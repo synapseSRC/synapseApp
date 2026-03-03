@@ -56,8 +56,8 @@ object PostUiMapper {
         return PostCardState(
             post = post,
             user = user,
-            isLiked = post.userReaction == ReactionType.LIKE,
-            likeCount = post.likesCount,
+            isLiked = post.userReaction == ReactionType.LIKE || post.hasUserReacted(),
+            likeCount = post.getTotalReactionsCount(),
             commentCount = post.commentsCount,
             repostCount = post.resharesCount,
             viewsCount = post.viewsCount,
