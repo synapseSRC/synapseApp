@@ -5,8 +5,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.synapse.social.studioasinc.data.repository.PostRepository
 import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
 class SyncWorker(appContext: Context, workerParams: WorkerParameters):
     CoroutineWorker(appContext, workerParams) {
