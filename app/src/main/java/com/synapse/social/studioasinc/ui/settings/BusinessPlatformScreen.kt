@@ -33,7 +33,8 @@ import com.synapse.social.studioasinc.shared.domain.model.business.VerificationS
 @Composable
 fun BusinessPlatformScreen(
     viewModel: BusinessPlatformViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNavigateToBrandPartnerships: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -115,7 +116,9 @@ fun BusinessPlatformScreen(
 
 
                     item {
-                        ProfessionalToolsSection()
+                        ProfessionalToolsSection(
+                            onNavigateToBrandPartnerships = onNavigateToBrandPartnerships
+                        )
                     }
 
 
@@ -351,7 +354,9 @@ fun MonetizationSection(
 }
 
 @Composable
-fun ProfessionalToolsSection() {
+fun ProfessionalToolsSection(
+    onNavigateToBrandPartnerships: () -> Unit = {}
+) {
     SettingsSection(title = "Professional Tools") {
         Column {
             SettingsNavigationItem(
@@ -374,7 +379,7 @@ fun ProfessionalToolsSection() {
                 title = "Brand Partnerships",
                 subtitle = "Manage collaborations",
                 imageVector = Icons.Default.Work,
-                onClick = { /* TODO: Implement Brand Partnerships navigation */ },
+                onClick = onNavigateToBrandPartnerships,
                 position = SettingsItemPosition.Bottom
             )
         }
