@@ -151,6 +151,9 @@ class SettingsDataStore private constructor(private val context: Context) {
         val DEFAULT_CHAT_LOCK_ENABLED = false
         val DEFAULT_ACCOUNT_REPORTS_AUTO_CREATE = false
         val DEFAULT_CHANNELS_REPORTS_AUTO_CREATE = false
+
+        val DEFAULT_AUTO_DOWNLOAD_WIFI_STRINGS = com.synapse.social.studioasinc.ui.settings.MediaType.values().map { it.name }.toSet()
+        val DEFAULT_AUTO_DOWNLOAD_WIFI_TYPES = com.synapse.social.studioasinc.ui.settings.MediaType.values().toSet()
     }
 
     private val dataStore: DataStore<Preferences>
@@ -458,7 +461,7 @@ class SettingsDataStore private constructor(private val context: Context) {
 
             wifi = preferences[KEY_AUTO_DOWNLOAD_WIFI]?.mapNotNull {
                 runCatching { com.synapse.social.studioasinc.ui.settings.MediaType.valueOf(it) }.getOrNull()
-            }?.toSet() ?: com.synapse.social.studioasinc.ui.settings.MediaType.values().toSet(),
+            }?.toSet() ?: DEFAULT_AUTO_DOWNLOAD_WIFI_TYPES,
 
             roaming = preferences[KEY_AUTO_DOWNLOAD_ROAMING]?.mapNotNull {
                 runCatching { com.synapse.social.studioasinc.ui.settings.MediaType.valueOf(it) }.getOrNull()
@@ -703,7 +706,7 @@ class SettingsDataStore private constructor(private val context: Context) {
             preferences[KEY_MEDIA_UPLOAD_QUALITY] = com.synapse.social.studioasinc.ui.settings.MediaUploadQuality.STANDARD.name
             preferences[KEY_USE_LESS_DATA_CALLS] = false
             preferences[KEY_AUTO_DOWNLOAD_MOBILE] = setOf(com.synapse.social.studioasinc.ui.settings.MediaType.PHOTO.name)
-            preferences[KEY_AUTO_DOWNLOAD_WIFI] = com.synapse.social.studioasinc.ui.settings.MediaType.values().map { it.name }.toSet()
+            preferences[KEY_AUTO_DOWNLOAD_WIFI] = DEFAULT_AUTO_DOWNLOAD_WIFI_STRINGS
             preferences[KEY_AUTO_DOWNLOAD_ROAMING] = emptySet()
 
 
