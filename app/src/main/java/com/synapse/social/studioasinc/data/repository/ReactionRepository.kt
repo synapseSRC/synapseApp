@@ -316,8 +316,10 @@ class ReactionRepository @Inject constructor(
 
                                  val currentUser = client.auth.currentUserOrNull()
 
+                                 val reactionsByPostId = reactions.groupBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
+
                                  chunkIds.map { postId ->
-                                     val postReactions = reactions.filter { it["post_id"]?.jsonPrimitive?.contentOrNull == postId }
+                                     val postReactions = reactionsByPostId[postId] ?: emptyList()
                                      val summary = postReactions
                                          .groupBy { ReactionType.fromString(it["reaction_type"]?.jsonPrimitive?.contentOrNull ?: "LIKE") }
                                          .mapValues { it.value.size }
@@ -376,8 +378,10 @@ class ReactionRepository @Inject constructor(
 
                                  val currentUser = client.auth.currentUserOrNull()
 
+                                 val reactionsByCommentId = reactions.groupBy { it["comment_id"]?.jsonPrimitive?.contentOrNull }
+
                                  chunkIds.map { commentId ->
-                                     val commentReactions = reactions.filter { it["comment_id"]?.jsonPrimitive?.contentOrNull == commentId }
+                                     val commentReactions = reactionsByCommentId[commentId] ?: emptyList()
                                      val summary = commentReactions
                                          .groupBy { ReactionType.fromString(it["reaction_type"]?.jsonPrimitive?.contentOrNull ?: "LIKE") }
                                          .mapValues { it.value.size }
