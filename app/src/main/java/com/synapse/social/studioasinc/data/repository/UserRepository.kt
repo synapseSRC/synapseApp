@@ -19,6 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import com.synapse.social.studioasinc.core.network.SupabaseErrorHandler
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient as SharedSupabaseClient
+import com.synapse.social.studioasinc.shared.core.util.sanitizeSearchQuery
 
 @Singleton
 class UserRepository @Inject constructor(
@@ -151,7 +152,8 @@ class UserRepository @Inject constructor(
 
     suspend fun searchUsers(query: String, limit: Int = 20): Result<List<UserProfile>> {
         return try {
-            if (query.isBlank()) {
+            val sanitizedQuery = sanitizeSearchQuery(query)
+            if (sanitizedQuery.isBlank()) {
                 return Result.success(emptyList())
             }
 
@@ -159,15 +161,15 @@ class UserRepository @Inject constructor(
                 .select() {
                     filter {
                         or {
-                            ilike("username", "%$query%")
-                            ilike("display_name", "%$query%")
+                            ilike("username", "%$sanitizedQuery%")
+                            ilike("display_name", "%$sanitizedQuery%")
                         }
                     }
                     limit(limit.toLong())
                 }
                 .decodeList<UserProfile>()
 
-            android.util.Log.d("UserRepository", "Search found ${users.size} users for query: $query")
+            android.util.Log.d("UserRepository", "Search found ${users.size} users for query: $sanitizedQuery")
             Result.success(users)
         } catch (e: Exception) {
             return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to search users with query: $query")
