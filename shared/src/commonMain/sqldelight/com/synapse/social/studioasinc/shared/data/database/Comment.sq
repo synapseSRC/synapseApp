@@ -1,0 +1,48 @@
+import kotlin.Boolean;
+import kotlin.Int;
+
+CREATE TABLE Comment (
+    id TEXT NOT NULL PRIMARY KEY,
+    postId TEXT NOT NULL,
+    authorId TEXT NOT NULL,
+    text TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    likesCount INTEGER AS Int NOT NULL DEFAULT 0,
+    repliesCount INTEGER AS Int NOT NULL DEFAULT 0,
+    isDeleted INTEGER AS Boolean NOT NULL DEFAULT 0,
+    parentCommentId TEXT,
+    username TEXT,
+    avatarUrl TEXT
+);
+
+insertComment:
+INSERT OR REPLACE INTO Comment(
+    id, postId, authorId, text, timestamp, likesCount, repliesCount, isDeleted, parentCommentId, username, avatarUrl
+) VALUES ?;
+
+selectByPostId:
+SELECT * FROM Comment WHERE postId = ? ORDER BY timestamp ASC;
+
+selectByPostIdWithUser:
+SELECT
+    C.id,
+    C.postId,
+    C.authorId,
+    C.text,
+    C.timestamp,
+    C.likesCount,
+    C.repliesCount,
+    C.isDeleted,
+    C.parentCommentId,
+    U.username,
+    U.avatarUrl
+FROM Comment C
+LEFT JOIN User U ON C.authorId = U.id
+WHERE C.postId = ?
+ORDER BY C.timestamp ASC;
+
+deleteById:
+DELETE FROM Comment WHERE id = ?;
+
+deleteAll:
+DELETE FROM Comment;

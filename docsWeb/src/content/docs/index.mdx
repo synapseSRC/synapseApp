@@ -1,0 +1,36 @@
+---
+title: Synapse Social
+description: Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase Powered.
+template: splash
+hero:
+  tagline: Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase Powered.
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Setup Guide
+      link: /guides/setup/
+      icon: right-arrow
+    - text: Architecture Overview
+      link: /guides/architecture/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Key Features
+
+<CardGrid stagger>
+	<Card title="Kotlin Multiplatform" icon="rocket">
+		Shared business logic across Android, iOS, and Web platforms for maximum consistency and development speed.
+	</Card>
+	<Card title="Native UI" icon="laptop">
+		100% Jetpack Compose for Android and SwiftUI for iOS, ensuring a premium, platform-specific user experience.
+	</Card>
+	<Card title="Supabase Powered" icon="setting">
+		Robust backend integration using Supabase for Authentication, Database, Storage, and Realtime features.
+	</Card>
+	<Card title="Privacy First" icon="approve-check">
+		Built with security in mind, including planned End-to-End Encryption (E2EE) using the Double Ratchet protocol.
+	</Card>
+</CardGrid>

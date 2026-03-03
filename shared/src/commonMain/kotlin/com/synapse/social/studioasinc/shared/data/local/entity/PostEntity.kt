@@ -1,0 +1,55 @@
+package com.synapse.social.studioasinc.shared.data.local.entity
+
+import com.synapse.social.studioasinc.shared.domain.model.MediaItem
+import com.synapse.social.studioasinc.shared.domain.model.PollOption
+import com.synapse.social.studioasinc.shared.domain.model.ReactionType
+import com.synapse.social.studioasinc.shared.domain.model.PostMetadata
+
+data class PostEntity(
+    val id: String,
+    val key: String?,
+    val authorUid: String,
+    val postText: String?,
+    val postImage: String?,
+    val postType: String?,
+    val postHideViewsCount: String?,
+    val postHideLikeCount: String?,
+    val postHideCommentsCount: String?,
+    val postDisableComments: String?,
+    val postVisibility: String?,
+    val publishDate: String?,
+    val timestamp: Long,
+    val likesCount: Int,
+    val commentsCount: Int,
+    val viewsCount: Int,
+    val resharesCount: Int,
+    val mediaItems: List<MediaItem>?,
+    val isEncrypted: Boolean?,
+    val nonce: String?,
+    val encryptionKeyId: String?,
+    val encryptedContent: Map<String, String>?,
+    val isDeleted: Boolean?,
+    val isEdited: Boolean?,
+    val editedAt: String?,
+    val deletedAt: String?,
+    val hasPoll: Boolean?,
+    val pollQuestion: String?,
+    val pollOptions: List<PollOption>?,
+    val pollEndTime: String?,
+    val pollAllowMultiple: Boolean?,
+    val hasLocation: Boolean?,
+    val locationName: String?,
+    val locationAddress: String?,
+    val locationLatitude: Double?,
+    val locationLongitude: Double?,
+    val locationPlaceId: String?,
+    val youtubeUrl: String?,
+    val reactions: Map<ReactionType, Int>?,
+    val userReaction: ReactionType?,
+    val username: String?,
+    val displayName: String?,
+    val avatarUrl: String?,
+    val isVerified: Boolean,
+    val userPollVote: Int?,
+    val metadata: PostMetadata?
+)

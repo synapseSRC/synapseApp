@@ -1,0 +1,90 @@
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.String;
+import kotlin.collections.List;
+import kotlin.collections.Map;
+import com.synapse.social.studioasinc.shared.domain.model.MediaItem;
+import com.synapse.social.studioasinc.shared.domain.model.PollOption;
+import com.synapse.social.studioasinc.shared.domain.model.PostMetadata;
+import com.synapse.social.studioasinc.shared.domain.model.ReactionType;
+
+CREATE TABLE Post (
+    id TEXT NOT NULL PRIMARY KEY,
+    key TEXT,
+    authorUid TEXT NOT NULL,
+    postText TEXT,
+    postImage TEXT,
+    postType TEXT,
+    postHideViewsCount TEXT,
+    postHideLikeCount TEXT,
+    postHideCommentsCount TEXT,
+    postDisableComments TEXT,
+    postVisibility TEXT,
+    publishDate TEXT,
+    timestamp INTEGER NOT NULL,
+    likesCount INTEGER AS Int NOT NULL DEFAULT 0,
+    commentsCount INTEGER AS Int NOT NULL DEFAULT 0,
+    viewsCount INTEGER AS Int NOT NULL DEFAULT 0,
+    resharesCount INTEGER AS Int NOT NULL DEFAULT 0,
+    mediaItems TEXT AS List<MediaItem>,
+    isEncrypted INTEGER AS Boolean DEFAULT 0,
+    nonce TEXT,
+    encryptionKeyId TEXT,
+    encryptedContent TEXT AS Map<String, String>,
+    isDeleted INTEGER AS Boolean DEFAULT 0,
+    isEdited INTEGER AS Boolean DEFAULT 0,
+    editedAt TEXT,
+    deletedAt TEXT,
+    hasPoll INTEGER AS Boolean DEFAULT 0,
+    pollQuestion TEXT,
+    pollOptions TEXT AS List<PollOption>,
+    pollEndTime TEXT,
+    pollAllowMultiple INTEGER AS Boolean DEFAULT 0,
+    hasLocation INTEGER AS Boolean DEFAULT 0,
+    locationName TEXT,
+    locationAddress TEXT,
+    locationLatitude REAL,
+    locationLongitude REAL,
+    locationPlaceId TEXT,
+    youtubeUrl TEXT,
+    reactions TEXT AS Map<ReactionType, Int>,
+    userReaction TEXT AS ReactionType,
+    username TEXT,
+    displayName TEXT,
+    avatarUrl TEXT,
+    isVerified INTEGER AS Boolean NOT NULL DEFAULT 0,
+    userPollVote INTEGER AS Int,
+    metadata TEXT AS PostMetadata
+);
+
+insertPost:
+INSERT OR REPLACE INTO Post(
+    id, key, authorUid, postText, postImage, postType,
+    postHideViewsCount, postHideLikeCount, postHideCommentsCount, postDisableComments, postVisibility,
+    publishDate, timestamp, likesCount, commentsCount, viewsCount, resharesCount,
+    mediaItems, isEncrypted, nonce, encryptionKeyId, encryptedContent, isDeleted, isEdited, editedAt, deletedAt,
+    hasPoll, pollQuestion, pollOptions, pollEndTime, pollAllowMultiple,
+    hasLocation, locationName, locationAddress, locationLatitude, locationLongitude, locationPlaceId,
+    youtubeUrl, reactions, userReaction, username, displayName, avatarUrl, isVerified, userPollVote, metadata
+) VALUES ?;
+
+selectAll:
+SELECT * FROM Post ORDER BY timestamp DESC;
+
+selectById:
+SELECT * FROM Post WHERE id = ?;
+
+deleteById:
+DELETE FROM Post WHERE id = ?;
+
+deleteAll:
+DELETE FROM Post;
+
+countPosts:
+SELECT count(*) FROM Post;
+
+selectAllPaged:
+SELECT * FROM Post LIMIT :limit OFFSET :offset;
+
+selectIds:
+SELECT id FROM Post;

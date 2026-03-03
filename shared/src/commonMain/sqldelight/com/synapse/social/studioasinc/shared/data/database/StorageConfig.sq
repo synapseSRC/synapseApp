@@ -1,0 +1,45 @@
+CREATE TABLE storage_config (
+  id INTEGER PRIMARY KEY NOT NULL DEFAULT 1,
+  photo_provider TEXT NOT NULL DEFAULT 'DEFAULT',
+  video_provider TEXT NOT NULL DEFAULT 'DEFAULT',
+  other_provider TEXT NOT NULL DEFAULT 'DEFAULT',
+  imgbb_key TEXT NOT NULL DEFAULT '',
+  cloudinary_cloud_name TEXT NOT NULL DEFAULT '',
+  cloudinary_api_key TEXT NOT NULL DEFAULT '',
+  cloudinary_api_secret TEXT NOT NULL DEFAULT '',
+  supabase_url TEXT NOT NULL DEFAULT '',
+  supabase_key TEXT NOT NULL DEFAULT '',
+  supabase_bucket TEXT NOT NULL DEFAULT '',
+  r2_account_id TEXT NOT NULL DEFAULT '',
+  r2_access_key_id TEXT NOT NULL DEFAULT '',
+  r2_secret_access_key TEXT NOT NULL DEFAULT '',
+  r2_bucket_name TEXT NOT NULL DEFAULT '',
+  last_updated INTEGER DEFAULT 0
+);
+
+insertDefault:
+INSERT OR IGNORE INTO storage_config (id) VALUES (1);
+
+getConfig:
+SELECT * FROM storage_config WHERE id = 1;
+
+updatePhotoProvider:
+UPDATE storage_config SET photo_provider = ?, last_updated = ? WHERE id = 1;
+
+updateVideoProvider:
+UPDATE storage_config SET video_provider = ?, last_updated = ? WHERE id = 1;
+
+updateOtherProvider:
+UPDATE storage_config SET other_provider = ?, last_updated = ? WHERE id = 1;
+
+updateImgBB:
+UPDATE storage_config SET imgbb_key = ?, last_updated = ? WHERE id = 1;
+
+updateCloudinary:
+UPDATE storage_config SET cloudinary_cloud_name = ?, cloudinary_api_key = ?, cloudinary_api_secret = ?, last_updated = ? WHERE id = 1;
+
+updateSupabase:
+UPDATE storage_config SET supabase_url = ?, supabase_key = ?, supabase_bucket = ?, last_updated = ? WHERE id = 1;
+
+updateR2:
+UPDATE storage_config SET r2_account_id = ?, r2_access_key_id = ?, r2_secret_access_key = ?, r2_bucket_name = ?, last_updated = ? WHERE id = 1;

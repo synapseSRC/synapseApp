@@ -1,0 +1,9 @@
+# Starlight/Astro build output and cache
+.astro/
+dist/
+
+# Dependencies
+node_modules/
+
+# Local logs
+*.log
