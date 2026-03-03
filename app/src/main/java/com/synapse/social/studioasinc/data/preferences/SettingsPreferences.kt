@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.data.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
