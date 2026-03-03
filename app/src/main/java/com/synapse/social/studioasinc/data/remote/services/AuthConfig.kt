@@ -26,10 +26,70 @@ data class AuthConfig(
         private const val KEY_AUTO_RETRY_ATTEMPTS = "auto_retry_attempts"
         private const val KEY_RETRY_DELAY_MS = "retry_delay_ms"
 
+        @Volatile
+        private var encryptedPrefs: android.content.SharedPreferences? = null
+
+        private fun getEncryptedSharedPreferences(context: Context): android.content.SharedPreferences {
+            return encryptedPrefs ?: synchronized(this) {
+                encryptedPrefs ?: createEncryptedSharedPreferences(context.applicationContext).also {
+                    encryptedPrefs = it
+                }
+            }
+        }
+
+        private fun createEncryptedSharedPreferences(context: Context): android.content.SharedPreferences {
+            return try {
+                initializeEncryptedPrefs(context)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to create EncryptedSharedPreferences, resetting keystore", e)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    context.deleteSharedPreferences("auth_config_secure")
+                } else {
+                    context.getSharedPreferences("auth_config_secure", Context.MODE_PRIVATE).edit().clear().apply()
+                }
+                initializeEncryptedPrefs(context)
+            }
+        }
+
+        private fun initializeEncryptedPrefs(context: Context): android.content.SharedPreferences {
+            val masterKey = androidx.security.crypto.MasterKey.Builder(context)
+                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
+            val securePrefs = androidx.security.crypto.EncryptedSharedPreferences.create(
+                context,
+                "auth_config_secure",
+                masterKey,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+
+            // Migrate old preferences
+            val oldPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val oldAll = oldPrefs.all
+            if (oldAll.isNotEmpty()) {
+                val editor = securePrefs.edit()
+                for ((key, value) in oldAll) {
+                    when (value) {
+                        is Boolean -> editor.putBoolean(key, value)
+                        is Int -> editor.putInt(key, value)
+                        is Long -> editor.putLong(key, value)
+                        is String -> editor.putString(key, value)
+                        is Float -> editor.putFloat(key, value)
+                    }
+                }
+                editor.apply()
+                oldPrefs.edit().clear().apply()
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    context.deleteSharedPreferences(PREFS_NAME)
+                }
+            }
+            return securePrefs
+        }
 
 
         fun create(context: Context): AuthConfig {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = getEncryptedSharedPreferences(context)
 
 
             val isDevelopmentMode = try {
@@ -121,7 +181,7 @@ data class AuthConfig(
 
 
         fun save(context: Context, config: AuthConfig) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = getEncryptedSharedPreferences(context)
             prefs.edit().apply {
                 putBoolean(KEY_REQUIRE_EMAIL_VERIFICATION, config.requireEmailVerification)
                 putInt(KEY_RESEND_COOLDOWN_SECONDS, config.resendCooldownSeconds)
@@ -141,7 +201,7 @@ data class AuthConfig(
 
 
         fun reset(context: Context): AuthConfig {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = getEncryptedSharedPreferences(context)
             prefs.edit().clear().apply()
 
             val config = create(context)
