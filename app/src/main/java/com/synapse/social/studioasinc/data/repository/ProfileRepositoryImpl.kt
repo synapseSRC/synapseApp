@@ -23,6 +23,10 @@ data class FollowInsert(
     val following_id: String
 )
 
+@Serializable
+private data class FollowingIdResponse(
+    val following_id: String
+)
 
 
 class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRepository {
@@ -279,8 +283,8 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
             filter { eq("follower_id", actualUserId) }
             limit(limit.toLong())
             range(offset.toLong(), (offset + limit - 1).toLong())
-        }.decodeList<JsonObject>().mapNotNull {
-            it["following_id"]?.jsonPrimitive?.contentOrNull
+        }.decodeList<FollowingIdResponse>().map {
+            it.following_id
         }
 
         if (followingIds.isEmpty()) {
