@@ -81,6 +81,234 @@ class StoryCreatorActivity : ComponentActivity() {
     }
 }
 
+@Composable
+private fun StoryMediaContent(state: StoryCreatorState) {
+    val mediaUri = state.capturedMediaUri
+    if (mediaUri != null) {
+        AsyncImage(
+            model = mediaUri,
+            contentDescription = "Story Media",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    } else if (state.sharedPost != null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Shared Post Editor", color = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun StoryDrawingCanvas(
+    state: StoryCreatorState,
+    viewModel: StoryCreatorViewModel,
+    isDrawingMode: Boolean,
+    currentPath: List<Offset>,
+    currentColor: Color,
+    currentStrokeWidth: Float,
+    onPathUpdate: (List<Offset>) -> Unit
+) {
+    val cachedPaths = remember(state.drawings) {
+        state.drawings.map { drawing ->
+            val path = Path().apply {
+                if (drawing.points.isNotEmpty()) {
+                    moveTo(drawing.points.first().x, drawing.points.first().y)
+                    for (i in 1 until drawing.points.size) {
+                        lineTo(drawing.points[i].x, drawing.points[i].y)
+                    }
+                }
+            }
+            Pair(path, drawing)
+        }
+    }
+
+    val activePath = remember(currentPath) {
+        Path().apply {
+            if (currentPath.isNotEmpty()) {
+                moveTo(currentPath.first().x, currentPath.first().y)
+                for (i in 1 until currentPath.size) {
+                    lineTo(currentPath[i].x, currentPath[i].y)
+                }
+            }
+        }
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(isDrawingMode) {
+                if (isDrawingMode) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            onPathUpdate(listOf(offset))
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            onPathUpdate(currentPath + change.position)
+                        },
+                        onDragEnd = {
+                            if (currentPath.isNotEmpty()) {
+                                viewModel.addDrawing(
+                                    DrawingPath(
+                                        points = currentPath,
+                                        color = currentColor,
+                                        strokeWidth = currentStrokeWidth
+                                    )
+                                )
+                                onPathUpdate(emptyList())
+                            }
+                        }
+                    )
+                }
+            }
+    ) {
+        cachedPaths.forEach { (path, drawing) ->
+            if (drawing.points.size > 1) {
+                drawPath(
+                    path = path,
+                    color = drawing.color,
+                    style = Stroke(
+                        width = drawing.strokeWidth,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    )
+                )
+            }
+        }
+
+        if (currentPath.size > 1) {
+            drawPath(
+                path = activePath,
+                color = currentColor,
+                style = Stroke(
+                    width = currentStrokeWidth,
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round
+                )
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StoryTextOverlays(state: StoryCreatorState, viewModel: StoryCreatorViewModel) {
+    state.textOverlays.forEachIndexed { index, overlay ->
+        Box(
+            modifier = Modifier
+                .offset {
+                    IntOffset(overlay.position.x.roundToInt(), overlay.position.y.roundToInt())
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        viewModel.updateTextPosition(
+                            index,
+                            Offset(
+                                overlay.position.x + dragAmount.x,
+                                overlay.position.y + dragAmount.y
+                            )
+                        )
+                    }
+                }
+        ) {
+            TextField(
+                value = overlay.text,
+                onValueChange = { viewModel.updateTextContent(index, it) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = overlay.color,
+                    unfocusedTextColor = overlay.color,
+                    cursorColor = overlay.color,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                textStyle = LocalTextStyle.current.copy(
+                    fontSize = (24 * overlay.scale).sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun StoryStickerOverlays(state: StoryCreatorState, viewModel: StoryCreatorViewModel) {
+    state.stickers.forEachIndexed { index, sticker ->
+        Text(
+            text = sticker.emoji,
+            fontSize = (48 * sticker.scale).sp,
+            modifier = Modifier
+                .offset {
+                    IntOffset(sticker.position.x.roundToInt(), sticker.position.y.roundToInt())
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        viewModel.updateStickerPosition(
+                            index,
+                            Offset(
+                                sticker.position.x + dragAmount.x,
+                                sticker.position.y + dragAmount.y
+                            )
+                        )
+                    }
+                }
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.StoryTopActionBar(
+    viewModel: StoryCreatorViewModel,
+    isDrawingMode: Boolean,
+    onDrawingModeChange: (Boolean) -> Unit,
+    onClose: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .align(Alignment.TopCenter)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        IconButton(onClick = {
+            viewModel.clearCapturedMedia()
+            onClose()
+        }) {
+            Icon(Icons.Default.Close, contentDescription = "Discard", tint = Color.White)
+        }
+        Row {
+            IconButton(onClick = { onDrawingModeChange(!isDrawingMode) }) {
+                Icon(Icons.Default.Edit, contentDescription = "Draw", tint = if (isDrawingMode) Color.Blue else Color.White)
+            }
+            IconButton(onClick = { viewModel.addTextOverlay() }) {
+                Text("Aa", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            }
+            IconButton(onClick = { viewModel.addSticker("\uD83D\uDE0A") }) { // Smiley emoji
+                Icon(Icons.Default.Face, contentDescription = "Sticker", tint = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.StoryBottomPostButton(state: StoryCreatorState, viewModel: StoryCreatorViewModel) {
+    Button(
+        onClick = { viewModel.postStory() },
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(16.dp)
+    ) {
+        if (state.isPosting) {
+            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+        } else {
+            Text("Post to ${state.selectedPrivacy.name}")
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoryCreatorScreen(
@@ -178,203 +406,30 @@ fun StoryEditor(
     var currentColor by remember { mutableStateOf(Color.White) }
     var currentStrokeWidth by remember { mutableStateOf(10f) }
 
-    val cachedPaths = remember(state.drawings) {
-        state.drawings.map { drawing ->
-            val path = Path().apply {
-                if (drawing.points.isNotEmpty()) {
-                    moveTo(drawing.points.first().x, drawing.points.first().y)
-                    for (i in 1 until drawing.points.size) {
-                        lineTo(drawing.points[i].x, drawing.points[i].y)
-                    }
-                }
-            }
-            Pair(path, drawing)
-        }
-    }
-
-    val activePath = remember(currentPath) {
-        Path().apply {
-            if (currentPath.isNotEmpty()) {
-                moveTo(currentPath.first().x, currentPath.first().y)
-                for (i in 1 until currentPath.size) {
-                    lineTo(currentPath[i].x, currentPath[i].y)
-                }
-            }
-        }
-    }
-
     Box(modifier = modifier.fillMaxSize()) {
-        val mediaUri = state.capturedMediaUri
-        if (mediaUri != null) {
-            AsyncImage(
-                model = mediaUri,
-                contentDescription = "Story Media",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else if (state.sharedPost != null) {
-            // Optionally render shared post here
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Shared Post Editor", color = Color.White)
-            }
-        }
+        StoryMediaContent(state)
 
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(isDrawingMode) {
-                    if (isDrawingMode) {
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                currentPath = listOf(offset)
-                            },
-                            onDrag = { change, dragAmount ->
-                                change.consume()
-                                currentPath = currentPath + change.position
-                            },
-                            onDragEnd = {
-                                if (currentPath.isNotEmpty()) {
-                                    viewModel.addDrawing(
-                                        DrawingPath(
-                                            points = currentPath,
-                                            color = currentColor,
-                                            strokeWidth = currentStrokeWidth
-                                        )
-                                    )
-                                    currentPath = emptyList()
-                                }
-                            }
-                        )
-                    }
-                }
-        ) {
-            cachedPaths.forEach { (path, drawing) ->
-                if (drawing.points.size > 1) {
-                    drawPath(
-                        path = path,
-                        color = drawing.color,
-                        style = Stroke(
-                            width = drawing.strokeWidth,
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round
-                        )
-                    )
-                }
-            }
+        StoryDrawingCanvas(
+            state = state,
+            viewModel = viewModel,
+            isDrawingMode = isDrawingMode,
+            currentPath = currentPath,
+            currentColor = currentColor,
+            currentStrokeWidth = currentStrokeWidth,
+            onPathUpdate = { currentPath = it }
+        )
 
-            if (currentPath.size > 1) {
-                drawPath(
-                    path = activePath,
-                    color = currentColor,
-                    style = Stroke(
-                        width = currentStrokeWidth,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round
-                    )
-                )
-            }
-        }
+        StoryTextOverlays(state, viewModel)
+        StoryStickerOverlays(state, viewModel)
 
-        state.textOverlays.forEachIndexed { index, overlay ->
-            Box(
-                modifier = Modifier
-                    .offset {
-                        IntOffset(overlay.position.x.roundToInt(), overlay.position.y.roundToInt())
-                    }
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            viewModel.updateTextPosition(
-                                index,
-                                Offset(
-                                    overlay.position.x + dragAmount.x,
-                                    overlay.position.y + dragAmount.y
-                                )
-                            )
-                        }
-                    }
-            ) {
-                TextField(
-                    value = overlay.text,
-                    onValueChange = { viewModel.updateTextContent(index, it) },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedTextColor = overlay.color,
-                        unfocusedTextColor = overlay.color,
-                        cursorColor = overlay.color,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = (24 * overlay.scale).sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
-        }
+        StoryTopActionBar(
+            viewModel = viewModel,
+            isDrawingMode = isDrawingMode,
+            onDrawingModeChange = { isDrawingMode = it },
+            onClose = onClose
+        )
 
-        state.stickers.forEachIndexed { index, sticker ->
-            Text(
-                text = sticker.emoji,
-                fontSize = (48 * sticker.scale).sp,
-                modifier = Modifier
-                    .offset {
-                        IntOffset(sticker.position.x.roundToInt(), sticker.position.y.roundToInt())
-                    }
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            viewModel.updateStickerPosition(
-                                index,
-                                Offset(
-                                    sticker.position.x + dragAmount.x,
-                                    sticker.position.y + dragAmount.y
-                                )
-                            )
-                        }
-                    }
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = {
-                viewModel.clearCapturedMedia()
-                onClose()
-            }) {
-                Icon(Icons.Default.Close, contentDescription = "Discard", tint = Color.White)
-            }
-            Row {
-                IconButton(onClick = { isDrawingMode = !isDrawingMode }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Draw", tint = if (isDrawingMode) Color.Blue else Color.White)
-                }
-                IconButton(onClick = { viewModel.addTextOverlay() }) {
-                    Text("Aa", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                }
-                IconButton(onClick = { viewModel.addSticker("\uD83D\uDE0A") }) { // Smiley emoji
-                    Icon(Icons.Default.Face, contentDescription = "Sticker", tint = Color.White)
-                }
-            }
-        }
-
-        Button(
-            onClick = { viewModel.postStory() },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            if (state.isPosting) {
-                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-            } else {
-                Text("Post to ${state.selectedPrivacy.name}")
-            }
-        }
+        StoryBottomPostButton(state, viewModel)
     }
 
     LaunchedEffect(state.isPosted) {
