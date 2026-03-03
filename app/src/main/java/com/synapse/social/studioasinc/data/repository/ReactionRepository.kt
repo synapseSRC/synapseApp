@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.data.repository
 
 import android.util.Log
-import com.synapse.social.studioasinc.domain.model.CommentReaction
 import com.synapse.social.studioasinc.domain.model.ReactionType
 import com.synapse.social.studioasinc.domain.model.CommentWithUser
 import io.github.jan.supabase.SupabaseClient
