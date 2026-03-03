@@ -11,8 +11,10 @@ import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.ReactionType
 import com.synapse.social.studioasinc.domain.model.UserReaction
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -181,10 +183,7 @@ class PostRepository constructor(
                 "timestamp" to System.currentTimeMillis()
             ))
             
-            val currentPost = client.from("posts").select { filter { eq("id", postId) } }.decodeSingle<PostSelectDto>()
-            client.from("posts").update(mapOf("reshares_count" to (currentPost.resharesCount + 1))) {
-                filter { eq("id", postId) }
-            }
+            client.postgrest.rpc("increment_post_reshares", mapOf("post_id" to postId))
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
