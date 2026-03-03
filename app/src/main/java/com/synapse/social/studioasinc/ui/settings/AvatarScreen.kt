@@ -8,27 +8,44 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvatarScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: AvatarViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
     var showRemoveDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearMessages()
+        }
+    }
+
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearMessages()
+        }
+    }
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            Toast.makeText(context, "Photo selected: $uri", Toast.LENGTH_SHORT).show()
-            // TODO: Upload to profile via ViewModel
+            viewModel.uploadPhoto(uri)
         }
     }
 
@@ -36,8 +53,7 @@ fun AvatarScreen(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
-            Toast.makeText(context, "Photo captured", Toast.LENGTH_SHORT).show()
-            // TODO: Upload bitmap to profile
+            viewModel.uploadBitmap(bitmap)
         }
     }
 
@@ -49,8 +65,7 @@ fun AvatarScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showRemoveDialog = false
-                    Toast.makeText(context, "Profile photo removed", Toast.LENGTH_SHORT).show()
-                    // TODO: Remove via ViewModel
+                    viewModel.removeProfilePhoto()
                 }) {
                     Text("Remove")
                 }
@@ -88,6 +103,11 @@ fun AvatarScreen(
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
             item {
+                if (uiState.isUploading) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(SettingsSpacing.sectionSpacing), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
                 SettingsSection(title = "Profile Photo") {
                     SettingsClickableItem(
                         title = "Choose from Gallery",

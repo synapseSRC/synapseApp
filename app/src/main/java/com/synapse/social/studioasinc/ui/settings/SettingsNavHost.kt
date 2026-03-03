@@ -269,10 +269,12 @@ fun SettingsNavHost(
 
 
         composable(route = SettingsDestination.ROUTE_AVATAR) {
+            val viewModel: AvatarViewModel = hiltViewModel()
             AvatarScreen(
                 onBackClick = {
                     navController.popBackStack()
-                }
+                },
+                viewModel = viewModel
             )
         }
 
