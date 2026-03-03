@@ -90,7 +90,7 @@ sealed class SettingsDestination(val route: String) {
 
     object ChangeNumber : SettingsDestination(ROUTE_CHANGE_NUMBER)
 
-    object ScheduledPosts : SettingsDestination(ROUTE_SCHEDULED_POSTS)
+    object BrandPartnerships : SettingsDestination(ROUTE_BRAND_PARTNERSHIPS)
 
     companion object {
 
@@ -116,7 +116,8 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_NETWORK_USAGE = "settings_network_usage"
         const val ROUTE_BUSINESS_PLATFORM = "settings_business_platform"
         const val ROUTE_CHANGE_NUMBER = "settings_change_number"
-        const val ROUTE_SCHEDULED_POSTS = "settings_scheduled_posts"
+        const val ROUTE_BRAND_PARTNERSHIPS = "settings_brand_partnerships"
+
 
 
         fun allDestinations(): List<SettingsDestination> = listOf(
@@ -141,7 +142,7 @@ sealed class SettingsDestination(val route: String) {
             NetworkUsage,
             BusinessPlatform,
             ChangeNumber,
-            ScheduledPosts
+            BrandPartnerships
         )
 
 
@@ -168,7 +169,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_NETWORK_USAGE -> NetworkUsage
             ROUTE_BUSINESS_PLATFORM -> BusinessPlatform
             ROUTE_CHANGE_NUMBER -> ChangeNumber
-            ROUTE_SCHEDULED_POSTS -> ScheduledPosts
+            ROUTE_BRAND_PARTNERSHIPS -> BrandPartnerships
             else -> null
         }
     }

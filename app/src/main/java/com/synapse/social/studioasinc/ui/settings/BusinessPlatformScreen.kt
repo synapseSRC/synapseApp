@@ -36,8 +36,6 @@ import com.synapse.social.studioasinc.shared.domain.model.business.VerificationS
 fun BusinessPlatformScreen(
     viewModel: BusinessPlatformViewModel,
     onBackClick: () -> Unit,
-    onNavigateToScheduledPosts: () -> Unit = {},
-    onNavigateToContentCalendar: () -> Unit = {},
     onNavigateToBrandPartnerships: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
@@ -121,8 +119,6 @@ fun BusinessPlatformScreen(
 
                     item {
                         ProfessionalToolsSection(
-                            onNavigateToScheduledPosts = onNavigateToScheduledPosts,
-                            onNavigateToContentCalendar = onNavigateToContentCalendar,
                             onNavigateToBrandPartnerships = onNavigateToBrandPartnerships
                         )
                     }
@@ -361,8 +357,6 @@ fun MonetizationSection(
 
 @Composable
 fun ProfessionalToolsSection(
-    onNavigateToScheduledPosts: () -> Unit = {},
-    onNavigateToContentCalendar: () -> Unit = {},
     onNavigateToBrandPartnerships: () -> Unit = {}
 ) {
     SettingsSection(title = "Professional Tools") {
