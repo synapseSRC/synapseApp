@@ -33,7 +33,8 @@ import com.synapse.social.studioasinc.shared.domain.model.business.VerificationS
 @Composable
 fun BusinessPlatformScreen(
     viewModel: BusinessPlatformViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNavigateToScheduledPosts: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -115,7 +116,9 @@ fun BusinessPlatformScreen(
 
 
                     item {
-                        ProfessionalToolsSection()
+                        ProfessionalToolsSection(
+                            onNavigateToScheduledPosts = onNavigateToScheduledPosts
+                        )
                     }
 
 
@@ -351,14 +354,16 @@ fun MonetizationSection(
 }
 
 @Composable
-fun ProfessionalToolsSection() {
+fun ProfessionalToolsSection(
+    onNavigateToScheduledPosts: () -> Unit = {}
+) {
     SettingsSection(title = "Professional Tools") {
         Column {
             SettingsNavigationItem(
                 title = "Scheduled Posts",
                 subtitle = "Manage upcoming content",
                 imageVector = Icons.Default.Schedule,
-                onClick = { /* TODO: Implement Scheduled Posts navigation */ },
+                onClick = onNavigateToScheduledPosts,
                 position = SettingsItemPosition.Top
             )
             SettingsDivider()
