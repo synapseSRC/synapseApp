@@ -361,9 +361,9 @@ fun MonetizationSection(
 
 @Composable
 fun ProfessionalToolsSection(
-    onNavigateToScheduledPosts: () -> Unit,
-    onNavigateToContentCalendar: () -> Unit,
-    onNavigateToBrandPartnerships: () -> Unit
+    onNavigateToScheduledPosts: () -> Unit = {},
+    onNavigateToContentCalendar: () -> Unit = {},
+    onNavigateToBrandPartnerships: () -> Unit = {}
 ) {
     SettingsSection(title = "Professional Tools") {
         Column {
