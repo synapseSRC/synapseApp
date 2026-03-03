@@ -324,6 +324,9 @@ dependencies {
 
     // Local AARs
 
+    // Security Crypto
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+
     // Kotlin coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4'
