@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.data.remote.services
 
 import android.content.Context
-import android.net.Uri
 import io.github.jan.supabase.storage.upload
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import io.github.jan.supabase.storage.storage
@@ -9,7 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.pow
 
