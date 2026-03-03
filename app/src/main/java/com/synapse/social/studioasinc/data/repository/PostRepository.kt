@@ -32,6 +32,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -330,20 +332,24 @@ class PostRepository constructor(
             val localIds = postDao.getAllPostIds()
             if (localIds.isEmpty()) return@coroutineScope
 
+            val semaphore = Semaphore(5)
+
             // Process in chunks of 50 to respect URL length limits (approx 2KB max for safe GET)
             // 50 UUIDs * 36 chars = 1800 chars + overhead
             val idsToDelete = localIds.chunked(50).map { chunk ->
                 async {
-                    try {
-                        val response = client.from("posts")
-                            .select(columns = Columns.raw("id, is_deleted")) {
-                                filter { isIn("id", chunk) }
-                            }
-                            .decodeList<JsonObject>()
-                        findDeletedIds(chunk, response)
-                    } catch (e: Exception) {
-                        android.util.Log.e(TAG, "Failed to check chunk existence", e)
-                        emptyList<String>()
+                    semaphore.withPermit {
+                        try {
+                            val response = client.from("posts")
+                                .select(columns = Columns.raw("id, is_deleted")) {
+                                    filter { isIn("id", chunk) }
+                                }
+                                .decodeList<JsonObject>()
+                            findDeletedIds(chunk, response)
+                        } catch (e: Exception) {
+                            android.util.Log.e(TAG, "Failed to check chunk existence", e)
+                            emptyList<String>()
+                        }
                     }
                 }
             }.awaitAll().flatten()
