@@ -12,11 +12,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.presentation.editprofile.EditProfileEvent
+import com.synapse.social.studioasinc.presentation.editprofile.EditProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvatarScreen(
+    viewModel: EditProfileViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -28,7 +32,7 @@ fun AvatarScreen(
     ) { uri ->
         if (uri != null) {
             Toast.makeText(context, "Photo selected: $uri", Toast.LENGTH_SHORT).show()
-            // TODO: Upload to profile via ViewModel
+            viewModel.onEvent(EditProfileEvent.AvatarSelected(uri))
         }
     }
 
