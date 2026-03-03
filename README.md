@@ -9,7 +9,7 @@ Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase P
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -27,12 +27,12 @@ Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase P
 
 ---
 
-## 🌟 Overview
+## Overview
 **Synapse Social** is a high-performance, cross-platform social media client built using **Kotlin Multiplatform (KMP)**. It aims to provide a native experience on both Android and iOS while sharing the core business logic, data handling, and security protocols. Powered by **Supabase**, Synapse offers a robust backend including real-time updates, secure authentication, and scalable storage.
 
 ---
 
-## ✨ Features
+## Features
 - **Kotlin Multiplatform (KMP):** Shared logic across Android and iOS for consistent behavior and faster development.
 - **Native UI:** 100% Jetpack Compose for Android and SwiftUI for iOS.
 - **Supabase Integration:** Full-stack features including Auth, Database, Storage, and Real-time notifications.
@@ -43,9 +43,9 @@ Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase P
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
-### 🧠 Shared Engine (:shared)
+### Shared Engine (:shared)
 - **Networking:** [Ktor](https://ktor.io/)
 - **Backend-as-a-Service:** [Supabase-kt](https://github.com/jan-tennert/supabase-kt)
 - **Local Database:** [SQLDelight](https://cashapp.github.io/sqldelight/)
@@ -54,7 +54,7 @@ Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase P
 - **Async/Flow:** [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html)
 - **Logging:** [Napier](https://github.com/aakira/Napier)
 
-### 🤖 Android Application (:app)
+### Android Application (:app)
 - **UI Framework:** [Jetpack Compose](https://developer.android.com/jetpack/compose)
 - **Dependency Injection:** [Hilt](https://developer.android.com/training/dependency-injection/hilt-android)
 - **Image Loading:** [Coil](https://coil-kt.github.io/coil/)
@@ -62,13 +62,13 @@ Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase P
 - **Notifications:** [OneSignal](https://onesignal.com/)
 - **Charts:** [Vico](https://github.com/patrykandpatrick/vico)
 
-### 🍎 iOS Application (:iosApp)
+### iOS Application (:iosApp)
 - **UI Framework:** [SwiftUI](https://developer.apple.com/xcode/swiftui/)
 - **Integration:** Consumes KMP shared logic as a static framework.
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 Synapse Social follows **Clean Architecture** principles to ensure maintainability and scalability.
 
@@ -97,20 +97,20 @@ graph TD
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 ```text
 Synapse/
-├── app/                  # 🤖 Android Application (Native UI)
-├── shared/               # 🧠 KMP Shared Engine (Logic, Data, Domain)
-├── iosApp/               # 🍎 iOS Application (Native SwiftUI)
-├── docsWeb/              # 🌐 Project Documentation (Astro/Starlight)
-├── gradle/               # 🐘 Build configuration
-└── gradlew               # 🛠 Gradle Wrapper
+├── app/                  # Android Application (Native UI)
+├── shared/               # KMP Shared Engine (Logic, Data, Domain)
+├── iosApp/               # iOS Application (Native SwiftUI)
+├── docsWeb/              # Project Documentation (Astro/Starlight)
+├── gradle/               # Build configuration
+└── gradlew               # Gradle Wrapper
 ```
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - **Android Studio Ladybug (2024.2.1)+**
@@ -137,7 +137,7 @@ Synapse/
 
 ---
 
-## 💻 Usage Examples
+## Usage Examples
 
 ### Executing a UseCase (Shared)
 ```kotlin
@@ -162,7 +162,7 @@ val storageModule = module {
 
 ---
 
-## 📡 API Documentation
+## API Documentation
 Synapse Social leverages the **Supabase Ecosystem** for its backend services:
 - **Authentication:** Email/Password, OAuth (planned), Passkeys.
 - **Database (PostgreSQL):** All user data, posts, and relations.
@@ -173,7 +173,7 @@ Detailed API references can be found in the `shared/src/commonMain/kotlin/.../da
 
 ---
 
-## ⚙️ Configuration Guide
+## Configuration Guide
 
 The following environment variables/properties are required:
 
@@ -187,7 +187,7 @@ The following environment variables/properties are required:
 
 ---
 
-## 🧪 Testing
+## Testing
 Run unit tests for the shared module and Android app using:
 ```bash
 ./gradlew test
@@ -197,7 +197,7 @@ Run unit tests for the shared module and Android app using:
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Android
 - Build Release APK/Bundle: `./gradlew :app:assembleRelease`
@@ -210,7 +210,7 @@ Run unit tests for the shared module and Android app using:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 We welcome contributions!
 1. Fork the project.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
@@ -223,14 +223,14 @@ Refer to `docsWeb/src/content/docs/guides/contributing.md` for full details.
 
 ---
 
-## 📄 License
-This project is licensed under the **Apache License 2.0**. See the `LICENSE` file for details (if available).
+## License
+This project is currently **Unlicensed**.
 
 ---
 
-## 📞 Contact
-- **Project Lead:** Mashik Ahmed ([mashikahamed0@gmail.com](mailto:mashikahamed0@gmail.com))
-- **Organization:** Studio Asinc
+## Contact
+- **Project Lead:** Ashik Ahmed ([ashikahamed0@gmail.com](mailto:ashikahamed0@gmail.com))
+- **Organization:** StudioAs Inc.
 
 ---
-*Built with ❤️ by the Studio Asinc team.*
+*Built with ❤️ by the StudioAs Inc. team.*
