@@ -62,6 +62,37 @@ fun EditProfileContent(
         }
 
         item {
+            LocationFields(
+                currentCity = uiState.currentCity,
+                onCurrentCityChange = { onEvent(EditProfileEvent.CurrentCityChanged(it)) },
+                hometown = uiState.hometown,
+                onHometownChange = { onEvent(EditProfileEvent.HometownChanged(it)) }
+            )
+        }
+
+        item {
+            WorkAndEducationFields(
+                occupation = uiState.occupation,
+                onOccupationChange = { onEvent(EditProfileEvent.OccupationChanged(it)) },
+                workplace = uiState.workplace,
+                onWorkplaceChange = { onEvent(EditProfileEvent.WorkplaceChanged(it)) },
+                education = uiState.education,
+                onEducationChange = { onEvent(EditProfileEvent.EducationChanged(it)) }
+            )
+        }
+
+        item {
+            SocialLinksFields(
+                discordTag = uiState.discordTag,
+                onDiscordTagChange = { onEvent(EditProfileEvent.DiscordTagChanged(it)) },
+                githubProfile = uiState.githubProfile,
+                onGithubProfileChange = { onEvent(EditProfileEvent.GithubProfileChanged(it)) },
+                personalWebsite = uiState.personalWebsite,
+                onPersonalWebsiteChange = { onEvent(EditProfileEvent.PersonalWebsiteChanged(it)) }
+            )
+        }
+
+        item {
             GenderSelector(
                 selectedGender = uiState.selectedGender,
                 onGenderSelected = { onEvent(EditProfileEvent.GenderSelected(it)) }

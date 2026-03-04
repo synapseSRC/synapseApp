@@ -65,7 +65,19 @@ class EditProfileRepository @Inject constructor(
                     status = UserStatus.fromString(result["status"]?.jsonPrimitive?.contentOrNull),
                     followersCount = result["followers_count"]?.jsonPrimitive?.intOrNull ?: 0,
                     followingCount = result["following_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                    postsCount = result["posts_count"]?.jsonPrimitive?.intOrNull ?: 0
+                    postsCount = result["posts_count"]?.jsonPrimitive?.intOrNull ?: 0,
+                    currentCity = result["current_city"]?.jsonPrimitive?.contentOrNull,
+                    hometown = result["hometown"]?.jsonPrimitive?.contentOrNull,
+                    occupation = result["occupation"]?.jsonPrimitive?.contentOrNull,
+                    workplace = result["workplace"]?.jsonPrimitive?.contentOrNull,
+                    education = result["education"]?.jsonPrimitive?.contentOrNull,
+                    pronouns = result["pronouns"]?.jsonPrimitive?.contentOrNull,
+                    birthday = result["birthday"]?.jsonPrimitive?.contentOrNull,
+                    relationshipStatus = result["relationship_status"]?.jsonPrimitive?.contentOrNull,
+                    discordTag = result["discord_tag"]?.jsonPrimitive?.contentOrNull,
+                    githubProfile = result["github_profile"]?.jsonPrimitive?.contentOrNull,
+                    personalWebsite = result["personal_website"]?.jsonPrimitive?.contentOrNull,
+                    publicEmail = result["public_email"]?.jsonPrimitive?.contentOrNull
                 )
                 emit(Result.success(user))
             } else {

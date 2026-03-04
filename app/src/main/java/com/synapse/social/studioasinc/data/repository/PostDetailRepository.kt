@@ -35,7 +35,7 @@ class PostDetailRepository @Inject constructor(
                 .select(
                     columns = Columns.raw("""
                         *,
-                        users!posts_author_uid_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
+                        users!author_uid(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
                     """.trimIndent())
                 ) {
                     filter { eq("id", postId) }

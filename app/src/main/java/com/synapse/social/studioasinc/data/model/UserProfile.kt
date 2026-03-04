@@ -41,6 +41,16 @@ data class UserProfile(
     val website: String? = null,
     val gender: String? = null,
     val pronouns: String? = null,
+    val occupation: String? = null,
+    val workplace: String? = null,
+    @SerialName("discord_tag")
+    val discordTag: String? = null,
+    @SerialName("github_profile")
+    val githubProfile: String? = null,
+    @SerialName("personal_website")
+    val personalWebsite: String? = null,
+    @SerialName("public_email")
+    val publicEmail: String? = null,
     @SerialName("linked_accounts")
     val linkedAccounts: List<LinkedAccount> = emptyList(),
     @SerialName("privacy_settings")

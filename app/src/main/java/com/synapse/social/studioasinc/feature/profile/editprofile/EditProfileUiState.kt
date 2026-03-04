@@ -22,7 +22,21 @@ data class EditProfileUiState(
     val selectedGender: Gender = Gender.Hidden,
     val selectedRegion: String? = null,
     val hasChanges: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    
+    // New Fields
+    val currentCity: String = "",
+    val hometown: String = "",
+    val occupation: String = "",
+    val workplace: String = "",
+    val education: String = "",
+    val pronouns: String = "",
+    val birthday: String = "",
+    val relationshipStatus: String = "",
+    val discordTag: String = "",
+    val githubProfile: String = "",
+    val personalWebsite: String = "",
+    val publicEmail: String = ""
 )
 
 sealed class UploadState {
@@ -52,6 +66,20 @@ sealed class EditProfileEvent {
     object BackClicked : EditProfileEvent()
     object ProfileHistoryClicked : EditProfileEvent()
     object CoverHistoryClicked : EditProfileEvent()
+
+    // New Events
+    data class CurrentCityChanged(val city: String) : EditProfileEvent()
+    data class HometownChanged(val hometown: String) : EditProfileEvent()
+    data class OccupationChanged(val occupation: String) : EditProfileEvent()
+    data class WorkplaceChanged(val workplace: String) : EditProfileEvent()
+    data class EducationChanged(val education: String) : EditProfileEvent()
+    data class PronounsChanged(val pronouns: String) : EditProfileEvent()
+    data class BirthdayChanged(val birthday: String) : EditProfileEvent()
+    data class RelationshipStatusChanged(val status: String) : EditProfileEvent()
+    data class DiscordTagChanged(val tag: String) : EditProfileEvent()
+    data class GithubProfileChanged(val profile: String) : EditProfileEvent()
+    data class PersonalWebsiteChanged(val website: String) : EditProfileEvent()
+    data class PublicEmailChanged(val email: String) : EditProfileEvent()
 }
 
 sealed class EditProfileNavigation {

@@ -33,7 +33,7 @@ class PostPagingSource(
                     .select(
                         columns = Columns.raw("""
                             *,
-                            users!posts_author_uid_fkey(username, display_name, avatar, verify),
+                            users!author_uid(username, display_name, avatar, verify),
                             latest_comments:comments(id, content, user_id, created_at, users(username))
                         """.trimIndent())
                     ) {

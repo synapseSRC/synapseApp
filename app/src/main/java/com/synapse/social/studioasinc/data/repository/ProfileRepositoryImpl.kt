@@ -53,6 +53,18 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
         const val KEY_GENDER = "gender"
         const val KEY_PRONOUNS = "pronouns"
         const val KEY_JOIN_DATE = "join_date"
+        const val KEY_CURRENT_CITY = "current_city"
+        const val KEY_HOMETOWN = "hometown"
+        const val KEY_OCCUPATION = "occupation"
+        const val KEY_WORKPLACE = "workplace"
+        const val KEY_EDUCATION = "education"
+        const val KEY_BIRTHDAY = "birthday"
+        const val KEY_RELATIONSHIP_STATUS = "relationship_status"
+        const val KEY_DISCORD_TAG = "discord_tag"
+        const val KEY_GITHUB_PROFILE = "github_profile"
+        const val KEY_PERSONAL_WEBSITE = "personal_website"
+        const val KEY_PUBLIC_EMAIL = "public_email"
+
         const val KEY_ID = "id"
         const val KEY_AUTHOR_UID = "author_uid"
         const val KEY_POST_TEXT = "post_text"
@@ -134,7 +146,18 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
             website = data.getNullableString(KEY_WEBSITE),
             gender = data.getNullableString(KEY_GENDER),
             pronouns = data.getNullableString(KEY_PRONOUNS),
-            joinedDate = parseDateToLong(data.getNullableString(KEY_JOIN_DATE))
+            joinedDate = parseDateToLong(data.getNullableString(KEY_JOIN_DATE)),
+            currentCity = data.getNullableString(KEY_CURRENT_CITY),
+            hometown = data.getNullableString(KEY_HOMETOWN),
+            occupation = data.getNullableString(KEY_OCCUPATION),
+            workplace = data.getNullableString(KEY_WORKPLACE),
+            education = data.getNullableString(KEY_EDUCATION),
+            birthday = data.getNullableString(KEY_BIRTHDAY),
+            relationshipStatus = data.getNullableString(KEY_RELATIONSHIP_STATUS),
+            discordTag = data.getNullableString(KEY_DISCORD_TAG),
+            githubProfile = data.getNullableString(KEY_GITHUB_PROFILE),
+            personalWebsite = data.getNullableString(KEY_PERSONAL_WEBSITE),
+            publicEmail = data.getNullableString(KEY_PUBLIC_EMAIL)
         )
     }
 
@@ -308,7 +331,7 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
     override suspend fun getProfilePosts(userId: String, limit: Int, offset: Int): Result<List<com.synapse.social.studioasinc.domain.model.Post>> = try {
         val actualUserId = resolveUserId(userId) ?: return Result.failure(Exception("User not authenticated"))
         val response = client.from("posts").select(
-            columns = Columns.raw("*, users!posts_author_uid_fkey($KEY_UID, $KEY_USERNAME, $KEY_AVATAR, $KEY_VERIFY)")
+            columns = Columns.raw("*, users!author_uid($KEY_UID, $KEY_USERNAME, $KEY_AVATAR, $KEY_VERIFY)")
         ) {
             filter { eq(KEY_AUTHOR_UID, actualUserId) }
             limit(limit.toLong())

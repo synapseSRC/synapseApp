@@ -62,7 +62,19 @@ class EditProfileViewModel @Inject constructor(
                                 avatarUrl = profile.avatar,
                                 coverUrl = profile.profileCoverImage,
                                 selectedGender = profile.safeGender,
-                                selectedRegion = profile.region.takeIf { it != "null" }
+                                selectedRegion = profile.region.takeIf { it != "null" },
+                                currentCity = profile.currentCity ?: "",
+                                hometown = profile.hometown ?: "",
+                                occupation = profile.occupation ?: "",
+                                workplace = profile.workplace ?: "",
+                                education = profile.education ?: "",
+                                pronouns = profile.pronouns ?: "",
+                                birthday = profile.birthday ?: "",
+                                relationshipStatus = profile.relationshipStatus ?: "",
+                                discordTag = profile.discordTag ?: "",
+                                githubProfile = profile.githubProfile ?: "",
+                                personalWebsite = profile.personalWebsite ?: "",
+                                publicEmail = profile.publicEmail ?: ""
                             )
                         }
                     },
@@ -118,6 +130,18 @@ class EditProfileViewModel @Inject constructor(
             EditProfileEvent.CoverHistoryClicked -> {
                 viewModelScope.launch { _navigationEvents.emit(EditProfileNavigation.NavigateToCoverHistory) }
             }
+            is EditProfileEvent.CurrentCityChanged -> _uiState.update { it.copy(currentCity = event.city, hasChanges = true) }
+            is EditProfileEvent.HometownChanged -> _uiState.update { it.copy(hometown = event.hometown, hasChanges = true) }
+            is EditProfileEvent.OccupationChanged -> _uiState.update { it.copy(occupation = event.occupation, hasChanges = true) }
+            is EditProfileEvent.WorkplaceChanged -> _uiState.update { it.copy(workplace = event.workplace, hasChanges = true) }
+            is EditProfileEvent.EducationChanged -> _uiState.update { it.copy(education = event.education, hasChanges = true) }
+            is EditProfileEvent.PronounsChanged -> _uiState.update { it.copy(pronouns = event.pronouns, hasChanges = true) }
+            is EditProfileEvent.BirthdayChanged -> _uiState.update { it.copy(birthday = event.birthday, hasChanges = true) }
+            is EditProfileEvent.RelationshipStatusChanged -> _uiState.update { it.copy(relationshipStatus = event.status, hasChanges = true) }
+            is EditProfileEvent.DiscordTagChanged -> _uiState.update { it.copy(discordTag = event.tag, hasChanges = true) }
+            is EditProfileEvent.GithubProfileChanged -> _uiState.update { it.copy(githubProfile = event.profile, hasChanges = true) }
+            is EditProfileEvent.PersonalWebsiteChanged -> _uiState.update { it.copy(personalWebsite = event.website, hasChanges = true) }
+            is EditProfileEvent.PublicEmailChanged -> _uiState.update { it.copy(publicEmail = event.email, hasChanges = true) }
         }
     }
 
@@ -465,6 +489,19 @@ class EditProfileViewModel @Inject constructor(
                 state.selectedRegion?.let { updateData["region"] = it }
                 state.avatarUrl?.let { updateData["avatar"] = it }
                 state.coverUrl?.let { updateData["profile_cover_image"] = it }
+                
+                updateData["current_city"] = state.currentCity
+                updateData["hometown"] = state.hometown
+                updateData["occupation"] = state.occupation
+                updateData["workplace"] = state.workplace
+                updateData["education"] = state.education
+                updateData["pronouns"] = state.pronouns
+                updateData["birthday"] = state.birthday
+                updateData["relationship_status"] = state.relationshipStatus
+                updateData["discord_tag"] = state.discordTag
+                updateData["github_profile"] = state.githubProfile
+                updateData["personal_website"] = state.personalWebsite
+                updateData["public_email"] = state.publicEmail
 
                 val result = repository.updateProfile(userId, updateData)
 
