@@ -127,39 +127,14 @@ fun CreatePostScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (uiState.isEditMode) stringResource(R.string.title_edit_post) else stringResource(R.string.title_create_post),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
-                    }
-                },
-                actions = {
-                    val isEnabled = !uiState.isLoading && (
-                        uiState.postText.isNotBlank() ||
-                        uiState.mediaItems.isNotEmpty() ||
-                        uiState.pollData != null
-                    )
-                    val buttonText = if (uiState.isLoading) stringResource(R.string.button_posting) else stringResource(R.string.post)
-                    ExpressiveButton(
-                        onClick = { viewModel.submitPost() },
-                        enabled = isEnabled,
-                        text = buttonText,
-                        variant = ButtonVariant.Filled,
-                        modifier = Modifier.height(40.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+            CreatePostTopBar(
+                isEditMode = uiState.isEditMode,
+                isLoading = uiState.isLoading,
+                postText = uiState.postText,
+                mediaItemsCount = uiState.mediaItems.size,
+                hasPoll = uiState.pollData != null,
+                onNavigateUp = onNavigateUp,
+                onSubmitPost = { viewModel.submitPost() }
             )
         },
         bottomBar = {
@@ -400,123 +375,95 @@ fun CreatePostScreen(
 
 
     if (showYoutubeDialog) {
-        var youtubeUrl by remember { mutableStateOf("") }
-        AlertDialog(
-             onDismissRequest = { showYoutubeDialog = false },
-             title = { Text(stringResource(R.string.dialog_title_add_youtube)) },
-             text = {
-                 OutlinedTextField(
-                     value = youtubeUrl,
-                     onValueChange = { youtubeUrl = it },
-                     label = { Text(stringResource(R.string.label_youtube_url)) },
-                     singleLine = true,
-                     shape = RoundedCornerShape(12.dp)
-                 )
-             },
-             confirmButton = {
-                 Button(onClick = {
-                     if (youtubeUrl.contains("youtube") || youtubeUrl.contains("youtu.be")) {
-                         viewModel.setYoutubeUrl(youtubeUrl)
-                         showYoutubeDialog = false
-                     } else {
-                         Toast.makeText(context, context.getString(R.string.error_invalid_youtube_url), Toast.LENGTH_SHORT).show()
-                     }
-                 }) { Text(stringResource(R.string.action_add)) }
-             },
-             dismissButton = {
-                 TextButton(onClick = { showYoutubeDialog = false }) { Text(stringResource(R.string.cancel)) }
-             }
+        YoutubeAddDialog(
+            onDismiss = { showYoutubeDialog = false },
+            onAddUrl = { url ->
+                if (url.contains("youtube") || url.contains("youtu.be")) {
+                    viewModel.setYoutubeUrl(url)
+                    showYoutubeDialog = false
+                } else {
+                    Toast.makeText(context, context.getString(R.string.error_invalid_youtube_url), Toast.LENGTH_SHORT).show()
+                }
+            }
         )
     }
 }
 
 
 @Composable
-fun PollPreviewCard(poll: PollData, onDelete: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f)),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = poll.question,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_remove), modifier = Modifier.size(16.dp))
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            poll.options.forEach { option ->
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                ) {
-                    Text(
-                        text = option,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
-    }
+fun YoutubeAddDialog(
+    onDismiss: () -> Unit,
+    onAddUrl: (String) -> Unit
+) {
+    var youtubeUrl by remember { mutableStateOf("") }
+    AlertDialog(
+         onDismissRequest = onDismiss,
+         title = { Text(stringResource(R.string.dialog_title_add_youtube)) },
+         text = {
+             OutlinedTextField(
+                 value = youtubeUrl,
+                 onValueChange = { youtubeUrl = it },
+                 label = { Text(stringResource(R.string.label_youtube_url)) },
+                 singleLine = true,
+                 shape = RoundedCornerShape(12.dp)
+             )
+         },
+         confirmButton = {
+             Button(onClick = { onAddUrl(youtubeUrl) }) {
+                 Text(stringResource(R.string.action_add))
+             }
+         },
+         dismissButton = {
+             TextButton(onClick = onDismiss) {
+                 Text(stringResource(R.string.cancel))
+             }
+         }
+    )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun YoutubePreviewCard(url: String, onDelete: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f)),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = Color.Red, modifier = Modifier.size(32.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = stringResource(R.string.label_youtube_video), style = MaterialTheme.typography.labelMedium)
-                Text(text = url, maxLines = 1, style = MaterialTheme.typography.bodySmall)
+fun CreatePostTopBar(
+    isEditMode: Boolean,
+    isLoading: Boolean,
+    postText: String,
+    mediaItemsCount: Int,
+    hasPoll: Boolean,
+    onNavigateUp: () -> Unit,
+    onSubmitPost: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = if (isEditMode) stringResource(R.string.title_edit_post) else stringResource(R.string.title_create_post),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateUp) {
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
             }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_remove))
-            }
-        }
-    }
-}
-
-@Composable
-fun LocationPreviewCard(location: LocationData, onDelete: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f)),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = location.name, style = MaterialTheme.typography.titleSmall)
-                location.address?.let {
-                    Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_remove))
-            }
-        }
-    }
+        },
+        actions = {
+            val isEnabled = !isLoading && (
+                postText.isNotBlank() ||
+                mediaItemsCount > 0 ||
+                hasPoll
+            )
+            val buttonText = if (isLoading) stringResource(R.string.button_posting) else stringResource(R.string.post)
+            ExpressiveButton(
+                onClick = onSubmitPost,
+                enabled = isEnabled,
+                text = buttonText,
+                variant = ButtonVariant.Filled,
+                modifier = Modifier.height(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
 }
