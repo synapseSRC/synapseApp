@@ -40,6 +40,8 @@ import com.synapse.social.studioasinc.domain.model.User
 import com.synapse.social.studioasinc.domain.model.FeelingActivity
 import com.synapse.social.studioasinc.domain.model.LocationData
 import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
+import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
 
 @Composable
 fun UserHeader(
@@ -763,4 +765,82 @@ fun LocationPreviewCard(location: LocationData, onDelete: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun YoutubeAddDialog(
+    onDismiss: () -> Unit,
+    onAddUrl: (String) -> Unit
+) {
+    var youtubeUrl by remember { mutableStateOf("") }
+    AlertDialog(
+         onDismissRequest = onDismiss,
+         title = { Text(stringResource(R.string.dialog_title_add_youtube)) },
+         text = {
+             OutlinedTextField(
+                 value = youtubeUrl,
+                 onValueChange = { youtubeUrl = it },
+                 label = { Text(stringResource(R.string.label_youtube_url)) },
+                 singleLine = true,
+                 shape = RoundedCornerShape(12.dp)
+             )
+         },
+         confirmButton = {
+             Button(onClick = { onAddUrl(youtubeUrl) }) {
+                 Text(stringResource(R.string.action_add))
+             }
+         },
+         dismissButton = {
+             TextButton(onClick = onDismiss) {
+                 Text(stringResource(R.string.cancel))
+             }
+         }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreatePostTopBar(
+    isEditMode: Boolean,
+    isLoading: Boolean,
+    postText: String,
+    mediaItemsCount: Int,
+    hasPoll: Boolean,
+    onNavigateUp: () -> Unit,
+    onSubmitPost: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = if (isEditMode) stringResource(R.string.title_edit_post) else stringResource(R.string.title_create_post),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateUp) {
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
+            }
+        },
+        actions = {
+            val isEnabled = !isLoading && (
+                postText.isNotBlank() ||
+                mediaItemsCount > 0 ||
+                hasPoll
+            )
+            val buttonText = if (isLoading) stringResource(R.string.button_posting) else stringResource(R.string.post)
+            ExpressiveButton(
+                onClick = onSubmitPost,
+                enabled = isEnabled,
+                text = buttonText,
+                variant = ButtonVariant.Filled,
+                modifier = Modifier.height(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
 }
