@@ -26,7 +26,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -121,159 +120,166 @@ fun EditProfileScreen(
     }
 
     SynapseTheme {
-        EditProfileContent(
-            uiState = uiState,
-            snackbarHostState = snackbarHostState,
-            scrollBehavior = scrollBehavior,
-            onEvent = viewModel::onEvent,
-            onNavigateToRegionSelection = onNavigateToRegionSelection,
-            launchCoverPicker = ::launchCoverPicker,
-            launchAvatarPicker = ::launchAvatarPicker
-        )
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                EditProfileTopBar(
+                    isSaving = uiState.isSaving,
+                    canSave = uiState.hasChanges &&
+                            uiState.usernameValidation !is UsernameValidation.Error &&
+                            uiState.nicknameError == null &&
+                            uiState.bioError == null,
+                    scrollBehavior = scrollBehavior,
+                    onBackClick = { viewModel.onEvent(EditProfileEvent.BackClicked) },
+                    onSaveClick = { viewModel.onEvent(EditProfileEvent.SaveClicked) }
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    ExpressiveLoadingIndicator()
+                }
+            } else {
+                EditProfileContent(
+                    uiState = uiState,
+                    paddingValues = paddingValues,
+                    onAvatarClick = { launchAvatarPicker() },
+                    onCoverClick = { launchCoverPicker() },
+                    onNavigateToRegionSelection = onNavigateToRegionSelection,
+                    onEvent = viewModel::onEvent
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProfileContent(
-    uiState: EditProfileUiState,
-    snackbarHostState: SnackbarHostState,
-    scrollBehavior: TopAppBarScrollBehavior,
-    onEvent: (EditProfileEvent) -> Unit,
-    onNavigateToRegionSelection: (String) -> Unit,
-    launchCoverPicker: () -> Unit,
-    launchAvatarPicker: () -> Unit,
+private fun EditProfileTopBar(
+    isSaving: Boolean,
+    canSave: Boolean,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    onBackClick: () -> Unit,
+    onSaveClick: () -> Unit
 ) {
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MediumTopAppBar(
-                title = { Text("Edit Profile") },
-                navigationIcon = {
-                    IconButton(onClick = { onEvent(EditProfileEvent.BackClicked) }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    if (uiState.isSaving) {
-                        ExpressiveLoadingIndicator(
-                            modifier = Modifier.padding(end = 16.dp).size(24.dp)
-                        )
-                    } else {
-                        TextButton(
-                            onClick = { onEvent(EditProfileEvent.SaveClicked) },
-                            enabled = uiState.hasChanges &&
-                                    uiState.usernameValidation !is UsernameValidation.Error &&
-                                    uiState.nicknameError == null &&
-                                    uiState.bioError == null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Text("Save")
-                        }
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+    MediumTopAppBar(
+        title = { Text("Edit Profile") },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
                 )
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                ExpressiveLoadingIndicator()
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = SettingsSpacing.screenPadding,
-                    end = SettingsSpacing.screenPadding,
-                    top = paddingValues.calculateTopPadding() + 8.dp,
-                    bottom = paddingValues.calculateBottomPadding() + 24.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
-            ) {
-
-                item {
-                    ProfileImageSection(
-                        coverUrl = uiState.coverUrl,
-                        avatarUrl = uiState.avatarUrl,
-                        avatarUploadState = uiState.avatarUploadState,
-                        coverUploadState = uiState.coverUploadState,
-                        onCoverClick = { launchCoverPicker() },
-                        onAvatarClick = { launchAvatarPicker() },
-                        onRetryAvatarUpload = {
-                            onEvent(EditProfileEvent.RetryAvatarUpload)
-                        },
-                        onRetryCoverUpload = {
-                            onEvent(EditProfileEvent.RetryCoverUpload)
-                        }
-                    )
+        },
+        actions = {
+            if (isSaving) {
+                ExpressiveLoadingIndicator(
+                    modifier = Modifier.padding(end = 16.dp).size(24.dp)
+                )
+            } else {
+                TextButton(
+                    onClick = onSaveClick,
+                    enabled = canSave,
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text("Save")
                 }
+            }
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    )
+}
 
+@Composable
+private fun EditProfileContent(
+    uiState: EditProfileUiState,
+    paddingValues: PaddingValues,
+    onAvatarClick: () -> Unit,
+    onCoverClick: () -> Unit,
+    onNavigateToRegionSelection: (String) -> Unit,
+    onEvent: (EditProfileEvent) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = SettingsSpacing.screenPadding,
+            end = SettingsSpacing.screenPadding,
+            top = paddingValues.calculateTopPadding() + 8.dp,
+            bottom = paddingValues.calculateBottomPadding() + 24.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+    ) {
 
-                item {
-                    ProfileFormFields(
-                        username = uiState.username,
-                        onUsernameChange = { onEvent(EditProfileEvent.UsernameChanged(it)) },
-                        usernameValidation = uiState.usernameValidation,
-                        nickname = uiState.nickname,
-                        onNicknameChange = { onEvent(EditProfileEvent.NicknameChanged(it)) },
-                        nicknameError = uiState.nicknameError,
-                        bio = uiState.bio,
-                        onBiographyChange = { onEvent(EditProfileEvent.BiographyChanged(it)) },
-                        bioError = uiState.bioError
-                    )
-                }
+        item {
+            ProfileImageSection(
+                coverUrl = uiState.coverUrl,
+                avatarUrl = uiState.avatarUrl,
+                avatarUploadState = uiState.avatarUploadState,
+                coverUploadState = uiState.coverUploadState,
+                onCoverClick = onCoverClick,
+                onAvatarClick = onAvatarClick,
+                onRetryAvatarUpload = { onEvent(EditProfileEvent.RetryAvatarUpload) },
+                onRetryCoverUpload = { onEvent(EditProfileEvent.RetryCoverUpload) }
+            )
+        }
 
+        item {
+            ProfileFormFields(
+                username = uiState.username,
+                onUsernameChange = { onEvent(EditProfileEvent.UsernameChanged(it)) },
+                usernameValidation = uiState.usernameValidation,
+                nickname = uiState.nickname,
+                onNicknameChange = { onEvent(EditProfileEvent.NicknameChanged(it)) },
+                nicknameError = uiState.nicknameError,
+                bio = uiState.bio,
+                onBiographyChange = { onEvent(EditProfileEvent.BiographyChanged(it)) },
+                bioError = uiState.bioError
+            )
+        }
 
-                item {
-                    GenderSelector(
-                        selectedGender = uiState.selectedGender,
-                        onGenderSelected = { onEvent(EditProfileEvent.GenderSelected(it)) }
-                    )
-                }
+        item {
+            GenderSelector(
+                selectedGender = uiState.selectedGender,
+                onGenderSelected = { onEvent(EditProfileEvent.GenderSelected(it)) }
+            )
+        }
 
-
-                item {
-                    SettingsCard {
-                        SettingsNavigationItem(
-                            title = "Region",
-                            subtitle = uiState.selectedRegion ?: "Not set",
-                            icon = R.drawable.ic_location,
-                            onClick = {
-                                onNavigateToRegionSelection(uiState.selectedRegion ?: "")
-                            }
-                        )
+        item {
+            SettingsCard {
+                SettingsNavigationItem(
+                    title = "Region",
+                    subtitle = uiState.selectedRegion ?: "Not set",
+                    icon = R.drawable.ic_location,
+                    onClick = {
+                        onNavigateToRegionSelection(uiState.selectedRegion ?: "")
                     }
-                }
+                )
+            }
+        }
 
+        item {
+            SettingsCard {
+                SettingsNavigationItem(
+                    title = "Profile Photo History",
+                    subtitle = "View and restore previous photos",
+                    icon = null,
+                    onClick = { onEvent(EditProfileEvent.ProfileHistoryClicked) }
+                )
 
-                item {
-                    SettingsCard {
-                        SettingsNavigationItem(
-                            title = "Profile Photo History",
-                            subtitle = "View and restore previous photos",
-                            icon = null,
-                            onClick = { onEvent(EditProfileEvent.ProfileHistoryClicked) }
-                        )
+                com.synapse.social.studioasinc.ui.settings.SettingsDivider()
 
-                        com.synapse.social.studioasinc.ui.settings.SettingsDivider()
-
-                        SettingsNavigationItem(
-                            title = "Cover Photo History",
-                            subtitle = "View and restore previous covers",
-                            icon = null,
-                            onClick = { onEvent(EditProfileEvent.CoverHistoryClicked) }
-                        )
-                    }
-                }
+                SettingsNavigationItem(
+                    title = "Cover Photo History",
+                    subtitle = "View and restore previous covers",
+                    icon = null,
+                    onClick = { onEvent(EditProfileEvent.CoverHistoryClicked) }
+                )
             }
         }
     }
