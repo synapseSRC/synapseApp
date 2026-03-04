@@ -129,7 +129,7 @@ fun PostContent(
                 isVideo = isVideo,
                 postViewStyle = postViewStyle,
                 onMediaClick = onMediaClick,
-                modifier = Modifier.padding(horizontal = 0.dp)
+                modifier = Modifier
             )
         }
 
@@ -143,7 +143,7 @@ fun PostContent(
         }
  
         if (quotedPost != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.Small))
             QuotedPostCard(
                 post = quotedPost,
                 onPostClick = { /* Handled by parent or specific click */ }
@@ -161,26 +161,26 @@ fun QuotedPostCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(Spacing.Medium))
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(Spacing.Medium)
             )
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             .clickable(onClick = onPostClick)
-            .padding(12.dp)
+            .padding(Spacing.Medium)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = post.avatarUrl,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(Spacing.Large)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Spacing.Small))
             Text(
                 text = post.displayName ?: post.username ?: "Unknown",
                 style = MaterialTheme.typography.labelLarge,
@@ -188,10 +188,10 @@ fun QuotedPostCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
             if (post.isVerified) {
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
                 // Add verification icon if available, or just skip for now
             }
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
             Text(
                 text = "@${post.username}",
                 style = MaterialTheme.typography.labelMedium,
@@ -200,7 +200,7 @@ fun QuotedPostCard(
         }
  
         if (!post.postText.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
             Text(
                 text = post.postText!!,
                 style = MaterialTheme.typography.bodyMedium,
@@ -211,13 +211,13 @@ fun QuotedPostCard(
         }
  
         if (!post.mediaItems.isNullOrEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.Small))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Gray.copy(alpha = 0.2f))
+                    .clip(RoundedCornerShape(Spacing.Small))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
             ) {
                 AsyncImage(
                     model = post.mediaItems!!.first().url,

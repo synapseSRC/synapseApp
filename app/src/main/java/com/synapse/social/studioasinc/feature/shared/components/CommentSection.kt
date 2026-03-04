@@ -25,7 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 
 data class Comment(
@@ -48,18 +48,18 @@ fun CommentSection(
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = Spacing.SmallMedium)
         ) {
             items(comments) { comment ->
                 CommentItem(comment)
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.Small))
             }
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(Spacing.Small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
@@ -68,7 +68,7 @@ fun CommentSection(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Write a comment...") }
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Spacing.Small))
             IconButton(
                 onClick = {
                     if (newCommentText.isNotBlank()) {
@@ -92,7 +92,7 @@ fun CommentItem(comment: Comment) {
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Spacing.Small))
             Text(
                 text = comment.timestamp,
                 style = MaterialTheme.typography.bodySmall,

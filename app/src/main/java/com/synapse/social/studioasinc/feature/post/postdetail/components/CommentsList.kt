@@ -117,33 +117,20 @@ fun CommentsList(
                     
                     // Render nested replies
                     if (replies.isNotEmpty()) {
-                        replies.forEachIndexed { replyIndex, reply ->
-                            val isLastReply = replyIndex == replies.lastIndex && comment.repliesCount <= replies.size
-                            val replyState = PostUiMapper.toPostCardState(
-                                comment = reply,
-                                parentAuthorUsername = comment.getUsername(),
-                                depth = 1,
-                                showThreadLine = reply.repliesCount > 0,
-                                isLastReply = isLastReply
-                            )
-                            
-                            PostCard(
-                                state = replyState,
-                                onLikeClick = { onLikeClick(reply.id) },
-                                onCommentClick = { onReplyClick(reply) },
-                                onShareClick = { onShareClick?.invoke(reply.id) },
-                                onRepostClick = { /* Not applicable for comments */ },
-                                onBookmarkClick = { /* Not applicable for comments */ },
-                                onUserClick = { reply.userId?.let { onUserClick(it) } },
-                                onPostClick = { /* Navigate to comment detail if needed */ },
-                                onMediaClick = { /* No media in comments */ },
-                                onOptionsClick = { onShowOptions(reply) },
-                                onPollVote = { /* No polls in comments */ },
-                                onReactionSelected = { reaction -> onShowReactions(reply) },
-                                onParentAuthorClick = { comment.userId?.let { onUserClick(it) } },
-                                modifier = Modifier
-                            )
-                        }
+                        RenderReplies(
+                            replies = replies,
+                            parentComment = comment,
+                            repliesState = repliesState,
+                            replyLoadingState = replyLoadingState,
+                            depth = 1,
+                            onReplyClick = onReplyClick,
+                            onLikeClick = onLikeClick,
+                            onShowReactions = onShowReactions,
+                            onShowOptions = onShowOptions,
+                            onUserClick = onUserClick,
+                            onShareClick = onShareClick,
+                            onViewReplies = onViewReplies
+                        )
                     }
                     
                     // Show "Show more replies" button
@@ -182,6 +169,96 @@ fun CommentsList(
                 ) {
                     ExpressiveLoadingIndicator()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RenderReplies(
+    replies: List<CommentWithUser>,
+    parentComment: CommentWithUser,
+    repliesState: Map<String, List<CommentWithUser>>,
+    replyLoadingState: Set<String>,
+    depth: Int,
+    onReplyClick: (CommentWithUser) -> Unit,
+    onLikeClick: (String) -> Unit,
+    onShowReactions: (CommentWithUser) -> Unit,
+    onShowOptions: (CommentWithUser) -> Unit,
+    onUserClick: (String) -> Unit,
+    onShareClick: ((String) -> Unit)?,
+    onViewReplies: (String) -> Unit
+) {
+    replies.forEachIndexed { replyIndex, reply ->
+        val nestedReplies = repliesState[reply.id] ?: emptyList()
+        val hasNestedReplies = reply.repliesCount > 0 || nestedReplies.isNotEmpty()
+        val isLastReply = replyIndex == replies.lastIndex && parentComment.repliesCount <= replies.size
+        
+        val replyState = PostUiMapper.toPostCardState(
+            comment = reply,
+            parentAuthorUsername = parentComment.getUsername(),
+            depth = depth,
+            showThreadLine = hasNestedReplies && !isLastReply,
+            isLastReply = isLastReply
+        )
+        
+        Column {
+            PostCard(
+                state = replyState,
+                onLikeClick = { onLikeClick(reply.id) },
+                onCommentClick = { onReplyClick(reply) },
+                onShareClick = { onShareClick?.invoke(reply.id) },
+                onRepostClick = { /* Not applicable for comments */ },
+                onBookmarkClick = { /* Not applicable for comments */ },
+                onUserClick = { reply.userId?.let { onUserClick(it) } },
+                onPostClick = { /* Navigate to comment detail if needed */ },
+                onMediaClick = { /* No media in comments */ },
+                onOptionsClick = { onShowOptions(reply) },
+                onPollVote = { /* No polls in comments */ },
+                onReactionSelected = { reaction -> onShowReactions(reply) },
+                onParentAuthorClick = { parentComment.userId?.let { onUserClick(it) } },
+                modifier = Modifier
+            )
+            
+            // Recursively render nested replies
+            if (nestedReplies.isNotEmpty()) {
+                RenderReplies(
+                    replies = nestedReplies,
+                    parentComment = reply,
+                    repliesState = repliesState,
+                    replyLoadingState = replyLoadingState,
+                    depth = depth + 1,
+                    onReplyClick = onReplyClick,
+                    onLikeClick = onLikeClick,
+                    onShowReactions = onShowReactions,
+                    onShowOptions = onShowOptions,
+                    onUserClick = onUserClick,
+                    onShareClick = onShareClick,
+                    onViewReplies = onViewReplies
+                )
+            }
+            
+            // Show "Show more replies" button for nested replies
+            if (reply.repliesCount > nestedReplies.size && !replyLoadingState.contains(reply.id)) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(com.synapse.social.studioasinc.R.string.show_more_replies),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(start = (68 + (depth * 32)).dp, top = 4.dp, bottom = 12.dp)
+                        .clickable { onViewReplies(reply.id) }
+                )
+            }
+            
+            // Show loading indicator for nested replies
+            if (replyLoadingState.contains(reply.id)) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(start = (68 + (depth * 32)).dp, top = 4.dp, bottom = 12.dp)
+                        .size(20.dp),
+                    strokeWidth = 2.dp
+                )
             }
         }
     }

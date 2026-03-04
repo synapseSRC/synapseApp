@@ -8,11 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.shared.reels.CommentsViewModel
 import com.synapse.social.studioasinc.shared.domain.model.ReelComment
 import com.synapse.social.studioasinc.ui.components.CircularAvatar
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +37,7 @@ fun CommentsBottomSheet(
             Text(
                 text = "Comments",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally)
+                modifier = Modifier.padding(Spacing.SmallMedium).align(Alignment.CenterHorizontally)
             )
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -45,7 +45,7 @@ fun CommentsBottomSheet(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else if (uiState.error != null && uiState.comments.isEmpty()) {
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        modifier = Modifier.fillMaxSize().padding(Spacing.SmallMedium),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -57,7 +57,7 @@ fun CommentsBottomSheet(
                 } else if (uiState.comments.isEmpty()) {
                     Text(
                         text = "No comments yet. Be the first to comment!",
-                        modifier = Modifier.align(Alignment.Center).padding(16.dp),
+                        modifier = Modifier.align(Alignment.Center).padding(Spacing.SmallMedium),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -72,13 +72,13 @@ fun CommentsBottomSheet(
 
 
             Surface(
-                tonalElevation = 2.dp,
+                tonalElevation = Spacing.ExtraSmall,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(Spacing.SmallMedium)
                         .navigationBarsPadding()
                         .imePadding(),
                     verticalAlignment = Alignment.CenterVertically
@@ -90,8 +90,8 @@ fun CommentsBottomSheet(
                         modifier = Modifier.weight(1f),
                         maxLines = 3,
                         colors = TextFieldDefaults.colors(
-                            focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                            unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+                            focusedIndicatorColor = MaterialTheme.colorScheme.surface,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surface
                         )
                     )
                     TextButton(
@@ -113,13 +113,13 @@ fun CommentsBottomSheet(
 
 @Composable
 fun CommentItem(comment: ReelComment) {
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)) {
         CircularAvatar(
             imageUrl = comment.userAvatarUrl,
             contentDescription = null,
-            size = 36.dp
+            size = Spacing.ExtraLarge
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Column {
             Text(
                 text = comment.userUsername ?: "Unknown",
@@ -131,7 +131,7 @@ fun CommentItem(comment: ReelComment) {
                 text = comment.createdAt,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier.padding(top = Spacing.ExtraSmall)
             )
         }
     }
