@@ -40,6 +40,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.presentation.editprofile.components.EditProfileContent
+import com.synapse.social.studioasinc.presentation.editprofile.components.EditProfileTopBar
 import com.synapse.social.studioasinc.presentation.editprofile.components.GenderSelector
 import com.synapse.social.studioasinc.presentation.editprofile.components.ProfileFormFields
 import com.synapse.social.studioasinc.presentation.editprofile.components.ProfileImageSection
@@ -148,137 +150,6 @@ fun EditProfileScreen(
                     onCoverClick = { launchCoverPicker() },
                     onNavigateToRegionSelection = onNavigateToRegionSelection,
                     onEvent = viewModel::onEvent
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun EditProfileTopBar(
-    isSaving: Boolean,
-    canSave: Boolean,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
-    onBackClick: () -> Unit,
-    onSaveClick: () -> Unit
-) {
-    MediumTopAppBar(
-        title = { Text("Edit Profile") },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-        },
-        actions = {
-            if (isSaving) {
-                ExpressiveLoadingIndicator(
-                    modifier = Modifier.padding(end = 16.dp).size(24.dp)
-                )
-            } else {
-                TextButton(
-                    onClick = onSaveClick,
-                    enabled = canSave,
-                    modifier = Modifier.padding(end = 8.dp)
-                ) {
-                    Text("Save")
-                }
-            }
-        },
-        scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    )
-}
-
-@Composable
-private fun EditProfileContent(
-    uiState: EditProfileUiState,
-    paddingValues: PaddingValues,
-    onAvatarClick: () -> Unit,
-    onCoverClick: () -> Unit,
-    onNavigateToRegionSelection: (String) -> Unit,
-    onEvent: (EditProfileEvent) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = SettingsSpacing.screenPadding,
-            end = SettingsSpacing.screenPadding,
-            top = paddingValues.calculateTopPadding() + 8.dp,
-            bottom = paddingValues.calculateBottomPadding() + 24.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
-    ) {
-
-        item {
-            ProfileImageSection(
-                coverUrl = uiState.coverUrl,
-                avatarUrl = uiState.avatarUrl,
-                avatarUploadState = uiState.avatarUploadState,
-                coverUploadState = uiState.coverUploadState,
-                onCoverClick = onCoverClick,
-                onAvatarClick = onAvatarClick,
-                onRetryAvatarUpload = { onEvent(EditProfileEvent.RetryAvatarUpload) },
-                onRetryCoverUpload = { onEvent(EditProfileEvent.RetryCoverUpload) }
-            )
-        }
-
-        item {
-            ProfileFormFields(
-                username = uiState.username,
-                onUsernameChange = { onEvent(EditProfileEvent.UsernameChanged(it)) },
-                usernameValidation = uiState.usernameValidation,
-                nickname = uiState.nickname,
-                onNicknameChange = { onEvent(EditProfileEvent.NicknameChanged(it)) },
-                nicknameError = uiState.nicknameError,
-                bio = uiState.bio,
-                onBiographyChange = { onEvent(EditProfileEvent.BiographyChanged(it)) },
-                bioError = uiState.bioError
-            )
-        }
-
-        item {
-            GenderSelector(
-                selectedGender = uiState.selectedGender,
-                onGenderSelected = { onEvent(EditProfileEvent.GenderSelected(it)) }
-            )
-        }
-
-        item {
-            SettingsCard {
-                SettingsNavigationItem(
-                    title = "Region",
-                    subtitle = uiState.selectedRegion ?: "Not set",
-                    icon = R.drawable.ic_location,
-                    onClick = {
-                        onNavigateToRegionSelection(uiState.selectedRegion ?: "")
-                    }
-                )
-            }
-        }
-
-        item {
-            SettingsCard {
-                SettingsNavigationItem(
-                    title = "Profile Photo History",
-                    subtitle = "View and restore previous photos",
-                    icon = null,
-                    onClick = { onEvent(EditProfileEvent.ProfileHistoryClicked) }
-                )
-
-                com.synapse.social.studioasinc.ui.settings.SettingsDivider()
-
-                SettingsNavigationItem(
-                    title = "Cover Photo History",
-                    subtitle = "View and restore previous covers",
-                    icon = null,
-                    onClick = { onEvent(EditProfileEvent.CoverHistoryClicked) }
                 )
             }
         }
