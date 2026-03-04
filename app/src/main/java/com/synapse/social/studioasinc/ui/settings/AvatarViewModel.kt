@@ -15,8 +15,39 @@ class AvatarViewModel @Inject constructor(
     private val editProfileRepository: EditProfileRepository
 ) : ViewModel() {
 
+    data class UiState(
+        val isUploading: Boolean = false,
+        val error: String? = null,
+        val successMessage: String? = null
+    )
+
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
     private val _isRemoving = MutableStateFlow(false)
     val isRemoving: StateFlow<Boolean> = _isRemoving.asStateFlow()
+
+    fun clearMessages() {
+        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+    }
+
+    fun uploadPhoto(uri: android.net.Uri) {
+        _uiState.value = _uiState.value.copy(isUploading = true)
+        // Simulate upload
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1000)
+            _uiState.value = _uiState.value.copy(isUploading = false, successMessage = "Photo uploaded")
+        }
+    }
+
+    fun uploadBitmap(bitmap: android.graphics.Bitmap) {
+        _uiState.value = _uiState.value.copy(isUploading = true)
+        // Simulate upload
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1000)
+            _uiState.value = _uiState.value.copy(isUploading = false, successMessage = "Photo uploaded")
+        }
+    }
 
     fun removeProfilePhoto(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {

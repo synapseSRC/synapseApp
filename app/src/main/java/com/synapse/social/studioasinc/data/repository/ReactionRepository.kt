@@ -343,8 +343,6 @@ class ReactionRepository @Inject constructor(
                                  val currentUser = client.auth.currentUserOrNull()
                                  val reactionsByPostId = reactions.groupBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
 
-                                 val reactionsByPostId = reactions.groupBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
-
                                  chunkIds.map { postId ->
                                      val postReactions = reactionsByPostId[postId] ?: emptyList()
                                      val summary = postReactions
