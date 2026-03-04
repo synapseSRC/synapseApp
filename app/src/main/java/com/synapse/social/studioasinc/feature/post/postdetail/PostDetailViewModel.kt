@@ -59,6 +59,12 @@ class PostDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val currentUserId = authRepository.getCurrentUserId()
             _uiState.update { it.copy(currentUserId = currentUserId) }
+            
+            currentUserId?.let { uid ->
+                userRepository.getUserById(uid).onSuccess { user ->
+                    _uiState.update { it.copy(currentUserAvatarUrl = user?.avatar) }
+                }
+            }
         }
     }
 

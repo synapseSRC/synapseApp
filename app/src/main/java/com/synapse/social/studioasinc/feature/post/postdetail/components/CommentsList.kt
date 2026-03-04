@@ -89,7 +89,8 @@ fun CommentsList(
                     onShowReactions = onShowReactions,
                     onShowOptions = onShowOptions,
                     onUserClick = onUserClick,
-                    modifier = Modifier
+                    modifier = Modifier,
+                    showThreadLine = comment.repliesCount > 0 || (repliesState[comment.id]?.isNotEmpty() == true)
                 )
             }
         }

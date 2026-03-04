@@ -16,5 +16,6 @@ data class PostDetailUiState(
     val replies: Map<String, List<CommentWithUser>> = emptyMap(),
     val replyLoading: Set<String> = emptySet(),
     val commentActionsLoading: Set<String> = emptySet(),
+    val currentUserAvatarUrl: String? = null,
     val refreshTrigger: Int = 0
 )
