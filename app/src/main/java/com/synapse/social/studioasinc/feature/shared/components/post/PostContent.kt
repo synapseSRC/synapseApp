@@ -38,6 +38,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.toArgb
 import com.synapse.social.studioasinc.styling.MarkdownRenderer
 import android.text.TextUtils
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 
@@ -59,29 +62,65 @@ fun PostContent(
     Column(modifier = modifier) {
         if (!text.isNullOrBlank()) {
             var localExpanded by remember { mutableStateOf(false) }
+            var isTruncated by remember { mutableStateOf(false) }
             val showFullText = isExpanded || localExpanded
 
             val context = LocalContext.current
             val colorOnSurface = MaterialTheme.colorScheme.onSurface
 
-            AndroidView(
-                modifier = Modifier
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                factory = { ctx ->
-                    TextView(ctx).apply {
-                        setTextColor(colorOnSurface.toArgb())
-                        textSize = 16f
-                        movementMethod = android.text.method.LinkMovementMethod.getInstance()
+            Column {
+                AndroidView(
+                    modifier = Modifier
+                        .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small),
+                    factory = { ctx ->
+                        TextView(ctx).apply {
+                            setTextColor(colorOnSurface.toArgb())
+                            textSize = 16f
+                            movementMethod = android.text.method.LinkMovementMethod.getInstance()
+                        }
+                    },
+                    update = { textView ->
+                        MarkdownRenderer.get(context).render(textView, text)
+                        textView.setTextColor(colorOnSurface.toArgb())
+                        textView.maxLines = if (showFullText) Int.MAX_VALUE else 10
+                        textView.ellipsize = if (showFullText) null else TextUtils.TruncateAt.END
+                        
+                        // Check if text is truncated
+                        textView.post {
+                            val layout = textView.layout
+                            if (layout != null) {
+                                val lineCount = layout.lineCount
+                                if (lineCount > 0) {
+                                    val ellipsisCount = layout.getEllipsisCount(lineCount - 1)
+                                    isTruncated = ellipsisCount > 0 || lineCount >= 10
+                                }
+                            }
+                        }
                     }
-                },
-                update = { textView ->
-                    MarkdownRenderer.get(context).render(textView, text)
-                    textView.setTextColor(colorOnSurface.toArgb())
-                    textView.maxLines = if (showFullText) Int.MAX_VALUE else 10
-                    textView.ellipsize = if (showFullText) null else TextUtils.TruncateAt.END
-                    textView.setOnClickListener { localExpanded = !localExpanded }
+                )
+                
+                if (isTruncated && !showFullText) {
+                    Text(
+                        text = stringResource(R.string.see_more),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(horizontal = Spacing.SmallMedium)
+                            .clickable { localExpanded = true }
+                    )
+                } else if (showFullText && !isExpanded) {
+                    Text(
+                        text = stringResource(R.string.show_less),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(horizontal = Spacing.SmallMedium)
+                            .clickable { localExpanded = false }
+                    )
                 }
-            )
+            }
         }
 
         if (mediaUrls.isNotEmpty()) {
