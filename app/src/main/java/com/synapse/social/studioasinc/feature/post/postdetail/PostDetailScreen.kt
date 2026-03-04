@@ -484,6 +484,7 @@ fun PostDetailScreen(
         )
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {

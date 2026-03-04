@@ -146,8 +146,8 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
                         }
                     }.decodeList<ChatParticipantDto>().firstOrNull()
 
-                if (sharedChats.isNotEmpty()) {
-                    return@withContext sharedChats.first().chatId
+                if (sharedChats != null) {
+                    return@withContext sharedChats.chatId
                 }
             }
 
