@@ -309,7 +309,6 @@ class ReactionRepository @Inject constructor(
                                              filter {
                                                  isIn("post_id", chunkIds)
                                                  eq("user_id", currentUser.id)
-                                                 eq("target_type", "post")
                                              }
                                          }.decodeList<JsonObject>()
 
@@ -335,7 +334,6 @@ class ReactionRepository @Inject constructor(
                                      .select {
                                          filter {
                                              isIn("post_id", chunkIds)
-                                             eq("target_type", "post")
                                          }
                                      }
                                      .decodeList<JsonObject>()

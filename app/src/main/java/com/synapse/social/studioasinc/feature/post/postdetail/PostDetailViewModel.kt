@@ -130,7 +130,9 @@ class PostDetailViewModel @Inject constructor(
             
             val optimisticPost = currentPost.copy(
                 post = currentPost.post.copy(
-                    likesCount = maxOf(0, currentPost.post.likesCount + countChange)
+                    likesCount = maxOf(0, currentPost.post.likesCount + countChange),
+                    reactions = updatedReactions,
+                    userReaction = newReaction
                 ),
                 userReaction = newReaction,
                 reactionSummary = updatedReactions

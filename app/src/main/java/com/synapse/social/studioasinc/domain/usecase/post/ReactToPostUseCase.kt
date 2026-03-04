@@ -55,6 +55,9 @@ class ReactToPostUseCase @Inject constructor(
             oldReaction = currentReaction,
             skipCheck = true
         ).onFailure {
+            // Revert optimistic update by re-emitting the original post
+            postActionsRepository.updateLocalPost(post)
+            emit(Result.success(post))
             emit(Result.failure(it))
         }
     }
