@@ -67,6 +67,8 @@ fun FeedScreen(
 
     var isUserRefreshing by remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
+    
+    val isRefreshing = isUserRefreshing || posts.loadState.refresh is LoadState.Loading
 
 
 
@@ -89,13 +91,13 @@ fun FeedScreen(
     }
 
     LaunchedEffect(posts.loadState.refresh) {
-        if (posts.loadState.refresh !is LoadState.Loading) {
+        if (posts.loadState.refresh is LoadState.NotLoading) {
             isUserRefreshing = false
         }
     }
 
     PullToRefreshBox(
-        isRefreshing = isUserRefreshing,
+        isRefreshing = isRefreshing,
         onRefresh = {
             isUserRefreshing = true
             posts.refresh()
@@ -106,7 +108,7 @@ fun FeedScreen(
         indicator = {
             ExpressivePullToRefreshIndicator(
                 state = pullToRefreshState,
-                isRefreshing = isUserRefreshing,
+                isRefreshing = isRefreshing,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
         }

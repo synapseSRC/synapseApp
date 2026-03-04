@@ -65,6 +65,7 @@ fun HomeScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val isPostDetail = currentDestination?.hasRoute<HomeDestinations.PostDetail>() == true
+    val isFeedScreen = currentDestination?.hasRoute<HomeDestinations.Feed>() == true
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -80,7 +81,7 @@ fun HomeScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            modifier = if (isFeedScreen) Modifier else Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             contentWindowInsets = if (isPostDetail) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
             topBar = {
                 if (!isPostDetail) {
