@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -220,7 +221,6 @@ fun FeelingSelectScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Moods", "Activities")
 
-
     val currentTabType = if (selectedTab == 0) com.synapse.social.studioasinc.domain.model.FeelingType.MOOD else com.synapse.social.studioasinc.domain.model.FeelingType.ACTIVITY
     val filteredFeelings = remember(feelings, selectedTab, searchQuery) {
         feelings.filter {
@@ -236,45 +236,148 @@ fun FeelingSelectScreen(
         onSearchQueryChange = onSearchQueryChange,
         searchPlaceholder = "Search feelings..."
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            TabRow(selectedTabIndex = selectedTab) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer)) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)) }
+            ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        text = { Text(title) }
+                        text = { 
+                            Text(
+                                title, 
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium
+                            ) 
+                        },
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            LazyColumn(
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                 items(
-                     items = filteredFeelings,
-                     key = { feeling -> feeling.hashCode() }
-                 ) { feeling ->
-                     Surface(
-                         shape = RoundedCornerShape(8.dp),
-                         color = MaterialTheme.colorScheme.surfaceContainer,
-                         onClick = {
-                             onFeelingSelected(feeling)
-                             onDismiss()
-                         }
-                     ) {
-                         Row(
-                             modifier = Modifier.padding(16.dp),
-                             verticalAlignment = Alignment.CenterVertically
-                         ) {
-                             Text(feeling.emoji, style = MaterialTheme.typography.headlineSmall)
-                             Spacer(modifier = Modifier.width(12.dp))
-                             Text(feeling.text, style = MaterialTheme.typography.bodyMedium)
+                 if (filteredFeelings.isEmpty()) {
+                     item {
+                         Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                             Text("No results found", color = MaterialTheme.colorScheme.onSurfaceVariant)
                          }
                      }
+                 }
+
+                 val rows = filteredFeelings.chunked(2)
+                 
+                 items(
+                     count = rows.size,
+                     key = { index -> "row_$index" }
+                 ) { rowIndex ->
+                     val rowItems = rows[rowIndex]
+                     val isFirstRow = rowIndex == 0
+                     val isLastRow = rowIndex == rows.size - 1
+
+                     Row(
+                         modifier = Modifier.fillMaxWidth()
+                     ) {
+                         rowItems.forEachIndexed { colIndex, feeling ->
+                             val isLastInRow = colIndex == rowItems.size - 1
+                             val isOnlyItem = rowItems.size == 1
+                             
+                             // Calculate rounding for each item based on its position in the grid
+                             val shape = when {
+                                 // Single item in the whole list
+                                 isFirstRow && isLastRow && isOnlyItem -> RoundedCornerShape(16.dp)
+                                 
+                                 // Top row
+                                 isFirstRow && colIndex == 0 -> {
+                                     if (isOnlyItem) RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                                     else RoundedCornerShape(topStart = 16.dp)
+                                 }
+                                 isFirstRow && colIndex == 1 -> RoundedCornerShape(topEnd = 16.dp)
+                                 
+                                 // Bottom row
+                                 isLastRow && colIndex == 0 -> {
+                                     if (isOnlyItem) RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+                                     else RoundedCornerShape(bottomStart = 16.dp)
+                                 }
+                                 isLastRow && colIndex == 1 -> RoundedCornerShape(bottomEnd = 16.dp)
+                                 
+                                 // Middle rows or inner corners
+                                 else -> androidx.compose.ui.graphics.RectangleShape
+                             }
+
+                             Surface(
+                                 shape = shape,
+                                 color = MaterialTheme.colorScheme.surface,
+                                 onClick = {
+                                     onFeelingSelected(feeling)
+                                     onDismiss()
+                                 },
+                                 modifier = Modifier.weight(1f)
+                             ) {
+                                 Box {
+                                     Row(
+                                         modifier = Modifier
+                                             .padding(horizontal = 12.dp, vertical = 16.dp)
+                                             .fillMaxWidth(),
+                                         verticalAlignment = Alignment.CenterVertically
+                                     ) {
+                                         Text(feeling.emoji, style = MaterialTheme.typography.titleLarge)
+                                         Spacer(modifier = Modifier.width(8.dp))
+                                         Text(
+                                             text = feeling.text,
+                                             style = MaterialTheme.typography.bodyMedium,
+                                             fontWeight = FontWeight.Medium,
+                                             maxLines = 1,
+                                             color = MaterialTheme.colorScheme.onSurface
+                                         )
+                                         Spacer(modifier = Modifier.weight(1f))
+                                         Icon(
+                                             Icons.Default.KeyboardArrowRight,
+                                             contentDescription = null,
+                                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                             modifier = Modifier.size(16.dp)
+                                         )
+                                     }
+
+                                     // Bottom divider (horizontal)
+                                     if (!isLastRow) {
+                                         HorizontalDivider(
+                                             modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 12.dp),
+                                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                             thickness = 0.5.dp
+                                         )
+                                     }
+                                     
+                                     // Right divider (vertical)
+                                     if (colIndex == 0 && !isOnlyItem) {
+                                         VerticalDivider(
+                                             modifier = Modifier
+                                                 .align(Alignment.CenterEnd)
+                                                 .padding(vertical = 12.dp)
+                                                 .height(24.dp),
+                                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                             thickness = 0.5.dp
+                                         )
+                                     }
+                                 }
+                             }
+                         }
+                         
+                         // If the last row has only one item, add a placeholder to maintain grid alignment
+                         if (rowItems.size == 1 && !isLastRow) {
+                             Spacer(modifier = Modifier.weight(1f))
+                         }
+                     }
+                 }
+                 
+                 item {
+                     Spacer(modifier = Modifier.height(32.dp))
                  }
             }
         }

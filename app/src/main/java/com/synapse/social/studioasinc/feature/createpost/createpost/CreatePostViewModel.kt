@@ -91,21 +91,52 @@ class CreatePostViewModel @Inject constructor(
     private var originalPost: Post? = null
 
     private val allFeelings = listOf(
+        // Moods
         FeelingActivity("😊", "Happy", FeelingType.MOOD),
+        FeelingActivity("😇", "Blessed", FeelingType.MOOD),
+        FeelingActivity("🤩", "Excited", FeelingType.MOOD),
+        FeelingActivity("🙏", "Grateful", FeelingType.MOOD),
+        FeelingActivity("🥰", "Loved", FeelingType.MOOD),
         FeelingActivity("😎", "Cool", FeelingType.MOOD),
-        FeelingActivity("😍", "Loved", FeelingType.MOOD),
-        FeelingActivity("😢", "Sad", FeelingType.MOOD),
-        FeelingActivity("🥳", "Celebrating", FeelingType.ACTIVITY),
+        FeelingActivity("🥳", "Celebrating", FeelingType.MOOD),
         FeelingActivity("😴", "Tired", FeelingType.MOOD),
+        FeelingActivity("😢", "Sad", FeelingType.MOOD),
         FeelingActivity("😡", "Angry", FeelingType.MOOD),
         FeelingActivity("🤔", "Thinking", FeelingType.MOOD),
         FeelingActivity("🤒", "Sick", FeelingType.MOOD),
+        FeelingActivity("😴", "Sleepy", FeelingType.MOOD),
+        FeelingActivity("😌", "Relaxed", FeelingType.MOOD),
+        FeelingActivity("💪", "Motivated", FeelingType.MOOD),
+        FeelingActivity("😜", "Silly", FeelingType.MOOD),
+        FeelingActivity("😔", "Lonely", FeelingType.MOOD),
+        FeelingActivity("😲", "Surprised", FeelingType.MOOD),
+        FeelingActivity("🧘", "Peaceful", FeelingType.MOOD),
+        FeelingActivity("😤", "Proud", FeelingType.MOOD),
+        FeelingActivity("🥱", "Bored", FeelingType.MOOD),
+        FeelingActivity("😟", "Worried", FeelingType.MOOD),
+        FeelingActivity("😰", "Nervous", FeelingType.MOOD),
+        
+        // Activities
         FeelingActivity("✈️", "Traveling", FeelingType.ACTIVITY),
         FeelingActivity("🍴", "Eating", FeelingType.ACTIVITY),
+        FeelingActivity("🍷", "Drinking", FeelingType.ACTIVITY),
         FeelingActivity("🎮", "Playing", FeelingType.ACTIVITY),
         FeelingActivity("📚", "Reading", FeelingType.ACTIVITY),
         FeelingActivity("📺", "Watching", FeelingType.ACTIVITY),
-        FeelingActivity("🎧", "Listening to music", FeelingType.ACTIVITY)
+        FeelingActivity("🎧", "Listening to music", FeelingType.ACTIVITY),
+        FeelingActivity("🎉", "Attending", FeelingType.ACTIVITY),
+        FeelingActivity("🏋️", "Exercising", FeelingType.ACTIVITY),
+        FeelingActivity("💼", "Working", FeelingType.ACTIVITY),
+        FeelingActivity("📖", "Studying", FeelingType.ACTIVITY),
+        FeelingActivity("🍳", "Cooking", FeelingType.ACTIVITY),
+        FeelingActivity("🎨", "Painting", FeelingType.ACTIVITY),
+        FeelingActivity("🏕️", "Camping", FeelingType.ACTIVITY),
+        FeelingActivity("🏊", "Swimming", FeelingType.ACTIVITY),
+        FeelingActivity("🥾", "Hiking", FeelingType.ACTIVITY),
+        FeelingActivity("🛍️", "Shopping", FeelingType.ACTIVITY),
+        FeelingActivity("💃", "Dancing", FeelingType.ACTIVITY),
+        FeelingActivity("💻", "Coding", FeelingType.ACTIVITY),
+        FeelingActivity("🤝", "Volunteering", FeelingType.ACTIVITY)
     )
 
     init {
