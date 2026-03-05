@@ -70,7 +70,39 @@ class EditProfileRepository @Inject constructor(
                     hometown = result["hometown"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     occupation = result["occupation"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     workplace = result["workplace"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
-                    education = result["education"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    education = result["education"]?.let { element ->
+                        when (element) {
+                            is kotlinx.serialization.json.JsonArray -> element.mapNotNull { item ->
+                                (item as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
+                            }
+                            is kotlinx.serialization.json.JsonPrimitive -> element.contentOrNull?.let { listOf(it) } ?: emptyList()
+                            else -> emptyList()
+                        }
+                    } ?: emptyList(),
+                    workHistory = result["work_history"]?.let { element ->
+                        when (element) {
+                            is kotlinx.serialization.json.JsonArray -> element.mapNotNull { item ->
+                                (item as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
+                            }
+                            else -> emptyList()
+                        }
+                    } ?: emptyList(),
+                    interests = result["interests"]?.let { element ->
+                        when (element) {
+                            is kotlinx.serialization.json.JsonArray -> element.mapNotNull { item ->
+                                (item as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
+                            }
+                            else -> emptyList()
+                        }
+                    } ?: emptyList(),
+                    travel = result["travel"]?.let { element ->
+                        when (element) {
+                            is kotlinx.serialization.json.JsonArray -> element.mapNotNull { item ->
+                                (item as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
+                            }
+                            else -> emptyList()
+                        }
+                    } ?: emptyList(),
                     pronouns = result["pronouns"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     birthday = result["birthday"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     relationshipStatus = result["relationship_status"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,

@@ -29,7 +29,8 @@ data class UserProfile(
     // Work & Education
     @SerialName("occupation") val occupation: String? = null,
     @SerialName("workplace") val workplace: String? = null,
-    @SerialName("education") val education: String? = null,
+    @SerialName("work_history") val workHistory: List<String> = emptyList(),
+    @SerialName("education") val education: List<String> = emptyList(),
     @SerialName("professional_skills") val professionalSkills: List<String> = emptyList(),
     
     // Identity & Personal
@@ -46,7 +47,11 @@ data class UserProfile(
     @SerialName("social_links") val socialLinks: Map<String, String> = emptyMap(),
     @SerialName("personal_website") val personalWebsite: String? = null,
 
+    // Interests
+    @SerialName("interests") val interests: List<String> = emptyList(),
+
     // Travel & Lifestyle
+    @SerialName("travel") val travel: List<String> = emptyList(),
     @SerialName("bucket_list") val bucketList: List<String> = emptyList(),
     @SerialName("visited_places") val visitedPlaces: List<String> = emptyList(),
     @SerialName("pet_info") val petInfo: String? = null,
@@ -63,4 +68,7 @@ data class UserProfile(
     val isVerified: Boolean get() = verify
     val isPremium: Boolean get() = account_type == "premium"
     val safeGender: Gender get() = gender ?: Gender.Hidden
+
+    /** Backward-compatible String view of education list (joined with ", ") */
+    val educationDisplay: String? get() = education.takeIf { it.isNotEmpty() }?.joinToString(", ")
 }

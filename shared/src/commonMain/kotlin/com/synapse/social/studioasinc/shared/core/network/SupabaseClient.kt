@@ -12,6 +12,9 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.http.Url
 
+import io.github.jan.supabase.serializer.KotlinXSerializer
+import kotlinx.serialization.json.Json
+
 class ConfigurationException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
 object SupabaseClient {
@@ -34,6 +37,11 @@ object SupabaseClient {
                 supabaseUrl = SynapseConfig.SUPABASE_URL,
                 supabaseKey = SynapseConfig.SUPABASE_ANON_KEY
             ) {
+                defaultSerializer = KotlinXSerializer(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                    coerceInputValues = true
+                })
                 install(Auth)
                 install(Postgrest)
                 install(Realtime)

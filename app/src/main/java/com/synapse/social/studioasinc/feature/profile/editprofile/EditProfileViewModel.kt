@@ -67,7 +67,7 @@ class EditProfileViewModel @Inject constructor(
                                 hometown = profile.hometown ?: "",
                                 occupation = profile.occupation ?: "",
                                 workplace = profile.workplace ?: "",
-                                education = profile.education ?: "",
+                                education = profile.educationDisplay ?: "",
                                 pronouns = profile.pronouns ?: "",
                                 birthday = profile.birthday ?: "",
                                 relationshipStatus = profile.relationshipStatus ?: "",
@@ -494,7 +494,7 @@ class EditProfileViewModel @Inject constructor(
                 updateData["hometown"] = state.hometown
                 updateData["occupation"] = state.occupation
                 updateData["workplace"] = state.workplace
-                updateData["education"] = state.education
+                updateData["education"] = state.education.split(",").map { it.trim() }.filter { it.isNotBlank() }
                 updateData["pronouns"] = state.pronouns
                 updateData["birthday"] = state.birthday
                 updateData["relationship_status"] = state.relationshipStatus
