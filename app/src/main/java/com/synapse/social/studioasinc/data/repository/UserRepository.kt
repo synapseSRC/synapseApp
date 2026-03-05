@@ -30,7 +30,7 @@ class UserRepository @Inject constructor(
             val userProfile = client.from(SharedSupabaseClient.TABLE_USERS)
                 .select {
                     filter {
-                        eq("uid", userId)
+                        eq("id", userId)
                     }
                 }
                 .decodeSingleOrNull<UserProfile>()
@@ -41,14 +41,14 @@ class UserRepository @Inject constructor(
                 val updatedUser = cachedUser?.copy(
                     username = userProfile.username,
                     displayName = userProfile.displayName,
-                    avatar = userProfile.avatar,
+                    avatar = userProfile.avatar?.let { url -> if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url) },
                     email = userProfile.email,
                     verify = userProfile.verify
                 ) ?: User(
                     uid = userProfile.uid,
                     username = userProfile.username,
                     displayName = userProfile.displayName,
-                    avatar = userProfile.avatar,
+                    avatar = userProfile.avatar?.let { url -> if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url) },
                     email = userProfile.email,
                     verify = userProfile.verify
                 )
@@ -73,7 +73,7 @@ class UserRepository @Inject constructor(
                 val userProfile = client.from(SharedSupabaseClient.TABLE_USERS)
                     .select() {
                         filter {
-                            eq("uid", userId)
+                            eq("id", userId)
                         }
                     }
                     .decodeSingleOrNull<UserProfile>()
@@ -84,7 +84,7 @@ class UserRepository @Inject constructor(
                         username = it.username,
                         displayName = it.displayName,
                         email = it.email,
-                        avatar = it.avatar,
+                        avatar = it.avatar?.let { url -> if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url) },
                         verify = it.verify,
                         bio = it.bio,
                         followersCount = it.followersCount ?: 0,
@@ -145,7 +145,7 @@ class UserRepository @Inject constructor(
             client.from(SharedSupabaseClient.TABLE_USERS)
                 .update(updateData) {
                     filter {
-                        eq("uid", user.uid)
+                        eq("id", user.uid)
                     }
                 }
 
