@@ -100,7 +100,7 @@ class UserRepositoryImpl(
         if (path.startsWith("http")) return path
         val baseUrl = SynapseConfig.SUPABASE_URL
         val cleanBaseUrl = if (baseUrl.endsWith("/")) baseUrl.dropLast(1) else baseUrl
-        return "/storage/v1/object/public/avatars/"
+        return "$cleanBaseUrl/storage/v1/object/public/avatars/$path"
     }
 
     private fun mapDbUser(dbUser: com.synapse.social.studioasinc.shared.data.database.User): User {
