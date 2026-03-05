@@ -38,6 +38,7 @@ sealed class FeedItem {
         val userFullName: String = "",
         val username: String = "",
         val avatarUrl: String? = null,
+        val mediaUrl: String? = null,
         val isVerified: Boolean = false,
         override val isLiked: Boolean = false // Needs fetching later
     ) : FeedItem()

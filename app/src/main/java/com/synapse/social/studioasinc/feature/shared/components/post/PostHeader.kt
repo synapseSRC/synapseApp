@@ -58,87 +58,99 @@ fun PostHeader(
                 .weight(1f)
                 .clickable(onClick = onUserClick)
         ) {
-            val annotatedText = buildAnnotatedString {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = user.displayName ?: user.username ?: "Unknown",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
 
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
-                    append(user.displayName ?: user.username ?: "Unknown")
+                if (user.verify) {
+                    VerifiedBadge()
                 }
 
-
-                if (feeling != null) {
-                    append(" is ")
-                    append(feeling.emoji)
-                    append(" feeling ")
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(feeling.text)
-                    }
-                }
-
-
-                if (taggedPeople.isNotEmpty()) {
-                    if (feeling == null) {
-                        append(" \u2014 with ")
-                    } else {
-                        append(" with ")
-                    }
-
-                    if (taggedPeople.size == 1) {
-                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                             append(taggedPeople[0].displayName ?: taggedPeople[0].username)
-                         }
-                    } else if (taggedPeople.size == 2) {
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                             append(taggedPeople[0].displayName ?: taggedPeople[0].username)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                            append("@${user.username} · $timestamp")
                         }
-                        append(" and ")
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                             append(taggedPeople[1].displayName ?: taggedPeople[1].username)
-                        }
-                    } else {
-                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                             append(taggedPeople[0].displayName ?: taggedPeople[0].username)
-                        }
-                        append(" and ")
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                             append("${taggedPeople.size - 1} others")
-                        }
-                    }
-                }
-
-
-                if (!locationName.isNullOrEmpty()) {
-                    if (feeling == null && taggedPeople.isEmpty()) {
-                        append(" is at ")
-                    } else {
-                        append(" at ")
-                    }
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(locationName)
-                    }
-                }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
-            Text(
-                text = annotatedText,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (feeling != null || taggedPeople.isNotEmpty() || !locationName.isNullOrEmpty()) {
+                val annotatedText = buildAnnotatedString {
+                    if (feeling != null) {
+                        append("is ")
+                        append(feeling.emoji)
+                        append(" feeling ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(feeling.text)
+                        }
+                    }
 
+                    if (taggedPeople.isNotEmpty()) {
+                        if (feeling == null) {
+                            append("\u2014 with ")
+                        } else {
+                            append(" with ")
+                        }
 
+                        if (taggedPeople.size == 1) {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(taggedPeople[0].displayName ?: taggedPeople[0].username)
+                            }
+                        } else if (taggedPeople.size == 2) {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(taggedPeople[0].displayName ?: taggedPeople[0].username)
+                            }
+                            append(" and ")
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(taggedPeople[1].displayName ?: taggedPeople[1].username)
+                            }
+                        } else {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(taggedPeople[0].displayName ?: taggedPeople[0].username)
+                            }
+                            append(" and ")
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("${taggedPeople.size - 1} others")
+                            }
+                        }
+                    }
 
+                    if (!locationName.isNullOrEmpty()) {
+                        if (feeling == null && taggedPeople.isEmpty()) {
+                            append("is at ")
+                        } else {
+                            append(" at ")
+                        }
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(locationName)
+                        }
+                    }
+                }
 
-
-
-
-
-
-            Text(
-                text = timestamp,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Text(
+                    text = annotatedText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
         }
         IconButton(
             onClick = onOptionsClick,

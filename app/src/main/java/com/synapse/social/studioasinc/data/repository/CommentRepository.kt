@@ -189,10 +189,10 @@ class CommentRepository constructor(
     }
 
     suspend fun createComment(postId: String, content: String, mediaUrl: String? = null, parentId: String? = null): Result<CommentWithUser> {
-        return addComment(postId, content, parentId)
+        return addComment(postId, content, mediaUrl, parentId)
     }
 
-    suspend fun addComment(postId: String, content: String, parentCommentId: String? = null): Result<CommentWithUser> = withContext(Dispatchers.IO) {
+    suspend fun addComment(postId: String, content: String, mediaUrl: String? = null, parentCommentId: String? = null): Result<CommentWithUser> = withContext(Dispatchers.IO) {
         try {
             val currentUser = client.auth.currentUserOrNull()
                 ?: return@withContext Result.failure(Exception("User must be authenticated"))
@@ -217,6 +217,7 @@ class CommentRepository constructor(
                         put("post_id", postId)
                         put("user_id", userId)
                         put("content", content)
+                        if (mediaUrl != null) put("media_url", mediaUrl)
                         if (parentCommentId != null) put("parent_comment_id", parentCommentId)
                         put("created_at", java.time.Instant.now().toString())
                         put("updated_at", java.time.Instant.now().toString())

@@ -6,8 +6,10 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
 import com.synapse.social.studioasinc.data.repository.*
 import com.synapse.social.studioasinc.domain.model.*
+import com.synapse.social.studioasinc.feature.createpost.createpost.handlers.MediaUploadHandler
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEvent
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
@@ -34,6 +36,7 @@ class PostDetailViewModel @Inject constructor(
     private val reportRepository: ReportRepository,
     private val userRepository: UserRepository,
     private val authRepository: AuthRepository,
+    private val mediaUploadHandler: MediaUploadHandler,
     private val postActionsRepository: PostActionsRepository
 ) : ViewModel() {
 
@@ -160,17 +163,30 @@ class PostDetailViewModel @Inject constructor(
 
     private var isSubmittingComment = false
 
-    fun addComment(content: String) {
+    fun addComment(content: String, mediaUri: Uri? = null) {
         if (isSubmittingComment) return
         val postId = currentPostId ?: return
         val parentId = _uiState.value.replyToComment?.id
 
         isSubmittingComment = true
         viewModelScope.launch {
-            commentRepository.addComment(postId, content, parentId).onSuccess {
-                refreshComments()
-                setReplyTo(null)
-            }.also {
+            try {
+                var mediaUrl: String? = null
+                if (mediaUri != null) {
+                    val mediaItem = MediaItem(url = mediaUri.toString(), type = MediaType.IMAGE)
+                    val uploadedItems = mediaUploadHandler.uploadMedia(listOf(mediaItem)) { }
+                    mediaUrl = uploadedItems.firstOrNull()?.url
+                }
+
+                commentRepository.addComment(postId, content, mediaUrl, parentId).onSuccess {
+                    refreshComments()
+                    setReplyTo(null)
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to add comment") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message ?: "Failed to upload media") }
+            } finally {
                 isSubmittingComment = false
             }
         }

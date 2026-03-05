@@ -162,11 +162,11 @@ fun PostDetailScreen(
                 focusRequester = focusRequester,
                 onCancelReply = { viewModel.setReplyTo(null) },
                 onCancelEdit = { viewModel.setEditingComment(null) },
-                onSendComment = { content ->
+                onSendComment = { content, mediaUri ->
                     if (uiState.editingComment != null) {
                         viewModel.editComment(uiState.editingComment!!.id, content)
                     } else {
-                        viewModel.addComment(content)
+                        viewModel.addComment(content, mediaUri)
                     }
                 }
             )
@@ -323,7 +323,7 @@ private fun PostDetailBottomBar(
     focusRequester: FocusRequester,
     onCancelReply: () -> Unit,
     onCancelEdit: () -> Unit,
-    onSendComment: (String) -> Unit
+    onSendComment: (String, android.net.Uri?) -> Unit
 ) {
     Column(
         modifier = Modifier

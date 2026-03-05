@@ -182,9 +182,7 @@ fun PostCard(
                     }
                     
                     // Memoize conditional parameters to avoid recomputation
-                    val contentMediaUrls = remember(state.isComment, state.mediaUrls) {
-                        if (state.isComment) emptyList() else state.mediaUrls
-                    }
+                    val contentMediaUrls = state.mediaUrls
                     val contentPollQuestion = remember(state.isComment, state.pollQuestion) {
                         if (state.isComment) null else state.pollQuestion
                     }
@@ -255,7 +253,7 @@ private fun ReplyContext(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(bottom = com.synapse.social.studioasinc.feature.shared.theme.Spacing.ExtraSmall),
+        modifier = modifier.padding(bottom = com.synapse.social.studioasinc.feature.shared.theme.Spacing.Tiny),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val replyingToText = androidx.compose.ui.res.stringResource(
@@ -265,12 +263,12 @@ private fun ReplyContext(
         
         Text(
             text = "$replyingToText ",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = "@$parentAuthorUsername",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = if (onParentAuthorClick != null) {
                 Modifier.clickable { onParentAuthorClick() }
