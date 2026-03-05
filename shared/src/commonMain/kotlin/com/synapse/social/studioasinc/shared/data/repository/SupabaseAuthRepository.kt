@@ -87,7 +87,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                 val count = client.from("users").select(columns = Columns.list("id")) {
                     count(Count.EXACT)
                     filter {
-                        eq("uid", userId)
+                        eq("id", userId)
                     }
                 }.countOrNull()
 

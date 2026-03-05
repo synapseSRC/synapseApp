@@ -11,7 +11,9 @@ enum class UserStatus {
 
 @Serializable
 data class User(
+    @SerialName("pk_id")
     val id: String? = null,
+    @SerialName("id")
     val uid: String,
     val email: String? = null,
     val username: String? = null,

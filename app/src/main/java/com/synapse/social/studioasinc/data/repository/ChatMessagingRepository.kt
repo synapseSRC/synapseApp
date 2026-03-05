@@ -294,7 +294,7 @@ class ChatMessagingRepository @Inject constructor(
 
             client.from("users")
                 .select {
-                    filter { eq("uid", otherUserId) }
+                    filter { eq("id", otherUserId) }
                     limit(1)
                 }.decodeSingleOrNull<User>()
         } catch (e: Exception) {

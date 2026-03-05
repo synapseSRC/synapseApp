@@ -60,7 +60,7 @@ class CommentRepository constructor(
         try {
             Log.d(TAG, "Fetching comments for post: $postId")
             val response = client.from("comments")
-                .select(columns = Columns.raw("*, users(uid, username, display_name, avatar, bio, verify, status, account_type, followers_count, following_count, posts_count, banned)")) {
+                .select(columns = Columns.raw("*, users(id, username, display_name, avatar, bio, verify, status, account_type, followers_count, following_count, posts_count, banned)")) {
                     filter {
                         eq("post_id", postId)
                         filterNot("is_deleted", io.github.jan.supabase.postgrest.query.filter.FilterOperator.EQ, true)
@@ -104,7 +104,7 @@ class CommentRepository constructor(
                 .select(
                     columns = Columns.raw("""
                         *,
-                        users!comments_user_id_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
+                        users!comments_user_id_fkey(id, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
                     """.trimIndent())
                 ) {
                     filter { eq("parent_comment_id", commentId) }
@@ -228,7 +228,7 @@ class CommentRepository constructor(
                                 select(
                                     columns = Columns.raw("""
                                         *,
-                                        users!comments_user_id_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
+                                        users!comments_user_id_fkey(id, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
                                     """.trimIndent())
                                 )
                             }
@@ -368,7 +368,7 @@ class CommentRepository constructor(
                     set("edited_at", java.time.Instant.now().toString())
                 }) {
                     filter { eq("id", commentId) }
-                    select(Columns.raw("*, users(uid, username, display_name, avatar, verify)"))
+                    select(Columns.raw("*, users(id, username, display_name, avatar, verify)"))
                 }
                 .decodeSingle<JsonObject>()
 
@@ -524,12 +524,12 @@ class CommentRepository constructor(
 
         return try {
             UserProfile(
-                uid = userData["uid"]?.jsonPrimitive?.contentOrNull ?: return null,
+                uid = userData["id"]?.jsonPrimitive?.contentOrNull ?: userData["uid"]?.jsonPrimitive?.contentOrNull ?: return null,
                 username = userData["username"]?.jsonPrimitive?.contentOrNull ?: "",
                 displayName = userData["display_name"]?.jsonPrimitive?.contentOrNull ?: "",
                 email = "",
                 bio = userData["bio"]?.jsonPrimitive?.contentOrNull,
-                avatar = userData["avatar"]?.jsonPrimitive?.contentOrNull,
+                avatar = userData["avatar"]?.jsonPrimitive?.contentOrNull?.let { com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(it) },
                 followersCount = userData["followers_count"]?.jsonPrimitive?.intOrNull ?: 0,
                 followingCount = userData["following_count"]?.jsonPrimitive?.intOrNull ?: 0,
                 postsCount = userData["posts_count"]?.jsonPrimitive?.intOrNull ?: 0,

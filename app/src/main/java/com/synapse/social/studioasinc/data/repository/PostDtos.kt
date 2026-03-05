@@ -47,7 +47,7 @@ data class PostInsertDto(
 
 @Serializable
 data class UserSummaryDto(
-    val uid: String,
+    @SerialName("id") val uid: String,
     val username: String? = null,
     @SerialName("display_name") val displayName: String? = null,
     @SerialName("avatar") val avatarUrl: String? = null,

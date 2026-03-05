@@ -55,7 +55,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
                 val otherUserId = otherParticipants.firstOrNull()?.userId ?: return@mapNotNull null
                 val otherUser = client.postgrest.from("users").select {
-                    filter { eq("uid", otherUserId) }
+                    filter { eq("id", otherUserId) }
                     limit(1)
                 }.decodeSingleOrNull<User>()
 

@@ -269,7 +269,7 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
     }
 
     override suspend fun updateProfile(userId: String, profile: UserProfile): Result<UserProfile> = try {
-        val updated = client.from("users").update(profile) { filter { eq("uid", userId) } }.decodeSingle<UserProfile>()
+        val updated = client.from("users").update(profile) { filter { eq("id", userId) } }.decodeSingle<UserProfile>()
         Result.success(updated)
     } catch (e: Exception) {
         Result.failure(e)

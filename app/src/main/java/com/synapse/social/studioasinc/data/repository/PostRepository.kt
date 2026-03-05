@@ -297,9 +297,9 @@ class PostRepository constructor(
                 .select(
                     columns = Columns.raw("""
                         *,
-                        users!author_uid(uid, username, display_name, avatar, verify),
+                        users!author_uid(id, username, display_name, avatar, verify),
                         latest_comments:comments(id, content, user_id, created_at, users(username)),
-                        quoted_post:posts!quoted_post_id(*, users!author_uid(uid, username, display_name, avatar, verify))
+                        quoted_post:posts!quoted_post_id(*, users!author_uid(id, username, display_name, avatar, verify))
                     """.trimIndent())
                 ) {
                     range(offset.toLong(), (offset + pageSize - 1).toLong())
@@ -379,9 +379,9 @@ class PostRepository constructor(
                 .select(
                     columns = Columns.raw("""
                         *,
-                        users!author_uid(uid, username, display_name, avatar, verify),
+                        users!author_uid(id, username, display_name, avatar, verify),
                         latest_comments:comments(id, content, user_id, created_at, users(username)),
-                        quoted_post:posts!quoted_post_id(*, users!author_uid(uid, username, display_name, avatar, verify))
+                        quoted_post:posts!quoted_post_id(*, users!author_uid(id, username, display_name, avatar, verify))
                     """.trimIndent())
                 ) {
                     filter { eq("author_uid", userId) }
@@ -561,11 +561,11 @@ class PostRepository constructor(
     private suspend fun fetchUserProfilesBatch(userIds: List<String>) {
         try {
             val users = client.from("users").select {
-                filter { isIn("uid", userIds) }
+                filter { isIn("id", userIds) }
             }.decodeList<JsonObject>()
 
             users.forEach { user ->
-                val uid = user["uid"]?.jsonPrimitive?.contentOrNull ?: return@forEach
+                val uid = user["id"]?.jsonPrimitive?.contentOrNull ?: user["uid"]?.jsonPrimitive?.contentOrNull ?: return@forEach
                 val dName = user["display_name"]?.jsonPrimitive?.contentOrNull
                 val profile = ProfileData(
                     username = if (!dName.isNullOrBlank()) dName else user["username"]?.jsonPrimitive?.contentOrNull,

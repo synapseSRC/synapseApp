@@ -184,7 +184,7 @@ class SupabaseNotificationRepository(
             supabase.postgrest.from("users").update(
                 mapOf("one_signal_player_id" to playerId)
             ) {
-                filter { eq("uid", userId) }
+                filter { eq("id", userId) }
             }
         } catch (e: Exception) {
             Napier.e("Failed to update OneSignal ID for $userId", e)

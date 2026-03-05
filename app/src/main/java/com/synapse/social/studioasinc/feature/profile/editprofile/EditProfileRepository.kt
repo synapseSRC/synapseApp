@@ -45,7 +45,7 @@ class EditProfileRepository @Inject constructor(
         try {
             val result = client.from("users")
                 .select(columns = Columns.raw("*")) {
-                    filter { eq("uid", userId) }
+                    filter { eq("id", userId) }
                 }
                 .decodeSingleOrNull<JsonObject>()
 
@@ -92,7 +92,7 @@ class EditProfileRepository @Inject constructor(
         return withContext(Dispatchers.IO) {
             try {
                 client.from("users").update(updateData) {
-                    filter { eq("uid", userId) }
+                    filter { eq("id", userId) }
                 }
                 Result.success(Unit)
             } catch (e: Exception) {
@@ -127,7 +127,7 @@ class EditProfileRepository @Inject constructor(
         return withContext(Dispatchers.IO) {
             try {
                 val result = client.from("users")
-                    .select(columns = Columns.raw("uid")) {
+                    .select(columns = Columns.raw("id")) {
                         filter { eq("username", username) }
                     }
                     .decodeList<JsonObject>()
@@ -137,7 +137,7 @@ class EditProfileRepository @Inject constructor(
                 if (result.isEmpty()) {
                     Result.success(true)
                 } else {
-                    val existingUserId = result.first()["uid"]?.toString()?.removeSurrounding("\"")
+                    val existingUserId = result.first()["id"]?.toString()?.removeSurrounding("\"")
                     Result.success(existingUserId == currentUserId)
                 }
             } catch (e: Exception) {
