@@ -52,32 +52,32 @@ class EditProfileRepository @Inject constructor(
             if (result != null) {
 
                 val user = UserProfile(
-                    uid = result["uid"]?.jsonPrimitive?.contentOrNull ?: userId,
-                    username = result["username"]?.jsonPrimitive?.contentOrNull ?: "",
-                    displayName = result["display_name"]?.jsonPrimitive?.contentOrNull
-                        ?: result["nickname"]?.jsonPrimitive?.contentOrNull,
-                    email = result["email"]?.jsonPrimitive?.contentOrNull,
-                    bio = result["bio"]?.jsonPrimitive?.contentOrNull,
-                    avatar = result["avatar"]?.jsonPrimitive?.contentOrNull,
-                    profileCoverImage = result["profile_cover_image"]?.jsonPrimitive?.contentOrNull,
-                    gender = Gender.fromString(result["gender"]?.jsonPrimitive?.contentOrNull),
-                    region = result["region"]?.jsonPrimitive?.contentOrNull,
-                    status = UserStatus.fromString(result["status"]?.jsonPrimitive?.contentOrNull),
-                    followersCount = result["followers_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                    followingCount = result["following_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                    postsCount = result["posts_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                    currentCity = result["current_city"]?.jsonPrimitive?.contentOrNull,
-                    hometown = result["hometown"]?.jsonPrimitive?.contentOrNull,
-                    occupation = result["occupation"]?.jsonPrimitive?.contentOrNull,
-                    workplace = result["workplace"]?.jsonPrimitive?.contentOrNull,
-                    education = result["education"]?.jsonPrimitive?.contentOrNull,
-                    pronouns = result["pronouns"]?.jsonPrimitive?.contentOrNull,
-                    birthday = result["birthday"]?.jsonPrimitive?.contentOrNull,
-                    relationshipStatus = result["relationship_status"]?.jsonPrimitive?.contentOrNull,
-                    discordTag = result["discord_tag"]?.jsonPrimitive?.contentOrNull,
-                    githubProfile = result["github_profile"]?.jsonPrimitive?.contentOrNull,
-                    personalWebsite = result["personal_website"]?.jsonPrimitive?.contentOrNull,
-                    publicEmail = result["public_email"]?.jsonPrimitive?.contentOrNull
+                    uid = result["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: userId,
+                    username = result["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                    displayName = result["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                        ?: result["nickname"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    email = result["email"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    bio = result["bio"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    avatar = result["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    profileCoverImage = result["profile_cover_image"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    gender = Gender.fromString(result["gender"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull),
+                    region = result["region"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    status = UserStatus.fromString(result["status"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull),
+                    followersCount = result["followers_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                    followingCount = result["following_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                    postsCount = result["posts_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                    currentCity = result["current_city"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    hometown = result["hometown"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    occupation = result["occupation"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    workplace = result["workplace"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    education = result["education"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    pronouns = result["pronouns"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    birthday = result["birthday"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    relationshipStatus = result["relationship_status"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    discordTag = result["discord_tag"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    githubProfile = result["github_profile"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    personalWebsite = result["personal_website"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    publicEmail = result["public_email"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 )
                 emit(Result.success(user))
             } else {
@@ -262,12 +262,12 @@ class EditProfileRepository @Inject constructor(
     }
 
     private fun parseHistoryItem(json: JsonObject): HistoryItem? {
-        val key = json["key"]?.jsonPrimitive?.contentOrNull ?: return null
-        val userId = json["user_id"]?.jsonPrimitive?.contentOrNull ?: return null
-        val imageUrl = json["image_url"]?.jsonPrimitive?.contentOrNull ?: return null
-        val uploadDateStr = json["upload_date"]?.jsonPrimitive?.contentOrNull
+        val key = json["key"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val userId = json["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val imageUrl = json["image_url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val uploadDateStr = json["upload_date"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
         val uploadDate = uploadDateStr?.toLongOrNull() ?: 0L
-        val type = json["type"]?.jsonPrimitive?.contentOrNull ?: "url"
+        val type = json["type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "url"
 
         return HistoryItem(key, userId, imageUrl, uploadDate, type)
     }

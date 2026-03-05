@@ -44,6 +44,6 @@ class ImgBBUploadService(private val client: HttpClient) : UploadService {
         onProgress(1.0f)
 
         val data = response["data"]?.jsonObject ?: throw UploadError.ImgBBError("ImgBB upload failed")
-        return data["url"]?.jsonPrimitive?.content ?: throw UploadError.ImgBBError("ImgBB URL missing")
+        return data["url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: throw UploadError.ImgBBError("ImgBB URL missing")
     }
 }

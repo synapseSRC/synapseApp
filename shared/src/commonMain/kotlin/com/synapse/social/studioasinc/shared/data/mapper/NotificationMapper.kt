@@ -11,7 +11,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
 fun NotificationDto.toDomain(): Notification {
-    val messageBody = body["en"]?.jsonPrimitive?.contentOrNull
+    val messageBody = body["en"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
     val messageType = if (messageBody != null) NotificationMessageType.CUSTOM else NotificationMessageType.FALLBACK
 
     return Notification(
@@ -23,7 +23,7 @@ fun NotificationDto.toDomain(): Notification {
         messageType = messageType,
         timestamp = createdAt,
         isRead = isRead,
-        targetId = data?.get("target_id")?.jsonPrimitive?.contentOrNull
+        targetId = data?.get("target_id")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
     )
 }
 

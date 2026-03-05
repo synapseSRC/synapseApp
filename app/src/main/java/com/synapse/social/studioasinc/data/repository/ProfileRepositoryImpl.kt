@@ -105,7 +105,7 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
     private fun constructAvatarUrl(storagePath: String): String = SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, storagePath)
 
     private fun JsonObject.getString(key: String, default: String = ""): String =
-        this[key]?.jsonPrimitive?.contentOrNull ?: default
+        this[key]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: default
 
     private fun JsonObject.getNullableString(key: String): String? {
         val element = this[key]
@@ -118,13 +118,13 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
     }
 
     private fun JsonObject.getBoolean(key: String, default: Boolean = false): Boolean =
-        this[key]?.jsonPrimitive?.booleanOrNull ?: default
+        this[key]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: default
 
     private fun JsonObject.getInt(key: String, default: Int = 0): Int =
-        this[key]?.jsonPrimitive?.intOrNull ?: default
+        this[key]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: default
 
     private fun JsonObject.getLong(key: String, default: Long = 0L): Long =
-        this[key]?.jsonPrimitive?.longOrNull ?: default
+        this[key]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.longOrNull ?: default
 
     private fun parseDateToLong(dateStr: String?): Long {
         if (dateStr.isNullOrBlank()) return 0L
@@ -366,15 +366,15 @@ class ProfileRepositoryImpl(private val client: SupabaseClientType) : ProfileRep
         }.decodeList<JsonObject>()
 
         val mediaItems = response.flatMap { data ->
-            val postId = data[KEY_ID]?.jsonPrimitive?.contentOrNull ?: return@flatMap emptyList()
+            val postId = data[KEY_ID]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@flatMap emptyList()
             data[KEY_MEDIA_ITEMS]?.takeIf { it !is JsonNull }?.jsonArray?.mapNotNull { item ->
                 val mediaMap = item.jsonObject
-                val url = mediaMap[KEY_URL]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-                val typeStr = mediaMap[KEY_TYPE]?.jsonPrimitive?.contentOrNull ?: MEDIA_TYPE_IMAGE
+                val url = mediaMap[KEY_URL]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
+                val typeStr = mediaMap[KEY_TYPE]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: MEDIA_TYPE_IMAGE
                 val isVideoType = typeStr.equals(MEDIA_TYPE_VIDEO, ignoreCase = true)
                 if (isVideoType != isVideo) return@mapNotNull null
                 com.synapse.social.studioasinc.feature.profile.profile.components.MediaItem(
-                    id = mediaMap[KEY_ID]?.jsonPrimitive?.contentOrNull ?: postId,
+                    id = mediaMap[KEY_ID]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: postId,
                     url = constructMediaUrl(url),
                     isVideo = isVideo
                 )

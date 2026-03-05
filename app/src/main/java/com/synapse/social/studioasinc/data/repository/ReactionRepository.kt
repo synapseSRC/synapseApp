@@ -91,7 +91,7 @@ class ReactionRepository @Inject constructor(
                         .decodeSingleOrNull<JsonObject>()
 
                     val result = if (existingReaction != null) {
-                        val existingType = existingReaction["reaction_type"]?.jsonPrimitive?.contentOrNull
+                        val existingType = existingReaction["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         if (existingType == reactionType.name.lowercase()) {
 
                             client.from(tableName)
@@ -183,7 +183,7 @@ class ReactionRepository @Inject constructor(
                 .decodeList<JsonObject>()
 
             val summary = reactions
-                .groupBy { ReactionType.fromString(it["reaction_type"]?.jsonPrimitive?.contentOrNull ?: "LIKE") }
+                .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
                 .mapValues { it.value.size }
 
             Result.success(summary)
@@ -208,7 +208,7 @@ class ReactionRepository @Inject constructor(
                 .select { filter { eq(idColumn, targetId); eq("user_id", userId) } }
                 .decodeSingleOrNull<JsonObject>()
 
-            val reactionType = reaction?.get("reaction_type")?.jsonPrimitive?.contentOrNull?.let {
+            val reactionType = reaction?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let {
                 ReactionType.fromString(it)
             }
             Result.success(reactionType)
@@ -313,7 +313,7 @@ class ReactionRepository @Inject constructor(
                                          }.decodeList<JsonObject>()
 
                                      val userReactionMap = userReactions.associate {
-                                         it["post_id"]?.jsonPrimitive?.contentOrNull to it["reaction_type"]?.jsonPrimitive?.contentOrNull
+                                         it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                      }
 
                                      rpcSummaries.map { summary ->
@@ -339,18 +339,18 @@ class ReactionRepository @Inject constructor(
                                      .decodeList<JsonObject>()
 
                                  val currentUser = client.auth.currentUserOrNull()
-                                 val reactionsByPostId = reactions.groupBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
+                                 val reactionsByPostId = reactions.groupBy { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
                                  chunkIds.map { postId ->
                                      val postReactions = reactionsByPostId[postId] ?: emptyList()
                                      val summary = postReactions
-                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.jsonPrimitive?.contentOrNull ?: "LIKE") }
+                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
                                          .mapValues { it.value.size }
                                          .mapKeys { it.key.name.lowercase() }
 
                                      val userReaction = currentUser?.let { user ->
-                                         postReactions.firstOrNull { it["user_id"]?.jsonPrimitive?.contentOrNull == user.id }
-                                             ?.get("reaction_type")?.jsonPrimitive?.contentOrNull
+                                         postReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
+                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                      }
 
                                      PostReactionSummary(
@@ -405,7 +405,7 @@ class ReactionRepository @Inject constructor(
                                          }.decodeList<JsonObject>()
 
                                      val userReactionMap = userReactions.associate {
-                                         it["comment_id"]?.jsonPrimitive?.contentOrNull to it["reaction_type"]?.jsonPrimitive?.contentOrNull
+                                         it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                      }
 
                                      rpcSummaries.map { summary ->
@@ -427,18 +427,18 @@ class ReactionRepository @Inject constructor(
 
                                  val currentUser = client.auth.currentUserOrNull()
 
-                                 val reactionsByCommentId = reactions.groupBy { it["comment_id"]?.jsonPrimitive?.contentOrNull }
+                                 val reactionsByCommentId = reactions.groupBy { it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
                                  chunkIds.map { commentId ->
                                      val commentReactions = reactionsByCommentId[commentId] ?: emptyList()
                                      val summary = commentReactions
-                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.jsonPrimitive?.contentOrNull ?: "LIKE") }
+                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
                                          .mapValues { it.value.size }
                                          .mapKeys { it.key.name.lowercase() }
 
                                      val userReaction = currentUser?.let { user ->
-                                         commentReactions.firstOrNull { it["user_id"]?.jsonPrimitive?.contentOrNull == user.id }
-                                             ?.get("reaction_type")?.jsonPrimitive?.contentOrNull
+                                         commentReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
+                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                      }
 
                                      CommentReactionSummary(

@@ -86,15 +86,15 @@ class PostRepository constructor(
         private val COLUMN_REGEX = Regex("column \"([^\"]+)\"")
 
         internal fun findDeletedIds(localChunk: List<String>, serverResponse: List<JsonObject>): List<String> {
-            val serverIds = serverResponse.mapNotNull { it["id"]?.jsonPrimitive?.contentOrNull }.toSet()
+            val serverIds = serverResponse.mapNotNull { it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }.toSet()
 
             // Hard deleted: in localChunk but not in serverIds
             val missingIds = localChunk.filter { !serverIds.contains(it) }
 
             // Soft deleted: in serverResponse with is_deleted=true
             val softDeletedIds = serverResponse.filter {
-                it["is_deleted"]?.jsonPrimitive?.booleanOrNull == true
-            }.mapNotNull { it["id"]?.jsonPrimitive?.contentOrNull }
+                it["is_deleted"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull == true
+            }.mapNotNull { it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
             return (missingIds + softDeletedIds).distinct()
         }
@@ -476,7 +476,7 @@ class PostRepository constructor(
                      val reaction = client.from("reactions")
                          .select { filter { eq("post_id", postId); eq("user_id", userId) } }
                          .decodeSingleOrNull<JsonObject>()
-                     val typeStr = reaction?.get("reaction_type")?.jsonPrimitive?.contentOrNull
+                     val typeStr = reaction?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                      Result.success(typeStr?.let { ReactionType.fromString(it) })
                  } catch (e: Exception) {
                      Result.failure(Exception("Error fetching user reaction"))
@@ -500,16 +500,16 @@ class PostRepository constructor(
                 .decodeList<JsonObject>()
 
             val userReactions = reactions.mapNotNull { reaction ->
-                val userId = reaction["user_id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                val userId = reaction["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                 val user = reaction["users"]?.jsonObject
-                val dName = user?.get("display_name")?.jsonPrimitive?.contentOrNull
+                val dName = user?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 UserReaction(
                     userId = userId,
-                    username = if (!dName.isNullOrBlank()) dName else (user?.get("username")?.jsonPrimitive?.contentOrNull ?: "Unknown"),
-                    profileImage = user?.get("avatar")?.jsonPrimitive?.contentOrNull?.let { constructAvatarUrl(it) },
-                    isVerified = user?.get("verify")?.jsonPrimitive?.booleanOrNull ?: false,
-                    reactionType = reaction["reaction_type"]?.jsonPrimitive?.contentOrNull ?: "LIKE",
-                    reactedAt = reaction["created_at"]?.jsonPrimitive?.contentOrNull
+                    username = if (!dName.isNullOrBlank()) dName else (user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "Unknown"),
+                    profileImage = user?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { constructAvatarUrl(it) },
+                    isVerified = user?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false,
+                    reactionType = reaction["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE",
+                    reactedAt = reaction["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 )
             }
             Result.success(userReactions)
@@ -565,12 +565,12 @@ class PostRepository constructor(
             }.decodeList<JsonObject>()
 
             users.forEach { user ->
-                val uid = user["uid"]?.jsonPrimitive?.contentOrNull ?: return@forEach
-                val dName = user["display_name"]?.jsonPrimitive?.contentOrNull
+                val uid = user["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@forEach
+                val dName = user["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 val profile = ProfileData(
-                    username = if (!dName.isNullOrBlank()) dName else user["username"]?.jsonPrimitive?.contentOrNull,
-                    avatarUrl = user["avatar"]?.jsonPrimitive?.contentOrNull?.let { constructAvatarUrl(it) },
-                    isVerified = user["verify"]?.jsonPrimitive?.booleanOrNull ?: false
+                    username = if (!dName.isNullOrBlank()) dName else user["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    avatarUrl = user["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { constructAvatarUrl(it) },
+                    isVerified = user["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
                 profileCache[uid] = CacheEntry(profile)
             }
@@ -591,11 +591,11 @@ class PostRepository constructor(
             }.decodeSingleOrNull<JsonObject>()
 
             if (user != null) {
-                val dName = user["display_name"]?.jsonPrimitive?.contentOrNull
+                val dName = user["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 val profile = ProfileData(
-                    username = if (!dName.isNullOrBlank()) dName else user["username"]?.jsonPrimitive?.contentOrNull,
-                    avatarUrl = user["avatar"]?.jsonPrimitive?.contentOrNull?.let { constructAvatarUrl(it) },
-                    isVerified = user["verify"]?.jsonPrimitive?.booleanOrNull ?: false
+                    username = if (!dName.isNullOrBlank()) dName else user["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    avatarUrl = user["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { constructAvatarUrl(it) },
+                    isVerified = user["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
                 profileCache[userId] = CacheEntry(profile)
                 profile
@@ -633,7 +633,7 @@ class PostRepository constructor(
                 filter { eq("id", postId) }
             }.decodeSingleOrNull<JsonObject>()
 
-            val currentStr = post?.get("post_disable_comments")?.jsonPrimitive?.contentOrNull
+            val currentStr = post?.get("post_disable_comments")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             val currentBool = currentStr == "true"
             val newStr = if (currentBool) "false" else "true"
 

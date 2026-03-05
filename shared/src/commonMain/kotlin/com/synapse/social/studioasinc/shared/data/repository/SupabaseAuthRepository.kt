@@ -177,7 +177,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     override fun isEmailVerified(): Boolean {
         return try {
             val user = client.auth.currentUserOrNull()
-            user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.jsonPrimitive?.contentOrNull == "true" } == true
+            user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "true" } == true
         } catch (e: Exception) {
             logSafeError("Failed to check email verification", e)
             false
@@ -348,7 +348,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                     .decodeList<JsonObject>()
 
                 val providers = identities.mapNotNull {
-                    it["provider"]?.jsonPrimitive?.contentOrNull
+                    it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 }
                 Result.success(providers)
             }
