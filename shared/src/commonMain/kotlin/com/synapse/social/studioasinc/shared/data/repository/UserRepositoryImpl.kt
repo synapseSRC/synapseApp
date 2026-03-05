@@ -41,7 +41,7 @@ class UserRepositoryImpl(
                 filter {
                     eq("id", uid)
                 }
-            }.decodeSingleOrNull<User>()
+            }.decodeSingleOrNull<User>()?.let { it.copy(avatar = it.avatar?.let { url -> constructAvatarUrl(url) }) }
 
             // Cache to DB if found
             if (user != null) {
@@ -75,7 +75,7 @@ class UserRepositoryImpl(
                     eq("id", uid)
                 }
                 select()
-            }.decodeSingleOrNull<User>()
+            }.decodeSingleOrNull<User>()?.let { it.copy(avatar = it.avatar?.let { url -> constructAvatarUrl(url) }) }
 
             if (user != null) {
                 database.userQueries.insertUser(mapDomainUser(user))
@@ -126,7 +126,7 @@ class UserRepositoryImpl(
             username = user.username ?: "",
             email = user.email?.let { EncryptedString(it) },
             fullName = user.displayName,
-            avatarUrl = user.avatar,
+            avatarUrl = user.avatar?.let { constructAvatarUrl(it) },
             bio = user.bio,
             website = user.website,
             location = user.location,
