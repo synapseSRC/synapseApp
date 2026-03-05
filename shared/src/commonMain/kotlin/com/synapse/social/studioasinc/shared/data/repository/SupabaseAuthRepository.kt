@@ -84,14 +84,17 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     override suspend fun ensureProfileExists(userId: String, email: String, username: String?): Result<Unit> {
         return try {
             withContext(Dispatchers.Default) {
+                Napier.d("Checking if user profile exists for userId: $userId", tag = TAG)
                 val count = client.from("users").select(columns = Columns.list("id")) {
                     count(Count.EXACT)
                     filter {
-                        eq("uid", userId)
+                        eq("id", userId)
                     }
                 }.countOrNull()
+                Napier.d("User profile count for $userId: $count", tag = TAG)
 
                 if (count == null || count == 0L) {
+                    Napier.d("Profile does not exist for $userId, creating new profile...", tag = TAG)
                     val actualUsername = username ?: email.substringBefore("@")
 
                     // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
@@ -104,17 +107,25 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                     // The app/UserRepository used "users". shared used "user_profiles".
                     // I see "users" table in Supabase list_tables output earlier.
                     // I will change it to "users" to match the actual DB.
+                    Napier.d("Inserting user profile for $userId into users table...", tag = TAG)
                     client.from("users").insert(profileInsert)
+                    Napier.d("Successfully inserted user profile for $userId.", tag = TAG)
 
                     // Also check if user_settings and user_presence exist in list_tables
                     // Yes: user_settings, user_presence.
                     val settingsInsert = UserSettingsInsert(user_id = userId)
+                    Napier.d("Inserting user settings for $userId...", tag = TAG)
                     client.from("user_settings").insert(settingsInsert)
+                    Napier.d("Successfully inserted user settings for $userId.", tag = TAG)
 
                     val presenceInsert = UserPresenceInsert(user_id = userId)
+                    Napier.d("Inserting user presence for $userId...", tag = TAG)
                     client.from("user_presence").insert(presenceInsert)
+                    Napier.d("Successfully inserted user presence for $userId.", tag = TAG)
 
                     Napier.d("User profile created: $userId", tag = TAG)
+                } else {
+                    Napier.d("Profile already exists for $userId.", tag = TAG)
                 }
                 Result.success(Unit)
             }
