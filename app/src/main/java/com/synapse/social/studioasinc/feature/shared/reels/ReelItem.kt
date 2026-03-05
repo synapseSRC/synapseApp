@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.ui.PlayerView
+import com.synapse.social.studioasinc.feature.shared.reels.components.ReelAction
 import com.synapse.social.studioasinc.feature.shared.reels.components.HeartAnimation
 import com.synapse.social.studioasinc.shared.domain.model.Reel
 import com.synapse.social.studioasinc.ui.components.CircularAvatar
@@ -180,8 +181,8 @@ fun ReelItem(
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
-                        startY = 500f
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.3f), Color.Black.copy(alpha = 0.8f)),
+                        startY = with(density) { 300.dp.toPx() }
                     )
                 )
         )
@@ -242,53 +243,41 @@ fun ReelItem(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                IconButton(onClick = onLikeClick) {
-                    Icon(
-                        imageVector = if (reel.isLikedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Like",
-                        tint = if (reel.isLikedByCurrentUser) Color.Red else Color.White
-                    )
-                }
-                Text(text = "${reel.likesCount}", color = Color.White)
-                Spacer(modifier = Modifier.size(16.dp))
+                ReelAction(
+                    icon = if (reel.isLikedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Like",
+                    tint = if (reel.isLikedByCurrentUser) Color.Red else Color.White,
+                    text = "${reel.likesCount}",
+                    onClick = onLikeClick
+                )
 
-                IconButton(onClick = onOpposeClick) {
-                    Icon(
-                        imageVector = if (reel.isOpposedByCurrentUser) Icons.Default.ThumbDown else Icons.Outlined.ThumbDown,
-                        contentDescription = "Oppose",
-                        tint = if (reel.isOpposedByCurrentUser) Color.Red else Color.White
-                    )
-                }
-                Text(text = "${reel.opposeCount}", color = Color.White)
-                Spacer(modifier = Modifier.size(16.dp))
+                ReelAction(
+                    icon = if (reel.isOpposedByCurrentUser) Icons.Default.ThumbDown else Icons.Outlined.ThumbDown,
+                    contentDescription = "Oppose",
+                    tint = if (reel.isOpposedByCurrentUser) Color.Red else Color.White,
+                    text = "${reel.opposeCount}",
+                    onClick = onOpposeClick
+                )
 
-                IconButton(onClick = onCommentClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.Comment,
-                        contentDescription = "Comment",
-                        tint = Color.White
-                    )
-                }
-                Text(text = "${reel.commentCount}", color = Color.White)
-                Spacer(modifier = Modifier.size(16.dp))
+                ReelAction(
+                    icon = Icons.AutoMirrored.Outlined.Comment,
+                    contentDescription = "Comment",
+                    text = "${reel.commentCount}",
+                    onClick = onCommentClick
+                )
 
-                IconButton(onClick = onShareClick) {
-                    Icon(
-                        imageVector = Icons.Outlined.Share,
-                        contentDescription = "Share",
-                        tint = Color.White
-                    )
-                }
-                Text(text = "${reel.shareCount}", color = Color.White)
-                Spacer(modifier = Modifier.size(16.dp))
+                ReelAction(
+                    icon = Icons.Outlined.Share,
+                    contentDescription = "Share",
+                    text = "${reel.shareCount}",
+                    onClick = onShareClick
+                )
 
-                IconButton(onClick = onMoreClick) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More",
-                        tint = Color.White
-                    )
-                }
+                ReelAction(
+                    icon = Icons.Default.MoreVert,
+                    contentDescription = "More",
+                    onClick = onMoreClick
+                )
             }
         }
 
@@ -319,14 +308,25 @@ fun ReelItem(
                         Column {
                             Text(
                                 text = reel.creatorUsername ?: "Unknown",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                    shadow = androidx.compose.ui.graphics.Shadow(
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        blurRadius = 4f
+                                    )
+                                ),
                                 color = Color.White,
                                 modifier = Modifier.clickable(onClick = onUserClick)
                             )
                             reel.locationName?.let { location ->
                                 Text(
                                     text = location,
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        shadow = androidx.compose.ui.graphics.Shadow(
+                                            color = Color.Black.copy(alpha = 0.5f),
+                                            blurRadius = 4f
+                                        )
+                                    ),
                                     color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
@@ -337,7 +337,12 @@ fun ReelItem(
                         if (caption.isNotEmpty()) {
                             Text(
                                 text = caption,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    shadow = androidx.compose.ui.graphics.Shadow(
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        blurRadius = 4f
+                                    )
+                                ),
                                 color = Color.White,
                                 maxLines = 3
                             )
@@ -347,8 +352,13 @@ fun ReelItem(
                         if (musicTrack.isNotEmpty()) {
                             Text(
                                 text = "🎵 $musicTrack",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    shadow = androidx.compose.ui.graphics.Shadow(
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        blurRadius = 4f
+                                    )
+                                ),
+                                color = Color.White.copy(alpha = 0.9f)
                             )
                         }
                     }
@@ -365,7 +375,12 @@ fun ReelItem(
             }
         }
 
-        if (showHeartAnimation) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showHeartAnimation,
+            enter = androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
             HeartAnimation(
                 onAnimationEnd = { showHeartAnimation = false }
             )

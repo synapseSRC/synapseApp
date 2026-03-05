@@ -48,6 +48,17 @@ fun ReelsScreen(
             if (urlsToPreload.isNotEmpty()) {
                 viewModel.preloadReels(urlsToPreload)
             }
+
+            // Proactively release players for reels just out of the window to save memory
+            // without looping over the entire list.
+            val outOfBoundsBefore = index - 3
+            if (outOfBoundsBefore >= 0 && outOfBoundsBefore < reels.size) {
+                viewModel.releasePlayer(reels[outOfBoundsBefore].videoUrl)
+            }
+            val outOfBoundsAfter = index + 3
+            if (outOfBoundsAfter < reels.size) {
+                viewModel.releasePlayer(reels[outOfBoundsAfter].videoUrl)
+            }
         }
     }
 

@@ -52,6 +52,10 @@ class ReelsViewModel @Inject constructor(
         videoPlayerManager.pauseAll()
     }
 
+    fun releasePlayer(url: String) {
+        videoPlayerManager.releasePlayer(url)
+    }
+
     fun releaseAllPlayers() {
         videoPlayerManager.releaseAll()
     }

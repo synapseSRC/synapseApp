@@ -35,7 +35,7 @@ class VideoPlayerManager @Inject constructor(
         private const val TAG = "VideoPlayerManager"
         private const val CACHE_SIZE_BYTES: Long = 200 * 1024 * 1024
         private const val MAX_PLAYER_POOL_SIZE = 3
-        private const val PRELOAD_SIZE_BYTES: Long = 5 * 1024 * 1024
+        private const val PRELOAD_SIZE_BYTES: Long = 2 * 1024 * 1024
         private const val MEDIA_CACHE_DIR = "media_cache"
     }
 
