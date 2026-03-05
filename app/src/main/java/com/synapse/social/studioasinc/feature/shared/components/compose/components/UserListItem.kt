@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -29,22 +30,12 @@ fun UserListItem(
     onMessageClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable { onUserClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
+    ListItem(
+        modifier = modifier.clickable { onUserClick() },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        leadingContent = {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(user.avatar)
@@ -58,58 +49,69 @@ fun UserListItem(
                 placeholder = painterResource(R.drawable.ic_profile_placeholder),
                 error = painterResource(R.drawable.ic_profile_placeholder)
             )
-
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (!user.displayName.isNullOrEmpty()) {
-                        Text(
-                            text = user.displayName,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    if (user.verify) {
-                        Icon(
-                            imageVector = Icons.Default.Verified,
-                            contentDescription = "Verified",
-                            modifier = Modifier
-                                .size(16.dp)
-                                .padding(start = 4.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+        },
+        headlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!user.displayName.isNullOrEmpty()) {
+                    Text(
+                        text = user.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        text = "@${user.username}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
+                if (user.verify) {
+                    Icon(
+                        imageVector = Icons.Default.Verified,
+                        contentDescription = "Verified",
+                        modifier = Modifier
+                            .size(18.dp)
+                            .padding(start = 4.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        },
+        supportingContent = {
+            if (!user.displayName.isNullOrEmpty()) {
                 Text(
                     text = "@${user.username}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-
-
+        },
+        trailingContent = {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
                     onClick = onMessageClick,
                     colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Message,
                         contentDescription = "Message",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
@@ -118,5 +120,5 @@ fun UserListItem(
                 )
             }
         }
-    }
+    )
 }

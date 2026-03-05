@@ -151,15 +151,17 @@ fun FollowListScreen(
 
                         else -> {
                             LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                modifier = Modifier.fillMaxSize()
                             ) {
                                 items(listState.users, key = { it.uid }) { user ->
                                     UserListItem(
                                         user = user,
                                         onUserClick = { onUserClick(user.uid) },
                                         onMessageClick = { onMessageClick(user.uid) }
+                                    )
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                        thickness = 0.5.dp
                                     )
                                 }
                             }
