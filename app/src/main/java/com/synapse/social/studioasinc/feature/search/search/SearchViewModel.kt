@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.shared.domain.model.SearchAccount
 import com.synapse.social.studioasinc.shared.domain.model.SearchHashtag
 import com.synapse.social.studioasinc.shared.domain.model.SearchNews
@@ -50,7 +51,9 @@ data class SearchUiState(
     val accounts: List<SearchAccount> = emptyList(),
     val searchHistory: List<String> = emptyList(),
     val lastQuery: String = "",
-    val cachedData: Map<SearchTab, Any> = emptyMap()
+    val cachedData: Map<SearchTab, Any> = emptyMap(),
+    val blockSuccess: Boolean = false,
+    val blockError: String? = null
 )
 
 @HiltViewModel
@@ -61,6 +64,7 @@ class SearchViewModel @Inject constructor(
     private val getSuggestedAccountsUseCase: GetSuggestedAccountsUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
+    private val blockUserUseCase: BlockUserUseCase,
     private val authRepository: AuthRepository,
     private val sharedPreferences: SharedPreferences,
     private val postRepository: com.synapse.social.studioasinc.data.repository.PostRepository,
@@ -373,13 +377,24 @@ class SearchViewModel @Inject constructor(
 
     fun blockUser(userId: String) {
         viewModelScope.launch {
-             val currentUserId = authRepository.getCurrentUserId() ?: return@launch
-             profileActionRepository.blockUser(currentUserId, userId)
-                 .onSuccess {
-                     performSearch(uiState.value.query)
-                 }
-                 .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+            _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+            
+            blockUserUseCase(userId)
+                .onSuccess {
+                    _uiState.update { it.copy(blockSuccess = true) }
+                    // Refresh search results to remove blocked user's posts
+                    performSearch(uiState.value.query)
+                }
+                .onFailure { error ->
+                    _uiState.update { 
+                        it.copy(blockError = error.message ?: "Failed to block user")
+                    }
+                }
         }
+    }
+    
+    fun clearBlockStatus() {
+        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
     }
 
     fun revokeVote(post: com.synapse.social.studioasinc.domain.model.Post) {

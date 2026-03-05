@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import com.synapse.social.studioasinc.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,7 +63,8 @@ fun FeedScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val posts = viewModel.posts.collectAsLazyPagingItems()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
-
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     val storyTrayState by storyTrayViewModel.storyTrayState.collectAsStateWithLifecycle()
     val currentUser by storyTrayViewModel.currentUser.collectAsStateWithLifecycle()
@@ -70,7 +74,23 @@ fun FeedScreen(
     
     val isRefreshing = isUserRefreshing || posts.loadState.refresh is LoadState.Loading
 
-
+    // Handle block success/error messages
+    LaunchedEffect(uiState.blockSuccess, uiState.blockError) {
+        when {
+            uiState.blockSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.block_success)
+                )
+                viewModel.clearBlockStatus()
+            }
+            uiState.blockError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.blockError ?: context.getString(R.string.error_block_failed)
+                )
+                viewModel.clearBlockStatus()
+            }
+        }
+    }
 
     val currentOnCommentClick by rememberUpdatedState(onCommentClick)
     val currentOnUserClick by rememberUpdatedState(onUserClick)
@@ -96,23 +116,24 @@ fun FeedScreen(
         }
     }
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isUserRefreshing = true
-            posts.refresh()
-            viewModel.refresh()
-            storyTrayViewModel.refresh()
-        },
-        state = pullToRefreshState,
-        indicator = {
-            ExpressivePullToRefreshIndicator(
-                state = pullToRefreshState,
-                isRefreshing = isRefreshing,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
-        }
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isUserRefreshing = true
+                posts.refresh()
+                viewModel.refresh()
+                storyTrayViewModel.refresh()
+            },
+            state = pullToRefreshState,
+            indicator = {
+                ExpressivePullToRefreshIndicator(
+                    state = pullToRefreshState,
+                    isRefreshing = isRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
+        ) {
         if (posts.loadState.refresh is LoadState.Loading && posts.itemCount == 0) {
             FeedLoading()
         } else if (posts.loadState.refresh is LoadState.Error) {
@@ -250,6 +271,12 @@ fun FeedScreen(
                 }
             }
         }
+    }
+    
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier.align(Alignment.BottomCenter)
+    )
     }
 
     selectedPost?.let { post ->

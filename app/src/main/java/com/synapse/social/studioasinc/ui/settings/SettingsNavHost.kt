@@ -16,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
+import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 
 
 
@@ -96,7 +98,7 @@ fun SettingsNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToBlockedUsers = {
-
+                    navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS)
                 },
                 onNavigateToMutedUsers = {
 
@@ -288,6 +290,17 @@ fun SettingsNavHost(
         composable(route = SettingsDestination.ROUTE_ACCESSIBILITY) {
             AccessibilityScreen(
                 onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+
+        composable(route = SettingsDestination.ROUTE_BLOCKED_CONTACTS) {
+            val viewModel: BlockingViewModel = hiltViewModel()
+            BlockedContactsScreen(
+                viewModel = viewModel,
+                onNavigateBack = {
                     navController.popBackStack()
                 }
             )

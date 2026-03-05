@@ -56,6 +56,9 @@ fun AuthScreen(
                     val intent = androidx.browser.customtabs.CustomTabsIntent.Builder().build()
                     intent.launchUrl(context, uri)
                 }
+                is AuthNavigationEvent.InitiateGoogleSignIn -> {
+                    // Google Sign-In is handled by the activity
+                }
             }
         }
     }

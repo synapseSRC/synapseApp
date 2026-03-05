@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 
 
@@ -201,18 +202,18 @@ internal fun ContactsSection(
     onNavigateToMutedUsers: () -> Unit,
     isLoading: Boolean
 ) {
-    SettingsSection(title = "Contacts") {
+    SettingsSection(title = stringResource(R.string.privacy_section_blocking)) {
         SettingsNavigationItem(
-            title = "Blocked Contacts",
-            subtitle = "Manage blocked users",
+            title = stringResource(R.string.blocked_contacts),
+            subtitle = stringResource(R.string.privacy_blocked_users_subtitle),
             icon = R.drawable.ic_block,
             onClick = onNavigateToBlockedUsers,
             enabled = !isLoading
         )
         SettingsDivider()
         SettingsNavigationItem(
-            title = "Muted Users",
-            subtitle = "Manage muted users",
+            title = stringResource(R.string.privacy_muted_users),
+            subtitle = stringResource(R.string.privacy_muted_users_subtitle),
             icon = R.drawable.ic_notifications,
             onClick = onNavigateToMutedUsers,
             enabled = !isLoading

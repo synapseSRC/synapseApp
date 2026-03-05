@@ -34,4 +34,8 @@ sealed class AuthNavigationEvent {
 
 
     data class OpenUrl(val url: String) : AuthNavigationEvent()
+    
+    
+    
+    object InitiateGoogleSignIn : AuthNavigationEvent()
 }

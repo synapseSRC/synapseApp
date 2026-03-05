@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
@@ -95,20 +96,21 @@ fun PostOptionsBottomSheet(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            val options = buildOptions(
+                isOwner = isOwner,
+                commentsDisabled = commentsDisabled,
+                post = post,
+                onEdit = { onEdit(); onDismiss() },
+                onDelete = { showDeleteDialog = true },
+                onToggleComments = { onToggleComments(); onDismiss() },
+                onReport = { onReport(); onDismiss() },
+                onBlock = { onBlock(); onDismiss() },
+                onShare = { onShare(); onDismiss() },
+                onRevokeVote = { onRevokeVote(); onDismiss() }
+            )
 
             LazyColumn {
-                items(buildOptions(
-                    isOwner = isOwner,
-                    commentsDisabled = commentsDisabled,
-                    post = post,
-                    onEdit = { onEdit(); onDismiss() },
-                    onDelete = { showDeleteDialog = true },
-                    onToggleComments = { onToggleComments(); onDismiss() },
-                    onReport = { onReport(); onDismiss() },
-                    onBlock = { onBlock(); onDismiss() },
-                    onShare = { onShare(); onDismiss() },
-                    onRevokeVote = { onRevokeVote(); onDismiss() }
-                )) { option ->
+                items(options) { option ->
                     OptionItem(option = option)
                 }
             }
@@ -195,6 +197,7 @@ private fun OptionItem(option: PostOption) {
     }
 }
 
+@Composable
 private fun buildOptions(
     isOwner: Boolean,
     commentsDisabled: Boolean,
@@ -210,23 +213,23 @@ private fun buildOptions(
     val options = mutableListOf<PostOption>()
 
     if (isOwner) {
-        options.add(PostOption("Edit", R.drawable.ic_edit_note_48px, action = onEdit))
+        options.add(PostOption(stringResource(R.string.edit), R.drawable.ic_edit_note_48px, action = onEdit))
         options.add(PostOption(
-            if (commentsDisabled) "Turn on commenting" else "Turn off commenting",
+            if (commentsDisabled) stringResource(R.string.turn_on_commenting) else stringResource(R.string.turn_off_commenting),
             R.drawable.ic_comments_disabled,
             action = onToggleComments
         ))
-        options.add(PostOption("Delete", R.drawable.ic_delete_48px, isDangerous = true, action = onDelete))
+        options.add(PostOption(stringResource(R.string.delete), R.drawable.ic_delete_48px, isDangerous = true, action = onDelete))
     } else {
-        options.add(PostOption("Report", R.drawable.ic_report_48px, isDangerous = true, action = onReport))
-        options.add(PostOption("Block", R.drawable.mobile_block_24px, isDangerous = true, action = onBlock))
+        options.add(PostOption(stringResource(R.string.report), R.drawable.ic_report_48px, isDangerous = true, action = onReport))
+        options.add(PostOption(stringResource(R.string.block_user), R.drawable.mobile_block_24px, isDangerous = true, action = onBlock))
     }
 
     if (post.userPollVote != null) {
-        options.add(PostOption("Revoke vote", R.drawable.ic_delete_48px, action = onRevokeVote))
+        options.add(PostOption(stringResource(R.string.revoke_vote), R.drawable.ic_delete_48px, action = onRevokeVote))
     }
 
-    options.add(PostOption("Share via...", R.drawable.ic_send, action = onShare))
+    options.add(PostOption(stringResource(R.string.share_via), R.drawable.ic_send, action = onShare))
 
     return options
 }

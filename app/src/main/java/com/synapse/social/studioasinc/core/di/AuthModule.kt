@@ -93,6 +93,12 @@ object AuthModule {
 
     @Provides
     @Singleton
+    fun provideSignInWithGoogleIdTokenUseCase(authRepository: AuthRepository): SignInWithGoogleIdTokenUseCase {
+        return SignInWithGoogleIdTokenUseCase(authRepository)
+    }
+
+    @Provides
+    @Singleton
     fun provideRefreshSessionUseCase(authRepository: AuthRepository): RefreshSessionUseCase {
         return RefreshSessionUseCase(authRepository)
     }

@@ -13,7 +13,7 @@ import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCase
-import com.synapse.social.studioasinc.domain.usecase.profile.BlockUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.GetFollowingUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileContentUseCase
@@ -70,7 +70,9 @@ data class ProfileScreenState(
     val isFollowLoading: Boolean = false,
     val searchResults: List<com.synapse.social.studioasinc.shared.domain.model.User> = emptyList(),
     val isSearching: Boolean = false,
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
+    val blockSuccess: Boolean = false,
+    val blockError: String? = null
 )
 
 @HiltViewModel
@@ -317,8 +319,22 @@ class ProfileViewModel @Inject constructor(
 
     fun blockUser(blockedUserId: String) {
         viewModelScope.launch {
-            blockUserUseCase(_state.value.currentUserId, blockedUserId).collect {}
+            _state.update { it.copy(blockSuccess = false, blockError = null) }
+            
+            blockUserUseCase(blockedUserId)
+                .onSuccess {
+                    _state.update { it.copy(blockSuccess = true) }
+                }
+                .onFailure { error ->
+                    _state.update { 
+                        it.copy(blockError = error.message ?: "Failed to block user")
+                    }
+                }
         }
+    }
+    
+    fun clearBlockStatus() {
+        _state.update { it.copy(blockSuccess = false, blockError = null) }
     }
 
     fun reportUser(reportedUserId: String, reason: String) {

@@ -17,5 +17,7 @@ data class PostDetailUiState(
     val replyLoading: Set<String> = emptySet(),
     val commentActionsLoading: Set<String> = emptySet(),
     val currentUserAvatarUrl: String? = null,
-    val refreshTrigger: Int = 0
+    val refreshTrigger: Int = 0,
+    val blockSuccess: Boolean = false,
+    val blockError: String? = null
 )

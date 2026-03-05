@@ -1152,4 +1152,26 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="title_inbox">Inbox</string>
     <string name="tab_contacts_label">Contacts</string>
     <string name="tab_messages">Messages</string>
+
+    <!-- User Blocking Feature -->
+    <string name="blocked_contacts">Blocked Contacts</string>
+    <string name="navigate_back">Navigate back</string>
+    <string name="no_blocked_users">No blocked users</string>
+    <string name="unblock_user_title">Unblock User</string>
+    <string name="unblock_user_message">Are you sure you want to unblock this user? They will be able to interact with you again.</string>
+    <string name="unblock">Unblock</string>
+    <string name="block_user">Block User</string>
+    <string name="block_success">User blocked successfully</string>
+    <string name="unblock_success">User unblocked successfully</string>
+    <string name="error_block_failed">Failed to block user. Please try again.</string>
+    <string name="error_unblock_failed">Failed to unblock user. Please try again.</string>
+    <string name="error_load_failed">Failed to load blocked users. Please try again.</string>
+    <string name="error_already_blocked">This user is already blocked</string>
+    <string name="error_cannot_block_self">You cannot block yourself</string>
+
+    <!-- Post Options Menu -->
+    <string name="turn_on_commenting">Turn on commenting</string>
+    <string name="turn_off_commenting">Turn off commenting</string>
+    <string name="revoke_vote">Revoke vote</string>
+    <string name="share_via">Share via…</string>
 </resources>

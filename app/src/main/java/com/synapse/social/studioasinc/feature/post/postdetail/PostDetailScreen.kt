@@ -55,6 +55,7 @@ fun PostDetailScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showMediaViewer by remember { mutableStateOf(false) }
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
@@ -73,6 +74,24 @@ fun PostDetailScreen(
     LaunchedEffect(uiState.refreshTrigger) {
         if (uiState.refreshTrigger > 0) {
             pagingItems.refresh()
+        }
+    }
+    
+    // Handle block success/error messages
+    LaunchedEffect(uiState.blockSuccess, uiState.blockError) {
+        when {
+            uiState.blockSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.block_success)
+                )
+                viewModel.clearBlockStatus()
+            }
+            uiState.blockError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.blockError ?: context.getString(R.string.error_block_failed)
+                )
+                viewModel.clearBlockStatus()
+            }
         }
     }
 
@@ -156,6 +175,7 @@ fun PostDetailScreen(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { PostDetailTopBar(onNavigateBack) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             PostDetailBottomBar(
                 uiState = uiState,

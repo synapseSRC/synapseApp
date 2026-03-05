@@ -64,31 +64,43 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     val effectiveIsOwnProfile = state.isOwnProfile && state.viewAsMode == null
-
 
     val effectiveState = state.copy(isOwnProfile = effectiveIsOwnProfile)
 
     val listState = rememberLazyListState()
     var showUserSearchDialog by remember { mutableStateOf(false) }
 
-
     var showMediaViewer by remember { mutableStateOf(false) }
     var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var initialMediaPage by remember { mutableStateOf(0) }
 
-
     var showPostOptions by remember { mutableStateOf(false) }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
 
-    val context = LocalContext.current
+    // Handle block success/error messages
+    LaunchedEffect(state.blockSuccess, state.blockError) {
+        when {
+            state.blockSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.block_success)
+                )
+                viewModel.clearBlockStatus()
+            }
+            state.blockError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = state.blockError ?: context.getString(R.string.error_block_failed)
+                )
+                viewModel.clearBlockStatus()
+            }
+        }
+    }
 
     val density = androidx.compose.ui.platform.LocalDensity.current
     val coverHeightPx = with(density) { 200.dp.toPx() }
-
 
     val scrollProgress = remember {
         derivedStateOf {

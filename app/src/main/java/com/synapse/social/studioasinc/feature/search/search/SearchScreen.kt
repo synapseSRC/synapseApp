@@ -82,6 +82,24 @@ fun SearchScreen(
             snackbarHostState.showSnackbar(error)
         }
     }
+    
+    // Handle block success/error messages
+    LaunchedEffect(uiState.blockSuccess, uiState.blockError) {
+        when {
+            uiState.blockSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(com.synapse.social.studioasinc.R.string.block_success)
+                )
+                viewModel.clearBlockStatus()
+            }
+            uiState.blockError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.blockError ?: context.getString(com.synapse.social.studioasinc.R.string.error_block_failed)
+                )
+                viewModel.clearBlockStatus()
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

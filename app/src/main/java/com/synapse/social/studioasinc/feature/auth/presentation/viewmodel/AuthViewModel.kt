@@ -42,6 +42,7 @@ class AuthViewModel @Inject constructor(
     private val handleOAuthCallbackUseCase: HandleOAuthCallbackUseCase,
     private val getOAuthUrlUseCase: GetOAuthUrlUseCase,
     private val signInWithOAuthUseCase: SignInWithOAuthUseCase,
+    private val signInWithGoogleIdTokenUseCase: SignInWithGoogleIdTokenUseCase,
     private val refreshSessionUseCase: RefreshSessionUseCase,
     private val isEmailVerifiedUseCase: IsEmailVerifiedUseCase
 ) : ViewModel() {
@@ -248,11 +249,8 @@ class AuthViewModel @Inject constructor(
                      }
                  )
              } else if (provider.equals("Google", ignoreCase = true)) {
-                 signInWithOAuthUseCase(SocialProvider.GOOGLE, Constants.AUTH_REDIRECT_URL).fold(
-                     onSuccess = {},
-                     onFailure = { e ->
-                     }
-                 )
+                 // Google Sign-In is handled natively via GoogleAuthHelper in AuthActivity
+                 _navigationEvent.emit(AuthNavigationEvent.InitiateGoogleSignIn)
              } else {
                  getOAuthUrlUseCase(provider, Constants.AUTH_REDIRECT_URL).fold(
                      onSuccess = { url ->
@@ -262,6 +260,40 @@ class AuthViewModel @Inject constructor(
                      }
                  )
              }
+        }
+    }
+
+    fun handleGoogleIdToken(idToken: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            if (currentState is AuthUiState.SignIn) {
+                _uiState.value = currentState.copy(isLoading = true, generalError = null)
+            } else if (currentState is AuthUiState.SignUp) {
+                _uiState.value = currentState.copy(isLoading = true, generalError = null)
+            }
+            
+            signInWithGoogleIdTokenUseCase(idToken).fold(
+                onSuccess = {
+                    _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
+                },
+                onFailure = { error ->
+                    when (val state = _uiState.value) {
+                        is AuthUiState.SignIn -> {
+                            _uiState.value = state.copy(
+                                isLoading = false,
+                                generalError = error.message ?: "Google Sign-In failed"
+                            )
+                        }
+                        is AuthUiState.SignUp -> {
+                            _uiState.value = state.copy(
+                                isLoading = false,
+                                generalError = error.message ?: "Google Sign-In failed"
+                            )
+                        }
+                        else -> {}
+                    }
+                }
+            )
         }
     }
 

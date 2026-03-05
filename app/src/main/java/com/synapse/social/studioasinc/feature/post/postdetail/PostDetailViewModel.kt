@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostEvent
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.data.paging.CommentPagingSource
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -37,7 +38,8 @@ class PostDetailViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val authRepository: AuthRepository,
     private val mediaUploadHandler: MediaUploadHandler,
-    private val postActionsRepository: PostActionsRepository
+    private val postActionsRepository: PostActionsRepository,
+    private val blockUserUseCase: BlockUserUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PostDetailUiState())
@@ -284,8 +286,22 @@ class PostDetailViewModel @Inject constructor(
 
     fun blockUser(userId: String) {
         viewModelScope.launch {
-
+            _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+            
+            blockUserUseCase(userId)
+                .onSuccess {
+                    _uiState.update { it.copy(blockSuccess = true) }
+                }
+                .onFailure { error ->
+                    _uiState.update { 
+                        it.copy(blockError = error.message ?: "Failed to block user")
+                    }
+                }
         }
+    }
+    
+    fun clearBlockStatus() {
+        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
     }
 
     fun hideComment(commentId: String) {

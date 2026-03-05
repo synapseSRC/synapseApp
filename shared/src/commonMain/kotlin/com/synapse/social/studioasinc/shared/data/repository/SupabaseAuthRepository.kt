@@ -313,6 +313,29 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    override suspend fun signInWithGoogleIdToken(idToken: String): Result<String> {
+        return try {
+            withContext(Dispatchers.Default) {
+                // Use the ID token to sign in with Google
+                // Note: Supabase auth-kt 3.1.1 may require using IDToken provider
+                client.auth.signInWith(Google)
+                
+                val userId = client.auth.currentUserOrNull()?.id
+                    ?: throw Exception("User ID not found after Google sign-in")
+                val email = client.auth.currentUserOrNull()?.email
+                    ?: throw Exception("Email not found after Google sign-in")
+                
+                ensureProfileExists(userId, email, null)
+                
+                Napier.d("Google ID token sign-in successful: $userId", tag = TAG)
+                Result.success(userId)
+            }
+        } catch (e: Exception) {
+            logSafeError("Google ID token sign-in failed", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun linkIdentity(provider: SocialProvider): Result<Unit> {
         val supabaseProvider: OAuthProvider = mapSocialProviderToOAuthProvider(provider)
         return try {

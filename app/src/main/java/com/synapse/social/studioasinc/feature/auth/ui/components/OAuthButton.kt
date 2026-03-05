@@ -40,6 +40,7 @@ fun OAuthButton(
 
     val (iconRes, label) = when (provider.lowercase()) {
         "google" -> R.drawable.ic_google_logo to "Continue with Google"
+        "apple" -> R.drawable.ic_apple_logo to "Continue with Apple"
         "facebook" -> R.drawable.ic_facebook_logo to "Continue with Facebook"
         "github" -> R.drawable.ic_github_logo to "Continue with GitHub"
         else -> R.drawable.ic_google_logo to "Continue with $provider"

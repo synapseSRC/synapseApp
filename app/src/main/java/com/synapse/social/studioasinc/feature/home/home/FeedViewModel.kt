@@ -18,6 +18,7 @@ import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.domain.usecase.settings.GetAppearanceSettingsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEvent
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus
@@ -41,7 +42,9 @@ data class FeedUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val error: String? = null,
-    val postViewStyle: PostViewStyle = PostViewStyle.SWIPE
+    val postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
+    val blockSuccess: Boolean = false,
+    val blockError: String? = null
 )
 
 @HiltViewModel
@@ -55,6 +58,7 @@ class FeedViewModel @Inject constructor(
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
+    private val blockUserUseCase: BlockUserUseCase,
     private val postRepository: com.synapse.social.studioasinc.data.repository.PostRepository,
     application: Application
 ) : AndroidViewModel(application) {
@@ -324,6 +328,24 @@ class FeedViewModel @Inject constructor(
     }
 
     fun blockUser(userId: String) {
-        // UI action
+        viewModelScope.launch {
+            _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+            
+            blockUserUseCase(userId)
+                .onSuccess {
+                    _uiState.update { it.copy(blockSuccess = true) }
+                    // Refresh feed to remove blocked user's posts
+                    refresh()
+                }
+                .onFailure { error ->
+                    _uiState.update { 
+                        it.copy(blockError = error.message ?: "Failed to block user")
+                    }
+                }
+        }
+    }
+    
+    fun clearBlockStatus() {
+        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
     }
 }
