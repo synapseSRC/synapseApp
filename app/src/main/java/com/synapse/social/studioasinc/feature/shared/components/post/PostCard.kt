@@ -167,6 +167,9 @@ fun PostCard(
                     timestamp = state.formattedTimestamp,
                     onUserClick = onUserClick,
                     onOptionsClick = onOptionsClick,
+                    feeling = state.post.metadata?.feeling,
+                    locationName = state.post.locationName,
+                    taggedPeople = state.post.metadata?.taggedPeople ?: emptyList(),
                     replyToUsername = if (state.isComment) state.parentAuthorUsername else null,
                     onReplyToClick = onParentAuthorClick
                 )
@@ -196,14 +199,6 @@ fun PostCard(
                     quotedPost = contentQuotedPost,
                     isExpanded = state.isExpanded,
                     modifier = Modifier.padding(top = 2.dp)
-                )
-
-                // Metadata (Feeling, Location, Tagged People)
-                PostMetadataContent(
-                    feeling = state.post.metadata?.feeling,
-                    locationName = state.post.locationName,
-                    taggedPeople = state.post.metadata?.taggedPeople ?: emptyList(),
-                    modifier = Modifier.padding(bottom = 4.dp)
                 )
 
                 PostInteractionBar(
@@ -244,73 +239,3 @@ fun PostCard(
     }
 }
 
-@Composable
-private fun PostMetadataContent(
-    feeling: com.synapse.social.studioasinc.domain.model.FeelingActivity?,
-    locationName: String?,
-    taggedPeople: List<User>,
-    modifier: Modifier = Modifier
-) {
-    if (feeling == null && locationName.isNullOrEmpty() && taggedPeople.isEmpty()) return
-
-    val annotatedText = buildAnnotatedString {
-        if (feeling != null) {
-            append("is ")
-            append(feeling.emoji)
-            append(" feeling ")
-            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(feeling.text)
-            }
-        }
-
-        if (taggedPeople.isNotEmpty()) {
-            if (feeling == null) {
-                append("\u2014 with ")
-            } else {
-                append(" with ")
-            }
-
-            if (taggedPeople.size == 1) {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(taggedPeople[0].displayName ?: taggedPeople[0].username ?: "Unknown")
-                }
-            } else if (taggedPeople.size == 2) {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(taggedPeople[0].displayName ?: taggedPeople[0].username ?: "Unknown")
-                }
-                append(" and ")
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(taggedPeople[1].displayName ?: taggedPeople[1].username ?: "Unknown")
-                }
-            } else {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(taggedPeople[0].displayName ?: taggedPeople[0].username ?: "Unknown")
-                }
-                append(" and ")
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append("${taggedPeople.size - 1} others")
-                }
-            }
-        }
-
-        if (!locationName.isNullOrEmpty()) {
-            if (feeling == null && taggedPeople.isEmpty()) {
-                append("is at ")
-            } else {
-                append(" at ")
-            }
-            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(locationName)
-            }
-        }
-    }
-
-    Text(
-        text = annotatedText,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-        modifier = modifier
-    )
-}

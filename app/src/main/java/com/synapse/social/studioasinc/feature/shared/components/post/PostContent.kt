@@ -71,7 +71,7 @@ fun PostContent(
             Column {
                 AndroidView(
                     modifier = Modifier
-                        .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small),
+                        .padding(vertical = Spacing.Small),
                     factory = { ctx ->
                         TextView(ctx).apply {
                             setTextColor(colorOnSurface.toArgb())
@@ -106,7 +106,6 @@ fun PostContent(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
-                            .padding(horizontal = Spacing.SmallMedium)
                             .clickable { localExpanded = true }
                     )
                 } else if (showFullText && !isExpanded) {
@@ -116,7 +115,6 @@ fun PostContent(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
-                            .padding(horizontal = Spacing.SmallMedium)
                             .clickable { localExpanded = false }
                     )
                 }

@@ -35,14 +35,15 @@ fun PostHeader(
     timestamp: String,
     onUserClick: () -> Unit,
     onOptionsClick: () -> Unit,
+    taggedPeople: List<User> = emptyList(),
+    feeling: FeelingActivity? = null,
+    locationName: String? = null,
     replyToUsername: String? = null,
     onReplyToClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onUserClick)
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -92,32 +93,95 @@ fun PostHeader(
             }
         }
 
-        if (replyToUsername != null) {
-                Row(
-                    modifier = Modifier.padding(top = 1.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val replyingToText = androidx.compose.ui.res.stringResource(
-                        com.synapse.social.studioasinc.R.string.replying_to,
-                        ""
-                    ).replace("%s", "").trim()
+        if (feeling != null || taggedPeople.isNotEmpty() || !locationName.isNullOrEmpty()) {
+            val annotatedText = buildAnnotatedString {
+                if (feeling != null) {
+                    append("is ")
+                    append(feeling.emoji)
+                    append(" feeling ")
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(feeling.text)
+                    }
+                }
 
-                    Text(
-                        text = "$replyingToText ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "@$replyToUsername",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = if (onReplyToClick != null) {
-                            Modifier.clickable { onReplyToClick() }
-                        } else {
-                            Modifier
+                if (taggedPeople.isNotEmpty()) {
+                    if (feeling == null) {
+                        append("\u2014 with ")
+                    } else {
+                        append(" with ")
+                    }
+
+                    if (taggedPeople.size == 1) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(taggedPeople[0].displayName ?: taggedPeople[0].username ?: "Unknown")
                         }
-                    )
+                    } else if (taggedPeople.size == 2) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(taggedPeople[0].displayName ?: taggedPeople[0].username ?: "Unknown")
+                        }
+                        append(" and ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(taggedPeople[1].displayName ?: taggedPeople[1].username ?: "Unknown")
+                        }
+                    } else {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(taggedPeople[0].displayName ?: taggedPeople[0].username ?: "Unknown")
+                        }
+                        append(" and ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append("${taggedPeople.size - 1} others")
+                        }
+                    }
+                }
+
+                if (!locationName.isNullOrEmpty()) {
+                    if (feeling == null && taggedPeople.isEmpty()) {
+                        append("is at ")
+                    } else {
+                        append(" at ")
+                    }
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(locationName)
+                    }
                 }
             }
+
+            Text(
+                text = annotatedText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 1.dp)
+            )
+        }
+
+        if (replyToUsername != null) {
+            Row(
+                modifier = Modifier.padding(top = 1.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val replyingToText = androidx.compose.ui.res.stringResource(
+                    com.synapse.social.studioasinc.R.string.replying_to,
+                    ""
+                ).replace("%s", "").trim()
+
+                Text(
+                    text = "$replyingToText ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "@$replyToUsername",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = if (onReplyToClick != null) {
+                        Modifier.clickable { onReplyToClick() }
+                    } else {
+                        Modifier
+                    }
+                )
+            }
+        }
     }
 }
