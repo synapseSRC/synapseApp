@@ -187,7 +187,7 @@ class StoryRepositoryImpl @Inject constructor(
                             uid = userJson["uid"]?.jsonPrimitive?.content ?: userId,
                             username = userJson["username"]?.jsonPrimitive?.content,
                             displayName = userJson["display_name"]?.jsonPrimitive?.content,
-                            avatar = userJson["avatar"]?.jsonPrimitive?.content,
+                            avatar = userJson["avatar"]?.jsonPrimitive?.content?.let { SupabaseClient.constructAvatarUrl(it) },
                             verify = userJson["verify"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
                         )
                     }
@@ -371,7 +371,7 @@ class StoryRepositoryImpl @Inject constructor(
                     uid = it["uid"]?.jsonPrimitive?.content ?: storyView.viewerId,
                     username = it["username"]?.jsonPrimitive?.content,
                     displayName = it["display_name"]?.jsonPrimitive?.content,
-                    avatar = it["avatar"]?.jsonPrimitive?.content
+                    avatar = it["avatar"]?.jsonPrimitive?.content?.let { url -> SupabaseClient.constructAvatarUrl(url) }
                 )
             }
 

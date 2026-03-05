@@ -587,7 +587,7 @@ class PostRepository constructor(
 
         return try {
             val user = client.from("users").select {
-                filter { eq("uid", userId) }
+                filter { eq("id", userId) }
             }.decodeSingleOrNull<JsonObject>()
 
             if (user != null) {

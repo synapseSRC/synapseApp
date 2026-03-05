@@ -39,7 +39,7 @@ class UserRepositoryImpl(
             // Fetch from network
             val user = client.postgrest["users"].select {
                 filter {
-                    eq("uid", uid)
+                    eq("id", uid)
                 }
             }.decodeSingleOrNull<User>()
 
@@ -72,7 +72,7 @@ class UserRepositoryImpl(
         runCatching {
             val user = client.postgrest["users"].update(updates) {
                 filter {
-                    eq("uid", uid)
+                    eq("id", uid)
                 }
                 select()
             }.decodeSingleOrNull<User>()
@@ -90,17 +90,14 @@ class UserRepositoryImpl(
             
             client.postgrest["users"].select {
                 filter {
-                    eq("uid", currentUserId)
+                    eq("id", currentUserId)
                 }
-            }.decodeSingleOrNull<User>()?.avatar
+            }.decodeSingleOrNull<User>()?.avatar?.let { constructAvatarUrl(it) }
         }
     }
 
     private fun constructAvatarUrl(path: String): String {
-        if (path.startsWith("http")) return path
-        val baseUrl = SynapseConfig.SUPABASE_URL
-        val cleanBaseUrl = if (baseUrl.endsWith("/")) baseUrl.dropLast(1) else baseUrl
-        return "/storage/v1/object/public/avatars/"
+        return SupabaseClient.constructAvatarUrl(path)
     }
 
     private fun mapDbUser(dbUser: com.synapse.social.studioasinc.shared.data.database.User): User {
