@@ -203,7 +203,7 @@ fun SettingsNavHost(
 
 
         composable(route = SettingsDestination.ROUTE_STORAGE_PROVIDER) {
-            val viewModel: SettingsViewModel = hiltViewModel()
+            val viewModel: StorageProviderViewModel = hiltViewModel()
             StorageProviderScreen(
                 navController = navController,
                 viewModel = viewModel

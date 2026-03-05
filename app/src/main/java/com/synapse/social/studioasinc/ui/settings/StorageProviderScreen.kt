@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Help
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ExpandMore
@@ -44,11 +45,31 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -70,34 +91,77 @@ import androidx.navigation.NavController
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 fun StorageProviderScreen(
     navController: NavController,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: StorageProviderViewModel = hiltViewModel()
 ) {
     val storageConfig by viewModel.storageConfig.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(uiState.error, uiState.successMessage) {
+        val message = uiState.error ?: uiState.successMessage
+        if (message != null) {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearMessages()
+        }
+    }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {
+                        TextButton(onClick = { data.dismiss() }) {
+                            Text("Dismiss")
+                        }
+                    }
+                ) {
+                    Text(data.visuals.message)
+                }
+            }
+        },
         topBar = {
-            TopAppBar(
+            MediumTopAppBar(
                 title = { Text("Storage Providers") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                ),
+                scrollBehavior = scrollBehavior
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(paddingValues),
+            contentPadding = PaddingValues(
+                start = SettingsSpacing.screenPadding,
+                end = SettingsSpacing.screenPadding,
+                top = SettingsSpacing.screenPadding,
+                bottom = SettingsSpacing.screenPadding * 2
+            ),
+            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
+            item {
 
 
             StorageSection(title = "Upload Preferences") {
@@ -126,7 +190,9 @@ fun StorageProviderScreen(
                 }
             }
 
-            StorageSection(title = "Provider Selection") {
+            }
+            item {
+                StorageSection(title = "Provider Selection") {
                 ProviderSelectionItem(
                     title = "Photos",
                     icon = Icons.Default.Image,
@@ -135,7 +201,7 @@ fun StorageProviderScreen(
                     onSelect = { viewModel.updatePhotoProvider(it) }
                 )
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                SettingsDivider()
 
                 ProviderSelectionItem(
                     title = "Videos",
@@ -145,7 +211,7 @@ fun StorageProviderScreen(
                     onSelect = { viewModel.updateVideoProvider(it) }
                 )
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                SettingsDivider()
 
                 ProviderSelectionItem(
                     title = "Other Files",
@@ -157,28 +223,36 @@ fun StorageProviderScreen(
             }
 
 
-            Text(
-                text = "Provider Configuration",
+            }
+            item {
+                Text(
+                    text = "Provider Configuration",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = 8.dp)
             )
 
 
-            ProviderConfigCard(
-                title = "ImgBB",
+            }
+            item {
+                ProviderConfigCard(
+                    title = "ImgBB",
                 isConfigured = storageConfig.isProviderConfigured(StorageProvider.IMGBB),
                 isExpanded = false
             ) {
                 ImgBBConfigContent(
                     apiKey = storageConfig.imgBBKey,
-                    onApiKeyChange = { viewModel.updateImgBBConfig(it) }
+                    onApiKeyChange = { viewModel.updateImgBBConfig(it) },
+                    onTestConnection = { viewModel.testImgBBConnection(it) },
+                    isLoading = uiState.isLoading
                 )
             }
 
 
-            ProviderConfigCard(
-                title = "Cloudinary",
+            }
+            item {
+                ProviderConfigCard(
+                    title = "Cloudinary",
                 isConfigured = storageConfig.isProviderConfigured(StorageProvider.CLOUDINARY),
                 isExpanded = false
             ) {
@@ -188,13 +262,19 @@ fun StorageProviderScreen(
                     apiSecret = storageConfig.cloudinaryApiSecret,
                     onConfigChange = { name, key, secret ->
                         viewModel.updateCloudinaryConfig(name, key, secret)
-                    }
+                    },
+                    onTestConnection = { name, key, secret ->
+                        viewModel.testCloudinaryConnection(name, key, secret)
+                    },
+                    isLoading = uiState.isLoading
                 )
             }
 
 
-            ProviderConfigCard(
-                title = "Supabase Storage",
+            }
+            item {
+                ProviderConfigCard(
+                    title = "Supabase Storage",
                 isConfigured = storageConfig.isProviderConfigured(StorageProvider.SUPABASE),
                 isExpanded = false
             ) {
@@ -204,13 +284,19 @@ fun StorageProviderScreen(
                     bucketName = storageConfig.supabaseBucket,
                     onConfigChange = { url, key, bucket ->
                         viewModel.updateSupabaseConfig(url, key, bucket)
-                    }
+                    },
+                    onTestConnection = { url, key, bucket ->
+                        viewModel.testSupabaseConnection(url, key, bucket)
+                    },
+                    isLoading = uiState.isLoading
                 )
             }
 
 
-            ProviderConfigCard(
-                title = "Cloudflare R2",
+            }
+            item {
+                ProviderConfigCard(
+                    title = "Cloudflare R2",
                 isConfigured = storageConfig.isProviderConfigured(StorageProvider.CLOUDFLARE_R2),
                 isExpanded = false
             ) {
@@ -221,11 +307,15 @@ fun StorageProviderScreen(
                     bucketName = storageConfig.r2BucketName,
                     onConfigChange = { accId, accKey, secret, bucket ->
                         viewModel.updateR2Config(accId, accKey, secret, bucket)
-                    }
+                    },
+                    onTestConnection = { accId, accKey, secret, bucket ->
+                        viewModel.testR2Connection(accId, accKey, secret, bucket)
+                    },
+                    isLoading = uiState.isLoading
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            }
         }
     }
 }
@@ -245,20 +335,13 @@ private fun StorageSection(
     title: String,
     content: @Composable () -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(16.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        content()
+    SettingsSection(title = title) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            content()
+        }
     }
 }
 
@@ -272,72 +355,85 @@ private fun ProviderSelectionItem(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }
-                .padding(vertical = 8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(text = title, style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        text = selectedProvider,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            Icon(
-                imageVector = if (expanded) Icons.Default.ExpandMore else Icons.Default.ExpandMore,
-                contentDescription = "Select",
-                modifier = Modifier.rotate(if (expanded) 180f else 0f)
-            )
-        }
-
-        AnimatedVisibility(visible = expanded) {
-            Column(
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = SettingsColors.cardBackground
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .padding(start = 40.dp, top = 8.dp)
                     .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(
+                        horizontal = SettingsSpacing.itemHorizontalPadding,
+                        vertical = SettingsSpacing.itemVerticalPadding
+                    )
             ) {
-                options.forEach { option ->
-                    val isSelected = option == selectedProvider
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onSelect(option)
-                                expanded = false
-                            }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = SettingsColors.itemIcon,
+                        modifier = Modifier.size(SettingsSpacing.iconSize)
+                    )
+                    Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+                    Column {
+                        Text(text = title, style = SettingsTypography.itemTitle, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = option,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            text = selectedProvider,
+                            style = SettingsTypography.itemSubtitle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (isSelected) {
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Selected",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = "Select",
+                    tint = SettingsColors.chevronIcon,
+                    modifier = Modifier.rotate(if (expanded) 180f else 0f)
+                )
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier
+                        .padding(start = 56.dp, end = SettingsSpacing.itemHorizontalPadding)
+                        .fillMaxWidth()
+                ) {
+                    options.forEach { option ->
+                        val isSelected = option == selectedProvider
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(SettingsShapes.itemShape)
+                                .clickable {
+                                    onSelect(option)
+                                    expanded = false
+                                }
+                                .padding(vertical = SettingsSpacing.itemVerticalPadding),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = option,
+                                style = SettingsTypography.itemSubtitle,
+                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            if (isSelected) {
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -354,9 +450,8 @@ private fun ProviderConfigCard(
     var expanded by remember { mutableStateOf(isExpanded) }
 
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
-        shadowElevation = 2.dp,
+        color = SettingsColors.cardBackground,
+        shape = SettingsShapes.cardShape,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
@@ -365,13 +460,16 @@ private fun ProviderConfigCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = !expanded }
-                    .padding(16.dp)
+                    .padding(
+                        horizontal = SettingsSpacing.itemHorizontalPadding,
+                        vertical = SettingsSpacing.itemVerticalPadding
+                    )
             ) {
 
                 Column(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(SettingsShapes.itemShape)
                         .background(
                             if (isConfigured) {
                                 MaterialTheme.colorScheme.primaryContainer
@@ -388,20 +486,19 @@ private fun ProviderConfigCard(
                         tint = if (isConfigured) {
                             MaterialTheme.colorScheme.onPrimaryContainer
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            SettingsColors.itemIcon
                         },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(SettingsSpacing.iconSize)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            style = SettingsTypography.itemTitle
                         )
                         if (isConfigured) {
                             Spacer(modifier = Modifier.width(8.dp))
@@ -415,7 +512,7 @@ private fun ProviderConfigCard(
                     }
                     Text(
                         text = if (isConfigured) "Ready to use" else "Configuration required",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = SettingsTypography.itemSubtitle,
                         color = if (isConfigured) {
                             MaterialTheme.colorScheme.primary
                         } else {
@@ -435,6 +532,7 @@ private fun ProviderConfigCard(
                     Icon(
                         imageVector = Icons.Default.ExpandMore,
                         contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = SettingsColors.chevronIcon,
                         modifier = Modifier.rotate(rotationAngle)
                     )
                 }
@@ -456,11 +554,13 @@ private fun ProviderConfigCard(
                     )
                 ) + fadeOut()
             ) {
-                Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(bottom = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                Column(modifier = Modifier.padding(
+                    start = SettingsSpacing.itemHorizontalPadding,
+                    end = SettingsSpacing.itemHorizontalPadding,
+                    bottom = SettingsSpacing.itemVerticalPadding * 2
+                )) {
+                    SettingsDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
                     content()
                 }
             }
@@ -471,15 +571,40 @@ private fun ProviderConfigCard(
 @Composable
 private fun ImgBBConfigContent(
     apiKey: String,
-    onApiKeyChange: (String) -> Unit
+    onApiKeyChange: (String) -> Unit,
+    onTestConnection: (String) -> Unit,
+    isLoading: Boolean
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    var key by remember { mutableStateOf(apiKey) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
         StorageSecureTextField(
-            value = apiKey,
-            onValueChange = onApiKeyChange,
-            label = "API Key"
+            value = key,
+            onValueChange = { key = it },
+            label = "API Key",
+            enabled = !isLoading
         )
         HelpText(text = "Get your free API key from api.imgbb.com")
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        ) {
+            OutlinedButton(
+                onClick = { onTestConnection(key) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Test Connection")
+            }
+            Button(
+                onClick = { onApiKeyChange(key) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save")
+            }
+        }
     }
 }
 
@@ -488,16 +613,23 @@ private fun CloudinaryConfigContent(
     cloudName: String,
     apiKey: String,
     apiSecret: String,
-    onConfigChange: (String, String, String) -> Unit
+    onConfigChange: (String, String, String) -> Unit,
+    onTestConnection: (String, String, String) -> Unit,
+    isLoading: Boolean
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    var name by remember { mutableStateOf(cloudName) }
+    var key by remember { mutableStateOf(apiKey) }
+    var secret by remember { mutableStateOf(apiSecret) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
         OutlinedTextField(
-            value = cloudName,
-            onValueChange = { newName -> onConfigChange(newName, apiKey, apiSecret) },
+            value = name,
+            onValueChange = { name = it },
             label = { Text("Cloud Name") },
+            enabled = !isLoading,
             trailingIcon = {
-                if (cloudName.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange("", apiKey, apiSecret) }) {
+                if (name.isNotEmpty() && !isLoading) {
+                    IconButton(onClick = { name = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -506,20 +638,42 @@ private fun CloudinaryConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
-            value = apiKey,
-            onValueChange = { newKey -> onConfigChange(cloudName, newKey, apiSecret) },
-            label = "API Key"
+            value = key,
+            onValueChange = { key = it },
+            label = "API Key",
+            enabled = !isLoading
         )
         StorageSecureTextField(
-            value = apiSecret,
-            onValueChange = { newSecret -> onConfigChange(cloudName, apiKey, newSecret) },
-            label = "API Secret"
+            value = secret,
+            onValueChange = { secret = it },
+            label = "API Secret",
+            enabled = !isLoading
         )
         HelpText(text = "Find these in your Cloudinary dashboard under Settings > Access Keys")
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        ) {
+            OutlinedButton(
+                onClick = { onTestConnection(name, key, secret) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Test Connection")
+            }
+            Button(
+                onClick = { onConfigChange(name, key, secret) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save")
+            }
+        }
     }
 }
 
@@ -528,17 +682,25 @@ private fun SupabaseConfigContent(
     url: String,
     apiKey: String,
     bucketName: String,
-    onConfigChange: (String, String, String) -> Unit
+    onConfigChange: (String, String, String) -> Unit,
+    onTestConnection: (String, String, String) -> Unit,
+    isLoading: Boolean
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    var currentUrl by remember { mutableStateOf(url) }
+    var key by remember { mutableStateOf(apiKey) }
+    var bucket by remember { mutableStateOf(bucketName) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
         OutlinedTextField(
-            value = url,
-            onValueChange = { newVal -> onConfigChange(newVal, apiKey, bucketName) },
+            value = currentUrl,
+            onValueChange = { currentUrl = it },
             label = { Text("Project URL") },
             placeholder = { Text("https://your-project.supabase.co") },
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             trailingIcon = {
-                if (url.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange("", apiKey, bucketName) }) {
+                if (currentUrl.isNotEmpty() && !isLoading) {
+                    IconButton(onClick = { currentUrl = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -547,21 +709,23 @@ private fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
-            value = apiKey,
-            onValueChange = { newVal -> onConfigChange(url, newVal, bucketName) },
-            label = "Service Role / API Key"
+            value = key,
+            onValueChange = { key = it },
+            label = "Service Role / API Key",
+            enabled = !isLoading
         )
         OutlinedTextField(
-            value = bucketName,
-            onValueChange = { newVal -> onConfigChange(url, apiKey, newVal) },
+            value = bucket,
+            onValueChange = { bucket = it },
             label = { Text("Bucket Name") },
+            enabled = !isLoading,
             trailingIcon = {
-                if (bucketName.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange(url, apiKey, "") }) {
+                if (bucket.isNotEmpty() && !isLoading) {
+                    IconButton(onClick = { bucket = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -570,10 +734,30 @@ private fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         HelpText(text = "Create a bucket in Supabase Storage and ensure policies allow read/write operations")
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        ) {
+            OutlinedButton(
+                onClick = { onTestConnection(currentUrl, key, bucket) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Test Connection")
+            }
+            Button(
+                onClick = { onConfigChange(currentUrl, key, bucket) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save")
+            }
+        }
     }
 }
 
@@ -583,16 +767,24 @@ private fun R2ConfigContent(
     accessKeyId: String,
     secretAccessKey: String,
     bucketName: String,
-    onConfigChange: (String, String, String, String) -> Unit
+    onConfigChange: (String, String, String, String) -> Unit,
+    onTestConnection: (String, String, String, String) -> Unit,
+    isLoading: Boolean
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    var accId by remember { mutableStateOf(accountId) }
+    var accKey by remember { mutableStateOf(accessKeyId) }
+    var secret by remember { mutableStateOf(secretAccessKey) }
+    var bucket by remember { mutableStateOf(bucketName) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
         OutlinedTextField(
-            value = accountId,
-            onValueChange = { newVal -> onConfigChange(newVal, accessKeyId, secretAccessKey, bucketName) },
+            value = accId,
+            onValueChange = { accId = it },
             label = { Text("Account ID") },
+            enabled = !isLoading,
             trailingIcon = {
-                if (accountId.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange("", accessKeyId, secretAccessKey, bucketName) }) {
+                if (accId.isNotEmpty() && !isLoading) {
+                    IconButton(onClick = { accId = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -601,26 +793,29 @@ private fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
-            value = accessKeyId,
-            onValueChange = { newVal -> onConfigChange(accountId, newVal, secretAccessKey, bucketName) },
-            label = "Access Key ID"
+            value = accKey,
+            onValueChange = { accKey = it },
+            label = "Access Key ID",
+            enabled = !isLoading
         )
         StorageSecureTextField(
-            value = secretAccessKey,
-            onValueChange = { newVal -> onConfigChange(accountId, accessKeyId, newVal, bucketName) },
-            label = "Secret Access Key"
+            value = secret,
+            onValueChange = { secret = it },
+            label = "Secret Access Key",
+            enabled = !isLoading
         )
         OutlinedTextField(
-            value = bucketName,
-            onValueChange = { newVal -> onConfigChange(accountId, accessKeyId, secretAccessKey, newVal) },
+            value = bucket,
+            onValueChange = { bucket = it },
             label = { Text("Bucket Name") },
+            enabled = !isLoading,
             trailingIcon = {
-                if (bucketName.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange(accountId, accessKeyId, secretAccessKey, "") }) {
+                if (bucket.isNotEmpty() && !isLoading) {
+                    IconButton(onClick = { bucket = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -629,10 +824,30 @@ private fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         HelpText(text = "Create an R2 bucket in your Cloudflare dashboard and generate API tokens")
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        ) {
+            OutlinedButton(
+                onClick = { onTestConnection(accId, accKey, secret, bucket) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Test Connection")
+            }
+            Button(
+                onClick = { onConfigChange(accId, accKey, secret, bucket) },
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save")
+            }
+        }
     }
 }
 
@@ -642,20 +857,20 @@ private fun HelpText(text: String) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(12.dp)
+            .clip(SettingsShapes.chipShape)
+            .background(SettingsColors.cardBackground)
+            .padding(SettingsSpacing.itemPadding)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Outlined.Help,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp)
+            tint = SettingsColors.itemIcon,
+            modifier = Modifier.size(SettingsSpacing.iconSize * 0.75f)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing / 2))
         Text(
             text = text,
-            style = MaterialTheme.typography.bodySmall,
+            style = SettingsTypography.itemSubtitle,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -665,7 +880,8 @@ private fun HelpText(text: String) {
 private fun StorageSecureTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String
+    label: String,
+    enabled: Boolean = true
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -673,6 +889,7 @@ private fun StorageSecureTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        enabled = enabled,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         trailingIcon = {
