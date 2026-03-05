@@ -45,7 +45,7 @@ class UserRepository @Inject constructor(
                     email = userProfile.email,
                     verify = userProfile.verify
                 ) ?: User(
-                    uid = userProfile.uid,
+                    uid = userProfile.id ?: userProfile.uid,
                     username = userProfile.username,
                     displayName = userProfile.displayName,
                     avatar = userProfile.avatar?.let { url -> if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url) },
@@ -80,7 +80,7 @@ class UserRepository @Inject constructor(
 
                 userProfile?.let {
                     user = User(
-                        uid = it.uid,
+                        uid = it.id ?: it.uid,
                         username = it.username,
                         displayName = it.displayName,
                         email = it.email,
