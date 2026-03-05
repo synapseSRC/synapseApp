@@ -30,7 +30,7 @@ class FollowRepositoryImpl(
                     .decodeList<JsonObject>()
 
                 val followerIds = followsResult.map {
-                    it["follower_id"]?.jsonPrimitive?.content ?: ""
+                    it["follower_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: ""
                 }.filter { it.isNotEmpty() }
 
                 if (followerIds.isEmpty()) {
@@ -69,7 +69,7 @@ class FollowRepositoryImpl(
                     .decodeList<JsonObject>()
 
                 val followingIds = followsResult.map {
-                    it["following_id"]?.jsonPrimitive?.content ?: ""
+                    it["following_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: ""
                 }.filter { it.isNotEmpty() }
 
                 if (followingIds.isEmpty()) {
@@ -94,11 +94,11 @@ class FollowRepositoryImpl(
     }
 
     private fun mapToUser(jsonObject: JsonObject): User {
-        val uid = jsonObject["uid"]?.jsonPrimitive?.content ?: ""
-        val username = jsonObject["username"]?.jsonPrimitive?.content ?: ""
-        val displayName = jsonObject["display_name"]?.jsonPrimitive?.content
-        val avatarPath = jsonObject["avatar"]?.jsonPrimitive?.content
-        val verify = jsonObject["verify"]?.jsonPrimitive?.content?.toBoolean() ?: false
+        val uid = jsonObject["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: ""
+        val username = jsonObject["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: ""
+        val displayName = jsonObject["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
+        val avatarPath = jsonObject["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
+        val verify = jsonObject["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content?.toBoolean() ?: false
 
         val avatarUrl = avatarPath?.let { constructAvatarUrl(it) }
 

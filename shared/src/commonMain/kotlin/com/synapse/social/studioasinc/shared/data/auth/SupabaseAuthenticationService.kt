@@ -184,7 +184,7 @@ class SupabaseAuthenticationService(
     override suspend fun isEmailVerified(): Boolean {
         return try {
             val user = client.auth.currentUserOrNull()
-            user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.jsonPrimitive?.contentOrNull == "true" } == true
+            user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "true" } == true
         } catch (e: Exception) {
             Napier.e("Failed to check email verification", e)
             false

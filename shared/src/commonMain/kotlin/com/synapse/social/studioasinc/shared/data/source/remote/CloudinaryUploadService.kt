@@ -61,7 +61,7 @@ class CloudinaryUploadService(private val client: HttpClient) : UploadService {
 
             onProgress(1.0f)
 
-            response["secure_url"]?.jsonPrimitive?.content
+            response["secure_url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
                 ?: throw Exception(extractCloudinaryError(response))
         } catch (e: Exception) {
             val errorMsg = e.message ?: e.toString()
@@ -74,7 +74,7 @@ class CloudinaryUploadService(private val client: HttpClient) : UploadService {
         val errorMessage = response["error"]
             ?.jsonObject
             ?.get("message")
-            ?.jsonPrimitive
+            ?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }
             ?.content
 
         return errorMessage ?: "Cloudinary URL missing in upload response"

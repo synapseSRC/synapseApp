@@ -45,8 +45,8 @@ class FeedPagingSource(
                 return LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)
             }
 
-            val postIds = timelineResponse.filter { it["item_type"]?.jsonPrimitive?.contentOrNull == "post" }.mapNotNull { it["id"]?.jsonPrimitive?.contentOrNull }
-            val commentIds = timelineResponse.filter { it["item_type"]?.jsonPrimitive?.contentOrNull == "comment" }.mapNotNull { it["id"]?.jsonPrimitive?.contentOrNull }
+            val postIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "post" }.mapNotNull { it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
+            val commentIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
             // 1. Fetch full Posts
             val postsMap = if (postIds.isNotEmpty()) {
@@ -67,22 +67,22 @@ class FeedPagingSource(
                     try {
                         val post = json.decodeFromJsonElement<Post>(jsonElement)
                         val userData = jsonElement["users"]?.jsonObject
-                        post.username = userData?.get("username")?.jsonPrimitive?.contentOrNull
-                        post.displayName = userData?.get("display_name")?.jsonPrimitive?.contentOrNull
-                        post.avatarUrl = userData?.get("avatar")?.jsonPrimitive?.contentOrNull?.let { avatarPath ->
+                        post.username = userData?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                        post.displayName = userData?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                        post.avatarUrl = userData?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
                             SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
                         }
-                        post.isVerified = userData?.get("verify")?.jsonPrimitive?.booleanOrNull ?: false
+                        post.isVerified = userData?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
 
                         val commentsArray = jsonElement["latest_comments"]?.jsonArray
                         if (!commentsArray.isNullOrEmpty()) {
                             val latestComment = commentsArray.map { it.jsonObject }
-                                .maxByOrNull { it["created_at"]?.jsonPrimitive?.contentOrNull ?: "" }
+                                .maxByOrNull { it["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
 
                             if (latestComment != null) {
-                                post.latestCommentText = latestComment["content"]?.jsonPrimitive?.contentOrNull
+                                post.latestCommentText = latestComment["content"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                 val commentUser = latestComment["users"]?.jsonObject
-                                post.latestCommentAuthor = commentUser?.get("username")?.jsonPrimitive?.contentOrNull
+                                post.latestCommentAuthor = commentUser?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                             }
                         }
                         post.id to post
@@ -99,17 +99,17 @@ class FeedPagingSource(
             val enrichedPostsMap = postsWithPolls.associateBy { it.id }
 
             // 2. Map Comments from timeline response
-            val commentsMap = timelineResponse.filter { it["item_type"]?.jsonPrimitive?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
-                val id = timelineItem["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-                val userId = timelineItem["user_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                val content = timelineItem["content"]?.jsonPrimitive?.contentOrNull ?: ""
-                val parentPostId = timelineItem["parent_post_id"]?.jsonPrimitive?.contentOrNull
-                val parentCommentId = timelineItem["parent_comment_id"]?.jsonPrimitive?.contentOrNull
-                val parentAuthorUsername = timelineItem["parent_author_username"]?.jsonPrimitive?.contentOrNull
-                val createdAt = timelineItem["created_at"]?.jsonPrimitive?.contentOrNull
-                val timestamp = timelineItem["timestamp"]?.jsonPrimitive?.longOrNull ?: 0L
-                val likeCount = timelineItem["likes_count"]?.jsonPrimitive?.intOrNull ?: 0
-                val commentCount = timelineItem["comments_count"]?.jsonPrimitive?.intOrNull ?: 0
+            val commentsMap = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
+                val id = timelineItem["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
+                val userId = timelineItem["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: ""
+                val content = timelineItem["content"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: ""
+                val parentPostId = timelineItem["parent_post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                val parentCommentId = timelineItem["parent_comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                val parentAuthorUsername = timelineItem["parent_author_username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                val createdAt = timelineItem["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                val timestamp = timelineItem["timestamp"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.longOrNull ?: 0L
+                val likeCount = timelineItem["likes_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
+                val commentCount = timelineItem["comments_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
                 
                 // We need to fetch the author details for comments.
                 id to FeedItem.CommentItem(
@@ -134,25 +134,25 @@ class FeedPagingSource(
                         filter { isIn("uid", commentUserIds) }
                     }.decodeList<JsonObject>()
                 }
-                val userMap = usersResponse.associateBy { it["uid"]?.jsonPrimitive?.contentOrNull ?: "" }
+                val userMap = usersResponse.associateBy { it["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
                 commentsMap.keys.forEach { id ->
                     val commentItem = commentsMap[id]!!
                     val user = userMap[commentItem.userId]
                     commentsMap[id] = commentItem.copy(
-                        username = user?.get("username")?.jsonPrimitive?.contentOrNull ?: "",
-                        userFullName = user?.get("display_name")?.jsonPrimitive?.contentOrNull ?: user?.get("username")?.jsonPrimitive?.contentOrNull ?: "",
-                        avatarUrl = user?.get("avatar")?.jsonPrimitive?.contentOrNull?.let { avatarPath ->
+                        username = user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                        userFullName = user?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                        avatarUrl = user?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
                             SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
                         },
-                        isVerified = user?.get("verify")?.jsonPrimitive?.booleanOrNull ?: false
+                        isVerified = user?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                     )
                 }
             }
 
             // Build final unified list
             val feedItems = timelineResponse.mapNotNull { item ->
-                val id = item["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-                val type = item["item_type"]?.jsonPrimitive?.contentOrNull
+                val id = item["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
+                val type = item["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 if (type == "post") {
                     enrichedPostsMap[id]?.let { FeedItem.PostItem(it) }
                 } else if (type == "comment") {

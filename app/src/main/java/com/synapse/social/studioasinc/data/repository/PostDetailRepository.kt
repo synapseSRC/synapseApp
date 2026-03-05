@@ -134,55 +134,55 @@ class PostDetailRepository @Inject constructor(
 
     private fun parsePostFromJson(data: JsonObject): Post {
         val post = Post(
-            id = data["id"]?.jsonPrimitive?.contentOrNull ?: "",
-            key = data["key"]?.jsonPrimitive?.contentOrNull,
-            authorUid = data["author_uid"]?.jsonPrimitive?.contentOrNull ?: "",
-            postText = data["post_text"]?.jsonPrimitive?.contentOrNull,
-            postImage = data["post_image"]?.jsonPrimitive?.contentOrNull,
-            postType = data["post_type"]?.jsonPrimitive?.contentOrNull,
-            postHideViewsCount = data["post_hide_views_count"]?.jsonPrimitive?.contentOrNull,
-            postHideLikeCount = data["post_hide_like_count"]?.jsonPrimitive?.contentOrNull,
-            postHideCommentsCount = data["post_hide_comments_count"]?.jsonPrimitive?.contentOrNull,
-            postDisableComments = data["post_disable_comments"]?.jsonPrimitive?.contentOrNull,
-            postVisibility = data["post_visibility"]?.jsonPrimitive?.contentOrNull,
-            publishDate = data["publish_date"]?.jsonPrimitive?.contentOrNull,
-            timestamp = data["timestamp"]?.jsonPrimitive?.longOrNull ?: System.currentTimeMillis(),
-            likesCount = data["likes_count"]?.jsonPrimitive?.intOrNull ?: 0,
-            commentsCount = data["comments_count"]?.jsonPrimitive?.intOrNull ?: 0,
-            viewsCount = data["views_count"]?.jsonPrimitive?.intOrNull ?: 0,
-            resharesCount = data["reshares_count"]?.jsonPrimitive?.intOrNull ?: 0,
-            isEncrypted = data["is_encrypted"]?.jsonPrimitive?.booleanOrNull,
-            nonce = data["nonce"]?.jsonPrimitive?.contentOrNull,
-            encryptionKeyId = data["encryption_key_id"]?.jsonPrimitive?.contentOrNull,
-            isDeleted = data["is_deleted"]?.jsonPrimitive?.booleanOrNull,
-            isEdited = data["is_edited"]?.jsonPrimitive?.booleanOrNull,
-            editedAt = data["edited_at"]?.jsonPrimitive?.contentOrNull,
-            deletedAt = data["deleted_at"]?.jsonPrimitive?.contentOrNull,
-            hasPoll = data["has_poll"]?.jsonPrimitive?.booleanOrNull,
-            pollQuestion = data["poll_question"]?.jsonPrimitive?.contentOrNull,
+            id = data["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+            key = data["key"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            authorUid = data["author_uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+            postText = data["post_text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postImage = data["post_image"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postType = data["post_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postHideViewsCount = data["post_hide_views_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postHideLikeCount = data["post_hide_like_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postHideCommentsCount = data["post_hide_comments_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postDisableComments = data["post_disable_comments"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            postVisibility = data["post_visibility"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            publishDate = data["publish_date"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            timestamp = data["timestamp"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.longOrNull ?: System.currentTimeMillis(),
+            likesCount = data["likes_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+            commentsCount = data["comments_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+            viewsCount = data["views_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+            resharesCount = data["reshares_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+            isEncrypted = data["is_encrypted"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull,
+            nonce = data["nonce"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            encryptionKeyId = data["encryption_key_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            isDeleted = data["is_deleted"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull,
+            isEdited = data["is_edited"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull,
+            editedAt = data["edited_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            deletedAt = data["deleted_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            hasPoll = data["has_poll"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull,
+            pollQuestion = data["poll_question"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
             pollOptions = data["poll_options"]?.jsonArray?.mapNotNull {
                 val obj = it.jsonObject
-                val text = obj["text"]?.jsonPrimitive?.contentOrNull
-                val votes = obj["votes"]?.jsonPrimitive?.intOrNull ?: 0
+                val text = obj["text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                val votes = obj["votes"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
                 if (text != null) PollOption(text, votes) else null
             },
-            pollEndTime = data["poll_end_time"]?.jsonPrimitive?.contentOrNull,
-            pollAllowMultiple = data["poll_allow_multiple"]?.jsonPrimitive?.booleanOrNull,
-            hasLocation = data["has_location"]?.jsonPrimitive?.booleanOrNull,
-            locationName = data["location_name"]?.jsonPrimitive?.contentOrNull,
-            locationAddress = data["location_address"]?.jsonPrimitive?.contentOrNull,
-            locationLatitude = data["location_latitude"]?.jsonPrimitive?.doubleOrNull,
-            locationLongitude = data["location_longitude"]?.jsonPrimitive?.doubleOrNull,
-            locationPlaceId = data["location_place_id"]?.jsonPrimitive?.contentOrNull,
-            youtubeUrl = data["youtube_url"]?.jsonPrimitive?.contentOrNull
+            pollEndTime = data["poll_end_time"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            pollAllowMultiple = data["poll_allow_multiple"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull,
+            hasLocation = data["has_location"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull,
+            locationName = data["location_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            locationAddress = data["location_address"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            locationLatitude = data["location_latitude"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.doubleOrNull,
+            locationLongitude = data["location_longitude"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.doubleOrNull,
+            locationPlaceId = data["location_place_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+            youtubeUrl = data["youtube_url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
         )
 
         val userData = data["users"]?.takeIf { it !is JsonNull }?.jsonObject
         if (userData != null) {
-            post.username = userData["username"]?.jsonPrimitive?.contentOrNull
-            post.displayName = userData["display_name"]?.jsonPrimitive?.contentOrNull
-            post.avatarUrl = userData["avatar"]?.jsonPrimitive?.contentOrNull?.let { if (it.startsWith("http")) it else com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(it) }
-            post.isVerified = userData["verify"]?.jsonPrimitive?.booleanOrNull ?: false
+            post.username = userData["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+            post.displayName = userData["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+            post.avatarUrl = userData["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { if (it.startsWith("http")) it else com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(it) }
+            post.isVerified = userData["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
         }
 
         val mediaData = data["media_items"]?.takeIf { it !is JsonNull }?.jsonArray
@@ -197,16 +197,16 @@ class PostDetailRepository @Inject constructor(
         return mediaData.mapNotNull { item ->
             try {
                 val mediaMap = item.jsonObject
-                val url = mediaMap["url"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-                val typeStr = mediaMap["type"]?.jsonPrimitive?.contentOrNull ?: "IMAGE"
+                val url = mediaMap["url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
+                val typeStr = mediaMap["type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "IMAGE"
                 MediaItem(
-                    id = mediaMap["id"]?.jsonPrimitive?.contentOrNull ?: "",
+                    id = mediaMap["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                     url = url,
                     type = if (typeStr.equals("VIDEO", ignoreCase = true)) MediaType.VIDEO else MediaType.IMAGE,
-                    thumbnailUrl = mediaMap["thumbnailUrl"]?.jsonPrimitive?.contentOrNull,
-                    duration = mediaMap["duration"]?.jsonPrimitive?.longOrNull,
-                    size = mediaMap["size"]?.jsonPrimitive?.longOrNull,
-                    mimeType = mediaMap["mimeType"]?.jsonPrimitive?.contentOrNull
+                    thumbnailUrl = mediaMap["thumbnailUrl"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    duration = mediaMap["duration"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.longOrNull,
+                    size = mediaMap["size"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.longOrNull,
+                    mimeType = mediaMap["mimeType"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse media item: ${e.message}")
@@ -220,19 +220,19 @@ class PostDetailRepository @Inject constructor(
 
         return try {
             UserProfile(
-                uid = userData["uid"]?.jsonPrimitive?.contentOrNull ?: return null,
-                username = userData["username"]?.jsonPrimitive?.contentOrNull ?: "",
-                displayName = userData["display_name"]?.jsonPrimitive?.contentOrNull ?: "",
+                uid = userData["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null,
+                username = userData["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                displayName = userData["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                 email = "",
-                bio = userData["bio"]?.jsonPrimitive?.contentOrNull,
-                avatar = userData["avatar"]?.jsonPrimitive?.contentOrNull,
-                followersCount = userData["followers_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                followingCount = userData["following_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                postsCount = userData["posts_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                status = UserStatus.fromString(userData["status"]?.jsonPrimitive?.contentOrNull),
-                account_type = userData["account_type"]?.jsonPrimitive?.contentOrNull ?: "user",
-                verify = userData["verify"]?.jsonPrimitive?.booleanOrNull ?: false,
-                banned = userData["banned"]?.jsonPrimitive?.booleanOrNull ?: false
+                bio = userData["bio"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                avatar = userData["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                followersCount = userData["followers_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                followingCount = userData["following_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                postsCount = userData["posts_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                status = UserStatus.fromString(userData["status"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull),
+                account_type = userData["account_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "user",
+                verify = userData["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false,
+                banned = userData["banned"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse user profile: ${e.message}")
@@ -273,7 +273,7 @@ class PostDetailRepository @Inject constructor(
                 .decodeSingleOrNull<JsonObject>()
 
             val options = post?.get("poll_options")?.jsonArray?.mapNotNull {
-                it.jsonObject["text"]?.jsonPrimitive?.contentOrNull
+                it.jsonObject["text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             } ?: emptyList()
 
             if (options.isEmpty()) {
@@ -285,14 +285,14 @@ class PostDetailRepository @Inject constructor(
                 .decodeList<JsonObject>()
 
             val voteCounts = votes.groupBy {
-                it["option_index"]?.jsonPrimitive?.intOrNull ?: 0
+                it["option_index"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
             }.mapValues { it.value.size }
 
             val pollResults = PollOptionResult.calculateResults(options, voteCounts)
 
             val userVote = if (userId != null) {
-                votes.find { it["user_id"]?.jsonPrimitive?.contentOrNull == userId }
-                    ?.get("option_index")?.jsonPrimitive?.intOrNull
+                votes.find { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == userId }
+                    ?.get("option_index")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull
             } else null
 
             Pair(pollResults, userVote)

@@ -48,25 +48,25 @@ class PostPagingSource(
             val parsedPosts = response.map { jsonElement ->
                 val post = json.decodeFromJsonElement<Post>(jsonElement)
                 val userData = jsonElement["users"]?.jsonObject
-                post.username = userData?.get("username")?.jsonPrimitive?.contentOrNull
-                post.displayName = userData?.get("display_name")?.jsonPrimitive?.contentOrNull
-                post.avatarUrl = userData?.get("avatar")?.jsonPrimitive?.contentOrNull?.let { avatarPath ->
+                post.username = userData?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                post.displayName = userData?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                post.avatarUrl = userData?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
                     SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
                 }
-                post.isVerified = userData?.get("verify")?.jsonPrimitive?.booleanOrNull ?: false
+                post.isVerified = userData?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
 
 
                 val commentsArray = jsonElement["latest_comments"]?.jsonArray
                 if (!commentsArray.isNullOrEmpty()) {
 
                     val latestComment = commentsArray.map { it.jsonObject }
-                        .maxByOrNull { it["created_at"]?.jsonPrimitive?.contentOrNull ?: "" }
+                        .maxByOrNull { it["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
 
                     if (latestComment != null) {
 
-                        post.latestCommentText = latestComment["content"]?.jsonPrimitive?.contentOrNull
+                        post.latestCommentText = latestComment["content"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         val commentUser = latestComment["users"]?.jsonObject
-                        post.latestCommentAuthor = commentUser?.get("username")?.jsonPrimitive?.contentOrNull
+                        post.latestCommentAuthor = commentUser?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                     }
                 }
 

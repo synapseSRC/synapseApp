@@ -294,15 +294,15 @@ class CommentRepository constructor(
                 .decodeSingleOrNull<JsonObject>()
                 ?: return@withContext Result.failure(Exception("Comment not found"))
 
-            val commentUserId = existingComment["user_id"]?.jsonPrimitive?.contentOrNull
+            val commentUserId = existingComment["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             if (commentUserId != currentUser.id) {
 
-                val postId = existingComment["post_id"]?.jsonPrimitive?.contentOrNull
+                val postId = existingComment["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 if (postId != null) {
                     val post = client.from("posts")
                         .select { filter { eq("id", postId) } }
                         .decodeSingleOrNull<JsonObject>()
-                    val postAuthor = post?.get("author_uid")?.jsonPrimitive?.contentOrNull
+                    val postAuthor = post?.get("author_uid")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
 
                     if (postAuthor != currentUser.id) {
                          return@withContext Result.failure(Exception("Not authorized to delete this comment"))
@@ -319,11 +319,11 @@ class CommentRepository constructor(
                 }
 
 
-            val parentId = existingComment["parent_comment_id"]?.jsonPrimitive?.contentOrNull
+            val parentId = existingComment["parent_comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             if (parentId != null) {
                 updateRepliesCount(parentId, -1)
             }
-            val postId = existingComment["post_id"]?.jsonPrimitive?.contentOrNull
+            val postId = existingComment["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             if (postId != null) {
                 updatePostCommentsCount(postId, -1)
             }
@@ -356,7 +356,7 @@ class CommentRepository constructor(
                 .decodeSingleOrNull<JsonObject>()
                 ?: return@withContext Result.failure(Exception("Comment not found"))
 
-            val commentUserId = existingComment["user_id"]?.jsonPrimitive?.contentOrNull
+            val commentUserId = existingComment["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             if (commentUserId != currentUser.id) {
                 return@withContext Result.failure(Exception("Not authorized to edit this comment"))
             }
@@ -396,7 +396,7 @@ class CommentRepository constructor(
                 .decodeSingleOrNull<JsonObject>()
                 ?: return@withContext Result.failure(Exception("Comment not found"))
 
-            val postId = existingComment["post_id"]?.jsonPrimitive?.contentOrNull
+            val postId = existingComment["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 ?: return@withContext Result.failure(Exception("Post ID not found for comment"))
 
             val post = client.from("posts")
@@ -404,7 +404,7 @@ class CommentRepository constructor(
                 .decodeSingleOrNull<JsonObject>()
                 ?: return@withContext Result.failure(Exception("Post not found"))
 
-            val postAuthor = post["author_uid"]?.jsonPrimitive?.contentOrNull
+            val postAuthor = post["author_uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
             if (postAuthor != currentUser.id) {
                 return@withContext Result.failure(Exception("Only post author can pin comments"))
             }
@@ -431,19 +431,19 @@ class CommentRepository constructor(
                 .decodeSingleOrNull<JsonObject>()
                 ?: return@withContext Result.failure(Exception("Comment not found"))
 
-            val commentUserId = existingComment["user_id"]?.jsonPrimitive?.contentOrNull
+            val commentUserId = existingComment["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
 
 
             var isAuthorized = commentUserId == currentUser.id
 
             if (!isAuthorized) {
-                val postId = existingComment["post_id"]?.jsonPrimitive?.contentOrNull
+                val postId = existingComment["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 if (postId != null) {
 
                     val post = client.from("posts")
                         .select { filter { eq("id", postId) } }
                         .decodeSingleOrNull<JsonObject>()
-                    val postAuthor = post?.get("author_uid")?.jsonPrimitive?.contentOrNull
+                    val postAuthor = post?.get("author_uid")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                     isAuthorized = postAuthor == currentUser.id
                 }
             }
@@ -490,25 +490,25 @@ class CommentRepository constructor(
     private suspend fun parseCommentFromJson(data: JsonObject): CommentWithUser? {
         return try {
             val user = parseUserProfileFromJson(data["users"]?.jsonObject)
-            val commentId = data["id"]?.jsonPrimitive?.contentOrNull ?: return null
+            val commentId = data["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
 
             val reactionSummary = emptyMap<ReactionType, Int>()
             val userReaction = null
 
             CommentWithUser(
                 id = commentId,
-                postId = data["post_id"]?.jsonPrimitive?.contentOrNull ?: return null,
-                userId = data["user_id"]?.jsonPrimitive?.contentOrNull ?: return null,
-                parentCommentId = data["parent_comment_id"]?.jsonPrimitive?.contentOrNull,
-                content = data["content"]?.jsonPrimitive?.contentOrNull ?: "",
-                mediaUrl = data["media_url"]?.jsonPrimitive?.contentOrNull,
-                createdAt = data["created_at"]?.jsonPrimitive?.contentOrNull ?: "",
-                updatedAt = data["updated_at"]?.jsonPrimitive?.contentOrNull,
-                likesCount = data["likes_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                repliesCount = data["replies_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                isDeleted = data["is_deleted"]?.jsonPrimitive?.booleanOrNull ?: false,
-                isEdited = data["is_edited"]?.jsonPrimitive?.booleanOrNull ?: false,
-                isPinned = data["is_pinned"]?.jsonPrimitive?.booleanOrNull ?: false,
+                postId = data["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null,
+                userId = data["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null,
+                parentCommentId = data["parent_comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                content = data["content"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                mediaUrl = data["media_url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                createdAt = data["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                updatedAt = data["updated_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                likesCount = data["likes_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                repliesCount = data["replies_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                isDeleted = data["is_deleted"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false,
+                isEdited = data["is_edited"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false,
+                isPinned = data["is_pinned"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false,
                 user = user,
                 reactionSummary = reactionSummary,
                 userReaction = userReaction
@@ -524,19 +524,19 @@ class CommentRepository constructor(
 
         return try {
             UserProfile(
-                uid = userData["uid"]?.jsonPrimitive?.contentOrNull ?: return null,
-                username = userData["username"]?.jsonPrimitive?.contentOrNull ?: "",
-                displayName = userData["display_name"]?.jsonPrimitive?.contentOrNull ?: "",
+                uid = userData["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null,
+                username = userData["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                displayName = userData["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                 email = "",
-                bio = userData["bio"]?.jsonPrimitive?.contentOrNull,
-                avatar = userData["avatar"]?.jsonPrimitive?.contentOrNull,
-                followersCount = userData["followers_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                followingCount = userData["following_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                postsCount = userData["posts_count"]?.jsonPrimitive?.intOrNull ?: 0,
-                status = UserStatus.fromString(userData["status"]?.jsonPrimitive?.contentOrNull),
-                account_type = userData["account_type"]?.jsonPrimitive?.contentOrNull ?: "user",
-                verify = userData["verify"]?.jsonPrimitive?.booleanOrNull ?: false,
-                banned = userData["banned"]?.jsonPrimitive?.booleanOrNull ?: false
+                bio = userData["bio"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                avatar = userData["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                followersCount = userData["followers_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                followingCount = userData["following_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                postsCount = userData["posts_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
+                status = UserStatus.fromString(userData["status"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull),
+                account_type = userData["account_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "user",
+                verify = userData["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false,
+                banned = userData["banned"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse user profile: ${e.message}")
@@ -561,7 +561,7 @@ class CommentRepository constructor(
                 .select { filter { eq("id", postId) } }
                 .decodeSingleOrNull<JsonObject>()
 
-            val currentCount = post?.get("comments_count")?.jsonPrimitive?.intOrNull ?: 0
+            val currentCount = post?.get("comments_count")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
             val newCount = maxOf(0, currentCount + delta)
 
             client.from("posts")

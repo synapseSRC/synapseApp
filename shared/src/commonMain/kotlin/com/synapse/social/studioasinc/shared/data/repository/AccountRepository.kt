@@ -30,7 +30,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
                     filter { eq("user_id", currentUser.id) }
                 }.decodeSingleOrNull<JsonObject>()
 
-                val enabled = response?.get("security_notifications_enabled")?.jsonPrimitive?.booleanOrNull ?: true
+                val enabled = response?.get("security_notifications_enabled")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: true
                 Result.success(enabled)
             }
         } catch (e: Exception) {
@@ -69,7 +69,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
                     .decodeList<JsonObject>()
 
                 val providers = identities.mapNotNull {
-                    it["provider"]?.jsonPrimitive?.contentOrNull
+                    it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 }
                 Result.success(providers)
             }
