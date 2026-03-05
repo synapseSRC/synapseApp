@@ -89,13 +89,13 @@ fun CommentsList(
                 val hasReplies = comment.repliesCount > 0 || replies.isNotEmpty()
                 val isLastComment = index == comments.itemCount - 1
                 
-                // Map comment to PostCardState
+                // Twitter/X style: Map comment to flat PostCardState
                 val postCardState = PostUiMapper.toPostCardState(
                     comment = comment,
-                    parentAuthorUsername = null, // Top-level comments don't have parent context
-                    depth = 0,
-                    showThreadLine = hasReplies && !isLastComment,
-                    isLastReply = isLastComment
+                    parentAuthorUsername = null,
+                    depth = 0,  // Twitter/X: Always flat
+                    showThreadLine = false,  // Twitter/X: No thread lines
+                    isLastReply = false
                 )
                 
                 Column {
@@ -190,17 +190,17 @@ private fun RenderReplies(
     onShareClick: ((String) -> Unit)?,
     onViewReplies: (String) -> Unit
 ) {
+    // Twitter/X style: Render all replies flat (no visual nesting)
     replies.forEachIndexed { replyIndex, reply ->
         val nestedReplies = repliesState[reply.id] ?: emptyList()
-        val hasNestedReplies = reply.repliesCount > 0 || nestedReplies.isNotEmpty()
-        val isLastReply = replyIndex == replies.lastIndex && parentComment.repliesCount <= replies.size
         
+        // Twitter/X style: depth always 0, no thread lines
         val replyState = PostUiMapper.toPostCardState(
             comment = reply,
             parentAuthorUsername = parentComment.getUsername(),
-            depth = depth,
-            showThreadLine = hasNestedReplies && !isLastReply,
-            isLastReply = isLastReply
+            depth = 0,  // Twitter/X: Always flat
+            showThreadLine = false,  // Twitter/X: No thread lines
+            isLastReply = false
         )
         
         Column {
@@ -222,14 +222,14 @@ private fun RenderReplies(
                 modifier = Modifier
             )
             
-            // Recursively render nested replies
+            // Twitter/X style: Render nested replies flat (same level)
             if (nestedReplies.isNotEmpty()) {
                 RenderReplies(
                     replies = nestedReplies,
                     parentComment = reply,
                     repliesState = repliesState,
                     replyLoadingState = replyLoadingState,
-                    depth = depth + 1,
+                    depth = 0,  // Twitter/X: Keep flat
                     onReplyClick = onReplyClick,
                     onLikeClick = onLikeClick,
                     onShowReactions = onShowReactions,
@@ -240,7 +240,7 @@ private fun RenderReplies(
                 )
             }
             
-            // Show "Show more replies" button for nested replies
+            // Show "Show more replies" button
             if (reply.repliesCount > nestedReplies.size && !replyLoadingState.contains(reply.id)) {
                 Text(
                     text = androidx.compose.ui.res.stringResource(com.synapse.social.studioasinc.R.string.show_more_replies),
@@ -248,16 +248,16 @@ private fun RenderReplies(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                        .padding(start = (68 + (depth * 32)).dp, top = 4.dp, bottom = 12.dp)
+                        .padding(start = 68.dp, top = 4.dp, bottom = 12.dp)  // Twitter/X: No depth-based padding
                         .clickable { onViewReplies(reply.id) }
                 )
             }
             
-            // Show loading indicator for nested replies
+            // Show loading indicator
             if (replyLoadingState.contains(reply.id)) {
                 CircularProgressIndicator(
                     modifier = Modifier
-                        .padding(start = (68 + (depth * 32)).dp, top = 4.dp, bottom = 12.dp)
+                        .padding(start = 68.dp, top = 4.dp, bottom = 12.dp)  // Twitter/X: No depth-based padding
                         .size(20.dp),
                     strokeWidth = 2.dp
                 )

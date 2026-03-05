@@ -88,13 +88,9 @@ fun PostCard(
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
 
-    // Calculate avatar size based on comment depth (memoized to avoid recomputation)
-    val avatarSize = remember(state.isComment, state.depth) {
-        when {
-            state.isComment && state.depth > 0 -> 32.dp
-            state.isComment -> 40.dp
-            else -> 48.dp
-        }
+    // Twitter/X style: All comments use same avatar size (no depth-based sizing)
+    val avatarSize = remember(state.isComment) {
+        if (state.isComment) 40.dp else 48.dp
     }
 
     Column(
@@ -143,21 +139,7 @@ fun PostCard(
                     size = avatarSize
                 )
 
-                val showThreadLineColumn = remember(state.isComment, state.showThreadLine, state.isLastReply) {
-                    state.isComment && state.showThreadLine && !state.isLastReply
-                }
-
-                if (showThreadLineColumn) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .width(com.synapse.social.studioasinc.feature.shared.theme.Spacing.Tiny)
-                            .weight(1f)
-                            .background(
-                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                            )
-                    )
-                }
+                // Twitter/X style: No visual thread lines
             }
 
             Spacer(modifier = Modifier.width(12.dp))

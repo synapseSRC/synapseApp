@@ -105,7 +105,7 @@ class PostSubmissionHandler @Inject constructor(
             val newMedia = state.mediaItems.filter { !it.url.startsWith("http") }
             val existingMedia = state.mediaItems.filter { it.url.startsWith("http") }
 
-            if (newMedia.isEmpty()) {
+            return@withContext if (newMedia.isEmpty()) {
                  val finalPost = post.copy(
                      mediaItems = existingMedia.toMutableList(),
                      postImage = existingMedia.firstOrNull { it.type == MediaType.IMAGE }?.url
@@ -115,7 +115,7 @@ class PostSubmissionHandler @Inject constructor(
                  uploadMediaAndSave(state, post, newMedia, existingMedia, onProgress)
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            return@withContext Result.failure(e)
         }
     }
 

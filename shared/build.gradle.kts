@@ -115,6 +115,7 @@ sqldelight {
   databases {
     create("StorageDatabase") {
       packageName.set("com.synapse.social.studioasinc.shared.data.database")
+      verifyMigrations.set(false)
     }
   }
 }
@@ -170,4 +171,9 @@ configurations.all {
             }
         }
     }
+}
+
+// Disable SQLDelight migration verification due to Windows file locking issues
+tasks.withType<app.cash.sqldelight.gradle.VerifyMigrationTask> {
+    enabled = false
 }
