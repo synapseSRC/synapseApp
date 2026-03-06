@@ -49,7 +49,8 @@ jobs:
           SUPABASE_SYNAPSE_S3_ACCESS_KEY: ${{ secrets.SUPABASE_SYNAPSE_S3_ACCESS_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
-        run: ./gradlew assembleRelease
+          GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Set short SHA
         id: set_sha

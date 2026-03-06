@@ -15,8 +15,6 @@ import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -75,13 +73,18 @@ class SupabaseAuthenticationService(
     override suspend fun createUserProfile(userId: String, email: String, username: String): Result<Unit> {
         return try {
             withContext(Dispatchers.Default) {
-                // Use the database function to create user profile with proper RLS handling
-                Napier.d("Calling create_user_profile function for $userId...")
-                client.postgrest.rpc("create_user_profile", buildJsonObject {
-                    put("p_user_id", userId)
-                    put("p_email", email)
-                    put("p_username", username)
-                })
+                val profileInsert = UserProfileInsert(
+                    uid = userId,
+                    username = username
+                )
+                client.from("users").insert(profileInsert)
+
+                val settingsInsert = UserSettingsInsert(user_id = userId)
+                client.from("user_settings").insert(settingsInsert)
+
+                val presenceInsert = UserPresenceInsert(user_id = userId)
+                client.from("user_presence").insert(presenceInsert)
+
                 Napier.d("User profile created successfully: $userId")
                 Result.success(Unit)
             }
@@ -178,17 +181,13 @@ class SupabaseAuthenticationService(
 
     @OptIn(ExperimentalTime::class)
     override suspend fun isEmailVerified(): Boolean {
-        // Email verification disabled for development - always return true
-        return true
-        
-        // Original verification logic commented out for development
-        // return try {
-        //     val user = client.auth.currentUserOrNull()
-        //     user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "true" } == true
-        // } catch (e: Exception) {
-        //     Napier.e("Failed to check email verification", e)
-        //     false
-        // }
+        return try {
+            val user = client.auth.currentUserOrNull()
+            user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "true" } == true
+        } catch (e: Exception) {
+            Napier.e("Failed to check email verification", e)
+            false
+        }
     }
 
     @OptIn(ExperimentalTime::class)

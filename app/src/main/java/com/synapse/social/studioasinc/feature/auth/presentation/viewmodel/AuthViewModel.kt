@@ -183,13 +183,9 @@ class AuthViewModel @Inject constructor(
             _uiState.value = state.copy(isLoading = true, generalError = null)
             signUpUseCase(state.email, state.password, state.username).fold(
                 onSuccess = {
-                    // Email verification disabled - go directly to main screen
-                    _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
-                    
-                    // Original verification flow commented out for development
-                    // _uiState.value = AuthUiState.EmailVerification(email = state.email)
-                    // startResendCooldown()
-                    // checkEmailVerification(state.email)
+                    _uiState.value = AuthUiState.EmailVerification(email = state.email)
+                    startResendCooldown()
+                    checkEmailVerification(state.email)
                 },
                 onFailure = { error ->
                     _uiState.value = state.copy(isLoading = false, generalError = error.message ?: "Registration failed")

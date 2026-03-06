@@ -398,14 +398,12 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                 val user = createLocalUser(email, supabaseUser)
                 debugLog("User created successfully: ${user.id}")
 
-                // Email verification disabled for development
-                val needsVerification = false
-                // val needsVerification = if (authConfig.shouldBypassEmailVerification()) {
-                //     debugLog("Email verification bypassed in development mode")
-                //     false
-                // } else {
-                //     supabaseUser?.emailConfirmedAt == null
-                // }
+                val needsVerification = if (authConfig.shouldBypassEmailVerification()) {
+                    debugLog("Email verification bypassed in development mode")
+                    false
+                } else {
+                    supabaseUser?.emailConfirmedAt == null
+                }
 
                 AuthErrorHandler.logVerificationAttempt(email, !needsVerification)
                 logAuthenticationStep("Sign up completed successfully", email, true)
@@ -460,36 +458,33 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                     OneSignal.login(user.id)
                     debugLog("Linked OneSignal with External User ID: ${user.id}")
 
-                    // Email verification disabled for development
-                    val emailVerified = true
-                    // val emailVerified = supabaseUser.emailConfirmedAt != null || authConfig.shouldBypassEmailVerification()
+                    val emailVerified = supabaseUser.emailConfirmedAt != null || authConfig.shouldBypassEmailVerification()
 
-                    // Email verification check commented out for development
-                    // if (!emailVerified && !authConfig.shouldBypassEmailVerification()) {
-                    //     AuthErrorHandler.logVerificationAttempt(email, false, "Email not verified")
-                    //     logAuthenticationStep("Sign in requires email verification", email, false)
-                    //
-                    //     Result.success(AuthResult(
-                    //         user = user,
-                    //         needsEmailVerification = true,
-                    //         message = "Please verify your email address to continue"
-                    //     ))
-                    // } else {
-                    AuthErrorHandler.logVerificationAttempt(email, true)
-                    logAuthenticationStep("Sign in completed successfully", email, true)
+                    if (!emailVerified && !authConfig.shouldBypassEmailVerification()) {
+                        AuthErrorHandler.logVerificationAttempt(email, false, "Email not verified")
+                        logAuthenticationStep("Sign in requires email verification", email, false)
 
-                    val message = if (authConfig.shouldBypassEmailVerification() && supabaseUser.emailConfirmedAt == null) {
-                        "Signed in successfully. Email verification bypassed in development mode."
+                        Result.success(AuthResult(
+                            user = user,
+                            needsEmailVerification = true,
+                            message = "Please verify your email address to continue"
+                        ))
                     } else {
-                        null
-                    }
+                        AuthErrorHandler.logVerificationAttempt(email, true)
+                        logAuthenticationStep("Sign in completed successfully", email, true)
 
-                    Result.success(AuthResult(
-                        user = user,
-                        needsEmailVerification = false,
-                        message = message
-                    ))
-                    // } // Commented out closing brace from email verification check
+                        val message = if (authConfig.shouldBypassEmailVerification() && supabaseUser.emailConfirmedAt == null) {
+                            "Signed in successfully. Email verification bypassed in development mode."
+                        } else {
+                            null
+                        }
+
+                        Result.success(AuthResult(
+                            user = user,
+                            needsEmailVerification = false,
+                            message = message
+                        ))
+                    }
                 } else {
                     logAuthenticationStep("Sign in failed - invalid credentials", email, false)
                     Result.failure(Exception("Authentication failed - invalid credentials"))
@@ -524,39 +519,34 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             try {
                 logAuthenticationStep("Starting resend verification email", email)
 
-                // Email verification disabled for development - always return success
-                debugLog("Resend verification email bypassed for development")
-                logAuthenticationStep("Resend verification email bypassed (dev mode)", email, true)
-                return@withContext Result.success(Unit)
 
-                // Original verification logic commented out for development
-                // if (authConfig.shouldBypassEmailVerification()) {
-                //     debugLog("Resend verification email bypassed in development mode")
-                //     logAuthenticationStep("Resend verification email bypassed (dev mode)", email, true)
-                //     return@withContext Result.success(Unit)
-                // }
-                //
-                //
-                // if (!SupabaseClient.isConfigured()) {
-                //     logAuthenticationStep("Resend verification failed - Supabase not configured", email, false)
-                //     return@withContext Result.failure(Exception("Supabase not configured. Please set up your credentials."))
-                // }
-                //
-                //
-                // AuthErrorHandler.executeWithRetry(
-                //     maxAttempts = authConfig.getEffectiveRetryAttempts(),
-                //     initialDelay = authConfig.getEffectiveRetryDelay()
-                // ) {
-                //     logAuthenticationStep("Calling Supabase resend", email)
-                //     client.auth.resendEmail(OtpType.Email.SIGNUP, email)
-                //     Unit
-                // }
-                //
-                //
-                // AuthErrorHandler.logResendVerificationAttempt(email, true)
-                // logAuthenticationStep("Resend verification email completed", email, true)
-                //
-                // Result.success(Unit)
+                if (authConfig.shouldBypassEmailVerification()) {
+                    debugLog("Resend verification email bypassed in development mode")
+                    logAuthenticationStep("Resend verification email bypassed (dev mode)", email, true)
+                    return@withContext Result.success(Unit)
+                }
+
+
+                if (!SupabaseClient.isConfigured()) {
+                    logAuthenticationStep("Resend verification failed - Supabase not configured", email, false)
+                    return@withContext Result.failure(Exception("Supabase not configured. Please set up your credentials."))
+                }
+
+
+                AuthErrorHandler.executeWithRetry(
+                    maxAttempts = authConfig.getEffectiveRetryAttempts(),
+                    initialDelay = authConfig.getEffectiveRetryDelay()
+                ) {
+                    logAuthenticationStep("Calling Supabase resend", email)
+                    client.auth.resendEmail(OtpType.Email.SIGNUP, email)
+                    Unit
+                }
+
+
+                AuthErrorHandler.logResendVerificationAttempt(email, true)
+                logAuthenticationStep("Resend verification email completed", email, true)
+
+                Result.success(Unit)
             } catch (e: Exception) {
                 logAuthenticationStep("Resend verification email failed", email, false)
                 debugLog("Failed to resend verification email", e)
@@ -578,45 +568,44 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             try {
                 logAuthenticationStep("Checking email verification status", email)
 
-                // Email verification disabled for development - always return true
-                debugLog("Email verification check bypassed for development - returning true")
-                logAuthenticationStep("Email verification check bypassed (dev mode)", email, true)
-                return@withContext Result.success(true)
 
-                // Original verification check commented out for development
-                // if (authConfig.shouldBypassEmailVerification()) {
-                //     debugLog("Email verification check bypassed in development mode - returning true")
-                //     logAuthenticationStep("Email verification check bypassed (dev mode)", email, true)
-                //     return@withContext Result.success(true)
-                // }
-                //
-                // if (!SupabaseClient.isConfigured()) {
-                //     logAuthenticationStep("Email verification check failed - Supabase not configured", email, false)
-                //     return@withContext Result.failure(Exception("Supabase not configured. Please set up your credentials."))
-                // }
-                //
-                // val isVerified = AuthErrorHandler.executeWithRetry(
-                //     maxAttempts = authConfig.getEffectiveRetryAttempts(),
-                //     initialDelay = authConfig.getEffectiveRetryDelay()
-                // ) {
-                //     val user = client.auth.currentUserOrNull()
-                //     if (user != null && user.email == email) {
-                //         val verified = user.emailConfirmedAt != null
-                //         debugLog("Email verification status for $email: $verified")
-                //         verified
-                //     } else {
-                //         debugLog("No current user or email mismatch for verification check")
-                //         false
-                //     }
-                // }
-                //
-                // AuthErrorHandler.logVerificationAttempt(email, isVerified)
-                // logAuthenticationStep("Email verification check completed", email, isVerified)
-                //
-                // Result.success(isVerified)
+                if (authConfig.shouldBypassEmailVerification()) {
+                    debugLog("Email verification check bypassed in development mode - returning true")
+                    logAuthenticationStep("Email verification check bypassed (dev mode)", email, true)
+                    return@withContext Result.success(true)
+                }
+
+
+                if (!SupabaseClient.isConfigured()) {
+                    logAuthenticationStep("Email verification check failed - Supabase not configured", email, false)
+                    return@withContext Result.failure(Exception("Supabase not configured. Please set up your credentials."))
+                }
+
+
+                val isVerified = AuthErrorHandler.executeWithRetry(
+                    maxAttempts = authConfig.getEffectiveRetryAttempts(),
+                    initialDelay = authConfig.getEffectiveRetryDelay()
+                ) {
+                    val user = client.auth.currentUserOrNull()
+                    if (user != null && user.email == email) {
+                        val verified = user.emailConfirmedAt != null
+                        debugLog("Email verification status for $email: $verified")
+                        verified
+                    } else {
+                        debugLog("No current user or email mismatch for verification check")
+                        false
+                    }
+                }
+
+
+                AuthErrorHandler.logVerificationAttempt(email, isVerified)
+                logAuthenticationStep("Email verification check completed", email, isVerified)
+
+                Result.success(isVerified)
             } catch (e: Exception) {
                 logAuthenticationStep("Email verification check failed", email, false)
                 debugLog("Failed to check email verification status", e)
+
 
                 AuthErrorHandler.logVerificationAttempt(email, false, e.message)
 

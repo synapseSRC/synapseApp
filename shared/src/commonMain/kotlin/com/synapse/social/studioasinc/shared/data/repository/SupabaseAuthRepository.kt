@@ -26,12 +26,9 @@ import com.synapse.social.studioasinc.shared.domain.model.auth.SocialProvider
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Count
-import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import io.github.aakira.napier.Napier
@@ -101,14 +98,32 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                     Napier.d("Profile does not exist for $userId, creating new profile...", tag = TAG)
                     val actualUsername = username ?: email.substringBefore("@")
 
-                    // Use the database function to create user profile with proper RLS handling
-                    Napier.d("Calling create_user_profile function for $userId...", tag = TAG)
-                    client.postgrest.rpc("create_user_profile", buildJsonObject {
-                        put("p_user_id", userId)
-                        put("p_email", email)
-                        put("p_username", actualUsername)
-                    })
-                    Napier.d("Successfully created user profile for $userId.", tag = TAG)
+                    // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
+                    val profileInsert = UserProfileInsert(
+                        uid = userId, // Ensure ID is passed if model requires it
+                        username = actualUsername
+                    )
+                    // Note: Check table name. Previous code said "user_profiles", but supabase tables showed "users".
+                    // The app/UserRepository used "users". shared used "user_profiles".
+                    // I see "users" table in Supabase list_tables output earlier.
+                    // I will change it to "users" to match the actual DB.
+                    Napier.d("Inserting user profile for $userId into users table...", tag = TAG)
+                    client.from("users").insert(profileInsert)
+                    Napier.d("Successfully inserted user profile for $userId.", tag = TAG)
+
+                    // Also check if user_settings and user_presence exist in list_tables
+                    // Yes: user_settings, user_presence.
+                    val settingsInsert = UserSettingsInsert(user_id = userId)
+                    Napier.d("Inserting user settings for $userId...", tag = TAG)
+                    client.from("user_settings").insert(settingsInsert)
+                    Napier.d("Successfully inserted user settings for $userId.", tag = TAG)
+
+                    val presenceInsert = UserPresenceInsert(user_id = userId)
+                    Napier.d("Inserting user presence for $userId...", tag = TAG)
+                    client.from("user_presence").insert(presenceInsert)
+                    Napier.d("Successfully inserted user presence for $userId.", tag = TAG)
+
+                    Napier.d("User profile created: $userId", tag = TAG)
                 } else {
                     Napier.d("Profile already exists for $userId.", tag = TAG)
                 }
@@ -171,17 +186,13 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     @OptIn(ExperimentalTime::class)
     override fun isEmailVerified(): Boolean {
-        // Email verification disabled for development - always return true
-        return true
-        
-        // Original verification logic commented out for development
-        // return try {
-        //     val user = client.auth.currentUserOrNull()
-        //     user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "true" } == true
-        // } catch (e: Exception) {
-        //     logSafeError("Failed to check email verification", e)
-        //     false
-        // }
+        return try {
+            val user = client.auth.currentUserOrNull()
+            user?.identities?.any { it.provider == "email" && it.identityData["email_verified"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "true" } == true
+        } catch (e: Exception) {
+            logSafeError("Failed to check email verification", e)
+            false
+        }
     }
 
     override suspend fun refreshSession(): Result<Unit> {
@@ -220,21 +231,16 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
 
     override suspend fun resendVerificationEmail(email: String): Result<Unit> {
-        // Email verification disabled for development - skip resend
-        Napier.d("Verification email resend bypassed for development", tag = TAG)
-        return Result.success(Unit)
-        
-        // Original resend logic commented out for development
-        // return try {
-        //     withContext(Dispatchers.Default) {
-        //         client.auth.resendEmail(OtpType.Email.SIGNUP, email)
-        //         Napier.d("Verification email resent", tag = TAG)
-        //         Result.success(Unit)
-        //     }
-        // } catch (e: Exception) {
-        //     logSafeError("Resend verification email failed", e)
-        //     Result.failure(e)
-        // }
+        return try {
+            withContext(Dispatchers.Default) {
+                client.auth.resendEmail(OtpType.Email.SIGNUP, email)
+                Napier.d("Verification email resent", tag = TAG)
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            logSafeError("Resend verification email failed", e)
+            Result.failure(e)
+        }
     }
 
     override suspend fun updatePassword(password: String): Result<Unit> {
