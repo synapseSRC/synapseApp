@@ -2,6 +2,8 @@ package com.synapse.social.studioasinc.shared.data.mapper
 
 import com.synapse.social.studioasinc.shared.domain.model.AuthError
 import io.github.jan.supabase.exceptions.RestException
+import io.github.jan.supabase.exceptions.HttpRequestException
+import io.github.jan.supabase.exceptions.UnknownRestException
 
 object AuthErrorMapper {
 
@@ -62,7 +64,8 @@ object AuthErrorMapper {
             messageToCheck.contains("connection") ||
             messageToCheck.contains("timeout") ||
             messageToCheck.contains("unable to resolve host") ||
-            messageToCheck.contains("failed to connect") -> {
+            messageToCheck.contains("failed to connect") ||
+            exception is HttpRequestException -> {
                 AuthError.NetworkError("Network connection failed. Please check your internet")
             }
             
@@ -104,6 +107,8 @@ object AuthErrorMapper {
                     ).firstOrNull { !it.isNullOrBlank() && !isGenericUnknownError(it) }
 
                     AuthError.Unknown(fallbackMsg ?: FALLBACK_SIGN_UP_SERVER_ERROR)
+                } else if (exception is UnknownRestException) {
+                    AuthError.Unknown(FALLBACK_SIGN_UP_SERVER_ERROR)
                 } else {
                     val fallbackMessage = listOfNotNull(
                         originalMessage,
