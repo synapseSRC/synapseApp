@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -212,7 +214,7 @@ fun StoryOptionsSheet(
             if (isOwnStory) {
 
                 ListItem(
-                    headlineContent = { Text("Delete story") },
+                    headlineContent = { Text(stringResource(R.string.story_delete)) },
                     leadingContent = {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -225,7 +227,7 @@ fun StoryOptionsSheet(
             } else {
 
                 ListItem(
-                    headlineContent = { Text("Mute this person's stories") },
+                    headlineContent = { Text(stringResource(R.string.story_mute)) },
                     leadingContent = {
                         Icon(
                             imageVector = Icons.Default.VolumeOff,
@@ -236,7 +238,7 @@ fun StoryOptionsSheet(
                 )
 
                 ListItem(
-                    headlineContent = { Text("Report story") },
+                    headlineContent = { Text(stringResource(R.string.story_report)) },
                     leadingContent = {
                         Icon(
                             imageVector = Icons.Default.Flag,

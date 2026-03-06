@@ -202,7 +202,7 @@ class CreatePostViewModel @Inject constructor(
 
                     if (mediaItems.isEmpty()) {
                         it.postImage?.let { imgUrl ->
-                             mediaItems.add(MediaItem(url = imgUrl, type = MediaType.IMAGE))
+                             mediaItems.add(MediaItem(id = java.util.UUID.randomUUID().toString(), url = imgUrl, type = MediaType.IMAGE))
                         }
                     }
 
@@ -281,7 +281,7 @@ class CreatePostViewModel @Inject constructor(
              val type = if (mimeType.startsWith("video")) MediaType.VIDEO else MediaType.IMAGE
              UriUtils.getPathFromUri(context, uri)?.let { path ->
                  android.util.Log.d("CreatePost", "Converted URI to path: $path")
-                 currentMedia.add(MediaItem(url = path, type = type))
+                 currentMedia.add(MediaItem(id = java.util.UUID.randomUUID().toString(), url = path, type = type))
              } ?: run {
                  android.util.Log.e("CreatePost", "Failed to convert URI to path: $uri")
              }

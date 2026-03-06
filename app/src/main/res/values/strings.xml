@@ -915,6 +915,108 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_dismiss">Dismiss</string>
     <string name="settings_cancel">Cancel</string>
     <string name="settings_save">Save</string>
+    
+    <!-- Story Strings -->
+    <string name="story_delete">Delete story</string>
+    <string name="story_mute">Mute this person\'s stories</string>
+    <string name="story_report">Report story</string>
+    <string name="story_open_gallery">Open Gallery</string>
+    <string name="story_camera_permission_required">Camera permission required</string>
+    <string name="story_post_to">Post to %1$s</string>
+    <string name="story_create">Create Story</string>
+    <string name="story_discard">Discard</string>
+    <string name="story_draw">Draw</string>
+    <string name="story_add_text">Add text</string>
+    <string name="story_add_sticker">Add sticker</string>
+    <string name="story_shared_post_editor">Shared Post Editor</string>
+    
+    <!-- Common Actions -->
+    <string name="action_retry">Retry</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_ok">OK</string>
+    <string name="action_later">Later</string>
+    <string name="action_update">Update</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_report">Report</string>
+    <string name="action_reshare">Reshare</string>
+    <string name="action_quote">Quote</string>
+    
+    <!-- Post Actions -->
+    <string name="post_delete_title">Delete Post</string>
+    <string name="post_delete_message">Are you sure you want to delete this post? This action cannot be undone.</string>
+    
+    <!-- Comment Actions -->
+    <string name="comment_write">Write a comment…</string>
+    
+    <!-- Search -->
+    <string name="search_synapse">Search Synapse</string>
+    <string name="search_settings">Search settings…</string>
+    <string name="search_region">Search region</string>
+    <string name="search_username_or_name">Search by username or name</string>
+    
+    <!-- Profile -->
+    <string name="profile_qr_code">Profile QR Code</string>
+    <string name="profile_select_region">Select Region</string>
+    <string name="profile_view_as_exit">Exit</string>
+    <string name="profile_see_all">See All</string>
+    
+    <!-- Photo History -->
+    <string name="photo_history_delete_title">Delete Photo?</string>
+    <string name="photo_history_delete_message">Are you sure you want to delete this photo from history? This action cannot be undone.</string>
+    
+    <!-- Report -->
+    <string name="report_user_title">Report User</string>
+    
+    <!-- Chat Privacy -->
+    <string name="chat_privacy_placeholder">Chat Privacy Settings (To be implemented)</string>
+    
+    <!-- Synapse Plus -->
+    <string name="synapse_plus_title">Synapse Plus</string>
+    <string name="synapse_plus_hero_title">Synapse Plus</string>
+    <string name="synapse_plus_hero_subtitle">Unlock premium features and enhance your experience</string>
+    <string name="synapse_plus_section_features">Features</string>
+    <string name="synapse_plus_feature_verified">Verified Badge</string>
+    <string name="synapse_plus_feature_verified_desc">Get the verified checkmark</string>
+    <string name="synapse_plus_feature_ad_free">Ad-Free Experience</string>
+    <string name="synapse_plus_feature_ad_free_desc">Browse without ads</string>
+    <string name="synapse_plus_feature_analytics">Advanced Analytics</string>
+    <string name="synapse_plus_feature_analytics_desc">Detailed insights</string>
+    <string name="synapse_plus_feature_themes">Custom Themes</string>
+    <string name="synapse_plus_feature_themes_desc">Personalize your app</string>
+    <string name="synapse_plus_feature_support">Priority Support</string>
+    <string name="synapse_plus_feature_support_desc">Get help faster</string>
+    <string name="synapse_plus_feature_extended">Extended Features</string>
+    <string name="synapse_plus_feature_extended_desc">More capabilities</string>
+    <string name="synapse_plus_upgrade_button">Upgrade to Synapse Plus</string>
+    <string name="synapse_plus_price">$4.99/month</string>
+    <string name="synapse_plus_upgrade_dialog_title">Upgrade to Synapse Plus</string>
+    <string name="synapse_plus_upgrade_dialog_message">Payment integration is coming soon. Stay tuned for premium features!</string>
+    
+    <!-- Storage -->
+    <string name="storage_used">%1$s used</string>
+    <string name="storage_free">%1$s free</string>
+    <string name="storage_synapse_media">Synapse media</string>
+    <string name="storage_apps_other">Apps and other items</string>
+    
+    <!-- Mentions -->
+    <string name="mention_username_format">\@%1$s</string>
+    
+    <!-- Error States -->
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown_short">Error</string>
+    
+    <!-- Content Descriptions -->
+    <string name="cd_close">Close</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_more_options">More options</string>
+    <string name="cd_profile_picture">Profile picture</string>
+    <string name="cd_post_image">Post image</string>
+    <string name="cd_like">Like</string>
+    <string name="cd_comment">Comment</string>
+    <string name="cd_share">Share</string>
+    <string name="cd_send">Send</string>
     <string name="settings_done">Done</string>
     <string name="settings_loading">Loading…</string>
     <string name="settings_error">Error</string>
@@ -1026,8 +1128,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="error_permission">Permission error</string>
     <string name="error_validation">Validation error</string>
     <string name="error_server">Server error</string>
-    <string name="error_unknown">Unknown error</string>
-    <string name="error_unknown_short">Unknown</string>
 
     <!-- Request Account Info -->
     <string name="request_account_info_title">Request Account Info</string>
@@ -1056,32 +1156,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="notification_fallback_message">You have a new notification</string>
     <string name="someone">Someone</string>
     <!-- Synapse Plus Strings -->
-    <string name="synapse_plus_title">Synapse Plus</string>
-    <string name="synapse_plus_hero_title">Synapse Plus</string>
-    <string name="synapse_plus_hero_subtitle">Get Verified &amp; Unlock Exclusive Features</string>
-    <string name="synapse_plus_section_verification">Verification</string>
-    <string name="synapse_plus_toggle_verified_badge">Show Verified Badge</string>
-    <string name="synapse_plus_toggle_verified_badge_desc">Display verification badge on your profile</string>
-    <string name="synapse_plus_section_features">Premium Features</string>
-    <string name="synapse_plus_upgrade_title">Upgrade to Plus</string>
-    <string name="synapse_plus_upgrade_subtitle">Unlock premium features and verification</string>
-    <string name="synapse_plus_feature_verified">Verified Badge</string>
-    <string name="synapse_plus_feature_verified_desc">Get that blue checkmark</string>
-    <string name="synapse_plus_feature_ad_free">Ad-Free</string>
-    <string name="synapse_plus_feature_ad_free_desc">No interruptions</string>
-    <string name="synapse_plus_feature_analytics">Analytics</string>
-    <string name="synapse_plus_feature_analytics_desc">Deep insights</string>
-    <string name="synapse_plus_feature_themes">Custom Themes</string>
-    <string name="synapse_plus_feature_themes_desc">Express yourself</string>
-    <string name="synapse_plus_feature_support">Priority Support</string>
-    <string name="synapse_plus_feature_support_desc">Skip the line</string>
-    <string name="synapse_plus_feature_extended">Extended Posts</string>
-    <string name="synapse_plus_feature_extended_desc">Write up to 4000 chars</string>
-    <string name="synapse_plus_upgrade_button">Upgrade Now</string>
-    <string name="synapse_plus_price">$4.99/month</string>
-    <string name="profile_get_user_info_failed">Failed to get user information.</string>
-    <string name="invalid_user_id">Invalid user ID</string>
-    <string name="profile_message_self_error">You cannot message yourself</string>
     <string name="chat_not_implemented">Chat feature not implemented</string>
     <string name="chat_error_start">Error starting chat: %1$s</string>
     <string name="action_add">Add</string>
@@ -1097,7 +1171,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="warn_remove_poll_for_media">Remove poll to add media</string>
     <string name="title_edit_post">Edit Post</string>
     <string name="title_create_post">Create Post</string>
-    <string name="cd_close">Close</string>
     <string name="button_posting">Posting...</string>
     <string name="hint_whats_on_your_mind">What\'s on your mind?</string>
     <string name="title_edit_image">Edit Image</string>
@@ -1146,7 +1219,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="toast_comment_copied">Comment copied</string>
     <string name="title_share_comment">Share Comment</string>
     <string name="title_post_detail">Post</string>
-    <string name="cd_back">Back</string>
     <string name="error_prefix">Error: %1$s</string>
     <!-- Inbox Screen -->
     <string name="title_inbox">Inbox</string>

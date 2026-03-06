@@ -175,7 +175,7 @@ class PostDetailViewModel @Inject constructor(
             try {
                 var mediaUrl: String? = null
                 if (mediaUri != null) {
-                    val mediaItem = MediaItem(url = mediaUri.toString(), type = MediaType.IMAGE)
+                    val mediaItem = MediaItem(id = java.util.UUID.randomUUID().toString(), url = mediaUri.toString(), type = MediaType.IMAGE)
                     val uploadedItems = mediaUploadHandler.uploadMedia(listOf(mediaItem)) { }
                     mediaUrl = uploadedItems.firstOrNull()?.url
                 }

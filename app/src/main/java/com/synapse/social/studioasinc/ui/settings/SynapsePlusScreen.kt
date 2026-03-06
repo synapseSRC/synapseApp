@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 
 
@@ -56,8 +57,8 @@ fun SynapsePlusScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            verticalArrangement = Arrangement.spacedBy(Spacing.Large),
+            contentPadding = PaddingValues(bottom = Spacing.Large)
         ) {
             item {
                 HeroCard()
@@ -68,7 +69,7 @@ fun SynapsePlusScreen(
                     text = stringResource(R.string.synapse_plus_section_features),
                     style = SettingsTypography.sectionHeader,
                     color = SettingsColors.sectionTitle,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = Spacing.Small)
                 )
                 FeatureGrid()
             }
@@ -81,11 +82,11 @@ fun SynapsePlusScreen(
         if (showUpgradeDialog) {
             AlertDialog(
                 onDismissRequest = { showUpgradeDialog = false },
-                title = { Text("Upgrade to Synapse Plus") },
-                text = { Text("Payment integration is coming soon. Stay tuned for premium features!") },
+                title = { Text(stringResource(R.string.synapse_plus_upgrade_dialog_title)) },
+                text = { Text(stringResource(R.string.synapse_plus_upgrade_dialog_message)) },
                 confirmButton = {
                     TextButton(onClick = { showUpgradeDialog = false }) {
-                        Text("OK")
+                        Text(stringResource(R.string.action_ok))
                     }
                 }
             )
@@ -105,11 +106,13 @@ private fun HeroCard() {
         ),
         label = "scale"
     )
+    
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = Spacing.ExtraSmall)
     ) {
         Box(
             modifier = Modifier
@@ -122,12 +125,12 @@ private fun HeroCard() {
                         )
                     )
                 )
-                .padding(24.dp),
+                .padding(Spacing.Large),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
             ) {
 
                 Icon(
@@ -136,24 +139,24 @@ private fun HeroCard() {
                     modifier = Modifier
                         .size(64.dp)
                         .scale(scale),
-                    tint = Color.White
+                    tint = onPrimaryColor
                 )
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
                 ) {
                     Text(
                         text = stringResource(R.string.synapse_plus_hero_title),
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
-                        color = Color.White
+                        color = onPrimaryColor
                     )
                     Text(
                         text = stringResource(R.string.synapse_plus_hero_subtitle),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = onPrimaryColor.copy(alpha = 0.9f),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -197,11 +200,11 @@ private fun FeatureGrid() {
         )
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)) {
         features.chunked(2).forEach { rowFeatures ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
             ) {
                 rowFeatures.forEach { feature ->
                     FeatureCard(
@@ -239,7 +242,7 @@ private fun FeatureCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(Spacing.Medium),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.Start
         ) {
@@ -255,19 +258,19 @@ private fun FeatureCard(
                             imageVector = feature.icon,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(Spacing.Large)
                         )
                         is Int -> Icon(
                             painter = painterResource(feature.icon),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(Spacing.Large)
                         )
                     }
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
                 Text(
                     text = feature.title,
                     style = SettingsTypography.itemTitle,
@@ -287,6 +290,8 @@ private fun FeatureCard(
 private fun UpgradeButton(
     onClick: () -> Unit
 ) {
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -300,7 +305,7 @@ private fun UpgradeButton(
                 )
             )
             .clickable(onClick = onClick)
-            .padding(vertical = 16.dp),
+            .padding(vertical = Spacing.Medium),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -309,12 +314,12 @@ private fun UpgradeButton(
             Text(
                 text = stringResource(R.string.synapse_plus_upgrade_button),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
+                color = onPrimaryColor
             )
             Text(
                 text = stringResource(R.string.synapse_plus_price),
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.9f)
+                color = onPrimaryColor.copy(alpha = 0.9f)
             )
         }
     }

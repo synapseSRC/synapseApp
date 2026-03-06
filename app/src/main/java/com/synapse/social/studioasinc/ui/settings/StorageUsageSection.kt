@@ -21,16 +21,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun StorageUsageSection(storageUsage: StorageUsageBreakdown) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(Spacing.Medium)
     ) {
         val totalGB = formatBytesToGB(storageUsage.totalSize)
         val usedGB = formatBytesToGB(storageUsage.usedSize)
@@ -41,45 +43,49 @@ fun StorageUsageSection(storageUsage: StorageUsageBreakdown) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "$usedGB used",
+                text = stringResource(R.string.storage_used, usedGB),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "$freeGB free",
+                text = stringResource(R.string.storage_free, freeGB),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.Small))
 
 
         StorageBar(usage = storageUsage)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.Medium))
 
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Badge(color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Synapse media", style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.width(Spacing.Small))
+            Text(stringResource(R.string.storage_synapse_media), style = MaterialTheme.typography.bodySmall)
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.Medium))
 
             Badge(color = MaterialTheme.colorScheme.tertiary)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Apps and other items", style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.width(Spacing.Small))
+            Text(stringResource(R.string.storage_apps_other), style = MaterialTheme.typography.bodySmall)
         }
     }
-    HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceContainerLowest)
+    HorizontalDivider(thickness = Spacing.Small, color = MaterialTheme.colorScheme.surfaceContainerLowest)
 }
 
 @Composable
 private fun StorageBar(usage: StorageUsageBreakdown) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    
     Canvas(modifier = Modifier
         .fillMaxWidth()
-        .height(8.dp)
+        .height(Spacing.Small)
         .clip(MaterialTheme.shapes.small)
     ) {
         val totalWidth = size.width
@@ -87,11 +93,11 @@ private fun StorageBar(usage: StorageUsageBreakdown) {
         val otherWidth = (usage.appsAndOtherSize.toFloat() / usage.totalSize) * totalWidth
 
 
-        drawRect(color = Color.LightGray.copy(alpha = 0.3f))
+        drawRect(color = surfaceVariant.copy(alpha = 0.3f))
 
 
         drawLine(
-            color = Color(0xFF6750A4),
+            color = primaryColor,
             start = Offset(0f, size.height / 2),
             end = Offset(synapseWidth, size.height / 2),
             strokeWidth = size.height,
@@ -100,7 +106,7 @@ private fun StorageBar(usage: StorageUsageBreakdown) {
 
 
         drawLine(
-            color = Color(0xFF7D5260),
+            color = tertiaryColor,
             start = Offset(synapseWidth, size.height / 2),
             end = Offset(synapseWidth + otherWidth, size.height / 2),
             strokeWidth = size.height,
@@ -110,10 +116,10 @@ private fun StorageBar(usage: StorageUsageBreakdown) {
 }
 
 @Composable
-private fun Badge(color: Color) {
+private fun Badge(color: androidx.compose.ui.graphics.Color) {
     Box(
         modifier = Modifier
-            .size(8.dp)
+            .size(Spacing.Small)
             .background(color, CircleShape)
     )
 }

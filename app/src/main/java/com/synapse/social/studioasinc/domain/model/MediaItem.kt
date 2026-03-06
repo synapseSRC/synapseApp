@@ -2,13 +2,12 @@ package com.synapse.social.studioasinc.domain.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import java.util.UUID
 
 
 
 @Serializable
 data class MediaItem(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String,
     val url: String,
     val type: MediaType,
     val thumbnailUrl: String? = null,

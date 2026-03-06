@@ -21,22 +21,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.StoryWithUser
 import com.synapse.social.studioasinc.domain.model.User
-
-
-
-private val storyGradientColors = listOf(
-    Color(0xFFE040FB),
-    Color(0xFFFF4081),
-    Color(0xFFFF6E40),
-    Color(0xFFFFAB00)
-)
-
-
-
-private val seenStoryRingColor = Color(0xFF424242)
+import com.synapse.social.studioasinc.feature.shared.theme.ProfileColors
 
 
 
@@ -173,8 +163,8 @@ private fun StoryCard(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            0.4f to Color.Transparent,
-                            1.0f to Color.Black.copy(alpha = 0.7f)
+                            0.4f to androidx.compose.ui.graphics.Color.Transparent,
+                            1.0f to MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f)
                         )
                     )
             )
@@ -191,6 +181,13 @@ private fun StoryCard(
                         .align(Alignment.TopStart)
                         .size(32.dp)
                 ) {
+                    val storyGradientColors = listOf(
+                        ProfileColors.storyRingStart,
+                        ProfileColors.storyRingMiddle,
+                        ProfileColors.storyRingEnd
+                    )
+                    val seenStoryColor = MaterialTheme.colorScheme.outline
+                    
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -205,7 +202,7 @@ private fun StoryCard(
 
                                      Modifier.border(
                                         width = 1.dp,
-                                        color = seenStoryRingColor,
+                                        color = seenStoryColor,
                                         shape = CircleShape
                                      )
                                 } else {
@@ -256,9 +253,9 @@ private fun StoryCard(
 
 
                 Text(
-                    text = if (isAddButton) "Create Story" else title,
+                    text = if (isAddButton) stringResource(R.string.story_create) else title,
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.align(Alignment.BottomStart)
