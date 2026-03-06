@@ -64,8 +64,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import androidx.navigation.NavController
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
@@ -95,16 +98,22 @@ fun StorageProviderScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(Spacing.Medium),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Large)
         ) {
 
 
             StorageSection(title = "Upload Preferences") {
+                val isHighQuality = !storageConfig.compressImages
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                        .toggleable(
+                            value = isHighQuality,
+                            role = Role.Switch,
+                            onValueChange = { viewModel.updateCompression(!it) }
+                        )
+                        .padding(vertical = Spacing.Small),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -120,8 +129,8 @@ fun StorageProviderScreen(
                         )
                     }
                     Switch(
-                        checked = !storageConfig.compressImages,
-                        onCheckedChange = { viewModel.updateCompression(!it) }
+                        checked = isHighQuality,
+                        onCheckedChange = null
                     )
                 }
             }
@@ -161,7 +170,7 @@ fun StorageProviderScreen(
                 text = "Provider Configuration",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = Spacing.Small)
             )
 
 
@@ -225,7 +234,7 @@ fun StorageProviderScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
         }
     }
 }
@@ -246,12 +255,12 @@ private fun StorageSection(
     content: @Composable () -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(Spacing.Medium))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(16.dp)
+            .padding(Spacing.Medium)
     ) {
         Text(
             text = title,
@@ -279,7 +288,7 @@ private fun ProviderSelectionItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = !expanded }
-                .padding(vertical = 8.dp)
+                .padding(vertical = Spacing.Small)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -287,7 +296,7 @@ private fun ProviderSelectionItem(
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(Spacing.Medium))
                 Column {
                     Text(text = title, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -297,17 +306,28 @@ private fun ProviderSelectionItem(
                     )
                 }
             }
+
+            val rotationAngle by animateFloatAsState(
+                targetValue = if (expanded) 180f else 0f,
+                animationSpec = tween(300, easing = EaseOutCubic),
+                label = "rotation"
+            )
+
             Icon(
-                imageVector = if (expanded) Icons.Default.ExpandMore else Icons.Default.ExpandMore,
-                contentDescription = "Select",
-                modifier = Modifier.rotate(if (expanded) 180f else 0f)
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = if (expanded) "Collapse options" else "Expand options",
+                modifier = Modifier.rotate(rotationAngle)
             )
         }
 
-        AnimatedVisibility(visible = expanded) {
+        AnimatedVisibility(
+            visible = expanded,
+            enter = ExpandEnterAnimation,
+            exit = ExpandExitAnimation
+        ) {
             Column(
                 modifier = Modifier
-                    .padding(start = 40.dp, top = 8.dp)
+                    .padding(start = Spacing.ExtraLarge, top = Spacing.Small)
                     .fillMaxWidth()
             ) {
                 options.forEach { option ->
@@ -315,11 +335,15 @@ private fun ProviderSelectionItem(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                onSelect(option)
-                                expanded = false
-                            }
-                            .padding(vertical = 12.dp),
+                            .selectable(
+                                selected = isSelected,
+                                onClick = {
+                                    onSelect(option)
+                                    expanded = false
+                                },
+                                role = Role.RadioButton
+                            )
+                            .padding(vertical = Spacing.SmallMedium),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -334,7 +358,7 @@ private fun ProviderSelectionItem(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Selected",
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(Spacing.Medium)
                             )
                         }
                     }
@@ -355,8 +379,8 @@ private fun ProviderConfigCard(
 
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
-        shadowElevation = 2.dp,
+        shape = RoundedCornerShape(Spacing.Medium),
+        shadowElevation = Spacing.Tiny,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
@@ -365,13 +389,13 @@ private fun ProviderConfigCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = !expanded }
-                    .padding(16.dp)
+                    .padding(Spacing.Medium)
             ) {
 
                 Column(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(Spacing.ExtraLarge)
+                        .clip(RoundedCornerShape(Spacing.SmallMedium))
                         .background(
                             if (isConfigured) {
                                 MaterialTheme.colorScheme.primaryContainer
@@ -390,11 +414,11 @@ private fun ProviderConfigCard(
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(Spacing.Large)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(Spacing.Medium))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -404,12 +428,12 @@ private fun ProviderConfigCard(
                             fontWeight = FontWeight.SemiBold
                         )
                         if (isConfigured) {
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(Spacing.Small))
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Configured",
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(Spacing.Medium)
                             )
                         }
                     }
@@ -434,7 +458,7 @@ private fun ProviderConfigCard(
                 IconButton(onClick = { expanded = !expanded }) {
                     Icon(
                         imageVector = Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        contentDescription = if (expanded) "Collapse $title configuration" else "Expand $title configuration",
                         modifier = Modifier.rotate(rotationAngle)
                     )
                 }
@@ -443,22 +467,12 @@ private fun ProviderConfigCard(
 
             AnimatedVisibility(
                 visible = expanded,
-                enter = expandVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    )
-                ) + fadeIn(),
-                exit = shrinkVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    )
-                ) + fadeOut()
+                enter = ExpandEnterAnimation,
+                exit = ExpandExitAnimation
             ) {
-                Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
+                Column(modifier = Modifier.padding(start = Spacing.Large, end = Spacing.Large, bottom = Spacing.Large)) {
                     HorizontalDivider(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier.padding(bottom = Spacing.Medium),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                     content()
@@ -473,7 +487,7 @@ private fun ImgBBConfigContent(
     apiKey: String,
     onApiKeyChange: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         StorageSecureTextField(
             value = apiKey,
             onValueChange = onApiKeyChange,
@@ -490,7 +504,7 @@ private fun CloudinaryConfigContent(
     apiSecret: String,
     onConfigChange: (String, String, String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         OutlinedTextField(
             value = cloudName,
             onValueChange = { newName -> onConfigChange(newName, apiKey, apiSecret) },
@@ -506,7 +520,7 @@ private fun CloudinaryConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Spacing.SmallMedium),
             singleLine = true
         )
         StorageSecureTextField(
@@ -530,7 +544,7 @@ private fun SupabaseConfigContent(
     bucketName: String,
     onConfigChange: (String, String, String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         OutlinedTextField(
             value = url,
             onValueChange = { newVal -> onConfigChange(newVal, apiKey, bucketName) },
@@ -547,7 +561,7 @@ private fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Spacing.SmallMedium),
             singleLine = true
         )
         StorageSecureTextField(
@@ -570,7 +584,7 @@ private fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Spacing.SmallMedium),
             singleLine = true
         )
         HelpText(text = "Create a bucket in Supabase Storage and ensure policies allow read/write operations")
@@ -585,7 +599,7 @@ private fun R2ConfigContent(
     bucketName: String,
     onConfigChange: (String, String, String, String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         OutlinedTextField(
             value = accountId,
             onValueChange = { newVal -> onConfigChange(newVal, accessKeyId, secretAccessKey, bucketName) },
@@ -601,7 +615,7 @@ private fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Spacing.SmallMedium),
             singleLine = true
         )
         StorageSecureTextField(
@@ -629,7 +643,7 @@ private fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Spacing.SmallMedium),
             singleLine = true
         )
         HelpText(text = "Create an R2 bucket in your Cloudflare dashboard and generate API tokens")
@@ -642,17 +656,17 @@ private fun HelpText(text: String) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(Spacing.Small))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(12.dp)
+            .padding(Spacing.SmallMedium)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Outlined.Help,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(Spacing.Medium)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(Spacing.Small))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
@@ -702,9 +716,23 @@ private fun StorageSecureTextField(
             )
         },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Spacing.SmallMedium),
         singleLine = true
     )
 }
 
 private val EaseOutCubic = CubicBezierEasing(0.33f, 1f, 0.68f, 1f)
+
+private val ExpandEnterAnimation = expandVertically(
+    animationSpec = spring(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+    )
+) + fadeIn()
+
+private val ExpandExitAnimation = shrinkVertically(
+    animationSpec = spring(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+    )
+) + fadeOut()
