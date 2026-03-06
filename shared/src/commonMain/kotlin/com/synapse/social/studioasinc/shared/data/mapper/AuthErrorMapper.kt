@@ -24,6 +24,12 @@ object AuthErrorMapper {
             messageToCheck.contains("already in use") -> {
                 AuthError.UserCollision("This email is already registered")
             }
+
+            // Username already exists / unique constraint violation
+            messageToCheck.contains("duplicate") && messageToCheck.contains("username") ||
+            messageToCheck.contains("users_username_key") -> {
+                AuthError.UserCollision("This username is already taken")
+            }
             
             // Weak password
             messageToCheck.contains("password") && (
@@ -65,7 +71,17 @@ object AuthErrorMapper {
             // Default unknown error
             else -> {
                 if (exception is RestException) {
-                    val fallbackMsg = exception.description ?: exception.error ?: originalMessage ?: "An unexpected error occurred"
+                    val errorDetail = exception.error
+                    val descDetail = exception.description
+                    val fallbackMsg = buildString {
+                        if (!descDetail.isNullOrBlank()) append(descDetail)
+                        else if (!errorDetail.isNullOrBlank()) append(errorDetail)
+                        else if (!originalMessage.isNullOrBlank()) append(originalMessage)
+                        else append("An unexpected error occurred")
+
+                        // If the message is completely generic like "Unknown Error", we could add more info,
+                        // but Supabase sometimes just returns exactly that string on 500s or unexpected failures.
+                    }
                     AuthError.Unknown(fallbackMsg)
                 } else {
                     AuthError.Unknown(originalMessage ?: "An unexpected error occurred")
