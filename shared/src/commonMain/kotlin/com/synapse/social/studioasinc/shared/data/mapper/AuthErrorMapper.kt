@@ -4,6 +4,8 @@ import com.synapse.social.studioasinc.shared.domain.model.AuthError
 import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.exceptions.UnknownRestException
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.utils.io.errors.IOException
 
 object AuthErrorMapper {
 
@@ -65,7 +67,9 @@ object AuthErrorMapper {
             messageToCheck.contains("timeout") ||
             messageToCheck.contains("unable to resolve host") ||
             messageToCheck.contains("failed to connect") ||
-            exception is HttpRequestException -> {
+            exception is HttpRequestException ||
+            exception is HttpRequestTimeoutException ||
+            exception is IOException -> {
                 AuthError.NetworkError("Network connection failed. Please check your internet")
             }
             
