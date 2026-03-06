@@ -101,8 +101,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                     // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
                     val profileInsert = UserProfileInsert(
                         uid = userId, // Ensure ID is passed if model requires it
-                        username = actualUsername,
-                        email = email
+                        username = actualUsername
                     )
                     // Note: Check table name. Previous code said "user_profiles", but supabase tables showed "users".
                     // The app/UserRepository used "users". shared used "user_profiles".

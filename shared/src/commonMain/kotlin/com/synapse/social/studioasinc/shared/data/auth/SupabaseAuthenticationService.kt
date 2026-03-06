@@ -75,8 +75,7 @@ class SupabaseAuthenticationService(
             withContext(Dispatchers.Default) {
                 val profileInsert = UserProfileInsert(
                     uid = userId,
-                    username = username,
-                    email = email
+                    username = username
                 )
                 client.from("users").insert(profileInsert)
 

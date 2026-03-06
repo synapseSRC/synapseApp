@@ -17,6 +17,5 @@ data class UserPresenceInsert(
 // SECURITY: Sensitive fields (account_premium, verify, banned) are intentionally omitted.
 data class UserProfileInsert(
     @SerialName("id") val uid: String,
-    val username: String,
-    val email: String
+    val username: String
 )
