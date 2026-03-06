@@ -8,7 +8,7 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,18 +56,22 @@ class ApiKeySettingsService @Inject constructor(
 
             val response = supabaseClient.functions.invoke(
                 function = "api-key-manager",
-                body = emptyMap<String, Any>()
+                body = emptyMap<String, String>()
             ).bodyAsText()
 
-            val result = Json.decodeFromString<Map<String, Any>>(response)
-            if (result["success"] == true) {
-                val keys = (result["api_keys"] as List<*>).map {
-                    Json.decodeFromString<ApiKeyInfo>(Json.encodeToString(it))
+            val result = Json.decodeFromString<JsonObject>(response)
+            val success = result["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            
+            if (success) {
+                val keysArray = result["api_keys"]?.jsonArray ?: emptyList()
+                val keys = keysArray.map { keyElement ->
+                    Json.decodeFromJsonElement<ApiKeyInfo>(keyElement)
                 }
                 _apiKeys.value = keys
                 Result.success(keys)
             } else {
-                Result.failure(Exception(result["error"].toString()))
+                val errorMsg = result["error"]?.jsonPrimitive?.contentOrNull ?: "Unknown error"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -96,12 +100,16 @@ class ApiKeySettingsService @Inject constructor(
                 body = request
             ).bodyAsText()
 
-            val result = Json.decodeFromString<Map<String, Any>>(response)
-            if (result["success"] == true) {
+            val result = Json.decodeFromString<JsonObject>(response)
+            val success = result["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            
+            if (success) {
                 loadApiKeys()
-                Result.success(result["message"].toString())
+                val message = result["message"]?.jsonPrimitive?.contentOrNull ?: "API key stored successfully"
+                Result.success(message)
             } else {
-                Result.failure(Exception(result["error"].toString()))
+                val errorMsg = result["error"]?.jsonPrimitive?.contentOrNull ?: "Unknown error"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -118,12 +126,16 @@ class ApiKeySettingsService @Inject constructor(
                 body = mapOf("key_id" to keyId)
             ).bodyAsText()
 
-            val result = Json.decodeFromString<Map<String, Any>>(response)
-            if (result["success"] == true) {
+            val result = Json.decodeFromString<JsonObject>(response)
+            val success = result["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            
+            if (success) {
                 loadApiKeys()
-                Result.success(result["message"].toString())
+                val message = result["message"]?.jsonPrimitive?.contentOrNull ?: "API key deleted successfully"
+                Result.success(message)
             } else {
-                Result.failure(Exception(result["error"].toString()))
+                val errorMsg = result["error"]?.jsonPrimitive?.contentOrNull ?: "Unknown error"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -164,14 +176,14 @@ class ApiKeySettingsService @Inject constructor(
                         eq("user_id", userId)
                     }
                 }
-                .decodeSingleOrNull<Map<String, Any>>()
+                .decodeSingleOrNull<JsonObject>()
 
             val settings = if (response != null) {
                 ProviderSettings(
-                    preferredProvider = response["preferred_provider"] as? String ?: "platform",
-                    fallbackToPlatform = response["fallback_to_platform"] as? Boolean ?: true,
-                    maxTokens = response["max_tokens"] as? Int ?: 1000,
-                    temperature = (response["temperature"] as? Number)?.toDouble() ?: 0.7
+                    preferredProvider = response["preferred_provider"]?.jsonPrimitive?.contentOrNull ?: "platform",
+                    fallbackToPlatform = response["fallback_to_platform"]?.jsonPrimitive?.booleanOrNull ?: true,
+                    maxTokens = response["max_tokens"]?.jsonPrimitive?.intOrNull ?: 1000,
+                    temperature = response["temperature"]?.jsonPrimitive?.doubleOrNull ?: 0.7
                 )
             } else {
                 ProviderSettings()

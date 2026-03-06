@@ -23,6 +23,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import io.github.aakira.napier.Napier
+import com.synapse.social.studioasinc.BuildConfig
 
 
 
@@ -31,9 +32,6 @@ class AuthActivity : ComponentActivity() {
 
     private lateinit var viewModel: AuthViewModel
     private lateinit var googleAuthHelper: GoogleAuthHelper
-    
-    // TODO: Replace with your actual Google OAuth 2.0 Web Client ID from Google Cloud Console
-    private val GOOGLE_SERVER_CLIENT_ID = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,14 +90,24 @@ class AuthActivity : ComponentActivity() {
     
     private fun handleGoogleSignIn() {
         lifecycleScope.launch {
-            googleAuthHelper.signIn(GOOGLE_SERVER_CLIENT_ID).fold(
+            val clientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
+            
+            if (clientId.isBlank()) {
+                val error = "Google Web Client ID not configured. Please set GOOGLE_WEB_CLIENT_ID in gradle.properties or environment variables."
+                Napier.e(error, tag = "AuthActivity")
+                viewModel.handleGoogleSignInError(error)
+                return@launch
+            }
+            
+            Napier.d("Initiating Google Sign-In with Credential Manager...", tag = "AuthActivity")
+            googleAuthHelper.signIn(clientId).fold(
                 onSuccess = { idToken ->
-                    Napier.d("Google ID token received, signing in...")
+                    Napier.d("Google ID token received, signing in with Supabase...", tag = "AuthActivity")
                     viewModel.handleGoogleIdToken(idToken)
                 },
                 onFailure = { error ->
-                    Napier.e("Google Sign-In failed: ${error.message}")
-                    // Error is handled in ViewModel
+                    Napier.e("Google Sign-In failed: ${error.message}", error, tag = "AuthActivity")
+                    viewModel.handleGoogleSignInError(error.message ?: "Google Sign-In failed")
                 }
             )
         }

@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.net.Uri
+import io.github.aakira.napier.Napier
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -289,9 +290,29 @@ class AuthViewModel @Inject constructor(
             )
         }
     }
+    
+    fun handleGoogleSignInError(errorMessage: String) {
+        when (val state = _uiState.value) {
+            is AuthUiState.SignIn -> {
+                _uiState.value = state.copy(
+                    isLoading = false,
+                    generalError = errorMessage
+                )
+            }
+            is AuthUiState.SignUp -> {
+                _uiState.value = state.copy(
+                    isLoading = false,
+                    generalError = errorMessage
+                )
+            }
+            else -> {}
+        }
+    }
 
     fun handleDeepLink(uri: Uri?) {
         if (uri == null) return
+        
+        Napier.d("Handling deep link: $uri", tag = "AuthViewModel")
 
         val code = uri.getQueryParameter("code")
         val fragment = uri.fragment
@@ -302,6 +323,7 @@ class AuthViewModel @Inject constructor(
         var errorDescription: String? = null
 
         if (fragment != null) {
+            Napier.d("Deep link has fragment: $fragment", tag = "AuthViewModel")
             val params = fragment.split("&").associate {
                 val parts = it.split("=")
                 if (parts.size == 2) parts[0] to parts[1] else "" to ""
@@ -315,6 +337,7 @@ class AuthViewModel @Inject constructor(
         if (uri.getQueryParameter("error") != null) {
             error = uri.getQueryParameter("error")
             errorDescription = uri.getQueryParameter("error_description")
+            Napier.e("OAuth error in deep link: $error - $errorDescription", tag = "AuthViewModel")
         }
 
         val deepLink = OAuthDeepLink(
@@ -327,13 +350,17 @@ class AuthViewModel @Inject constructor(
             errorCode = null,
             errorDescription = errorDescription
         )
+        
+        Napier.d("Processing OAuth callback - code: ${code != null}, accessToken: ${accessToken != null}", tag = "AuthViewModel")
 
         viewModelScope.launch {
             handleOAuthCallbackUseCase(deepLink).fold(
                 onSuccess = {
+                    Napier.d("OAuth callback successful, navigating to main", tag = "AuthViewModel")
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
                 },
                 onFailure = { e ->
+                    Napier.e("OAuth callback failed: ${e.message}", e, tag = "AuthViewModel")
                      _uiState.value = AuthUiState.SignIn()
                      viewModelScope.launch { UiEventManager.emit(UiEvent.Error(e.message ?: "Error")) }
                 }

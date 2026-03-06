@@ -275,11 +275,29 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun getOAuthUrl(provider: String, redirectUrl: String): Result<String> {
         return try {
+            // Map string provider to SocialProvider enum
+            val socialProvider = when (provider.lowercase()) {
+                "google" -> SocialProvider.GOOGLE
+                "apple" -> SocialProvider.APPLE
+                "github" -> SocialProvider.GITHUB
+                "discord" -> SocialProvider.DISCORD
+                "twitter" -> SocialProvider.TWITTER
+                "facebook" -> SocialProvider.FACEBOOK
+                "spotify" -> SocialProvider.SPOTIFY
+                "slack" -> SocialProvider.SLACK
+                else -> throw IllegalArgumentException("Unsupported OAuth provider: $provider")
+            }
+            
+            val oauthProvider = mapSocialProviderToOAuthProvider(socialProvider)
+            
+            // Use Supabase's built-in OAuth URL generation with proper redirect
             val oauthUrl = URLBuilder(client.supabaseUrl).apply {
                 appendPathSegments("auth", "v1", "authorize")
-                parameters.append("provider", provider)
+                parameters.append("provider", oauthProvider.name.lowercase())
                 parameters.append("redirect_to", redirectUrl)
             }.buildString()
+            
+            Napier.d("Generated OAuth URL for ${oauthProvider.name}: $oauthUrl", tag = TAG)
             Result.success(oauthUrl)
         } catch (e: Exception) {
             logSafeError("OAuth URL generation failed", e)
