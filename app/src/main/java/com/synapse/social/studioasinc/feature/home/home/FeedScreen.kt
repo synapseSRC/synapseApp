@@ -72,7 +72,7 @@ fun FeedScreen(
     var isUserRefreshing by remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
     
-    val isRefreshing = isUserRefreshing || posts.loadState.refresh is LoadState.Loading
+    val isRefreshing = isUserRefreshing || posts.loadState.refresh is LoadState.Loading || storyTrayState.isLoading
 
     // Handle block success/error messages
     LaunchedEffect(uiState.blockSuccess, uiState.blockError) {
@@ -110,8 +110,10 @@ fun FeedScreen(
         )
     }
 
-    LaunchedEffect(posts.loadState.refresh) {
-        if (posts.loadState.refresh is LoadState.NotLoading || posts.loadState.refresh is LoadState.Error) {
+    LaunchedEffect(posts.loadState.refresh, storyTrayState.isLoading) {
+        val isPostsDone = posts.loadState.refresh is LoadState.NotLoading || posts.loadState.refresh is LoadState.Error
+        val isStoriesDone = !storyTrayState.isLoading
+        if (isPostsDone && isStoriesDone) {
             isUserRefreshing = false
         }
     }

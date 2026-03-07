@@ -233,11 +233,11 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
             messages.forEach { msg ->
                 msg.id?.let { messageId ->
-                    val readByList = msg.readBy?.split(",")?.toMutableList() ?: mutableListOf()
+                    val readByList = msg.readBy?.toMutableList() ?: mutableListOf<String>()
                     if (!readByList.contains(currentUserId)) {
                         readByList.add(currentUserId)
                         client.postgrest.from("messages").update({
-                            set("read_by", readByList.joinToString(","))
+                            set("read_by", readByList)
                         }) {
                             filter { eq("id", messageId) }
                         }

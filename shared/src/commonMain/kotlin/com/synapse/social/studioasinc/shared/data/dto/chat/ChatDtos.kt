@@ -18,7 +18,7 @@ data class MessageDto(
     @SerialName("reply_to_id") val replyToId: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
-    @SerialName("read_by") val readBy: String? = null,
+    @SerialName("read_by") val readBy: List<String>? = null,
     @SerialName("is_encrypted") val isEncrypted: Boolean = false,
     @SerialName("encrypted_content") val encryptedContent: String? = null
 )
