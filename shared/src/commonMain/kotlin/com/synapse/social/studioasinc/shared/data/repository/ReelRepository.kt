@@ -18,6 +18,11 @@ import io.github.aakira.napier.Napier
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 
 
@@ -202,14 +207,39 @@ class ReelRepository {
             locationAddress?.let { reelData["location_address"] = it }
             locationLatitude?.let { reelData["location_latitude"] = it }
             locationLongitude?.let { reelData["location_longitude"] = it }
-            metadata?.let { reelData["metadata"] = it }
+            metadata?.let { reelData["metadata"] = mapToJsonObject(it) }
 
             client.from("reels").insert(reelData)
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Napier.e("Failed to upload reel", e, tag = TAG)
-            Result.failure(e)
+            Napier.e("Failed to upload reel: ${e::class.simpleName}: ${e.message}", e, tag = TAG)
+            Result.failure(Exception("Reel upload failed: ${e.message ?: e::class.simpleName}", e))
+        }
+    }
+
+    /**
+     * Converts a Map<String, Any?> to a JsonObject for safe serialization.
+     */
+    private fun mapToJsonObject(map: Map<String, Any?>): JsonObject {
+        return JsonObject(map.mapValues { (_, v) -> anyToJsonElement(v) })
+    }
+
+    /**
+     * Recursively converts an arbitrary value to a JsonElement.
+     */
+    private fun anyToJsonElement(value: Any?): JsonElement {
+        return when (value) {
+            null -> JsonNull
+            is JsonElement -> value
+            is String -> JsonPrimitive(value)
+            is Number -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is Map<*, *> -> JsonObject(
+                value.entries.associate { (k, v) -> k.toString() to anyToJsonElement(v) }
+            )
+            is List<*> -> JsonArray(value.map { anyToJsonElement(it) })
+            else -> JsonPrimitive(value.toString())
         }
     }
 

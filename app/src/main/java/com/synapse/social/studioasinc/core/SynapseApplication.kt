@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import io.github.aakira.napier.Napier
+import io.github.aakira.napier.DebugAntilog
+import com.synapse.social.studioasinc.BuildConfig
 
 @HiltAndroidApp
 class SynapseApplication : Application() {
@@ -26,6 +29,11 @@ class SynapseApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize Napier logging
+        if (BuildConfig.DEBUG) {
+            Napier.base(DebugAntilog())
+        }
 
         // Apply saved language before anything else
         applySavedLanguage()

@@ -128,6 +128,27 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
             client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
         }
 
+    /**
+     * Looks up the other participant in a chat from the chat_participants table.
+     * This is more reliable than parsing chatId strings.
+     */
+    suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val participants = client.postgrest.from("chat_participants")
+                .select(columns = Columns.list("user_id")) {
+                    filter {
+                        eq("chat_id", chatId)
+                        neq("user_id", currentUserId)
+                    }
+                    limit(1)
+                }.decodeList<ChatParticipantDto>()
+            participants.firstOrNull()?.userId
+        } catch (e: Exception) {
+            Napier.e("Error looking up other participant for chat $chatId", e)
+            null
+        }
+    }
+
     suspend fun getUserPublicKey(userId: String): UserPublicKeyDto? = withContext(Dispatchers.IO) {
         try {
             client.postgrest.from("user_public_keys").select {

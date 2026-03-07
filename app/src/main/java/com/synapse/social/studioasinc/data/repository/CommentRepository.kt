@@ -524,13 +524,18 @@ class CommentRepository constructor(
         if (userData == null) return null
 
         return try {
+            val avatarPath = userData["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+            val avatarUrl = avatarPath?.let { path ->
+                if (path.startsWith("http")) path else com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(path)
+            }
+
             UserProfile(
                 uid = userData["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null,
                 username = userData["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                 displayName = userData["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                 email = "",
                 bio = userData["bio"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
-                avatar = userData["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                avatar = avatarUrl,
                 followersCount = userData["followers_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
                 followingCount = userData["following_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,
                 postsCount = userData["posts_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0,

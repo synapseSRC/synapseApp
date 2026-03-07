@@ -3,6 +3,7 @@
 - [🎨 UI & Coding Standards](#-ui--coding-standards)
 - [📩 Pre-Submission Checklist](#-pre-submission-checklist)
 - [🎁 Submission & PR Template](#-submission--pr-template)
+- [🚀 CI/CD & GitHub Actions Secrets](#-cicd--github-actions-secrets)
 - [🍏 iOS Development](#-ios-development)
 
 ---
@@ -87,6 +88,33 @@ ALWAYS include a **PRESENT** for the user! 🎁
 ### ✅ Build Status
 The build passed/failed/(N/A)
 ```
+
+---
+
+# 🚀 CI/CD & GitHub Actions Secrets
+
+To ensure the Android CI/CD (`android.yml`) works properly, the following secrets and variables must be configured in GitHub Actions:
+
+### 🔑 Required Secrets
+| Secret Name | Purpose |
+| :--- | :--- |
+| `SUPABASE_SYNAPSE_URL` | Supabase API endpoint URL |
+| `SUPABASE_SYNAPSE_ANON_KEY` | Supabase anonymous API key |
+| `SUPABASE_SYNAPSE_S3_ENDPOINT_URL` | S3 endpoint for file storage |
+| `SUPABASE_SYNAPSE_S3_ENDPOINT_REGION` | AWS/S3 region for storage |
+| `SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID` | Storage access key ID |
+| `SUPABASE_SYNAPSE_S3_ACCESS_KEY` | Storage secret access key |
+| `GEMINI_API_KEY` | API key for AI feature integration |
+| `IMGBB_API_KEY` | API key for image uploads (ImgBB) |
+| `GOOGLE_WEB_CLIENT_ID` | OAuth Web Client ID for Google Login |
+| `TELEGRAM_API_ID` | Telegram API ID for deployment bot |
+| `TELEGRAM_API_HASH` | Telegram API Hash for deployment bot |
+| `TELEGRAM_BOT_TOKEN` | Token for the Telegram bot used for delivery |
+| `TELEGRAM_CHAT_ID` | Group ID where APKs and logs are sent |
+| `TELEGRAM_TOPIC_ID` | (Optional) Thread ID within the Telegram group |
+
+### ⚙️ Variables
+- `IS_USING_HOSTED_RUNNERS`: Set to `true` to use `self-hosted` runners; otherwise, it defaults to `ubuntu-latest`.
 
 ---
 

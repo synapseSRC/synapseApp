@@ -105,7 +105,6 @@ class SupabaseChatRepository(
 
     override suspend fun sendMessage(chatId: String, content: String, mediaUrl: String?, messageType: String): Result<Message> = try {
         val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
-        val otherUserId = chatId.replace(currentUserId, "").replace("_", "")
         
         var isEncrypted = false
         var encryptedContentStr: String? = null
@@ -113,25 +112,31 @@ class SupabaseChatRepository(
         
         if (signalProtocolManager != null) {
             try {
-                // Ensure session with the receiver
-                ensureSession(otherUserId)
-                val encryptedForReceiver = signalProtocolManager.encryptMessage(otherUserId, content.encodeToByteArray())
-                
-                // Ensure session with ourselves (to read our own sent messages)
-                ensureSession(currentUserId)
-                val encryptedForSelf = signalProtocolManager.encryptMessage(currentUserId, content.encodeToByteArray())
+                // Look up the other participant from the database instead of parsing chatId
+                val otherUserId = dataSource.getOtherParticipantId(chatId, currentUserId)
+                if (otherUserId != null) {
+                    // Ensure session with the receiver
+                    ensureSession(otherUserId)
+                    val encryptedForReceiver = signalProtocolManager.encryptMessage(otherUserId, content.encodeToByteArray())
+                    
+                    // Ensure session with ourselves (to read our own sent messages)
+                    ensureSession(currentUserId)
+                    val encryptedForSelf = signalProtocolManager.encryptMessage(currentUserId, content.encodeToByteArray())
 
-                val payloads = mapOf(
-                    otherUserId to encryptedForReceiver,
-                    currentUserId to encryptedForSelf
-                )
-                
-                isEncrypted = true
-                encryptedContentStr = Json.encodeToString(payloads)
-                finalContent = "Message is encrypted"
+                    val payloads = mapOf(
+                        otherUserId to encryptedForReceiver,
+                        currentUserId to encryptedForSelf
+                    )
+                    
+                    isEncrypted = true
+                    encryptedContentStr = Json.encodeToString(payloads)
+                    finalContent = "Message is encrypted"
+                } else {
+                    Napier.w("Could not determine other participant for chat $chatId, sending unencrypted")
+                }
             } catch (e: Exception) {
-                Napier.e("E2EE encryption failed", e)
-                throw e
+                Napier.e("E2EE encryption failed, sending unencrypted", e)
+                // Fall through and send unencrypted instead of failing the entire send
             }
         }
 

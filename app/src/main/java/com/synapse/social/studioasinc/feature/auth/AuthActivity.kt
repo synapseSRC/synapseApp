@@ -92,22 +92,30 @@ class AuthActivity : ComponentActivity() {
         lifecycleScope.launch {
             val clientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
             
-            if (clientId.isBlank()) {
-                val error = "Google Web Client ID not configured. Please set GOOGLE_WEB_CLIENT_ID in gradle.properties or environment variables."
+            // Check for both blank and placeholder values
+            if (clientId.isBlank() || clientId.contains("your-google-web-client-id-here")) {
+                val error = "Google Web Client ID not configured. Please set GOOGLE_WEB_CLIENT_ID in gradle.properties to your actual Client ID from Google Cloud Console."
                 Napier.e(error, tag = "AuthActivity")
+                // Use fallback Log in case Napier isn't fully initialized
+                android.util.Log.e("AuthActivity", error)
                 viewModel.handleGoogleSignInError(error)
                 return@launch
             }
             
-            Napier.d("Initiating Google Sign-In with Credential Manager...", tag = "AuthActivity")
+            Napier.d("Initiating Google Sign-In with Credential Manager. Client ID: ${clientId.take(10)}...", tag = "AuthActivity")
+            android.util.Log.d("AuthActivity", "Handling Google Sign-In with Credential Manager...")
+            
             googleAuthHelper.signIn(clientId).fold(
                 onSuccess = { idToken ->
                     Napier.d("Google ID token received, signing in with Supabase...", tag = "AuthActivity")
+                    android.util.Log.d("AuthActivity", "Google ID token received, delegating to ViewModel...")
                     viewModel.handleGoogleIdToken(idToken)
                 },
                 onFailure = { error ->
-                    Napier.e("Google Sign-In failed: ${error.message}", error, tag = "AuthActivity")
-                    viewModel.handleGoogleSignInError(error.message ?: "Google Sign-In failed")
+                    val errorMsg = error.message ?: "Google Sign-In failed"
+                    Napier.e("Google Sign-In failed: $errorMsg", error, tag = "AuthActivity")
+                    android.util.Log.e("AuthActivity", "Google Sign-In failed: $errorMsg", error)
+                    viewModel.handleGoogleSignInError(errorMsg)
                 }
             )
         }

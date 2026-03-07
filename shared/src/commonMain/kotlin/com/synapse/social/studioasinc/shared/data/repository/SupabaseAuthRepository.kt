@@ -344,7 +344,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                     this.provider = Google
                 }
                 
-                // wait for session to establish after OAuth
+                // Retrieve the user from the established session
                 val user = client.auth.currentUserOrNull()
                 val userId = user?.id
                     ?: throw Exception("User ID not found after Google sign-in")

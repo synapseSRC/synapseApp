@@ -53,8 +53,12 @@ fun PostHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
+                val name = user.displayName ?: user.username ?: "Unknown"
+                val handle = user.username
+                val showHandle = !handle.isNullOrBlank() && (user.displayName != null && handle != user.displayName)
+
                 Text(
-                    text = user.displayName ?: user.username ?: "Unknown",
+                    text = name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -71,7 +75,11 @@ fun PostHeader(
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            append("@${user.username} · $timestamp")
+                            if (showHandle) {
+                                append("@$handle · $timestamp")
+                            } else {
+                                append("· $timestamp")
+                            }
                         }
                     },
                     style = MaterialTheme.typography.bodySmall,

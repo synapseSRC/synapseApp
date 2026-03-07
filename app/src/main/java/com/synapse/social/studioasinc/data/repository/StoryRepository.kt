@@ -182,12 +182,16 @@ class StoryRepositoryImpl @Inject constructor(
                 if (!usersMap.containsKey(userId)) {
                     val userJson = storyJson["users"] as? JsonObject
                     if (userJson != null) {
+                        val avatarPath = userJson["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
+                        val avatarUrl = avatarPath?.let { path ->
+                            if (path.startsWith("http")) path else SupabaseClient.constructAvatarUrl(path)
+                        }
                         usersMap[userId] = User(
                             id = userJson["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
                             uid = userJson["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: userId,
                             username = userJson["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
                             displayName = userJson["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
-                            avatar = userJson["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
+                            avatar = avatarUrl,
                             verify = userJson["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content?.toBooleanStrictOrNull() ?: false
                         )
                     }
@@ -366,12 +370,16 @@ class StoryRepositoryImpl @Inject constructor(
 
             val userJson = viewJson["users"] as? JsonObject
             val viewer = userJson?.let {
+                val avatarPath = it["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
+                val avatarUrl = avatarPath?.let { path ->
+                    if (path.startsWith("http")) path else SupabaseClient.constructAvatarUrl(path)
+                }
                 User(
                     id = it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
                     uid = it["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content ?: storyView.viewerId,
                     username = it["username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
                     displayName = it["display_name"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content,
-                    avatar = it["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
+                    avatar = avatarUrl
                 )
             }
 

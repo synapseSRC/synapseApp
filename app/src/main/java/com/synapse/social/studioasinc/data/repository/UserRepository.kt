@@ -38,17 +38,21 @@ class UserRepository @Inject constructor(
             if (userProfile != null) {
                 val cachedUser = userDao.getUserById(userId)?.let { UserMapper.toModel(it) }
 
+                val avatarUrl = userProfile.avatar?.let { url ->
+                    if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url)
+                }
+
                 val updatedUser = cachedUser?.copy(
                     username = userProfile.username,
                     displayName = userProfile.displayName,
-                    avatar = userProfile.avatar,
+                    avatar = avatarUrl,
                     email = userProfile.email,
                     verify = userProfile.verify
                 ) ?: User(
                     uid = userProfile.uid,
                     username = userProfile.username,
                     displayName = userProfile.displayName,
-                    avatar = userProfile.avatar,
+                    avatar = avatarUrl,
                     email = userProfile.email,
                     verify = userProfile.verify
                 )
@@ -79,12 +83,15 @@ class UserRepository @Inject constructor(
                     .decodeSingleOrNull<UserProfile>()
 
                 userProfile?.let {
+                    val avatarUrl = it.avatar?.let { url ->
+                        if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url)
+                    }
                     user = User(
                         uid = it.uid,
                         username = it.username,
                         displayName = it.displayName,
                         email = it.email,
-                        avatar = it.avatar,
+                        avatar = avatarUrl,
                         verify = it.verify,
                         bio = it.bio,
                         followersCount = it.followersCount ?: 0,
@@ -115,7 +122,14 @@ class UserRepository @Inject constructor(
                 }
                 .decodeSingleOrNull<UserProfile>()
 
-            Result.success(user)
+            val updatedUser = user?.let { u ->
+                val avatarUrl = u.avatar?.let { url ->
+                    if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url)
+                }
+                u.copy(avatar = avatarUrl)
+            }
+
+            Result.success(updatedUser)
         } catch (e: Exception) {
             return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to fetch user by username: $username")
         }
@@ -174,6 +188,12 @@ class UserRepository @Inject constructor(
                     limit(limit.toLong())
                 }
                 .decodeList<UserProfile>()
+                .map { user ->
+                    val avatarUrl = user.avatar?.let { url ->
+                        if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url)
+                    }
+                    user.copy(avatar = avatarUrl)
+                }
 
             android.util.Log.d("UserRepository", "Search found ${users.size} users for query: $sanitizedQuery")
             Result.success(users)

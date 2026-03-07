@@ -243,6 +243,12 @@ class AuthViewModel @Inject constructor(
     fun onOAuthClick(provider: String) {
         viewModelScope.launch {
              if (provider.equals("Google", ignoreCase = true)) {
+                 // Set loading state before starting the native flow
+                 when (val state = _uiState.value) {
+                     is AuthUiState.SignIn -> _uiState.value = state.copy(isLoading = true, generalError = null)
+                     is AuthUiState.SignUp -> _uiState.value = state.copy(isLoading = true, generalError = null)
+                     else -> {}
+                 }
                  // Google Sign-In is handled natively via GoogleAuthHelper in AuthActivity
                  _navigationEvent.emit(AuthNavigationEvent.InitiateGoogleSignIn)
              } else {

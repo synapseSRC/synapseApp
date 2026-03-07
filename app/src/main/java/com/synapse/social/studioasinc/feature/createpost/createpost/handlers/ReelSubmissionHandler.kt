@@ -106,7 +106,8 @@ class ReelSubmissionHandler @Inject constructor(
                     onProgress = onProgress
                 )
             } catch (e: Exception) {
-                Result.failure(e)
+                android.util.Log.e("ReelSubmissionHandler", "Reel submission failed: ${e.message}", e)
+                Result.failure(Exception("Reel submission failed: ${e.message ?: e::class.simpleName}", e))
             }
         }
     }
