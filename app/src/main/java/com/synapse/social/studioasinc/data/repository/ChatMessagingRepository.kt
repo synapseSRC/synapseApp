@@ -217,7 +217,7 @@ class ChatMessagingRepository @Inject constructor(
             }
 
             // No existing chat — create a new one
-            val chatId = "${currentUserId}_${otherUserId}"
+            val chatId = java.util.UUID.randomUUID().toString()
 
             // Insert both participants
             val participants = listOf(
