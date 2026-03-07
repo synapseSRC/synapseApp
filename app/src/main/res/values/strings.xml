@@ -1032,6 +1032,7 @@ Please explain the following message from %3$s in detail, considering the contex
 
     <!-- Accessibility Descriptions -->
     <string name="settings_icon_description">Settings icon</string>
+    <string name="cd_selected">Selected</string>
     <string name="settings_back_description">Navigate back</string>
     <string name="settings_profile_avatar_description">Profile picture</string>
     <string name="settings_category_icon_description">Category icon</string>
