@@ -12,10 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,12 +35,13 @@ fun NetworkUsageScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Network Usage") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                title = { Text(text = stringResource(R.string.network_usage_title), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back_button)
                         )
                     }
                 },
@@ -53,85 +56,86 @@ fun NetworkUsageScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(vertical = 16.dp)
+                contentPadding = PaddingValues(bottom = Spacing.Medium, top = Spacing.Medium, start = Spacing.Medium, end = Spacing.Medium)
             ) {
                 item {
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(bottom = Spacing.Medium)
+                            .padding(Spacing.Medium)
                             .background(
                                 MaterialTheme.colorScheme.surfaceContainer,
-                                MaterialTheme.shapes.medium
+                                MaterialTheme.shapes.large
                             )
-                            .padding(16.dp)
+                            .padding(Spacing.Medium)
                     ) {
                         Text(
-                            text = "Usage",
+                            text = stringResource(R.string.network_usage_heading),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.Medium))
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = Spacing.Medium)) {
                                 Text(
-                                    text = "Sent",
+                                    text = stringResource(R.string.network_usage_sent),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = formatBytes(totalSent),
-                                    style = MaterialTheme.typography.headlineSmall,
+                                    style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Received",
+                                    text = stringResource(R.string.network_usage_received),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = formatBytes(totalReceived),
-                                    style = MaterialTheme.typography.headlineSmall,
+                                    style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
                 }
 
                 items(usageItems) { item ->
                     ListItem(
-                        headlineContent = { Text(item.label) },
+                        headlineContent = { Text(text = item.label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface) },
                         supportingContent = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_cloud_upload),
-                                    contentDescription = "Sent",
-                                    modifier = Modifier.size(12.dp),
+                                    contentDescription = stringResource(R.string.cd_upload_icon),
+                                    modifier = Modifier.size(Spacing.SmallMedium),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(formatBytes(item.sentBytes))
-                                Spacer(modifier = Modifier.width(16.dp))
+                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                Text(text = formatBytes(item.sentBytes), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Spacer(modifier = Modifier.width(Spacing.Medium))
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_download),
-                                    contentDescription = "Received",
-                                    modifier = Modifier.size(12.dp),
+                                    contentDescription = stringResource(R.string.cd_download_icon),
+                                    modifier = Modifier.size(Spacing.SmallMedium),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(formatBytes(item.receivedBytes))
+                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                Text(text = formatBytes(item.receivedBytes), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         },
                         leadingContent = {
@@ -146,8 +150,8 @@ fun NetworkUsageScreen(
                                         else -> R.drawable.ic_network_check
                                     }
                                 ),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp),
+                                contentDescription = stringResource(R.string.cd_category_icon),
+                                modifier = Modifier.size(Spacing.Large),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -156,12 +160,12 @@ fun NetworkUsageScreen(
 
                 item {
 
-                     Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                     Box(modifier = Modifier.fillMaxWidth().padding(Spacing.Medium)) {
                         TextButton(
                             onClick = {  },
                             modifier = Modifier.align(Alignment.CenterEnd)
                         ) {
-                            Text("Reset Statistics")
+                            Text(text = stringResource(R.string.network_reset_statistics), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                      }
                 }

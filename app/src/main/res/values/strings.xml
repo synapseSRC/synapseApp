@@ -1258,4 +1258,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="cd_upload_icon">Upload indicator</string>
     <string name="cd_download_icon">Download indicator</string>
     <string name="network_reset_statistics">Reset Statistics</string>
+    <!-- Network & Storage Extra strings -->
+    <string name="network_usage_heading">Usage</string>
+    <string name="network_usage_sent">Sent</string>
+    <string name="network_usage_received">Received</string>
+    <string name="storage_review_delete">Review and delete items</string>
+    <string name="storage_larger_than">Larger than 5 MB</string>
 </resources>
