@@ -135,15 +135,19 @@ fun FeedScreen(
                 )
             }
         ) {
-        if (posts.loadState.refresh is LoadState.Loading && posts.itemCount == 0) {
+        val showLoading = isRefreshing && posts.itemCount == 0
+        val showError = posts.loadState.refresh is LoadState.Error && posts.itemCount == 0
+        val showEmpty = posts.loadState.refresh is LoadState.NotLoading && posts.itemCount == 0 && !isRefreshing
+
+        if (showLoading) {
             FeedLoading()
-        } else if (posts.loadState.refresh is LoadState.Error) {
+        } else if (showError) {
             val e = posts.loadState.refresh as LoadState.Error
             FeedError(
                 message = e.error.localizedMessage ?: stringResource(R.string.error_unknown_feed),
                 onRetry = { posts.retry() }
             )
-        } else if (posts.itemCount == 0 && posts.loadState.refresh is LoadState.NotLoading) {
+        } else if (showEmpty) {
             FeedEmpty()
         } else {
             LazyColumn(

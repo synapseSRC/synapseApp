@@ -37,13 +37,15 @@ class NotificationsViewModel @Inject constructor(
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
     private var realtimeJob: Job? = null
+    private var loadJob: Job? = null
 
     init {
         loadNotifications()
     }
 
     fun loadNotifications() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
             getNotificationsUseCase().collect { result ->

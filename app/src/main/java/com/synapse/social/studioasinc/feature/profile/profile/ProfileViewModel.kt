@@ -131,7 +131,10 @@ class ProfileViewModel @Inject constructor(
 
     fun loadProfile(userId: String) {
         viewModelScope.launch {
-            _state.update { it.copy(profileState = ProfileUiState.Loading) }
+            if (!_state.value.isRefreshing) {
+                _state.update { it.copy(profileState = ProfileUiState.Loading) }
+            }
+            
             val currentUserUid = getCurrentUserIdUseCase() ?: ""
             val isOwnProfile = currentUserUid == userId
 
@@ -158,6 +161,9 @@ class ProfileViewModel @Inject constructor(
                 }.onFailure { error ->
                     _state.update { it.copy(profileState = ProfileUiState.Error(error.message ?: "Unknown error")) }
                 }
+                
+                // Reset refreshing state after profile is loaded (or failed)
+                _state.update { it.copy(isRefreshing = false) }
             }
         }
     }
@@ -165,7 +171,6 @@ class ProfileViewModel @Inject constructor(
     fun refreshProfile(userId: String) {
         _state.update { it.copy(isRefreshing = true) }
         loadProfile(userId)
-        _state.update { it.copy(isRefreshing = false) }
     }
 
     fun followUser(userId: String) {

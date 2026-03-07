@@ -15,8 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.synapse.social.studioasinc.ui.components.ExpressivePullToRefreshIndicator
 import com.synapse.social.studioasinc.ui.home.FeedLoading
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -68,8 +69,8 @@ fun NotificationsScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val swipeRefreshState = rememberSwipeRefreshState(uiState.isLoading)
-
+    val pullToRefreshState = rememberPullToRefreshState()
+    
 
     val currentOnNotificationClick by rememberUpdatedState(onNotificationClick)
     val currentOnUserClick by rememberUpdatedState(onUserClick)
@@ -87,14 +88,25 @@ fun NotificationsScreen(
         }
     }
 
-    SwipeRefresh(
-        state = swipeRefreshState,
-        onRefresh = { viewModel.refresh() }
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (uiState.isLoading && uiState.notifications.isEmpty()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = { viewModel.refresh() },
+            state = pullToRefreshState,
+            indicator = {
+                ExpressivePullToRefreshIndicator(
+                    state = pullToRefreshState,
+                    isRefreshing = uiState.isLoading,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
+        ) {
+            val showLoading = uiState.isLoading && uiState.notifications.isEmpty()
+            val showEmpty = !uiState.isLoading && uiState.notifications.isEmpty()
+
+            if (showLoading) {
                 FeedLoading()
-            } else if (uiState.notifications.isEmpty()) {
+            } else if (showEmpty) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No notifications", style = MaterialTheme.typography.bodyLarge)
                 }
