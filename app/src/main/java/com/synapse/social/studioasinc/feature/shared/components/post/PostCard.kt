@@ -138,14 +138,12 @@ fun PostCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
                 .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
         ) {
             // Left Column: Avatar and Thread Line
             Box(
                 modifier = Modifier
-                    .width(avatarSize)
-                    .fillMaxHeight(),
+                    .width(avatarSize),
                 contentAlignment = Alignment.TopCenter
             ) {
                 // Twitter/X style: Visual thread lines connecting avatars

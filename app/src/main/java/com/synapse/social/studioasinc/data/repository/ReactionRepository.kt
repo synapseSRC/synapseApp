@@ -141,40 +141,7 @@ class ReactionRepository @Inject constructor(
         targetType: String
     ): Result<Map<ReactionType, Int>> = withContext(Dispatchers.IO) {
         try {
-            // Optimized RPC calls for supported types
-            if (targetType.equals("post", ignoreCase = true)) {
-                try {
-                    val summaryList = client.postgrest.rpc(
-                        "get_posts_reactions_summary",
-                        buildJsonObject { put("post_ids", buildJsonArray { add(targetId) }) }
-                    ).decodeList<PostReactionSummary>()
-
-                    val summary = summaryList.firstOrNull()?.reactionCounts?.entries
-                        ?.associate { ReactionType.fromString(it.key) to it.value }
-                        ?: emptyMap()
-                    return@withContext Result.success(summary)
-                } catch (e: Exception) {
-                    Log.e("ReactionRepository", "RPC call failed, falling back to direct query", e)
-                    // Fall through to fallback query
-                }
-            } else if (targetType.equals("comment", ignoreCase = true)) {
-                try {
-                    val summaryList = client.postgrest.rpc(
-                        "get_comments_reactions_summary",
-                        buildJsonObject { put("comment_ids", buildJsonArray { add(targetId) }) }
-                    ).decodeList<CommentReactionSummary>()
-
-                    val summary = summaryList.firstOrNull()?.reactionCounts?.entries
-                        ?.associate { ReactionType.fromString(it.key) to it.value }
-                        ?: emptyMap()
-                    return@withContext Result.success(summary)
-                } catch (e: Exception) {
-                    Log.e("ReactionRepository", "RPC call failed, falling back to direct query", e)
-                    // Fall through to fallback query
-                }
-            }
-
-            // Fallback for other types or if RPC fails
+            // Use direct query to bypass postgrest ambiguity error on RPC calls
             val tableName = getTableName(targetType)
             val idColumn = getIdColumn(targetType)
 
@@ -292,73 +259,35 @@ class ReactionRepository @Inject constructor(
                  allPostIds.chunked(20).map { chunkIds ->
                      async {
                          semaphore.withPermit {
-                             try {
-                                 val rpcSummaries = client.postgrest.rpc(
-                                    "get_posts_reactions_summary",
-                                    buildJsonObject { 
-                                        put("post_ids", buildJsonArray { 
-                                            chunkIds.forEach { add(it) }
-                                        }) 
-                                    }
-                                 ).decodeList<PostReactionSummary>()
-
-                                 val currentUser = client.auth.currentUserOrNull()
-                                 if (currentUser != null) {
-                                     val userReactions = client.from("reactions")
-                                         .select(io.github.jan.supabase.postgrest.query.Columns.raw("post_id, reaction_type")) {
-                                             filter {
-                                                 isIn("post_id", chunkIds)
-                                                 eq("user_id", currentUser.id)
-                                             }
-                                         }.decodeList<JsonObject>()
-
-                                     val userReactionMap = userReactions.associate {
-                                         it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                             // Use direct query to bypass postgrest ambiguity error on RPC calls
+                             val reactions = client.from("reactions")
+                                 .select {
+                                     filter {
+                                         isIn("post_id", chunkIds)
                                      }
-
-                                     rpcSummaries.map { summary ->
-                                         val userReaction = userReactionMap[summary.postId]
-                                         if (userReaction != null) {
-                                             summary.copy(userReaction = userReaction)
-                                         } else {
-                                             summary
-                                         }
-                                     }
-                                 } else {
-                                     rpcSummaries
                                  }
-                             } catch (e: Exception) {
-                                 Log.e(TAG, "Failed to fetch reaction summaries for chunk via RPC, falling back", e)
-                                 // Fallback: query reactions table directly
-                                 val reactions = client.from("reactions")
-                                     .select {
-                                         filter {
-                                             isIn("post_id", chunkIds)
-                                         }
-                                     }
-                                     .decodeList<JsonObject>()
+                                 .decodeList<JsonObject>()
 
-                                 val currentUser = client.auth.currentUserOrNull()
-                                 val reactionsByPostId = reactions.groupBy { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
+                             val currentUser = client.auth.currentUserOrNull()
+                             val reactionsByPostId = reactions.groupBy { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
-                                 chunkIds.map { postId ->
-                                     val postReactions = reactionsByPostId[postId] ?: emptyList()
-                                     val summary = postReactions
-                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
-                                         .mapValues { it.value.size }
-                                         .mapKeys { it.key.name.lowercase() }
+                             chunkIds.map { postId ->
+                                 val postReactions = reactionsByPostId[postId] ?: emptyList()
+                                 val summary = postReactions
+                                     .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
+                                     .mapValues { it.value.size }
+                                     .mapKeys { it.key.name.lowercase() }
 
-                                     val userReaction = currentUser?.let { user ->
-                                         postReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                                     }
-
-                                     PostReactionSummary(
-                                         postId = postId,
-                                         reactionCounts = summary,
-                                         userReaction = userReaction
-                                     )
+                                 val userReaction = currentUser?.let { user ->
+                                     postReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
+                                         ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                  }
+
+                                 PostReactionSummary(
+                                     postId = postId,
+                                     reactionCounts = summary,
+                                     userReaction = userReaction
+                                 )
                              }
                          }
                      }
@@ -384,69 +313,32 @@ class ReactionRepository @Inject constructor(
                  allCommentIds.chunked(20).map { chunkIds ->
                      async {
                          semaphore.withPermit {
-                             try {
-                                 val rpcSummaries = client.postgrest.rpc(
-                                    "get_comments_reactions_summary",
-                                    buildJsonObject { 
-                                        put("comment_ids", buildJsonArray { 
-                                            chunkIds.forEach { add(it) }
-                                        }) 
-                                    }
-                                 ).decodeList<CommentReactionSummary>()
+                             // Use direct query to bypass postgrest ambiguity error on RPC calls
+                             val reactions = client.from("comment_reactions")
+                                 .select { filter { isIn("comment_id", chunkIds) } }
+                                 .decodeList<JsonObject>()
 
-                                 val currentUser = client.auth.currentUserOrNull()
-                                 if (currentUser != null) {
-                                     val userReactions = client.from("comment_reactions")
-                                         .select(io.github.jan.supabase.postgrest.query.Columns.raw("comment_id, reaction_type")) {
-                                             filter {
-                                                 isIn("comment_id", chunkIds)
-                                                 eq("user_id", currentUser.id)
-                                             }
-                                         }.decodeList<JsonObject>()
+                             val currentUser = client.auth.currentUserOrNull()
 
-                                     val userReactionMap = userReactions.associate {
-                                         it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                                     }
+                             val reactionsByCommentId = reactions.groupBy { it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
-                                     rpcSummaries.map { summary ->
-                                         val userReaction = userReactionMap[summary.commentId]
-                                         if (userReaction != null) {
-                                             summary.copy(userReaction = userReaction)
-                                         } else {
-                                             summary
-                                         }
-                                     }
-                                 } else {
-                                     rpcSummaries
+                             chunkIds.map { commentId ->
+                                 val commentReactions = reactionsByCommentId[commentId] ?: emptyList()
+                                 val summary = commentReactions
+                                     .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
+                                     .mapValues { it.value.size }
+                                     .mapKeys { it.key.name.lowercase() }
+
+                                 val userReaction = currentUser?.let { user ->
+                                     commentReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
+                                         ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                  }
-                             } catch(e: Exception) {
-                                 Log.e(TAG, "Failed to fetch reaction summaries for comment chunk via RPC, falling back", e)
-                                 val reactions = client.from("comment_reactions")
-                                     .select { filter { isIn("comment_id", chunkIds) } }
-                                     .decodeList<JsonObject>()
 
-                                 val currentUser = client.auth.currentUserOrNull()
-
-                                 val reactionsByCommentId = reactions.groupBy { it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
-
-                                 chunkIds.map { commentId ->
-                                     val commentReactions = reactionsByCommentId[commentId] ?: emptyList()
-                                     val summary = commentReactions
-                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
-                                         .mapValues { it.value.size }
-                                         .mapKeys { it.key.name.lowercase() }
-
-                                     val userReaction = currentUser?.let { user ->
-                                         commentReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                                     }
-
-                                     CommentReactionSummary(
-                                         commentId = commentId,
-                                         reactionCounts = summary,
-                                         userReaction = userReaction
-                                     )
-                                 }
+                                 CommentReactionSummary(
+                                     commentId = commentId,
+                                     reactionCounts = summary,
+                                     userReaction = userReaction
+                                 )
                              }
                          }
                      }
