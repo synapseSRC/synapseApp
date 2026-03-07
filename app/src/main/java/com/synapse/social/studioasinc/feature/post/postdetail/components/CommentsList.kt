@@ -95,6 +95,7 @@ fun CommentsList(
                     parentAuthorUsername = null,
                     depth = 0,
                     showThreadLine = hasReplies,
+                    isThreadChild = false,
                     isLastReply = false
                 )
                 
@@ -194,13 +195,17 @@ private fun RenderReplies(
         val nestedReplies = repliesState[reply.id] ?: emptyList()
         val isLastInBranch = replyIndex == replies.size - 1
         
-        // X (Twitter) style: Use nesting depth and thread lines
+        val hasChildren = reply.repliesCount > 0 || nestedReplies.isNotEmpty()
+        val isFirstReply = replyIndex == 0
+
+        // X (Twitter) style: First reply connects to parent. Subsequent replies start new blocks.
         val replyState = PostUiMapper.toPostCardState(
             comment = reply,
             parentAuthorUsername = parentComment.getUsername(),
             depth = depth,
-            showThreadLine = true,
-            isLastReply = isLastInBranch && nestedReplies.isEmpty()
+            showThreadLine = hasChildren,
+            isThreadChild = isFirstReply,
+            isLastReply = isLastInBranch && !hasChildren
         )
         
         Column {
@@ -240,9 +245,8 @@ private fun RenderReplies(
                 )
             }
             
-            // Show "Show more replies" button
+            // Show "Show more replies" button aligned with text content
             val basePadding = 68.dp
-            val depthPadding = (depth * 16).dp
             
             if (reply.repliesCount > nestedReplies.size && !replyLoadingState.contains(reply.id)) {
                 Text(
@@ -251,16 +255,16 @@ private fun RenderReplies(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                        .padding(start = basePadding + depthPadding, top = 4.dp, bottom = 12.dp)
+                        .padding(start = basePadding, top = 4.dp, bottom = 12.dp)
                         .clickable { onViewReplies(reply.id) }
                 )
             }
             
-            // Show loading indicator
+            // Show loading indicator aligned with text content
             if (replyLoadingState.contains(reply.id)) {
                 CircularProgressIndicator(
                     modifier = Modifier
-                        .padding(start = basePadding + depthPadding, top = 4.dp, bottom = 12.dp)
+                        .padding(start = basePadding, top = 4.dp, bottom = 12.dp)
                         .size(20.dp),
                     strokeWidth = 2.dp
                 )
