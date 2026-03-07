@@ -11,6 +11,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import com.synapse.social.studioasinc.core.util.NotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
@@ -166,6 +167,17 @@ class ChatViewModel @Inject constructor(
             ).onSuccess { actualMessage ->
                 _messages.update { current ->
                     current.map { if (it.id == tempId) actualMessage else it }.sortedBy { msg -> msg.createdAt }
+                }
+                
+                // Notify via OneSignal
+                val recipientId = _participantProfile.value?.uid
+                if (recipientId != null && currentUserId != null && recipientId != currentUserId) {
+                    NotificationHelper.sendMessageAndNotifyIfNeeded(
+                        chatId = chatId,
+                        senderId = currentUserId!!,
+                        recipientId = recipientId,
+                        message = text
+                    )
                 }
             }.onFailure { e ->
                 _error.value = "Failed to send: ${e.message}"

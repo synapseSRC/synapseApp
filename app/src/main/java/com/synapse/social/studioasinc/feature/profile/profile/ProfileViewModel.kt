@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import com.synapse.social.studioasinc.core.util.NotificationHelper
 
 data class ProfileScreenState(
     val profileState: ProfileUiState = ProfileUiState.Loading,
@@ -179,6 +180,15 @@ class ProfileViewModel @Inject constructor(
             _state.update { it.copy(isFollowLoading = true) }
             followUserUseCase(currentUserId, userId).onSuccess {
                 _state.update { it.copy(isFollowing = true, isFollowLoading = false) }
+                if (currentUserId.isNotEmpty() && currentUserId != userId) {
+                    NotificationHelper.sendNotification(
+                        recipientUid = userId,
+                        senderUid = currentUserId,
+                        message = "Someone started following you.",
+                        notificationType = "NEW_FOLLOWER",
+                        data = mapOf("followerId" to currentUserId)
+                    )
+                }
             }.onFailure {
                 _state.update { it.copy(isFollowLoading = false) }
             }
