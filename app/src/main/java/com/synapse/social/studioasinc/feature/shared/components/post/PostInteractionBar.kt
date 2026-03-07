@@ -155,7 +155,11 @@ fun PostInteractionBar(
                             showRepostMenu = false
                         },
                         leadingIcon = {
-                            Icon(androidx.compose.material.icons.Icons.AutoMirrored.Outlined.Comment, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.Comment,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     )
                 }

@@ -25,6 +25,7 @@ import com.synapse.social.studioasinc.domain.usecase.profile.MuteUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.story.HasActiveStoryUseCase
+import com.synapse.social.studioasinc.data.repository.PostRepository
 import com.synapse.social.studioasinc.feature.profile.profile.components.FollowingUser
 import com.synapse.social.studioasinc.feature.profile.profile.components.ViewAsMode
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
@@ -98,7 +99,8 @@ class ProfileViewModel @Inject constructor(
     private val reportUserUseCase: ReportUserUseCase,
     private val muteUserUseCase: MuteUserUseCase,
     private val isFollowingUseCase: IsFollowingUseCase,
-    private val hasActiveStoryUseCase: HasActiveStoryUseCase
+    private val hasActiveStoryUseCase: HasActiveStoryUseCase,
+    private val postRepository: PostRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileScreenState())
@@ -115,7 +117,15 @@ class ProfileViewModel @Inject constructor(
                             val updatedPosts = currentState.posts.map { item ->
                                 if (item is Post && item.id == event.post.id) event.post else item
                             }
-                            currentState.copy(posts = updatedPosts)
+                            val updatedReplies = currentState.replies.map { item ->
+                                if (item is com.synapse.social.studioasinc.domain.model.CommentWithUser && item.id == event.post.id) {
+                                    item.copy(
+                                        likesCount = event.post.likesCount,
+                                        userReaction = event.post.userReaction
+                                    )
+                                } else item
+                            }
+                            currentState.copy(posts = updatedPosts, replies = updatedReplies)
                         }
                     }
                     is PostEvent.Deleted -> {
@@ -215,6 +225,22 @@ class ProfileViewModel @Inject constructor(
                 result.onSuccess { updatedPost ->
                      PostEventBus.emit(PostEvent.Updated(updatedPost))
                 }
+            }
+        }
+    }
+
+    fun resharePost(post: Post) {
+        viewModelScope.launch {
+            postRepository.resharePost(post.id).onSuccess {
+                // Refresh or update state if needed
+            }
+        }
+    }
+
+    fun quotePost(post: Post, text: String) {
+        viewModelScope.launch {
+            postRepository.quotePost(post.id, text).onSuccess {
+                // Refresh or update state if needed
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.home.home
 
 import android.app.Application
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -35,7 +36,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.VisibleForTesting
+import com.synapse.social.studioasinc.data.repository.ReactionRepository
+import com.synapse.social.studioasinc.data.repository.PostRepository
 import javax.inject.Inject
 
 data class FeedUiState(
@@ -59,7 +61,8 @@ class FeedViewModel @Inject constructor(
     private val deletePostUseCase: DeletePostUseCase,
     private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
     private val blockUserUseCase: BlockUserUseCase,
-    private val postRepository: com.synapse.social.studioasinc.data.repository.PostRepository,
+    private val postRepository: PostRepository,
+    private val reactionRepository: ReactionRepository,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -176,23 +179,15 @@ class FeedViewModel @Inject constructor(
             
             // Optimistic update
             val currentPost = _modifiedPosts.value[commentId]
-            val isLiked = reactionType == ReactionType.LIKE
-            val newCount = if (isLiked) 1 else 0 // Simplified for now
             
-            // We'll call the repository via a launch
-            val result = com.synapse.social.studioasinc.data.repository.ReactionRepository()
-                .toggleReaction(commentId, "comment", reactionType)
-            
-            result.onSuccess {
+            reactionRepository.toggleReaction(commentId, "comment", reactionType).onSuccess {
                 // Fetch updated summary to sync state
-                val summary = com.synapse.social.studioasinc.data.repository.ReactionRepository()
-                    .getReactionSummary(commentId, "comment").getOrDefault(emptyMap())
-                val userReact = com.synapse.social.studioasinc.data.repository.ReactionRepository()
-                    .getUserReaction(commentId, "comment").getOrNull()
+                val summary = reactionRepository.getReactionSummary(commentId, "comment").getOrDefault(emptyMap())
+                val userReact = reactionRepository.getUserReaction(commentId, "comment").getOrNull()
                 
                 val updatedCommentPost = Post(
                     id = commentId,
-                    authorUid = "", // Not strictly needed for the cache merge
+                    authorUid = "", 
                     likesCount = summary[ReactionType.LIKE] ?: 0,
                     userReaction = userReact
                 )
