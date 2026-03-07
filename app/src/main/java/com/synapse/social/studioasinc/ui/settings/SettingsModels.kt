@@ -203,7 +203,8 @@ data class SettingsCategory(
     val title: String,
     val subtitle: String,
     @DrawableRes val icon: Int,
-    val destination: SettingsDestination
+    val destination: SettingsDestination,
+    val keywords: List<String> = emptyList()
 )
 
 data class SettingsGroup(

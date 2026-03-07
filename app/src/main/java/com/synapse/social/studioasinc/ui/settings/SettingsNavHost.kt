@@ -308,12 +308,10 @@ fun SettingsNavHost(
 
 
         composable(route = SettingsDestination.ROUTE_SEARCH) {
-
-
-            android.widget.Toast.makeText(LocalContext.current, "Search coming soon", android.widget.Toast.LENGTH_SHORT).show()
-            LaunchedEffect(Unit) {
-                navController.popBackStack()
-            }
+            com.synapse.social.studioasinc.feature.settings.search.SettingsSearchScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavigateToSetting = { route -> navController.navigate(route) }
+            )
         }
     }
 }

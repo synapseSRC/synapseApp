@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.ui.settings.SettingsDataProvider
 
 data class SettingsSearchItem(
     val title: String,
@@ -126,40 +127,17 @@ private fun SettingsSearchResultItem(
     }
 }
 
-private fun getSearchableSettings(): List<SettingsSearchItem> = listOf(
-    SettingsSearchItem(
-        title = "Security Notifications",
-        subtitle = "Get notified about security events",
-        category = "Account",
-        route = "account",
-        keywords = listOf("security", "alerts", "notifications")
-    ),
-    SettingsSearchItem(
-        title = "Read Receipts",
-        subtitle = "Show when you've read messages",
-        category = "Privacy",
-        route = "privacy",
-        keywords = listOf("read", "receipts", "seen", "messages")
-    ),
-    SettingsSearchItem(
-        title = "Chat Themes",
-        subtitle = "Customize chat appearance",
-        category = "Chat",
-        route = "chat",
-        keywords = listOf("theme", "colors", "appearance", "customize")
-    ),
-    SettingsSearchItem(
-        title = "Notification Tones",
-        subtitle = "Choose notification sounds",
-        category = "Notifications",
-        route = "notifications",
-        keywords = listOf("sound", "tone", "ringtone", "alert")
-    ),
-    SettingsSearchItem(
-        title = "Data Saver",
-        subtitle = "Reduce data usage",
-        category = "Storage & Data",
-        route = "storage",
-        keywords = listOf("data", "saver", "usage", "bandwidth")
-    )
-)
+private fun getSearchableSettings(): List<SettingsSearchItem> {
+    val groups = SettingsDataProvider.getSettingsGroups()
+    return groups.flatMap { group ->
+        group.categories.map { category ->
+            SettingsSearchItem(
+                title = category.title,
+                subtitle = category.subtitle,
+                category = group.title ?: "General",
+                route = category.destination.route,
+                keywords = category.keywords
+            )
+        }
+    }
+}
