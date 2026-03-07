@@ -135,27 +135,16 @@ fun PostCard(
         }
  
         // Main layout Row: Avatar on left, content on right
+        val lineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
-                .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
-        ) {
-            // Left Column: Avatar and Thread Line
-            Box(
-                modifier = Modifier
-                    .width(avatarSize)
-                    .fillMaxHeight(),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                // Twitter/X style: Visual thread lines connecting avatars
-                if (state.showThreadLine) {
-                    val lineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    val strokeWidth = 2.dp
-                    
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val centerX = size.width / 2
-                        val avatarCenterY = (avatarSize / 2).toPx()
+                .drawBehind {
+                    if (state.showThreadLine) {
+                        val strokeWidth = 2.dp.toPx()
+                        val paddingPx = Spacing.SmallMedium.toPx()
+                        val centerX = paddingPx + (avatarSize.toPx() / 2f)
+                        val avatarCenterY = Spacing.Small.toPx() + (avatarSize.toPx() / 2f)
                         
                         // Line above (only for comments after the root parent)
                         if (state.isComment && state.depth >= 0) {
@@ -163,7 +152,7 @@ fun PostCard(
                                 color = lineColor,
                                 start = Offset(centerX, 0f),
                                 end = Offset(centerX, avatarCenterY),
-                                strokeWidth = strokeWidth.toPx()
+                                strokeWidth = strokeWidth
                             )
                         }
                         
@@ -173,12 +162,18 @@ fun PostCard(
                                 color = lineColor,
                                 start = Offset(centerX, avatarCenterY),
                                 end = Offset(centerX, size.height),
-                                strokeWidth = strokeWidth.toPx()
+                                strokeWidth = strokeWidth
                             )
                         }
                     }
                 }
-
+                .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+        ) {
+            // Left Column: Avatar
+            Box(
+                modifier = Modifier.width(avatarSize),
+                contentAlignment = Alignment.TopCenter
+            ) {
                 CircularAvatar(
                     imageUrl = state.user.avatar,
                     contentDescription = "Avatar of ${state.user.username}",
