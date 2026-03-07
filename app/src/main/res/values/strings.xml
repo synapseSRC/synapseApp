@@ -1247,4 +1247,15 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="turn_off_commenting">Turn off commenting</string>
     <string name="revoke_vote">Revoke vote</string>
     <string name="share_via">Share via…</string>
+    <!-- Storage & Network Screen additions -->
+    <string name="storage_manage_title">Manage Storage</string>
+    <string name="cd_back_button">Back</string>
+    <string name="cd_storage_badge">Storage category badge</string>
+    <string name="cd_file_icon">File type icon</string>
+    <string name="cd_chevron_right">Navigate to details</string>
+    <string name="network_usage_title">Network Usage</string>
+    <string name="cd_category_icon">Category icon</string>
+    <string name="cd_upload_icon">Upload indicator</string>
+    <string name="cd_download_icon">Download indicator</string>
+    <string name="network_reset_statistics">Reset Statistics</string>
 </resources>
