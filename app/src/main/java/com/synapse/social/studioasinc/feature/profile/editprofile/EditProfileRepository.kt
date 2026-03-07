@@ -16,6 +16,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
+import com.synapse.social.studioasinc.core.util.toJsonObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -123,7 +124,7 @@ class EditProfileRepository @Inject constructor(
     suspend fun updateProfile(userId: String, updateData: Map<String, Any?>): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                client.from("users").update(updateData) {
+                client.from("users").update(updateData.toJsonObject()) {
                     filter { eq("uid", userId) }
                 }
                 Result.success(Unit)
