@@ -137,6 +137,7 @@ object PostUiMapper {
             repliesCount = feedComment.commentCount,
             depth = 0, // Feed comments are always top-level
             showThreadLine = false, // No thread lines in feed
+            isThreadChild = false,
             isLastReply = false
         )
     }
@@ -156,6 +157,7 @@ object PostUiMapper {
         parentAuthorUsername: String? = null,
         depth: Int = 0,
         showThreadLine: Boolean = false,
+        isThreadChild: Boolean = false,
         isLastReply: Boolean = false
     ): PostCardState {
         // Clamp depth to prevent performance degradation with deeply nested comments
@@ -205,6 +207,7 @@ object PostUiMapper {
             repliesCount = comment.repliesCount,
             depth = clampedDepth,
             showThreadLine = showThreadLine,
+            isThreadChild = isThreadChild,
             isLastReply = isLastReply
         )
     }

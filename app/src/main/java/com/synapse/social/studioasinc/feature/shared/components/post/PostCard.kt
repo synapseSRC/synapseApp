@@ -72,6 +72,7 @@ data class PostCardState(
     val repliesCount: Int = 0,
     val depth: Int = 0,
     val showThreadLine: Boolean = false,
+    val isThreadChild: Boolean = false,
     val isLastReply: Boolean = false
 )
 
@@ -101,16 +102,12 @@ fun PostCard(
         if (state.isComment) 40.dp else 48.dp
     }
 
-    val indentation = remember(state.depth) {
-        if (state.depth > 0) (state.depth * 16).dp else 0.dp
-    }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
             .clickable(onClick = onPostClick)
-            .padding(start = indentation)
+            // No horizontal padding offset: avatars align fully to the left in X style
     ) {
         if (state.repostedBy != null) {
             Row(
@@ -149,7 +146,7 @@ fun PostCard(
                 contentAlignment = Alignment.TopCenter
             ) {
                 // Twitter/X style: Visual thread lines connecting avatars
-                if (state.showThreadLine) {
+                if (state.showThreadLine || state.isThreadChild) {
                     val lineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     val strokeWidth = 2.dp
                     
@@ -157,8 +154,8 @@ fun PostCard(
                         val centerX = size.width / 2
                         val avatarCenterY = (avatarSize / 2).toPx()
                         
-                        // Line above (only for comments after the root parent)
-                        if (state.isComment && state.depth >= 0) {
+                        // Line above (only if this is a direct thread child connecting to its parent)
+                        if (state.isComment && state.isThreadChild) {
                             drawLine(
                                 color = lineColor,
                                 start = Offset(centerX, 0f),
@@ -167,8 +164,8 @@ fun PostCard(
                             )
                         }
                         
-                        // Line below (if there are more replies or thread continues)
-                        if (!state.isLastReply) {
+                        // Line below (if the thread continues to a child)
+                        if (state.showThreadLine) {
                             drawLine(
                                 color = lineColor,
                                 start = Offset(centerX, avatarCenterY),
@@ -253,7 +250,7 @@ fun PostCard(
             }
         }
 
-        if (!state.showThreadLine || state.isLastReply) {
+        if (!state.showThreadLine) {
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = Spacing.SmallMedium),
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
