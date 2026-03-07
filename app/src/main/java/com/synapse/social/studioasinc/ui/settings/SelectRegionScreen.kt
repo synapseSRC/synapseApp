@@ -42,8 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,19 +83,19 @@ fun SelectRegionScreen(
                         isSearchActive = active
                         if (!active) searchQuery = ""
                     },
-                    placeholder = { Text("Search region") },
+                    placeholder = { Text(stringResource(R.string.search_region)) },
                     leadingIcon = {
                         IconButton(onClick = {
                             isSearchActive = false
                             searchQuery = ""
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                         }
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear search")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_all))
                             }
                         }
                     },
@@ -102,7 +105,7 @@ fun SelectRegionScreen(
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
                     ) {
                         itemsIndexed(filteredRegions) { index, region ->
                             val shape = getShapeForItem(index, filteredRegions.size)
@@ -117,15 +120,15 @@ fun SelectRegionScreen(
                 }
             } else {
                 TopAppBar(
-                    title = { Text("Select Region") },
+                    title = { Text(stringResource(R.string.select_region)) },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                         }
                     },
                     actions = {
                         IconButton(onClick = { isSearchActive = true }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -141,7 +144,7 @@ fun SelectRegionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
             ) {
                 itemsIndexed(filteredRegions) { index, region ->
                     val shape = getShapeForItem(index, filteredRegions.size)
@@ -159,12 +162,13 @@ fun SelectRegionScreen(
 
 @Composable
 fun getShapeForItem(index: Int, size: Int): Shape {
-    val cornerRadius = 24.dp
+    val largeRadius = Spacing.Large
+    val smallRadius = Spacing.ExtraSmall
     return when {
-        size == 1 -> RoundedCornerShape(cornerRadius)
-        index == 0 -> RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius, bottomStart = 4.dp, bottomEnd = 4.dp)
-        index == size - 1 -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = cornerRadius, bottomEnd = cornerRadius)
-        else -> RoundedCornerShape(4.dp)
+        size == 1 -> RoundedCornerShape(largeRadius)
+        index == 0 -> RoundedCornerShape(topStart = largeRadius, topEnd = largeRadius, bottomStart = smallRadius, bottomEnd = smallRadius)
+        index == size - 1 -> RoundedCornerShape(topStart = smallRadius, topEnd = smallRadius, bottomStart = largeRadius, bottomEnd = largeRadius)
+        else -> RoundedCornerShape(smallRadius)
     }
 }
 
