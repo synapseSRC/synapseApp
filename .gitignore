@@ -105,3 +105,8 @@ __pycache__/
 *.tmp
 *.bak
 *.orig
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/

@@ -7,3 +7,8 @@ node_modules/
 
 # Local logs
 *.log
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/

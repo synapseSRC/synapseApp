@@ -1,4 +1,3 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
@@ -49,6 +48,14 @@ export default defineConfig({
 					],
 				},
 			],
+			customCss: [
+				// custom css here if needed
+			],
 		}),
 	],
+	vite: {
+		define: {
+			'process.env.JULES_API_KEY': JSON.stringify(process.env.JULES_API_KEY),
+		}
+	}
 });
