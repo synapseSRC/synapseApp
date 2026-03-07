@@ -24,6 +24,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -44,34 +46,32 @@ fun StorageUsageSection(storageUsage: StorageUsageBreakdown) {
         ) {
             Text(
                 text = stringResource(R.string.storage_used, usedGB),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = stringResource(R.string.storage_free, freeGB),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         Spacer(modifier = Modifier.height(Spacing.Small))
 
-
         StorageBar(usage = storageUsage)
 
         Spacer(modifier = Modifier.height(Spacing.Medium))
 
-
         Row(verticalAlignment = Alignment.CenterVertically) {
             Badge(color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.width(Spacing.Small))
-            Text(stringResource(R.string.storage_synapse_media), style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.storage_synapse_media), style = MaterialTheme.typography.bodyMedium)
 
             Spacer(modifier = Modifier.width(Spacing.Medium))
 
             Badge(color = MaterialTheme.colorScheme.tertiary)
             Spacer(modifier = Modifier.width(Spacing.Small))
-            Text(stringResource(R.string.storage_apps_other), style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.storage_apps_other), style = MaterialTheme.typography.bodyMedium)
         }
     }
     HorizontalDivider(thickness = Spacing.Small, color = MaterialTheme.colorScheme.surfaceContainerLowest)
@@ -92,9 +92,7 @@ private fun StorageBar(usage: StorageUsageBreakdown) {
         val synapseWidth = (usage.synapseSize.toFloat() / usage.totalSize) * totalWidth
         val otherWidth = (usage.appsAndOtherSize.toFloat() / usage.totalSize) * totalWidth
 
-
         drawRect(color = surfaceVariant.copy(alpha = 0.3f))
-
 
         drawLine(
             color = primaryColor,
@@ -103,7 +101,6 @@ private fun StorageBar(usage: StorageUsageBreakdown) {
             strokeWidth = size.height,
             cap = StrokeCap.Round
         )
-
 
         drawLine(
             color = tertiaryColor,
@@ -117,9 +114,11 @@ private fun StorageBar(usage: StorageUsageBreakdown) {
 
 @Composable
 private fun Badge(color: androidx.compose.ui.graphics.Color) {
+    val cdStorageBadge = stringResource(id = R.string.cd_storage_badge)
     Box(
         modifier = Modifier
             .size(Spacing.Small)
             .background(color, CircleShape)
+            .semantics { contentDescription = cdStorageBadge }
     )
 }
