@@ -197,7 +197,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
                 if (existingChatId != null) return@withContext existingChatId
             }
 
-            val chatId = "${currentUserId}_${otherUserId}"
+            val chatId = com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()
             val participants = listOf(
                 ChatParticipantDto(chatId = chatId, userId = currentUserId, isAdmin = true),
                 ChatParticipantDto(chatId = chatId, userId = otherUserId)
