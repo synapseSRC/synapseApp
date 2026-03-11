@@ -387,48 +387,85 @@ fun ChatScreen(
                         }
                     }
 
-                    // Context Menu for messages
+                    // Context Menu and Reactions for messages
                     if (selectedMessageForMenu != null) {
-                        AlertDialog(
-                            onDismissRequest = { selectedMessageForMenu = null },
-                            title = { Text("Message Options") },
-                            text = {
-                                Column {
-                                    ListItem(
-                                        headlineContent = { Text("Edit") },
-                                        leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                        modifier = Modifier.clickable {
-                                            selectedMessageForMenu?.let { viewModel.startEditing(it) }
-                                            selectedMessageForMenu = null
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Delete for Me") },
-                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                                        onClick = {
-                                            selectedMessageForMenu?.let { viewModel.deleteMessageForMe(it.id!!) }
-                                            selectedMessageForMenu = null
-                                        }
-                                    )
-                                    val isFromMe = selectedMessageForMenu?.senderId == currentUserId
-                                    if (isFromMe) {
-                                        DropdownMenuItem(
-                                            text = { Text("Delete for Everyone", color = MaterialTheme.colorScheme.error) },
-                                            leadingIcon = { Icon(Icons.Default.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                                            onClick = {
-                                                selectedMessageForMenu?.let { viewModel.deleteMessage(it.id!!) }
+                        ModalBottomSheet(
+                            onDismissRequest = { selectedMessageForMenu = null }
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 32.dp)
+                            ) {
+                                // Reactions Row
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    AppReactionType.values().forEach { reaction ->
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.clickable {
+                                                val sharedReaction = SharedReactionType.fromString(reaction.name)
+                                                selectedMessageForMenu?.id?.let { viewModel.toggleMessageReaction(it, sharedReaction) }
                                                 selectedMessageForMenu = null
                                             }
-                                        )
+                                        ) {
+                                            Image(
+                                                painter = painterResource(id = reaction.iconRes),
+                                                contentDescription = reaction.displayName,
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .padding(4.dp)
+                                            )
+                                        }
                                     }
                                 }
-                            },
-                            confirmButton = {
-                                TextButton(onClick = { selectedMessageForMenu = null }) {
-                                    Text("Cancel")
+
+                                Divider()
+
+                                // Options
+                                ListItem(
+                                    headlineContent = { Text("Copy") },
+                                    leadingContent = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                    modifier = Modifier.clickable {
+                                        selectedMessageForMenu?.let {
+                                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(it.content))
+                                        }
+                                        selectedMessageForMenu = null
+                                    }
+                                )
+                                ListItem(
+                                    headlineContent = { Text("Edit") },
+                                    leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                    modifier = Modifier.clickable {
+                                        selectedMessageForMenu?.let { viewModel.startEditing(it) }
+                                        selectedMessageForMenu = null
+                                    }
+                                )
+                                ListItem(
+                                    headlineContent = { Text("Delete for Me") },
+                                    leadingContent = { Icon(Icons.Default.Delete, contentDescription = null) },
+                                    modifier = Modifier.clickable {
+                                        selectedMessageForMenu?.let { viewModel.deleteMessageForMe(it.id!!) }
+                                        selectedMessageForMenu = null
+                                    }
+                                )
+                                val isFromMe = selectedMessageForMenu?.senderId == currentUserId
+                                if (isFromMe) {
+                                    ListItem(
+                                        headlineContent = { Text("Delete for Everyone", color = MaterialTheme.colorScheme.error) },
+                                        leadingContent = { Icon(Icons.Default.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                        modifier = Modifier.clickable {
+                                            selectedMessageForMenu?.let { viewModel.deleteMessage(it.id!!) }
+                                            selectedMessageForMenu = null
+                                        }
+                                    )
                                 }
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -722,18 +759,7 @@ fun MessageBubble(
     val density = LocalDensity.current
     val threshold = with(density) { 50.dp.toPx() }
 
-    var showReactionPicker by remember { mutableStateOf(false) }
 
-    if (showReactionPicker) {
-        ReactionPicker(
-            onReactionSelected = { appReaction ->
-                showReactionPicker = false
-                val sharedReaction = SharedReactionType.fromString(appReaction.name)
-                onReactionSelected(sharedReaction)
-            },
-            onDismiss = { showReactionPicker = false }
-        )
-    }
 
     Box(
 
@@ -742,14 +768,7 @@ fun MessageBubble(
             .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent)
             .combinedClickable(
 
-                onLongClick = {
-                    if (isSelected) {
-                        onToggleSelection()
-                    } else {
-                        showReactionPicker = true
-                        onLongClick()
-                    }
-                }
+                onLongClick = onLongClick
 ,
                 onClick = { onToggleSelection() },
                 interactionSource = remember { MutableInteractionSource() },
@@ -907,25 +926,12 @@ fun MessageBubble(
                             append(message.content.substring(lastIndex))
                         }
 
-                        ClickableText(
+                        Text(
                             text = annotatedString,
                             style = androidx.compose.ui.text.TextStyle(
                                 color = contentColor,
                                 fontSize = 15.sp,
-                            ),
-                            onClick = { offset ->
-                                annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                                    .firstOrNull()?.let { annotation ->
-                                        try {
-                                            uriHandler.openUri(annotation.item)
-                                        } catch (e: Exception) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
-                                            if (intent.resolveActivity(context.packageManager) != null) {
-                                                context.startActivity(intent)
-                                            }
-                                        }
-                                    }
-                            }
+                            )
                         )
                     }
                 }
