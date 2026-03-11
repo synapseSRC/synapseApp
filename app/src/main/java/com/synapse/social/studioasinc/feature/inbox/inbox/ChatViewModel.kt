@@ -404,7 +404,7 @@ class ChatViewModel @Inject constructor(
             val newUserReaction = if (isSame) null else reactionType
 
             if (oldUserReaction != null) {
-                oldReactionCounts[oldUserReaction] = (oldReactionCounts[oldUserReaction] ?: 1) - 1
+                oldReactionCounts[oldUserReaction] = (oldReactionCounts[oldUserReaction] ?: 0) - 1
                 if (oldReactionCounts[oldUserReaction] == 0) oldReactionCounts.remove(oldUserReaction)
             }
             if (!isSame) {
