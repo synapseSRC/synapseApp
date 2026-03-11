@@ -208,7 +208,7 @@ class ReactionRepository @Inject constructor(
                 .select { filter { eq(idColumn, targetId); eq("user_id", userId) } }
                 .decodeSingleOrNull<JsonObject>()
 
-            val reactionType = reaction?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let {
+            val reactionType = reaction?.getStringOrNull("reaction_type")?.let {
                 ReactionType.fromString(it)
             }
             Result.success(reactionType)
@@ -350,7 +350,7 @@ class ReactionRepository @Inject constructor(
 
                                      val userReaction = currentUser?.let { user ->
                                          postReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                             ?.getStringOrNull("reaction_type")
                                      }
 
                                      PostReactionSummary(
@@ -438,7 +438,7 @@ class ReactionRepository @Inject constructor(
 
                                      val userReaction = currentUser?.let { user ->
                                          commentReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                             ?.getStringOrNull("reaction_type")
                                      }
 
                                      CommentReactionSummary(
@@ -496,7 +496,7 @@ class ReactionRepository @Inject constructor(
 
                                      val userReactionStr = currentUser?.let { user ->
                                          messageReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                             ?.getStringOrNull("reaction_type")
                                      }
                                      val userReaction = userReactionStr?.let { com.synapse.social.studioasinc.shared.domain.model.ReactionType.fromString(it) }
 

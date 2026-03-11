@@ -47,6 +47,14 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 
 import com.synapse.social.studioasinc.feature.shared.components.post.ReactionPicker
 import com.synapse.social.studioasinc.domain.model.ReactionType as AppReactionType
@@ -376,12 +384,11 @@ fun ChatScreen(
                                     if (selectedMessageIds.isNotEmpty()) {
                                         message.id?.let { viewModel.toggleMessageSelection(it) }
                                     } else {
-                                        if (message.isFromMe(currentUserId)) {
-                                            selectedMessageForMenu = message
-                                        } else {
-                                            message.id?.let { viewModel.toggleMessageSelection(it) }
-                                        }
+                                        selectedMessageForMenu = message
                                     }
+                                },
+                                onReactionSelected = { reaction ->
+                                    message.id?.let { viewModel.toggleMessageReaction(it, reaction) }
                                 }
                             )
                         }
@@ -926,12 +933,37 @@ fun MessageBubble(
                             append(message.content.substring(lastIndex))
                         }
 
+                        var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                         Text(
                             text = annotatedString,
                             style = androidx.compose.ui.text.TextStyle(
                                 color = contentColor,
                                 fontSize = 15.sp,
-                            )
+                            ),
+                            onTextLayout = { layoutResult = it },
+                            modifier = Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = {
+                                        onLongClick()
+                                    },
+                                    onTap = { pos ->
+                                        layoutResult?.let { layoutResult ->
+                                            val offset = layoutResult.getOffsetForPosition(pos)
+                                            annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                                                .firstOrNull()?.let { annotation ->
+                                                    try {
+                                                        uriHandler.openUri(annotation.item)
+                                                    } catch (e: Exception) {
+                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
+                                                        if (intent.resolveActivity(context.packageManager) != null) {
+                                                            context.startActivity(intent)
+                                                        }
+                                                    }
+                                                }
+                                        }
+                                    }
+                                )
+                            }
                         )
                     }
                 }
