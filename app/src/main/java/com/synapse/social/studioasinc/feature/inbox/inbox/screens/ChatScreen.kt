@@ -47,6 +47,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+
+import com.synapse.social.studioasinc.feature.shared.components.post.ReactionPicker
+import com.synapse.social.studioasinc.domain.model.ReactionType as AppReactionType
+import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -686,7 +693,8 @@ fun MessageBubble(
     onToggleSelection: () -> Unit = {},
     onSwipeToReply: () -> Unit = {},
     replyToMessage: Message? = null,
-    onLongClick: () -> Unit = {}
+    onLongClick: () -> Unit = {},
+    onReactionSelected: (SharedReactionType) -> Unit = {}
 ) {
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
     val containerColor = if (isFromMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer
@@ -714,12 +722,35 @@ fun MessageBubble(
     val density = LocalDensity.current
     val threshold = with(density) { 50.dp.toPx() }
 
+    var showReactionPicker by remember { mutableStateOf(false) }
+
+    if (showReactionPicker) {
+        ReactionPicker(
+            onReactionSelected = { appReaction ->
+                showReactionPicker = false
+                val sharedReaction = SharedReactionType.fromString(appReaction.name)
+                onReactionSelected(sharedReaction)
+            },
+            onDismiss = { showReactionPicker = false }
+        )
+    }
+
     Box(
+
         modifier = Modifier
             .fillMaxWidth()
             .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent)
             .combinedClickable(
-                onLongClick = onLongClick,
+
+                onLongClick = {
+                    if (isSelected) {
+                        onToggleSelection()
+                    } else {
+                        showReactionPicker = true
+                        onLongClick()
+                    }
+                }
+,
                 onClick = { onToggleSelection() },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
