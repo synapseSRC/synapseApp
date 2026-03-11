@@ -444,14 +444,17 @@ fun ChatScreen(
                                         selectedMessageForMenu = null
                                     }
                                 )
-                                ListItem(
-                                    headlineContent = { Text("Edit") },
-                                    leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                    modifier = Modifier.clickable {
-                                        selectedMessageForMenu?.let { viewModel.startEditing(it) }
-                                        selectedMessageForMenu = null
-                                    }
-                                )
+                                val isFromMe = selectedMessageForMenu?.senderId == currentUserId
+                                if (isFromMe) {
+                                    ListItem(
+                                        headlineContent = { Text("Edit") },
+                                        leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                        modifier = Modifier.clickable {
+                                            selectedMessageForMenu?.let { viewModel.startEditing(it) }
+                                            selectedMessageForMenu = null
+                                        }
+                                    )
+                                }
                                 ListItem(
                                     headlineContent = { Text("Delete for Me") },
                                     leadingContent = { Icon(Icons.Default.Delete, contentDescription = null) },
@@ -460,7 +463,6 @@ fun ChatScreen(
                                         selectedMessageForMenu = null
                                     }
                                 )
-                                val isFromMe = selectedMessageForMenu?.senderId == currentUserId
                                 if (isFromMe) {
                                     ListItem(
                                         headlineContent = { Text("Delete for Everyone", color = MaterialTheme.colorScheme.error) },
