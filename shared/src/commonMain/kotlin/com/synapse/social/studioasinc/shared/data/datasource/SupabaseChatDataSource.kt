@@ -472,6 +472,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
             client.postgrest.from("user_deleted_messages").insert(deletion)
         }
 
+
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) = 
         withContext(Dispatchers.IO) {
             try {

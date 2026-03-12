@@ -537,11 +537,20 @@ class ChatViewModel @Inject constructor(
                 chatId = chatId,
                 filePath = filePath,
                 fileName = fileName,
-                contentType = contentType
-            ) { progress ->
-                uploadProgressManager.showProgress(notificationId, progress, "Uploading media")
-            }.onSuccess { mediaUrl ->
-                uploadProgressManager.finishProgress(notificationId, true, "Upload Complete")
+                contentType = contentType,
+                onProgress = { progress ->
+                    uploadProgressManager.updateProgress(chatId, fileName, progress)
+                    _messages.update { current ->
+                        current.map {
+                            if (it.id == tempId) {
+                                it.copy(content = "Uploading... $progress%")
+                            } else {
+                                it
+                            }
+                        }
+                    }
+                }
+            ).onSuccess { mediaUrl ->
                 val finalContent = if (messageType == "image" || messageType == "video") "Media message" else fileName
                 sendMessageUseCase(
                     chatId = chatId,
