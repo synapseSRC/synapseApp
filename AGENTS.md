@@ -1,8 +1,16 @@
 # Overview
+- [📦 Repository Context](#-repository-context)
 - [🏗️ Architectural Integrity](#️-architectural-integrity)
 - [🎨 UI & Coding Standards](#-ui--coding-standards)
 - [📩 Pre-Submission Checklist](#-pre-submission-checklist)
 - [🎁 Submission & PR Template](#-submission--pr-template)
+
+---
+
+# 📦 Repository Context
+
+- **Default Branch:** `main`
+- **Source Repository:** `synapseSRC/synapseApp`
 
 ---
 
