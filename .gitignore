@@ -120,3 +120,6 @@ __pycache__/
 playwright-report/
 test-results/
 playwright/.cache/
+
+# IDE
+.vscode/
