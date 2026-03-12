@@ -33,6 +33,4 @@ class UploadProgressManager @Inject constructor(
         val progress = if (success) 100 else 0
         NotificationHelper.showProgressNotification(context, id, progress, title)
     }
-        }
-    }
 }
