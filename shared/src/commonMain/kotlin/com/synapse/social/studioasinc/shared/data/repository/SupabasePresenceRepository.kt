@@ -25,34 +25,53 @@ class SupabasePresenceRepository(
     private val presenceChannel by lazy { client.realtime.channel("presence") }
     
     override suspend fun updatePresence(isOnline: Boolean, currentChatId: String?): Result<Unit> = runCatching {
-        val userId = client.auth.currentUserOrNull()?.id?.toString() ?: return Result.failure(Exception("Not authenticated"))
+        val session = client.auth.currentSessionOrNull() ?: run {
+            Napier.w("Cannot update presence: No active session")
+            return Result.failure(Exception("Not authenticated"))
+        }
+        val userId = session.user?.id?.toString() ?: run {
+            Napier.w("Cannot update presence: No user ID in session")
+            return Result.failure(Exception("No user ID"))
+        }
         
         withContext(Dispatchers.IO) {
-            client.postgrest.from("user_presence").upsert(
-                buildJsonObject {
-                    put("user_id", userId)
-                    put("is_online", isOnline)
-                    put("last_seen", Clock.System.now().toString())
-                    put("activity_status", if (isOnline) "online" else "offline")
-                    put("updated_at", Clock.System.now().toString())
-                    put("current_chat_id", currentChatId)
-                }
-            )
-            Napier.d("Presence updated: userId=$userId, isOnline=$isOnline, status=${if (isOnline) "online" else "offline"}")
+            try {
+                client.postgrest.from("user_presence").upsert(
+                    buildJsonObject {
+                        put("user_id", userId)
+                        put("is_online", isOnline)
+                        put("last_seen", Clock.System.now().toString())
+                        put("activity_status", if (isOnline) "online" else "offline")
+                        put("updated_at", Clock.System.now().toString())
+                        put("current_chat_id", currentChatId)
+                    }
+                )
+                Napier.d("✅ Presence updated: userId=$userId, isOnline=$isOnline, status=${if (isOnline) "online" else "offline"}")
+            } catch (e: Exception) {
+                Napier.e("❌ Failed to update presence: ${e.message}", e)
+                throw e
+            }
         }
     }
     
     override suspend fun startPresenceTracking() {
-        val userId = client.auth.currentUserOrNull()?.id?.toString() ?: run {
-            Napier.e("Cannot start presence tracking: User not authenticated")
+        val session = client.auth.currentSessionOrNull() ?: run {
+            Napier.w("⚠️ Cannot start presence tracking: No active session")
+            return
+        }
+        val userId = session.user?.id?.toString() ?: run {
+            Napier.w("⚠️ Cannot start presence tracking: No user ID")
             return
         }
         
-        Napier.d("Starting presence tracking for user: $userId")
+        Napier.d("🟢 Starting presence tracking for user: $userId")
         
         // Initial presence update
-        updatePresence(true).onFailure { 
-            Napier.e("Failed initial presence update", it)
+        updatePresence(true).onSuccess {
+            Napier.d("✅ Initial presence set to online")
+        }.onFailure { 
+            Napier.e("❌ Failed initial presence update", it)
+            return // Don't start heartbeat if initial update fails
         }
         
         // Subscribe to realtime channel
@@ -62,9 +81,9 @@ class SupabasePresenceRepository(
                 put("user_id", userId)
                 put("online", true)
             })
-            Napier.d("Subscribed to presence channel")
+            Napier.d("✅ Subscribed to presence channel")
         } catch (e: Exception) {
-            Napier.e("Failed to subscribe to presence channel", e)
+            Napier.e("❌ Failed to subscribe to presence channel", e)
         }
         
         // Start heartbeat
@@ -72,12 +91,14 @@ class SupabasePresenceRepository(
         heartbeatJob = CoroutineScope(Dispatchers.Default).launch {
             while (isActive) {
                 delay(30_000) // 30s heartbeat
-                updatePresence(true).onFailure { 
-                    Napier.e("Heartbeat update failed", it)
+                updatePresence(true).onSuccess {
+                    Napier.d("💓 Heartbeat: Presence updated")
+                }.onFailure { 
+                    Napier.e("❌ Heartbeat update failed", it)
                 }
             }
         }
-        Napier.d("Presence heartbeat started")
+        Napier.d("✅ Presence heartbeat started (30s interval)")
     }
     
     override suspend fun stopPresenceTracking() {
@@ -106,8 +127,18 @@ class SupabasePresenceRepository(
                         .decodeSingle<UserPresenceDto>()
                     
                     // User is active if online and last_seen within 5 minutes
-                    response.isOnline && isWithinActiveWindow(response.lastSeen)
-                }.getOrDefault(false)
+                    val withinWindow = isWithinActiveWindow(response.lastSeen)
+                    val result = response.isOnline && withinWindow
+                    
+                    if (!result && response.isOnline) {
+                        Napier.d("User $userId is marked online but last_seen is stale (${response.lastSeen})")
+                    }
+                    
+                    result
+                }.getOrElse { error ->
+                    Napier.w("Failed to fetch presence for user $userId: ${error.message}")
+                    false
+                }
                 emit(isActive)
                 delay(10_000) // Poll every 10 seconds
             }
