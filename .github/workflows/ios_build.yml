@@ -27,3 +27,9 @@ jobs:
 
       - name: Build KMP Shared Framework for iOS
         run: ./gradlew :shared:compileKotlinIosSimulatorArm64
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build iOS Application (Skipped due to missing xcodeproj in repo)
+        run: echo "Skipping xcodebuild as xcodeproj is not tracked in the repository per project guidelines."

@@ -47,6 +47,21 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
+
+import com.synapse.social.studioasinc.feature.shared.components.post.ReactionPicker
+import com.synapse.social.studioasinc.domain.model.ReactionType as AppReactionType
+import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -369,24 +384,68 @@ fun ChatScreen(
                                     if (selectedMessageIds.isNotEmpty()) {
                                         message.id?.let { viewModel.toggleMessageSelection(it) }
                                     } else {
-                                        if (message.isFromMe(currentUserId)) {
-                                            selectedMessageForMenu = message
-                                        } else {
-                                            message.id?.let { viewModel.toggleMessageSelection(it) }
-                                        }
+                                        selectedMessageForMenu = message
                                     }
+                                },
+                                onReactionSelected = { reaction ->
+                                    message.id?.let { viewModel.toggleMessageReaction(it, reaction) }
                                 }
                             )
                         }
                     }
 
-                    // Context Menu for messages
+                    // Context Menu and Reactions for messages
                     if (selectedMessageForMenu != null) {
-                        AlertDialog(
-                            onDismissRequest = { selectedMessageForMenu = null },
-                            title = { Text("Message Options") },
-                            text = {
-                                Column {
+                        ModalBottomSheet(
+                            onDismissRequest = { selectedMessageForMenu = null }
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 32.dp)
+                            ) {
+                                // Reactions Row
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    AppReactionType.values().forEach { reaction ->
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.clickable {
+                                                val sharedReaction = SharedReactionType.fromString(reaction.name)
+                                                selectedMessageForMenu?.id?.let { viewModel.toggleMessageReaction(it, sharedReaction) }
+                                                selectedMessageForMenu = null
+                                            }
+                                        ) {
+                                            Image(
+                                                painter = painterResource(id = reaction.iconRes),
+                                                contentDescription = reaction.displayName,
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .padding(4.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Divider()
+
+                                // Options
+                                ListItem(
+                                    headlineContent = { Text("Copy") },
+                                    leadingContent = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                    modifier = Modifier.clickable {
+                                        selectedMessageForMenu?.let {
+                                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(it.content))
+                                        }
+                                        selectedMessageForMenu = null
+                                    }
+                                )
+                                val isFromMe = selectedMessageForMenu?.senderId == currentUserId
+                                if (isFromMe) {
                                     ListItem(
                                         headlineContent = { Text("Edit") },
                                         leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
@@ -395,33 +454,27 @@ fun ChatScreen(
                                             selectedMessageForMenu = null
                                         }
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("Delete for Me") },
-                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                                        onClick = {
-                                            selectedMessageForMenu?.let { viewModel.deleteMessageForMe(it.id!!) }
+                                }
+                                ListItem(
+                                    headlineContent = { Text("Delete for Me") },
+                                    leadingContent = { Icon(Icons.Default.Delete, contentDescription = null) },
+                                    modifier = Modifier.clickable {
+                                        selectedMessageForMenu?.let { viewModel.deleteMessageForMe(it.id!!) }
+                                        selectedMessageForMenu = null
+                                    }
+                                )
+                                if (isFromMe) {
+                                    ListItem(
+                                        headlineContent = { Text("Delete for Everyone", color = MaterialTheme.colorScheme.error) },
+                                        leadingContent = { Icon(Icons.Default.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                        modifier = Modifier.clickable {
+                                            selectedMessageForMenu?.let { viewModel.deleteMessage(it.id!!) }
                                             selectedMessageForMenu = null
                                         }
                                     )
-                                    val isFromMe = selectedMessageForMenu?.senderId == currentUserId
-                                    if (isFromMe) {
-                                        DropdownMenuItem(
-                                            text = { Text("Delete for Everyone", color = MaterialTheme.colorScheme.error) },
-                                            leadingIcon = { Icon(Icons.Default.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                                            onClick = {
-                                                selectedMessageForMenu?.let { viewModel.deleteMessage(it.id!!) }
-                                                selectedMessageForMenu = null
-                                            }
-                                        )
-                                    }
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(onClick = { selectedMessageForMenu = null }) {
-                                    Text("Cancel")
                                 }
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -686,7 +739,8 @@ fun MessageBubble(
     onToggleSelection: () -> Unit = {},
     onSwipeToReply: () -> Unit = {},
     replyToMessage: Message? = null,
-    onLongClick: () -> Unit = {}
+    onLongClick: () -> Unit = {},
+    onReactionSelected: (SharedReactionType) -> Unit = {}
 ) {
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
     val containerColor = if (isFromMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer
@@ -714,12 +768,17 @@ fun MessageBubble(
     val density = LocalDensity.current
     val threshold = with(density) { 50.dp.toPx() }
 
+
+
     Box(
+
         modifier = Modifier
             .fillMaxWidth()
             .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent)
             .combinedClickable(
-                onLongClick = onLongClick,
+
+                onLongClick = onLongClick
+,
                 onClick = { onToggleSelection() },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -876,24 +935,36 @@ fun MessageBubble(
                             append(message.content.substring(lastIndex))
                         }
 
-                        ClickableText(
+                        var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                        Text(
                             text = annotatedString,
                             style = androidx.compose.ui.text.TextStyle(
                                 color = contentColor,
                                 fontSize = 15.sp,
                             ),
-                            onClick = { offset ->
-                                annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                                    .firstOrNull()?.let { annotation ->
-                                        try {
-                                            uriHandler.openUri(annotation.item)
-                                        } catch (e: Exception) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
-                                            if (intent.resolveActivity(context.packageManager) != null) {
-                                                context.startActivity(intent)
-                                            }
+                            onTextLayout = { layoutResult = it },
+                            modifier = Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = {
+                                        onLongClick()
+                                    },
+                                    onTap = { pos ->
+                                        layoutResult?.let { layoutResult ->
+                                            val offset = layoutResult.getOffsetForPosition(pos)
+                                            annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                                                .firstOrNull()?.let { annotation ->
+                                                    try {
+                                                        uriHandler.openUri(annotation.item)
+                                                    } catch (e: Exception) {
+                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
+                                                        if (intent.resolveActivity(context.packageManager) != null) {
+                                                            context.startActivity(intent)
+                                                        }
+                                                    }
+                                                }
                                         }
                                     }
+                                )
                             }
                         )
                     }

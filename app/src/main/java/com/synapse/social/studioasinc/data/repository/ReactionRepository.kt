@@ -183,7 +183,7 @@ class ReactionRepository @Inject constructor(
                 .decodeList<JsonObject>()
 
             val summary = reactions
-                .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
+                .groupBy { ReactionType.fromString(it.getStringOrNull("reaction_type") ?: "LIKE") }
                 .mapValues { it.value.size }
 
             Result.success(summary)
@@ -208,7 +208,7 @@ class ReactionRepository @Inject constructor(
                 .select { filter { eq(idColumn, targetId); eq("user_id", userId) } }
                 .decodeSingleOrNull<JsonObject>()
 
-            val reactionType = reaction?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let {
+            val reactionType = reaction?.getStringOrNull("reaction_type")?.let {
                 ReactionType.fromString(it)
             }
             Result.success(reactionType)
@@ -313,7 +313,7 @@ class ReactionRepository @Inject constructor(
                                          }.decodeList<JsonObject>()
 
                                      val userReactionMap = userReactions.associate {
-                                         it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                         it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it.getStringOrNull("reaction_type")
                                      }
 
                                      rpcSummaries.map { summary ->
@@ -344,13 +344,13 @@ class ReactionRepository @Inject constructor(
                                  chunkIds.map { postId ->
                                      val postReactions = reactionsByPostId[postId] ?: emptyList()
                                      val summary = postReactions
-                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
+                                         .groupBy { ReactionType.fromString(it.getStringOrNull("reaction_type") ?: "LIKE") }
                                          .mapValues { it.value.size }
                                          .mapKeys { it.key.name.lowercase() }
 
                                      val userReaction = currentUser?.let { user ->
-                                         postReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                         postReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
+                                             ?.getStringOrNull("reaction_type")
                                      }
 
                                      PostReactionSummary(
@@ -405,7 +405,7 @@ class ReactionRepository @Inject constructor(
                                          }.decodeList<JsonObject>()
 
                                      val userReactionMap = userReactions.associate {
-                                         it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                         it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it.getStringOrNull("reaction_type")
                                      }
 
                                      rpcSummaries.map { summary ->
@@ -432,13 +432,13 @@ class ReactionRepository @Inject constructor(
                                  chunkIds.map { commentId ->
                                      val commentReactions = reactionsByCommentId[commentId] ?: emptyList()
                                      val summary = commentReactions
-                                         .groupBy { ReactionType.fromString(it["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "LIKE") }
+                                         .groupBy { ReactionType.fromString(it.getStringOrNull("reaction_type") ?: "LIKE") }
                                          .mapValues { it.value.size }
                                          .mapKeys { it.key.name.lowercase() }
 
                                      val userReaction = currentUser?.let { user ->
-                                         commentReactions.firstOrNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == user.id }
-                                             ?.get("reaction_type")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                         commentReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
+                                             ?.getStringOrNull("reaction_type")
                                      }
 
                                      CommentReactionSummary(
@@ -463,7 +463,71 @@ class ReactionRepository @Inject constructor(
 
 
 
-    suspend fun togglePostReaction(postId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(postId, "post", reactionType, oldReaction, skipCheck)
+
+    suspend fun populateMessageReactions(messages: List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>): List<com.synapse.social.studioasinc.shared.domain.model.chat.Message> = withContext(Dispatchers.IO) {
+        if (messages.isEmpty()) return@withContext messages
+
+        try {
+            val allMessageIds = messages.map { it.id }
+            val semaphore = Semaphore(5)
+
+            val summaries = supervisorScope {
+                 allMessageIds.chunked(20).map { chunkIds ->
+                     async {
+                         semaphore.withPermit {
+                             try {
+                                 val reactions = client.from("message_reactions")
+                                     .select { filter { isIn("message_id", chunkIds) } }
+                                     .decodeList<JsonObject>()
+
+                                 val currentUser = client.auth.currentUserOrNull()
+
+                                 val reactionsByMessageId = reactions.groupBy { it.getStringOrNull("message_id") }
+
+                                 chunkIds.map { messageId ->
+                                     val messageReactions = reactionsByMessageId[messageId] ?: emptyList()
+
+                                     // Count each reaction type
+                                     val summaryMap = messageReactions
+                                         .mapNotNull { it.getStringOrNull("reaction_type") }
+                                         .groupBy { it }
+                                         .mapKeys { com.synapse.social.studioasinc.shared.domain.model.ReactionType.fromString(it.key) }
+                                         .mapValues { it.value.size }
+
+                                     val userReactionStr = currentUser?.let { user ->
+                                         messageReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
+                                             ?.getStringOrNull("reaction_type")
+                                     }
+                                     val userReaction = userReactionStr?.let { com.synapse.social.studioasinc.shared.domain.model.ReactionType.fromString(it) }
+
+                                     messageId to Pair(summaryMap, userReaction)
+                                 }
+                             } catch(e: Exception) {
+                                 Log.e(TAG, "Failed to fetch reaction summaries for message chunk", e)
+                                 chunkIds.map { messageId ->
+                                     messageId to Pair(emptyMap<com.synapse.social.studioasinc.shared.domain.model.ReactionType, Int>(), null)
+                                 }
+                             }
+                         }
+                     }
+                 }.awaitAll().flatten().toMap()
+            }
+
+            return@withContext messages.map { msg ->
+                val summary = summaries[msg.id]
+                if (summary != null) {
+                    msg.copy(reactions = summary.first, userReaction = summary.second)
+                } else {
+                    msg
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to populate message reactions", e)
+            messages
+        }
+    }
+
+suspend fun togglePostReaction(postId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(postId, "post", reactionType, oldReaction, skipCheck)
 
     suspend fun toggleCommentReaction(commentId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(commentId, "comment", reactionType, oldReaction, skipCheck)
 
@@ -472,6 +536,15 @@ class ReactionRepository @Inject constructor(
 
     suspend fun getCommentReactionSummary(commentId: String) =
         getReactionSummary(commentId, "comment")
+
+    suspend fun toggleMessageReaction(messageId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(messageId, "message", reactionType, oldReaction, skipCheck)
+
+    suspend fun getMessageReactionSummary(messageId: String) =
+        getReactionSummary(messageId, "message")
+
+    suspend fun getUserMessageReaction(messageId: String) =
+        getUserReaction(messageId, "message")
+
 
     suspend fun getUserPostReaction(postId: String) =
         getUserReaction(postId, "post")
@@ -485,6 +558,7 @@ class ReactionRepository @Inject constructor(
     private fun getTableName(targetType: String): String {
         return when (targetType.lowercase()) {
             "post" -> "reactions"
+            "message" -> "message_reactions"
             "comment" -> "comment_reactions"
             else -> "reactions"
         }
@@ -493,6 +567,7 @@ class ReactionRepository @Inject constructor(
     private fun getIdColumn(targetType: String): String {
         return when (targetType.lowercase()) {
             "post" -> "post_id"
+            "message" -> "message_id"
             "comment" -> "comment_id"
             else -> "post_id"
         }
@@ -550,8 +625,12 @@ class ReactionRepository @Inject constructor(
     fun isReactionSummaryAccurate(summary: Map<ReactionType, Int>, totalReactions: Int): Boolean {
         return summary.values.sum() == totalReactions
     }
-}
 
+    private fun JsonObject.getStringOrNull(key: String): String? {
+        val element = this[key] ?: return null
+        return if (element is kotlinx.serialization.json.JsonPrimitive) element.contentOrNull else null
+    }
+}
 
 
 enum class ReactionToggleResult {

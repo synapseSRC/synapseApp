@@ -23,6 +23,10 @@ import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class SupabaseChatRepository(
     private val dataSource: SupabaseChatDataSource = SupabaseChatDataSource(),
@@ -35,10 +39,30 @@ class SupabaseChatRepository(
         if (this.isEncrypted && this.encryptedContent != null && signalProtocolManager != null) {
             try {
                 Napier.d("E2EE_DECRYPT: Attempting to decrypt message ${this.id}", tag = "E2EE")
-                val payloads = Json.decodeFromString<Map<String, EncryptedMessage>>(this.encryptedContent)
-                val myPayload = payloads[currentUserId]
-                if (myPayload != null) {
+                val jsonElement = Json.parseToJsonElement(this.encryptedContent).jsonObject
+                val myPayloadElement = jsonElement[currentUserId]
+
+                if (myPayloadElement != null) {
                     val senderId = this.senderId
+
+                    // If the sender is the current user, the payload is stored as plain text (base64)
+                    if (senderId == currentUserId) {
+                        // Sender's copy: stored as a JSON string with the plain text
+                        val plainText = try {
+                            myPayloadElement.jsonPrimitive.content
+                        } catch (_: Exception) {
+                            null
+                        }
+                        if (plainText != null) {
+                            Napier.d("E2EE_DECRYPT: Retrieved sender's plaintext copy for message ${this.id}", tag = "E2EE")
+                            return this.copy(content = plainText)
+                        }
+                        // Fallback: try decoding as EncryptedMessage (legacy format)
+                        Napier.d("E2EE_DECRYPT: Sender copy not plaintext, trying legacy decrypt", tag = "E2EE")
+                    }
+
+                    // Recipient's copy: decrypt using Signal Protocol
+                    val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
                     try {
                         val decryptedBytes = signalProtocolManager.decryptMessage(
                             senderId = senderId,
@@ -191,17 +215,20 @@ class SupabaseChatRepository(
                         Napier.d("E2EE_ENCRYPT: Encrypting for recipient $otherUserId", tag = "E2EE")
                         val encryptedForReceiver = signalProtocolManager.encryptMessage(otherUserId, content.encodeToByteArray())
                         
-                        ensureSession(currentUserId)
-                        Napier.d("E2EE_ENCRYPT: Encrypting for self $currentUserId", tag = "E2EE")
-                        val encryptedForSelf = signalProtocolManager.encryptMessage(currentUserId, content.encodeToByteArray())
+                        // Store sender's copy as plain text — do NOT create a Signal
+                        // session with yourself (Signal Protocol doesn't support self-sessions
+                        // and doing so corrupts pre-key state, breaking all encryption).
+                        Napier.d("E2EE_ENCRYPT: Storing plaintext copy for sender $currentUserId", tag = "E2EE")
 
-                        val payloads = mapOf(
-                            otherUserId to encryptedForReceiver,
-                            currentUserId to encryptedForSelf
-                        )
+                        // Build a mixed JSON object: recipient gets EncryptedMessage, sender gets plain string
+                        val recipientJson = Json.encodeToJsonElement(EncryptedMessage.serializer(), encryptedForReceiver)
+                        val payloads = JsonObject(mapOf(
+                            otherUserId to recipientJson,
+                            currentUserId to JsonPrimitive(content)
+                        ))
                         
                         isEncrypted = true
-                        encryptedContentStr = Json.encodeToString(payloads)
+                        encryptedContentStr = payloads.toString()
                         finalContent = "Message is encrypted"
                         Napier.d("E2EE_ENCRYPT: Successfully encrypted message", tag = "E2EE")
                     }
@@ -288,16 +315,15 @@ class SupabaseChatRepository(
                     ensureSession(otherUserId)
                     val encryptedForReceiver = signalProtocolManager.encryptMessage(otherUserId, newContent.encodeToByteArray())
                     
-                    ensureSession(currentUserId)
-                    val encryptedForSelf = signalProtocolManager.encryptMessage(currentUserId, newContent.encodeToByteArray())
-
-                    val payloads = mapOf(
-                        otherUserId to encryptedForReceiver,
-                        currentUserId to encryptedForSelf
-                    )
+                    // Sender's copy stored as plain text (no self-session)
+                    val recipientJson = Json.encodeToJsonElement(EncryptedMessage.serializer(), encryptedForReceiver)
+                    val payloads = JsonObject(mapOf(
+                        otherUserId to recipientJson,
+                        currentUserId to JsonPrimitive(newContent)
+                    ))
                     
                     isEncrypted = true
-                    encryptedContentStr = Json.encodeToString(payloads)
+                    encryptedContentStr = payloads.toString()
                     finalContent = "Message is encrypted"
                 }
             } catch (e: Exception) {
