@@ -476,7 +476,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         withContext(Dispatchers.IO) {
             try {
                 val path = "chat_media/$chatId/$fileName"
-                client.storage.from("chat_attachments").upload(path, fileBytes)
+                client.storage.from("chat_attachments").upload(path, fileBytes) { upsert = false }
                 client.storage.from("chat_attachments").publicUrl(path)
             } catch (e: Exception) {
                 Napier.e("Error uploading media", e)

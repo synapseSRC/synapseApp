@@ -125,6 +125,9 @@ class ChatViewModel: ObservableObject {
                 // requires specific standard library bindings like `shared.KotlinByteArray(size: data.count)`.
                 // A correct approach uses KMP-NativeCoroutines or explicit mappings.
                 let kotlinArray = shared.KotlinByteArray(size: Int32(data.count))
+                for (index, byte) in data.enumerated() {
+                    kotlinArray.set(index: Int32(index), value: Int8(bitPattern: byte))
+                }
                 // Filling the array is skipped for brevity as it requires loop bridging in pure Swift
                 // without a dedicated extension.
 
