@@ -310,8 +310,8 @@ class SupabaseChatRepository(
 
 
 
-    override suspend fun uploadMedia(chatId: String, fileBytes: ByteArray, fileName: String, contentType: String): Result<String> = try {
-        val url = dataSource.uploadMedia(chatId, fileBytes, fileName, contentType)
+    override suspend fun uploadMedia(chatId: String, fileBytes: ByteArray, fileName: String, contentType: String, onProgress: ((Int) -> Unit)?): Result<String> = try {
+        val url = dataSource.uploadMedia(chatId, fileBytes, fileName, contentType, onProgress)
         Result.success(url)
     } catch (e: Exception) {
         Napier.e("Error uploading media", e)
