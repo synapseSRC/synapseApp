@@ -48,6 +48,10 @@ fun CommentsList(
         }
 
         if (comments.loadState.refresh is LoadState.Loading) {
+            // TODO: Implement comment skeleton shimmer loading
+            //  - Create CommentShimmer composable similar to ChatShimmer
+            //  - Show 3-5 shimmer items with avatar, text lines, and action buttons
+            //  - Match CommentItem layout structure
             item {
                 Box(
                     modifier = Modifier

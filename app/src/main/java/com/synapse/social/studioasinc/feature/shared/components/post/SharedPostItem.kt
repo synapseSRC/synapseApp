@@ -21,21 +21,21 @@ fun SharedPostItem(
     modifier: Modifier = Modifier
 ) {
 
-    val state = remember(post, currentProfile, isExpanded) {
+    val state = remember(post.id, post.updatedAt, currentProfile?.id, isExpanded) {
         PostUiMapper.mapToState(post, currentProfile, isExpanded)
     }
 
 
 
-    val onLikeClick = remember(post, actions) { { actions.onLike(post) } }
-    val onCommentClick = remember(post, actions) { { actions.onComment(post) } }
-    val onShareClick = remember(post, actions) { { actions.onShare(post) } }
-    val onRepostClick = remember(post, actions) { { actions.onRepost(post) } }
-    val onQuoteClick = remember(post, actions) { { actions.onQuote(post) } }
-    val onBookmarkClick = remember(post, actions) { { actions.onBookmark(post) } }
-    val onUserClick = remember(post, actions) { { actions.onUserClick(post.authorUid) } }
-    val onPostClick = remember(post, actions) { { actions.onComment(post) } }
-    val onMediaClick = remember(post, actions, postViewStyle) {
+    val onLikeClick = remember(post.id, actions) { { actions.onLike(post) } }
+    val onCommentClick = remember(post.id, actions) { { actions.onComment(post) } }
+    val onShareClick = remember(post.id, actions) { { actions.onShare(post) } }
+    val onRepostClick = remember(post.id, actions) { { actions.onRepost(post) } }
+    val onQuoteClick = remember(post.id, actions) { { actions.onQuote(post) } }
+    val onBookmarkClick = remember(post.id, actions) { { actions.onBookmark(post) } }
+    val onUserClick = remember(post.authorUid, actions) { { actions.onUserClick(post.authorUid) } }
+    val onPostClick = remember(post.id, actions) { { actions.onComment(post) } }
+    val onMediaClick = remember(post.id, actions, postViewStyle) {
         { index: Int ->
             if (postViewStyle == PostViewStyle.GRID) {
                 actions.onComment(post)
@@ -44,8 +44,8 @@ fun SharedPostItem(
             }
         }
     }
-    val onOptionsClick = remember(post, actions) { { actions.onOptionClick(post) } }
-    val onPollVote = remember(post, actions) {
+    val onOptionsClick = remember(post.id, actions) { { actions.onOptionClick(post) } }
+    val onPollVote = remember(post.id, actions) {
         { optionId: String ->
             val index = optionId.toIntOrNull()
             if (index != null) {

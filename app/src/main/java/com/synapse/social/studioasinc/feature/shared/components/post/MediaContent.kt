@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
@@ -49,7 +50,11 @@ fun MediaContent(
                 .clickable { onMediaClick(0) }
         ) {
             AsyncImage(
-                model = url,
+                model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(url)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .build(),
                 contentDescription = "Post Image",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -86,7 +91,11 @@ fun MediaContent(
                         .padding(vertical = 8.dp)
                 ) {
                     AsyncImage(
-                        model = mediaUrls[page],
+                        model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                            .data(mediaUrls[page])
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .build(),
                         contentDescription = "Post Image",
                         modifier = Modifier
                             .fillMaxWidth()
@@ -193,7 +202,11 @@ fun MediaGridItem(
     onClick: () -> Unit
 ) {
     AsyncImage(
-        model = url,
+        model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+            .data(url)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .build(),
         contentDescription = "Post Image",
         modifier = modifier
             .clickable(onClick = onClick),

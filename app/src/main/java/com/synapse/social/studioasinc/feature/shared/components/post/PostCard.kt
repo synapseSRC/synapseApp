@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -44,7 +44,7 @@ import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 
 
 
-@Stable
+@Immutable
 data class PostCardState(
     val post: Post,
     val user: User,
