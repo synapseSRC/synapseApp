@@ -8,8 +8,8 @@ The active status feature shows a green indicator next to users who are currentl
 ### Backend
 - Uses the existing `user_presence` table in Supabase
 - A user is considered "active" if:
-  - `is_online` is `true`
-  - `last_seen` timestamp is within the last 5 minutes
+  - `last_seen` timestamp is within the last **2 minutes**
+  - Note: The `is_online` flag is NOT used for active status detection (it's unreliable due to app lifecycle)
 
 ### Database
 - **Function**: `is_user_active(user_last_seen)` - Helper function to check if a timestamp is within the active window
@@ -29,7 +29,8 @@ The active status feature shows a green indicator next to users who are currentl
 - **Repository Implementation**: `SupabasePresenceRepository`
   - Polls user_presence table every 10 seconds
   - Sends heartbeat every 30 seconds when user is active
-  - Validates 5-minute active window
+  - Validates 2-minute active window based on `last_seen` timestamp only
+  - Does NOT rely on `is_online` flag for active status (more reliable)
 
 #### Presentation Layer
 - **ViewModel**: `UserPresenceViewModel` - Manages presence state
@@ -68,9 +69,9 @@ LaunchedEffect(Unit) {
 ## Customization
 
 ### Change Active Window
-Modify the `isWithinActiveWindow` function in `SupabasePresenceRepository`:
+Modify the `observeUserPresence` function in `SupabasePresenceRepository`:
 ```kotlin
-diff.inWholeMinutes < 5  // Change 5 to desired minutes
+isWithinActiveWindow(response.lastSeen, windowMinutes = 2)  // Change 2 to desired minutes
 ```
 
 ### Change Indicator Color

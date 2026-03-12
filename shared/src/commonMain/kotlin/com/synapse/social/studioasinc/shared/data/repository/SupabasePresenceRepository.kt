@@ -126,15 +126,8 @@ class SupabasePresenceRepository(
                         }
                         .decodeSingle<UserPresenceDto>()
                     
-                    // User is active if online and last_seen within 5 minutes
-                    val withinWindow = isWithinActiveWindow(response.lastSeen)
-                    val result = response.isOnline && withinWindow
-                    
-                    if (!result && response.isOnline) {
-                        Napier.d("User $userId is marked online but last_seen is stale (${response.lastSeen})")
-                    }
-                    
-                    result
+                    // User is active if last_seen is within 2 minutes (more reliable than is_online flag)
+                    isWithinActiveWindow(response.lastSeen, windowMinutes = 2)
                 }.getOrElse { error ->
                     Napier.w("Failed to fetch presence for user $userId: ${error.message}")
                     false
@@ -155,19 +148,18 @@ class SupabasePresenceRepository(
                 }
                 .decodeSingle<UserPresenceDto>()
             
-            response.isOnline && 
             response.currentChatId == chatId && 
-            isWithinActiveWindow(response.lastSeen)
+            isWithinActiveWindow(response.lastSeen, windowMinutes = 2)
         }.getOrDefault(false)
     }
     
-    private fun isWithinActiveWindow(lastSeen: String?): Boolean {
+    private fun isWithinActiveWindow(lastSeen: String?, windowMinutes: Long = 5): Boolean {
         if (lastSeen == null) return false
         return try {
             val lastSeenInstant = kotlinx.datetime.Instant.parse(lastSeen)
             val now = Clock.System.now()
             val diff = now - lastSeenInstant
-            diff.inWholeMinutes < 5
+            diff.inWholeMinutes < windowMinutes
         } catch (e: Exception) {
             false
         }

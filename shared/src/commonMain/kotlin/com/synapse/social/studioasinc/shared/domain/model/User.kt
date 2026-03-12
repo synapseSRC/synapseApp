@@ -83,7 +83,4 @@ data class User(
     val linkedAccounts: List<LinkedAccount> = emptyList(),
     @SerialName("privacy_settings")
     val privacySettings: Map<String, String> = emptyMap()
-) {
-    val isActive: Boolean
-        get() = status == UserStatus.ONLINE && lastSeen != null
-}
+)
