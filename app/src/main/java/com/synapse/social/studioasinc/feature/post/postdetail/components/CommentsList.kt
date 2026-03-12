@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
 import androidx.paging.LoadState
 import androidx.paging.compose.itemKey
 import androidx.paging.compose.LazyPagingItems
@@ -141,8 +142,9 @@ fun CommentsList(
                     
                     // Show "Show more replies" button
                     if (comment.repliesCount > replies.size && !replyLoadingState.contains(comment.id)) {
+                        val remainingReplies = comment.repliesCount - replies.size
                         Text(
-                            text = androidx.compose.ui.res.stringResource(com.synapse.social.studioasinc.R.string.show_more_replies),
+                            text = "View $remainingReplies replies",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
@@ -213,24 +215,37 @@ private fun RenderReplies(
             isLastReply = isLastInBranch && !hasChildren
         )
         
-        Column {
-            PostCard(
-                state = replyState,
-                onLikeClick = { onLikeClick(reply.id) },
-                onCommentClick = { onReplyClick(reply) },
-                onShareClick = { onShareClick?.invoke(reply.id) },
-                onRepostClick = { /* Not applicable for comments */ },
-                onBookmarkClick = { /* Not applicable for comments */ },
-                onUserClick = { reply.userId?.let { onUserClick(it) } },
-                onPostClick = { onCommentClick(reply.id) },
-                onMediaClick = { /* No media in comments */ },
-                onOptionsClick = { onShowOptions(reply) },
-                onPollVote = { /* No polls in comments */ },
-                onReactionSelected = { reaction -> onShowReactions(reply) },
-                onQuoteClick = { },
-                onParentAuthorClick = { parentComment.userId?.let { onUserClick(it) } },
-                modifier = Modifier
-            )
+        Column(
+            modifier = Modifier.padding(start = 16.dp)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                // Vertical connector line for visual indentation
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 24.dp)
+                        .width(2.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                )
+
+                PostCard(
+                    state = replyState,
+                    onLikeClick = { onLikeClick(reply.id) },
+                    onCommentClick = { onReplyClick(reply) },
+                    onShareClick = { onShareClick?.invoke(reply.id) },
+                    onRepostClick = { /* Not applicable for comments */ },
+                    onBookmarkClick = { /* Not applicable for comments */ },
+                    onUserClick = { reply.userId?.let { onUserClick(it) } },
+                    onPostClick = { onCommentClick(reply.id) },
+                    onMediaClick = { /* No media in comments */ },
+                    onOptionsClick = { onShowOptions(reply) },
+                    onPollVote = { /* No polls in comments */ },
+                    onReactionSelected = { reaction -> onShowReactions(reply) },
+                    onQuoteClick = { },
+                    onParentAuthorClick = { parentComment.userId?.let { onUserClick(it) } },
+                    modifier = Modifier
+                )
+            }
             
             // X (Twitter) style: Render nested replies with increased depth
             if (nestedReplies.isNotEmpty()) {
@@ -255,8 +270,9 @@ private fun RenderReplies(
             val basePadding = 68.dp
             
             if (reply.repliesCount > nestedReplies.size && !replyLoadingState.contains(reply.id)) {
+                val remainingReplies = reply.repliesCount - nestedReplies.size
                 Text(
-                    text = androidx.compose.ui.res.stringResource(com.synapse.social.studioasinc.R.string.show_more_replies),
+                    text = "View $remainingReplies replies",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,

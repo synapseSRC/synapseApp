@@ -434,6 +434,7 @@ private fun PostDetailBottomBar(
             onSend = onSendComment,
             initialValue = uiState.editingComment?.content ?: "",
             userAvatarUrl = uiState.currentUserAvatarUrl,
+            replyingToUsername = uiState.replyToComment?.user?.username,
             focusRequester = focusRequester
         )
     }
