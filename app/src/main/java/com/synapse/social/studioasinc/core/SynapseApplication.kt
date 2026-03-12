@@ -107,7 +107,20 @@ class SynapseApplication : Application() {
                 val userId = authService.getCurrentUserId()
                 if (userId != null) {
                     OneSignal.login(userId)
+                    OneSignal.User.pushSubscription.optIn()
                     android.util.Log.d("OneSignal", "✅ App startup login successful with user: $userId")
+                    
+                    val subId = OneSignal.User.pushSubscription.id
+                    if (subId != null && OneSignal.User.pushSubscription.optedIn) {
+                        kotlinx.coroutines.withContext(Dispatchers.IO) {
+                            try {
+                                notificationRepository.updateOneSignalPlayerId(userId, subId)
+                                android.util.Log.d("SynapseApplication", "✅ Synced OneSignal ID to backend on startup: $subId")
+                            } catch (e: Exception) {
+                                android.util.Log.e("SynapseApplication", "❌ Failed to sync OneSignal ID on startup", e)
+                            }
+                        }
+                    }
                 } else {
                     android.util.Log.w("OneSignal", "⚠️ No user logged in at app startup")
                 }
