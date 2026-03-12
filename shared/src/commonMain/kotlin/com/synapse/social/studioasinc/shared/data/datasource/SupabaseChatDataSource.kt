@@ -42,6 +42,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.putJsonObject
 import kotlin.coroutines.cancellation.CancellationException
 
 class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseClient.client) {
@@ -195,7 +196,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
                 put("sender_id", senderId)
                 put("message", message)
                 put("type", "NEW_MESSAGE")
-                kotlinx.serialization.json.putJsonObject("data") {
+                putJsonObject("data") {
                     put("chat_id", chatId)
                 }
             })

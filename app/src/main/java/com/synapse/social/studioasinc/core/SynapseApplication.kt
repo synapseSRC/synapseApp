@@ -58,11 +58,6 @@ class SynapseApplication : Application() {
     }
 
     private fun initializeOneSignal() {
-        if (!NotificationConfig.USE_CLIENT_SIDE_NOTIFICATIONS) {
-            android.util.Log.i("SynapseApplication", "ℹ️ Using Supabase Edge Functions for notifications. OneSignal initialization skipped.")
-            return
-        }
-
         if (com.synapse.social.studioasinc.BuildConfig.DEBUG && NotificationConfig.ENABLE_DEBUG_LOGGING) {
             OneSignal.Debug.logLevel = LogLevel.VERBOSE
         }
