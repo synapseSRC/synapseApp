@@ -629,9 +629,12 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideUploadMediaUseCaseChat(
-        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
+        storageRepository: com.synapse.social.studioasinc.shared.domain.repository.StorageRepository,
+        mediaUploadRepository: MediaUploadRepository,
+        fileUploader: com.synapse.social.studioasinc.shared.data.FileUploader
     ): com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase {
-        return com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase(chatRepository)
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase(chatRepository, storageRepository, mediaUploadRepository, fileUploader)
     }
 
     @Provides

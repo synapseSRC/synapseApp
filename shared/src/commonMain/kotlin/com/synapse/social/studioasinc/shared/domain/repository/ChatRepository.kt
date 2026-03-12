@@ -14,7 +14,7 @@ interface ChatRepository {
     suspend fun editMessage(messageId: String, newContent: String): Result<Unit>
     suspend fun deleteMessage(messageId: String): Result<Unit>
     suspend fun deleteMessageForMe(messageId: String): Result<Unit>
-    suspend fun uploadMedia(chatId: String, fileBytes: ByteArray, fileName: String, contentType: String): Result<String>
+    suspend fun uploadMedia(chatId: String, fileBytes: ByteArray, fileName: String, contentType: String, onProgress: ((Int) -> Unit)? = null): Result<String>
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean): Result<Unit>
     fun subscribeToMessages(chatId: String): Flow<Message>
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message>

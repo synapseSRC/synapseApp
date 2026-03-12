@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileU
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 import kotlin.time.Duration.Companion.seconds
 import com.synapse.social.studioasinc.core.util.NotificationHelper
+import com.synapse.social.studioasinc.core.util.UploadProgressManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
@@ -41,7 +42,8 @@ class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.domain.usecase.ai.GenerateSmartRepliesUseCase,
-    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase
+    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase,
+    private val uploadProgressManager: UploadProgressManager
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -486,7 +488,7 @@ class ChatViewModel @Inject constructor(
         _disappearingMode.value = mode
     }
 
-    fun uploadAndSendMedia(fileBytes: ByteArray, fileName: String, contentType: String, messageType: String) {
+    fun uploadAndSendMedia(filePath: String, fileName: String, contentType: String, messageType: String) {
         val chatId = currentChatId ?: return
 
         viewModelScope.launch {
@@ -516,9 +518,21 @@ class ChatViewModel @Inject constructor(
 
             uploadMediaUseCase(
                 chatId = chatId,
-                fileBytes = fileBytes,
+                filePath = filePath,
                 fileName = fileName,
-                contentType = contentType
+                contentType = contentType,
+                onProgress = { progress ->
+                    uploadProgressManager.updateProgress(chatId, fileName, progress)
+                    _messages.update { current ->
+                        current.map {
+                            if (it.id == tempId) {
+                                it.copy(content = "Uploading... $progress%")
+                            } else {
+                                it
+                            }
+                        }
+                    }
+                }
             ).onSuccess { mediaUrl ->
                 val finalContent = if (messageType == "image" || messageType == "video") "Media message" else fileName
                 sendMessageUseCase(
