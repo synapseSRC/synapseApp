@@ -7,7 +7,6 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'
     id 'dagger.hilt.android.plugin'
     id 'com.google.gms.google-services'
-    id 'com.onesignal.androidsdk.onesignal-gradle-plugin'
 }
 
 def keystoreProperties = new Properties()
@@ -36,7 +35,7 @@ def getGitCommitCount = { ->
 
 android {
     namespace = "com.synapse.social.studioasinc"
-    compileSdk = 36
+    compileSdk 35
     buildToolsVersion = "36.0.0"
 
     signingConfigs {
@@ -59,7 +58,7 @@ android {
     defaultConfig {
         applicationId = "com.synapse.social.studioasinc"
         minSdk = 26
-        targetSdk = 34 // Updated to Android 14 for security and Play Store compliance
+        targetSdk 35
         versionCode = 1
         versionName = project.findProperty("projectVersion")
         multiDexEnabled = true
@@ -337,7 +336,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.13.1'
 
     // UI Components (Non-AndroidX)
-    implementation 'com.onesignal:OneSignal:[5.1.6, 5.1.99]'
+    implementation 'com.onesignal:OneSignal:5.7.1'
 
     // Local AARs
 

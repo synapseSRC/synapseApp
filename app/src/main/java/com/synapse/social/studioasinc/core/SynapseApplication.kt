@@ -21,6 +21,10 @@ import javax.inject.Inject
 import io.github.aakira.napier.Napier
 import io.github.aakira.napier.DebugAntilog
 import com.synapse.social.studioasinc.BuildConfig
+import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.flow.collect
 
 @HiltAndroidApp
 class SynapseApplication : Application() {
@@ -73,16 +77,16 @@ class SynapseApplication : Application() {
         // Listen for subscription changes
         OneSignal.User.pushSubscription.addObserver(object : com.onesignal.user.subscriptions.IPushSubscriptionObserver {
             override fun onPushSubscriptionChange(state: com.onesignal.user.subscriptions.PushSubscriptionChangedState) {
-                if (state.current.optedIn && state.current.id != null) {
-                    val subscriptionId = state.current.id
-                    android.util.Log.d("SynapseApplication", "Push subscribed: $subscriptionId")
+                val subscriptionId = state.current.id
+                if (subscriptionId != null) {
+                    android.util.Log.d("SynapseApplication", "Push subscription status: $subscriptionId (optedIn: ${state.current.optedIn})")
                     
                     // Sync with backend
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
                             val userId = authService.getCurrentUserId()
-                            if (userId != null && subscriptionId != null) {
+                            if (userId != null) {
                                 notificationRepository.updateOneSignalPlayerId(userId, subscriptionId)
                                 android.util.Log.d("SynapseApplication", "✅ Synced OneSignal ID to backend: $subscriptionId")
                             }
@@ -98,20 +102,17 @@ class SynapseApplication : Application() {
             // Request permission first
             OneSignal.Notifications.requestPermission(true)
             
-            // Wait a bit for permission to be granted
-            kotlinx.coroutines.delay(1000)
-            
-            // Then login with user ID
+            // Login and sync with user ID if available
             try {
                 val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
                 val userId = authService.getCurrentUserId()
                 if (userId != null) {
                     OneSignal.login(userId)
                     OneSignal.User.pushSubscription.optIn()
-                    android.util.Log.d("OneSignal", "✅ App startup login successful with user: $userId")
+                    android.util.Log.d("OneSignal", "✅ App startup registration for user: $userId")
                     
                     val subId = OneSignal.User.pushSubscription.id
-                    if (subId != null && OneSignal.User.pushSubscription.optedIn) {
+                    if (subId != null) {
                         kotlinx.coroutines.withContext(Dispatchers.IO) {
                             try {
                                 notificationRepository.updateOneSignalPlayerId(userId, subId)
@@ -122,10 +123,10 @@ class SynapseApplication : Application() {
                         }
                     }
                 } else {
-                    android.util.Log.w("OneSignal", "⚠️ No user logged in at app startup")
+                    android.util.Log.w("OneSignal", "⚠️ No user logged in at app startup for OneSignal registration")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("OneSignal", "❌ App startup login failed", e)
+                android.util.Log.e("OneSignal", "❌ App startup OneSignal registration failed", e)
             }
             
             // Start presence tracking
@@ -138,6 +139,50 @@ class SynapseApplication : Application() {
                 }
             } catch (e: Exception) {
                 android.util.Log.e("SynapseApplication", "Failed to start presence tracking", e)
+            }
+        }
+
+        // Observe Supabase Auth changes to sync with OneSignal
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Wait for Supabase to be initialized via service
+                SupabaseAuthenticationService.getInstance(this@SynapseApplication)
+                
+                SupabaseClient.client.auth.sessionStatus.collect { status ->
+                    when (status) {
+                        is SessionStatus.Authenticated -> {
+                            val userId = status.session.user?.id
+                            if (userId != null) {
+                                withContext(Dispatchers.Main) {
+                                    android.util.Log.d("OneSignal", "Syncing identity for authenticated user: $userId")
+                                    OneSignal.login(userId)
+                                    OneSignal.User.pushSubscription.optIn()
+                                    
+                                    val subId = OneSignal.User.pushSubscription.id
+                                    if (subId != null) {
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            try {
+                                                notificationRepository.updateOneSignalPlayerId(userId, subId)
+                                                android.util.Log.d("SynapseApplication", "✅ Session sync: OneSignal ID updated")
+                                            } catch (e: Exception) {
+                                                android.util.Log.e("SynapseApplication", "❌ Session sync: Failed to update OneSignal ID", e)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        is SessionStatus.NotAuthenticated -> {
+                            withContext(Dispatchers.Main) {
+                                android.util.Log.d("OneSignal", "User logged out, logging out from OneSignal")
+                                OneSignal.logout()
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("SynapseApplication", "Error in OneSignal session listener", e)
             }
         }
     }
