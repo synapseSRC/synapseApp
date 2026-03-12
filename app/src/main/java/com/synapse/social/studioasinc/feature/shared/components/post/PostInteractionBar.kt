@@ -38,6 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.synapse.social.studioasinc.feature.shared.theme.InteractionIconDefault
+import com.synapse.social.studioasinc.feature.shared.theme.InteractionLikeActive
+import com.synapse.social.studioasinc.feature.shared.theme.InteractionRepostActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -69,11 +72,9 @@ fun PostInteractionBar(
 
     Column(modifier = modifier.fillMaxWidth()) {
 
-
-
-        val iconColor = Color(0xFF657786) // Twitter-like grey
-        val likeActiveColor = Color(0xFFE0245E) // Twitter-like red
-        val repostActiveColor = Color(0xFF17BF63) // Twitter-like green
+        val iconColor = InteractionIconDefault
+        val likeActiveColor = InteractionLikeActive
+        val repostActiveColor = InteractionRepostActive
         val blueAlpha = 0.1f
 
         Row(

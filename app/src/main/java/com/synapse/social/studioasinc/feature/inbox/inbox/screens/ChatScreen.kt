@@ -74,6 +74,8 @@ import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
+import com.synapse.social.studioasinc.feature.shared.theme.StatusRead
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
@@ -233,7 +235,7 @@ fun ChatScreen(
                                 }
                                 val statusColor = when {
                                     typingStatus != null && typingStatus!!.isTyping -> MaterialTheme.colorScheme.primary
-                                    participantProfile?.status?.name == "ONLINE" -> Color(0xFF4CAF50)
+                                    participantProfile?.status?.name == "ONLINE" -> StatusOnline
                                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                                 }
                                 Text(
@@ -307,6 +309,7 @@ fun ChatScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(top = paddingValues.calculateTopPadding())
                 .imePadding()
         ) {
@@ -338,7 +341,7 @@ fun ChatScreen(
                         state = listState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surface),
+                            .background(MaterialTheme.colorScheme.background),
                         // Extra bottom padding so last messages aren't hidden behind the floating input
                         contentPadding = PaddingValues(
                             start = Spacing.Medium,
@@ -1038,7 +1041,7 @@ fun MessageBubble(
                                 else -> "✓"
                             },
                             fontSize = 11.sp,
-                            color = if (message.deliveryStatus == com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.READ) Color(0xFF4FC3F7)
+                            color = if (message.deliveryStatus == com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.READ) StatusRead
                                     else contentColor.copy(alpha = 0.6f)
                         )
                     }

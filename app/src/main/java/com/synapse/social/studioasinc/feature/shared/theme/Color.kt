@@ -73,3 +73,24 @@ val DarkScrim = Color(0xFF000000)
 
 
 val StatusOnline = Color(0xFF4CAF50)
+
+// Interaction colors
+val InteractionIconDefault = Color(0xFF657786)
+val InteractionLikeActive = Color(0xFFE0245E)
+val InteractionRepostActive = Color(0xFF17BF63)
+
+// Status colors
+val StatusRead = Color(0xFF4FC3F7)
+val StatusOffline = Color(0xFF9E9E9E)
+
+// Accent colors
+val AccentOrange = Color(0xFFFFA500)
+val AccentBlue = Color(0xFF2196F3)
+val AccentYellow = Color(0xFFFFC107)
+
+// Neutral grays
+val Gray200 = Color(0xFFE0E0E0)
+val Gray300 = Color(0xFFBDBDBD)
+val Gray500 = Color(0xFF9E9E9E)
+val Gray700 = Color(0xFF616161)
+val Gray900 = Color(0xFF212121)

@@ -34,12 +34,11 @@ class SupabasePresenceRepository(
                     put("is_online", isOnline)
                     put("last_seen", Clock.System.now().toString())
                     put("activity_status", if (isOnline) "online" else "offline")
-                    if (currentChatId != null) {
-                        put("current_chat_id", currentChatId)
-                    }
+                    put("updated_at", Clock.System.now().toString())
+                    put("current_chat_id", currentChatId)
                 }
             )
-            Napier.d("Presence updated: userId=$userId, isOnline=$isOnline")
+            Napier.d("Presence updated: userId=$userId, isOnline=$isOnline, status=${if (isOnline) "online" else "offline"}")
         }
     }
     

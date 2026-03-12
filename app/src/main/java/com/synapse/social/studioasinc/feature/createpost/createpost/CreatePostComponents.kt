@@ -43,6 +43,8 @@ import com.synapse.social.studioasinc.domain.model.LocationData
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
 import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
+import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
+import com.synapse.social.studioasinc.feature.shared.theme.AccentYellow
 
 @Composable
 fun UserHeader(
@@ -488,8 +490,8 @@ fun AddToPostSheet(
 
             val actions = listOf(
                 Triple("Photo/Video", Icons.Filled.Image, MaterialTheme.colorScheme.primary) to onMediaClick,
-                Triple("Tag People", Icons.Filled.Person, Color(0xFF2196F3)) to onTagClick,
-                Triple("Feeling/Activity", Icons.Filled.Mood, Color(0xFFFFC107)) to onFeelingClick,
+                Triple("Tag People", Icons.Filled.Person, AccentBlue) to onTagClick,
+                Triple("Feeling/Activity", Icons.Filled.Mood, AccentYellow) to onFeelingClick,
                 Triple("Check In", Icons.Filled.Place, MaterialTheme.colorScheme.error) to onLocationClick,
                 Triple("Poll", Icons.Default.Poll, MaterialTheme.colorScheme.tertiary) to onPollClick,
                 Triple("YouTube", Icons.Default.VideoLibrary, MaterialTheme.colorScheme.secondary) to onYoutubeClick

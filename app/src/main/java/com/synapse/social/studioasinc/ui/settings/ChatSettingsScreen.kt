@@ -25,6 +25,7 @@ import com.synapse.social.studioasinc.domain.model.ChatListLayout
 import com.synapse.social.studioasinc.domain.model.ChatSwipeGesture
 import com.synapse.social.studioasinc.domain.model.ChatThemePreset
 import com.synapse.social.studioasinc.domain.model.WallpaperType
+import com.synapse.social.studioasinc.feature.shared.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,25 +167,25 @@ private fun ChatLivePreview(
     wallpaperType: WallpaperType
 ) {
     val backgroundColor = when (wallpaperType) {
-        WallpaperType.SOLID_COLOR -> Color(0xFFE0E0E0)
+        WallpaperType.SOLID_COLOR -> Gray200
         WallpaperType.DEFAULT -> MaterialTheme.colorScheme.surfaceVariant
         WallpaperType.IMAGE_URI -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     val myBubbleColor = when (themePreset) {
         ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.primaryContainer
-        ChatThemePreset.OCEAN -> Color(0xFFE3F2FD)
+        ChatThemePreset.OCEAN -> LightPrimaryContainer
         ChatThemePreset.FOREST -> Color(0xFFE8F5E9)
         ChatThemePreset.SUNSET -> Color(0xFFFBE9E7)
-        ChatThemePreset.MONOCHROME -> Color(0xFFF5F5F5)
+        ChatThemePreset.MONOCHROME -> Gray200
     }
 
     val myTextColor = when (themePreset) {
         ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.onPrimaryContainer
-        ChatThemePreset.OCEAN -> Color(0xFF0D47A1)
+        ChatThemePreset.OCEAN -> DarkPrimaryContainer
         ChatThemePreset.FOREST -> Color(0xFF1B5E20)
         ChatThemePreset.SUNSET -> Color(0xFFBF360C)
-        ChatThemePreset.MONOCHROME -> Color(0xFF212121)
+        ChatThemePreset.MONOCHROME -> Gray900
     }
 
     val theirBubbleColor = MaterialTheme.colorScheme.surface
@@ -290,8 +291,8 @@ private fun ThemePicker(
         themes.forEach { theme ->
             val color = when (theme) {
                 ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.primary
-                ChatThemePreset.OCEAN -> Color(0xFF2196F3)
-                ChatThemePreset.FOREST -> Color(0xFF4CAF50)
+                ChatThemePreset.OCEAN -> AccentBlue
+                ChatThemePreset.FOREST -> StatusOnline
                 ChatThemePreset.SUNSET -> Color(0xFFFF5722)
                 ChatThemePreset.MONOCHROME -> Color(0xFF9E9E9E)
             }

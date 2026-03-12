@@ -1,6 +1,9 @@
 package com.synapse.social.studioasinc.core
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.HiltAndroidApp
 import com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService
 import com.synapse.social.studioasinc.data.remote.services.AuthDevelopmentUtils
@@ -12,6 +15,7 @@ import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.feature.shared.theme.ThemeManager
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StartPresenceTrackingUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.UpdatePresenceUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -31,6 +35,7 @@ class SynapseApplication : Application() {
 
     @Inject lateinit var notificationRepository: NotificationRepository
     @Inject lateinit var startPresenceTrackingUseCase: StartPresenceTrackingUseCase
+    @Inject lateinit var updatePresenceUseCase: UpdatePresenceUseCase
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
     override fun onCreate() {
@@ -46,6 +51,9 @@ class SynapseApplication : Application() {
 
         initializeOneSignal()
 
+        setupLifecycleObserver()
+
+        setupLifecycleObserver()
 
         SupabaseAuthenticationService.initialize(this)
 
@@ -59,6 +67,37 @@ class SynapseApplication : Application() {
         if (AuthDevelopmentUtils.isDevelopmentBuild()) {
             AuthDevelopmentUtils.logAuthConfig(this)
         }
+    }
+
+    private fun setupLifecycleObserver() {
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                // App moved to foreground
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
+                        if (authService.getCurrentUserId() != null) {
+                            updatePresenceUseCase(true)
+                            Napier.d("App foreground: Presence set to online")
+                        }
+                    } catch (e: Exception) {
+                        Napier.e("Failed to update presence on foreground", e)
+                    }
+                }
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                // App moved to background
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        updatePresenceUseCase(false)
+                        Napier.d("App background: Presence set to offline")
+                    } catch (e: Exception) {
+                        Napier.e("Failed to update presence on background", e)
+                    }
+                }
+            }
+        })
     }
 
     private fun initializeOneSignal() {
@@ -134,11 +173,17 @@ class SynapseApplication : Application() {
                 val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
                 if (authService.getCurrentUserId() != null) {
                     kotlinx.coroutines.withContext(Dispatchers.IO) {
+                        // First set online status
+                        updatePresenceUseCase(true)
+                        Napier.d("Initial presence set to online")
+                        // Then start heartbeat tracking
                         startPresenceTrackingUseCase()
+                        Napier.d("Presence tracking started")
                     }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("SynapseApplication", "Failed to start presence tracking", e)
+                Napier.e("Failed to start presence tracking", e)
             }
         }
 

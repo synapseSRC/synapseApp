@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
+import com.synapse.social.studioasinc.feature.shared.theme.AccentOrange
 
 @Composable
 fun PasswordStrengthIndicator(
@@ -78,7 +79,7 @@ fun PasswordStrengthIndicator(
 val PasswordStrength.color: Color
     get() = when(this) {
         PasswordStrength.Weak -> Color.Red
-        PasswordStrength.Fair -> Color(0xFFFFA500) // Orange
+        PasswordStrength.Fair -> AccentOrange
         PasswordStrength.Strong -> Color.Green
     }
 

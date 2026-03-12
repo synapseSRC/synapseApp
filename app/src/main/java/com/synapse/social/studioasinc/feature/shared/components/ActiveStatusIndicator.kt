@@ -12,20 +12,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @Composable
 fun ActiveStatusIndicator(
     isActive: Boolean,
     modifier: Modifier = Modifier,
-    size: Dp = 12.dp
+    size: Dp = Sizes.IconSmall
 ) {
     if (isActive) {
         Box(
             modifier = modifier
                 .size(size)
                 .clip(CircleShape)
-                .background(Color(0xFF44B700))
-                .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                .background(StatusOnline)
+                .border(Sizes.BorderDefault, MaterialTheme.colorScheme.surface, CircleShape)
         )
     }
 }
