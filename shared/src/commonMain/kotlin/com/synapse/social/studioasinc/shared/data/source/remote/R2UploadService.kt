@@ -57,9 +57,8 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             host to "https://$host/$targetBucket/$encodedFileName"
         }
         
-        // For S3 signature, the canonical path needs to be URL-encoded
-        // Cloudflare R2 expects double URL encoding for the canonical path in the signature
-        val canonicalPath = "/$targetBucket/${fileName.encodeURLPathPart().encodeURLPathPart()}"
+        // For S3 signature, the canonical path needs to be URL-encoded once
+        val canonicalPath = "/$targetBucket/$encodedFileName"
 
         val amzDate = getAmzDate()
 
