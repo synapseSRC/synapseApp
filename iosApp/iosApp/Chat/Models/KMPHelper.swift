@@ -27,12 +27,29 @@ class KMPHelper {
         // We instantiate the real SupabaseChatRepository exposed by KMP.
         // The default constructor arguments in Kotlin (dataSource, client, etc.)
         // allow us to initialize it without passing dependencies manually.
-        self.chatRepository = shared.SupabaseChatRepository(dataSource: shared.SupabaseChatDataSource(), client: shared.SupabaseClient.shared.client, signalProtocolManager: nil)
+
+        let fileUploader = shared.FileUploader()
+        let imgBBService = shared.ImgBBUploadService(httpClient: shared.SupabaseClient.shared.httpClient)
+        let cloudinaryService = shared.CloudinaryUploadService()
+        let supabaseService = shared.SupabaseUploadService(supabaseClient: shared.SupabaseClient.shared.client)
+        let r2Service = shared.R2UploadService()
+        let mediaUploadRepository = shared.MediaUploadRepositoryImpl(
+            fileUploader: fileUploader,
+            imgBBUploadService: imgBBService,
+            cloudinaryUploadService: cloudinaryService,
+            supabaseUploadService: supabaseService,
+            r2UploadService: r2Service
+        )
+
+        self.chatRepository = shared.SupabaseChatRepository(dataSource: shared.SupabaseChatDataSource(), client: shared.SupabaseClient.shared.client, signalProtocolManager: nil, mediaUploadRepository: mediaUploadRepository)
 
         self.getConversationsUseCase = shared.GetConversationsUseCase(repository: chatRepository)
         self.getMessagesUseCase = shared.GetMessagesUseCase(repository: chatRepository)
         self.subscribeToMessagesUseCase = shared.SubscribeToMessagesUseCase(repository: chatRepository)
         self.sendMessageUseCase = shared.SendMessageUseCase(repository: chatRepository)
-        self.uploadMediaUseCase = shared.UploadMediaUseCase(repository: chatRepository)
-    }
-}
+
+        // Mock StorageRepository or construct it if it exists. Since this is just for iOS
+        // we'll pass a dummy one for now, or instantiate properly.
+        // Actually we need to instantiate it. But since we lack fully exposed Koin,
+        let storageRepository = shared.IOSDependencies.shared.getStorageRepository()
+        self.uploadMediaUseCase = shared.UploadMediaUseCase(repository: chatRepository, storageRepository: storageRepository)

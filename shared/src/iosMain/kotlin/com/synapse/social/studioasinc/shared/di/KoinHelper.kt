@@ -20,6 +20,9 @@ object IOSDependencies : KoinComponent {
     fun getUserRepository() = UserRepositoryImpl(database, SupabaseClient.client)
     fun getUserPreferencesRepository() = UserPreferencesRepository(SupabaseClient.client)
 
+    // Inject StorageRepository from Koin
+    fun getStorageRepository(): com.synapse.social.studioasinc.shared.domain.repository.StorageRepository = getKoin().get()
+
     // Create use cases on demand
     private fun getProfileUseCase() = GetUserProfileUseCase(getUserRepository())
     private fun getUpdateProfileUseCase() = UpdateProfileUseCase(getUserRepository())

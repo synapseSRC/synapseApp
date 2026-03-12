@@ -18,13 +18,17 @@ import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import com.synapse.social.studioasinc.shared.data.crypto.models.PreKeyBundle
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
+import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
+import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
+import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class SupabaseChatRepository(
     private val dataSource: SupabaseChatDataSource = SupabaseChatDataSource(),
     private val client: SupabaseClientLib = SupabaseClient.client,
-    private val signalProtocolManager: SignalProtocolManager? = null
+    private val signalProtocolManager: SignalProtocolManager? = null,
+    private val mediaUploadRepository: MediaUploadRepository
 ) : ChatRepository {
 
     private suspend fun MessageDto.decryptIfNecessary(currentUserId: String): MessageDto {
@@ -310,9 +314,22 @@ class SupabaseChatRepository(
 
 
 
-    override suspend fun uploadMedia(chatId: String, fileBytes: ByteArray, fileName: String, contentType: String): Result<String> = try {
-        val url = dataSource.uploadMedia(chatId, fileBytes, fileName, contentType)
-        Result.success(url)
+    override suspend fun uploadMedia(chatId: String, filePath: String, fileName: String, contentType: String, provider: StorageProvider?, config: StorageConfig?, onProgress: ((Int) -> Unit)?): Result<String> = try {
+        // Use the chat attachments bucket. The fileName is assumed to already contain the necessary prefix (e.g., chat_media/chatId/fileName).
+        val bucketName = "chat_attachments"
+        mediaUploadRepository.upload(
+            filePath = filePath,
+            provider = provider ?: StorageProvider.SUPABASE,
+            config = config ?: StorageConfig(),
+            bucketName = bucketName,
+            onProgress = { floatProgress -> onProgress?.invoke((floatProgress * 100).toInt()) }
+        ).onSuccess { url ->
+            return Result.success(url)
+        }.onFailure { e ->
+            Napier.e("Error uploading media", e)
+            return Result.failure(e)
+        }
+        Result.failure(Exception("Unknown error"))
     } catch (e: Exception) {
         Napier.e("Error uploading media", e)
         Result.failure(e)
