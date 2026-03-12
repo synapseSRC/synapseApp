@@ -537,12 +537,14 @@ object RepositoryModule {
     @Singleton
     fun provideChatRepository(
         client: SupabaseClientType,
-        signalProtocolManager: SignalProtocolManager
+        signalProtocolManager: SignalProtocolManager,
+        mediaUploadRepository: com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
     ): com.synapse.social.studioasinc.shared.domain.repository.ChatRepository {
         return com.synapse.social.studioasinc.shared.data.repository.SupabaseChatRepository(
             com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource(client),
             client,
-            signalProtocolManager
+            signalProtocolManager,
+            mediaUploadRepository
         )
     }
 
@@ -629,9 +631,10 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideUploadMediaUseCaseChat(
-        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
+        storageRepository: com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
     ): com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase {
-        return com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase(chatRepository)
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase(chatRepository, storageRepository)
     }
 
     @Provides

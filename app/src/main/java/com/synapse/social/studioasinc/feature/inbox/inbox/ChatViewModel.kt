@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileU
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 import kotlin.time.Duration.Companion.seconds
 import com.synapse.social.studioasinc.core.util.NotificationHelper
+import com.synapse.social.studioasinc.core.util.UploadProgressManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
@@ -41,7 +42,9 @@ class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.domain.usecase.ai.GenerateSmartRepliesUseCase,
-    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase
+    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase,
+    private val uploadProgressManager: UploadProgressManager,
+    private val fileUploader: com.synapse.social.studioasinc.shared.data.FileUploader
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -486,10 +489,26 @@ class ChatViewModel @Inject constructor(
         _disappearingMode.value = mode
     }
 
-    fun uploadAndSendMedia(fileBytes: ByteArray, fileName: String, contentType: String, messageType: String) {
+    fun uploadAndSendMedia(filePath: String, fileName: String, contentType: String, messageType: String) {
         val chatId = currentChatId ?: return
 
         viewModelScope.launch {
+            val fileSize = fileUploader.getFileSize(filePath)
+            val maxVideoSize = 50 * 1024 * 1024L // 50MB
+            val maxImageSize = 10 * 1024 * 1024L // 10MB
+
+            if (messageType == "video" && fileSize > maxVideoSize) {
+                _error.value = "Video file size exceeds 50MB limit"
+                return@launch
+            }
+            if (messageType == "image" && fileSize > maxImageSize) {
+                _error.value = "Image file size exceeds 10MB limit"
+                return@launch
+            }
+
+            val notificationId = kotlin.random.Random.nextInt()
+            uploadProgressManager.showProgress(notificationId, 0, "Uploading media")
+
             // Optimistic update
             val tempId = UUID.randomUUID().toString()
             // Register this temp ID so the realtime handler knows to replace it
@@ -516,10 +535,13 @@ class ChatViewModel @Inject constructor(
 
             uploadMediaUseCase(
                 chatId = chatId,
-                fileBytes = fileBytes,
+                filePath = filePath,
                 fileName = fileName,
                 contentType = contentType
-            ).onSuccess { mediaUrl ->
+            ) { progress ->
+                uploadProgressManager.showProgress(notificationId, progress, "Uploading media")
+            }.onSuccess { mediaUrl ->
+                uploadProgressManager.finishProgress(notificationId, true, "Upload Complete")
                 val finalContent = if (messageType == "image" || messageType == "video") "Media message" else fileName
                 sendMessageUseCase(
                     chatId = chatId,
@@ -550,6 +572,7 @@ class ChatViewModel @Inject constructor(
                     _messages.update { current -> current.filter { it.id != tempId } }
                 }
             }.onFailure { e ->
+                uploadProgressManager.finishProgress(notificationId, false, "Upload Failed")
                 pendingTempIds.update { it - tempId }
                 _error.value = "Upload failed: ${e.message}"
                 _messages.update { current -> current.filter { it.id != tempId } }

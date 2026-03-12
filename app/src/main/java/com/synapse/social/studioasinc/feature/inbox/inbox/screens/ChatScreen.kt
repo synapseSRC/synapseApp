@@ -123,10 +123,10 @@ fun ChatScreen(
                 }
             }
 
-            val bytes = contentResolver.openInputStream(it)?.readBytes()
-            if (bytes != null) {
+            val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, it.toString())
+            if (filePath != null) {
                 viewModel.uploadAndSendMedia(
-                    fileBytes = bytes,
+                    filePath = filePath,
                     fileName = fileName,
                     contentType = mimeType,
                     messageType = type

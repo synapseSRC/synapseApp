@@ -472,18 +472,6 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
             client.postgrest.from("user_deleted_messages").insert(deletion)
         }
 
-    suspend fun uploadMedia(chatId: String, fileBytes: ByteArray, fileName: String, contentType: String): String =
-        withContext(Dispatchers.IO) {
-            try {
-                val path = "chat_media/$chatId/$fileName"
-                client.storage.from("chat_attachments").upload(path, fileBytes)
-                client.storage.from("chat_attachments").publicUrl(path)
-            } catch (e: Exception) {
-                Napier.e("Error uploading media", e)
-                throw e
-            }
-        }
-
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) = 
         withContext(Dispatchers.IO) {
             try {
