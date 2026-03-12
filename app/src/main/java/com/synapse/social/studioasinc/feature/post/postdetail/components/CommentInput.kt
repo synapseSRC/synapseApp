@@ -32,6 +32,7 @@ fun CommentInput(
     modifier: Modifier = Modifier,
     initialValue: String = "",
     userAvatarUrl: String? = null,
+    replyingToUsername: String? = null,
     focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
     var text by remember(initialValue) { mutableStateOf(initialValue) }
@@ -72,6 +73,14 @@ fun CommentInput(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                if (replyingToUsername != null) {
+                    Text(
+                        text = "Replying to @$replyingToUsername",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 4.dp, top = 4.dp)
+                    )
+                }
                 TextField(
                     value = text,
                     onValueChange = { text = it },

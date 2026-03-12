@@ -191,6 +191,51 @@ class CommentRepository constructor(
         }
     }
 
+    suspend fun fetchReplies(parentCommentId: String, limit: Int = 20, offset: Int = 0): Result<List<CommentWithUser>> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Fetching paginated replies for comment: $parentCommentId (limit: $limit, offset: $offset)")
+            val response = client.from("comments")
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        users!comments_user_id_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("parent_comment_id", parentCommentId)
+                        filterNot("is_deleted", io.github.jan.supabase.postgrest.query.filter.FilterOperator.EQ, true)
+                    }
+                    order("created_at", Order.ASCENDING)
+                    range(offset.toLong(), (offset + limit - 1).toLong())
+                }
+                .decodeList<JsonObject>()
+
+            Log.d(TAG, "Raw response size: ${response.size}")
+
+            val replies = mutableListOf<CommentWithUser>()
+            for (json in response) {
+                parseCommentFromJson(json)?.let {
+                    replies.add(it)
+                }
+            }
+
+            // Optimized: Bulk fetch reactions
+            val populatedReplies = reactionRepository.populateCommentReactions(replies)
+
+            Log.d(TAG, "Successfully parsed ${populatedReplies.size} paginated replies")
+
+            val commentsToCache = populatedReplies.map {
+                CommentMapper.toSharedEntity(it.toComment(), it.user?.username, it.user?.avatar)
+            }
+            commentDao.insertAll(commentsToCache)
+
+            Result.success(populatedReplies)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to fetch paginated replies: ${e.message}", e)
+            Result.failure(Exception(mapSupabaseError(e)))
+        }
+    }
+
     suspend fun getReplies(commentId: String): Result<List<CommentWithUser>> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Fetching replies for comment: $commentId")

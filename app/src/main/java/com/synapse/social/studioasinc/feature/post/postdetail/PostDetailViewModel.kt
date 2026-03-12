@@ -210,7 +210,7 @@ class PostDetailViewModel @Inject constructor(
                     mediaUrl = uploadedItems.firstOrNull()?.url
                 }
 
-                commentRepository.addComment(postId, content, mediaUrl, parentId).onSuccess {
+                commentRepository.createComment(postId, content, mediaUrl, parentId).onSuccess {
                     refreshComments()
                     invalidateComments()
                     setReplyTo(null)
@@ -383,16 +383,24 @@ class PostDetailViewModel @Inject constructor(
         Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
     }
 
-    fun loadReplies(commentId: String) {
+    fun expandReplies(commentId: String) {
         if (_uiState.value.replyLoading.contains(commentId)) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(replyLoading = it.replyLoading + commentId) }
-            commentRepository.getReplies(commentId).fold(
-                onSuccess = { replies ->
+
+            val currentReplies = _uiState.value.replies[commentId] ?: emptyList()
+            val offset = currentReplies.size
+
+            commentRepository.fetchReplies(commentId, limit = 20, offset = offset).fold(
+                onSuccess = { newReplies ->
                     _uiState.update {
+                        val updatedRepliesMap = it.replies.toMutableMap()
+                        val combinedReplies = (currentReplies + newReplies).distinctBy { reply -> reply.id }
+                        updatedRepliesMap[commentId] = combinedReplies
+
                         it.copy(
-                            replies = it.replies + (commentId to replies),
+                            replies = updatedRepliesMap,
                             replyLoading = it.replyLoading - commentId
                         )
                     }
@@ -402,5 +410,9 @@ class PostDetailViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    fun loadReplies(commentId: String) {
+        expandReplies(commentId)
     }
 }
