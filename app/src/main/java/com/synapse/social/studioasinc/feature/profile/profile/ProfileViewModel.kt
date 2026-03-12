@@ -192,15 +192,6 @@ class ProfileViewModel @Inject constructor(
             _state.update { it.copy(isFollowLoading = true) }
             followUserUseCase(currentUserId, userId).onSuccess {
                 _state.update { it.copy(isFollowing = true, isFollowLoading = false) }
-                if (currentUserId.isNotEmpty() && currentUserId != userId) {
-                    NotificationHelper.sendNotification(
-                        recipientUid = userId,
-                        senderUid = currentUserId,
-                        message = "Someone started following you.",
-                        notificationType = "NEW_FOLLOWER",
-                        data = mapOf("followerId" to currentUserId)
-                    )
-                }
             }.onFailure {
                 _state.update { it.copy(isFollowLoading = false) }
             }
