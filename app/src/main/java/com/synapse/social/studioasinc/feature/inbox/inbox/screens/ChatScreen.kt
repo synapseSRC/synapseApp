@@ -129,6 +129,9 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
 
+    // TODO: Replace direct upload with preview screen
+    //  Current: Immediately uploads and sends media
+    //  Needed: Show preview screen first (see TODO above visualMediaLauncher)
     val handleFileSelection = { uri: Uri?, type: String ->
         uri?.let {
             val contentResolver = context.contentResolver
@@ -153,6 +156,13 @@ fun ChatScreen(
         }
     }
 
+    // TODO: Implement image message with preview/edit screen (similar to WhatsApp)
+    //  - Create a dedicated screen/composable for image preview before sending
+    //  - Allow caption editing (text input overlay)
+    //  - Add image editing capabilities (crop, rotate, filters) using CropImageContract like CreatePostScreen
+    //  - Reference: CreatePostScreen.kt for media handling pattern (lines ~40-150)
+    //  - Flow: Pick image -> Show preview screen with edit tools -> Add caption -> Send
+    //  - Consider reusing MediaUploadHandler from createpost package
     val visualMediaLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -212,12 +222,14 @@ fun ChatScreen(
                             // Participant avatar
                             AsyncImage(
                                 model = participantProfile?.avatar,
-                                contentDescription = null,
+                                contentDescription = "Profile picture",
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
+                                placeholder = painterResource(R.drawable.ic_person),
+                                error = painterResource(R.drawable.ic_person)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {

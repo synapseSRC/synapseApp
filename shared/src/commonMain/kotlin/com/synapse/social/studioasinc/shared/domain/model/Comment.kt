@@ -27,4 +27,9 @@ data class Comment(
     // - linkPreview: LinkPreview? = null
     // - Parse URLs from text and generate preview cards
     // - Store preview metadata in database
+    
+    // TODO: Implement views count for comments
+    // - Add viewsCount field to track comment visibility
+    // - Implement increment logic similar to posts
+    // - Update database schema and DTOs
 )
