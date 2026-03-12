@@ -190,13 +190,15 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) = withContext(Dispatchers.IO) {
         try {
-            client.functions.invoke("send-push-notification", mapOf(
-                "recipient_id" to recipientId,
-                "sender_id" to senderId,
-                "message" to message,
-                "type" to "NEW_MESSAGE",
-                "data" to mapOf("chat_id" to chatId)
-            ))
+            client.functions.invoke("send-push-notification", buildJsonObject {
+                put("recipient_id", recipientId)
+                put("sender_id", senderId)
+                put("message", message)
+                put("type", "NEW_MESSAGE")
+                kotlinx.serialization.json.putJsonObject("data") {
+                    put("chat_id", chatId)
+                }
+            })
         } catch (e: Exception) {
             Napier.e("Failed to send notification", e)
         }

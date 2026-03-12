@@ -10,6 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.time.LocalTime
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 
 object NotificationHelper {
 
@@ -162,14 +165,24 @@ object NotificationHelper {
         data: Map<String, String>? = null
     ) {
         try {
-            val request = mapOf(
-                "recipient_id" to recipientUid,
-                "message" to message,
-                "type" to notificationType,
-                "headings" to mapOf("en" to NotificationConfig.getTitleForNotificationType(notificationType)),
-                "sender_id" to senderUid,
-                "data" to data
-            )
+            val request = buildJsonObject {
+                put("recipient_id", recipientUid)
+                put("message", message)
+                put("type", notificationType)
+                putJsonObject("headings") {
+                    put("en", NotificationConfig.getTitleForNotificationType(notificationType))
+                }
+                if (senderUid != null) {
+                    put("sender_id", senderUid)
+                }
+                if (data != null) {
+                    putJsonObject("data") {
+                        data.forEach { (key, value) ->
+                            put(key, value)
+                        }
+                    }
+                }
+            }
 
             Log.d(TAG, "Sending notification: recipient=$recipientUid, type=$notificationType")
 
