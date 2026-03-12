@@ -70,6 +70,12 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
+        // TODO: Implement app lock enforcement
+        //  - Check if app lock is enabled in settings
+        //  - Show biometric/PIN prompt before allowing access
+        //  - Handle lock timeout (e.g., lock after 5 minutes in background)
+        //  - Bypass lock for incoming call notifications
+
         splashScreen.setKeepOnScreenCondition {
             viewModel.isCheckingAuth.value
         }

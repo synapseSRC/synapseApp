@@ -330,10 +330,20 @@ class SettingsRepositoryImpl private constructor(
     }
 
     override suspend fun setAppLockEnabled(enabled: Boolean) {
+        // TODO: Implement secure app lock storage
+        //  - Store lock preference in encrypted storage
+        //  - Add lock timeout preference (immediate, 1min, 5min, 30min)
+        //  - Store biometric/PIN preference
+        //  - Sync with backend for multi-device support
         settingsDataStore.setAppLockEnabled(enabled)
     }
 
     override suspend fun setChatLockEnabled(enabled: Boolean) {
+        // TODO: Implement secure chat lock storage
+        //  - Store locked chat IDs in encrypted storage
+        //  - Add per-chat lock timeout settings
+        //  - Store lock method preference (biometric/PIN)
+        //  - Handle lock state persistence across app restarts
         settingsDataStore.setChatLockEnabled(enabled)
     }
 

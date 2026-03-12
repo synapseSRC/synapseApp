@@ -337,6 +337,11 @@ class PrivacySecurityViewModel(
             _isLoading.value = true
             _error.value = null
             try {
+                // TODO: Implement app lock functionality
+                //  - Add biometric authentication on app launch
+                //  - Add PIN/Pattern fallback option
+                //  - Store lock preference securely
+                //  - Handle lock timeout settings
                 settingsRepository.setAppLockEnabled(enabled)
                 android.util.Log.d("PrivacySecurityViewModel", "App lock ${if (enabled) "enabled" else "disabled"}")
             } catch (e: Exception) {
@@ -359,6 +364,12 @@ class PrivacySecurityViewModel(
             _isLoading.value = true
             _error.value = null
             try {
+                // TODO: Implement chat lock functionality
+                //  - Add per-chat lock capability
+                //  - Require biometric/PIN to open locked chats
+                //  - Add lock icon indicator in chat list
+                //  - Store locked chat IDs securely
+                //  - Handle lock timeout for individual chats
                 settingsRepository.setChatLockEnabled(enabled)
                 android.util.Log.d("PrivacySecurityViewModel", "Chat lock ${if (enabled) "enabled" else "disabled"}")
             } catch (e: Exception) {

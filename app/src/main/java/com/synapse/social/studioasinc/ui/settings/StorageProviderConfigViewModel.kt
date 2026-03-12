@@ -35,12 +35,7 @@ class StorageProviderConfigViewModel : ViewModel() {
             } else {
                 current.remove(provider)
             }
-
-
-
-            if (current.isNotEmpty()) {
-                _photoProviders.value = current
-            }
+            _photoProviders.value = current
         }
     }
 
@@ -52,9 +47,7 @@ class StorageProviderConfigViewModel : ViewModel() {
             } else {
                 current.remove(provider)
             }
-             if (current.isNotEmpty()) {
-                _videoProviders.value = current
-            }
+            _videoProviders.value = current
         }
     }
 
@@ -66,9 +59,7 @@ class StorageProviderConfigViewModel : ViewModel() {
             } else {
                 current.remove(provider)
             }
-             if (current.isNotEmpty()) {
-                _fileProviders.value = current
-            }
+            _fileProviders.value = current
         }
     }
 }

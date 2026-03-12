@@ -76,7 +76,6 @@ fun ProfileMoreMenuBottomSheet(
                     icon = Icons.Default.Settings,
                     text = "Settings",
                     onClick = {
-                        android.widget.Toast.makeText(context, "Settings clicked - attempting to navigate", android.widget.Toast.LENGTH_SHORT).show()
                         onDismiss()
                         onSettings()
                     }

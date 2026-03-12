@@ -115,6 +115,12 @@ class ChatViewModel @Inject constructor(
         _isLoading.value = true
         _error.value = null
 
+        // TODO: Implement chat lock check
+        //  - Check if this specific chat is locked
+        //  - Show biometric/PIN prompt before loading messages
+        //  - Handle lock verification failure (navigate back)
+        //  - Store unlock state temporarily (until app backgrounded)
+
         // Set participant profile info
         if (participantId != null) {
             viewModelScope.launch {
