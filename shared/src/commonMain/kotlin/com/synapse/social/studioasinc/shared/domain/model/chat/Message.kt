@@ -22,6 +22,10 @@ data class Message(
     val encryptionFailureReason: String? = null,
     val reactions: Map<ReactionType, Int> = emptyMap(),
     val userReaction: ReactionType? = null
+    // TODO: Add link preview support
+    // - linkPreview: LinkPreview? = null (title, description, imageUrl, url)
+    // - Extract URLs from content and fetch metadata
+    // - Cache preview data to avoid repeated fetches
 ) {
     fun isFromMe(currentUserId: String): Boolean = senderId == currentUserId
 }

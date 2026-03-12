@@ -155,6 +155,13 @@ data class Post(
     @SerialName("youtube_url")
     val youtubeUrl: String? = null,
 
+    // TODO: Add link preview support
+    // - linkPreviews: List<LinkPreview>? = null
+    // - Extract all URLs from postText and generate preview cards
+    // - Support Open Graph and Twitter Card metadata
+    // - Cache preview data in database to reduce API calls
+    // - Handle multiple links in a single post
+
     @Transient
     var reactions: Map<ReactionType, Int>? = null,
     @Transient

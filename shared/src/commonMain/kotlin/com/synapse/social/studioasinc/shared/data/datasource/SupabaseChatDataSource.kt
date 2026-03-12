@@ -482,7 +482,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
                 val currentUserId = getCurrentUserId() ?: return@withContext
                 val channel = client.realtime.channel("chat-$chatId")
                 
-                // Track typing status
+                channel.subscribe(blockUntilSubscribed = true)
                 channel.track(buildJsonObject {
                     put("user_id", currentUserId)
                     put("is_typing", isTyping)

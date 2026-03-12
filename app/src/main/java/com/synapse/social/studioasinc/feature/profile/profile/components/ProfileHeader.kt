@@ -252,8 +252,6 @@ private fun ProfileActionButtons(
                     .weight(1f)
                     .height(Spacing.ButtonHeight)
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(Spacing.Small))
                 Text(stringResource(R.string.add_story))
             }
 

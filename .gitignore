@@ -102,6 +102,13 @@ gha-creds-*.json
 *.py
 *.patch
 
+# Root directory file exclusions
+/*.md
+!README.md
+!AGENTS.md
+/*.py
+/*.sh
+
 # Cleanup
 __pycache__/
 *.pyc

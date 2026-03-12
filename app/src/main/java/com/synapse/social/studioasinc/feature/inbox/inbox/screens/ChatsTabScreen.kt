@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyState
+import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxShimmer
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
@@ -52,12 +53,9 @@ fun ChatsTabScreen(
 ) {
     when {
         isLoading && conversations.isEmpty() -> {
-            Box(
-                modifier = modifier.fillMaxSize().padding(contentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            InboxShimmer(
+                modifier = modifier.fillMaxSize().padding(contentPadding)
+            )
         }
         error != null && conversations.isEmpty() -> {
             InboxEmptyState(

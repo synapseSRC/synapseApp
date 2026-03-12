@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.ui.navigation
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -7,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -33,6 +35,7 @@ import com.synapse.social.studioasinc.presentation.editprofile.photohistory.Phot
 import com.synapse.social.studioasinc.feature.shared.components.compose.FollowListScreen
 import com.synapse.social.studioasinc.feature.stories.viewer.StoryViewerScreen
 import com.synapse.social.studioasinc.feature.stories.viewer.StoryViewerViewModel
+import com.synapse.social.studioasinc.feature.stories.creator.StoryCreatorActivity
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileViewModel
 import com.synapse.social.studioasinc.ui.settings.SettingsNavHost
@@ -118,6 +121,7 @@ fun AppNavigation(
         composable<AppDestination.Profile>(
             deepLinks = listOf(navDeepLink<AppDestination.Profile>(basePath = "synapse://profile"))
         ) { backStackEntry ->
+            val context = LocalContext.current
             val args = backStackEntry.toRoute<AppDestination.Profile>()
             val userId = args.userId
             val currentUserId = AuthHelper.getCurrentUserId() ?: return@composable
@@ -147,6 +151,9 @@ fun AppNavigation(
                 },
                 onNavigateToUserProfile = { targetUid ->
                     navController.navigate(AppDestination.Profile(targetUid))
+                },
+                onNavigateToStoryCreator = {
+                    context.startActivity(Intent(context, StoryCreatorActivity::class.java))
                 },
                 viewModel = viewModel
             )

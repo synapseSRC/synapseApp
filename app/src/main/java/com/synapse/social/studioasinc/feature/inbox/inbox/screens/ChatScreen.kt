@@ -73,6 +73,7 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
+import com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatShimmer
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.feature.shared.theme.StatusRead
@@ -315,7 +316,7 @@ fun ChatScreen(
         ) {
             when {
                 isLoading && messages.isEmpty() -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    ChatShimmer(modifier = Modifier.fillMaxSize())
                 }
                 error != null && messages.isEmpty() -> {
                     Column(

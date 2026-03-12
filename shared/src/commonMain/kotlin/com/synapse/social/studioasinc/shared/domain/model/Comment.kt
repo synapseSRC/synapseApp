@@ -23,4 +23,8 @@ data class Comment(
     val username: String? = null,
     @SerialName("avatar_url")
     val avatarUrl: String? = null
+    // TODO: Add link preview support
+    // - linkPreview: LinkPreview? = null
+    // - Parse URLs from text and generate preview cards
+    // - Store preview metadata in database
 )
