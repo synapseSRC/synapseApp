@@ -73,8 +73,23 @@ class SynapseApplication : Application() {
         // Listen for subscription changes
         OneSignal.User.pushSubscription.addObserver(object : com.onesignal.user.subscriptions.IPushSubscriptionObserver {
             override fun onPushSubscriptionChange(state: com.onesignal.user.subscriptions.PushSubscriptionChangedState) {
-                if (state.current.optedIn && state.current.token != null) {
-                    android.util.Log.d("SynapseApplication", "Push subscribed: ${state.current.id}, token: ${state.current.token}")
+                if (state.current.optedIn && state.current.id != null) {
+                    val subscriptionId = state.current.id
+                    android.util.Log.d("SynapseApplication", "Push subscribed: $subscriptionId")
+                    
+                    // Sync with backend
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
+                            val userId = authService.getCurrentUserId()
+                            if (userId != null && subscriptionId != null) {
+                                notificationRepository.updateOneSignalPlayerId(userId, subscriptionId)
+                                android.util.Log.d("SynapseApplication", "✅ Synced OneSignal ID to backend: $subscriptionId")
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("SynapseApplication", "❌ Failed to sync OneSignal ID", e)
+                        }
+                    }
                 }
             }
         })
