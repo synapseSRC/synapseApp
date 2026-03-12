@@ -119,7 +119,7 @@ class ChatViewModel @Inject constructor(
         if (participantId != null) {
             viewModelScope.launch {
                 getUserProfileUseCase(participantId).onSuccess { user ->
-                    Napier.d("Loaded participant profile: ${user.username}, avatar: ${user.avatar}", tag = "ChatViewModel")
+                    Napier.d("Loaded participant profile: ${user?.username}, avatar: ${user?.avatar}", tag = "ChatViewModel")
                     _participantProfile.value = user
                 }.onFailure { e ->
                     Napier.e("Failed to load participant profile", e)
