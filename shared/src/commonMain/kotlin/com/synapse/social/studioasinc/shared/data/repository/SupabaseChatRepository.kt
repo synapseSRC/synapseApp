@@ -7,7 +7,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
-import io.github.aakira.napier.Napier
+import com.synapse.social.studioasinc.shared.util.Logger
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.flow.Flow
@@ -46,12 +46,12 @@ class SupabaseChatRepository(
             
             // Check cache first
             decryptedMessageCache[messageId]?.let {
-                Napier.d("E2EE_DECRYPT: Found message $messageId in cache", tag = "E2EE")
+                Logger.d("E2EE_DECRYPT: Found message $messageId in cache", tag = "E2EE")
                 return this.copy(content = it)
             }
 
             try {
-                Napier.d("E2EE_DECRYPT: Attempting to decrypt message $messageId", tag = "E2EE")
+                Logger.d("E2EE_DECRYPT: Attempting to decrypt message $messageId", tag = "E2EE")
                 val jsonElement = Json.parseToJsonElement(this.encryptedContent).jsonObject
                 val myPayloadElement = jsonElement[currentUserId]
 
@@ -67,12 +67,12 @@ class SupabaseChatRepository(
                             null
                         }
                         if (plainText != null) {
-                            Napier.d("E2EE_DECRYPT: Retrieved sender's plaintext copy for message $messageId", tag = "E2EE")
+                            Logger.d("E2EE_DECRYPT: Retrieved sender's plaintext copy for message $messageId", tag = "E2EE")
                             decryptedMessageCache[messageId] = plainText
                             return this.copy(content = plainText)
                         }
                         // Fallback: try decoding as EncryptedMessage (legacy format)
-                        Napier.d("E2EE_DECRYPT: Sender copy not plaintext, trying legacy decrypt", tag = "E2EE")
+                        Logger.d("E2EE_DECRYPT: Sender copy not plaintext, trying legacy decrypt", tag = "E2EE")
                     }
 
                     // Recipient's copy: decrypt using Signal Protocol
@@ -83,11 +83,11 @@ class SupabaseChatRepository(
                             message = myPayload
                         )
                         val decryptedContent = decryptedBytes.decodeToString()
-                        Napier.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
+                        Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
                         decryptedMessageCache[messageId] = decryptedContent
                         return this.copy(content = decryptedContent)
                     } catch (decryptError: Exception) {
-                        Napier.e("E2EE_DECRYPT: Decryption failed for message $messageId", decryptError, tag = "E2EE")
+                        Logger.e("E2EE_DECRYPT: Decryption failed for message $messageId", tag = "E2EE", throwable = decryptError)
                         // If decryption fails, the session might be corrupted, but we can't 
                         // re-establish it by ensureSession(senderId) here because that 
                         // establishes a session AS SENDER to them. 
@@ -95,16 +95,16 @@ class SupabaseChatRepository(
                         // a message, we'll start a fresh session.
                         try {
                             signalProtocolManager.deleteSession(senderId)
-                            Napier.d("E2EE_DECRYPT: Deleted corrupted session for $senderId to trigger reset on next send", tag = "E2EE")
+                            Logger.d("E2EE_DECRYPT: Deleted corrupted session for $senderId to trigger reset on next send", tag = "E2EE")
                         } catch (e: Exception) {
-                            Napier.e("E2EE_DECRYPT: Failed to delete session", e, tag = "E2EE")
+                            Logger.e("E2EE_DECRYPT: Failed to delete session", tag = "E2EE", throwable = e)
                         }
                     }
                 } else {
-                    Napier.w("E2EE_DECRYPT: No payload found for current user in message $messageId. Available keys: ${jsonElement.keys}", tag = "E2EE")
+                    Logger.w("E2EE_DECRYPT: No payload found for current user in message $messageId. Available keys: ${jsonElement.keys}", tag = "E2EE")
                 }
             } catch (e: Exception) {
-                Napier.e("E2EE_DECRYPT: Critical failure for message $messageId: ${e.message}", e, tag = "E2EE")
+                Logger.e("E2EE_DECRYPT: Critical failure for message $messageId: ${e.message}", tag = "E2EE", throwable = e)
             }
         }
         return this
@@ -112,19 +112,19 @@ class SupabaseChatRepository(
 
     private suspend fun ensureSession(userId: String) {
         if (signalProtocolManager != null && !signalProtocolManager.hasSession(userId)) {
-            Napier.d("E2EE_SESSION: No session exists for user $userId, establishing...", tag = "E2EE")
+            Logger.d("E2EE_SESSION: No session exists for user $userId, establishing...", tag = "E2EE")
             val keyDto = dataSource.getUserPublicKey(userId)
             if (keyDto != null) {
-                Napier.d("E2EE_SESSION: Found public key for user $userId, processing bundle", tag = "E2EE")
+                Logger.d("E2EE_SESSION: Found public key for user $userId, processing bundle", tag = "E2EE")
                 val bundle = Json.decodeFromString<PreKeyBundle>(keyDto.publicKey)
                 signalProtocolManager.processPreKeyBundle(userId, bundle)
-                Napier.d("E2EE_SESSION: Session established successfully for user $userId", tag = "E2EE")
+                Logger.d("E2EE_SESSION: Session established successfully for user $userId", tag = "E2EE")
             } else {
-                Napier.e("E2EE_SESSION: Public key not found for user $userId. They probably haven't enabled E2EE.", tag = "E2EE")
+                Logger.e("E2EE_SESSION: Public key not found for user $userId. They probably haven't enabled E2EE.", tag = "E2EE")
                 throw Exception("Recipient hasn't enabled E2EE")
             }
         } else if (signalProtocolManager != null) {
-            Napier.d("E2EE_SESSION: Session already exists for user $userId", tag = "E2EE")
+            Logger.d("E2EE_SESSION: Session already exists for user $userId", tag = "E2EE")
         }
     }
 
@@ -174,7 +174,7 @@ class SupabaseChatRepository(
         
         Result.success(conversations)
     } catch (e: Exception) {
-        Napier.e("Error getting conversations", e)
+        Logger.e("Error getting conversations", throwable = e)
         Result.failure(e)
     }
 
@@ -188,7 +188,7 @@ class SupabaseChatRepository(
         }
         Result.success(decrypted)
     } catch (e: Exception) {
-        Napier.e("Error getting messages: ${e.message}", e)
+        Logger.e("Error getting messages: ${e.message}", throwable = e)
         Result.failure(e)
     }
 
@@ -209,23 +209,23 @@ class SupabaseChatRepository(
         
         if (signalProtocolManager == null) {
             failureReason = "E2EE not initialized - SignalProtocolManager is null"
-            Napier.e("E2EE_SEND: $failureReason. Check DI configuration.", tag = "E2EE")
+            Logger.e("E2EE_SEND: $failureReason. Check DI configuration.", tag = "E2EE")
         } else {
-            Napier.d("E2EE_SEND: SignalProtocolManager is available, attempting encryption", tag = "E2EE")
+            Logger.d("E2EE_SEND: SignalProtocolManager is available, attempting encryption", tag = "E2EE")
             try {
                 val otherUserId = dataSource.getOtherParticipantId(chatId, currentUserId)
-                Napier.d("E2EE_ENCRYPT: Other participant ID: $otherUserId", tag = "E2EE")
+                Logger.d("E2EE_ENCRYPT: Other participant ID: $otherUserId", tag = "E2EE")
                 if (otherUserId != null) {
                     try {
-                        Napier.d("E2EE_ENCRYPT: Establishing/Verifying session with $otherUserId", tag = "E2EE")
+                        Logger.d("E2EE_ENCRYPT: Establishing/Verifying session with $otherUserId", tag = "E2EE")
                         // ensureSession will fetch keys if needed, no need for redundant dataSource.getUserPublicKey call
                         ensureSession(otherUserId)
                         
-                        Napier.d("E2EE_ENCRYPT: Calling SignalProtocolManager.encryptMessage for $otherUserId", tag = "E2EE")
+                        Logger.d("E2EE_ENCRYPT: Calling SignalProtocolManager.encryptMessage for $otherUserId", tag = "E2EE")
                         val encryptedForReceiver = signalProtocolManager.encryptMessage(otherUserId, content.encodeToByteArray())
                         
                         // Store sender's copy as plain text
-                        Napier.d("E2EE_ENCRYPT: Encryption successful, building payload", tag = "E2EE")
+                        Logger.d("E2EE_ENCRYPT: Encryption successful, building payload", tag = "E2EE")
                         val recipientJson = Json.encodeToJsonElement(EncryptedMessage.serializer(), encryptedForReceiver)
                         val payloads = JsonObject(mapOf(
                             otherUserId to recipientJson,
@@ -235,21 +235,21 @@ class SupabaseChatRepository(
                         isEncrypted = true
                         encryptedContentStr = payloads.toString()
                         finalContent = "Message is encrypted"
-                        Napier.d("E2EE_ENCRYPT: Message fully prepared for secure transit", tag = "E2EE")
+                        Logger.d("E2EE_ENCRYPT: Message fully prepared for secure transit", tag = "E2EE")
                     } catch (e: Exception) {
                         failureReason = when {
                             e.message?.contains("hasn't enabled E2EE") == true -> "Recipient hasn't enabled E2EE"
                             else -> e.message ?: "Encryption failed"
                         }
-                        Napier.e("E2EE_ENCRYPT: $failureReason for recipient $otherUserId, falling back to unencrypted", e, tag = "E2EE")
+                        Logger.e("E2EE_ENCRYPT: $failureReason for recipient $otherUserId, falling back to unencrypted", tag = "E2EE", throwable = e)
                     }
                 } else {
                     failureReason = "Chat $chatId has no other participant to encrypt for"
-                    Napier.w("E2EE_ENCRYPT: $failureReason, sending unencrypted", tag = "E2EE")
+                    Logger.w("E2EE_ENCRYPT: $failureReason, sending unencrypted", tag = "E2EE")
                 }
             } catch (e: Exception) {
                 failureReason = e.message ?: "Encryption failed during participant lookup"
-                Napier.e("E2EE_ENCRYPT: $failureReason, sending unencrypted", e, tag = "E2EE")
+                Logger.e("E2EE_ENCRYPT: $failureReason, sending unencrypted", tag = "E2EE", throwable = e)
             }
         }
 
@@ -265,7 +265,7 @@ class SupabaseChatRepository(
                 }
             }
         } catch (e: Exception) {
-            Napier.w("Failed to send notification: ${e.message}", tag = "NOTIFICATION")
+            Logger.w("Failed to send notification: ${e.message}", tag = "NOTIFICATION")
         }
         
         val decryptedDto = message.copy(
@@ -274,7 +274,7 @@ class SupabaseChatRepository(
         )
         Result.success(decryptedDto.toDomain())
     } catch (e: Exception) {
-        Napier.e("Error sending message", e)
+        Logger.e("Error sending message", throwable = e)
         Result.failure(e)
     }
 
@@ -282,7 +282,7 @@ class SupabaseChatRepository(
         val chatId = dataSource.getOrCreateChat(otherUserId) ?: throw Exception("Failed to create chat")
         Result.success(chatId)
     } catch (e: Exception) {
-        Napier.e("Error creating chat", e)
+        Logger.e("Error creating chat", throwable = e)
         Result.failure(e)
     }
 
@@ -290,7 +290,7 @@ class SupabaseChatRepository(
         dataSource.markMessagesAsRead(chatId)
         Result.success(Unit)
     } catch (e: Exception) {
-        Napier.e("Error marking messages as read", e)
+        Logger.e("Error marking messages as read", throwable = e)
         Result.failure(e)
     }
 
@@ -298,7 +298,7 @@ class SupabaseChatRepository(
         dataSource.deleteMessage(messageId)
         Result.success(Unit)
     } catch (e: Exception) {
-        Napier.e("Error deleting message", e)
+        Logger.e("Error deleting message", throwable = e)
         Result.failure(e)
     }
 
@@ -338,14 +338,14 @@ class SupabaseChatRepository(
                     finalContent = "Message is encrypted"
                 }
             } catch (e: Exception) {
-                Napier.e("E2EE encryption failed for edit, sending unencrypted", e)
+                Logger.e("E2EE encryption failed for edit, sending unencrypted", throwable = e)
             }
         }
 
         dataSource.editMessage(messageId, finalContent, isEncrypted, encryptedContentStr)
         Result.success(Unit)
     } catch (e: Exception) {
-        Napier.e("Error editing message", e)
+        Logger.e("Error editing message", throwable = e)
         Result.failure(e)
     }
 
@@ -363,12 +363,12 @@ class SupabaseChatRepository(
         ).onSuccess { url ->
             return Result.success(url)
         }.onFailure { e ->
-            Napier.e("Error uploading media", e)
+            Logger.e("Error uploading media", throwable = e)
             return Result.failure(e)
         }
         Result.failure(Exception("Unknown error"))
     } catch (e: Exception) {
-        Napier.e("Error uploading media", e)
+        Logger.e("Error uploading media", throwable = e)
         Result.failure(e)
     }
 
@@ -376,7 +376,7 @@ class SupabaseChatRepository(
         dataSource.broadcastTypingStatus(chatId, isTyping)
         Result.success(Unit)
     } catch (e: Exception) {
-        Napier.e("Error broadcasting typing status", e)
+        Logger.e("Error broadcasting typing status", throwable = e)
         Result.failure(e)
     }
 
@@ -411,56 +411,56 @@ class SupabaseChatRepository(
         return try {
             if (signalProtocolManager == null) {
                 val error = "SignalProtocolManager is null, E2EE not available"
-                Napier.e("E2EE_INIT: $error", tag = "E2EE")
+                Logger.e("E2EE_INIT: $error", tag = "E2EE")
                 return Result.failure(Exception(error))
             }
 
             val currentUserId = getCurrentUserId()
             if (currentUserId == null) {
                 val error = "User not authenticated, cannot initialize E2EE"
-                Napier.e("E2EE_INIT: $error", tag = "E2EE")
+                Logger.e("E2EE_INIT: $error", tag = "E2EE")
                 return Result.failure(Exception(error))
             }
 
-            Napier.d("E2EE_INIT: Starting E2EE initialization for user $currentUserId", tag = "E2EE")
+            Logger.d("E2EE_INIT: Starting E2EE initialization for user $currentUserId", tag = "E2EE")
             
             val hasLocalKeys = signalProtocolManager.hasIdentity()
             val remoteKeyDto = try { dataSource.getUserPublicKey(currentUserId) } catch (_: Exception) { null }
             val hasRemoteKeys = remoteKeyDto != null
             
-            Napier.d("E2EE_INIT: hasLocalKeys=$hasLocalKeys, hasRemoteKeys=$hasRemoteKeys", tag = "E2EE")
+            Logger.d("E2EE_INIT: hasLocalKeys=$hasLocalKeys, hasRemoteKeys=$hasRemoteKeys", tag = "E2EE")
 
             when {
                 hasLocalKeys && hasRemoteKeys -> {
                     // Both exist — fully initialized
                     val regId = signalProtocolManager.getLocalRegistrationId()
-                    Napier.d("E2EE_INIT: E2EE already fully initialized (regId: $regId)", tag = "E2EE")
+                    Logger.d("E2EE_INIT: E2EE already fully initialized (regId: $regId)", tag = "E2EE")
                     
                     if (signalProtocolManager.checkKeyRotationNeeded()) {
-                        Napier.w("E2EE_INIT: Key rotation recommended (keys older than 30 days)", tag = "E2EE")
+                        Logger.w("E2EE_INIT: Key rotation recommended (keys older than 30 days)", tag = "E2EE")
                     }
                 }
                 hasLocalKeys && !hasRemoteKeys -> {
                     // Local keys exist but remote missing — re-upload the bundle
-                    Napier.w("E2EE_INIT: Local keys exist but remote keys MISSING. Re-uploading...", tag = "E2EE")
+                    Logger.w("E2EE_INIT: Local keys exist but remote keys MISSING. Re-uploading...", tag = "E2EE")
                     val bundle = buildBundleFromLocalKeys()
                     val bundleStr = Json.encodeToString(bundle)
                     dataSource.uploadUserPublicKey(bundleStr)
-                    Napier.d("E2EE_INIT: Successfully re-uploaded public key bundle", tag = "E2EE")
+                    Logger.d("E2EE_INIT: Successfully re-uploaded public key bundle", tag = "E2EE")
                 }
                 else -> {
                     // No local keys (or both missing) — full generation
                     if (!hasLocalKeys && hasRemoteKeys) {
-                        Napier.w("E2EE_INIT: Remote keys exist but local keys MISSING. Regenerating everything...", tag = "E2EE")
+                        Logger.w("E2EE_INIT: Remote keys exist but local keys MISSING. Regenerating everything...", tag = "E2EE")
                     } else {
-                        Napier.d("E2EE_INIT: Fresh E2EE setup — no local or remote keys", tag = "E2EE")
+                        Logger.d("E2EE_INIT: Fresh E2EE setup — no local or remote keys", tag = "E2EE")
                     }
                     
                     val identity = signalProtocolManager.generateIdentityAndKeys()
-                    Napier.d("E2EE_INIT: Generated identity with regId: ${identity.registrationId}", tag = "E2EE")
+                    Logger.d("E2EE_INIT: Generated identity with regId: ${identity.registrationId}", tag = "E2EE")
                     
                     val preKeys = signalProtocolManager.generateOneTimePreKeys(startId = 1, count = 100)
-                    Napier.d("E2EE_INIT: Generated ${preKeys.size} one-time pre-keys", tag = "E2EE")
+                    Logger.d("E2EE_INIT: Generated ${preKeys.size} one-time pre-keys", tag = "E2EE")
                     
                     val bundle = PreKeyBundle(
                         registrationId = identity.registrationId,
@@ -474,15 +474,15 @@ class SupabaseChatRepository(
                     )
                     
                     val bundleStr = Json.encodeToString(bundle)
-                    Napier.d("E2EE_INIT: Uploading public key bundle to server", tag = "E2EE")
+                    Logger.d("E2EE_INIT: Uploading public key bundle to server", tag = "E2EE")
                     dataSource.uploadUserPublicKey(bundleStr)
-                    Napier.d("E2EE_INIT: Successfully uploaded public key bundle", tag = "E2EE")
+                    Logger.d("E2EE_INIT: Successfully uploaded public key bundle", tag = "E2EE")
                 }
             }
             
             Result.success(Unit)
         } catch (e: Exception) {
-            Napier.e("E2EE_INIT: Initialization failed: ${e.message}", e, tag = "E2EE")
+            Logger.e("E2EE_INIT: Initialization failed: ${e.message}", tag = "E2EE", throwable = e)
             Result.failure(e)
         }
     }
