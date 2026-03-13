@@ -550,7 +550,7 @@ class ChatViewModel @Inject constructor(
         _disappearingMode.value = mode
     }
 
-    fun uploadAndSendMedia(filePath: String, fileName: String, contentType: String, messageType: String) {
+    fun uploadAndSendMedia(filePath: String, fileName: String, contentType: String, messageType: String, caption: String? = null) {
         val chatId = currentChatId ?: return
 
         viewModelScope.launch {
@@ -612,7 +612,7 @@ class ChatViewModel @Inject constructor(
                     }
                 }
             ).onSuccess { mediaUrl ->
-                val finalContent = if (messageType == "image" || messageType == "video") "Media message" else fileName
+                val finalContent = if (!caption.isNullOrBlank()) caption else if (messageType == "image" || messageType == "video") "Media message" else fileName
                 sendMessageUseCase(
                     chatId = chatId,
                     content = finalContent,
