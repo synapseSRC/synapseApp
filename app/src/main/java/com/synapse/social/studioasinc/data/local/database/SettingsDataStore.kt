@@ -87,6 +87,8 @@ class SettingsDataStore private constructor(private val context: Context) {
         private val KEY_CHAT_THEME_PRESET = stringPreferencesKey("chat_theme_preset")
         private val KEY_CHAT_WALLPAPER_TYPE = stringPreferencesKey("chat_wallpaper_type")
         private val KEY_CHAT_WALLPAPER_VALUE = stringPreferencesKey("chat_wallpaper_value")
+        private val KEY_CHAT_WALLPAPER_BLUR = floatPreferencesKey("chat_wallpaper_blur")
+
         private val KEY_CHAT_MESSAGE_CORNER_RADIUS = androidx.datastore.preferences.core.intPreferencesKey("chat_message_corner_radius")
         private val KEY_CHAT_LIST_LAYOUT = stringPreferencesKey("chat_list_layout")
         private val KEY_CHAT_SWIPE_GESTURE = stringPreferencesKey("chat_swipe_gesture")
@@ -493,6 +495,33 @@ class SettingsDataStore private constructor(private val context: Context) {
         }
     }
 
+    val chatWallpaperValue: Flow<String?> = safePreferencesFlow().map { preferences ->
+        preferences[KEY_CHAT_WALLPAPER_VALUE]
+    }
+
+    suspend fun setChatWallpaperValue(value: String?) {
+        dataStore.edit { preferences ->
+            if (value == null) {
+                preferences.remove(KEY_CHAT_WALLPAPER_VALUE)
+            preferences.remove(KEY_CHAT_WALLPAPER_BLUR)
+            preferences.remove(KEY_CHAT_WALLPAPER_BLUR)
+            } else {
+                preferences[KEY_CHAT_WALLPAPER_VALUE] = value
+            }
+        }
+    }
+
+    val chatWallpaperBlur: Flow<Float> = safePreferencesFlow().map { preferences ->
+        preferences[KEY_CHAT_WALLPAPER_BLUR] ?: 0f
+    }
+
+    suspend fun setChatWallpaperBlur(blur: Float) {
+        dataStore.edit { preferences ->
+            preferences[KEY_CHAT_WALLPAPER_BLUR] = blur
+        }
+    }
+
+
     val chatMessageCornerRadius: Flow<Int> = safePreferencesFlow().map { preferences ->
         preferences[KEY_CHAT_MESSAGE_CORNER_RADIUS] ?: DEFAULT_CHAT_MESSAGE_CORNER_RADIUS
     }
@@ -724,6 +753,8 @@ class SettingsDataStore private constructor(private val context: Context) {
             preferences.remove(KEY_CHAT_THEME_PRESET)
             preferences.remove(KEY_CHAT_WALLPAPER_TYPE)
             preferences.remove(KEY_CHAT_WALLPAPER_VALUE)
+            preferences.remove(KEY_CHAT_WALLPAPER_BLUR)
+            preferences.remove(KEY_CHAT_WALLPAPER_BLUR)
             preferences.remove(KEY_CHAT_MESSAGE_CORNER_RADIUS)
             preferences.remove(KEY_CHAT_LIST_LAYOUT)
             preferences.remove(KEY_CHAT_SWIPE_GESTURE)
@@ -786,6 +817,8 @@ class SettingsDataStore private constructor(private val context: Context) {
             preferences[KEY_CHAT_THEME_PRESET] = DEFAULT_CHAT_THEME_PRESET.name
             preferences[KEY_CHAT_WALLPAPER_TYPE] = DEFAULT_CHAT_WALLPAPER_TYPE.name
             preferences.remove(KEY_CHAT_WALLPAPER_VALUE)
+            preferences.remove(KEY_CHAT_WALLPAPER_BLUR)
+            preferences.remove(KEY_CHAT_WALLPAPER_BLUR)
             preferences[KEY_CHAT_MESSAGE_CORNER_RADIUS] = DEFAULT_CHAT_MESSAGE_CORNER_RADIUS
             preferences[KEY_CHAT_LIST_LAYOUT] = DEFAULT_CHAT_LIST_LAYOUT.name
             preferences[KEY_CHAT_SWIPE_GESTURE] = DEFAULT_CHAT_SWIPE_GESTURE.name

@@ -25,6 +25,14 @@ import com.synapse.social.studioasinc.domain.model.ChatListLayout
 import com.synapse.social.studioasinc.domain.model.ChatSwipeGesture
 import com.synapse.social.studioasinc.domain.model.ChatThemePreset
 import com.synapse.social.studioasinc.domain.model.WallpaperType
+
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
+
 import com.synapse.social.studioasinc.feature.shared.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +79,9 @@ fun ChatSettingsScreen(
                     fontScale = chatFontScale,
                     cornerRadius = chatMessageCornerRadius,
                     themePreset = chatThemePreset,
-                    wallpaperType = chatWallpaperType
+                    wallpaperType = chatWallpaperType,
+                    wallpaperValue = viewModel.chatWallpaperValue.collectAsState().value,
+                    blurIntensity = viewModel.chatWallpaperBlur.collectAsState().value
                 )
             }
 
@@ -129,14 +139,20 @@ fun ChatSettingsScreen(
                 }
             }
 
+
             item {
                 SettingsBlock(title = "Chat Background") {
                     WallpaperPicker(
                         selectedWallpaper = chatWallpaperType,
-                        onWallpaperSelected = { viewModel.updateChatWallpaperType(it) }
+                        onWallpaperSelected = { viewModel.updateChatWallpaperType(it) },
+                        selectedWallpaperValue = viewModel.chatWallpaperValue.collectAsState().value,
+                        onWallpaperValueSelected = { viewModel.updateChatWallpaperValue(it) },
+                        blurIntensity = viewModel.chatWallpaperBlur.collectAsState().value,
+                        onBlurIntensityChanged = { viewModel.updateChatWallpaperBlur(it) }
                     )
                 }
             }
+
 
             item {
                 SettingsBlock(title = "Chat List View") {
@@ -164,12 +180,13 @@ private fun ChatLivePreview(
     fontScale: Float,
     cornerRadius: Int,
     themePreset: ChatThemePreset,
-    wallpaperType: WallpaperType
+    wallpaperType: WallpaperType,
+    wallpaperValue: String?,
+    blurIntensity: Float
 ) {
     val backgroundColor = when (wallpaperType) {
         WallpaperType.SOLID_COLOR -> Gray200
-        WallpaperType.DEFAULT -> MaterialTheme.colorScheme.surfaceVariant
-        WallpaperType.IMAGE_URI -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     val myBubbleColor = when (themePreset) {
@@ -198,10 +215,34 @@ private fun ChatLivePreview(
             .height(200.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
-            .padding(16.dp)
     ) {
+        if (wallpaperType == WallpaperType.DEFAULT) {
+            val mContext = LocalContext.current
+            AsyncImage(
+                model = mContext.resources.getIdentifier("pattern_11", "raw", mContext.packageName),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * 50).dp),
+                contentScale = ContentScale.Crop,
+                alpha = 0.5f
+            )
+        } else if ((wallpaperType == WallpaperType.PATTERN || wallpaperType == WallpaperType.IMAGE_URI) && wallpaperValue != null) {
+            val context = LocalContext.current
+            val resId = context.resources.getIdentifier(wallpaperValue.substringBeforeLast("."), "raw", context.packageName)
+            if (resId != 0) {
+                 AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(resId)
+                        .decoderFactory(SvgDecoder.Factory())
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * 50).dp),
+                    contentScale = ContentScale.Crop
+                 )
+            }
+        }
+
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Their message
@@ -336,58 +377,134 @@ private fun ThemePicker(
 @Composable
 private fun WallpaperPicker(
     selectedWallpaper: WallpaperType,
-    onWallpaperSelected: (WallpaperType) -> Unit
+    onWallpaperSelected: (WallpaperType) -> Unit,
+    selectedWallpaperValue: String?,
+    onWallpaperValueSelected: (String?) -> Unit,
+    blurIntensity: Float,
+    onBlurIntensityChanged: (Float) -> Unit
 ) {
-    val wallpapers = WallpaperType.entries.toList()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        wallpapers.forEach { wallpaper ->
-            val isSelected = wallpaper == selectedWallpaper
-            val bgColor = when(wallpaper) {
-                WallpaperType.SOLID_COLOR -> Color(0xFFE0E0E0)
-                else -> MaterialTheme.colorScheme.surfaceVariant
+    Column {
+        val wallpapers = WallpaperType.entries.toList()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            wallpapers.forEach { wallpaper ->
+                val isSelected = wallpaper == selectedWallpaper
+                val bgColor = when(wallpaper) {
+                    WallpaperType.SOLID_COLOR -> Color(0xFFE0E0E0)
+                    else -> MaterialTheme.colorScheme.surfaceVariant
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.clickable { onWallpaperSelected(wallpaper) }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 64.dp, height = 80.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(bgColor)
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = wallpaper.name.lowercase().replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.IMAGE_URI) {
+            val isPattern = selectedWallpaper == WallpaperType.PATTERN
+            val items = if (isPattern) {
+                (1..33).map { "pattern_$it" }
+            } else {
+                listOf("wallpaper_10", "wallpaper_23", "wallpaper_24", "wallpaper_26")
             }
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { onWallpaperSelected(wallpaper) }
+            Text("Select Resource", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 64.dp, height = 80.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(bgColor)
-                        .border(
-                            width = if (isSelected) 3.dp else 0.dp,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Selected",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
+                items.forEach { item ->
+                    val isSelected = item == selectedWallpaperValue
+                    val context = LocalContext.current
+
+                    val resId = context.resources.getIdentifier(item, "raw", context.packageName)
+
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onWallpaperValueSelected(item) }
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                    ) {
+                        if (resId != 0) {
+                            AsyncImage(
+                                model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                    .data(resId)
+                                    .decoderFactory(coil.decode.SvgDecoder.Factory())
+                                    .build(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                             Box(modifier = Modifier.fillMaxSize().background(Color.Gray))
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = wallpaper.name.lowercase().replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
+        }
+
+        if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.IMAGE_URI || selectedWallpaper == WallpaperType.DEFAULT) {
+            Text(
+                text = "Blur Intensity: ${(blurIntensity * 100).toInt()}%",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            var localBlur by remember(blurIntensity) { mutableStateOf(blurIntensity) }
+            Slider(
+                value = localBlur,
+                onValueChange = { localBlur = it },
+                onValueChangeFinished = { onBlurIntensityChanged(localBlur) },
+                valueRange = 0f..1f,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
     }
 }
+
 
 @Composable
 private fun ChatListViewPicker(

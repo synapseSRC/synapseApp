@@ -78,8 +78,13 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.provider.OpenableColumns
 import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+
+import androidx.compose.ui.draw.blur
+import com.synapse.social.studioasinc.domain.model.WallpaperType
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatShimmer
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -130,6 +135,11 @@ fun ChatScreen(
     val selectedMessageIds by viewModel.selectedMessageIds.collectAsState()
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val currentUserId = viewModel.currentUserId ?: ""
+
+    val chatWallpaperType by viewModel.chatWallpaperType.collectAsState()
+    val chatWallpaperValue by viewModel.chatWallpaperValue.collectAsState()
+    val chatWallpaperBlur by viewModel.chatWallpaperBlur.collectAsState()
+
 
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
 
@@ -332,6 +342,39 @@ fun ChatScreen(
                 .padding(top = paddingValues.calculateTopPadding())
                 .imePadding()
         ) {
+
+            when (chatWallpaperType) {
+                WallpaperType.SOLID_COLOR -> {
+                    // Do nothing, default surface color
+                }
+                WallpaperType.DEFAULT -> {
+                     AsyncImage(
+                        model = context.resources.getIdentifier("pattern_11", "raw", context.packageName), // Default pattern or just surface color
+                        contentDescription = "Background",
+                        modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * 50).dp),
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.5f
+                     )
+                }
+                WallpaperType.PATTERN, WallpaperType.IMAGE_URI -> {
+                    chatWallpaperValue?.let { value ->
+                        val context = LocalContext.current
+                        val resId = context.resources.getIdentifier(value, "raw", context.packageName)
+                        if (resId != 0) {
+                             AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(resId)
+                                    .decoderFactory(SvgDecoder.Factory())
+                                    .build(),
+                                contentDescription = "Background",
+                                modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * 50).dp),
+                                contentScale = ContentScale.Crop
+                             )
+                        }
+                    }
+                }
+            }
+
             when {
                 isLoading && messages.isEmpty() -> {
                     ChatShimmer(modifier = Modifier.fillMaxSize())
