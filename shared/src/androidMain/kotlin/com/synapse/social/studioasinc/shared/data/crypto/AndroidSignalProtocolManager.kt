@@ -42,9 +42,12 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
             store.storeLocalIdentity(identityKeyPair, registrationId)
         }
 
-        val signedPreKey = KeyHelper.generateSignedPreKey(identityKeyPair, 1)
+        // Generate a signed pre-key. Using an ID derived from current time to avoid overwriting issues
+        // while staying within the expected Int range for Signal protocols.
+        val signedPreKeyId = (System.currentTimeMillis() / 1000 % 0x00FFFFFF).toInt()
+        val signedPreKey = KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId)
         store.storeSignedPreKey(signedPreKey.id, signedPreKey)
-        Napier.d("E2EE_INIT: Stored identity and signed pre-key locally (regId: $registrationId)", tag = "E2EE")
+        Napier.d("E2EE_INIT: Stored identity and signed pre-key locally (regId: $registrationId, signedKeyId: $signedPreKeyId)", tag = "E2EE")
 
         return SignalIdentityKeys(
             registrationId = registrationId,
