@@ -4,7 +4,11 @@ import com.synapse.social.studioasinc.R
 
 object SettingsDataProvider {
     fun getSettingsGroups(): List<SettingsGroup> {
-        val groupA = SettingsGroup(
+        return listOf(getGroupA(), getGroupB(), getGroupC(), getGroupD(), getGroupE())
+    }
+
+    private fun getGroupA(): SettingsGroup {
+        return SettingsGroup(
             id = "group_a",
             title = null,
             categories = listOf(
@@ -34,8 +38,10 @@ object SettingsDataProvider {
                 )
             )
         )
+    }
 
-        val groupB = SettingsGroup(
+    private fun getGroupB(): SettingsGroup {
+        return SettingsGroup(
             id = "group_b",
             title = null,
             categories = listOf(
@@ -81,8 +87,10 @@ object SettingsDataProvider {
                 )
             )
         )
+    }
 
-        val groupC = SettingsGroup(
+    private fun getGroupC(): SettingsGroup {
+        return SettingsGroup(
             id = "group_c",
             title = null,
             categories = listOf(
@@ -104,8 +112,10 @@ object SettingsDataProvider {
                 )
             )
         )
+    }
 
-        val groupD = SettingsGroup(
+    private fun getGroupD(): SettingsGroup {
+        return SettingsGroup(
             id = "group_d",
             title = null,
             categories = listOf(
@@ -135,8 +145,10 @@ object SettingsDataProvider {
                 )
             )
         )
+    }
 
-        val groupE = SettingsGroup(
+    private fun getGroupE(): SettingsGroup {
+        return SettingsGroup(
             id = "group_e",
             title = "Experiments",
             categories = listOf(
@@ -158,7 +170,5 @@ object SettingsDataProvider {
                 )
             )
         )
-
-        return listOf(groupA, groupB, groupC, groupD, groupE)
     }
 }
