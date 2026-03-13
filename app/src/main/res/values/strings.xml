@@ -115,6 +115,7 @@
     <string name="whats_on_your_mind">What\'s on your mind?</string>
     <string name="photo">Photo</string>
     <string name="video">Video</string>
+    <string name="feeling_activity">Feeling/Activity</string>
     <string name="post_settings">Post Settings</string>
     <string name="post_visibility">Post Visibility</string>
     <string name="hide_views_count">Hide views count</string>

@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import com.synapse.social.studioasinc.R
 import androidx.compose.runtime.Composable
+import com.synapse.social.studioasinc.feature.home.home.components.QuickPostArea
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,7 @@ fun FeedScreen(
     onEditPost: (String) -> Unit,
     onStoryClick: (String) -> Unit = { _ -> },
     onAddStoryClick: () -> Unit = {},
+    onCreatePostClick: () -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -207,12 +209,12 @@ fun FeedScreen(
                         isLoading = storyTrayState.isLoading
                     )
                 }
-
-                // TODO: Implement "What's on your mind?" quick post area
-                // - Add a Facebook-like composer card below StoryTray
-                // - Show user avatar + "What's on your mind?" placeholder
-                // - Tap to navigate to CreatePostScreen
-                // - Include quick action buttons (Photo, Video, Feeling/Activity)
+                item {
+                    QuickPostArea(
+                        userProfileUrl = currentUser?.avatar,
+                        onClick = onCreatePostClick
+                    )
+                }
 
                 items(
                     count = posts.itemCount,
