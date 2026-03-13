@@ -58,6 +58,7 @@ data class NewMessageDto(
     @SerialName("sender_id") val senderId: String,
     val content: String,
     @SerialName("message_type") val messageType: String = "text",
+    @SerialName("media_url") val mediaUrl: String? = null,
     @SerialName("delivery_status") val deliveryStatus: String = "sent",
     @SerialName("message_state") val messageState: String = "sent"
 )

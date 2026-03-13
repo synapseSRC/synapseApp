@@ -162,7 +162,7 @@ class ChatMessagingRepository @Inject constructor(
     /**
      * Send a text message.
      */
-    suspend fun sendMessage(chatId: String, content: String): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    suspend fun sendMessage(chatId: String, content: String, mediaUrl: String? = null, messageType: String = "text"): Result<ChatMessage> = withContext(Dispatchers.IO) {
         try {
             val senderId = getCurrentUserId()
                 ?: return@withContext Result.failure(Exception("Not authenticated"))
@@ -170,7 +170,9 @@ class ChatMessagingRepository @Inject constructor(
             val newMessage = NewMessageDto(
                 chatId = chatId,
                 senderId = senderId,
-                content = content
+                content = content,
+                mediaUrl = mediaUrl,
+                messageType = messageType
             )
 
             val inserted = client.from("messages")
