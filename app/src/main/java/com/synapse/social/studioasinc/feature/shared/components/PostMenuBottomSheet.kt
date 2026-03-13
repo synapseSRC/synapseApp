@@ -10,6 +10,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,7 +36,7 @@ fun PostMenuBottomSheet(
             if (isOwnPost) {
                 MenuOption(
                     icon = Icons.Default.Edit,
-                    text = "Edit Post",
+                    text = stringResource(R.string.edit_post),
                     onClick = {
                         onEdit()
                         onDismiss()
@@ -42,7 +45,7 @@ fun PostMenuBottomSheet(
 
                 MenuOption(
                     icon = Icons.Default.Delete,
-                    text = "Delete Post",
+                    text = stringResource(R.string.post_delete_title),
                     onClick = {
                         onDelete()
                         onDismiss()
@@ -52,7 +55,7 @@ fun PostMenuBottomSheet(
             } else {
                 MenuOption(
                     icon = Icons.Default.Report,
-                    text = "Report Post",
+                    text = stringResource(R.string.report_post_menu),
                     onClick = {
                         onReport()
                         onDismiss()

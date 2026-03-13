@@ -9,6 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+
 
 enum class ViewAsMode {
     PUBLIC, FRIENDS, SPECIFIC_USER
@@ -25,12 +28,12 @@ fun ViewAsBottomSheet(
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(bottom = 16.dp)) {
             Text(
-                "View As",
+                stringResource(R.string.view_as_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             Text(
-                "See how your profile looks to others",
+                stringResource(R.string.see_how_your_profile_looks),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -40,20 +43,20 @@ fun ViewAsBottomSheet(
 
             ViewAsOption(
                 icon = Icons.Default.Public,
-                text = "Public View",
-                description = "How everyone sees your profile",
+                text = stringResource(R.string.public_view),
+                description = stringResource(R.string.how_everyone_sees),
                 onClick = { onViewAsPublic(); onDismiss() }
             )
             ViewAsOption(
                 icon = Icons.Default.Group,
-                text = "Friends View",
-                description = "How your friends see your profile",
+                text = stringResource(R.string.friends_view),
+                description = stringResource(R.string.how_your_friends_see),
                 onClick = { onViewAsFriends(); onDismiss() }
             )
             ViewAsOption(
                 icon = Icons.Default.Person,
-                text = "Specific User",
-                description = "See as a specific person",
+                text = stringResource(R.string.specific_user),
+                description = stringResource(R.string.see_as_specific_person),
                 onClick = { onViewAsSpecificUser(); onDismiss() }
             )
         }

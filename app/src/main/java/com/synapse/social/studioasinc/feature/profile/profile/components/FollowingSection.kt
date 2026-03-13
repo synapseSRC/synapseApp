@@ -9,6 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+
 
 enum class FollowingFilter {
     ALL, MUTUAL, RECENT
@@ -42,11 +45,11 @@ fun FollowingSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Following",
+                        text = stringResource(R.string.following),
                         style = MaterialTheme.typography.titleMedium
                     )
                     TextButton(onClick = onSeeAllClick) {
-                        Text("See All")
+                        Text(stringResource(R.string.see_all))
                     }
                 }
 
@@ -97,11 +100,11 @@ private fun EmptyFollowingState(modifier: Modifier = Modifier) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Not following anyone yet",
+                    text = stringResource(R.string.no_following),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "Find people to follow",
+                    text = stringResource(R.string.find_people_to_follow),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

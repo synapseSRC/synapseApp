@@ -11,9 +11,11 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,21 +81,21 @@ fun QuickPostArea(
             ) {
                 QuickPostAction(
                     icon = Icons.Default.Image,
-                    tint = Color(0xFF4CAF50),
+                    tint = MaterialTheme.colorScheme.primary,
                     text = stringResource(R.string.photo),
                     onClick = onClick
                 )
 
                 QuickPostAction(
                     icon = Icons.Default.Videocam,
-                    tint = Color(0xFFE91E63),
+                    tint = MaterialTheme.colorScheme.tertiary,
                     text = stringResource(R.string.video),
                     onClick = onClick
                 )
 
                 QuickPostAction(
                     icon = Icons.Default.Mood,
-                    tint = Color(0xFFFFC107),
+                    tint = MaterialTheme.colorScheme.secondary,
                     text = stringResource(R.string.feeling_activity),
                     onClick = onClick
                 )

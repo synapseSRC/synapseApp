@@ -15,9 +15,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.EmptyStateType
-
-
 
 @Composable
 fun InboxEmptyState(
@@ -26,47 +26,49 @@ fun InboxEmptyState(
     onActionClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val (icon, title, description, actionText) = remember(type, message) {
-        when (type) {
-            EmptyStateType.CHATS -> EmptyStateContent(
-                icon = Icons.Outlined.Email,
-                title = "No messages yet",
-                description = "Your conversations will appear here",
-                actionText = "New Message"
-            )
-            EmptyStateType.CALLS -> EmptyStateContent(
-                icon = Icons.Outlined.Call,
-                title = "No calls yet",
-                description = "Your call history will appear here. Start a call with someone!",
-                actionText = null
-            )
-            EmptyStateType.CONTACTS -> EmptyStateContent(
-                icon = Icons.Outlined.People,
-                title = "Connect with friends",
-                description = "Find your friends on Synapse and start messaging",
-                actionText = "Find Friends"
-            )
-            EmptyStateType.SEARCH_NO_RESULTS -> EmptyStateContent(
-                icon = Icons.Outlined.SearchOff,
-                title = "No results found",
-                description = "Try searching with different keywords",
-                actionText = null
-            )
-            EmptyStateType.ARCHIVED -> EmptyStateContent(
-                icon = Icons.Outlined.Archive,
-                title = "No archived chats",
-                description = "Chats you archive will appear here",
-                actionText = null
-            )
-            EmptyStateType.ERROR -> EmptyStateContent(
-                icon = Icons.Default.Warning,
-                title = "Something went wrong",
-                description = message ?: "We couldn't load your messages. Please try again.",
-                actionText = "Retry"
-            )
-        }
+    val content = when (type) {
+        EmptyStateType.CHATS -> EmptyStateContent(
+            icon = Icons.Outlined.Email,
+            title = stringResource(R.string.no_messages_yet),
+            description = stringResource(R.string.your_conversations_will_appear_here),
+            actionText = stringResource(R.string.new_message)
+        )
+        EmptyStateType.CALLS -> EmptyStateContent(
+            icon = Icons.Outlined.Call,
+            title = stringResource(R.string.no_calls_yet),
+            description = stringResource(R.string.your_call_history_will_appear_here),
+            actionText = null
+        )
+        EmptyStateType.CONTACTS -> EmptyStateContent(
+            icon = Icons.Outlined.People,
+            title = stringResource(R.string.connect_with_friends),
+            description = stringResource(R.string.find_your_friends_on_synapse),
+            actionText = stringResource(R.string.find_friends)
+        )
+        EmptyStateType.SEARCH_NO_RESULTS -> EmptyStateContent(
+            icon = Icons.Outlined.SearchOff,
+            title = stringResource(R.string.no_results_found),
+            description = stringResource(R.string.try_searching_with_different_keywords),
+            actionText = null
+        )
+        EmptyStateType.ARCHIVED -> EmptyStateContent(
+            icon = Icons.Outlined.Archive,
+            title = stringResource(R.string.no_archived_chats),
+            description = stringResource(R.string.chats_you_archive_will_appear_here),
+            actionText = null
+        )
+        EmptyStateType.ERROR -> EmptyStateContent(
+            icon = Icons.Default.Warning,
+            title = stringResource(R.string.something_went_wrong_title),
+            description = message ?: stringResource(R.string.we_couldnt_load_your_messages),
+            actionText = stringResource(R.string.action_retry)
+        )
     }
 
+    val icon = content.icon
+    val title = content.title
+    val description = content.description
+    val actionText = content.actionText
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -112,7 +114,6 @@ fun InboxEmptyState(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             ) {}
 
-
             Icon(
                 imageVector = icon,
                 contentDescription = null,
@@ -122,7 +123,6 @@ fun InboxEmptyState(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-
 
         Text(
             text = title,
@@ -134,7 +134,6 @@ fun InboxEmptyState(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
@@ -144,7 +143,6 @@ fun InboxEmptyState(
                 .alpha(contentAlpha)
                 .padding(horizontal = 24.dp)
         )
-
 
         if (actionText != null) {
             Spacer(modifier = Modifier.height(24.dp))
@@ -171,16 +169,12 @@ fun InboxEmptyState(
     }
 }
 
-
-
 private data class EmptyStateContent(
     val icon: ImageVector,
     val title: String,
     val description: String,
     val actionText: String?
 )
-
-
 
 @Composable
 fun CompactEmptyState(

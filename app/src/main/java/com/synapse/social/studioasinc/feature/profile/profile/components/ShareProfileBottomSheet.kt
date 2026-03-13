@@ -9,6 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,29 +25,29 @@ fun ShareProfileBottomSheet(
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(bottom = 16.dp)) {
             Text(
-                "Share Profile",
+                stringResource(R.string.share_profile),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             ShareOption(
                 icon = Icons.Default.ContentCopy,
-                text = "Copy Link",
+                text = stringResource(R.string.copy_link),
                 onClick = { onCopyLink(); onDismiss() }
             )
             ShareOption(
                 icon = Icons.Default.AutoStories,
-                text = "Share to Story",
+                text = stringResource(R.string.share_to_story),
                 onClick = { onShareToStory(); onDismiss() }
             )
             ShareOption(
                 icon = Icons.Default.Message,
-                text = "Share via Message",
+                text = stringResource(R.string.share_via_message),
                 onClick = { onShareViaMessage(); onDismiss() }
             )
             ShareOption(
                 icon = Icons.Default.Share,
-                text = "Share to External Apps",
+                text = stringResource(R.string.share_to_external_apps),
                 onClick = { onShareExternal(); onDismiss() }
             )
         }

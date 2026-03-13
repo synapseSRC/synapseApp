@@ -11,6 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,37 +38,37 @@ fun ProfileMoreMenuBottomSheet(
         Column(modifier = Modifier.padding(bottom = 16.dp)) {
             MenuOption(
                 icon = Icons.Default.Share,
-                text = "Share Profile",
+                text = stringResource(R.string.share_profile),
                 onClick = { onShareProfile(); onDismiss() }
             )
 
             if (isOwnProfile) {
                 MenuOption(
                     icon = Icons.Default.Visibility,
-                    text = "View As...",
+                    text = stringResource(R.string.view_as),
                     onClick = { onViewAs(); onDismiss() }
                 )
 
                 MenuOption(
                     icon = Icons.Default.Lock,
-                    text = "Lock Profile",
+                    text = stringResource(R.string.lock_profile),
                     onClick = { onLockProfile(); onDismiss() }
                 )
                 MenuOption(
                     icon = Icons.Default.Archive,
-                    text = "Archive Profile",
+                    text = stringResource(R.string.archive_profile),
                     onClick = { onArchiveProfile(); onDismiss() }
                 )
             }
 
             MenuOption(
                 icon = Icons.Default.QrCode,
-                text = "QR Code",
+                text = stringResource(R.string.qr_code),
                 onClick = { onQrCode(); onDismiss() }
             )
             MenuOption(
                 icon = Icons.Default.ContentCopy,
-                text = "Copy Profile Link",
+                text = stringResource(R.string.copy_profile_link),
                 onClick = { onCopyLink(); onDismiss() }
             )
 
@@ -74,7 +77,7 @@ fun ProfileMoreMenuBottomSheet(
             if (isOwnProfile) {
                 MenuOption(
                     icon = Icons.Default.Settings,
-                    text = "Settings",
+                    text = stringResource(R.string.settings),
                     onClick = {
                         onDismiss()
                         onSettings()
@@ -82,7 +85,7 @@ fun ProfileMoreMenuBottomSheet(
                 )
                 MenuOption(
                     icon = Icons.Default.History,
-                    text = "Activity Log",
+                    text = stringResource(R.string.activity_log),
                     onClick = {
                         onDismiss()
                         onActivityLog()
@@ -91,17 +94,17 @@ fun ProfileMoreMenuBottomSheet(
             } else {
                 MenuOption(
                     icon = Icons.Default.Block,
-                    text = "Block User",
+                    text = stringResource(R.string.block_user_menu),
                     onClick = { onBlockUser(); onDismiss() }
                 )
                 MenuOption(
                     icon = Icons.Default.Report,
-                    text = "Report User",
+                    text = stringResource(R.string.report_user_menu),
                     onClick = { onReportUser(); onDismiss() }
                 )
                 MenuOption(
                     icon = Icons.AutoMirrored.Filled.VolumeOff,
-                    text = "Mute User",
+                    text = stringResource(R.string.mute_user),
                     onClick = { onMuteUser(); onDismiss() }
                 )
             }

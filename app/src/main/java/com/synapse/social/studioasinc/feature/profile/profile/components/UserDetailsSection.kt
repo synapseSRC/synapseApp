@@ -22,6 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import kotlinx.coroutines.delay
 
@@ -76,7 +79,7 @@ fun UserDetailsSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "About",
+                text = stringResource(R.string.about_details),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -160,11 +163,11 @@ private fun ExpandCollapseButton(
         onClick = onClick,
         modifier = Modifier.minimumInteractiveComponentSize()
     ) {
-        Text(if (expanded) "Less" else "More")
+        Text(if (expanded) stringResource(R.string.less) else stringResource(R.string.more))
         Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = if (expanded) "Collapse" else "Expand",
+            contentDescription = if (expanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
             modifier = Modifier
                 .size(20.dp)
                 .rotate(rotation)
@@ -182,7 +185,7 @@ private fun CollapsedSummary(details: UserDetails) {
         }
         details.joinedDate?.takeIf { it.isNotBlank() }?.let {
             if (isNotEmpty()) append(" • ")
-            append("Joined $it")
+            append("${stringResource(R.string.joined)} $it")
         }
 
         if (isEmpty()) {
@@ -192,9 +195,9 @@ private fun CollapsedSummary(details: UserDetails) {
             }
             if (isEmpty()) {
                  if (details.linkedAccounts.isNotEmpty()) {
-                     append("Linked Accounts: ${details.linkedAccounts.size}")
+                     append("${stringResource(R.string.linked_accounts)}: ${details.linkedAccounts.size}")
                  } else {
-                     append("Tap 'More' to see details")
+                     append(stringResource(R.string.tap_more_to_see_details))
                  }
             }
         }
@@ -217,31 +220,31 @@ private fun ExpandedDetailsContent(
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
         val detailItems = buildList<Triple<ImageVector, String, String>> {
             details.location?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.LocationOn, "Location", it))
+                add(Triple(Icons.Outlined.LocationOn, stringResource(R.string.location), it))
             }
             details.work?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Work, "Work", it))
+                add(Triple(Icons.Outlined.Work, stringResource(R.string.work), it))
             }
             details.education?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.School, "Education", it))
+                add(Triple(Icons.Outlined.School, stringResource(R.string.education), it))
             }
             details.website?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Link, "Website", it))
+                add(Triple(Icons.Outlined.Link, stringResource(R.string.website), it))
             }
             details.joinedDate?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.CalendarToday, "Joined", it))
+                add(Triple(Icons.Outlined.CalendarToday, stringResource(R.string.joined), it))
             }
             details.birthday?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Cake, "Birthday", it))
+                add(Triple(Icons.Outlined.Cake, stringResource(R.string.birthday), it))
             }
             details.relationshipStatus?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Favorite, "Relationship", it))
+                add(Triple(Icons.Outlined.Favorite, stringResource(R.string.relationship), it))
             }
             details.gender?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Person, "Gender", it))
+                add(Triple(Icons.Outlined.Person, stringResource(R.string.gender_detail), it))
             }
             details.pronouns?.takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Badge, "Pronouns", it))
+                add(Triple(Icons.Outlined.Badge, stringResource(R.string.pronouns), it))
             }
         }
 
@@ -250,8 +253,8 @@ private fun ExpandedDetailsContent(
                 icon = icon,
                 label = label,
                 value = value,
-                isClickable = label == "Website",
-                onClick = if (label == "Website") { { onWebsiteClick(value) } } else null,
+                isClickable = label == stringResource(R.string.website),
+                onClick = if (label == stringResource(R.string.website)) { { onWebsiteClick(value) } } else null,
                 animationDelay = index * 30
             )
         }
@@ -259,7 +262,7 @@ private fun ExpandedDetailsContent(
         if (details.linkedAccounts.isNotEmpty()) {
             Spacer(modifier = Modifier.height(Spacing.SmallMedium))
             Text(
-                text = "Linked Accounts",
+                text = stringResource(R.string.linked_accounts),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = Spacing.Small)
@@ -395,7 +398,7 @@ private fun EmptyDetailsState(onAddClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Share more about yourself",
+            text = stringResource(R.string.share_more_about_yourself),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -410,7 +413,7 @@ private fun EmptyDetailsState(onAddClick: () -> Unit) {
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-            Text("Add Details")
+            Text(stringResource(R.string.add_details))
         }
     }
 }
