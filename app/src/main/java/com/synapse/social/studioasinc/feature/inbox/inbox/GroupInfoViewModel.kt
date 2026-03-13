@@ -51,7 +51,7 @@ class GroupInfoViewModel @Inject constructor(
         val chatId = currentChatId ?: return
         viewModelScope.launch {
             _isLoading.value = true
-            chatRepository.addGroupMember(chatId, userId).onSuccess {
+            chatRepository.addGroupMembers(chatId, listOf(userId)).onSuccess {
                 loadMembers(chatId) // Reload to get full user object
             }.onFailure {
                 _error.value = "Failed to add member"

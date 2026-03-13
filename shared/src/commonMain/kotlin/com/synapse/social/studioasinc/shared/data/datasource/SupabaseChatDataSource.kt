@@ -358,10 +358,10 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun addGroupMember(chatId: String, userId: String) = withContext(Dispatchers.IO) {
+    suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(Dispatchers.IO) {
         try {
-            val participant = ChatParticipantDto(chatId = chatId, userId = userId)
-            client.postgrest.from("chat_participants").insert(participant)
+            val participants = userIds.map { ChatParticipantDto(chatId = chatId, userId = it) }
+            client.postgrest.from("chat_participants").insert(participants)
         } catch (e: Exception) {
             Napier.e("Error adding group member", e)
             throw e
