@@ -195,10 +195,10 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
                         navController.navigate(AppDestination.Chat(chatId = "new", userId = targetUserId, participantName = userName))
                     },
                     onNavigateToFollowers = {
-                        navController.navigate(AppDestination.FollowList(userId, "followers"))
+                        navController.navigate(AppDestination.FollowList(userId, 0))
                     },
                     onNavigateToFollowing = {
-                        navController.navigate(AppDestination.FollowList(userId, "following"))
+                        navController.navigate(AppDestination.FollowList(userId, 1))
                     },
                     onNavigateToUserProfile = { targetUid ->
                         navController.navigate(AppDestination.Profile(targetUid))
@@ -261,10 +261,10 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
                 val userId = args.userId
                 val currentUserId = AuthHelper.getCurrentUserId() ?: return@composable
                 val targetUserId = if (userId == "me") currentUserId else userId
-                val listType = args.type
+                val initialTab = args.initialTab
                 FollowListScreen(
                     userId = targetUserId,
-                    listType = listType,
+                    initialTab = initialTab,
                     onNavigateBack = { navController.popBackStack() },
                     onUserClick = { profileUserId ->
                         navController.navigate(AppDestination.Profile(profileUserId))

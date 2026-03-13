@@ -22,7 +22,7 @@ class FollowListActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_USER_ID = "user_id"
-        const val EXTRA_LIST_TYPE = "list_type"
+        const val EXTRA_INITIAL_TAB = "initial_tab"
         const val TYPE_FOLLOWERS = "followers"
         const val TYPE_FOLLOWING = "following"
     }
@@ -31,9 +31,9 @@ class FollowListActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val userId = intent.getStringExtra(EXTRA_USER_ID)
-        val listType = intent.getStringExtra(EXTRA_LIST_TYPE)
+        val initialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0)
 
-        if (userId == null || listType == null) {
+        if (userId == null) {
             finish()
             return
         }
@@ -42,7 +42,7 @@ class FollowListActivity : ComponentActivity() {
             SynapseTheme {
                 FollowListScreen(
                     userId = userId,
-                    listType = listType,
+                    initialTab = initialTab,
                     onNavigateBack = { finish() },
                     onUserClick = { targetUserId ->
                         val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("synapse://profile/$targetUserId"))

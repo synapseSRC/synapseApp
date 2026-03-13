@@ -26,7 +26,7 @@ sealed interface AppDestination {
     @Serializable
     data class PhotoHistory(val type: String) : AppDestination
     @Serializable
-    data class FollowList(val userId: String, val type: String) : AppDestination
+    data class FollowList(val userId: String, val initialTab: Int = 0) : AppDestination
     @Serializable
     data class Chat(
         val chatId: String, 

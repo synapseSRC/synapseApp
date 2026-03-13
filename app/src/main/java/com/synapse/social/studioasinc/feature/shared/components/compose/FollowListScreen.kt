@@ -17,35 +17,47 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.compose.components.UserListItem
 import com.synapse.social.studioasinc.viewmodel.FollowListViewModel
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FollowListScreen(
     userId: String,
-    listType: String,
+    initialTab: Int = 0,
     onNavigateBack: () -> Unit,
     onUserClick: (String) -> Unit,
     onMessageClick: (String, String?) -> Unit,
     viewModel: FollowListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(userId, listType) {
-        viewModel.loadUsers(userId, listType)
+    val tabs = listOf(
+        stringResource(R.string.followers),
+        stringResource(R.string.following)
+    )
+
+    var hasLoadedFollowers by remember { mutableStateOf(false) }
+    var hasLoadedFollowing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(userId, pagerState.currentPage) {
+        if (pagerState.currentPage == 0 && !hasLoadedFollowers) {
+            viewModel.loadFollowers(userId)
+            hasLoadedFollowers = true
+        } else if (pagerState.currentPage == 1 && !hasLoadedFollowing) {
+            viewModel.loadFollowing(userId)
+            hasLoadedFollowing = true
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = when (listType) {
-                            "followers" -> stringResource(R.string.followers)
-                            "following" -> stringResource(R.string.following)
-                            else -> stringResource(R.string.users)
-                        }
-                    )
-                },
+                title = { Text(text = stringResource(R.string.users)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -57,55 +69,81 @@ fun FollowListScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                uiState.error != null -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = uiState.error ?: "Unknown error",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                uiState.users.isEmpty() -> {
-                    Text(
-                        text = when (listType) {
-                            "followers" -> stringResource(R.string.no_followers)
-                            "following" -> stringResource(R.string.no_following)
-                            else -> stringResource(R.string.no_users_found)
+            ScrollableTabRow(
+                selectedTabIndex = pagerState.currentPage,
+                modifier = Modifier.fillMaxWidth(),
+                edgePadding = 8.dp
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = pagerState.currentPage == index,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
                         },
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = { Text(text = title) }
                     )
                 }
+            }
 
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        items(uiState.users) { user ->
-                            UserListItem(
-                                user = user,
-                                onUserClick = { onUserClick(user.uid) },
-                                 onMessageClick = { onMessageClick(user.uid, user.displayName ?: user.username) }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val isLoading = if (page == 0) uiState.followersLoading else uiState.followingLoading
+                val error = if (page == 0) uiState.followersError else uiState.followingError
+                val users = if (page == 0) uiState.followers else uiState.following
+                val emptyMessage = if (page == 0) stringResource(R.string.no_followers) else stringResource(R.string.no_following)
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when {
+                        isLoading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center)
                             )
+                        }
+
+                        error != null -> {
+                            Column(
+                                modifier = Modifier.align(Alignment.Center),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = error ?: "Unknown error",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+
+                        users.isEmpty() -> {
+                            Text(
+                                text = emptyMessage,
+                                modifier = Modifier.align(Alignment.Center),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        else -> {
+                            LazyColumn(
+                                contentPadding = PaddingValues(vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                items(users) { user ->
+                                    UserListItem(
+                                        user = user,
+                                        onUserClick = { onUserClick(user.uid) },
+                                        onMessageClick = { onMessageClick(user.uid, user.displayName ?: user.username) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

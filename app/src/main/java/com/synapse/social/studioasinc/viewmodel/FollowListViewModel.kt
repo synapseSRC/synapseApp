@@ -14,9 +14,12 @@ import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.shared.domain.model.User as SharedUser
 
 data class FollowListUiState(
-    val users: List<User> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
+    val followers: List<User> = emptyList(),
+    val following: List<User> = emptyList(),
+    val followersLoading: Boolean = false,
+    val followingLoading: Boolean = false,
+    val followersError: String? = null,
+    val followingError: String? = null
 )
 
 @HiltViewModel
@@ -28,16 +31,12 @@ class FollowListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FollowListUiState())
     val uiState: StateFlow<FollowListUiState> = _uiState.asStateFlow()
 
-    fun loadUsers(userId: String, listType: String) {
+    fun loadFollowers(userId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(followersLoading = true, followersError = null)
 
             try {
-                val result: Result<List<SharedUser>> = when (listType) {
-                    "followers" -> getFollowersUseCase(userId)
-                    "following" -> getFollowingUseCase(userId)
-                    else -> Result.success(emptyList())
-                }
+                val result: Result<List<SharedUser>> = getFollowersUseCase(userId)
 
                 result.fold(
                     onSuccess = { sharedUsers ->
@@ -51,21 +50,60 @@ class FollowListViewModel @Inject constructor(
                             )
                         }
                         _uiState.value = _uiState.value.copy(
-                            users = users,
-                            isLoading = false
+                            followers = users,
+                            followersLoading = false
                         )
                     },
                     onFailure = { error ->
                         _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "Failed to load users: ${error.message}"
+                            followersLoading = false,
+                            followersError = "Failed to load followers: ${error.message}"
                         )
                     }
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = "Error: ${e.message}"
+                    followersLoading = false,
+                    followersError = "Error: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun loadFollowing(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(followingLoading = true, followingError = null)
+
+            try {
+                val result: Result<List<SharedUser>> = getFollowingUseCase(userId)
+
+                result.fold(
+                    onSuccess = { sharedUsers ->
+                        val users = sharedUsers.map { sharedUser ->
+                            User(
+                                uid = sharedUser.uid,
+                                username = sharedUser.username,
+                                displayName = sharedUser.displayName,
+                                avatar = sharedUser.avatar,
+                                verify = sharedUser.verify
+                            )
+                        }
+                        _uiState.value = _uiState.value.copy(
+                            following = users,
+                            followingLoading = false
+                        )
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            followingLoading = false,
+                            followingError = "Failed to load following: ${error.message}"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    followingLoading = false,
+                    followingError = "Error: ${e.message}"
                 )
             }
         }
