@@ -75,6 +75,7 @@ fun HomeNavGraph(
                 onAddStoryClick = {
                     context.startActivity(Intent(context, StoryCreatorActivity::class.java))
                 },
+                onCreatePostClick = { navController.navigate(AppDestination.CreatePost()) },
                 contentPadding = PaddingValues(bottom = bottomPadding)
             )
         }
