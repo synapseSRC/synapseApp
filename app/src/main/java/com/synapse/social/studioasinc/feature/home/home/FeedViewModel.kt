@@ -1,8 +1,7 @@
 package com.synapse.social.studioasinc.feature.home.home
 
-import android.app.Application
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.AndroidViewModel
+import com.synapse.social.studioasinc.feature.shared.viewmodel.BaseViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -64,12 +63,9 @@ class FeedViewModel @Inject constructor(
     private val deletePostUseCase: DeletePostUseCase,
     private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
     private val blockUserUseCase: BlockUserUseCase,
-    private val repostPostUseCase: RepostPostUseCase,
-    application: Application
-) : AndroidViewModel(application) {
+    private val repostPostUseCase: RepostPostUseCase
+) : BaseViewModel<FeedUiState>(FeedUiState()) {
 
-    private val _uiState = MutableStateFlow(FeedUiState())
-    val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
 
     private val _modifiedPosts = MutableStateFlow<Map<String, Post>>(emptyMap())
     private val MAX_MODIFIED_POSTS = 100
@@ -104,7 +100,7 @@ class FeedViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             getAppearanceSettingsUseCase().collect { settings ->
-                _uiState.update { it.copy(postViewStyle = settings.postViewStyle) }
+                updateState { it.copy(postViewStyle = settings.postViewStyle) }
             }
         }
 
@@ -228,7 +224,6 @@ class FeedViewModel @Inject constructor(
             )
             cacheModifiedPost(optimisticPost)
             PostEventBus.emit(PostEvent.Updated(optimisticPost))
-            
             repostPostUseCase(post.id).onFailure {
                 // Revert on failure
                 cacheModifiedPost(post)
@@ -309,23 +304,21 @@ class FeedViewModel @Inject constructor(
 
     fun blockUser(userId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(blockSuccess = false, blockError = null) }
-            
+            updateState { it.copy(blockSuccess = false, blockError = null) }
             blockUserUseCase(userId)
                 .onSuccess {
-                    _uiState.update { it.copy(blockSuccess = true) }
+                    updateState { it.copy(blockSuccess = true) }
                     // Refresh feed to remove blocked user's posts
                     refresh()
                 }
                 .onFailure { error ->
-                    _uiState.update { 
+                    updateState {
                         it.copy(blockError = error.message ?: "Failed to block user")
                     }
                 }
         }
     }
-    
     fun clearBlockStatus() {
-        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+        updateState { it.copy(blockSuccess = false, blockError = null) }
     }
 }

@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.ui.search
 import com.synapse.social.studioasinc.data.repository.ProfileActionRepository
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
+import com.synapse.social.studioasinc.feature.shared.viewmodel.BaseViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
@@ -71,12 +72,10 @@ class SearchViewModel @Inject constructor(
     private val bookmarkRepository: com.synapse.social.studioasinc.data.repository.BookmarkRepository,
     private val pollRepository: com.synapse.social.studioasinc.data.repository.PollRepository,
     private val profileActionRepository: com.synapse.social.studioasinc.data.repository.ProfileActionRepository
-) : ViewModel() {
+) : BaseViewModel<SearchUiState>(SearchUiState()) {
 
     private val reactionRepository = com.synapse.social.studioasinc.data.repository.ReactionRepository()
 
-    private val _uiState = MutableStateFlow(SearchUiState())
-    val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
     private val HISTORY_KEY = "search_history"
@@ -94,7 +93,7 @@ class SearchViewModel @Inject constructor(
         } else {
             emptyList()
         }
-        _uiState.update { it.copy(searchHistory = historyList) }
+        updateState { it.copy(searchHistory = historyList) }
     }
 
     private fun saveHistory(history: List<String>) {
@@ -104,57 +103,57 @@ class SearchViewModel @Inject constructor(
 
     fun addToHistory(query: String) {
         if (query.isBlank()) return
-        val currentHistory = uiState.value.searchHistory.toMutableList()
+        val currentHistory = currentState.searchHistory.toMutableList()
         currentHistory.remove(query)
         currentHistory.add(0, query)
         if (currentHistory.size > 10) {
             currentHistory.removeAt(currentHistory.lastIndex)
         }
-        _uiState.update { it.copy(searchHistory = currentHistory) }
+        updateState { it.copy(searchHistory = currentHistory) }
         saveHistory(currentHistory)
     }
 
     fun removeFromHistory(query: String) {
-        val currentHistory = uiState.value.searchHistory.toMutableList()
+        val currentHistory = currentState.searchHistory.toMutableList()
         currentHistory.remove(query)
-        _uiState.update { it.copy(searchHistory = currentHistory) }
+        updateState { it.copy(searchHistory = currentHistory) }
         saveHistory(currentHistory)
     }
 
     fun clearHistory() {
-        _uiState.update { it.copy(searchHistory = emptyList()) }
+        updateState { it.copy(searchHistory = emptyList()) }
         saveHistory(emptyList())
     }
 
     fun onQueryChange(query: String) {
-        _uiState.update { it.copy(query = query) }
+        updateState { it.copy(query = query) }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(500)
-            if (query != uiState.value.lastQuery) {
-                _uiState.update { it.copy(cachedData = emptyMap(), lastQuery = query) }
+            if (query != currentState.lastQuery) {
+                updateState { it.copy(cachedData = emptyMap(), lastQuery = query) }
             }
             performSearch(query)
         }
     }
 
     fun onActiveChange(active: Boolean) {
-        _uiState.update { it.copy(active = active) }
+        updateState { it.copy(active = active) }
     }
 
     fun onTabSelected(tab: SearchTab) {
-        _uiState.update { it.copy(selectedTab = tab) }
-        performSearch(uiState.value.query)
+        updateState { it.copy(selectedTab = tab) }
+        performSearch(currentState.query)
     }
 
     fun onSearch(query: String) {
-         _uiState.update { it.copy(query = query) }
+         updateState { it.copy(query = query) }
          addToHistory(query)
          performSearch(query)
     }
 
     fun clearSearch() {
-        _uiState.update { it.copy(query = "") }
+        updateState { it.copy(query = "") }
         performSearch("")
     }
 
@@ -162,22 +161,22 @@ class SearchViewModel @Inject constructor(
         refreshCurrentTab(query)
     }
 
-    fun refreshCurrentTab(query: String = uiState.value.query) {
-        val currentTab = uiState.value.selectedTab
-        val cached = uiState.value.cachedData[currentTab]
+    fun refreshCurrentTab(query: String = currentState.query) {
+        val currentTab = currentState.selectedTab
+        val cached = currentState.cachedData[currentTab]
         
-        if (cached != null && query == uiState.value.lastQuery) {
+        if (cached != null && query == currentState.lastQuery) {
             when (currentTab) {
-                SearchTab.FOR_YOU, SearchTab.PEOPLE -> _uiState.update { it.copy(accounts = cached as List<SearchAccount>, isLoading = false) }
-                SearchTab.TRENDING, SearchTab.LISTS -> _uiState.update { it.copy(hashtags = cached as List<SearchHashtag>, isLoading = false) }
-                SearchTab.NEWS, SearchTab.SPORTS, SearchTab.ENTERTAINMENT -> _uiState.update { it.copy(news = cached as List<SearchNews>, isLoading = false) }
-                SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> _uiState.update { it.copy(posts = cached as List<com.synapse.social.studioasinc.domain.model.Post>, isLoading = false) }
+                SearchTab.FOR_YOU, SearchTab.PEOPLE -> updateState { it.copy(accounts = cached as List<SearchAccount>, isLoading = false) }
+                SearchTab.TRENDING, SearchTab.LISTS -> updateState { it.copy(hashtags = cached as List<SearchHashtag>, isLoading = false) }
+                SearchTab.NEWS, SearchTab.SPORTS, SearchTab.ENTERTAINMENT -> updateState { it.copy(news = cached as List<SearchNews>, isLoading = false) }
+                SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> updateState { it.copy(posts = cached as List<com.synapse.social.studioasinc.domain.model.Post>, isLoading = false) }
             }
             return
         }
         
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            updateState { it.copy(isLoading = true, error = null) }
             try {
                 when (currentTab) {
                     SearchTab.FOR_YOU, SearchTab.PEOPLE -> {
@@ -185,7 +184,7 @@ class SearchViewModel @Inject constructor(
                         val currentUserId = authRepository.getCurrentUserId()
                         result.onSuccess { data ->
                             val filtered = data.filter { it.id != currentUserId }
-                            _uiState.update { 
+                            updateState {
                                 it.copy(
                                     accounts = filtered, 
                                     isLoading = false,
@@ -193,12 +192,12 @@ class SearchViewModel @Inject constructor(
                                 )
                             }
                         }
-                        result.onFailure { err -> _uiState.update { it.copy(error = err.message, isLoading = false) } }
+                        result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.TRENDING, SearchTab.LISTS -> {
                         val result = searchHashtagsUseCase(if (currentTab == SearchTab.TRENDING) "" else query)
                         result.onSuccess { data -> 
-                            _uiState.update { 
+                            updateState {
                                 it.copy(
                                     hashtags = data, 
                                     isLoading = false,
@@ -206,12 +205,12 @@ class SearchViewModel @Inject constructor(
                                 )
                             }
                         }
-                        result.onFailure { err -> _uiState.update { it.copy(error = err.message, isLoading = false) } }
+                        result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.NEWS -> {
                         val result = searchNewsUseCase(query)
                         result.onSuccess { data -> 
-                            _uiState.update { 
+                            updateState {
                                 it.copy(
                                     news = data, 
                                     isLoading = false,
@@ -219,12 +218,12 @@ class SearchViewModel @Inject constructor(
                                 )
                             }
                         }
-                        result.onFailure { err -> _uiState.update { it.copy(error = err.message, isLoading = false) } }
+                        result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.SPORTS -> {
                         val result = searchNewsUseCase("$query sports")
                         result.onSuccess { data -> 
-                            _uiState.update { 
+                            updateState {
                                 it.copy(
                                     news = data, 
                                     isLoading = false,
@@ -232,12 +231,12 @@ class SearchViewModel @Inject constructor(
                                 )
                             }
                         }
-                        result.onFailure { err -> _uiState.update { it.copy(error = err.message, isLoading = false) } }
+                        result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.ENTERTAINMENT -> {
                         val result = searchNewsUseCase("$query entertainment")
                         result.onSuccess { data -> 
-                            _uiState.update { 
+                            updateState {
                                 it.copy(
                                     news = data, 
                                     isLoading = false,
@@ -245,7 +244,7 @@ class SearchViewModel @Inject constructor(
                                 )
                             }
                         }
-                        result.onFailure { err -> _uiState.update { it.copy(error = err.message, isLoading = false) } }
+                        result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
                         val result = searchPostsUseCase(query)
@@ -276,7 +275,7 @@ class SearchViewModel @Inject constructor(
                                 SearchTab.MEDIA -> fullyEnrichedPosts
                                 else -> fullyEnrichedPosts
                             }
-                            _uiState.update { 
+                            updateState {
                                 it.copy(
                                     posts = filtered, 
                                     isLoading = false,
@@ -284,11 +283,11 @@ class SearchViewModel @Inject constructor(
                                 )
                             }
                         }
-                        result.onFailure { err -> _uiState.update { it.copy(error = err.message, isLoading = false) } }
+                        result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+                updateState { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
@@ -296,7 +295,7 @@ class SearchViewModel @Inject constructor(
     fun toggleFollow(accountId: String) {
         viewModelScope.launch {
             val currentUserId = authRepository.getCurrentUserId() ?: return@launch
-            val account = uiState.value.accounts.find { it.id == accountId } ?: return@launch
+            val account = currentState.accounts.find { it.id == accountId } ?: return@launch
 
             val result = if (account.isFollowing) {
                 unfollowUserUseCase(currentUserId, accountId)
@@ -305,7 +304,7 @@ class SearchViewModel @Inject constructor(
             }
 
             result.onSuccess {
-                _uiState.update { state ->
+                updateState { state ->
                     state.copy(
                         accounts = state.accounts.map { acc ->
                             if (acc.id == accountId) acc.copy(isFollowing = !acc.isFollowing) else acc
@@ -313,7 +312,7 @@ class SearchViewModel @Inject constructor(
                     )
                 }
             }.onFailure { err ->
-                _uiState.update { it.copy(error = err.message) }
+                updateState { it.copy(error = err.message) }
             }
         }
     }
@@ -323,7 +322,7 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = authRepository.getCurrentUserId() ?: return@launch
             postRepository.toggleReaction(post.id, userId, reactionType, post.userReaction, skipCheck = true)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
@@ -331,14 +330,14 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = authRepository.getCurrentUserId() ?: return@launch
             postRepository.toggleReaction(post.id, userId, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE, post.userReaction, skipCheck = true)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
     fun bookmarkPost(post: com.synapse.social.studioasinc.domain.model.Post) {
         viewModelScope.launch {
             bookmarkRepository.toggleBookmark(post.id)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
@@ -349,14 +348,14 @@ class SearchViewModel @Inject constructor(
     fun votePoll(post: com.synapse.social.studioasinc.domain.model.Post, optionIndex: Int) {
         viewModelScope.launch {
             pollRepository.submitVote(post.id, optionIndex)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
     fun deletePost(post: com.synapse.social.studioasinc.domain.model.Post) {
         viewModelScope.launch {
             postRepository.deletePost(post.id)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
@@ -367,7 +366,7 @@ class SearchViewModel @Inject constructor(
     fun toggleComments(post: com.synapse.social.studioasinc.domain.model.Post) {
         viewModelScope.launch {
             postRepository.toggleComments(post.id)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
@@ -377,16 +376,16 @@ class SearchViewModel @Inject constructor(
 
     fun blockUser(userId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+            updateState { it.copy(blockSuccess = false, blockError = null) }
             
             blockUserUseCase(userId)
                 .onSuccess {
-                    _uiState.update { it.copy(blockSuccess = true) }
+                    updateState { it.copy(blockSuccess = true) }
                     // Refresh search results to remove blocked user's posts
-                    performSearch(uiState.value.query)
+                    performSearch(currentState.query)
                 }
                 .onFailure { error ->
-                    _uiState.update { 
+                    updateState {
                         it.copy(blockError = error.message ?: "Failed to block user")
                     }
                 }
@@ -394,13 +393,13 @@ class SearchViewModel @Inject constructor(
     }
     
     fun clearBlockStatus() {
-        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+        updateState { it.copy(blockSuccess = false, blockError = null) }
     }
 
     fun revokeVote(post: com.synapse.social.studioasinc.domain.model.Post) {
         viewModelScope.launch {
             pollRepository.revokeVote(post.id)
-                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+                .onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
