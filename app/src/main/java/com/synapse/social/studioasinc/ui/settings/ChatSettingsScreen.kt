@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.ui.settings
 
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +35,9 @@ import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 
 import com.synapse.social.studioasinc.feature.shared.theme.*
+
+private const val MAX_BLUR_RADIUS = 50f
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -221,11 +225,11 @@ private fun ChatLivePreview(
             AsyncImage(
                 model = mContext.resources.getIdentifier("pattern_11", "raw", mContext.packageName),
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * 50).dp),
+                modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * MAX_BLUR_RADIUS).dp),
                 contentScale = ContentScale.Crop,
                 alpha = 0.5f
             )
-        } else if ((wallpaperType == WallpaperType.PATTERN || wallpaperType == WallpaperType.IMAGE_URI) && wallpaperValue != null) {
+        } else if ((wallpaperType == WallpaperType.PATTERN || wallpaperType == WallpaperType.PRESET_IMAGE) && wallpaperValue != null) {
             val context = LocalContext.current
             val resId = context.resources.getIdentifier(wallpaperValue.substringBeforeLast("."), "raw", context.packageName)
             if (resId != 0) {
@@ -235,7 +239,7 @@ private fun ChatLivePreview(
                         .decoderFactory(SvgDecoder.Factory())
                         .build(),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * 50).dp),
+                    modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * MAX_BLUR_RADIUS).dp),
                     contentScale = ContentScale.Crop
                  )
             }
@@ -298,7 +302,8 @@ private fun ChatLivePreview(
 @Composable
 private fun SettingsBlock(
     title: String,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable
+ColumnScope.() -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -384,128 +389,160 @@ private fun WallpaperPicker(
     onBlurIntensityChanged: (Float) -> Unit
 ) {
     Column {
-        val wallpapers = WallpaperType.entries.toList()
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            wallpapers.forEach { wallpaper ->
-                val isSelected = wallpaper == selectedWallpaper
-                val bgColor = when(wallpaper) {
-                    WallpaperType.SOLID_COLOR -> Color(0xFFE0E0E0)
-                    else -> MaterialTheme.colorScheme.surfaceVariant
-                }
+        WallpaperTypeSelector(selectedWallpaper, onWallpaperSelected)
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { onWallpaperSelected(wallpaper) }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 64.dp, height = 80.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(bgColor)
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                shape = RoundedCornerShape(8.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isSelected) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Selected",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = wallpaper.name.lowercase().replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.PRESET_IMAGE) {
+            PatternSelector(selectedWallpaper, selectedWallpaperValue, onWallpaperValueSelected)
         }
 
-        if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.IMAGE_URI) {
-            val isPattern = selectedWallpaper == WallpaperType.PATTERN
-            val items = if (isPattern) {
-                (1..33).map { "pattern_$it" }
-            } else {
-                listOf("wallpaper_10", "wallpaper_23", "wallpaper_24", "wallpaper_26")
-            }
-
-            Text("Select Resource", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge)
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items.forEach { item ->
-                    val isSelected = item == selectedWallpaperValue
-                    val context = LocalContext.current
-
-                    val resId = context.resources.getIdentifier(item, "raw", context.packageName)
-
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { onWallpaperValueSelected(item) }
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                    ) {
-                        if (resId != 0) {
-                            AsyncImage(
-                                model = coil.request.ImageRequest.Builder(LocalContext.current)
-                                    .data(resId)
-                                    .decoderFactory(coil.decode.SvgDecoder.Factory())
-                                    .build(),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                             Box(modifier = Modifier.fillMaxSize().background(Color.Gray))
-                        }
-                    }
-                }
-            }
-        }
-
-        if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.IMAGE_URI || selectedWallpaper == WallpaperType.DEFAULT) {
-            Text(
-                text = "Blur Intensity: ${(blurIntensity * 100).toInt()}%",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            var localBlur by remember(blurIntensity) { mutableStateOf(blurIntensity) }
-            Slider(
-                value = localBlur,
-                onValueChange = { localBlur = it },
-                onValueChangeFinished = { onBlurIntensityChanged(localBlur) },
-                valueRange = 0f..1f,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+        if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.PRESET_IMAGE || selectedWallpaper == WallpaperType.DEFAULT) {
+            BlurSlider(blurIntensity, onBlurIntensityChanged)
         }
     }
 }
 
+@Composable
+private fun WallpaperTypeSelector(
+    selectedWallpaper: WallpaperType,
+    onWallpaperSelected: (WallpaperType) -> Unit
+) {
+    val wallpapers = WallpaperType.entries.toList()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        wallpapers.forEach { wallpaper ->
+            val isSelected = wallpaper == selectedWallpaper
+            val bgColor = when(wallpaper) {
+                WallpaperType.SOLID_COLOR -> Color(0xFFE0E0E0)
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
 
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable { onWallpaperSelected(wallpaper) }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 64.dp, height = 80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(bgColor)
+                        .border(
+                            width = if (isSelected) 3.dp else 0.dp,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = wallpaper.name.lowercase().replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PatternSelector(
+    selectedWallpaper: WallpaperType,
+    selectedWallpaperValue: String?,
+    onWallpaperValueSelected: (String?) -> Unit
+) {
+    val context = LocalContext.current
+    val isPattern = selectedWallpaper == WallpaperType.PATTERN
+    val items = remember(isPattern) {
+        try {
+            val rawClass = Class.forName("${context.packageName}.R\$raw")
+            rawClass.fields
+                .map { it.name }
+                .filter { if (isPattern) it.startsWith("pattern_") else it.startsWith("wallpaper_") }
+                .sortedBy {
+                    val numStr = it.substringAfterLast("_").filter { c -> c.isDigit() }
+                    numStr.toIntOrNull() ?: 0
+                }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    Text("Select Resource", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items.forEach { item ->
+            val isSelected = item == selectedWallpaperValue
+
+            val resId = context.resources.getIdentifier(item, "raw", context.packageName)
+
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onWallpaperValueSelected(item) }
+                    .border(
+                        width = if (isSelected) 3.dp else 0.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+            ) {
+                if (resId != 0) {
+                    AsyncImage(
+                        model = coil.request.ImageRequest.Builder(LocalContext.current)
+                            .data(resId)
+                            .decoderFactory(coil.decode.SvgDecoder.Factory())
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                     Box(modifier = Modifier.fillMaxSize().background(Color.Gray))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BlurSlider(
+    blurIntensity: Float,
+    onBlurIntensityChanged: (Float) -> Unit
+) {
+    Text(
+        text = "Blur Intensity: ${(blurIntensity * 100).toInt()}%",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    )
+    var localBlur by remember(blurIntensity) { mutableStateOf(blurIntensity) }
+    Slider(
+        value = localBlur,
+        onValueChange = { localBlur = it },
+        onValueChangeFinished = { onBlurIntensityChanged(localBlur) },
+        valueRange = 0f..1f,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
+}
 @Composable
 private fun ChatListViewPicker(
     selectedLayout: ChatListLayout,

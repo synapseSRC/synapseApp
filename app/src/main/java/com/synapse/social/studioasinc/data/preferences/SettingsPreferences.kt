@@ -130,29 +130,6 @@ class SettingsPreferences @Inject constructor(
     }
 
 
-    private val _chatWallpaperType = MutableStateFlow(prefs.getString("chat_wallpaper_type", "DEFAULT") ?: "DEFAULT")
-    val chatWallpaperType = _chatWallpaperType.asStateFlow()
-
-    private val _chatWallpaperValue = MutableStateFlow(prefs.getString("chat_wallpaper_value", null))
-    val chatWallpaperValue = _chatWallpaperValue.asStateFlow()
-
-    private val _chatWallpaperBlur = MutableStateFlow(prefs.getFloat("chat_wallpaper_blur", 0f))
-    val chatWallpaperBlur = _chatWallpaperBlur.asStateFlow()
-
-    fun setChatWallpaperType(type: String) {
-        prefs.edit().putString("chat_wallpaper_type", type).apply()
-        _chatWallpaperType.value = type
-    }
-
-    fun setChatWallpaperValue(value: String?) {
-        prefs.edit().putString("chat_wallpaper_value", value).apply()
-        _chatWallpaperValue.value = value
-    }
-
-    fun setChatWallpaperBlur(blur: Float) {
-        prefs.edit().putFloat("chat_wallpaper_blur", blur).apply()
-        _chatWallpaperBlur.value = blur
-    }
 
     fun getLockedChatIds(): Set<String> {
         return prefs.getStringSet("locked_chat_ids", emptySet()) ?: emptySet()

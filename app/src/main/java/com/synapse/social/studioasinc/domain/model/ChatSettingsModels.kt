@@ -23,7 +23,7 @@ enum class ChatThemePreset {
 enum class WallpaperType {
     DEFAULT,
     SOLID_COLOR,
-    IMAGE_URI,
+    PRESET_IMAGE,
     PATTERN
 }
 
