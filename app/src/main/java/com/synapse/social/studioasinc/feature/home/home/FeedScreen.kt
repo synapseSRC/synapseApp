@@ -182,6 +182,13 @@ fun FeedScreen(
                 contentPadding = contentPadding
             ) {
 
+                item {
+                    QuickPostArea(
+                        userProfileUrl = currentUser?.avatar,
+                        onClick = onCreatePostClick
+                    )
+                }
+
                 item(key = "story_tray") {
 
 
@@ -207,12 +214,6 @@ fun FeedScreen(
                         onAddStoryClick = onAddStoryClick,
                         onStoryClick = onStoryClickMemoized,
                         isLoading = storyTrayState.isLoading
-                    )
-                }
-                item {
-                    QuickPostArea(
-                        userProfileUrl = currentUser?.avatar,
-                        onClick = onCreatePostClick
                     )
                 }
 

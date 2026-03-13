@@ -64,7 +64,7 @@ class PostRepository constructor(
                 pageSize = 20,
                 enablePlaceholders = false
             ),
-            pagingSourceFactory = { com.synapse.social.studioasinc.data.paging.FeedPagingSource(client) }
+            pagingSourceFactory = { com.synapse.social.studioasinc.data.paging.FeedPagingSource(client, postDao) }
         ).flow
     }
 

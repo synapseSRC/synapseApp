@@ -50,6 +50,7 @@ fun HomeNavGraph(
     onNavigateToEditPost: (String) -> Unit,
     onNavigateToStoryViewer: (String) -> Unit = {},
     onNavigateToCreateReel: () -> Unit = {},
+    onNavigateToCreatePost: () -> Unit = {},
     startDestination: Any = HomeDestinations.Feed,
     modifier: Modifier = Modifier,
     bottomPadding: Dp = 0.dp
@@ -75,7 +76,7 @@ fun HomeNavGraph(
                 onAddStoryClick = {
                     context.startActivity(Intent(context, StoryCreatorActivity::class.java))
                 },
-                onCreatePostClick = { navController.navigate(AppDestination.CreatePost()) },
+                onCreatePostClick = onNavigateToCreatePost,
                 contentPadding = PaddingValues(bottom = bottomPadding)
             )
         }

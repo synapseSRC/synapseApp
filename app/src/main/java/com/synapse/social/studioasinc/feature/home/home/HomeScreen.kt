@@ -149,6 +149,7 @@ fun HomeScreen(
                 onNavigateToEditPost = { postId -> onNavigateToCreatePost(postId) },
                 onNavigateToStoryViewer = onNavigateToStoryViewer,
                 onNavigateToCreateReel = onNavigateToCreateReel,
+                onNavigateToCreatePost = { onNavigateToCreatePost(null) },
                 modifier = Modifier.padding(innerPadding),
                 bottomPadding = 80.dp
             )

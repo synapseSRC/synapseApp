@@ -30,9 +30,9 @@ fun QuickPostArea(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(bottom = Spacing.Small),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(0.dp)
     ) {

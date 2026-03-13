@@ -8,6 +8,8 @@ interface PostDao {
     suspend fun insertAll(posts: List<PostEntity>)
     suspend fun getPostById(id: String): PostEntity?
     suspend fun getAllPosts(): List<PostEntity>
+    suspend fun getPostsPaged(limit: Long, offset: Long): List<PostEntity>
+    suspend fun getPostsCount(): Long
     fun getAllPostsAsFlow(): Flow<List<PostEntity>>
     suspend fun getAllPostIds(): List<String>
     suspend fun deleteById(id: String)

@@ -37,6 +37,14 @@ class SqlDelightPostDao(
     }
 
 
+    override suspend fun getPostsPaged(limit: Long, offset: Long): List<PostEntity> = withContext(Dispatchers.IO) {
+        db.postQueries.selectAllPaged(limit, offset).executeAsList().map { toEntity(it) }
+    }
+
+    override suspend fun getPostsCount(): Long = withContext(Dispatchers.IO) {
+        db.postQueries.countAllPosts().executeAsOne()
+    }
+
     override fun getAllPostsAsFlow(): Flow<List<PostEntity>> {
         return db.postQueries.selectAll()
             .asFlow()
