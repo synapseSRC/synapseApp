@@ -84,6 +84,16 @@ class ApiKeySettingsService @Inject constructor(
         keyName: String? = null,
         usageLimit: Int? = null
     ): Result<String> {
+        if (provider.isBlank() || provider !in getAvailableProviders()) {
+            return Result.failure(IllegalArgumentException("Invalid provider"))
+        }
+        if (apiKey.isBlank()) {
+            return Result.failure(IllegalArgumentException("API key cannot be empty"))
+        }
+        if (usageLimit != null && usageLimit <= 0) {
+            return Result.failure(IllegalArgumentException("Usage limit must be positive"))
+        }
+
         return try {
             val token = supabaseClient.auth.currentAccessTokenOrNull()
                 ?: return Result.failure(Exception("Not authenticated"))
@@ -91,7 +101,7 @@ class ApiKeySettingsService @Inject constructor(
             val request = ApiKeyRequest(
                 provider = provider,
                 api_key = apiKey,
-                key_name = keyName ?: "$provider Key",
+                key_name = keyName?.takeIf { it.isNotBlank() } ?: "$provider Key",
                 usage_limit = usageLimit
             )
 
@@ -117,6 +127,10 @@ class ApiKeySettingsService @Inject constructor(
     }
 
     suspend fun deleteApiKey(keyId: String): Result<String> {
+        if (keyId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Key ID cannot be empty"))
+        }
+
         return try {
             val token = supabaseClient.auth.currentAccessTokenOrNull()
                 ?: return Result.failure(Exception("Not authenticated"))
@@ -143,6 +157,16 @@ class ApiKeySettingsService @Inject constructor(
     }
 
     suspend fun updateProviderSettings(settings: ProviderSettings): Result<Unit> {
+        if (settings.preferredProvider !in getAvailableProviders()) {
+            return Result.failure(IllegalArgumentException("Invalid preferred provider"))
+        }
+        if (settings.maxTokens <= 0) {
+            return Result.failure(IllegalArgumentException("Max tokens must be positive"))
+        }
+        if (settings.temperature < 0.0 || settings.temperature > 1.0) {
+            return Result.failure(IllegalArgumentException("Temperature must be between 0.0 and 1.0"))
+        }
+
         return try {
             val userId = supabaseClient.auth.currentUserOrNull()?.id
                 ?: return Result.failure(Exception("Not authenticated"))

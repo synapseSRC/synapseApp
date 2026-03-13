@@ -358,10 +358,10 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun addGroupMember(chatId: String, userId: String) = withContext(Dispatchers.IO) {
+    suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(Dispatchers.IO) {
         try {
-            val participant = ChatParticipantDto(chatId = chatId, userId = userId)
-            client.postgrest.from("chat_participants").insert(participant)
+            val participants = userIds.map { ChatParticipantDto(chatId = chatId, userId = it) }
+            client.postgrest.from("chat_participants").insert(participants)
         } catch (e: Exception) {
             Napier.e("Error adding group member", e)
             throw e
@@ -396,26 +396,30 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
                 }
             }
 
-            val messages = client.postgrest.from("messages").select {
+            // Optimize: Fetch only necessary columns
+            val messages = client.postgrest.from("messages").select(columns = Columns.list("id", "read_by")) {
                 filter {
                     eq("chat_id", chatId)
                     neq("sender_id", currentUserId)
                 }
             }.decodeList<MessageDto>()
 
-            messages.forEach { msg ->
-                msg.id?.let { messageId ->
-                    val readByList = msg.readBy?.toMutableList() ?: mutableListOf<String>()
-                    if (!readByList.contains(currentUserId)) {
-                        readByList.add(currentUserId)
+            // Optimize: Group messages by their current read_by list to perform bulk updates
+            messages
+                .filter { it.id != null && it.readBy?.contains(currentUserId) != true }
+                .groupBy { it.readBy ?: emptyList<String>() }
+                .forEach { (oldReadBy, msgs) ->
+                    val newReadBy = oldReadBy + currentUserId
+                    val ids = msgs.mapNotNull { it.id }
+
+                    if (ids.isNotEmpty()) {
                         client.postgrest.from("messages").update({
-                            set("read_by", readByList)
+                            set("read_by", newReadBy)
                         }) {
-                            filter { eq("id", messageId) }
+                            filter { isIn("id", ids) }
                         }
                     }
                 }
-            }
         } catch (e: Exception) {
             Napier.e("Error marking messages as read", e)
         }

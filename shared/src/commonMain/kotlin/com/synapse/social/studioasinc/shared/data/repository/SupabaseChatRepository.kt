@@ -536,8 +536,8 @@ class SupabaseChatRepository(
         Result.failure(e)
     }
 
-    override suspend fun addGroupMember(chatId: String, userId: String): Result<Unit> = try {
-        dataSource.addGroupMember(chatId, userId)
+    override suspend fun addGroupMembers(chatId: String, userIds: List<String>): Result<Unit> = try {
+        dataSource.addGroupMembers(chatId, userIds)
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error adding group member", e)
