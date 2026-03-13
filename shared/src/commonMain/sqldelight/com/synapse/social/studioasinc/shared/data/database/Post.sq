@@ -87,7 +87,12 @@ countPosts:
 SELECT count(*) FROM Post;
 
 selectAllPaged:
-SELECT * FROM Post LIMIT :limit OFFSET :offset;
+SELECT * FROM Post ORDER BY timestamp DESC LIMIT :limit OFFSET :offset;
 
 selectIds:
 SELECT id FROM Post;
+
+-- Ensures selectAllPaged and countPosts exist for paging system caching
+
+countAllPosts:
+SELECT count(*) FROM Post;

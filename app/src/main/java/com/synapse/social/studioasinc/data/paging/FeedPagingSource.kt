@@ -13,12 +13,18 @@ import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+import com.synapse.social.studioasinc.data.repository.PostMapper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
 import kotlinx.serialization.json.*
 
 private val json = Json { ignoreUnknownKeys = true }
 
 class FeedPagingSource(
-    private val client: io.github.jan.supabase.SupabaseClient
+    private val client: io.github.jan.supabase.SupabaseClient,
+    private val postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao
 ) : PagingSource<Int, FeedItem>() {
 
     private val reactionRepository = ReactionRepository()
@@ -27,6 +33,41 @@ class FeedPagingSource(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FeedItem> {
         val position = params.key ?: 0
         val pageSize = params.loadSize
+        return try {
+            Log.d("FeedPagingSource", "Loading feed timeline at position: $position, pageSize: $pageSize")
+
+            // Cache-First Strategy (for pagination):
+            // Always fetch position 0 from network to ensure the feed is fresh and real-time updates are seen.
+            // For older posts (position > 0), check the local cache first for smooth 60 FPS scrolling.
+            if (position > 0) {
+                val localPostsEntity = postDao.getPostsPaged(pageSize.toLong(), position.toLong())
+                val totalCached = postDao.getPostsCount()
+
+                // Return cached data ONLY if we have enough items to fill the page,
+                // OR if we've reached the end of the cached data.
+                if (localPostsEntity.size == pageSize || (localPostsEntity.isNotEmpty() && position + localPostsEntity.size >= totalCached.toInt() && totalCached.toInt() > 0)) {
+                Log.d("FeedPagingSource", "Cache hit: Loaded ${localPostsEntity.size} feed items from local DB (offset: $position)")
+                val localPosts = localPostsEntity.map { PostMapper.toModel(it) }
+                val feedItems = localPosts.map { FeedItem.PostItem(it) }
+
+                return LoadResult.Page(
+                    data = feedItems,
+                    prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
+                    nextKey = if (localPostsEntity.isEmpty()) null else position + localPostsEntity.size
+                )
+            }
+            }
+
+            // Fallback to Network if cache has gaps, is empty, or if we are refreshing the top of the feed (position == 0)
+            return syncNetworkData(position, pageSize)
+        } catch (e: Exception) {
+            Log.e("FeedPagingSource", "Error loading feed items", e)
+            LoadResult.Error(e)
+        }
+    }
+
+
+    private suspend fun syncNetworkData(position: Int, pageSize: Int): LoadResult<Int, FeedItem> {
         return try {
             Log.d("FeedPagingSource", "Loading feed timeline at position: $position, pageSize: $pageSize")
 
@@ -160,13 +201,30 @@ class FeedPagingSource(
                 } else null
             }
 
+            // Insert fetched items into cache
+            val postsToCache = postsWithPolls.map { PostMapper.toEntity(it) }
+            if (postsToCache.isNotEmpty()) {
+                postDao.insertAll(postsToCache)
+            }
+
             LoadResult.Page(
                 data = feedItems,
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (timelineResponse.isEmpty()) null else position + pageSize
             )
         } catch (e: Exception) {
-            Log.e("FeedPagingSource", "Error loading feed items", e)
+            Log.e("FeedPagingSource", "Error syncing feed items", e)
+            // If offline/network fails, return whatever is in cache even if it's incomplete
+            val fallbackCache = postDao.getPostsPaged(pageSize.toLong(), position.toLong())
+            if (fallbackCache.isNotEmpty()) {
+                val fallbackPosts = fallbackCache.map { PostMapper.toModel(it) }
+                val fallbackItems = fallbackPosts.map { FeedItem.PostItem(it) }
+                return LoadResult.Page(
+                    data = fallbackItems,
+                    prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
+                    nextKey = if (fallbackCache.isEmpty()) null else position + fallbackCache.size
+                )
+            }
             LoadResult.Error(e)
         }
     }
