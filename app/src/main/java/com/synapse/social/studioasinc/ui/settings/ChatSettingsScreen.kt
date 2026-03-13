@@ -236,7 +236,11 @@ private fun ChatLivePreview(
                  AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(resId)
-                        .decoderFactory(SvgDecoder.Factory())
+                        .apply {
+                            if (wallpaperType == WallpaperType.PATTERN) {
+                                decoderFactory(SvgDecoder.Factory())
+                            }
+                        }
                         .build(),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().blur(radius = (blurIntensity * MAX_BLUR_RADIUS).dp),
@@ -509,7 +513,11 @@ private fun PatternSelector(
                     AsyncImage(
                         model = coil.request.ImageRequest.Builder(LocalContext.current)
                             .data(resId)
-                            .decoderFactory(coil.decode.SvgDecoder.Factory())
+                            .apply {
+                                if (isPattern) {
+                                    decoderFactory(coil.decode.SvgDecoder.Factory())
+                                }
+                            }
                             .build(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),

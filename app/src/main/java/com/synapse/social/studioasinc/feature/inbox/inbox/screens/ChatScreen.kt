@@ -368,7 +368,11 @@ fun ChatScreen(
                              AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(resId)
-                                    .decoderFactory(SvgDecoder.Factory())
+                                    .apply {
+                                        if (chatWallpaperType == WallpaperType.PATTERN) {
+                                            decoderFactory(SvgDecoder.Factory())
+                                        }
+                                    }
                                     .build(),
                                 contentDescription = "Background",
                                 modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
