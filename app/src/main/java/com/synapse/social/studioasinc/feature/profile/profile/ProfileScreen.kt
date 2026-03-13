@@ -515,48 +515,10 @@ private fun ProfileContent(
                 }
             )
         }
-
-
         item {
-            Spacer(modifier = Modifier.height(8.dp))
-            ContentFilterBar(
-                selectedFilter = state.contentFilter,
-                onFilterSelected = { filter -> viewModel.switchContentFilter(filter) },
-                modifier = Modifier.fillMaxWidth(),
-                showLabels = true
-            )
-        }
-
-
-        item {
-            crossfadeContent(targetState = state.contentFilter) { filter ->
-                when (filter) {
-                    ProfileContentFilter.PHOTOS -> {
-                        if (state.photos.isEmpty() && !state.isLoadingMore && !state.isRefreshing) {
-                            EmptyState(
-                                icon = Icons.Default.PhotoLibrary,
-                                title = stringResource(R.string.empty_profile_photos_title),
-                                message = stringResource(R.string.empty_profile_photos_msg)
-                            )
-                        } else {
-                            val photos = remember(state.photos) {
-                                state.photos.filterIsInstance<MediaItem>()
-                            }
-                            PhotoGrid(
-                                items = photos,
-                                onItemClick = { mediaItem ->
-
-                                    val allUrls = photos.map { it.url }
-                                    val index = photos.indexOf(mediaItem)
-                                    onOpenMediaViewer(allUrls, if (index >= 0) index else 0)
-                                },
-                                isLoading = state.isLoadingMore
-                            )
-                        }
-                    }
-                    ProfileContentFilter.POSTS -> {
-                        val profile = (state.profileState as? ProfileUiState.Success)?.profile ?: return@crossfadeContent
-                        Column {
+            val profile = (state.profileState as? ProfileUiState.Success)?.profile
+            if (profile != null) {
+                Column {
 
                             Spacer(modifier = Modifier.height(16.dp))
                             UserDetailsSection(
@@ -609,6 +571,52 @@ private fun ProfileContent(
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+
+
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            ContentFilterBar(
+                selectedFilter = state.contentFilter,
+                onFilterSelected = { filter -> viewModel.switchContentFilter(filter) },
+                modifier = Modifier.fillMaxWidth(),
+                showLabels = true
+            )
+        }
+
+
+        item {
+            crossfadeContent(targetState = state.contentFilter) { filter ->
+                when (filter) {
+                    ProfileContentFilter.PHOTOS -> {
+                        if (state.photos.isEmpty() && !state.isLoadingMore && !state.isRefreshing) {
+                            EmptyState(
+                                icon = Icons.Default.PhotoLibrary,
+                                title = stringResource(R.string.empty_profile_photos_title),
+                                message = stringResource(R.string.empty_profile_photos_msg)
+                            )
+                        } else {
+                            val photos = remember(state.photos) {
+                                state.photos.filterIsInstance<MediaItem>()
+                            }
+                            PhotoGrid(
+                                items = photos,
+                                onItemClick = { mediaItem ->
+
+                                    val allUrls = photos.map { it.url }
+                                    val index = photos.indexOf(mediaItem)
+                                    onOpenMediaViewer(allUrls, if (index >= 0) index else 0)
+                                },
+                                isLoading = state.isLoadingMore
+                            )
+                        }
+                    }
+                    ProfileContentFilter.POSTS -> {
+                        val profile = (state.profileState as? ProfileUiState.Success)?.profile ?: return@crossfadeContent
+                        Column {
 
 
                             if (state.posts.isEmpty() && !state.isLoadingMore && !state.isRefreshing) {
