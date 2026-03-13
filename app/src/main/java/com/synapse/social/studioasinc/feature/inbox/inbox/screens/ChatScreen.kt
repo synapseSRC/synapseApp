@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
+
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.canhub.cropper.CropImageContract
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextLayoutResult
+
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -78,8 +80,13 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.provider.OpenableColumns
 import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+
+import androidx.compose.ui.draw.blur
+import com.synapse.social.studioasinc.domain.model.WallpaperType
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatShimmer
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -102,6 +109,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
+
+private const val MAX_BLUR_RADIUS = 50f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,6 +139,11 @@ fun ChatScreen(
     val selectedMessageIds by viewModel.selectedMessageIds.collectAsState()
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val currentUserId = viewModel.currentUserId ?: ""
+
+    val chatWallpaperType by viewModel.chatWallpaperType.collectAsState()
+    val chatWallpaperValue by viewModel.chatWallpaperValue.collectAsState()
+    val chatWallpaperBlur by viewModel.chatWallpaperBlur.collectAsState()
+
 
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
 
@@ -332,6 +346,45 @@ fun ChatScreen(
                 .padding(top = paddingValues.calculateTopPadding())
                 .imePadding()
         ) {
+
+            if (!isLoading || messages.isNotEmpty()) {
+                when (chatWallpaperType) {
+                    WallpaperType.SOLID_COLOR -> {
+                        // Do nothing, default surface color
+                    }
+                    WallpaperType.DEFAULT -> {
+                         AsyncImage(
+                            model = context.resources.getIdentifier("pattern_11", "raw", context.packageName), // Default pattern or just surface color
+                            contentDescription = "Background",
+                            modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
+                            contentScale = ContentScale.Crop,
+                            alpha = 0.5f
+                         )
+                    }
+                    WallpaperType.PATTERN, WallpaperType.PRESET_IMAGE -> {
+                        chatWallpaperValue?.let { value ->
+                            val context = LocalContext.current
+                            val resId = context.resources.getIdentifier(value, "raw", context.packageName)
+                            if (resId != 0) {
+                                 AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(resId)
+                                        .apply {
+                                            if (chatWallpaperType == WallpaperType.PATTERN) {
+                                                decoderFactory(SvgDecoder.Factory())
+                                            }
+                                        }
+                                        .build(),
+                                    contentDescription = "Background",
+                                    modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
+                                    contentScale = ContentScale.Crop
+                                 )
+                            }
+                        }
+                    }
+                }
+            }
+
             when {
                 isLoading && messages.isEmpty() -> {
                     ChatShimmer(modifier = Modifier.fillMaxSize())
@@ -359,8 +412,7 @@ fun ChatScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
+                            .fillMaxSize(),
                         // Extra bottom padding so last messages aren't hidden behind the floating input
                         contentPadding = PaddingValues(
                             start = Spacing.Medium,

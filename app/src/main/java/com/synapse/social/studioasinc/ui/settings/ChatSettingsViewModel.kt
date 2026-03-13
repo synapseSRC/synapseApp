@@ -48,6 +48,21 @@ class ChatSettingsViewModel @Inject constructor(
             initialValue = WallpaperType.DEFAULT
         )
 
+
+    val chatWallpaperValue: StateFlow<String?> = settingsRepository.chatWallpaperValue
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    val chatWallpaperBlur: StateFlow<Float> = settingsRepository.chatWallpaperBlur
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0f
+        )
+
     val chatListLayout: StateFlow<ChatListLayout> = settingsRepository.chatListLayout
         .stateIn(
             scope = viewModelScope,
@@ -90,6 +105,19 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatWallpaperType(type: WallpaperType) {
         viewModelScope.launch {
             settingsRepository.setChatWallpaperType(type)
+        }
+    }
+
+
+    fun updateChatWallpaperValue(value: String?) {
+        viewModelScope.launch {
+            settingsRepository.setChatWallpaperValue(value)
+        }
+    }
+
+    fun updateChatWallpaperBlur(blur: Float) {
+        viewModelScope.launch {
+            settingsRepository.setChatWallpaperBlur(blur)
         }
     }
 

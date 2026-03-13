@@ -51,7 +51,8 @@ class ChatViewModel @Inject constructor(
     private val uploadProgressManager: UploadProgressManager,
     private val fileUploader: com.synapse.social.studioasinc.shared.data.FileUploader,
     private val toggleMessageReactionUseCase: ToggleMessageReactionUseCase,
-    private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase
+    private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
+    private val settingsRepository: com.synapse.social.studioasinc.data.repository.SettingsRepository
 ) : ViewModel() {
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
@@ -77,6 +78,14 @@ class ChatViewModel @Inject constructor(
 
     private val _editingMessage = MutableStateFlow<Message?>(null)
     val editingMessage: StateFlow<Message?> = _editingMessage.asStateFlow()
+
+    val chatWallpaperType = settingsRepository.chatWallpaperType
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), com.synapse.social.studioasinc.domain.model.WallpaperType.DEFAULT)
+    val chatWallpaperValue = settingsRepository.chatWallpaperValue
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val chatWallpaperBlur = settingsRepository.chatWallpaperBlur
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0f)
+
 
     private val _selectedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedMessageIds: StateFlow<Set<String>> = _selectedMessageIds.asStateFlow()

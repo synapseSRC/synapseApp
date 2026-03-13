@@ -129,6 +129,8 @@ class SettingsPreferences @Inject constructor(
         _dataSaverEnabled.value = enabled
     }
 
+
+
     fun getLockedChatIds(): Set<String> {
         return prefs.getStringSet("locked_chat_ids", emptySet()) ?: emptySet()
     }

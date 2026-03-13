@@ -24,7 +24,9 @@ fun ChatShimmer(
     val listState = rememberLazyListState()
     
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         state = listState,
         contentPadding = PaddingValues(Spacing.Medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.Small),

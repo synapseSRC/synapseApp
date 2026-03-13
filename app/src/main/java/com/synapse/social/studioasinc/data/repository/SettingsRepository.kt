@@ -137,6 +137,13 @@ interface SettingsRepository {
     val chatWallpaperType: Flow<com.synapse.social.studioasinc.domain.model.WallpaperType>
     suspend fun setChatWallpaperType(type: com.synapse.social.studioasinc.domain.model.WallpaperType)
 
+    val chatWallpaperValue: Flow<String?>
+    suspend fun setChatWallpaperValue(value: String?)
+
+    val chatWallpaperBlur: Flow<Float>
+    suspend fun setChatWallpaperBlur(blur: Float)
+
+
     val chatMessageCornerRadius: Flow<Int>
     suspend fun setChatMessageCornerRadius(radius: Int)
 

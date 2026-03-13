@@ -158,6 +158,19 @@ class SettingsRepositoryImpl private constructor(
         settingsDataStore.setChatWallpaperType(type)
     }
 
+    override val chatWallpaperValue: Flow<String?> = settingsDataStore.chatWallpaperValue
+
+    override suspend fun setChatWallpaperValue(value: String?) {
+        settingsDataStore.setChatWallpaperValue(value)
+    }
+
+    override val chatWallpaperBlur: Flow<Float> = settingsDataStore.chatWallpaperBlur
+
+    override suspend fun setChatWallpaperBlur(blur: Float) {
+        settingsDataStore.setChatWallpaperBlur(blur)
+    }
+
+
     override val chatMessageCornerRadius: Flow<Int> = settingsDataStore.chatMessageCornerRadius
 
     override suspend fun setChatMessageCornerRadius(radius: Int) {
