@@ -410,8 +410,7 @@ fun ChatScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
+                            .fillMaxSize(),
                         // Extra bottom padding so last messages aren't hidden behind the floating input
                         contentPadding = PaddingValues(
                             start = Spacing.Medium,
