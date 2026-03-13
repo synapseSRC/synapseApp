@@ -479,138 +479,12 @@ class EditProfileViewModel @Inject constructor(
             }
 
             try {
-                val updateData = mutableMapOf<String, Any?>()
-
-                // Required fields
-                updateData["username"] = state.username
-                
-                // Optional string fields - only add if not blank
-                if (state.nickname.isNotBlank()) {
-                    updateData["display_name"] = state.nickname
-                } else {
-                    updateData["display_name"] = null
-                }
-                
-                if (state.bio.isNotBlank()) {
-                    updateData["bio"] = state.bio
-                } else {
-                    updateData["bio"] = null
-                }
-                
-                // Gender - always set
-                updateData["gender"] = state.selectedGender.name.lowercase()
-
-                // Region
-                state.selectedRegion?.let { 
-                    if (it.isNotBlank()) updateData["region"] = it 
-                }
-                
-                // Media URLs
-                state.avatarUrl?.let { 
-                    if (it.isNotBlank()) updateData["avatar"] = it 
-                }
-                state.coverUrl?.let { 
-                    if (it.isNotBlank()) updateData["profile_cover_image"] = it 
-                }
-                
-                // Location fields
-                if (state.currentCity.isNotBlank()) {
-                    updateData["current_city"] = state.currentCity
-                } else {
-                    updateData["current_city"] = null
-                }
-                
-                if (state.hometown.isNotBlank()) {
-                    updateData["hometown"] = state.hometown
-                } else {
-                    updateData["hometown"] = null
-                }
-                
-                // Work & Education
-                if (state.occupation.isNotBlank()) {
-                    updateData["occupation"] = state.occupation
-                } else {
-                    updateData["occupation"] = null
-                }
-                
-                if (state.workplace.isNotBlank()) {
-                    updateData["workplace"] = state.workplace
-                } else {
-                    updateData["workplace"] = null
-                }
-                
-                // Education - convert to list only if not empty
-                val educationList = state.education.split(",").map { it.trim() }.filter { it.isNotBlank() }
-                if (educationList.isNotEmpty()) {
-                    updateData["education"] = educationList
-                } else {
-                    updateData["education"] = emptyList<String>()
-                }
-                
-                // Personal info
-                if (state.pronouns.isNotBlank()) {
-                    updateData["pronouns"] = state.pronouns
-                } else {
-                    updateData["pronouns"] = null
-                }
-                
-                if (state.birthday.isNotBlank()) {
-                    updateData["birthday"] = state.birthday
-                } else {
-                    updateData["birthday"] = null
-                }
-                
-                if (state.relationshipStatus.isNotBlank()) {
-                    updateData["relationship_status"] = state.relationshipStatus
-                } else {
-                    updateData["relationship_status"] = null
-                }
-                
-                // Social links
-                if (state.discordTag.isNotBlank()) {
-                    updateData["discord_tag"] = state.discordTag
-                } else {
-                    updateData["discord_tag"] = null
-                }
-                
-                if (state.githubProfile.isNotBlank()) {
-                    updateData["github_profile"] = state.githubProfile
-                } else {
-                    updateData["github_profile"] = null
-                }
-                
-                if (state.personalWebsite.isNotBlank()) {
-                    updateData["personal_website"] = state.personalWebsite
-                } else {
-                    updateData["personal_website"] = null
-                }
-                
-                if (state.publicEmail.isNotBlank()) {
-                    updateData["public_email"] = state.publicEmail
-                } else {
-                    updateData["public_email"] = null
-                }
-
+                val updateData = buildUpdateDataMap(state)
                 val result = repository.updateProfile(userId, updateData)
 
                 result.fold(
                     onSuccess = {
-                         val originalUsername = state.profile?.username
-                         if (originalUsername != null && originalUsername != state.username) {
-                             val syncResult = repository.syncUsernameChange(originalUsername, state.username, userId)
-                             syncResult.fold(
-                                 onSuccess = {
-                                     _uiState.update { it.copy(isSaving = false, hasChanges = false) }
-                                     _navigationEvents.emit(EditProfileNavigation.NavigateBack)
-                                 },
-                                 onFailure = { error ->
-                                     _uiState.update { it.copy(isSaving = false, error = "Profile saved but username sync failed: ${error.message}. Please try again.") }
-                                 }
-                             )
-                         } else {
-                             _uiState.update { it.copy(isSaving = false, hasChanges = false) }
-                             _navigationEvents.emit(EditProfileNavigation.NavigateBack)
-                         }
+                        handleSuccessfulSave(state, userId)
                     },
                     onFailure = { error ->
                         _uiState.update { it.copy(isSaving = false, error = "Failed to save: ${error.message}") }
@@ -619,6 +493,141 @@ class EditProfileViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, error = "Unexpected error: ${e.message}") }
             }
+        }
+    }
+
+    private fun buildUpdateDataMap(state: EditProfileUiState): Map<String, Any?> {
+        val updateData = mutableMapOf<String, Any?>()
+
+        // Required fields
+        updateData["username"] = state.username
+
+        // Optional string fields - only add if not blank
+        if (state.nickname.isNotBlank()) {
+            updateData["display_name"] = state.nickname
+        } else {
+            updateData["display_name"] = null
+        }
+
+        if (state.bio.isNotBlank()) {
+            updateData["bio"] = state.bio
+        } else {
+            updateData["bio"] = null
+        }
+
+        // Gender - always set
+        updateData["gender"] = state.selectedGender.name.lowercase()
+
+        // Region
+        state.selectedRegion?.let {
+            if (it.isNotBlank()) updateData["region"] = it
+        }
+
+        // Media URLs
+        state.avatarUrl?.let {
+            if (it.isNotBlank()) updateData["avatar"] = it
+        }
+        state.coverUrl?.let {
+            if (it.isNotBlank()) updateData["profile_cover_image"] = it
+        }
+
+        // Location fields
+        if (state.currentCity.isNotBlank()) {
+            updateData["current_city"] = state.currentCity
+        } else {
+            updateData["current_city"] = null
+        }
+
+        if (state.hometown.isNotBlank()) {
+            updateData["hometown"] = state.hometown
+        } else {
+            updateData["hometown"] = null
+        }
+
+        // Work & Education
+        if (state.occupation.isNotBlank()) {
+            updateData["occupation"] = state.occupation
+        } else {
+            updateData["occupation"] = null
+        }
+
+        if (state.workplace.isNotBlank()) {
+            updateData["workplace"] = state.workplace
+        } else {
+            updateData["workplace"] = null
+        }
+
+        // Education - convert to list only if not empty
+        val educationList = state.education.split(",").map { it.trim() }.filter { it.isNotBlank() }
+        if (educationList.isNotEmpty()) {
+            updateData["education"] = educationList
+        } else {
+            updateData["education"] = emptyList<String>()
+        }
+
+        // Personal info
+        if (state.pronouns.isNotBlank()) {
+            updateData["pronouns"] = state.pronouns
+        } else {
+            updateData["pronouns"] = null
+        }
+
+        if (state.birthday.isNotBlank()) {
+            updateData["birthday"] = state.birthday
+        } else {
+            updateData["birthday"] = null
+        }
+
+        if (state.relationshipStatus.isNotBlank()) {
+            updateData["relationship_status"] = state.relationshipStatus
+        } else {
+            updateData["relationship_status"] = null
+        }
+
+        // Social links
+        if (state.discordTag.isNotBlank()) {
+            updateData["discord_tag"] = state.discordTag
+        } else {
+            updateData["discord_tag"] = null
+        }
+
+        if (state.githubProfile.isNotBlank()) {
+            updateData["github_profile"] = state.githubProfile
+        } else {
+            updateData["github_profile"] = null
+        }
+
+        if (state.personalWebsite.isNotBlank()) {
+            updateData["personal_website"] = state.personalWebsite
+        } else {
+            updateData["personal_website"] = null
+        }
+
+        if (state.publicEmail.isNotBlank()) {
+            updateData["public_email"] = state.publicEmail
+        } else {
+            updateData["public_email"] = null
+        }
+
+        return updateData
+    }
+
+    private suspend fun handleSuccessfulSave(state: EditProfileUiState, userId: String) {
+        val originalUsername = state.profile?.username
+        if (originalUsername != null && originalUsername != state.username) {
+            val syncResult = repository.syncUsernameChange(originalUsername, state.username, userId)
+            syncResult.fold(
+                onSuccess = {
+                    _uiState.update { it.copy(isSaving = false, hasChanges = false) }
+                    _navigationEvents.emit(EditProfileNavigation.NavigateBack)
+                },
+                onFailure = { error ->
+                    _uiState.update { it.copy(isSaving = false, error = "Profile saved but username sync failed: ${error.message}. Please try again.") }
+                }
+            )
+        } else {
+            _uiState.update { it.copy(isSaving = false, hasChanges = false) }
+            _navigationEvents.emit(EditProfileNavigation.NavigateBack)
         }
     }
 }
