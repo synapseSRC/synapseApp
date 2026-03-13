@@ -1,5 +1,13 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.*
@@ -129,10 +137,11 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
 
-    // TODO: Replace direct upload with preview screen
-    //  Current: Immediately uploads and sends media
-    //  Needed: Show preview screen first (see TODO above visualMediaLauncher)
-    val handleFileSelection = { uri: Uri?, type: String ->
+    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedMediaType by remember { mutableStateOf("") }
+    var mediaCaption by remember { mutableStateOf("") }
+
+    val handleFileSelection = { uri: Uri?, type: String, caption: String? ->
         uri?.let {
             val contentResolver = context.contentResolver
             val mimeType = contentResolver.getType(it) ?: ""
@@ -150,25 +159,20 @@ fun ChatScreen(
                     filePath = filePath,
                     fileName = fileName,
                     contentType = mimeType,
-                    messageType = type
+                    messageType = type,
+                    caption = caption
                 )
             }
         }
     }
 
-    // TODO: Implement image message with preview/edit screen (similar to WhatsApp)
-    //  - Create a dedicated screen/composable for image preview before sending
-    //  - Allow caption editing (text input overlay)
-    //  - Add image editing capabilities (crop, rotate, filters) using CropImageContract like CreatePostScreen
-    //  - Reference: CreatePostScreen.kt for media handling pattern (lines ~40-150)
-    //  - Flow: Pick image -> Show preview screen with edit tools -> Add caption -> Send
-    //  - Consider reusing MediaUploadHandler from createpost package
     val visualMediaLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         val type = context.contentResolver.getType(uri ?: return@rememberLauncherForActivityResult) ?: ""
         val messageType = if (type.startsWith("video/")) "video" else "image"
-        handleFileSelection(uri, messageType)
+        selectedMediaUri = uri
+        selectedMediaType = messageType
     }
 
     val documentLauncher = rememberLauncherForActivityResult(
@@ -176,8 +180,10 @@ fun ChatScreen(
     ) { uri ->
         val type = context.contentResolver.getType(uri ?: return@rememberLauncherForActivityResult) ?: ""
         val messageType = if (type.startsWith("audio/")) "audio" else "file"
-        handleFileSelection(uri, messageType)
+        selectedMediaUri = uri
+        selectedMediaType = messageType
     }
+
 
     var showAttachmentMenu by remember { mutableStateOf(false) }
 
@@ -725,6 +731,142 @@ fun ChatScreen(
                         }
                     }
                 )
+            }
+        }
+    }
+
+    if (selectedMediaUri != null) {
+        Dialog(
+            onDismissRequest = {
+                selectedMediaUri = null
+                mediaCaption = ""
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            val cropImageLauncher = rememberLauncherForActivityResult(contract = CropImageContract()) { result ->
+                if (result.isSuccessful) {
+                    result.uriContent?.let { uri ->
+                        selectedMediaUri = uri
+                    }
+                } else {
+                    val exception = result.error
+                    android.widget.Toast.makeText(context, context.getString(R.string.error_crop_failed, exception?.message ?: ""), android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Preview") },
+                        navigationIcon = {
+                            IconButton(onClick = {
+                                selectedMediaUri = null
+                                mediaCaption = ""
+                            }) {
+                                Icon(Icons.Default.Close, contentDescription = "Close Preview")
+                            }
+                        },
+                        actions = {
+                            if (selectedMediaType == "image") {
+                                IconButton(onClick = {
+                                    val uriToCrop = selectedMediaUri
+                                    if (uriToCrop != null) {
+                                        cropImageLauncher.launch(
+                                            CropImageContractOptions(
+                                                uri = uriToCrop,
+                                                cropImageOptions = CropImageOptions().apply {
+                                                    guidelines = CropImageView.Guidelines.ON
+                                                    activityTitle = context.getString(R.string.title_edit_image)
+                                                    cropMenuCropButtonTitle = context.getString(R.string.action_save)
+                                                    showCropOverlay = true
+                                                    showProgressBar = true
+                                                }
+                                            )
+                                        )
+                                    }
+                                }) {
+                                    Icon(Icons.Default.Crop, contentDescription = "Crop Image")
+                                }
+                            }
+                        }
+                    )
+                },
+                containerColor = MaterialTheme.colorScheme.background
+            ) { previewPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(previewPadding),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when (selectedMediaType) {
+                            "image" -> {
+                                AsyncImage(
+                                    model = selectedMediaUri,
+                                    contentDescription = "Image Preview",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                            "video" -> {
+                                VideoPlayerBox(mediaUrl = selectedMediaUri.toString())
+                            }
+                            "audio" -> {
+                                AudioPlayer(mediaUrl = selectedMediaUri.toString(), tintColor = MaterialTheme.colorScheme.primary)
+                            }
+                            else -> {
+                                Icon(
+                                    Icons.Default.InsertDriveFile,
+                                    contentDescription = "File",
+                                    modifier = Modifier.size(120.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .imePadding(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = mediaCaption,
+                            onValueChange = { mediaCaption = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Add a caption...") },
+                            maxLines = 4,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FloatingActionButton(
+                            onClick = {
+                                handleFileSelection(selectedMediaUri, selectedMediaType, mediaCaption.takeIf { it.isNotBlank() })
+                                selectedMediaUri = null
+                                mediaCaption = ""
+                            },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                        }
+                    }
+                }
             }
         }
     }
