@@ -118,6 +118,7 @@ fun ChatScreen(
     chatId: String,
     participantId: String? = null,
     initialParticipantName: String? = null,
+    initialParticipantAvatar: String? = null,
     onNavigateBack: () -> Unit,
     onNavigateToGroupInfo: (String, String) -> Unit = { _, _ -> },
     viewModel: ChatViewModel = hiltViewModel()
@@ -241,7 +242,7 @@ fun ChatScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // Participant avatar
                             AsyncImage(
-                                model = participantProfile?.avatar,
+                                model = participantProfile?.avatar ?: initialParticipantAvatar,
                                 contentDescription = "Profile picture",
                                 modifier = Modifier
                                     .size(40.dp)

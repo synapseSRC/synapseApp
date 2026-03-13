@@ -43,7 +43,7 @@ fun ChatsTabScreen(
     conversations: List<Conversation>,
     isLoading: Boolean,
     error: String?,
-    onConversationClick: (String, String, String?) -> Unit,
+    onConversationClick: (String, String, String?, String?) -> Unit,
     onRetry: () -> Unit,
     isLocked: (String) -> Boolean = { false },
     modifier: Modifier = Modifier,
@@ -128,7 +128,7 @@ fun ChatsTabScreen(
                             ConversationItem(
                                 conversation = conversation,
                                 isLocked = isLocked(conversation.chatId),
-                                onClick = { onConversationClick(conversation.chatId, conversation.participantId, conversation.participantName) },
+                                onClick = { onConversationClick(conversation.chatId, conversation.participantId, conversation.participantName, conversation.participantAvatar) },
                                 layout = chatListLayout,
                                 shape = shape
                             )

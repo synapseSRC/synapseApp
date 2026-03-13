@@ -131,8 +131,8 @@ fun NavGraphBuilder.inboxGraph(navController: NavHostController) {
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
                     },
-                    onNavigateToChat = { chatId, userId, userName ->
-                        navController.navigate(AppDestination.Chat(chatId, userId, userName))
+                    onNavigateToChat = { chatId, userId, userName, avatar ->
+                        navController.navigate(AppDestination.Chat(chatId, userId, userName, avatar))
                     },
                     onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) }
                 )
@@ -143,6 +143,7 @@ fun NavGraphBuilder.inboxGraph(navController: NavHostController) {
                     chatId = args.chatId,
                     participantId = args.userId,
                     initialParticipantName = args.participantName,
+                    initialParticipantAvatar = args.participantAvatar,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToGroupInfo = { chatId, groupName ->
                         navController.navigate(AppDestination.GroupInfo(chatId, groupName))

@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun InboxScreen(
     onNavigateToProfile: (String) -> Unit,
-    onNavigateToChat: (String, String?, String?) -> Unit,
+    onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToCreateGroup: () -> Unit = {},
     viewModel: InboxViewModel = hiltViewModel()
 ) {
@@ -121,7 +121,7 @@ fun InboxScreen(
                     conversations = conversations,
                     isLoading = isLoading,
                     error = error,
-                    onConversationClick = { chatId, userId, userName ->
+                    onConversationClick = { chatId, userId, userName, avatar ->
                         if (viewModel.isChatLocked(chatId)) {
                             val activity = (context as? androidx.fragment.app.FragmentActivity)
                             if (activity != null) {
@@ -130,12 +130,12 @@ fun InboxScreen(
                                 )
                                 chatLockManager.authenticate(
                                     activity = activity,
-                                    onSuccess = { onNavigateToChat(chatId, userId, userName) },
+                                    onSuccess = { onNavigateToChat(chatId, userId, userName, avatar) },
                                     onError = { /* Handle error, maybe show Snackbar */ }
                                 )
                             }
                         } else {
-                            onNavigateToChat(chatId, userId, userName)
+                            onNavigateToChat(chatId, userId, userName, avatar)
                         }
                     },
                     isLocked = { viewModel.isChatLocked(it) },
