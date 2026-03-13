@@ -79,21 +79,21 @@ fun QuickPostArea(
             ) {
                 QuickPostAction(
                     icon = Icons.Default.Image,
-                    tint = Color(0xFF4CAF50),
+                    tint = MaterialTheme.colorScheme.primary,
                     text = stringResource(R.string.photo),
                     onClick = onClick
                 )
 
                 QuickPostAction(
                     icon = Icons.Default.Videocam,
-                    tint = Color(0xFFE91E63),
+                    tint = MaterialTheme.colorScheme.secondary,
                     text = stringResource(R.string.video),
                     onClick = onClick
                 )
 
                 QuickPostAction(
                     icon = Icons.Default.Mood,
-                    tint = Color(0xFFFFC107),
+                    tint = MaterialTheme.colorScheme.tertiary,
                     text = stringResource(R.string.feeling_activity),
                     onClick = onClick
                 )
