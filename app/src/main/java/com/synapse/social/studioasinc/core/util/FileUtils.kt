@@ -5,6 +5,8 @@ import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -84,9 +86,9 @@ object FileUtils {
         }
     }
 
-    fun readFile(path: String): String {
+    suspend fun readFile(path: String): String = withContext(Dispatchers.IO) {
         createNewFile(path)
-        return try {
+        return@withContext try {
             File(path).readText()
         } catch (e: Exception) {
             Log.e(TAG, "readFile failed: $path", e)
@@ -94,7 +96,7 @@ object FileUtils {
         }
     }
 
-    fun writeFile(path: String, str: String) {
+    suspend fun writeFile(path: String, str: String) = withContext(Dispatchers.IO) {
         createNewFile(path)
         try {
             File(path).writeText(str)
