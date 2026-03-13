@@ -1,34 +1,21 @@
 package com.synapse.social.studioasinc
 
 import android.content.Intent
-import android.net.Uri
-import android.content.SharedPreferences
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.lifecycle.ViewModel
-import com.synapse.social.studioasinc.feature.shared.main.MainActivity
 import androidx.lifecycle.ViewModelProvider
-import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
-import com.synapse.social.studioasinc.data.repository.UsernameRepository
+import com.synapse.social.studioasinc.feature.shared.main.MainActivity
 import com.synapse.social.studioasinc.feature.auth.ui.AuthScreen
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.SignInViewModel
-import com.synapse.social.studioasinc.feature.shared.theme.AuthTheme
-import androidx.activity.enableEdgeToEdge
+import com.synapse.social.studioasinc.core.ui.base.BaseComposeActivity
 import dagger.hilt.android.AndroidEntryPoint
 import com.synapse.social.studioasinc.core.auth.GoogleAuthHelper
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import io.github.aakira.napier.Napier
 import com.synapse.social.studioasinc.BuildConfig
 
-
-
 @AndroidEntryPoint
-class AuthActivity : ComponentActivity() {
+class AuthActivity : BaseComposeActivity() {
 
     private lateinit var viewModel: SignInViewModel
     private lateinit var googleAuthHelper: GoogleAuthHelper
@@ -36,27 +23,22 @@ class AuthActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-        enableEdgeToEdge()
-
         viewModel = ViewModelProvider(this)[SignInViewModel::class.java]
         googleAuthHelper = GoogleAuthHelper(this)
 
         intent?.let { handleDeepLink(it) }
         
-        setContent {
-            AuthTheme(enableEdgeToEdge = true) {
-                AuthScreen(
-                    signInViewModel = viewModel,
-                    onInitiateGoogleSignIn = {
-                        handleGoogleSignIn()
-                    },
-                    onNavigateToMain = {
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
-                    }
-                )
-            }
+        setAuthContent {
+            AuthScreen(
+                signInViewModel = viewModel,
+                onInitiateGoogleSignIn = {
+                    handleGoogleSignIn()
+                },
+                onNavigateToMain = {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                }
+            )
         }
     }
 
