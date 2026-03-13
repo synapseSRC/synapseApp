@@ -1,0 +1,53 @@
+---
+title: Welcome to Synapse
+description: Next-Gen Social Network Client - Native UI, Kotlin Multiplatform, and Supabase Powered.
+template: splash
+hero:
+  tagline: Native UI, Kotlin Multiplatform, and Supabase Powered.
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Get Started
+      link: /guides/setup/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/studioasinc/synapse
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Key Features
+
+<CardGrid stagger>
+	<Card title="Kotlin Multiplatform" icon="pencil">
+		Shared logic across Android and iOS for consistent behavior and faster development.
+	</Card>
+	<Card title="Native UI" icon="setting">
+		100% Jetpack Compose for Android and SwiftUI for iOS, ensuring peak performance.
+	</Card>
+	<Card title="Supabase Powered" icon="add-document">
+		Robust backend including Realtime, Auth, Database, and Storage.
+	</Card>
+	<Card title="Privacy First" icon="open-book">
+		Planned End-to-End Encryption (E2EE) using the Double Ratchet protocol.
+	</Card>
+</CardGrid>
+
+## Technical Stack
+
+### Shared Engine (:shared)
+- **Networking:** Ktor
+- **Backend:** Supabase-kt
+- **Local DB:** SQLDelight
+- **DI:** Koin
+
+### Android Application (:app)
+- **UI:** Jetpack Compose
+- **DI:** Hilt
+- **Media:** ExoPlayer / Media3
+
+### iOS Application (:iosApp)
+- **UI:** SwiftUI
+- **Integration:** Consumes shared logic as a static framework.
