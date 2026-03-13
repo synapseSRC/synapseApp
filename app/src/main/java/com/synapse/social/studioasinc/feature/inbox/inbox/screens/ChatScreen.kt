@@ -347,37 +347,39 @@ fun ChatScreen(
                 .imePadding()
         ) {
 
-            when (chatWallpaperType) {
-                WallpaperType.SOLID_COLOR -> {
-                    // Do nothing, default surface color
-                }
-                WallpaperType.DEFAULT -> {
-                     AsyncImage(
-                        model = context.resources.getIdentifier("pattern_11", "raw", context.packageName), // Default pattern or just surface color
-                        contentDescription = "Background",
-                        modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
-                        contentScale = ContentScale.Crop,
-                        alpha = 0.5f
-                     )
-                }
-                WallpaperType.PATTERN, WallpaperType.PRESET_IMAGE -> {
-                    chatWallpaperValue?.let { value ->
-                        val context = LocalContext.current
-                        val resId = context.resources.getIdentifier(value, "raw", context.packageName)
-                        if (resId != 0) {
-                             AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(resId)
-                                    .apply {
-                                        if (chatWallpaperType == WallpaperType.PATTERN) {
-                                            decoderFactory(SvgDecoder.Factory())
+            if (!isLoading || messages.isNotEmpty()) {
+                when (chatWallpaperType) {
+                    WallpaperType.SOLID_COLOR -> {
+                        // Do nothing, default surface color
+                    }
+                    WallpaperType.DEFAULT -> {
+                         AsyncImage(
+                            model = context.resources.getIdentifier("pattern_11", "raw", context.packageName), // Default pattern or just surface color
+                            contentDescription = "Background",
+                            modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
+                            contentScale = ContentScale.Crop,
+                            alpha = 0.5f
+                         )
+                    }
+                    WallpaperType.PATTERN, WallpaperType.PRESET_IMAGE -> {
+                        chatWallpaperValue?.let { value ->
+                            val context = LocalContext.current
+                            val resId = context.resources.getIdentifier(value, "raw", context.packageName)
+                            if (resId != 0) {
+                                 AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(resId)
+                                        .apply {
+                                            if (chatWallpaperType == WallpaperType.PATTERN) {
+                                                decoderFactory(SvgDecoder.Factory())
+                                            }
                                         }
-                                    }
-                                    .build(),
-                                contentDescription = "Background",
-                                modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
-                                contentScale = ContentScale.Crop
-                             )
+                                        .build(),
+                                    contentDescription = "Background",
+                                    modifier = Modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),
+                                    contentScale = ContentScale.Crop
+                                 )
+                            }
                         }
                     }
                 }
