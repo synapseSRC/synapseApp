@@ -396,26 +396,30 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
                 }
             }
 
-            val messages = client.postgrest.from("messages").select {
+            // Optimize: Fetch only necessary columns
+            val messages = client.postgrest.from("messages").select(columns = Columns.list("id", "read_by")) {
                 filter {
                     eq("chat_id", chatId)
                     neq("sender_id", currentUserId)
                 }
             }.decodeList<MessageDto>()
 
-            messages.forEach { msg ->
-                msg.id?.let { messageId ->
-                    val readByList = msg.readBy?.toMutableList() ?: mutableListOf<String>()
-                    if (!readByList.contains(currentUserId)) {
-                        readByList.add(currentUserId)
+            // Optimize: Group messages by their current read_by list to perform bulk updates
+            messages
+                .filter { it.id != null && it.readBy?.contains(currentUserId) != true }
+                .groupBy { it.readBy ?: emptyList<String>() }
+                .forEach { (oldReadBy, msgs) ->
+                    val newReadBy = oldReadBy + currentUserId
+                    val ids = msgs.mapNotNull { it.id }
+
+                    if (ids.isNotEmpty()) {
                         client.postgrest.from("messages").update({
-                            set("read_by", readByList)
+                            set("read_by", newReadBy)
                         }) {
-                            filter { eq("id", messageId) }
+                            filter { isIn("id", ids) }
                         }
                     }
                 }
-            }
         } catch (e: Exception) {
             Napier.e("Error marking messages as read", e)
         }
