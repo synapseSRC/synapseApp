@@ -13,13 +13,22 @@ import com.synapse.social.studioasinc.ui.components.ShimmerCircle
 
 @Composable
 fun CommentShimmer(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    itemCount: Int = 5
 ) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        repeat(itemCount) {
+            CommentShimmerItem()
+        }
+    }
+}
+
+@Composable
+fun CommentShimmerItem() {
     val avatarSize = 40.dp
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
@@ -27,48 +36,52 @@ fun CommentShimmer(
                 .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
         ) {
             // Left Column: Avatar
-            Box(
-                modifier = Modifier.width(avatarSize),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                ShimmerCircle(size = avatarSize)
-            }
+            ShimmerCircle(size = avatarSize)
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Right Column: Content
+            // Right Column: Header, Content, Interaction Bar
             Column(modifier = Modifier.weight(1f)) {
-                // Header (Username and Time)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ShimmerBox(modifier = Modifier.width(100.dp).height(14.dp))
-                    Spacer(modifier = Modifier.width(Spacing.Small))
-                    ShimmerBox(modifier = Modifier.width(40.dp).height(14.dp))
+                // Header
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ShimmerBox(
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ShimmerBox(
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(12.dp)
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Text Content
-                ShimmerBox(modifier = Modifier.fillMaxWidth(0.95f).height(14.dp))
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
-                ShimmerBox(modifier = Modifier.fillMaxWidth(0.7f).height(14.dp))
+                // Content
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(14.dp)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(14.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Interaction Bar
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Items: Comment, Repost, Like, Views, Bookmark, Share
-                    repeat(4) {
-                        ShimmerBox(modifier = Modifier.width(32.dp).height(18.dp))
+                    repeat(6) {
+                        ShimmerCircle(size = 18.dp)
                     }
-                    ShimmerBox(modifier = Modifier.size(18.dp))
-                    ShimmerBox(modifier = Modifier.size(18.dp))
                 }
             }
         }

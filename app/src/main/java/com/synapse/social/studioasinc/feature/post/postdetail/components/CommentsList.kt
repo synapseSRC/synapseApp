@@ -48,7 +48,7 @@ fun CommentsList(
         }
 
         if (comments.loadState.refresh is LoadState.Loading) {
-            items(5) {
+            item {
                 CommentShimmer()
             }
         }
