@@ -21,7 +21,8 @@ data class Message(
     val expiresAt: String? = null,
     val encryptionFailureReason: String? = null,
     val reactions: Map<ReactionType, Int> = emptyMap(),
-    val userReaction: ReactionType? = null
+    val userReaction: ReactionType? = null,
+    val isSensitive: Boolean = false
     // TODO: Add link preview support
     // - linkPreview: LinkPreview? = null (title, description, imageUrl, url)
     // - Extract URLs from content and fetch metadata

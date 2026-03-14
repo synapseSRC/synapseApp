@@ -98,6 +98,10 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
+                implementation("com.google.mediapipe:tasks-genai:0.10.14")
+                implementation("com.google.mediapipe:tasks-text:0.10.14")
+                implementation("com.google.mediapipe:tasks-vision:0.10.14")
+
                 implementation("io.ktor:ktor-client-okhttp:3.1.2")
                 implementation("org.whispersystems:signal-protocol-android:2.8.1")
                 implementation("androidx.security:security-crypto:1.1.0-alpha06")

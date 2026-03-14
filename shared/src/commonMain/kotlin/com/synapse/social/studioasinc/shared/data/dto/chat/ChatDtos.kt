@@ -22,7 +22,8 @@ data class MessageDto(
     @SerialName("is_encrypted") val isEncrypted: Boolean = false,
     @SerialName("encrypted_content") val encryptedContent: String? = null,
     @SerialName("expires_at") val expiresAt: String? = null,
-    val encryptionFailureReason: String? = null
+    val encryptionFailureReason: String? = null,
+    @SerialName("is_sensitive") val isSensitive: Boolean = false
 )
 
 @Serializable
@@ -47,7 +48,8 @@ data class NewMessageDto(
     @SerialName("is_encrypted") val isEncrypted: Boolean = false,
     @SerialName("encrypted_content") val encryptedContent: String? = null,
     @SerialName("expires_at") val expiresAt: String? = null,
-    @SerialName("reply_to_id") val replyToId: String? = null
+    @SerialName("reply_to_id") val replyToId: String? = null,
+    @SerialName("is_sensitive") val isSensitive: Boolean = false
 )
 
 @Serializable
