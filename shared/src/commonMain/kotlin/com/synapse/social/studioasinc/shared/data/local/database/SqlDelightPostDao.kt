@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 import com.synapse.social.studioasinc.shared.data.local.entity.PostEntity
 import com.synapse.social.studioasinc.shared.data.database.Post as DbPost
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+
 import kotlinx.coroutines.withContext
 
 class SqlDelightPostDao(

@@ -30,7 +30,7 @@ import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.*
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
