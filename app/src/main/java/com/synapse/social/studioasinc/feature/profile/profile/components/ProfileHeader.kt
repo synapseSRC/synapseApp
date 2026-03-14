@@ -103,9 +103,9 @@ fun ProfileHeader(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Spacer for the avatar
-                    Spacer(modifier = Modifier.width(110.dp))
+                    Spacer(modifier = Modifier.width(110.dp).height(84.dp)) // ensures Bio below the row clears the avatar
 
-                    Column(
+                                        Column(
                         modifier = Modifier.weight(1f)
                     ) {
                         Row(
@@ -140,6 +140,15 @@ fun ProfileHeader(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        InlineStatsText(
+                            postsCount = postsCount,
+                            followersCount = followersCount,
+                            followingCount = followingCount,
+                            onStatsClick = onStatsClick
+                        )
                     }
                 }
 
@@ -155,14 +164,7 @@ fun ProfileHeader(
                     Spacer(modifier = Modifier.height(Spacing.Medium))
                 }
 
-                InlineStatsRow(
-                    postsCount = postsCount,
-                    followersCount = followersCount,
-                    followingCount = followingCount,
-                    onStatsClick = onStatsClick
-                )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
 
                 ProfileActionButtons(
                     isOwnProfile = isOwnProfile,
@@ -427,61 +429,93 @@ private fun ProfileHeaderPreview() {
     }
 }
 
+
+
+
+
 @Composable
-private fun InlineStatsRow(
+private fun InlineStatsText(
     postsCount: Int,
     followersCount: Int,
     followingCount: Int,
     onStatsClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val formattedFollowers = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(followersCount)
+    val formattedFollowing = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(followingCount)
+    val formattedPosts = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(postsCount)
+
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        InlineStatItem(
-            count = postsCount,
-            label = stringResource(R.string.posts),
-            onClick = { onStatsClick("posts") }
-        )
-        InlineStatItem(
-            count = followersCount,
-            label = stringResource(R.string.followers),
-            onClick = { onStatsClick("followers") }
-        )
-        InlineStatItem(
-            count = followingCount,
-            label = stringResource(R.string.following),
-            onClick = { onStatsClick("following") }
-        )
-    }
-}
+        Row(
+            modifier = Modifier.clickable { onStatsClick("followers") },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = formattedFollowers,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = stringResource(R.string.followers).lowercase(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-@Composable
-private fun InlineStatItem(
-    count: Int,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-    ) {
         Text(
-            text = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(count),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
+            text = "  ·  ",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        Row(
+            modifier = Modifier.clickable { onStatsClick("following") },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = formattedFollowing,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = stringResource(R.string.following).lowercase(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Text(
+            text = "  ·  ",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Row(
+            modifier = Modifier.clickable { onStatsClick("posts") },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = formattedPosts,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = stringResource(R.string.posts).lowercase(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
