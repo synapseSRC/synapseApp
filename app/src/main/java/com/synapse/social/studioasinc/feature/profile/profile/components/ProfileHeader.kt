@@ -34,6 +34,7 @@ import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
 import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
 import com.synapse.social.studioasinc.feature.shared.components.animatedShape
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.domain.model.UserStatus
 
 @Composable
@@ -67,25 +68,31 @@ fun ProfileHeader(
     bioExpanded: Boolean = false,
     onToggleBio: () -> Unit = {}
 ) {
+    val coverHeight = 200.dp
+    val overlap = 40.dp
+    val contentPaddingTop = coverHeight - overlap
+    val avatarSize = 110.dp
+    val avatarPaddingTop = contentPaddingTop - (avatarSize / 2)
+    val textSpacerTop = (avatarSize / 2) + Spacing.SmallMedium
+    val avatarBorderWidth = 4.dp
+
     Box(
         modifier = modifier.fillMaxWidth()
     ) {
-        // Cover Photo layer
         CoverPhoto(
             coverImageUrl = coverImageUrl,
             scrollOffset = scrollOffset,
             isOwnProfile = isOwnProfile,
             onEditClick = onCoverEditClick,
             onCoverClick = onCoverPhotoClick,
-            height = 200.dp
+            height = coverHeight
         )
 
-        // The rounded white surface that overlaps the cover photo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 160.dp) // 200dp - 40dp overlap
-                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .padding(top = contentPaddingTop)
+                .clip(RoundedCornerShape(topStart = Sizes.CornerMassive, topEnd = Sizes.CornerMassive))
                 .background(MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -93,9 +100,7 @@ fun ProfileHeader(
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.Medium)
             ) {
-                // Avatar is 110dp. Half is 55dp overlapping the cover photo, half overlapping the surface.
-                // So we add 55dp + padding (12dp) = 67dp vertical spacing before the text to clear the avatar.
-                Spacer(modifier = Modifier.height(67.dp))
+                Spacer(modifier = Modifier.height(textSpacerTop))
 
                 Column(
                     modifier = Modifier.fillMaxWidth()
@@ -176,16 +181,16 @@ fun ProfileHeader(
         Box(
             modifier = Modifier
                 .padding(start = Spacing.Medium)
-                .padding(top = 105.dp) // 160dp boundary - 55dp (half of 110dp avatar) = 105dp
+                .padding(top = avatarPaddingTop)
         ) {
             ProfileImageWithRing(
                 avatar = avatar,
-                size = 110.dp,
+                size = avatarSize,
                 status = status,
                 hasStory = hasStory,
                 isOwnProfile = isOwnProfile,
                 onClick = onProfileImageClick,
-                modifier = Modifier.border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                modifier = Modifier.border(avatarBorderWidth, MaterialTheme.colorScheme.surface, CircleShape)
             )
         }
     }
