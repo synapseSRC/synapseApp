@@ -198,7 +198,8 @@ class SupabaseChatRepository(
         mediaUrl: String?, 
         messageType: String,
         expiresAt: String?,
-        replyToId: String?
+        replyToId: String?,
+        isSensitive: Boolean
     ): Result<Message> = try {
         val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
         
@@ -253,7 +254,7 @@ class SupabaseChatRepository(
             }
         }
 
-        val message = dataSource.sendMessage(chatId, finalContent, mediaUrl, messageType, isEncrypted, encryptedContentStr, expiresAt, replyToId)
+        val message = dataSource.sendMessage(chatId, finalContent, mediaUrl, messageType, isEncrypted, encryptedContentStr, expiresAt, replyToId, isSensitive)
         
         // Send notification to recipient only if they're not in the chat
         try {

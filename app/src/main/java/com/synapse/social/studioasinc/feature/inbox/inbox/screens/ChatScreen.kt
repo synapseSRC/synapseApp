@@ -1080,6 +1080,7 @@ fun MessageBubble(
                                 .fillMaxWidth()
                                 .heightIn(max = 200.dp)
                                 .clip(RoundedCornerShape(8.dp))
+                                .blur(radius = if (message.isSensitive) 30.dp else 0.dp)
                                 .clickable {
                                     message.mediaUrl?.let { uriHandler.openUri(it) }
                                 }
@@ -1088,7 +1089,10 @@ fun MessageBubble(
                     }
                     MessageType.VIDEO -> {
                         message.mediaUrl?.let {
-                            VideoPlayerBox(mediaUrl = it)
+                            VideoPlayerBox(
+                                mediaUrl = it,
+                                modifier = Modifier.blur(radius = if (message.isSensitive) 30.dp else 0.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -1370,7 +1374,7 @@ fun AudioPlayer(mediaUrl: String, tintColor: Color, viewModel: com.synapse.socia
 }
 
 @Composable
-fun VideoPlayerBox(mediaUrl: String, viewModel: com.synapse.social.studioasinc.feature.shared.reels.VideoPlayerViewModel = hiltViewModel(key = mediaUrl)) {
+fun VideoPlayerBox(mediaUrl: String, modifier: Modifier = Modifier, viewModel: com.synapse.social.studioasinc.feature.shared.reels.VideoPlayerViewModel = hiltViewModel(key = mediaUrl)) {
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -1396,7 +1400,7 @@ fun VideoPlayerBox(mediaUrl: String, viewModel: com.synapse.social.studioasinc.f
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(max = 240.dp)
             .clip(RoundedCornerShape(8.dp))

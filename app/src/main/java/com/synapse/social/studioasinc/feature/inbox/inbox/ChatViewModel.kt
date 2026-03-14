@@ -46,8 +46,10 @@ class ChatViewModel @Inject constructor(
     private val initializeE2EUseCase: InitializeE2EUseCase,
     private val chatRepository: ChatRepository,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
-    private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.domain.usecase.ai.GenerateSmartRepliesUseCase,
-    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase,
+    private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.ai.GenerateSmartRepliesUseCase,
+    private val summarizeChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.ai.SummarizeChatUseCase,
+    private val checkMessageToxicityUseCase: com.synapse.social.studioasinc.shared.domain.usecase.ai.CheckMessageToxicityUseCase,
+    private val detectSensitiveMediaUseCase: com.synapse.social.studioasinc.shared.domain.usecase.ai.DetectSensitiveMediaUseCase,
     private val uploadProgressManager: UploadProgressManager,
     private val fileUploader: com.synapse.social.studioasinc.shared.data.FileUploader,
     private val toggleMessageReactionUseCase: ToggleMessageReactionUseCase,
@@ -339,6 +341,20 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun performSendMessage(chatId: String, text: String) {
+        viewModelScope.launch {
+            checkMessageToxicityUseCase(text).onSuccess { isToxic ->
+                if (isToxic) {
+                    _error.value = "Message contains toxic content and cannot be sent."
+                } else {
+                    actuallySendMessage(chatId, text)
+                }
+            }.onFailure {
+                actuallySendMessage(chatId, text)
+            }
+        }
+    }
+
+    private fun actuallySendMessage(chatId: String, text: String) {
         _inputText.value = ""
 
         val currentMode = _disappearingMode.value
@@ -603,6 +619,8 @@ class ChatViewModel @Inject constructor(
                 (current + newMessage).distinctBy { it.id }.sortedBy { msg -> msg.createdAt }
             }
 
+            val isSensitive = detectSensitiveMediaUseCase(filePath).getOrDefault(false)
+
             uploadMediaUseCase(
                 chatId = chatId,
                 filePath = filePath,
@@ -626,7 +644,8 @@ class ChatViewModel @Inject constructor(
                     chatId = chatId,
                     content = finalContent,
                     mediaUrl = mediaUrl,
-                    messageType = messageType
+                    messageType = messageType,
+                    isSensitive = isSensitive
                 ).onSuccess { actualMessage ->
                     pendingTempIds.update { it - tempId }
                     _messages.update { current ->

@@ -32,6 +32,7 @@ object ChatMapper {
         isEncrypted = isEncrypted,
         encryptedContent = encryptedContent,
         expiresAt = expiresAt,
-        encryptionFailureReason = encryptionFailureReason
+        encryptionFailureReason = encryptionFailureReason,
+        isSensitive = isSensitive
     )
 }
