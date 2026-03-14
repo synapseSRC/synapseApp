@@ -7,6 +7,8 @@ import com.synapse.social.studioasinc.shared.domain.model.activitypub.ActivityPu
 import com.synapse.social.studioasinc.shared.domain.model.activitypub.ActivityPubObject
 import com.synapse.social.studioasinc.shared.domain.repository.IActivityPubRepository
 import io.github.jan.supabase.functions.functions
+import io.ktor.client.statement.bodyAsText
+import kotlinx.serialization.json.Json
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 
 class ActivityPubRepositoryImpl(
@@ -16,13 +18,13 @@ class ActivityPubRepositoryImpl(
     override suspend fun searchFederatedActors(query: String): Result<List<ActivityPubActor>> = runCatching {
         val response = client.functions.invoke("federation-search", mapOf("query" to query))
         // Assuming the function returns a list of ActorDto
-        val actors = client.functions.serializer.decodeFromString<List<ActorDto>>(response.bodyAsText())
+        val actors = Json.decodeFromString<List<ActorDto>>(response.bodyAsText())
         actors.map { it.toDomain() }
     }
 
     override suspend fun getFederatedPost(postId: String): Result<ActivityPubObject> = runCatching {
         val response = client.functions.invoke("federation-get-post", mapOf("postId" to postId))
-        val dto = client.functions.serializer.decodeFromString<ObjectDto>(response.bodyAsText())
+        val dto = Json.decodeFromString<ObjectDto>(response.bodyAsText())
         dto.toDomain()
     }
 
