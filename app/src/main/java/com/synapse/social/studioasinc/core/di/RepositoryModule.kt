@@ -60,10 +60,13 @@ import com.synapse.social.studioasinc.shared.data.repository.AccountRepository
 import com.synapse.social.studioasinc.shared.data.repository.OfflineActionRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.repository.DraftRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowingUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.BusinessRepository
 import com.synapse.social.studioasinc.shared.data.repository.BusinessRepositoryImpl
+import com.synapse.social.studioasinc.shared.data.repository.DraftRepositoryImpl
+import com.synapse.social.studioasinc.shared.data.local.database.DraftDao
 import com.synapse.social.studioasinc.shared.domain.repository.AppRepository
 import com.synapse.social.studioasinc.shared.data.repository.AppRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.usecase.CheckForUpdatesUseCase
@@ -135,6 +138,14 @@ object RepositoryModule {
         pendingActionDao: PendingActionDao
     ): OfflineActionRepository {
         return OfflineActionRepositoryImpl(pendingActionDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDraftRepository(
+        draftDao: DraftDao
+    ): DraftRepository {
+        return DraftRepositoryImpl(draftDao)
     }
 
     @Provides

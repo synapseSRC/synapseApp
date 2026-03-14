@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.stories.creator
 import android.net.Uri
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.core.auth.AuthHelper
@@ -11,7 +12,11 @@ import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
 import com.synapse.social.studioasinc.domain.model.StoryPrivacy
 import com.synapse.social.studioasinc.domain.usecase.post.GetPostByIdUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.GetDraftUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.SaveDraftUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.ClearDraftUseCase
 import com.synapse.social.studioasinc.domain.usecase.user.GetUserByIdUseCase
+import com.synapse.social.studioasinc.shared.domain.model.DraftType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,9 +25,47 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import javax.inject.Inject
 
 enum class FlashMode { OFF, ON, AUTO }
+
+@Serializable
+data class TextOverlayDraft(
+    val text: String,
+    val positionX: Float,
+    val positionY: Float,
+    val colorArgb: Int,
+    val scale: Float
+)
+
+@Serializable
+data class DrawingPathDraft(
+    val points: List<Pair<Float, Float>>,
+    val colorArgb: Int,
+    val strokeWidth: Float
+)
+
+@Serializable
+data class StickerOverlayDraft(
+    val emoji: String,
+    val positionX: Float,
+    val positionY: Float,
+    val scale: Float
+)
+
+@Serializable
+data class StoryCreatorDraft(
+    val capturedMediaUri: String? = null,
+    val mediaType: StoryMediaType = StoryMediaType.PHOTO,
+    val textOverlays: List<TextOverlayDraft> = emptyList(),
+    val drawings: List<DrawingPathDraft> = emptyList(),
+    val stickers: List<StickerOverlayDraft> = emptyList(),
+    val selectedPrivacy: StoryPrivacy = StoryPrivacy.ALL_FRIENDS,
+    val sharedPostId: String? = null
+)
 
 data class TextOverlay(
     val text: String,
@@ -57,14 +100,18 @@ data class StoryCreatorState(
     val isPosting: Boolean = false,
     val isPosted: Boolean = false,
     val error: String? = null,
-    val sharedPost: Post? = null
+    val sharedPost: Post? = null,
+    val checkDraft: Boolean = true
 )
 
 @HiltViewModel
 class StoryCreatorViewModel @Inject constructor(
     private val storyRepository: StoryRepository,
     private val getPostByIdUseCase: GetPostByIdUseCase,
-    private val getUserByIdUseCase: com.synapse.social.studioasinc.domain.usecase.user.GetUserByIdUseCase
+    private val getUserByIdUseCase: com.synapse.social.studioasinc.domain.usecase.user.GetUserByIdUseCase,
+    private val getDraftUseCase: GetDraftUseCase,
+    private val saveDraftUseCase: SaveDraftUseCase,
+    private val clearDraftUseCase: ClearDraftUseCase
 ) : ViewModel() {
 
     companion object {
@@ -97,6 +144,83 @@ class StoryCreatorViewModel @Inject constructor(
                         android.util.Log.e("StoryCreatorViewModel", "Failed to load current user: ${error.message}", error)
                     }
             }
+        }
+    }
+
+    fun loadDraft() {
+        if (!_state.value.checkDraft) return
+
+        viewModelScope.launch {
+            getDraftUseCase(DraftType.STORY)?.let { draft ->
+                try {
+                    val draftContent = Json.decodeFromString<StoryCreatorDraft>(draft.content)
+
+                    // Load shared post if any
+                    val sharedPost = draftContent.sharedPostId?.let {
+                        getPostByIdUseCase(it).getOrNull()
+                    }
+
+                    _state.update { state ->
+                        state.copy(
+                            capturedMediaUri = draftContent.capturedMediaUri?.let { Uri.parse(it) },
+                            mediaType = draftContent.mediaType,
+                            textOverlays = draftContent.textOverlays.map {
+                                TextOverlay(it.text, Offset(it.positionX, it.positionY), Color(it.colorArgb), it.scale)
+                            },
+                            drawings = draftContent.drawings.map {
+                                DrawingPath(it.points.map { p -> Offset(p.first, p.second) }, Color(it.colorArgb), it.strokeWidth)
+                            },
+                            stickers = draftContent.stickers.map {
+                                StickerOverlay(it.emoji, Offset(it.positionX, it.positionY), it.scale)
+                            },
+                            selectedPrivacy = draftContent.selectedPrivacy,
+                            sharedPost = sharedPost,
+                            checkDraft = false
+                        )
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("StoryCreatorViewModel", "Failed to decode draft", e)
+                    _state.update { it.copy(checkDraft = false) }
+                }
+            } ?: run {
+                _state.update { it.copy(checkDraft = false) }
+            }
+        }
+    }
+
+    fun saveDraft() {
+        if (_state.value.isPosted) return
+
+        val state = _state.value
+        if (state.capturedMediaUri != null || state.textOverlays.isNotEmpty() || state.drawings.isNotEmpty() || state.stickers.isNotEmpty()) {
+            val draftContent = StoryCreatorDraft(
+                capturedMediaUri = state.capturedMediaUri?.toString(),
+                mediaType = state.mediaType,
+                textOverlays = state.textOverlays.map {
+                    TextOverlayDraft(it.text, it.position.x, it.position.y, it.color.toArgb(), it.scale)
+                },
+                drawings = state.drawings.map {
+                    DrawingPathDraft(it.points.map { p -> p.x to p.y }, it.color.toArgb(), it.strokeWidth)
+                },
+                stickers = state.stickers.map {
+                    StickerOverlayDraft(it.emoji, it.position.x, it.position.y, it.scale)
+                },
+                selectedPrivacy = state.selectedPrivacy,
+                sharedPostId = state.sharedPost?.id
+            )
+            viewModelScope.launch {
+                saveDraftUseCase(
+                    id = "story_creator_draft",
+                    type = DraftType.STORY,
+                    content = Json.encodeToString(draftContent)
+                )
+            }
+        }
+    }
+
+    fun clearDraft() {
+        viewModelScope.launch {
+            clearDraftUseCase(DraftType.STORY)
         }
     }
 
@@ -303,6 +427,7 @@ class StoryCreatorViewModel @Inject constructor(
                 privacy = _state.value.selectedPrivacy,
                 duration = duration
             ).onSuccess {
+                clearDraft()
                 _state.update { it.copy(isPosting = false, isPosted = true) }
             }.onFailure { error ->
                 _state.update {

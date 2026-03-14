@@ -1,0 +1,22 @@
+CREATE TABLE Draft (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    content TEXT NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+insertDraft:
+INSERT OR REPLACE INTO Draft(id, type, content, updatedAt)
+VALUES ?;
+
+deleteDraftById:
+DELETE FROM Draft WHERE id = ?;
+
+deleteDraftByType:
+DELETE FROM Draft WHERE type = ?;
+
+selectDraftByType:
+SELECT * FROM Draft WHERE type = ? ORDER BY updatedAt DESC;
+
+selectAllDrafts:
+SELECT * FROM Draft ORDER BY updatedAt DESC;

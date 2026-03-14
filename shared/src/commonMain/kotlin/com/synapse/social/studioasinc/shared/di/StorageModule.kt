@@ -18,11 +18,14 @@ import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPendingActionDao
+import com.synapse.social.studioasinc.shared.data.local.database.DraftDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightDraftDao
 import com.synapse.social.studioasinc.shared.data.adapter.EncryptedStringAdapter
 
 
 import com.synapse.social.studioasinc.shared.data.repository.MediaUploadRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.repository.OfflineActionRepositoryImpl
+import com.synapse.social.studioasinc.shared.data.repository.DraftRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.source.remote.CloudinaryUploadService
 import com.synapse.social.studioasinc.shared.data.source.remote.ImgBBUploadService
 import com.synapse.social.studioasinc.shared.data.source.remote.R2UploadService
@@ -30,6 +33,7 @@ import com.synapse.social.studioasinc.shared.data.source.remote.SupabaseUploadSe
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.repository.DraftRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.GetStorageConfigUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.UpdateStorageProviderUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.UploadMediaUseCase
@@ -87,7 +91,9 @@ val storageModule = module {
     single<StorageRepository> { StorageRepositoryImpl(get(), get()) }
     single<CommentDao> { SqlDelightCommentDao(get()) }
     single<PendingActionDao> { SqlDelightPendingActionDao(get()) }
+    single<DraftDao> { SqlDelightDraftDao(get()) }
     single<OfflineActionRepository> { OfflineActionRepositoryImpl(get()) }
+    single<DraftRepository> { DraftRepositoryImpl(get()) }
 
 
     single {

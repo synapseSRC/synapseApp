@@ -19,6 +19,8 @@ import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPostDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPendingActionDao
+import com.synapse.social.studioasinc.shared.data.local.database.DraftDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightDraftDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDaoImpl
 import com.synapse.social.studioasinc.shared.security.SecurityCipher
@@ -37,6 +39,11 @@ object DatabaseModule {
     @Provides
     fun providePendingActionDao(db: StorageDatabase): PendingActionDao {
         return SqlDelightPendingActionDao(db)
+    }
+
+    @Provides
+    fun provideDraftDao(db: StorageDatabase): DraftDao {
+        return SqlDelightDraftDao(db)
     }
 
     @Provides
