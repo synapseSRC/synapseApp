@@ -7,7 +7,10 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.util.Logger
+import com.synapse.social.studioasinc.shared.util.UUIDUtils
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.flow.Flow
@@ -27,13 +30,16 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class SupabaseChatRepository(
     private val dataSource: SupabaseChatDataSource = SupabaseChatDataSource(),
     private val client: SupabaseClientLib = SupabaseClient.client,
     private val signalProtocolManager: SignalProtocolManager? = null,
     private val mediaUploadRepository: MediaUploadRepository,
-    private val presenceRepository: com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository? = null
+    private val presenceRepository: com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository? = null,
+    private val offlineActionRepository: OfflineActionRepository? = null
 ) : ChatRepository {
 
     // In-memory cache for decrypted content to avoid re-decryption failures
@@ -200,6 +206,7 @@ class SupabaseChatRepository(
         expiresAt: String?,
         replyToId: String?
     ): Result<Message> = try {
+        // We could do optimistic update here by inserting into a local DAO if we had one for messages
         val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
         
         var isEncrypted = false
@@ -253,7 +260,42 @@ class SupabaseChatRepository(
             }
         }
 
-        val message = dataSource.sendMessage(chatId, finalContent, mediaUrl, messageType, isEncrypted, encryptedContentStr, expiresAt, replyToId)
+        val message = try {
+            dataSource.sendMessage(chatId, finalContent, mediaUrl, messageType, isEncrypted, encryptedContentStr, expiresAt, replyToId)
+        } catch (e: Exception) {
+            if (offlineActionRepository != null) {
+                Logger.w("Failed to send message via network, queuing for background sync", tag = "CHAT", throwable = e)
+                val actionId = UUIDUtils.randomUUID()
+                offlineActionRepository.addAction(
+                    PendingAction(
+                        id = actionId,
+                        actionType = PendingAction.ActionType.SEND_MESSAGE,
+                        targetId = chatId,
+                        payload = buildJsonObject {
+                            put("content", content)
+                            put("mediaUrl", mediaUrl)
+                            put("messageType", messageType)
+                            put("expiresAt", expiresAt)
+                            put("replyToId", replyToId)
+                        }.toString()
+                    )
+                )
+                // Construct a temporary Message object for the UI
+                MessageDto(
+                    id = actionId,
+                    chatId = chatId,
+                    senderId = currentUserId,
+                    content = content,
+                    messageType = messageType,
+                    mediaUrl = mediaUrl,
+                    createdAt = java.time.Instant.now().toString(),
+                    isEncrypted = isEncrypted,
+                    encryptedContent = encryptedContentStr
+                )
+            } else {
+                throw e
+            }
+        }
         
         // Send notification to recipient only if they're not in the chat
         try {

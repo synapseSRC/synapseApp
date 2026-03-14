@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
+import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
@@ -56,7 +57,9 @@ import com.synapse.social.studioasinc.shared.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.repository.FollowRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.repository.StorageRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.repository.AccountRepository
+import com.synapse.social.studioasinc.shared.data.repository.OfflineActionRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
+import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowingUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.BusinessRepository
@@ -128,11 +131,20 @@ object RepositoryModule {
 
     @Provides
     @Singleton
+    fun provideOfflineActionRepository(
+        pendingActionDao: PendingActionDao
+    ): OfflineActionRepository {
+        return OfflineActionRepositoryImpl(pendingActionDao)
+    }
+
+    @Provides
+    @Singleton
     fun providePostRepository(
         postDao: PostDao,
-        client: SupabaseClientType
+        client: SupabaseClientType,
+        offlineActionRepository: OfflineActionRepository
     ): PostRepository {
-        return PostRepository(postDao, client)
+        return PostRepository(postDao, client, offlineActionRepository)
     }
 
     @Provides
@@ -539,14 +551,16 @@ object RepositoryModule {
         client: SupabaseClientType,
         signalProtocolManager: SignalProtocolManager,
         mediaUploadRepository: com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository,
-        presenceRepository: com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
+        presenceRepository: com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository? = null,
+        offlineActionRepository: OfflineActionRepository
     ): com.synapse.social.studioasinc.shared.domain.repository.ChatRepository {
         return com.synapse.social.studioasinc.shared.data.repository.SupabaseChatRepository(
             com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource(client),
             client,
             signalProtocolManager,
             mediaUploadRepository,
-            presenceRepository
+            presenceRepository,
+            offlineActionRepository
         )
     }
 

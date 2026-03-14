@@ -16,16 +16,20 @@ import com.synapse.social.studioasinc.shared.data.database.booleanAdapter
 import com.synapse.social.studioasinc.shared.data.repository.StorageRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCommentDao
+import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPendingActionDao
 import com.synapse.social.studioasinc.shared.data.adapter.EncryptedStringAdapter
 
 
 import com.synapse.social.studioasinc.shared.data.repository.MediaUploadRepositoryImpl
+import com.synapse.social.studioasinc.shared.data.repository.OfflineActionRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.source.remote.CloudinaryUploadService
 import com.synapse.social.studioasinc.shared.data.source.remote.ImgBBUploadService
 import com.synapse.social.studioasinc.shared.data.source.remote.R2UploadService
 import com.synapse.social.studioasinc.shared.data.source.remote.SupabaseUploadService
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
+import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.GetStorageConfigUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.UpdateStorageProviderUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.UploadMediaUseCase
@@ -73,12 +77,17 @@ val storageModule = module {
                 followersCountAdapter = intAdapter,
                 followingCountAdapter = intAdapter,
                 postsCountAdapter = intAdapter
+            ),
+            PendingActionAdapter = com.synapse.social.studioasinc.shared.data.database.PendingAction.Adapter(
+                retryCountAdapter = intAdapter
             )
         )
     }
 
     single<StorageRepository> { StorageRepositoryImpl(get(), get()) }
     single<CommentDao> { SqlDelightCommentDao(get()) }
+    single<PendingActionDao> { SqlDelightPendingActionDao(get()) }
+    single<OfflineActionRepository> { OfflineActionRepositoryImpl(get()) }
 
 
     single {

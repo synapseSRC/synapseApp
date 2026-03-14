@@ -39,13 +39,16 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 
 import io.github.jan.supabase.SupabaseClient as JanSupabaseClient
 
 @Singleton
 class PostRepository constructor(
     private val postDao: PostDao,
-    private val client: JanSupabaseClient
+    private val client: JanSupabaseClient,
+    private val offlineActionRepository: OfflineActionRepository
 ) : PostActionsRepository {
 
     fun getPostsPaged(): Flow<PagingData<Post>> {
@@ -459,9 +462,49 @@ class PostRepository constructor(
         oldReaction: ReactionType? = null,
         skipCheck: Boolean = false
     ): Result<Unit> = withContext(Dispatchers.IO) {
+        // Optimistic update
+        val post = postDao.getPostById(postId)?.let { PostMapper.toModel(it) }
+        if (post != null) {
+            val updatedReactions = post.reactions?.toMutableMap() ?: mutableMapOf()
+            val currentCount = updatedReactions[reactionType] ?: 0
 
-        reactionRepository.toggleReaction(postId, "post", reactionType, oldReaction, skipCheck)
-            .map { Unit }
+            if (oldReaction == reactionType) {
+                updatedReactions[reactionType] = maxOf(0, currentCount - 1)
+                post.userReaction = null
+            } else {
+                if (oldReaction != null) {
+                    val oldTypeCount = updatedReactions[oldReaction] ?: 0
+                    updatedReactions[oldReaction] = maxOf(0, oldTypeCount - 1)
+                }
+                updatedReactions[reactionType] = currentCount + 1
+                post.userReaction = reactionType
+            }
+
+            val updatedPost = post.copy(
+                reactions = updatedReactions,
+                likesCount = updatedReactions.values.sum()
+            )
+            postDao.insert(PostMapper.toEntity(updatedPost))
+        }
+
+        try {
+            reactionRepository.toggleReaction(postId, "post", reactionType, oldReaction, skipCheck)
+                .map { Unit }
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Network reaction toggle failed, queuing for background sync", e)
+            offlineActionRepository.addAction(
+                PendingAction(
+                    id = java.util.UUID.randomUUID().toString(),
+                    actionType = PendingAction.ActionType.LIKE,
+                    targetId = postId,
+                    payload = buildJsonObject {
+                        put("reactionType", reactionType.name)
+                        put("oldReaction", oldReaction?.name)
+                    }.toString()
+                )
+            )
+            Result.success(Unit) // Return success because it's queued
+        }
     }
 
     suspend fun getReactionSummary(postId: String): Result<Map<ReactionType, Int>> =

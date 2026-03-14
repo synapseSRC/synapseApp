@@ -17,6 +17,8 @@ import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPostDao
+import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDaoImpl
 import com.synapse.social.studioasinc.shared.security.SecurityCipher
@@ -30,6 +32,11 @@ object DatabaseModule {
     @Provides
     fun provideCommentDao(db: StorageDatabase): CommentDao {
         return SqlDelightCommentDao(db)
+    }
+
+    @Provides
+    fun providePendingActionDao(db: StorageDatabase): PendingActionDao {
+        return SqlDelightPendingActionDao(db)
     }
 
     @Provides
@@ -76,6 +83,9 @@ object DatabaseModule {
                 followersCountAdapter = intAdapter,
                 followingCountAdapter = intAdapter,
                 postsCountAdapter = intAdapter
+            ),
+            PendingActionAdapter = com.synapse.social.studioasinc.shared.data.database.PendingAction.Adapter(
+                retryCountAdapter = intAdapter
             )
         )
     }
