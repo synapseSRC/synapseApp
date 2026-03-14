@@ -6,6 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -90,66 +93,54 @@ fun ProfileHeader(
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.Medium)
             ) {
-                // Name and badge in a Row right next to Avatar
-                // Wait, if we want it next to the avatar (on the right) we should put it in a Box or Row.
-                // Avatar is 110dp. Half is 55dp.
-                // Left padding is Spacing.Medium (16.dp).
-                // Avatar total width area = 16.dp + 110.dp = 126.dp.
-                // Let's position the Name and followers right beside the avatar in a Row.
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp), // Some padding from top of rounded card
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                // Avatar is 110dp. Half is 55dp overlapping the cover photo, half overlapping the surface.
+                // So we add 55dp + padding (12dp) = 67dp vertical spacing before the text to clear the avatar.
+                Spacer(modifier = Modifier.height(67.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Spacer for the avatar
-                    Spacer(modifier = Modifier.width(110.dp).height(84.dp)) // ensures Bio below the row clears the avatar
-
-                                        Column(
-                        modifier = Modifier.weight(1f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
-                        ) {
-                            Text(
-                                text = name ?: username,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-
-                            if (isVerified) {
-                                AnimatedVerifiedBadge()
-                            }
-                        }
-
                         Text(
-                            text = "@$username",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = name ?: username,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
 
-                        if (!nickname.isNullOrBlank()) {
-                            Text(
-                                text = nickname,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                        if (isVerified) {
+                            AnimatedVerifiedBadge()
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "@$username",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
-                        InlineStatsText(
-                            postsCount = postsCount,
-                            followersCount = followersCount,
-                            followingCount = followingCount,
-                            onStatsClick = onStatsClick
+                    if (!nickname.isNullOrBlank()) {
+                        Text(
+                            text = nickname,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    InlineStatsText(
+                        postsCount = postsCount,
+                        followersCount = followersCount,
+                        followingCount = followingCount,
+                        onStatsClick = onStatsClick
+                    )
                 }
 
                 // Add spacing before bio
@@ -181,11 +172,11 @@ fun ProfileHeader(
             }
         }
 
-        // Avatar sitting on the boundary
+        // Avatar overlapping equally
         Box(
             modifier = Modifier
                 .padding(start = Spacing.Medium)
-                .padding(top = 149.dp) // 160dp boundary - 11dp (10% overlap) = 149dp
+                .padding(top = 105.dp) // 160dp boundary - 55dp (half of 110dp avatar) = 105dp
         ) {
             ProfileImageWithRing(
                 avatar = avatar,
@@ -433,6 +424,7 @@ private fun ProfileHeaderPreview() {
 
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InlineStatsText(
     postsCount: Int,
@@ -445,10 +437,10 @@ private fun InlineStatsText(
     val formattedFollowing = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(followingCount)
     val formattedPosts = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(postsCount)
 
-    Row(
+    FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.Center
     ) {
         Row(
             modifier = Modifier.clickable { onStatsClick("followers") },
