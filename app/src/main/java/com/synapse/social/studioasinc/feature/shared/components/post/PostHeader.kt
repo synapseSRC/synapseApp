@@ -166,7 +166,7 @@ fun PostHeader(
 
         if (replyToUsername != null) {
             Row(
-                modifier = Modifier.padding(top = 1.dp),
+                modifier = Modifier.padding(top = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val replyingToText = androidx.compose.ui.res.stringResource(

@@ -200,23 +200,25 @@ fun PostInteractionBar(
             }
 
             // Views
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.BarChart,
-                    contentDescription = "Views",
-                    tint = iconColor,
-                    modifier = Modifier.size(18.dp)
-                )
-                if (viewsCount > 0) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = formatCount(viewsCount),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = iconColor
+            if (!isComment) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.BarChart,
+                        contentDescription = "Views",
+                        tint = iconColor,
+                        modifier = Modifier.size(18.dp)
                     )
+                    if (viewsCount > 0) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = formatCount(viewsCount),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = iconColor
+                        )
+                    }
                 }
             }
 
