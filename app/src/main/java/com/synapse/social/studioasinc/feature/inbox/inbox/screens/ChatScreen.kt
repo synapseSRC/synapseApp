@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
+import com.synapse.social.studioasinc.feature.shared.components.picker.SynapseFilePicker
+
 
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -702,27 +704,25 @@ fun ChatScreen(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            DropdownMenu(
-                                expanded = showAttachmentMenu,
-                                onDismissRequest = { showAttachmentMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Gallery (Image/Video)") },
-                                    onClick = {
-                                        showAttachmentMenu = false
-                                        visualMediaLauncher.launch(
-                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                                        )
+                            if (showAttachmentMenu) {
+                                SynapseFilePicker(
+                                    onDismissRequest = { showAttachmentMenu = false },
+                                    onFilesSelected = { files ->
+                                        files.forEach { pickedFile ->
+                                            val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
+                                            if (filePath != null) {
+                                                val type = if (pickedFile.mimeType.startsWith("video/")) "video" else if (pickedFile.mimeType.startsWith("image/")) "image" else if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
+                                                viewModel.uploadAndSendMedia(
+                                                    filePath = filePath,
+                                                    fileName = pickedFile.fileName,
+                                                    contentType = pickedFile.mimeType,
+                                                    messageType = type,
+                                                    caption = null
+                                                )
+                                            }
+                                        }
                                     },
-                                    leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Document / File") },
-                                    onClick = {
-                                        showAttachmentMenu = false
-                                        documentLauncher.launch("*/*")
-                                    },
-                                    leadingIcon = { Icon(Icons.Default.InsertDriveFile, contentDescription = null) }
+                                    maxSelection = 1
                                 )
                             }
                         }

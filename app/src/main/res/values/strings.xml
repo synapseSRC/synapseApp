@@ -1343,4 +1343,12 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="see_as_specific_person">See as a specific person</string>
     <string name="view_as_title">View As</string>
 
+
+    <!-- File Picker -->
+    <string name="picker_category_media">Media</string>
+    <string name="picker_category_docs">Docs</string>
+    <string name="picker_category_audio">Audio</string>
+    <string name="picker_category_file">File</string>
+    <string name="picker_category_contact">Contact</string>
+    <string name="picker_send_button">Send (%1$d)</string>
 </resources>
