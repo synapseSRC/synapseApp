@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.shared.domain.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import com.synapse.social.studioasinc.shared.util.TimeProvider
 
 @Serializable
 data class PendingAction(
@@ -9,7 +10,7 @@ data class PendingAction(
     val actionType: ActionType,
     val targetId: String,
     val payload: String? = null,
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = TimeProvider.nowMillis(),
     val retryCount: Int = 0,
     val lastAttemptAt: Long? = null
 ) {

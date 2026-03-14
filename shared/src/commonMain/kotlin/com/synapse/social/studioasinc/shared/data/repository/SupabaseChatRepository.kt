@@ -11,6 +11,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepo
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.util.Logger
 import com.synapse.social.studioasinc.shared.util.UUIDUtils
+import com.synapse.social.studioasinc.shared.util.TimeProvider
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.flow.Flow
@@ -288,7 +289,7 @@ class SupabaseChatRepository(
                     content = content,
                     messageType = messageType,
                     mediaUrl = mediaUrl,
-                    createdAt = java.time.Instant.now().toString(),
+                    createdAt = TimeProvider.nowInstant().toString(),
                     isEncrypted = isEncrypted,
                     encryptedContent = encryptedContentStr
                 )
