@@ -25,12 +25,16 @@ import com.synapse.social.studioasinc.domain.usecase.search.SearchLocationsUseCa
 import com.synapse.social.studioasinc.domain.usecase.search.SearchFeelingsUseCase
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager
+import com.synapse.social.studioasinc.shared.domain.model.DraftType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import javax.inject.Inject
 
 enum class CompositionType {
@@ -48,6 +52,20 @@ private val allFeelings = listOf(
     FeelingActivity("😰", "Anxious", FeelingType.MOOD),
     FeelingActivity("😕", "Confused", FeelingType.MOOD),
     FeelingActivity("🦚", "Proud", FeelingType.MOOD)
+)
+
+@Serializable
+data class CreatePostDraft(
+    val postText: String = "",
+    val mediaItems: List<MediaItem> = emptyList(),
+    val pollData: PollData? = null,
+    val location: LocationData? = null,
+    val youtubeUrl: String? = null,
+    val privacy: String = "public",
+    val settings: PostSettings = PostSettings(),
+    val taggedPeople: List<User> = emptyList(),
+    val feeling: FeelingActivity? = null,
+    val textBackgroundColor: Long? = null
 )
 
 data class CreatePostUiState(
@@ -77,12 +95,14 @@ data class CreatePostUiState(
     val isSearchLoading: Boolean = false
 )
 
+@Serializable
 data class PollData(
     val question: String,
     val options: List<String>,
     val durationHours: Int
 )
 
+@Serializable
 data class PostSettings(
     val hideViewsCount: Boolean = false,
     val hideLikeCount: Boolean = false,
@@ -133,12 +153,32 @@ class CreatePostViewModel @Inject constructor(
     fun loadDraft() {
         if (_uiState.value.isEditMode || !_uiState.value.checkDraft) return
 
-        val draftText = getDraftUseCase()
-
-        if (!draftText.isNullOrEmpty()) {
-             _uiState.update { it.copy(postText = draftText, checkDraft = false) }
-        } else {
-            _uiState.update { it.copy(checkDraft = false) }
+        viewModelScope.launch {
+            getDraftUseCase(DraftType.POST)?.let { draft ->
+                try {
+                    val draftContent = Json.decodeFromString<CreatePostDraft>(draft.content)
+                    _uiState.update { state ->
+                        state.copy(
+                            postText = draftContent.postText,
+                            mediaItems = draftContent.mediaItems,
+                            pollData = draftContent.pollData,
+                            location = draftContent.location,
+                            youtubeUrl = draftContent.youtubeUrl,
+                            privacy = draftContent.privacy,
+                            settings = draftContent.settings,
+                            taggedPeople = draftContent.taggedPeople,
+                            feeling = draftContent.feeling,
+                            textBackgroundColor = draftContent.textBackgroundColor,
+                            checkDraft = false
+                        )
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("CreatePostViewModel", "Failed to decode draft", e)
+                    _uiState.update { it.copy(checkDraft = false) }
+                }
+            } ?: run {
+                _uiState.update { it.copy(checkDraft = false) }
+            }
         }
     }
 
@@ -146,15 +186,34 @@ class CreatePostViewModel @Inject constructor(
         if (_uiState.value.isPostCreated) return
         if (_uiState.value.isEditMode) return
 
-        val text = _uiState.value.postText
-
-        if (text.isNotBlank() || _uiState.value.mediaItems.isNotEmpty()) {
-            saveDraftUseCase(text)
+        val state = _uiState.value
+        if (state.postText.isNotBlank() || state.mediaItems.isNotEmpty()) {
+            val draftContent = CreatePostDraft(
+                postText = state.postText,
+                mediaItems = state.mediaItems,
+                pollData = state.pollData,
+                location = state.location,
+                youtubeUrl = state.youtubeUrl,
+                privacy = state.privacy,
+                settings = state.settings,
+                taggedPeople = state.taggedPeople,
+                feeling = state.feeling,
+                textBackgroundColor = state.textBackgroundColor
+            )
+            viewModelScope.launch {
+                saveDraftUseCase(
+                    id = "create_post_draft",
+                    type = DraftType.POST,
+                    content = Json.encodeToString(draftContent)
+                )
+            }
         }
     }
 
     fun clearDraft() {
-        clearDraftUseCase()
+        viewModelScope.launch {
+            clearDraftUseCase(DraftType.POST)
+        }
     }
 
     fun setCompositionType(type: String) {
