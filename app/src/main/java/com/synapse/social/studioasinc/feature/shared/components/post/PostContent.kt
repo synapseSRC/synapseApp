@@ -80,7 +80,10 @@ fun PostContent(
                         }
                     },
                     update = { textView ->
-                        MarkdownRenderer.get(context).render(textView, text)
+                        if (textView.tag != text) {
+                            MarkdownRenderer.get(context).render(textView, text ?: "")
+                            textView.tag = text
+                        }
                         textView.setTextColor(colorOnSurface.toArgb())
                         textView.maxLines = if (showFullText) Int.MAX_VALUE else 10
                         textView.ellipsize = if (showFullText) null else TextUtils.TruncateAt.END

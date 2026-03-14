@@ -57,23 +57,31 @@ object TimeUtils {
 
 
 
+    private val fallbackFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").withZone(java.time.ZoneId.of("UTC"))
+
     fun getTimeAgo(isoTimestamp: String): String {
         if (isoTimestamp.isBlank()) return "1s"
-        return try {
 
-            val odt = java.time.OffsetDateTime.parse(isoTimestamp)
-            formatTimestamp(odt.toInstant().toEpochMilli())
-        } catch (e: java.time.format.DateTimeParseException) {
-
+        // Fast path for ISO timestamps from Supabase
+        if (isoTimestamp.length > 10 && isoTimestamp[10] == 'T') {
             try {
-                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
-                    timeZone = TimeZone.getTimeZone("UTC")
+                // If it ends with Z or has an offset
+                if (isoTimestamp.endsWith("Z") || isoTimestamp.contains("+") || (isoTimestamp.indexOf("-", 11) != -1)) {
+                    val odt = java.time.OffsetDateTime.parse(isoTimestamp)
+                    return formatTimestamp(odt.toInstant().toEpochMilli())
                 }
-                val timestamp = sdf.parse(isoTimestamp.substringBefore('+').substringBefore('Z'))?.time ?: return "1s"
-                formatTimestamp(timestamp)
-            } catch (e2: Exception) {
-                "1s"
+
+                // Fallback for timezone-less strings
+                val cleanTimestamp = isoTimestamp.substringBefore('+').substringBefore('Z').substringBefore('.')
+                val localDateTime = java.time.LocalDateTime.parse(cleanTimestamp, fallbackFormatter)
+                val timestamp = localDateTime.atZone(java.time.ZoneId.of("UTC")).toInstant().toEpochMilli()
+                return formatTimestamp(timestamp)
+            } catch (e: Exception) {
+                // Ignore parsing errors and return default
             }
         }
+
+        // Final fallback if parsing failed or string format is totally unrecognized
+        return "1s"
     }
 }
