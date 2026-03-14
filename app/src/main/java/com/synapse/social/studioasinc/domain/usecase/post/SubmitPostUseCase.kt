@@ -1,5 +1,9 @@
 package com.synapse.social.studioasinc.domain.usecase.post
 
+import com.synapse.social.studioasinc.shared.domain.repository.MeshRepository
+import com.synapse.social.studioasinc.shared.domain.model.mesh.MeshMessage
+import com.synapse.social.studioasinc.shared.util.UUIDUtils
+
 import com.synapse.social.studioasinc.data.repository.PostRepository
 import com.synapse.social.studioasinc.data.repository.UserRepository
 import com.synapse.social.studioasinc.domain.model.MediaItem
@@ -26,7 +30,8 @@ class SubmitPostUseCase @Inject constructor(
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
     private val mediaUploadHandler: MediaUploadHandler,
-    private val reelSubmissionHandler: ReelSubmissionHandler
+    private val reelSubmissionHandler: ReelSubmissionHandler,
+    private val meshRepository: MeshRepository? = null
 ) {
 
     suspend operator fun invoke(
@@ -186,6 +191,22 @@ class SubmitPostUseCase @Inject constructor(
                 PostEventBus.emit(PostEvent.Updated(updatedPost))
             } else {
                 PostEventBus.emit(PostEvent.Created(updatedPost))
+            }
+        }
+
+                result.onFailure { error ->
+            // Mesh Fallback for posts
+            meshRepository?.let { mesh ->
+                val meshMsg = MeshMessage(
+                    id = UUIDUtils.randomUUID(),
+                    senderId = post.authorUid,
+                    recipientId = null,
+                    chatId = null,
+                    content = "post:" + (post.postText ?: ""),
+                    timestamp = System.currentTimeMillis(),
+                    type = "post"
+                )
+                mesh.broadcastMessage(meshMsg)
             }
         }
 

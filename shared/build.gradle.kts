@@ -98,6 +98,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
+                implementation("com.google.android.gms:play-services-nearby:18.3.0")
                 implementation("io.ktor:ktor-client-okhttp:3.1.2")
                 implementation("org.whispersystems:signal-protocol-android:2.8.1")
                 implementation("androidx.security:security-crypto:1.1.0-alpha06")

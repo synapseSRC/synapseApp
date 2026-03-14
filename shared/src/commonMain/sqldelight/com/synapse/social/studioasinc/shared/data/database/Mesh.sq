@@ -1,0 +1,38 @@
+import kotlin.Boolean;
+
+CREATE TABLE MeshMessage (
+    id TEXT NOT NULL PRIMARY KEY,
+    senderId TEXT NOT NULL,
+    recipientId TEXT,
+    chatId TEXT,
+    content TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    isSynced INTEGER AS Boolean DEFAULT 0
+);
+
+CREATE TABLE MeshPeer (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    lastSeen INTEGER NOT NULL
+);
+
+insertMessage:
+INSERT OR REPLACE INTO MeshMessage(id, senderId, recipientId, chatId, content, timestamp, type, isSynced)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllMessages:
+SELECT * FROM MeshMessage ORDER BY timestamp DESC;
+
+selectPendingSync:
+SELECT * FROM MeshMessage WHERE isSynced = 0;
+
+markAsSynced:
+UPDATE MeshMessage SET isSynced = 1 WHERE id = ?;
+
+insertPeer:
+INSERT OR REPLACE INTO MeshPeer(id, name, lastSeen)
+VALUES (?, ?, ?);
+
+selectAllPeers:
+SELECT * FROM MeshPeer;

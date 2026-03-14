@@ -1,5 +1,11 @@
 package com.synapse.social.studioasinc.shared.di
 
+import com.synapse.social.studioasinc.shared.data.local.database.MeshDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightMeshDao
+import com.synapse.social.studioasinc.shared.data.repository.MeshRepositoryImpl
+import com.synapse.social.studioasinc.shared.domain.repository.MeshRepository
+import com.synapse.social.studioasinc.shared.data.datasource.MeshDataSource
+
 import com.synapse.social.studioasinc.shared.data.FileUploader
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.data.database.Post
@@ -42,10 +48,12 @@ import app.cash.sqldelight.db.SqlDriver
 
 expect val storageDriverModule: Module
 expect val fileUploaderModule: Module
+expect val meshDataSourceModule: Module
 
 val storageModule = module {
     includes(storageDriverModule)
     includes(fileUploaderModule)
+    includes(meshDataSourceModule)
     includes(secureStorageModule)
 
     single {
@@ -79,6 +87,8 @@ val storageModule = module {
 
     single<StorageRepository> { StorageRepositoryImpl(get(), get()) }
     single<CommentDao> { SqlDelightCommentDao(get()) }
+    single<MeshDao> { SqlDelightMeshDao(get()) }
+    single<MeshRepository> { MeshRepositoryImpl(get(), get()) }
 
 
     single {

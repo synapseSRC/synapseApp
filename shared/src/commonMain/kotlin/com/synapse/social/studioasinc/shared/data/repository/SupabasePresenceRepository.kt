@@ -1,5 +1,9 @@
 package com.synapse.social.studioasinc.shared.data.repository
 
+import com.synapse.social.studioasinc.shared.domain.repository.MeshRepository
+import com.synapse.social.studioasinc.shared.domain.model.mesh.MeshMessage
+import com.synapse.social.studioasinc.shared.util.UUIDUtils
+
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
 import io.github.aakira.napier.Napier
@@ -18,7 +22,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 class SupabasePresenceRepository(
-    private val client: SupabaseClientLib = SupabaseClient.client
+    private val client: SupabaseClientLib = SupabaseClient.client,
+    private val meshRepository: MeshRepository? = null
 ) : PresenceRepository {
     
     private var heartbeatJob: Job? = null
@@ -46,7 +51,21 @@ class SupabasePresenceRepository(
                         put("current_chat_id", currentChatId)
                     }
                 )
-                Napier.d("✅ Presence updated: userId=$userId, isOnline=$isOnline, status=${if (isOnline) "online" else "offline"}")
+                                Napier.d("✅ Presence updated: userId=$userId, isOnline=$isOnline, status=${if (isOnline) "online" else "offline"}")
+
+                // Mesh broadcast
+                meshRepository?.let { mesh ->
+                    val meshMsg = MeshMessage(
+                        id = UUIDUtils.randomUUID(),
+                        senderId = userId,
+                        recipientId = null,
+                        chatId = null,
+                        content = "presence:${if (isOnline) "online" else "offline"}",
+                        timestamp = Clock.System.now().toEpochMilliseconds(),
+                        type = "presence"
+                    )
+                    mesh.broadcastMessage(meshMsg)
+                }
             } catch (e: Exception) {
                 Napier.e("❌ Failed to update presence: ${e.message}", e)
                 throw e

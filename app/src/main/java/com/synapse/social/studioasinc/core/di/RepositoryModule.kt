@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.core.di
 
+import com.synapse.social.studioasinc.shared.domain.usecase.mesh.SyncMeshDataUseCase
+
 import android.content.Context
 import android.content.SharedPreferences
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
@@ -16,6 +18,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
+import com.synapse.social.studioasinc.shared.domain.repository.MeshRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -535,18 +538,38 @@ object RepositoryModule {
 
     @Provides
     @Singleton
+    fun provideMeshDataSource(@ApplicationContext context: Context): com.synapse.social.studioasinc.shared.data.datasource.MeshDataSource {
+        return com.synapse.social.studioasinc.shared.data.datasource.AndroidMeshDataSource(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMeshRepository(
+        storageDatabase: StorageDatabase,
+        meshDataSource: com.synapse.social.studioasinc.shared.data.datasource.MeshDataSource
+    ): MeshRepository {
+        return com.synapse.social.studioasinc.shared.data.repository.MeshRepositoryImpl(
+            meshDataSource,
+            com.synapse.social.studioasinc.shared.data.local.database.SqlDelightMeshDao(storageDatabase)
+        )
+    }
+
+    @Provides
+    @Singleton
     fun provideChatRepository(
         client: SupabaseClientType,
         signalProtocolManager: SignalProtocolManager,
         mediaUploadRepository: com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository,
-        presenceRepository: com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
+        presenceRepository: com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository,
+        meshRepository: MeshRepository
     ): com.synapse.social.studioasinc.shared.domain.repository.ChatRepository {
         return com.synapse.social.studioasinc.shared.data.repository.SupabaseChatRepository(
             com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource(client),
             client,
             signalProtocolManager,
             mediaUploadRepository,
-            presenceRepository
+            presenceRepository,
+            meshRepository
         )
     }
 
@@ -655,4 +678,13 @@ object RepositoryModule {
     ): com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase {
         return com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase(chatRepository)
     }
+    @Provides
+    @Singleton
+    fun provideSyncMeshDataUseCase(
+        meshRepository: MeshRepository,
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): SyncMeshDataUseCase {
+        return SyncMeshDataUseCase(meshRepository, chatRepository)
+    }
+
 }

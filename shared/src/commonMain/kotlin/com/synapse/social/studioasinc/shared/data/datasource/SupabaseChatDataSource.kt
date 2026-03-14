@@ -30,7 +30,8 @@ import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.*
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import com.synapse.social.studioasinc.shared.util.SynapseIO
+
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -49,7 +50,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     
     fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
-    suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(Dispatchers.IO) {
+    suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(Dispatchers.SynapseIO) {
         val currentUserId = getCurrentUserId() ?: return@withContext emptyList()
         
         try {
@@ -108,7 +109,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getLastMessage(chatId: String): MessageDto? = withContext(Dispatchers.IO) {
+    suspend fun getLastMessage(chatId: String): MessageDto? = withContext(Dispatchers.SynapseIO) {
         try {
             client.postgrest.from("messages").select {
                 filter {
@@ -128,7 +129,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getUnreadCount(chatId: String, lastReadAt: String?): Int = withContext(Dispatchers.IO) {
+    suspend fun getUnreadCount(chatId: String, lastReadAt: String?): Int = withContext(Dispatchers.SynapseIO) {
         if (lastReadAt == null) return@withContext 0
         try {
             val messages = client.postgrest.from("messages").select {
@@ -150,7 +151,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     }
 
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null): List<MessageDto> = 
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.SynapseIO) {
             try {
                 client.postgrest.from("messages").select {
                     filter {
@@ -183,13 +184,13 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         expiresAt: String? = null,
         replyToId: String? = null
     ): MessageDto =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.SynapseIO) {
             val senderId = getCurrentUserId() ?: throw Exception("Not authenticated")
             val newMessage = NewMessageDto(chatId, senderId, content, messageType, mediaUrl, isEncrypted, encryptedContent, expiresAt, replyToId)
             client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
         }
 
-    suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) = withContext(Dispatchers.SynapseIO) {
         try {
             client.functions.invoke("send-push-notification", buildJsonObject {
                 put("recipient_id", recipientId)
@@ -209,7 +210,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
      * Looks up the other participant in a chat from the chat_participants table.
      * This is more reliable than parsing chatId strings.
      */
-    suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? = withContext(Dispatchers.IO) {
+    suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? = withContext(Dispatchers.SynapseIO) {
         try {
             val participants = client.postgrest.from("chat_participants")
                 .select(columns = Columns.list("user_id")) {
@@ -226,7 +227,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getUserPublicKey(userId: String): UserPublicKeyDto? = withContext(Dispatchers.IO) {
+    suspend fun getUserPublicKey(userId: String): UserPublicKeyDto? = withContext(Dispatchers.SynapseIO) {
         try {
             Napier.d("E2EE_KEY_FETCH: Fetching public key for user $userId", tag = "E2EE")
             val result = client.postgrest.from("user_public_keys").select {
@@ -246,7 +247,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun uploadUserPublicKey(publicKey: String) = withContext(Dispatchers.IO) {
+    suspend fun uploadUserPublicKey(publicKey: String) = withContext(Dispatchers.SynapseIO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not authenticated")
             val dto = UserPublicKeyDto(currentUserId, publicKey)
@@ -258,7 +259,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getOrCreateChat(otherUserId: String): String? = withContext(Dispatchers.IO) {
+    suspend fun getOrCreateChat(otherUserId: String): String? = withContext(Dispatchers.SynapseIO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
             
@@ -297,7 +298,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     }
 
 
-    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): String? = withContext(Dispatchers.IO) {
+    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): String? = withContext(Dispatchers.SynapseIO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
 
@@ -323,7 +324,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getChatInfo(chatId: String): ChatDto? = withContext(Dispatchers.IO) {
+    suspend fun getChatInfo(chatId: String): ChatDto? = withContext(Dispatchers.SynapseIO) {
         try {
             client.postgrest.from("chats").select {
                 filter { eq("id", chatId) }
@@ -335,7 +336,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getGroupMembers(chatId: String): List<Pair<User, Boolean>> = withContext(Dispatchers.IO) {
+    suspend fun getGroupMembers(chatId: String): List<Pair<User, Boolean>> = withContext(Dispatchers.SynapseIO) {
         try {
             val participants = client.postgrest.from("chat_participants").select {
                 filter { eq("chat_id", chatId) }
@@ -358,7 +359,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(Dispatchers.IO) {
+    suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(Dispatchers.SynapseIO) {
         try {
             val participants = userIds.map { ChatParticipantDto(chatId = chatId, userId = it) }
             client.postgrest.from("chat_participants").insert(participants)
@@ -368,7 +369,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun removeGroupMember(chatId: String, userId: String) = withContext(Dispatchers.IO) {
+    suspend fun removeGroupMember(chatId: String, userId: String) = withContext(Dispatchers.SynapseIO) {
         try {
             client.postgrest.from("chat_participants").delete {
                 filter {
@@ -382,7 +383,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun markMessagesAsRead(chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun markMessagesAsRead(chatId: String) = withContext(Dispatchers.SynapseIO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext
             val now = kotlinx.datetime.Clock.System.now().toString()
@@ -425,7 +426,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
-    suspend fun getMessageById(messageId: String): MessageDto? = withContext(Dispatchers.IO) {
+    suspend fun getMessageById(messageId: String): MessageDto? = withContext(Dispatchers.SynapseIO) {
         try {
             client.postgrest.from("messages").select {
                 filter { eq("id", messageId) }
@@ -442,7 +443,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         newContent: String, 
         isEncrypted: Boolean = false, 
         encryptedContent: String? = null
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(Dispatchers.SynapseIO) {
         try {
             client.postgrest.from("messages").update({
                 set("content", newContent)
@@ -459,7 +460,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     }
 
     suspend fun deleteMessage(messageId: String): Unit = 
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.SynapseIO) {
             try {
                 client.postgrest.from("messages").update({
                     set("is_deleted", true)
@@ -473,7 +474,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         }
 
     suspend fun deleteMessageForMe(messageId: String): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.SynapseIO) {
             val userId = getCurrentUserId() ?: throw Exception("Not authenticated")
             val deletion = UserDeletedMessageDto(messageId = messageId, userId = userId)
             client.postgrest.from("user_deleted_messages").insert(deletion)
@@ -481,7 +482,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
 
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) = 
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.SynapseIO) {
             try {
                 val currentUserId = getCurrentUserId() ?: return@withContext
                 val channel = client.realtime.channel("chat-$chatId")
@@ -509,7 +510,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.SynapseIO) {
             try {
                 channel.subscribe()
             } catch (e: Exception) {
@@ -607,7 +608,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.SynapseIO) {
             try {
                 channel.subscribe()
             } catch (e: Exception) {
@@ -643,7 +644,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.SynapseIO) {
             try {
                 channel.subscribe()
             } catch (e: Exception) {

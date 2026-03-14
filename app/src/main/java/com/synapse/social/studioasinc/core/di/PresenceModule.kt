@@ -19,7 +19,8 @@ object PresenceModule {
     
     @Provides
     @Singleton
-    fun providePresenceRepository(): PresenceRepository = SupabasePresenceRepository()
+    fun providePresenceRepository(
+        meshRepository: com.synapse.social.studioasinc.shared.domain.repository.MeshRepository,): PresenceRepository = SupabasePresenceRepository()
     
     @Provides
     @Singleton

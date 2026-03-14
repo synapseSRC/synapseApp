@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.map
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import com.synapse.social.studioasinc.shared.util.SynapseIO
+
 
 class SqlDelightCommentDao(
     private val db: StorageDatabase
@@ -17,7 +18,7 @@ class SqlDelightCommentDao(
     override fun getCommentsForPost(postId: String): Flow<List<CommentEntity>> {
         return db.commentQueries.selectByPostId(postId)
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(Dispatchers.SynapseIO)
             .map { comments ->
                 comments.map { it.toEntity() }
             }

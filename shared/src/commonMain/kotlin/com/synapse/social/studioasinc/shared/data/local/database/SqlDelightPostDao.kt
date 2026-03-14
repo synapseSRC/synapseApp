@@ -9,18 +9,19 @@ import kotlinx.coroutines.flow.map
 import com.synapse.social.studioasinc.shared.data.local.entity.PostEntity
 import com.synapse.social.studioasinc.shared.data.database.Post as DbPost
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import com.synapse.social.studioasinc.shared.util.SynapseIO
+
 import kotlinx.coroutines.withContext
 
 class SqlDelightPostDao(
     private val db: StorageDatabase
 ) : PostDao {
 
-    override suspend fun insert(post: PostEntity): Unit = withContext(Dispatchers.IO) {
+    override suspend fun insert(post: PostEntity): Unit = withContext(Dispatchers.SynapseIO) {
         db.postQueries.insertPost(toDbPost(post))
     }
 
-    override suspend fun insertAll(posts: List<PostEntity>) = withContext(Dispatchers.IO) {
+    override suspend fun insertAll(posts: List<PostEntity>) = withContext(Dispatchers.SynapseIO) {
         db.transaction {
             posts.forEach { post ->
                 db.postQueries.insertPost(toDbPost(post))
@@ -28,39 +29,39 @@ class SqlDelightPostDao(
         }
     }
 
-    override suspend fun getPostById(id: String): PostEntity? = withContext(Dispatchers.IO) {
+    override suspend fun getPostById(id: String): PostEntity? = withContext(Dispatchers.SynapseIO) {
         db.postQueries.selectById(id).executeAsOneOrNull()?.let { toEntity(it) }
     }
 
-    override suspend fun getAllPosts(): List<PostEntity> = withContext(Dispatchers.IO) {
+    override suspend fun getAllPosts(): List<PostEntity> = withContext(Dispatchers.SynapseIO) {
         db.postQueries.selectAll().executeAsList().map { toEntity(it) }
     }
 
 
-    override suspend fun getPostsPaged(limit: Long, offset: Long): List<PostEntity> = withContext(Dispatchers.IO) {
+    override suspend fun getPostsPaged(limit: Long, offset: Long): List<PostEntity> = withContext(Dispatchers.SynapseIO) {
         db.postQueries.selectAllPaged(limit, offset).executeAsList().map { toEntity(it) }
     }
 
-    override suspend fun getPostsCount(): Long = withContext(Dispatchers.IO) {
+    override suspend fun getPostsCount(): Long = withContext(Dispatchers.SynapseIO) {
         db.postQueries.countAllPosts().executeAsOne()
     }
 
     override fun getAllPostsAsFlow(): Flow<List<PostEntity>> {
         return db.postQueries.selectAll()
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(Dispatchers.SynapseIO)
             .map { list -> list.map { toEntity(it) } }
     }
 
-    override suspend fun getAllPostIds(): List<String> = withContext(Dispatchers.IO) {
+    override suspend fun getAllPostIds(): List<String> = withContext(Dispatchers.SynapseIO) {
         db.postQueries.selectIds().executeAsList()
     }
 
-    override suspend fun deleteById(id: String): Unit = withContext(Dispatchers.IO) {
+    override suspend fun deleteById(id: String): Unit = withContext(Dispatchers.SynapseIO) {
         db.postQueries.deleteById(id)
     }
 
-    override suspend fun deleteByIds(ids: List<String>) = withContext(Dispatchers.IO) {
+    override suspend fun deleteByIds(ids: List<String>) = withContext(Dispatchers.SynapseIO) {
         db.transaction {
             ids.forEach { id ->
                 db.postQueries.deleteById(id)
@@ -68,7 +69,7 @@ class SqlDelightPostDao(
         }
     }
 
-    override suspend fun deleteAll(): Unit = withContext(Dispatchers.IO) {
+    override suspend fun deleteAll(): Unit = withContext(Dispatchers.SynapseIO) {
         db.postQueries.deleteAll()
     }
 

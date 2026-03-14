@@ -9,7 +9,8 @@ import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import com.synapse.social.studioasinc.shared.util.SynapseIO
+
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -39,47 +40,47 @@ class StorageRepositoryImpl(
     override fun getStorageConfig(): Flow<StorageConfig> {
         return queries.getConfig().asFlow()
             .onStart { ensureDefault() }
-            .mapToOneOrNull(Dispatchers.IO)
+            .mapToOneOrNull(Dispatchers.SynapseIO)
             .map { row -> mapToConfig(row) }
     }
 
     internal suspend fun mapToConfig(row: Storage_config?): StorageConfig = coroutineScope {
         if (row == null) return@coroutineScope StorageConfig()
 
-        val imgBBKeyDeferred = async(Dispatchers.IO) {
+        val imgBBKeyDeferred = async(Dispatchers.SynapseIO) {
              secureStorage.getString(KEY_IMGBB)?.takeIf { it.isNotBlank() }
                  ?: row.imgbb_key.takeIf { it.isNotBlank() }
                  ?: SynapseConfig.IMGBB_API_KEY
         }
 
-        val cloudinaryApiKeyDeferred = async(Dispatchers.IO) {
+        val cloudinaryApiKeyDeferred = async(Dispatchers.SynapseIO) {
             secureStorage.getString(KEY_CLOUDINARY_API_KEY)?.takeIf { it.isNotBlank() }
                 ?: row.cloudinary_api_key.takeIf { it.isNotBlank() }
                 ?: SynapseConfig.CLOUDINARY_API_KEY
         }
-        val cloudinaryApiSecretDeferred = async(Dispatchers.IO) {
+        val cloudinaryApiSecretDeferred = async(Dispatchers.SynapseIO) {
             secureStorage.getString(KEY_CLOUDINARY_API_SECRET)?.takeIf { it.isNotBlank() }
                 ?: row.cloudinary_api_secret.takeIf { it.isNotBlank() }
                 ?: SynapseConfig.CLOUDINARY_API_SECRET
         }
 
-        val supabaseKeyDeferred = async(Dispatchers.IO) {
+        val supabaseKeyDeferred = async(Dispatchers.SynapseIO) {
             secureStorage.getString(KEY_SUPABASE)?.takeIf { it.isNotBlank() }
                 ?: row.supabase_key.takeIf { it.isNotBlank() }
                 ?: SynapseConfig.SUPABASE_ANON_KEY
         }
 
-        val r2AccessKeyIdDeferred = async(Dispatchers.IO) { 
+        val r2AccessKeyIdDeferred = async(Dispatchers.SynapseIO) {
             secureStorage.getString(KEY_R2_ACCESS_KEY_ID)?.takeIf { it.isNotBlank() } 
                 ?: row.r2_access_key_id.takeIf { it.isNotBlank() }
                 ?: SynapseConfig.SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID
         }
-        val r2SecretAccessKeyDeferred = async(Dispatchers.IO) { 
+        val r2SecretAccessKeyDeferred = async(Dispatchers.SynapseIO) {
             secureStorage.getString(KEY_R2_SECRET_ACCESS_KEY)?.takeIf { it.isNotBlank() } 
                 ?: row.r2_secret_access_key.takeIf { it.isNotBlank() }
                 ?: SynapseConfig.SUPABASE_SYNAPSE_S3_ACCESS_KEY
         }
-        val compressImagesDeferred = async(Dispatchers.IO) { secureStorage.getString(KEY_COMPRESS_IMAGES)?.toBoolean() ?: true }
+        val compressImagesDeferred = async(Dispatchers.SynapseIO) { secureStorage.getString(KEY_COMPRESS_IMAGES)?.toBoolean() ?: true }
 
         // Logic for Cloudinary Cloud Name fallback
         val cloudinaryCloudName = row.cloudinary_cloud_name.takeIf { it.isNotBlank() } ?: SynapseConfig.CLOUDINARY_CLOUD_NAME
@@ -110,7 +111,7 @@ class StorageRepositoryImpl(
         )
     }
 
-    override suspend fun saveStorageConfig(config: StorageConfig) = withContext(Dispatchers.IO) {
+    override suspend fun saveStorageConfig(config: StorageConfig) = withContext(Dispatchers.SynapseIO) {
 
         secureStorage.save(KEY_IMGBB, config.imgBBKey)
         secureStorage.save(KEY_CLOUDINARY_API_KEY, config.cloudinaryApiKey)
@@ -132,30 +133,30 @@ class StorageRepositoryImpl(
         }
     }
 
-    override suspend fun updatePhotoProvider(provider: StorageProvider): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updatePhotoProvider(provider: StorageProvider): Unit = withContext(Dispatchers.SynapseIO) {
         queries.updatePhotoProvider(provider.name, TimeProvider.nowMillis())
     }
 
-    override suspend fun updateVideoProvider(provider: StorageProvider): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updateVideoProvider(provider: StorageProvider): Unit = withContext(Dispatchers.SynapseIO) {
         queries.updateVideoProvider(provider.name, TimeProvider.nowMillis())
     }
 
-    override suspend fun updateOtherProvider(provider: StorageProvider): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updateOtherProvider(provider: StorageProvider): Unit = withContext(Dispatchers.SynapseIO) {
         queries.updateOtherProvider(provider.name, TimeProvider.nowMillis())
     }
 
-    override suspend fun updateImgBBConfig(key: String): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updateImgBBConfig(key: String): Unit = withContext(Dispatchers.SynapseIO) {
         secureStorage.save(KEY_IMGBB, key)
         queries.updateImgBB("", TimeProvider.nowMillis())
     }
 
-    override suspend fun updateCloudinaryConfig(cloudName: String, apiKey: String, apiSecret: String): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updateCloudinaryConfig(cloudName: String, apiKey: String, apiSecret: String): Unit = withContext(Dispatchers.SynapseIO) {
         secureStorage.save(KEY_CLOUDINARY_API_KEY, apiKey)
         secureStorage.save(KEY_CLOUDINARY_API_SECRET, apiSecret)
         queries.updateCloudinary(cloudName, "", "", TimeProvider.nowMillis())
     }
 
-    override suspend fun updateSupabaseConfig(url: String, key: String, bucket: String): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updateSupabaseConfig(url: String, key: String, bucket: String): Unit = withContext(Dispatchers.SynapseIO) {
         secureStorage.save(KEY_SUPABASE, key)
         queries.updateSupabase(url, "", bucket, TimeProvider.nowMillis())
     }
@@ -165,14 +166,14 @@ class StorageRepositoryImpl(
         accessKeyId: String,
         secretAccessKey: String,
         bucketName: String
-    ): Unit = withContext(Dispatchers.IO) {
+    ): Unit = withContext(Dispatchers.SynapseIO) {
         secureStorage.save(KEY_R2_ACCESS_KEY_ID, accessKeyId)
         secureStorage.save(KEY_R2_SECRET_ACCESS_KEY, secretAccessKey)
         queries.updateR2(accountId, "", "", bucketName, TimeProvider.nowMillis())
     }
 
 
-    override suspend fun updateCompression(enabled: Boolean): Unit = withContext(Dispatchers.IO) {
+    override suspend fun updateCompression(enabled: Boolean): Unit = withContext(Dispatchers.SynapseIO) {
         secureStorage.save(KEY_COMPRESS_IMAGES, enabled.toString())
         // Trigger flow update by updating last_updated in DB (dummy update to any field or dedicated field if available, but here we reuse updatePhotoProvider or similar if we want to trigger,
         // OR rely on the fact that flow emits when mapToConfig is called? No, mapToConfig is called when DB changes.
@@ -186,7 +187,7 @@ class StorageRepositoryImpl(
         queries.updateImgBB(currentKey, TimeProvider.nowMillis())
     }
 
-    override suspend fun ensureDefault() = withContext(Dispatchers.IO) {
+    override suspend fun ensureDefault() = withContext(Dispatchers.SynapseIO) {
         queries.insertDefault()
         migrateSecrets()
     }

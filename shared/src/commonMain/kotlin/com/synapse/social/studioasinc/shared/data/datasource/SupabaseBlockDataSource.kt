@@ -8,7 +8,8 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import com.synapse.social.studioasinc.shared.util.SynapseIO
+
 import kotlinx.coroutines.withContext
 
 /**
@@ -24,7 +25,7 @@ class SupabaseBlockDataSource(
      * Creates a new block record in Supabase.
      * Checks for existing block before creating to prevent duplicates.
      */
-    suspend fun createBlock(targetUserId: String): Result<BlockDTO> = withContext(Dispatchers.IO) {
+    suspend fun createBlock(targetUserId: String): Result<BlockDTO> = withContext(Dispatchers.SynapseIO) {
         runCatching {
             val currentUserId = client.auth.currentUserOrNull()?.id 
                 ?: throw IllegalStateException("User not authenticated")
@@ -63,7 +64,7 @@ class SupabaseBlockDataSource(
     /**
      * Deletes a block record from Supabase.
      */
-    suspend fun deleteBlock(targetUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun deleteBlock(targetUserId: String): Result<Unit> = withContext(Dispatchers.SynapseIO) {
         runCatching {
             val currentUserId = client.auth.currentUserOrNull()?.id 
                 ?: throw IllegalStateException("User not authenticated")
@@ -85,7 +86,7 @@ class SupabaseBlockDataSource(
      * Fetches all blocks for the current user with user profile details.
      * Joins with users table to get profile information.
      */
-    suspend fun getBlockedUsers(): Result<List<BlockWithUserDTO>> = withContext(Dispatchers.IO) {
+    suspend fun getBlockedUsers(): Result<List<BlockWithUserDTO>> = withContext(Dispatchers.SynapseIO) {
         runCatching {
             val currentUserId = client.auth.currentUserOrNull()?.id 
                 ?: throw IllegalStateException("User not authenticated")
@@ -116,7 +117,7 @@ class SupabaseBlockDataSource(
     /**
      * Checks if a specific user is blocked.
      */
-    suspend fun isUserBlocked(targetUserId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    suspend fun isUserBlocked(targetUserId: String): Result<Boolean> = withContext(Dispatchers.SynapseIO) {
         runCatching {
             val currentUserId = client.auth.currentUserOrNull()?.id 
                 ?: throw IllegalStateException("User not authenticated")
