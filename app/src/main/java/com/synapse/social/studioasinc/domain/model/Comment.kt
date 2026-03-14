@@ -29,6 +29,8 @@ data class Comment(
     val updatedAt: String? = null,
     @SerialName("report_count")
     val reportCount: Int = 0,
+    @SerialName("views_count")
+    val viewsCount: Int = 0,
     @SerialName("photo_url")
     val photoUrl: String? = null,
     @SerialName("video_url")

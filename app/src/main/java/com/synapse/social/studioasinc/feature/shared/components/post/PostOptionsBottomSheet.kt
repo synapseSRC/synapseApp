@@ -143,7 +143,7 @@ fun PostOptionsBottomSheet(
 }
 
 @Composable
-private fun QuickAction(
+internal fun QuickAction(
     icon: Int,
     label: String,
     onClick: () -> Unit
@@ -174,7 +174,7 @@ private fun QuickAction(
 }
 
 @Composable
-private fun OptionItem(option: PostOption) {
+internal fun OptionItem(option: PostOption) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

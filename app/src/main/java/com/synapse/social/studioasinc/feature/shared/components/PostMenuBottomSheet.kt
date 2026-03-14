@@ -2,17 +2,16 @@ package com.synapse.social.studioasinc.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
-
+import com.synapse.social.studioasinc.feature.shared.components.post.PostOption
+import com.synapse.social.studioasinc.feature.shared.components.post.OptionItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,74 +25,36 @@ fun PostMenuBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(bottom = 16.dp)
         ) {
+            val options = mutableListOf<PostOption>()
             if (isOwnPost) {
-                MenuOption(
-                    icon = Icons.Default.Edit,
-                    text = stringResource(R.string.edit_post),
-                    onClick = {
-                        onEdit()
-                        onDismiss()
-                    }
-                )
-
-                MenuOption(
-                    icon = Icons.Default.Delete,
-                    text = stringResource(R.string.post_delete_title),
-                    onClick = {
-                        onDelete()
-                        onDismiss()
-                    },
-                    isDestructive = true
-                )
+                options.add(PostOption("Edit Post", R.drawable.ic_edit_note_48px) {
+                    onEdit()
+                    onDismiss()
+                })
+                options.add(PostOption("Delete Post", R.drawable.ic_delete_48px, isDangerous = true) {
+                    onDelete()
+                    onDismiss()
+                })
             } else {
-                MenuOption(
-                    icon = Icons.Default.Report,
-                    text = stringResource(R.string.report_post_menu),
-                    onClick = {
-                        onReport()
-                        onDismiss()
-                    },
-                    isDestructive = true
-                )
+                options.add(PostOption("Report Post", R.drawable.ic_report_48px, isDangerous = true) {
+                    onReport()
+                    onDismiss()
+                })
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn {
+                items(options) { option ->
+                    OptionItem(option = option)
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun MenuOption(
-    icon: ImageVector,
-    text: String,
-    onClick: () -> Unit,
-    isDestructive: Boolean = false
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-        )
     }
 }

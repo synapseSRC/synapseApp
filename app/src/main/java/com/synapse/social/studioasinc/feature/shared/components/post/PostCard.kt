@@ -225,7 +225,7 @@ fun PostCard(
                     onPollVote = onPollVote,
                     quotedPost = contentQuotedPost,
                     isExpanded = state.isExpanded,
-                    modifier = Modifier.padding(top = 2.dp)
+                    modifier = Modifier
                 )
 
                 PostInteractionBar(

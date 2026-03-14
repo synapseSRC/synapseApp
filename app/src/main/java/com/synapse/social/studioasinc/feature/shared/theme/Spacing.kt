@@ -54,6 +54,8 @@ object Sizes {
     val CornerLarge = 16.dp
     val CornerExtraLarge = 24.dp
 
+    val CornerMassive = 28.dp
+
     val HeightSmall = 24.dp
     val HeightMedium = 40.dp
     val HeightDefault = 56.dp
