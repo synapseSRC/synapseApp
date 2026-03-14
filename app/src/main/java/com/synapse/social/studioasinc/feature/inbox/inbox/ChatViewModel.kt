@@ -349,7 +349,7 @@ class ChatViewModel @Inject constructor(
                     actuallySendMessage(chatId, text)
                 }
             }.onFailure {
-                actuallySendMessage(chatId, text)
+                _error.value = "Could not verify message content safety. Please try again."
             }
         }
     }
@@ -619,7 +619,7 @@ class ChatViewModel @Inject constructor(
                 (current + newMessage).distinctBy { it.id }.sortedBy { msg -> msg.createdAt }
             }
 
-            val isSensitive = detectSensitiveMediaUseCase(filePath).getOrDefault(false)
+            val isSensitive = detectSensitiveMediaUseCase(filePath).getOrElse { e -> Napier.e("Sensitive media detection failed", e); true }
 
             uploadMediaUseCase(
                 chatId = chatId,
