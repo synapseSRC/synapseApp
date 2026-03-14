@@ -155,7 +155,7 @@ fun ProfileHeader(
                     Spacer(modifier = Modifier.height(Spacing.Medium))
                 }
 
-                StatsRow(
+                InlineStatsRow(
                     postsCount = postsCount,
                     followersCount = followersCount,
                     followingCount = followingCount,
@@ -183,7 +183,7 @@ fun ProfileHeader(
         Box(
             modifier = Modifier
                 .padding(start = Spacing.Medium)
-                .padding(top = 105.dp) // 200dp - 40dp overlap - 55dp (half avatar) = 105dp
+                .padding(top = 149.dp) // 160dp boundary - 11dp (10% overlap) = 149dp
         ) {
             ProfileImageWithRing(
                 avatar = avatar,
@@ -423,6 +423,65 @@ private fun ProfileHeaderPreview() {
             onAddStoryClick = {},
             onMoreClick = {},
             onStatsClick = {}
+        )
+    }
+}
+
+@Composable
+private fun InlineStatsRow(
+    postsCount: Int,
+    followersCount: Int,
+    followingCount: Int,
+    onStatsClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        InlineStatItem(
+            count = postsCount,
+            label = stringResource(R.string.posts),
+            onClick = { onStatsClick("posts") }
+        )
+        InlineStatItem(
+            count = followersCount,
+            label = stringResource(R.string.followers),
+            onClick = { onStatsClick("followers") }
+        )
+        InlineStatItem(
+            count = followingCount,
+            label = stringResource(R.string.following),
+            onClick = { onStatsClick("following") }
+        )
+    }
+}
+
+@Composable
+private fun InlineStatItem(
+    count: Int,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 16.dp)
+    ) {
+        Text(
+            text = com.synapse.social.studioasinc.core.util.NumberFormatter.formatCount(count),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
