@@ -460,7 +460,6 @@ fun MediaItemView(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddToPostSheet(
     onDismiss: () -> Unit,
@@ -471,11 +470,6 @@ fun AddToPostSheet(
     onTagClick: () -> Unit,
     onFeelingClick: () -> Unit
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
-    ) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -490,8 +484,8 @@ fun AddToPostSheet(
 
             val actions = listOf(
                 Triple("Photo/Video", Icons.Filled.Image, MaterialTheme.colorScheme.primary) to onMediaClick,
-                Triple("Tag People", Icons.Filled.Person, AccentBlue) to onTagClick,
-                Triple("Feeling/Activity", Icons.Filled.Mood, AccentYellow) to onFeelingClick,
+                Triple("Tag People", Icons.Filled.Person, MaterialTheme.colorScheme.secondary) to onTagClick,
+                Triple("Feeling/Activity", Icons.Filled.Mood, MaterialTheme.colorScheme.tertiary) to onFeelingClick,
                 Triple("Check In", Icons.Filled.Place, MaterialTheme.colorScheme.error) to onLocationClick,
                 Triple("Poll", Icons.Default.Poll, MaterialTheme.colorScheme.tertiary) to onPollClick,
                 Triple("YouTube", Icons.Default.VideoLibrary, MaterialTheme.colorScheme.secondary) to onYoutubeClick
@@ -538,7 +532,6 @@ fun AddToPostSheet(
                  }
             }
         }
-    }
 }
 
 
@@ -548,7 +541,11 @@ fun AddToPostSheet(
 @Composable
 fun StickyBottomActionArea(
     onMediaClick: () -> Unit,
-    onMoreClick: () -> Unit,
+    onTagClick: () -> Unit,
+    onFeelingClick: () -> Unit,
+    onLocationClick: () -> Unit,
+    onPollClick: () -> Unit,
+    onYoutubeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -563,25 +560,25 @@ fun StickyBottomActionArea(
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-
             IconButton(onClick = onMediaClick) {
-                Icon(
-                    Icons.Filled.Image,
-                    contentDescription = "Photo/Video",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                Icon(Icons.Filled.Image, contentDescription = "Photo/Video", tint = MaterialTheme.colorScheme.primary)
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            IconButton(onClick = onMoreClick) {
-                Icon(
-                    Icons.Default.MoreHoriz,
-                    contentDescription = "More options",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            IconButton(onClick = onTagClick) {
+                Icon(Icons.Filled.Person, contentDescription = "Tag People", tint = MaterialTheme.colorScheme.secondary)
+            }
+            IconButton(onClick = onFeelingClick) {
+                Icon(Icons.Filled.Mood, contentDescription = "Feeling/Activity", tint = MaterialTheme.colorScheme.tertiary)
+            }
+            IconButton(onClick = onLocationClick) {
+                Icon(Icons.Filled.Place, contentDescription = "Check In", tint = MaterialTheme.colorScheme.error)
+            }
+            IconButton(onClick = onPollClick) {
+                Icon(Icons.Default.Poll, contentDescription = "Poll", tint = MaterialTheme.colorScheme.tertiary)
+            }
+            IconButton(onClick = onYoutubeClick) {
+                Icon(Icons.Default.VideoLibrary, contentDescription = "YouTube", tint = MaterialTheme.colorScheme.secondary)
             }
         }
     }

@@ -16,14 +16,6 @@ fun CreatePostSheets(
     showPollSheet: Boolean,
     onPollSheetDismiss: () -> Unit,
     onCreatePoll: (PollData) -> Unit,
-    showAddToPostSheet: Boolean,
-    onAddToPostSheetDismiss: () -> Unit,
-    onMediaClick: () -> Unit,
-    onPollClick: () -> Unit,
-    onYoutubeClick: () -> Unit,
-    onLocationClick: () -> Unit,
-    onTagClick: () -> Unit,
-    onFeelingClick: () -> Unit,
     showTagScreen: Boolean,
     onTagScreenDismiss: () -> Unit,
     tagSearchQuery: String,
@@ -63,24 +55,6 @@ fun CreatePostSheets(
                     onCreatePoll(it)
                 }
             }
-        )
-    }
-
-    if (showAddToPostSheet) {
-        AddToPostSheet(
-            onDismiss = onAddToPostSheetDismiss,
-            onMediaClick = onMediaClick,
-            onPollClick = {
-                if (uiState.mediaItems.isNotEmpty()) {
-                    Toast.makeText(context, context.getString(R.string.warn_remove_media_for_poll), Toast.LENGTH_SHORT).show()
-                } else {
-                    onPollClick()
-                }
-            },
-            onYoutubeClick = onYoutubeClick,
-            onLocationClick = onLocationClick,
-            onTagClick = onTagClick,
-            onFeelingClick = onFeelingClick
         )
     }
 

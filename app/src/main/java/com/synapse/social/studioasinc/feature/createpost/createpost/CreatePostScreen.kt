@@ -8,7 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -53,7 +55,7 @@ fun CreatePostScreen(
 
     var showPrivacySheet by remember { mutableStateOf(false) }
     var showPollSheet by remember { mutableStateOf(false) }
-    var showAddToPostSheet by remember { mutableStateOf(false) }
+
     var showTagScreen by remember { mutableStateOf(false) }
     var showLocationScreen by remember { mutableStateOf(false) }
     var showFeelingScreen by remember { mutableStateOf(false) }
@@ -99,7 +101,46 @@ fun CreatePostScreen(
         }
     }
 
-    Scaffold(
+    val scaffoldState = rememberBottomSheetScaffoldState()
+    val scope = rememberCoroutineScope()
+
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = 72.dp,
+        sheetDragHandle = {
+            StickyBottomActionArea(
+                onMediaClick = { launchMediaPicker() },
+                onTagClick = { showTagScreen = true },
+                onFeelingClick = { showFeelingScreen = true },
+                onLocationClick = { showLocationScreen = true },
+                onPollClick = {
+                    if (uiState.mediaItems.isNotEmpty()) {
+                        Toast.makeText(context, context.getString(R.string.warn_remove_media_for_poll), Toast.LENGTH_SHORT).show()
+                    } else {
+                        showPollSheet = true
+                    }
+                },
+                onYoutubeClick = { showYoutubeDialog = true },
+                modifier = Modifier.imePadding()
+            )
+        },
+        sheetContent = {
+            AddToPostSheet(
+                onDismiss = { scope.launch { scaffoldState.bottomSheetState.partialExpand() } },
+                onMediaClick = { launchMediaPicker() },
+                onPollClick = {
+                    if (uiState.mediaItems.isNotEmpty()) {
+                        Toast.makeText(context, context.getString(R.string.warn_remove_media_for_poll), Toast.LENGTH_SHORT).show()
+                    } else {
+                        showPollSheet = true
+                    }
+                },
+                onLocationClick = { showLocationScreen = true },
+                onYoutubeClick = { showYoutubeDialog = true },
+                onTagClick = { showTagScreen = true },
+                onFeelingClick = { showFeelingScreen = true }
+            )
+        },
         topBar = {
             CreatePostTopBar(
                 isEditMode = uiState.isEditMode,
@@ -109,13 +150,6 @@ fun CreatePostScreen(
                 hasPoll = uiState.pollData != null,
                 onNavigateUp = onNavigateUp,
                 onSubmitPost = { viewModel.submitPost() }
-            )
-        },
-        bottomBar = {
-            StickyBottomActionArea(
-                onMediaClick = { launchMediaPicker() },
-                onMoreClick = { showAddToPostSheet = true },
-                modifier = Modifier.imePadding()
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -170,14 +204,6 @@ fun CreatePostScreen(
             viewModel.setPoll(it)
             showPollSheet = false
         },
-        showAddToPostSheet = showAddToPostSheet,
-        onAddToPostSheetDismiss = { showAddToPostSheet = false },
-        onMediaClick = { launchMediaPicker() },
-        onPollClick = { showPollSheet = true },
-        onYoutubeClick = { showYoutubeDialog = true },
-        onLocationClick = { showLocationScreen = true },
-        onTagClick = { showTagScreen = true },
-        onFeelingClick = { showFeelingScreen = true },
         showTagScreen = showTagScreen,
         onTagScreenDismiss = {
             showTagScreen = false
