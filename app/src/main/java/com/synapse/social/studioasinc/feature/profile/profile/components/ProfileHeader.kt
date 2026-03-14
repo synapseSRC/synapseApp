@@ -5,7 +5,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -28,6 +27,7 @@ import com.synapse.social.studioasinc.R
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
 import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
+import com.synapse.social.studioasinc.feature.shared.components.animatedShape
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.domain.model.UserStatus
 
@@ -246,23 +246,23 @@ private fun ProfileActionButtons(
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isOwnProfile) {
-            Button(
+            ExpressiveButton(
                 onClick = onAddStoryClick,
+                text = stringResource(R.string.add_story),
                 modifier = Modifier
                     .weight(1f)
-                    .height(Spacing.ButtonHeight)
-            ) {
-                Text(stringResource(R.string.add_story))
-            }
+                    .height(Spacing.ButtonHeight),
+                variant = ButtonVariant.Filled
+            )
 
-            FilledTonalButton(
+            ExpressiveButton(
                 onClick = onEditProfileClick,
+                text = stringResource(R.string.edit_profile),
                 modifier = Modifier
                     .weight(1f)
-                    .height(Spacing.ButtonHeight)
-            ) {
-                Text(stringResource(R.string.edit_profile))
-            }
+                    .height(Spacing.ButtonHeight),
+                variant = ButtonVariant.FilledTonal
+            )
         } else {
             AnimatedFollowButton(
                 isFollowing = isFollowing,
@@ -273,18 +273,19 @@ private fun ProfileActionButtons(
                     .height(Spacing.ButtonHeight)
             )
 
-            OutlinedButton(
+            ExpressiveButton(
                 onClick = onMessageClick,
+                text = stringResource(R.string.m_message),
                 modifier = Modifier
                     .weight(1f)
-                    .height(Spacing.ButtonHeight)
-            ) {
-                Text(stringResource(R.string.m_message))
-            }
+                    .height(Spacing.ButtonHeight),
+                variant = ButtonVariant.Outlined
+            )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AnimatedFollowButton(
     isFollowing: Boolean,
@@ -321,7 +322,7 @@ fun AnimatedFollowButton(
         },
         modifier = modifier,
         enabled = !isLoading,
-        shape = CircleShape,
+        shape = ButtonDefaults.animatedShape(),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,

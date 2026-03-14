@@ -11,27 +11,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.IconToggleButton
 
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun IconToggleButton(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    shapes: Any? = null,
-    content: @Composable () -> Unit
-) {
-    androidx.compose.material3.IconToggleButton(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        modifier = modifier,
-        enabled = enabled,
-        content = content
-    )
-}
 
 
 
@@ -134,12 +115,34 @@ fun ExpressiveIconToggleButton(
 }
 
 
+
+
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun androidx.compose.material3.ButtonDefaults.animatedShape(): androidx.compose.ui.graphics.Shape = this.shape
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 object IconToggleButtonDefaults {
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     fun variantAnimatedShapes(): Any = Any()
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun IconToggleButton(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shapes: Any? = null,
+    content: @Composable () -> Unit
+) {
+    androidx.compose.material3.IconToggleButton(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        enabled = enabled,
+        content = content
+    )
 }
