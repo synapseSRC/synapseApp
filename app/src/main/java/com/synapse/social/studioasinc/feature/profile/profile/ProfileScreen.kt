@@ -694,6 +694,7 @@ private fun ProfileContent(
                 val postCardState = remember(comment) {
                     com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper.toPostCardState(
                         comment = comment,
+                        parentAuthorUsername = null, // Will be updated when parent author info is available in CommentWithUser
                         depth = 0,
                         showThreadLine = false,
                         isLastReply = false
