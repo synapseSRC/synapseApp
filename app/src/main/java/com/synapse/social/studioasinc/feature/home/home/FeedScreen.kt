@@ -233,58 +233,41 @@ fun FeedScreen(
                                 )
                             }
                             is FeedItem.CommentItem -> {
-                                // Map FeedItem.CommentItem to PostCardState
-                                val commentState = PostUiMapper.toPostCardState(feedItem)
+                                // Memoize mapped state to prevent re-mapping on every scroll frame
+                                val commentState = remember(feedItem) {
+                                    PostUiMapper.toPostCardState(feedItem)
+                                }
+
+                                val onLikeClick = remember(feedItem.id) { { viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) } }
+                                val onCommentClick = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> currentOnCommentClick(postId) } ?: Unit } }
+                                val onShareClick = remember(feedItem.id) { { /* Share comment link? */ } }
+                                val onRepostClick = remember(commentState.post) { { viewModel.resharePost(commentState.post) } }
+                                val onQuoteClick = remember(commentState.post) { { viewModel.quotePost(commentState.post, "") } }
+                                val onBookmarkClick = remember(commentState.post) { { viewModel.bookmarkPost(commentState.post) } }
+                                val onUserClick = remember(feedItem.userId) { { currentOnUserClick(feedItem.userId) } }
+                                val onPostClick = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> currentOnCommentClick(postId) } ?: Unit } }
+                                val onMediaClick = remember(feedItem.id) { { index: Int -> currentOnMediaClick(index) } }
+                                val onOptionsClick = remember(commentState.post) { { selectedPost = commentState.post } }
+                                val onPollVote = remember(feedItem.id) { { _: String -> } }
+                                val onReactionSelected = remember(feedItem.id) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }
+                                val onParentAuthorClick = remember(feedItem.id) { { /* Navigate to parent author */ } }
                                 
                                 PostCard(
                                     state = commentState,
                                     postViewStyle = uiState.postViewStyle,
-                                    onLikeClick = {
-                                        viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE)
-                                    },
-                                    onCommentClick = {
-                                        // Still navigates to detail for now, but could open specific reply
-                                        feedItem.parentPostId?.let { postId ->
-                                            currentOnCommentClick(postId)
-                                        }
-                                    },
-                                    onShareClick = {
-                                        // Share comment link?
-                                    },
-                                    onRepostClick = {
-                                        // Comments can be reshared too
-                                        viewModel.resharePost(commentState.post)
-                                    },
-                                    onQuoteClick = {
-                                        // Comments can be quoted too
-                                        viewModel.quotePost(commentState.post, "") 
-                                    },
-                                    onBookmarkClick = {
-                                        viewModel.bookmarkPost(commentState.post)
-                                    },
-                                    onUserClick = {
-                                        currentOnUserClick(feedItem.userId)
-                                    },
-                                    onPostClick = {
-                                        feedItem.parentPostId?.let { postId ->
-                                            currentOnCommentClick(postId)
-                                        }
-                                    },
-                                    onMediaClick = { index ->
-                                        // Comments might have media
-                                        currentOnMediaClick(index)
-                                    },
-                                    onOptionsClick = {
-                                        // Map minimal post for options
-                                        selectedPost = commentState.post
-                                    },
-                                    onPollVote = { _ -> },
-                                    onReactionSelected = { reaction ->
-                                        viewModel.reactToComment(feedItem.id, reaction)
-                                    },
-                                    onParentAuthorClick = {
-                                        // Navigate to parent author
-                                    }
+                                    onLikeClick = onLikeClick,
+                                    onCommentClick = onCommentClick,
+                                    onShareClick = onShareClick,
+                                    onRepostClick = onRepostClick,
+                                    onQuoteClick = onQuoteClick,
+                                    onBookmarkClick = onBookmarkClick,
+                                    onUserClick = onUserClick,
+                                    onPostClick = onPostClick,
+                                    onMediaClick = onMediaClick,
+                                    onOptionsClick = onOptionsClick,
+                                    onPollVote = onPollVote,
+                                    onReactionSelected = onReactionSelected,
+                                    onParentAuthorClick = onParentAuthorClick
                                 )
                             }
                         }
