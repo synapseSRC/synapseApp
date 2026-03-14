@@ -5,6 +5,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 
 private val LightColorScheme = lightColorScheme(
     primary = LightPrimary,
@@ -70,6 +73,7 @@ private val DarkColorScheme = darkColorScheme(
     scrim = DarkScrim,
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SynapseTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -85,8 +89,9 @@ fun SynapseTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
         typography = SynapseTypography,
         content = content
     )
