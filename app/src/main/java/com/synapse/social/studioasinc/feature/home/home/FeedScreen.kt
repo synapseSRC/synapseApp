@@ -245,7 +245,7 @@ fun FeedScreen(
                                 val onQuoteClick = remember(commentState.post) { { viewModel.quotePost(commentState.post, "") } }
                                 val onBookmarkClick = remember(commentState.post) { { viewModel.bookmarkPost(commentState.post) } }
                                 val onUserClick = remember(feedItem.userId) { { currentOnUserClick(feedItem.userId) } }
-                                val onPostClick = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> currentOnCommentClick(postId) } ?: Unit } }
+                                val onPostClick = onCommentClick
                                 val onMediaClick = remember(feedItem.id) { { index: Int -> currentOnMediaClick(index) } }
                                 val onOptionsClick = remember(commentState.post) { { selectedPost = commentState.post } }
                                 val onPollVote = remember(feedItem.id) { { _: String -> } }

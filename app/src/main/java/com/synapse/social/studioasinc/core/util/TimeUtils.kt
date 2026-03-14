@@ -72,7 +72,7 @@ object TimeUtils {
                 }
 
                 // Fallback for timezone-less strings
-                val cleanTimestamp = isoTimestamp.substringBefore('+').substringBefore('Z')
+                val cleanTimestamp = isoTimestamp.substringBefore('+').substringBefore('Z').substringBefore('.')
                 val localDateTime = java.time.LocalDateTime.parse(cleanTimestamp, fallbackFormatter)
                 val timestamp = localDateTime.atZone(java.time.ZoneId.of("UTC")).toInstant().toEpochMilli()
                 return formatTimestamp(timestamp)
