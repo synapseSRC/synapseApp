@@ -3,9 +3,11 @@ package com.synapse.social.studioasinc.feature.profile.profile.components
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -62,98 +64,139 @@ fun ProfileHeader(
     bioExpanded: Boolean = false,
     onToggleBio: () -> Unit = {}
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+    Box(
+        modifier = modifier.fillMaxWidth()
     ) {
-        CoverPhotoWithProfile(
+        // Cover Photo layer
+        CoverPhoto(
             coverImageUrl = coverImageUrl,
-            avatar = avatar,
-            status = status,
             scrollOffset = scrollOffset,
             isOwnProfile = isOwnProfile,
-            hasStory = hasStory,
-            onCoverEditClick = onCoverEditClick,
-            onProfileImageClick = onProfileImageClick,
+            onEditClick = onCoverEditClick,
             onCoverClick = onCoverPhotoClick,
-            coverHeight = 200.dp,
-            profileImageSize = 110.dp
+            height = 200.dp
         )
 
-        Spacer(modifier = Modifier.height(60.dp))
-
-        Column(
+        // The rounded white surface that overlaps the cover photo
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Medium)
+                .padding(top = 160.dp) // 200dp - 40dp overlap
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(MaterialTheme.colorScheme.surface)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.Medium)
             ) {
-                Text(
-                    text = name ?: username,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                // Name and badge in a Row right next to Avatar
+                // Wait, if we want it next to the avatar (on the right) we should put it in a Box or Row.
+                // Avatar is 110dp. Half is 55dp.
+                // Left padding is Spacing.Medium (16.dp).
+                // Avatar total width area = 16.dp + 110.dp = 126.dp.
+                // Let's position the Name and followers right beside the avatar in a Row.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp), // Some padding from top of rounded card
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Spacer for the avatar
+                    Spacer(modifier = Modifier.width(110.dp))
 
-                if (isVerified) {
-                    AnimatedVerifiedBadge()
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                        ) {
+                            Text(
+                                text = name ?: username,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+
+                            if (isVerified) {
+                                AnimatedVerifiedBadge()
+                            }
+                        }
+
+                        Text(
+                            text = "@$username",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        if (!nickname.isNullOrBlank()) {
+                            Text(
+                                text = nickname,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
-            }
 
-            Text(
-                text = "@$username",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                // Add spacing before bio
+                Spacer(modifier = Modifier.height(16.dp))
 
-            if (!nickname.isNullOrBlank()) {
-                Text(
-                    text = nickname,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                if (!bio.isNullOrBlank()) {
+                    ExpandableBio(
+                        bio = bio,
+                        expanded = bioExpanded,
+                        onToggle = onToggleBio
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                }
+
+                StatsRow(
+                    postsCount = postsCount,
+                    followersCount = followersCount,
+                    followingCount = followingCount,
+                    onStatsClick = onStatsClick
                 )
-            }
 
-            if (!bio.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
-                ExpandableBio(
-                    bio = bio,
-                    expanded = bioExpanded,
-                    onToggle = onToggleBio
+                Spacer(modifier = Modifier.height(Spacing.Medium))
+
+                ProfileActionButtons(
+                    isOwnProfile = isOwnProfile,
+                    isFollowing = isFollowing,
+                    isFollowLoading = isFollowLoading,
+                    onEditProfileClick = onEditProfileClick,
+                    onAddStoryClick = onAddStoryClick,
+                    onFollowClick = onFollowClick,
+                    onMessageClick = onMessageClick,
+                    onMoreClick = onMoreClick
                 )
+
+                Spacer(modifier = Modifier.height(Spacing.Medium))
             }
+        }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-
-            StatsRow(
-                postsCount = postsCount,
-                followersCount = followersCount,
-                followingCount = followingCount,
-                onStatsClick = onStatsClick
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-
-            ProfileActionButtons(
+        // Avatar sitting on the boundary
+        Box(
+            modifier = Modifier
+                .padding(start = Spacing.Medium)
+                .padding(top = 105.dp) // 200dp - 40dp overlap - 55dp (half avatar) = 105dp
+        ) {
+            ProfileImageWithRing(
+                avatar = avatar,
+                size = 110.dp,
+                status = status,
+                hasStory = hasStory,
                 isOwnProfile = isOwnProfile,
-                isFollowing = isFollowing,
-                isFollowLoading = isFollowLoading,
-                onEditProfileClick = onEditProfileClick,
-                onAddStoryClick = onAddStoryClick,
-                onFollowClick = onFollowClick,
-                onMessageClick = onMessageClick,
-                onMoreClick = onMoreClick
+                onClick = onProfileImageClick,
+                modifier = Modifier.border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
             )
-
-            Spacer(modifier = Modifier.height(Spacing.Medium))
         }
     }
 }
-
 @Composable
 fun AnimatedVerifiedBadge(
     modifier: Modifier = Modifier
