@@ -10,7 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.IconToggleButtonDefaults
 
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExpressiveButton(
     onClick: () -> Unit,
@@ -25,6 +30,7 @@ fun ExpressiveButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
+            shape = ButtonDefaults.animatedShape(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
         ) {
             ButtonContent(icon, text)
@@ -34,6 +40,7 @@ fun ExpressiveButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
+            shape = ButtonDefaults.animatedShape(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
         ) {
             ButtonContent(icon, text)
@@ -43,6 +50,7 @@ fun ExpressiveButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
+            shape = ButtonDefaults.animatedShape(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
         ) {
             ButtonContent(icon, text)
@@ -52,6 +60,7 @@ fun ExpressiveButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
+            shape = ButtonDefaults.animatedShape(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
         ) {
             ButtonContent(icon, text)
@@ -81,4 +90,24 @@ enum class ButtonVariant {
     FilledTonal,
     Outlined,
     Text
+}
+
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ExpressiveIconToggleButton(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    IconToggleButton(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        enabled = enabled,
+        shapes = IconToggleButtonDefaults.variantAnimatedShapes(),
+        content = content
+    )
 }
