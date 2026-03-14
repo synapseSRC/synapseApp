@@ -70,8 +70,7 @@ fun PostContent(
 
             Column {
                 AndroidView(
-                    modifier = Modifier
-                        .padding(bottom = Spacing.Small),
+                    modifier = Modifier,
                     factory = { ctx ->
                         TextView(ctx).apply {
                             setTextColor(colorOnSurface.toArgb())

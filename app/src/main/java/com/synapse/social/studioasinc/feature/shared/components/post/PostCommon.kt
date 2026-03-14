@@ -190,7 +190,7 @@ object PostUiMapper {
             likeCount = comment.getTotalReactions(),
             commentCount = comment.repliesCount,
             repostCount = 0,
-            viewsCount = 0,
+            viewsCount = comment.viewsCount,
             isBookmarked = false,
             hideLikeCount = false,
             mediaUrls = listOfNotNull(comment.mediaUrl),

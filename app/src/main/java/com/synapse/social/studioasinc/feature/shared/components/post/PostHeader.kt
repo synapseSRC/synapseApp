@@ -55,7 +55,7 @@ fun PostHeader(
             ) {
                 val name = user.displayName ?: user.username ?: "Unknown"
                 val handle = user.username
-                val showHandle = !handle.isNullOrBlank() && (user.displayName != null && handle != user.displayName)
+                val showHandle = !handle.isNullOrBlank()
 
                 Text(
                     text = name,
@@ -166,7 +166,7 @@ fun PostHeader(
 
         if (replyToUsername != null) {
             Row(
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val replyingToText = androidx.compose.ui.res.stringResource(

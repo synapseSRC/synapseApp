@@ -26,6 +26,8 @@ data class CommentWithUser(
     val likesCount: Int = 0,
     @SerialName("replies_count")
     val repliesCount: Int = 0,
+    @SerialName("views_count")
+    val viewsCount: Int = 0,
     @SerialName("is_deleted")
     val isDeleted: Boolean = false,
     @SerialName("is_edited")
