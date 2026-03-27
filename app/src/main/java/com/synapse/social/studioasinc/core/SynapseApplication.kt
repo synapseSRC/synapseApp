@@ -29,17 +29,26 @@ import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.SupervisorJob
 
 @HiltAndroidApp
 class SynapseApplication : Application() {
+
+    companion object {
+        lateinit var instance: SynapseApplication
+            private set
+    }
 
     @Inject lateinit var notificationRepository: NotificationRepository
     @Inject lateinit var startPresenceTrackingUseCase: StartPresenceTrackingUseCase
     @Inject lateinit var updatePresenceUseCase: UpdatePresenceUseCase
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate() {
         super.onCreate()
+        instance = this
 
         // Initialize Napier logging
         if (BuildConfig.DEBUG) {
@@ -73,7 +82,7 @@ class SynapseApplication : Application() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 // App moved to foreground
-                CoroutineScope(Dispatchers.IO).launch {
+                applicationScope.launch(Dispatchers.IO) {
                     try {
                         val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
                         if (authService.getCurrentUserId() != null) {
@@ -88,7 +97,7 @@ class SynapseApplication : Application() {
 
             override fun onStop(owner: LifecycleOwner) {
                 // App moved to background
-                CoroutineScope(Dispatchers.IO).launch {
+                applicationScope.launch(Dispatchers.IO) {
                     try {
                         updatePresenceUseCase(false)
                         Napier.d("App background: Presence set to offline")
@@ -121,7 +130,7 @@ class SynapseApplication : Application() {
                     android.util.Log.d("SynapseApplication", "Push subscription status: $subscriptionId (optedIn: ${state.current.optedIn})")
                     
                     // Sync with backend
-                    CoroutineScope(Dispatchers.IO).launch {
+                    applicationScope.launch(Dispatchers.IO) {
                         try {
                             val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
                             val userId = authService.getCurrentUserId()
@@ -137,7 +146,7 @@ class SynapseApplication : Application() {
             }
         })
 
-        CoroutineScope(Dispatchers.Main).launch {
+        applicationScope.launch {
             // Request permission first
             OneSignal.Notifications.requestPermission(true)
             
@@ -188,7 +197,7 @@ class SynapseApplication : Application() {
         }
 
         // Observe Supabase Auth changes to sync with OneSignal
-        CoroutineScope(Dispatchers.IO).launch {
+        applicationScope.launch(Dispatchers.IO) {
             try {
                 // Wait for Supabase to be initialized via service
                 SupabaseAuthenticationService.getInstance(this@SynapseApplication)
@@ -205,7 +214,7 @@ class SynapseApplication : Application() {
                                     
                                     val subId = OneSignal.User.pushSubscription.id
                                     if (subId != null) {
-                                        CoroutineScope(Dispatchers.IO).launch {
+                                        applicationScope.launch(Dispatchers.IO) {
                                             try {
                                                 notificationRepository.updateOneSignalPlayerId(userId, subId)
                                                 android.util.Log.d("SynapseApplication", "✅ Session sync: OneSignal ID updated")
@@ -234,7 +243,7 @@ class SynapseApplication : Application() {
 
     private fun applySavedLanguage() {
         val settingsRepository = SettingsRepositoryImpl.getInstance(this)
-        CoroutineScope(Dispatchers.Main).launch {
+        applicationScope.launch {
             try {
                 val languageCode = settingsRepository.language.first()
                 if (languageCode.isNotEmpty() && languageCode != "en") {
@@ -259,7 +268,7 @@ class SynapseApplication : Application() {
 
     private fun applyThemeOnStartup() {
         val settingsRepository = SettingsRepositoryImpl.getInstance(this)
-        CoroutineScope(Dispatchers.Main).launch {
+        applicationScope.launch {
             try {
                 settingsRepository.appearanceSettings.collect { settings ->
                     ThemeManager.applyThemeMode(settings.themeMode)

@@ -1586,4 +1586,16 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="api_add_key_title">Add API Key</string>
     <string name="notification_today">Today</string>
     <string name="notification_yesterday">Yesterday</string>
+    <string name="notification_title_new_post">New Post</string>
+    <string name="notification_title_new_comment">New Comment</string>
+    <string name="notification_title_new_reply">New Reply</string>
+    <string name="notification_title_new_like">New Like</string>
+    <string name="notification_title_mention">New Mention</string>
+    <string name="notification_title_new_message">New Message</string>
+    <string name="notification_title_default">New Message</string>
+    <string name="notification_subtitle_default">Synapse Social</string>
+    <string name="connection_type_wifi_label">Wi-Fi</string>
+    <string name="connection_type_cellular_label">Mobile Data</string>
+    <string name="connection_type_ethernet_label">Ethernet</string>
+    <string name="connection_type_none_label">No Connection</string>
 </resources>

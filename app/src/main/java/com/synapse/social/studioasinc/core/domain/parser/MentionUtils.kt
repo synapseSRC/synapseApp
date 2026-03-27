@@ -17,9 +17,12 @@ import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
 import java.util.regex.Pattern
 
 object MentionUtils {
+
+    private val mentionScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     fun handleMentions(context: Context, textView: TextView, text: String) {
         val spannableString = SpannableString(text)
@@ -34,7 +37,7 @@ object MentionUtils {
 
                 val clickableSpan = object : ClickableSpan() {
                     override fun onClick(widget: View) {
-                        CoroutineScope(Dispatchers.IO).launch {
+                        mentionScope.launch(Dispatchers.IO) {
                             try {
                                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                                 val userDao = entryPoint.getUserDao()
@@ -45,7 +48,7 @@ object MentionUtils {
                                 userResult.fold(
                                     onSuccess = { user ->
                                         if (user != null) {
-                                            CoroutineScope(Dispatchers.Main).launch {
+                                            mentionScope.launch {
                                                 IntentUtils.openUrl(context, "synapse://profile/${user.uid}")
                                             }
                                         }
@@ -141,7 +144,7 @@ object MentionUtils {
             }
 
             val currentUserData = userRepository.getUserById(currentUser.id).getOrNull()
-            val senderName = currentUserData?.username ?: "Someone"
+            val senderName = currentUserData?.username ?: context.getString(R.string.someone)
             val message = "$senderName mentioned you in a $contentType"
 
             val data = hashMapOf<String, String>().apply {

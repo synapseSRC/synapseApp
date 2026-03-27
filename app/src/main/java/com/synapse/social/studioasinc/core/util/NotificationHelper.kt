@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.core.util
 
 import android.util.Log
+import com.synapse.social.studioasinc.core.SynapseApplication
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.config.NotificationConfig
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
@@ -171,7 +172,7 @@ object NotificationHelper {
                 put("message", message)
                 put("type", notificationType)
                 putJsonObject("headings") {
-                    put("en", NotificationConfig.getTitleForNotificationType(notificationType))
+                    put("en", NotificationConfig.getTitleForNotificationType(SynapseApplication.instance, notificationType))
                 }
                 if (senderUid != null) {
                     put("sender_id", senderUid)

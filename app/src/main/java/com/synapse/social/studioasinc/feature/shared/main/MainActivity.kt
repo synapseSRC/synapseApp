@@ -57,9 +57,12 @@ import androidx.lifecycle.Lifecycle
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.domain.usecase.update.UpdateState
+import androidx.fragment.app.FragmentActivity
+import com.synapse.social.studioasinc.core.util.ChatLockManager
+import kotlinx.coroutines.flow.first
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var authRepository: AuthRepository
@@ -67,26 +70,59 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var reelUploadManager: com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 
+    @Inject
+    lateinit var chatLockManager: ChatLockManager
+
     private val viewModel: MainViewModel by viewModels()
     private lateinit var navController: androidx.navigation.NavHostController
+
+    private var isAppUnlocked = false
+    private var isCheckingLock = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        // TODO: Implement app lock enforcement
-        //  - Check if app lock is enabled in settings
-        //  - Show biometric/PIN prompt before allowing access
-        //  - Handle lock timeout (e.g., lock after 5 minutes in background)
-        //  - Bypass lock for incoming call notifications
-
         splashScreen.setKeepOnScreenCondition {
-            viewModel.isCheckingAuth.value
+            viewModel.isCheckingAuth.value || isCheckingLock || (!isAppUnlocked && isAppLockEnabledBlocking())
         }
-
 
         enableEdgeToEdge()
 
+        lifecycleScope.launch {
+            val settingsRepository = com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl.getInstance(this@MainActivity)
+            val privacySettings = settingsRepository.privacySettings.first()
+            if (privacySettings.appLockEnabled) {
+                chatLockManager.authenticate(
+                    this@MainActivity,
+                    onSuccess = {
+                        isAppUnlocked = true
+                        isCheckingLock = false
+                        setupContent()
+                    },
+                    onError = {
+                        // Exit the app if authentication fails or is cancelled
+                        finish()
+                    }
+                )
+            } else {
+                isAppUnlocked = true
+                isCheckingLock = false
+                setupContent()
+            }
+        }
+
+        createNotificationChannels()
+        viewModel.checkForUpdates()
+    }
+
+    private fun isAppLockEnabledBlocking(): Boolean {
+        // Fast path for the splash screen condition so we don't block
+        // We'll rely on the coroutine to finish checking quickly.
+        return true
+    }
+
+    private fun setupContent() {
         setContent {
             LaunchedEffect(Unit) {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -158,11 +194,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        createNotificationChannels()
-
-
-        viewModel.checkForUpdates()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -226,12 +257,10 @@ fun MainScreen(
     val updateState by viewModel.updateState.observeAsState()
     val authState by viewModel.authState.observeAsState()
 
-
     LaunchedEffect(updateState) {
         when (updateState) {
             is UpdateState.NoUpdate -> viewModel.checkUserAuthentication()
             is UpdateState.Error -> {
-
             }
             else -> {  }
         }
@@ -268,9 +297,7 @@ fun MainScreen(
                 .padding(Spacing.Medium),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Spacer(modifier = Modifier.weight(1f))
-
 
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
@@ -286,7 +313,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.weight(3f))
 
-
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Company Trademark",
@@ -298,7 +324,6 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.weight(1f))
         }
-
 
         updateState?.let { state ->
             when (state) {
@@ -347,7 +372,6 @@ fun MainScreen(
                 )
             }
         }
-
 
         if (!SupabaseClient.isConfigured()) {
             ErrorDialog(

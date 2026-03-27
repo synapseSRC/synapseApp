@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-
-
 class PrivacySecurityViewModel(
     application: Application
 ) : AndroidViewModel(application) {
@@ -21,10 +19,6 @@ class PrivacySecurityViewModel(
     private val biometricChecker: BiometricChecker = BiometricCheckerImpl()
 
     private val settingsRepository = SettingsRepositoryImpl.getInstance(application)
-
-
-
-
 
     private val _privacySettings = MutableStateFlow(PrivacySettings())
     val privacySettings: StateFlow<PrivacySettings> = _privacySettings.asStateFlow()
@@ -35,7 +29,6 @@ class PrivacySecurityViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-
     private val _show2FASetupDialog = MutableStateFlow(false)
     val show2FASetupDialog: StateFlow<Boolean> = _show2FASetupDialog.asStateFlow()
 
@@ -45,12 +38,6 @@ class PrivacySecurityViewModel(
     init {
         loadPrivacySettings()
     }
-
-
-
-
-
-
 
     private fun loadPrivacySettings() {
         viewModelScope.launch {
@@ -64,8 +51,6 @@ class PrivacySecurityViewModel(
             }
         }
     }
-
-
 
     fun setProfileVisibility(visibility: ProfileVisibility) {
         viewModelScope.launch {
@@ -83,8 +68,6 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
     fun setContentVisibility(visibility: ContentVisibility) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -100,8 +83,6 @@ class PrivacySecurityViewModel(
             }
         }
     }
-
-
 
     fun setGroupPrivacy(privacy: GroupPrivacy) {
         viewModelScope.launch {
@@ -119,23 +100,15 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
-
-
-
-
     fun setTwoFactorEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
                 if (enabled) {
-
                     _show2FASetupDialog.value = true
                     _twoFactorSetupState.value = TwoFactorSetupState()
                 } else {
-
                     settingsRepository.setTwoFactorEnabled(false)
                     android.util.Log.d("PrivacySecurityViewModel", "Two-factor authentication disabled")
                 }
@@ -148,8 +121,6 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
     fun generate2FASecret() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -157,7 +128,6 @@ class PrivacySecurityViewModel(
                 val currentUserEmail = com.synapse.social.studioasinc.core.auth.AuthHelper.getCurrentUserEmail()
 
                 if (currentUserEmail != null) {
-
                     val secret = generateBase32Secret()
                     val qrCodeUrl = "otpauth://totp/Synapse:${currentUserEmail}?secret=$secret&issuer=Synapse"
 
@@ -178,8 +148,6 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
     fun verify2FACode(code: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -188,8 +156,6 @@ class PrivacySecurityViewModel(
                     _error.value = "Please enter a valid 6-digit code"
                     return@launch
                 }
-
-
 
                 settingsRepository.setTwoFactorEnabled(true)
 
@@ -207,65 +173,23 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
     fun dismiss2FASetupDialog() {
         _show2FASetupDialog.value = false
         _twoFactorSetupState.value = TwoFactorSetupState()
     }
-
-
 
     private fun generateBase32Secret(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
         return (1..32).map { chars.random() }.joinToString("")
     }
 
-
-
     fun setBiometricLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
-                if (enabled) {
-                    val canAuthenticate = biometricChecker.canAuthenticate(getApplication())
-
-                    when (canAuthenticate) {
-                        BiometricManager.BIOMETRIC_SUCCESS -> {
-
-                        }
-                        BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
-                            _error.value = "No biometric features available on this device."
-                            _isLoading.value = false
-                            return@launch
-                        }
-                        BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
-                            _error.value = "Biometric features are currently unavailable."
-                            _isLoading.value = false
-                            return@launch
-                        }
-                        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                            _error.value = "No biometric credentials enrolled on this device."
-                            _isLoading.value = false
-                            return@launch
-                        }
-                        BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> {
-                            _error.value = "Security update required for biometric features."
-                            _isLoading.value = false
-                            return@launch
-                        }
-                        BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> {
-                            _error.value = "Biometric features are unsupported."
-                            _isLoading.value = false
-                            return@launch
-                        }
-                        BiometricManager.BIOMETRIC_STATUS_UNKNOWN -> {
-                            _error.value = "Biometric status unknown."
-                            _isLoading.value = false
-                            return@launch
-                        }
-                    }
+                if (enabled && !canAuthenticateBiometrics()) {
+                    return@launch
                 }
 
                 settingsRepository.setBiometricLockEnabled(enabled)
@@ -279,36 +203,17 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
-
-
-
-
     fun navigateToBlockedUsers() {
         android.util.Log.d("PrivacySecurityViewModel", "Navigate to blocked users")
-
     }
-
-
 
     fun navigateToMutedUsers() {
         android.util.Log.d("PrivacySecurityViewModel", "Navigate to muted users")
-
     }
-
-
 
     fun navigateToActiveSessions() {
         android.util.Log.d("PrivacySecurityViewModel", "Navigate to active sessions")
-
     }
-
-
-
-
-
-
 
     fun setReadReceiptsEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -326,22 +231,14 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
-
-
-
-
     fun setAppLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
-                // TODO: Implement app lock functionality
-                //  - Add biometric authentication on app launch
-                //  - Add PIN/Pattern fallback option
-                //  - Store lock preference securely
-                //  - Handle lock timeout settings
+                if (enabled && !canAuthenticateBiometrics()) {
+                    return@launch
+                }
                 settingsRepository.setAppLockEnabled(enabled)
                 android.util.Log.d("PrivacySecurityViewModel", "App lock ${if (enabled) "enabled" else "disabled"}")
             } catch (e: Exception) {
@@ -353,23 +250,14 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
-
-
-
-
     fun setChatLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
-                // TODO: Implement chat lock functionality
-                //  - Add per-chat lock capability
-                //  - Require biometric/PIN to open locked chats
-                //  - Add lock icon indicator in chat list
-                //  - Store locked chat IDs securely
-                //  - Handle lock timeout for individual chats
+                if (enabled && !canAuthenticateBiometrics()) {
+                    return@launch
+                }
                 settingsRepository.setChatLockEnabled(enabled)
                 android.util.Log.d("PrivacySecurityViewModel", "Chat lock ${if (enabled) "enabled" else "disabled"}")
             } catch (e: Exception) {
@@ -381,26 +269,48 @@ class PrivacySecurityViewModel(
         }
     }
 
-
-
-
-
-
+    private fun canAuthenticateBiometrics(): Boolean {
+        val canAuthenticate = biometricChecker.canAuthenticate(getApplication())
+        when (canAuthenticate) {
+            BiometricManager.BIOMETRIC_SUCCESS -> {
+                return true
+            }
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
+                _error.value = "No biometric features available on this device."
+            }
+            BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                _error.value = "Biometric features are currently unavailable."
+            }
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                _error.value = "No biometric credentials enrolled on this device."
+            }
+            BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> {
+                _error.value = "Security update required for biometric features."
+            }
+            BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> {
+                _error.value = "Biometric features are unsupported."
+            }
+            BiometricManager.BIOMETRIC_STATUS_UNKNOWN -> {
+                _error.value = "Biometric status unknown."
+            }
+            else -> {
+                _error.value = "Biometric error code: $canAuthenticate"
+            }
+        }
+        _isLoading.value = false
+        return false
+    }
 
     fun clearError() {
         _error.value = null
     }
 }
 
-
-
 data class TwoFactorSetupState(
     val step: TwoFactorSetupStep = TwoFactorSetupStep.INITIAL,
     val secret: String = "",
     val qrCodeUrl: String = ""
 )
-
-
 
 enum class TwoFactorSetupStep {
     INITIAL,
