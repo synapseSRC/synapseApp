@@ -229,8 +229,43 @@ class ProfileViewModel @Inject constructor(
 
     fun resharePost(post: Post) {
         viewModelScope.launch {
-            postRepository.resharePost(post.id).onSuccess {
-                // Refresh or update state if needed
+            val isCurrentlyReshared = post.isReshared
+            val newResharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+            val optimisticPost = post.copy(
+                isReshared = !isCurrentlyReshared,
+                resharesCount = newResharesCount
+            )
+
+            // Optimistic update
+            _state.update { state ->
+                state.copy(
+                    posts = state.posts.map {
+                        if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) optimisticPost
+                        else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) com.synapse.social.studioasinc.domain.model.FeedItem.PostItem(optimisticPost)
+                        else it
+                    }
+                )
+            }
+            com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(optimisticPost))
+
+            val result = if (isCurrentlyReshared) {
+                postRepository.unresharePost(post.id)
+            } else {
+                postRepository.resharePost(post.id)
+            }
+
+            result.onFailure {
+                // Revert on failure
+                _state.update { state ->
+                    state.copy(
+                        posts = state.posts.map {
+                            if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) post
+                            else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) com.synapse.social.studioasinc.domain.model.FeedItem.PostItem(post)
+                            else it
+                        }
+                    )
+                }
+                com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(post))
             }
         }
     }

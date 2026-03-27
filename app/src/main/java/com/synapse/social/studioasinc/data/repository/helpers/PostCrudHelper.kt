@@ -106,16 +106,32 @@ internal class PostCrudHelper(
         try {
             val userId = client.auth.currentUserOrNull()?.id ?: return@withContext Result.failure(Exception("Not authenticated"))
 
-            val newPostId = java.util.UUID.randomUUID().toString()
-            client.from("posts").insert(mapOf(
-                "id" to newPostId,
-                "author_uid" to userId,
-                "quoted_post_id" to postId,
-                "is_quote" to false,
-                "timestamp" to System.currentTimeMillis()
+            client.from("reshares").insert(mapOf(
+                "post_id" to postId,
+                "user_id" to userId
             ))
 
             client.postgrest.rpc("increment_post_reshares", mapOf("post_id" to postId))
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun unresharePost(postId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val userId = client.auth.currentUserOrNull()?.id ?: return@withContext Result.failure(Exception("Not authenticated"))
+
+            client.from("reshares").delete {
+                filter {
+                    eq("post_id", postId)
+                    eq("user_id", userId)
+                }
+            }
+
+            client.postgrest.rpc("decrement_post_reshares", mapOf("post_id" to postId))
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

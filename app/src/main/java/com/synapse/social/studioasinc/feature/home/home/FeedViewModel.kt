@@ -16,6 +16,7 @@ import com.synapse.social.studioasinc.domain.usecase.post.GetFeedPagedUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToCommentUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.QuotePostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
@@ -70,6 +71,7 @@ class FeedViewModel @Inject constructor(
     private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
     private val blockUserUseCase: BlockUserUseCase,
     private val repostPostUseCase: RepostPostUseCase,
+    private val unrepostPostUseCase: UnrepostPostUseCase,
     private val summarizePostUseCase: SummarizePostUseCase
 ) : BaseViewModel<FeedUiState>(FeedUiState()) {
 
@@ -226,13 +228,21 @@ class FeedViewModel @Inject constructor(
 
     fun resharePost(post: Post) {
         viewModelScope.launch {
+            val isCurrentlyReshared = post.isReshared
             val optimisticPost = post.copy(
-                isReshared = true,
-                resharesCount = post.resharesCount + 1
+                isReshared = !isCurrentlyReshared,
+                resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
             )
             cacheModifiedPost(optimisticPost)
             PostEventBus.emit(PostEvent.Updated(optimisticPost))
-            repostPostUseCase(post.id).onFailure {
+
+            val result = if (isCurrentlyReshared) {
+                unrepostPostUseCase(post.id)
+            } else {
+                repostPostUseCase(post.id)
+            }
+
+            result.onFailure {
                 // Revert on failure
                 cacheModifiedPost(post)
                 PostEventBus.emit(PostEvent.Updated(post))

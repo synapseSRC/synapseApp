@@ -52,6 +52,7 @@ class PostRepository @Inject constructor(
     override suspend fun deletePost(postId: String): Result<Unit> = crudHelper.deletePost(postId)
     override suspend fun toggleComments(postId: String): Result<Unit> = crudHelper.toggleComments(postId)
     override suspend fun resharePost(postId: String): Result<Unit> = crudHelper.resharePost(postId)
+    override suspend fun unresharePost(postId: String): Result<Unit> = crudHelper.unresharePost(postId)
     override suspend fun quotePost(postId: String, text: String): Result<Post> = crudHelper.quotePost(postId, text)
 
     suspend fun toggleReaction(postId: String, userId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false): Result<Unit> =

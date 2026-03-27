@@ -42,6 +42,7 @@ internal fun ProfileContent(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToFollowers: () -> Unit,
     onNavigateToFollowing: () -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
     onNavigateToUserProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?) -> Unit,
     onNavigateToStoryCreator: () -> Unit,
@@ -67,6 +68,7 @@ internal fun ProfileContent(
     var bioExpanded by remember { mutableStateOf(false) }
 
     val currentOnNavigateToUserProfile by rememberUpdatedState(onNavigateToUserProfile)
+    val currentOnNavigateToQuotePost by rememberUpdatedState(onNavigateToQuotePost)
     val currentOnOpenMediaViewer by rememberUpdatedState(onOpenMediaViewer)
     val currentOnShowPostOptions by rememberUpdatedState(onShowPostOptions)
 
@@ -88,7 +90,7 @@ internal fun ProfileContent(
                 context.startActivity(Intent.createChooser(intent, context.getString(R.string.title_share_post)))
             },
             onQuote = { post ->
-                // Handled in parent composable if needed or implemented similarly
+                currentOnNavigateToQuotePost(post.id)
             },
             onUserClick = { userId -> currentOnNavigateToUserProfile(userId) },
             onOptionClick = { post -> currentOnShowPostOptions(post) },

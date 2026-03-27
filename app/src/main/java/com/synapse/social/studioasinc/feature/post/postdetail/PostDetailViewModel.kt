@@ -311,11 +311,35 @@ class PostDetailViewModel @Inject constructor(
 
     fun createReshare(commentary: String?) {
         val postId = currentPostId ?: return
+        val currentPostDetail = _uiState.value.post ?: return
+        val currentPost = currentPostDetail.post
+        val isCurrentlyReshared = currentPost.isReshared
+
         viewModelScope.launch {
-            reshareRepository.createReshare(postId, commentary).onSuccess {
-                postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                    _uiState.update { it.copy(post = updatedPost) }
+            // Optimistic update
+            val newResharesCount = if (isCurrentlyReshared) maxOf(0, currentPost.resharesCount - 1) else currentPost.resharesCount + 1
+            val optimisticPost = currentPost.copy(
+                isReshared = !isCurrentlyReshared,
+                resharesCount = newResharesCount
+            )
+            val optimisticPostDetail = currentPostDetail.copy(post = optimisticPost)
+            _uiState.update { it.copy(post = optimisticPostDetail) }
+            com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(optimisticPost))
+
+            val result = if (isCurrentlyReshared) {
+                reshareRepository.removeReshare(postId)
+            } else {
+                reshareRepository.createReshare(postId, commentary)
+            }
+
+            result.onSuccess {
+                postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPostDetail ->
+                    _uiState.update { it.copy(post = updatedPostDetail) }
                 }
+            }.onFailure {
+                // Revert on failure
+                _uiState.update { it.copy(post = currentPostDetail) }
+                com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(currentPost))
             }
         }
     }
