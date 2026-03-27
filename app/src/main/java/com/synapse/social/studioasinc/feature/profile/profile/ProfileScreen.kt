@@ -61,7 +61,6 @@ fun ProfileScreen(
     onNavigateToFollowers: () -> Unit = {},
     onNavigateToFollowing: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onNavigateToActivityLog: () -> Unit = {},
     onNavigateToUserProfile: (String) -> Unit = {},
     onNavigateToChat: (String, String?, String?) -> Unit = { _, _, _ -> },
     onNavigateToStoryCreator: () -> Unit = {},
@@ -203,8 +202,7 @@ fun ProfileScreen(
             context = context,
             profileLinkLabel = profileLinkLabel,
             postLinkLabel = postLinkLabel,
-            onNavigateToSettings = onNavigateToSettings,
-            onNavigateToActivityLog = onNavigateToActivityLog
+            onNavigateToSettings = onNavigateToSettings
         )
 
         ShareProfileSection(
