@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import android.net.Uri
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,7 +50,9 @@ fun FileListContent(
     isLoading: Boolean,
     category: FilePickerCategory,
     onFileClicked: (PickedFile) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedUris: java.util.LinkedHashSet<Uri> = java.util.LinkedHashSet(),
+    maxSelection: Int = 1
 ) {
     if (isLoading) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -95,7 +99,9 @@ fun FileListContent(
                 items(contacts, key = { it.uri.toString() }) { file ->
                     ContactListItem(
                         file = file,
-                        onClick = { onFileClicked(file) }
+                        onClick = { onFileClicked(file) },
+                        isSelected = file.uri in selectedUris,
+                        maxSelection = maxSelection
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(start = Spacing.Huge + Spacing.Large),
@@ -137,6 +143,14 @@ fun FileListContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+                    if (maxSelection > 1) {
+                        Checkbox(
+                            checked = file.uri in selectedUris,
+                            onCheckedChange = null,
+                            modifier = Modifier.padding(start = Spacing.Small)
+                        )
+                    }
                 }
                 HorizontalDivider(modifier = Modifier.padding(start = Spacing.Huge))
             }
@@ -149,7 +163,9 @@ fun FileListContent(
 private fun ContactListItem(
     file: PickedFile,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    maxSelection: Int = 1
 ) {
     Row(
         modifier = modifier
@@ -178,6 +194,14 @@ private fun ContactListItem(
                 text = stringResource(R.string.picker_category_contact),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (maxSelection > 1) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = null,
+                modifier = Modifier.padding(start = Spacing.Small)
             )
         }
     }

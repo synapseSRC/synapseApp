@@ -153,10 +153,16 @@ fun SynapseFilePicker(
                                 isLoading = uiState.isLoading,
                                 category = uiState.selectedCategory,
                                 onFileClicked = { file ->
-                                    onFilesSelected(listOf(file))
-                                    onDismissRequest()
+                                    if (maxSelection == 1) {
+                                        onFilesSelected(listOf(file))
+                                        onDismissRequest()
+                                    } else {
+                                        viewModel.toggleSelection(file.uri, maxSelection)
+                                    }
                                 },
-                                modifier = Modifier.padding(bottom = Spacing.Huge)
+                                modifier = Modifier.padding(bottom = Spacing.Huge),
+                                selectedUris = uiState.selectedUris,
+                                maxSelection = maxSelection
                             )
                         }
                         FilePickerCategory.CONTACT -> {
@@ -165,10 +171,16 @@ fun SynapseFilePicker(
                                 isLoading = uiState.isLoading,
                                 category = uiState.selectedCategory,
                                 onFileClicked = { file ->
-                                    onFilesSelected(listOf(file))
-                                    onDismissRequest()
+                                    if (maxSelection == 1) {
+                                        onFilesSelected(listOf(file))
+                                        onDismissRequest()
+                                    } else {
+                                        viewModel.toggleSelection(file.uri, maxSelection)
+                                    }
                                 },
-                                modifier = Modifier.padding(bottom = Spacing.Huge)
+                                modifier = Modifier.padding(bottom = Spacing.Huge),
+                                selectedUris = uiState.selectedUris,
+                                maxSelection = maxSelection
                             )
                         }
                     }
@@ -185,7 +197,8 @@ fun SynapseFilePicker(
                 AnimatedVisibility(visible = uiState.selectedUris.isNotEmpty() && maxSelection > 1) {
                     Button(
                         onClick = {
-                            val selectedFiles = uiState.mediaItems.filter { it.uri in uiState.selectedUris }
+                            val allItems = uiState.mediaItems + uiState.fileItems + uiState.contactItems
+                            val selectedFiles = allItems.filter { it.uri in uiState.selectedUris }
                             onFilesSelected(selectedFiles)
                             onDismissRequest()
                         },
