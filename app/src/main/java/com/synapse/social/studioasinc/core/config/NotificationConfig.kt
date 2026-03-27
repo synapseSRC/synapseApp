@@ -1,31 +1,15 @@
 package com.synapse.social.studioasinc.core.config
 
 import com.synapse.social.studioasinc.BuildConfig
-
-
+import android.content.Context
+import com.synapse.social.studioasinc.R
 
 object NotificationConfig {
 
-
-
-
     const val USE_CLIENT_SIDE_NOTIFICATIONS = false
-
-
-
-
-
     const val ONESIGNAL_APP_ID = BuildConfig.ONESIGNAL_APP_ID
-
-
-
-
-
-    const val NOTIFICATION_TITLE = "New Message"
-    const val NOTIFICATION_SUBTITLE = "Synapse Social"
     const val NOTIFICATION_CHANNEL_ID = "messages"
     const val NOTIFICATION_PRIORITY = 10
-
 
     const val NOTIFICATION_TYPE_NEW_POST = "NEW_POST"
     const val NOTIFICATION_TYPE_NEW_COMMENT = "NEW_COMMENT"
@@ -36,19 +20,8 @@ object NotificationConfig {
     const val NOTIFICATION_TYPE_NEW_FOLLOWER = "NEW_FOLLOWER"
     const val NOTIFICATION_TYPE_NEW_MESSAGE = "NEW_MESSAGE"
 
-
-    const val NOTIFICATION_TITLE_NEW_POST = "New Post"
-    const val NOTIFICATION_TITLE_NEW_COMMENT = "New Comment"
-    const val NOTIFICATION_TITLE_NEW_REPLY = "New Reply"
-    const val NOTIFICATION_TITLE_NEW_LIKE_POST = "New Like"
-    const val NOTIFICATION_TITLE_NEW_LIKE_COMMENT = "New Like"
-    const val NOTIFICATION_TITLE_MENTION = "New Mention"
-    const val NOTIFICATION_TITLE_NEW_MESSAGE = "New Message"
-
-
     const val WORKER_URL = "https://my-app-notification-sender.mashikahamed0.workers.dev"
     const val EDGE_FUNCTION_SEND_PUSH = "send-push-notification"
-
 
     const val TAG_LIKES = "likes"
     const val TAG_COMMENTS = "comments"
@@ -60,52 +33,33 @@ object NotificationConfig {
     const val TAG_MESSAGES = "messages"
     const val TAG_GLOBAL_ENABLED = "global_enabled"
 
-
-
-
     const val RECENT_ACTIVITY_THRESHOLD = 5 * 60 * 1000L
 
-
-
     const val ENABLE_SMART_SUPPRESSION = true
-
-
     const val ENABLE_FALLBACK_MECHANISMS = true
-
-
     const val ENABLE_DEEP_LINKING = true
-
-
-
     const val ENABLE_DEBUG_LOGGING = true
-
-
 
     fun isConfigurationValid(): Boolean {
         return if (USE_CLIENT_SIDE_NOTIFICATIONS) {
             ONESIGNAL_APP_ID.isNotBlank() && ONESIGNAL_APP_ID != "YOUR_ONESIGNAL_APP_ID_HERE"
-
         } else {
             true
         }
     }
 
-
-
-    fun getTitleForNotificationType(type: String): String {
+    fun getTitleForNotificationType(context: Context, type: String): String {
         return when (type) {
-            NOTIFICATION_TYPE_NEW_POST -> NOTIFICATION_TITLE_NEW_POST
-            NOTIFICATION_TYPE_NEW_COMMENT -> NOTIFICATION_TITLE_NEW_COMMENT
-            NOTIFICATION_TYPE_NEW_REPLY -> NOTIFICATION_TITLE_NEW_REPLY
-            NOTIFICATION_TYPE_NEW_LIKE_POST -> NOTIFICATION_TITLE_NEW_LIKE_POST
-            NOTIFICATION_TYPE_NEW_LIKE_COMMENT -> NOTIFICATION_TITLE_NEW_LIKE_COMMENT
-            NOTIFICATION_TYPE_MENTION -> NOTIFICATION_TITLE_MENTION
-            NOTIFICATION_TYPE_NEW_MESSAGE -> NOTIFICATION_TITLE_NEW_MESSAGE
-            else -> NOTIFICATION_TITLE
+            NOTIFICATION_TYPE_NEW_POST -> context.getString(R.string.notification_title_new_post)
+            NOTIFICATION_TYPE_NEW_COMMENT -> context.getString(R.string.notification_title_new_comment)
+            NOTIFICATION_TYPE_NEW_REPLY -> context.getString(R.string.notification_title_new_reply)
+            NOTIFICATION_TYPE_NEW_LIKE_POST -> context.getString(R.string.notification_title_new_like)
+            NOTIFICATION_TYPE_NEW_LIKE_COMMENT -> context.getString(R.string.notification_title_new_like)
+            NOTIFICATION_TYPE_MENTION -> context.getString(R.string.notification_title_mention)
+            NOTIFICATION_TYPE_NEW_MESSAGE -> context.getString(R.string.notification_title_new_message)
+            else -> context.getString(R.string.notification_title_default)
         }
     }
-
-
 
     fun getNotificationSystemDescription(): String {
         return if (USE_CLIENT_SIDE_NOTIFICATIONS) {
@@ -114,8 +68,6 @@ object NotificationConfig {
             "Server-side via Supabase Edge Function"
         }
     }
-
-
 
     fun getConfigurationStatus(): Map<String, Any> {
         return mapOf(

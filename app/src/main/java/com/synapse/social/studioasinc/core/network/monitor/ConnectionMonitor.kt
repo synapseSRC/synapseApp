@@ -11,12 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.synapse.social.studioasinc.R
 
 
 
 @Singleton
 class ConnectionMonitor @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext private val context: Context
 ) {
 
     enum class ConnectionState {
@@ -182,10 +183,10 @@ class ConnectionMonitor @Inject constructor(
 
     fun getConnectionTypeString(): String {
         return when (_connectionInfo.value.type) {
-            ConnectionType.WIFI -> "Wi-Fi"
-            ConnectionType.CELLULAR -> "Mobile Data"
-            ConnectionType.ETHERNET -> "Ethernet"
-            ConnectionType.NONE -> "No Connection"
+            ConnectionType.WIFI -> context.getString(R.string.connection_type_wifi_label)
+            ConnectionType.CELLULAR -> context.getString(R.string.connection_type_cellular_label)
+            ConnectionType.ETHERNET -> context.getString(R.string.connection_type_ethernet_label)
+            ConnectionType.NONE -> context.getString(R.string.connection_type_none_label)
         }
     }
 
