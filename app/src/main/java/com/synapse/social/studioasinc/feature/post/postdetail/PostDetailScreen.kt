@@ -49,6 +49,7 @@ fun PostDetailScreen(
     rootCommentId: String? = null,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToEditPost: (String) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit = {},
     onNavigateToReplyToPost: (String) -> Unit,
     onNavigateToCommentDetail: (String, String) -> Unit,
     onNavigateBack: () -> Unit,
@@ -273,6 +274,7 @@ private fun PostDetailContent(
     onPostComment: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostShare: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostRepost: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit = {},
     onPostBookmark: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostOptionClick: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostPollVote: (com.synapse.social.studioasinc.domain.model.Post, Int) -> Unit,
@@ -390,7 +392,7 @@ private fun PostDetailContent(
                                     onUserClick = onUserClick,
                                     onMediaClick = onPostMediaClick,
                                     onReactionSelected = onPostReactionSelected,
-                                    onQuote = onPostRepost
+                                    onQuote = { post -> onNavigateToQuotePost(post.id) }
                                 )
                             }
 

@@ -65,6 +65,7 @@ fun ProfileScreen(
     onNavigateToUserProfile: (String) -> Unit = {},
     onNavigateToChat: (String, String?, String?) -> Unit = { _, _, _ -> },
     onNavigateToStoryCreator: () -> Unit = {},
+    onNavigateToQuotePost: (String) -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -154,6 +155,7 @@ fun ProfileScreen(
                         onNavigateToEditProfile = onNavigateToEditProfile,
                         onNavigateToFollowers = onNavigateToFollowers,
                         onNavigateToFollowing = onNavigateToFollowing,
+                        onNavigateToQuotePost = onNavigateToQuotePost,
                         onNavigateToUserProfile = onNavigateToUserProfile,
                         onNavigateToChat = onNavigateToChat,
                         onNavigateToStoryCreator = onNavigateToStoryCreator,

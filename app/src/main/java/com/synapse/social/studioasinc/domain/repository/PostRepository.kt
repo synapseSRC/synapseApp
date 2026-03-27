@@ -11,6 +11,7 @@ interface PostRepository {
     suspend fun createPosts(posts: List<Post>): Result<List<Post>>
     suspend fun updatePost(post: Post): Result<Post>
     suspend fun resharePost(postId: String): Result<Unit>
+    suspend fun unresharePost(postId: String): Result<Unit>
     suspend fun quotePost(postId: String, text: String): Result<Post>
     fun getPostsPaged(): Flow<PagingData<Post>>
     fun getFeedPaged(): Flow<PagingData<FeedItem>>

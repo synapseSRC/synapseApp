@@ -213,6 +213,9 @@ fun NavGraphBuilder.profileGraph(navController: NavHostController) {
                     onNavigateToFollowing = {
                         navController.navigate(AppDestination.FollowList(userId, 1))
                     },
+                    onNavigateToQuotePost = { postId ->
+                        navController.navigate(AppDestination.QuotePost(postId))
+                    },
                     onNavigateToUserProfile = { targetUid ->
                         navController.navigate(AppDestination.Profile(targetUid))
                     },
@@ -347,6 +350,9 @@ fun NavGraphBuilder.postGraph(navController: NavHostController) {
                     },
                     onNavigateToEditPost = { pid ->
                         navController.navigate(AppDestination.CreatePost(pid))
+                },
+                onNavigateToQuotePost = { pid ->
+                        navController.navigate(AppDestination.QuotePost(pid))
                 },
                 onNavigateToReplyToPost = { pid ->
                     navController.navigate(AppDestination.CreatePost(replyToPostId = pid))

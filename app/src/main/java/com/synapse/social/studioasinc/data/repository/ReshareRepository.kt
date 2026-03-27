@@ -3,6 +3,9 @@ package com.synapse.social.studioasinc.data.repository
 import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.SerialName
@@ -65,9 +68,30 @@ class ReshareRepository @Inject constructor(
         client.from("reshares")
             .insert(Reshare(postId = postId, userId = userId, reshareText = commentary))
 
+        client.postgrest.rpc("increment_post_reshares", buildJsonObject { put("post_id", postId) })
+
 
         Log.d(TAG, "Reshare created: $postId")
     }
+
+
+    suspend fun removeReshare(postId: String): Result<Unit> = runCatching {
+        val userId = client.auth.currentUserOrNull()?.id
+            ?: return Result.failure(Exception("Not authenticated"))
+
+        client.from("reshares")
+            .delete {
+                filter {
+                    eq("post_id", postId)
+                    eq("user_id", userId)
+                }
+            }
+
+        client.postgrest.rpc("decrement_post_reshares", buildJsonObject { put("post_id", postId) })
+
+        Log.d(TAG, "Reshare removed: $postId")
+    }
+
 
     companion object {
         private const val TAG = "ReshareRepository"

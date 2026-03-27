@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.createpost.quote
 
+import androidx.navigation.toRoute
+import com.synapse.social.studioasinc.ui.navigation.AppDestination
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,7 +32,7 @@ class QuotePostViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(QuotePostUiState())
     val uiState: StateFlow<QuotePostUiState> = _uiState.asStateFlow()
 
-    private val postId: String = checkNotNull(savedStateHandle["postId"])
+    private val postId: String = savedStateHandle.toRoute<AppDestination.QuotePost>().postId
 
     init {
         loadPost()
