@@ -27,12 +27,12 @@ fun SharedPostItem(
 
 
 
-    val onLikeClick = remember(post.id, actions) { { actions.onLike(post) } }
+    val onLikeClick = remember(post.id, post.userReaction, actions) { { actions.onLike(post) } }
     val onCommentClick = remember(post.id, actions) { { actions.onComment(post) } }
     val onShareClick = remember(post.id, actions) { { actions.onShare(post) } }
-    val onRepostClick = remember(post.id, actions) { { actions.onRepost(post) } }
+    val onRepostClick = remember(post.id, post.isReshared, actions) { { actions.onRepost(post) } }
     val onQuoteClick = remember(post.id, actions) { { actions.onQuote(post) } }
-    val onBookmarkClick = remember(post.id, actions) { { actions.onBookmark(post) } }
+    val onBookmarkClick = remember(post.id, post.isBookmarked, actions) { { actions.onBookmark(post) } }
     val onUserClick = remember(post.authorUid, actions) { { actions.onUserClick(post.authorUid) } }
     val onPostClick = remember(post.id, actions) { { actions.onComment(post) } }
     val onMediaClick = remember(post.id, actions, postViewStyle) {
