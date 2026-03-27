@@ -62,7 +62,6 @@ fun ProfileHeader(
     isFollowLoading: Boolean = false,
     onFollowClick: () -> Unit = {},
     onMessageClick: () -> Unit = {},
-    onCoverEditClick: () -> Unit = {},
     onCoverPhotoClick: () -> Unit = {},
     scrollOffset: Float = 0f,
     bioExpanded: Boolean = false,
@@ -83,7 +82,6 @@ fun ProfileHeader(
             coverImageUrl = coverImageUrl,
             scrollOffset = scrollOffset,
             isOwnProfile = isOwnProfile,
-            onEditClick = onCoverEditClick,
             onCoverClick = onCoverPhotoClick,
             height = coverHeight
         )

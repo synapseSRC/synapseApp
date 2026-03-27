@@ -40,7 +40,6 @@ fun CoverPhoto(
     coverImageUrl: String?,
     scrollOffset: Float = 0f,
     isOwnProfile: Boolean = false,
-    onEditClick: () -> Unit = {},
     onCoverClick: () -> Unit = {},
     height: Dp = Sizes.HeightExtraLarge
 ) {
@@ -67,31 +66,6 @@ fun CoverPhoto(
             )
         } else {
             CoverPlaceholder(modifier = Modifier.fillMaxSize())
-        }
-
-        if (isOwnProfile) {
-            Surface(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onEditClick()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(Spacing.SmallMedium)
-                    .size(Sizes.IconGiant),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                tonalElevation = Spacing.ExtraSmall
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Edit cover photo",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(Sizes.IconDefault)
-                    )
-                }
-            }
         }
     }
 }
@@ -156,7 +130,6 @@ fun CoverPhotoWithProfile(
     scrollOffset: Float = 0f,
     isOwnProfile: Boolean = false,
     hasStory: Boolean = false,
-    onCoverEditClick: () -> Unit = {},
     onProfileImageClick: () -> Unit = {},
     onCoverClick: () -> Unit = {},
     coverHeight: Dp = Sizes.HeightExtraLarge,
@@ -172,7 +145,6 @@ fun CoverPhotoWithProfile(
             coverImageUrl = coverImageUrl,
             scrollOffset = scrollOffset,
             isOwnProfile = isOwnProfile,
-            onEditClick = onCoverEditClick,
             onCoverClick = onCoverClick,
             height = coverHeight
         )
@@ -333,8 +305,7 @@ private fun CoverPhotoPreview() {
     MaterialTheme {
         CoverPhoto(
             coverImageUrl = null,
-            isOwnProfile = true,
-            onEditClick = {}
+            isOwnProfile = true
         )
     }
 }

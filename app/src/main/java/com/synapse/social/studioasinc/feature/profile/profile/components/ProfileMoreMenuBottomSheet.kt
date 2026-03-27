@@ -24,11 +24,11 @@ fun ProfileMoreMenuBottomSheet(
     onShareProfile: () -> Unit,
     onViewAs: () -> Unit,
     onLockProfile: () -> Unit,
-    onArchiveProfile: () -> Unit,
+
     onQrCode: () -> Unit,
-    onCopyLink: () -> Unit,
+
     onSettings: () -> Unit,
-    onActivityLog: () -> Unit,
+
     onBlockUser: () -> Unit,
     onReportUser: () -> Unit,
     onMuteUser: () -> Unit
@@ -55,22 +55,12 @@ fun ProfileMoreMenuBottomSheet(
                     text = stringResource(R.string.lock_profile),
                     onClick = { onLockProfile(); onDismiss() }
                 )
-                MenuOption(
-                    icon = Icons.Default.Archive,
-                    text = stringResource(R.string.archive_profile),
-                    onClick = { onArchiveProfile(); onDismiss() }
-                )
             }
 
             MenuOption(
                 icon = Icons.Default.QrCode,
                 text = stringResource(R.string.qr_code),
                 onClick = { onQrCode(); onDismiss() }
-            )
-            MenuOption(
-                icon = Icons.Default.ContentCopy,
-                text = stringResource(R.string.copy_profile_link),
-                onClick = { onCopyLink(); onDismiss() }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
@@ -82,14 +72,6 @@ fun ProfileMoreMenuBottomSheet(
                     onClick = {
                         onDismiss()
                         onSettings()
-                    }
-                )
-                MenuOption(
-                    icon = Icons.Default.History,
-                    text = stringResource(R.string.activity_log),
-                    onClick = {
-                        onDismiss()
-                        onActivityLog()
                     }
                 )
             } else {

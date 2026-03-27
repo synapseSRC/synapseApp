@@ -20,8 +20,7 @@ internal fun ProfileMoreMenuSection(
     context: Context,
     profileLinkLabel: String,
     postLinkLabel: String,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToActivityLog: () -> Unit
+    onNavigateToSettings: () -> Unit
 ) {
     if (state.showMoreMenu) {
         ProfileMoreMenuBottomSheet(
@@ -32,20 +31,8 @@ internal fun ProfileMoreMenuSection(
             onLockProfile = {
                 profile?.let { viewModel.lockProfile(!it.isPrivate) }
             },
-            onArchiveProfile = {
-                profile?.let { viewModel.archiveProfile(true) }
-            },
             onQrCode = { viewModel.showQrCode() },
-            onCopyLink = {
-                val username = profile?.username ?: ""
-                val url = "${BuildConfig.APP_DOMAIN}/profile/$username"
-                val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-                val clip = android.content.ClipData.newPlainText(profileLinkLabel, url)
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, context.getString(R.string.toast_link_copied), Toast.LENGTH_SHORT).show()
-            },
             onSettings = onNavigateToSettings,
-            onActivityLog = onNavigateToActivityLog,
             onBlockUser = {
                 profile?.let { viewModel.blockUser(it.id) }
             },
