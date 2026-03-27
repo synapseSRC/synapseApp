@@ -50,11 +50,15 @@
 		android:enableOnBackInvokedCallback="true">
 
 		<meta-data
+			android:name="android.app.LocaleManager"
+			android:value="true" />
+
+		<meta-data
 			android:name="com.onesignal.NotificationOpened.DEFAULT"
 			android:value="DISABLE" />
 		<activity
 			android:name=".feature.shared.main.MainActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
@@ -74,7 +78,7 @@
 			</intent-filter></activity>
 		<activity
 			android:name=".HomeActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:windowSoftInputMode="adjustResize"
@@ -98,7 +102,7 @@
 		</activity>
 		<activity
 			android:name=".SearchActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
@@ -106,7 +110,7 @@
 
 		<activity
 			android:name=".feature.post.PostDetailActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden"
+			android:configChanges="orientation|screenSize|keyboardHidden|locale"
 			android:screenOrientation="portrait"
 			android:windowSoftInputMode="adjustResize"
 			android:parentActivityName=".HomeActivity"
@@ -121,14 +125,14 @@
 
 		<activity
 			android:name=".feature.profile.ProfileEditActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
 			android:windowSoftInputMode="stateHidden" />
 		<activity
 			android:name=".feature.shared.components.FollowListActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
@@ -136,7 +140,7 @@
 
 		<activity
 			android:name=".CreatePostActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
@@ -145,7 +149,7 @@
 		<!-- Story Viewer Activity -->
 		<activity
 			android:name=".feature.stories.viewer.StoryViewerActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:screenOrientation="portrait"
 			android:theme="@style/AppTheme.FullScreen"
@@ -154,14 +158,14 @@
 		<!-- Story Creator Activity -->
 		<activity
 			android:name=".feature.stories.creator.StoryCreatorActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:screenOrientation="portrait"
 			android:windowSoftInputMode="adjustResize" />
 
 		<activity
 			android:name=".AuthActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:windowSoftInputMode="adjustResize"
@@ -192,14 +196,14 @@
 		</activity>
 		<activity
 			android:name=".feature.settings.SettingsActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
 			android:windowSoftInputMode="stateHidden" />
 		<activity
 			android:name=".ActivityLogActivity"
-			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
 			android:hardwareAccelerated="true"
 			android:supportsPictureInPicture="true"
 			android:screenOrientation="portrait"
