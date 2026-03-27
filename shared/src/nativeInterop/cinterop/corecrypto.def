@@ -1,0 +1,15 @@
+package = platform.CoreCrypto
+
+compilerOpts = -I/usr/include
+linkerOpts = -L/usr/lib/system -lcorecrypto -framework Security -framework CoreFoundation
+
+---
+
+#include <stdint.h>
+#include <CommonCrypto/CommonCrypto.h>
+#include <CommonCrypto/CommonHMAC.h>
+#include <CommonCrypto/CommonRandom.h>
+
+// CoreCrypto Curve25519 declarations
+extern int cccurve25519_make_key_pair(uint8_t *pk, uint8_t *sk);
+extern int cccurve25519(uint8_t *shared_secret, const uint8_t *sk, const uint8_t *pk);

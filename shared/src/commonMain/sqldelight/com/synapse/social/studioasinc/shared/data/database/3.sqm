@@ -1,0 +1,2 @@
+ALTER TABLE CachedMessage ADD COLUMN delivery_status TEXT NOT NULL DEFAULT 'sent';
+ALTER TABLE CachedMessage ADD COLUMN read_by TEXT;

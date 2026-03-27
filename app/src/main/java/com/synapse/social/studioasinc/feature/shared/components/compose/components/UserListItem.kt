@@ -1,0 +1,125 @@
+package com.synapse.social.studioasinc.feature.shared.components.compose.components
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.domain.model.User
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
+@Composable
+fun UserListItem(
+    user: User,
+    onUserClick: () -> Unit,
+    onMessageClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
+            .clickable { onUserClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.Medium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(user.avatar)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = stringResource(R.string.author_avatar),
+                modifier = Modifier
+                    .size(Sizes.AvatarDefault)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop,
+                placeholder = rememberVectorPainter(Icons.Filled.Person),
+                error = rememberVectorPainter(Icons.Filled.Person)
+            )
+
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = Spacing.SmallMedium)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!user.displayName.isNullOrEmpty()) {
+                        Text(
+                            text = user.displayName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    if (user.verify) {
+                        Icon(
+                            imageVector = Icons.Default.Verified,
+                            contentDescription = "Verified",
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(start = Spacing.ExtraSmall),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Text(
+                    text = "@${user.username}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+            ) {
+                IconButton(
+                    onClick = onMessageClick,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Message,
+                        contentDescription = "Message",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+
+                FollowButtonCompose(
+                    targetUserId = user.uid
+                )
+            }
+        }
+    }
+}

@@ -1,0 +1,1155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Synapse</string>
+    <string name="lang">bn</string>
+    <string name="login_synapse_community">Synapse কমিউনিটিতে প্রবেশ করুন</string>
+    <string name="sign_with_email">ইমেইল দিয়ে সাইন ইন করুন</string>
+    <string name="sign_with_google">গুগল দিয়ে চালিয়ে যান</string>
+    <string name="i_accept_terms_conditions">আমি শর্তাবলী মেনে নিচ্ছি</string>
+    <string name="create_account">অ্যাকাউন্ট তৈরি করুন</string>
+    <string name="please_accept_terms_and_conditions">আপনাকে অবশ্যই সমস্ত শর্তাবলী গ্রহণ করতে হবে!</string>
+    <string name="google_sign_not_available">গুগল দিয়ে সাইন ইন এখনও উপলব্ধ নয়।</string>
+    <string name="welcome_again">আবার স্বাগতম 👋🏻</string>
+    <string name="login_your_account">এখনই আপনার Synapse অ্যাকাউন্টে লগইন করুন।</string>
+    <string name="email">ই-মেইল</string>
+    <string name="password">পাসওয়ার্ড</string>
+    <string name="forgot_password">পাসওয়ার্ড ভুলে গেছেন?</string>
+    <string name="continue_button">চালিয়ে যান</string>
+    <string name="please_enter_email">অনুগ্রহ করে ই-মেইল লিখুন</string>
+    <string name="please_enter_password">অনুগ্রহ করে পাসওয়ার্ড লিখুন</string>
+    <string name="synapse_create_account">অ্যাকাউন্ট তৈরি করুন 🎉</string>
+    <string name="join_synapse_community">এখনই আপনার অ্যাকাউন্ট তৈরি করে Synapse কমিউনিটিতে যোগ দিন 😊</string>
+
+    <!-- Follow List Screen -->
+    <string name="users">ব্যবহারকারীগণ</string>
+    <string name="back">পিছনে</string>
+    <string name="no_followers">এখনও কোন ফলোয়ার নেই</string>
+    <string name="no_following">এখনও কাউকে ফলো করছেন না</string>
+    <string name="no_users_found">কোন ব্যবহারকারী পাওয়া যায়নি</string>
+    <string name="complete_profile_title">আপনার প্রোফাইল সম্পন্ন করুন</string>
+    <string name="complete_profile_subtitle">এখন আপনার প্রোফাইল সম্পন্ন করে অ্যাকাউন্ট তৈরির কাজ শেষ করুন অথবা স্কিপ বোতাম ব্যবহার করে প্রোফাইল সম্পন্ন করার ধাপটি এড়িয়ে যান।</string>
+    <string name="primary_details_title">প্রাথমিক বিবরণ</string>
+    <string name="primary_details_subtitle">প্রোফাইল ছবি, ইউজারনেম, ডাকনাম এবং বায়ো যা আপনার প্রোফাইলে প্রদর্শিত হবে।</string>
+    <string name="username">হ্যান্ডেল</string>
+    <string name="nickname">ইউজারনেম</string>
+    <string name="display_name">প্রদর্শন নাম</string>
+    <string name="display_name_hint">প্রদর্শন নাম লিখুন (ঐচ্ছিক)</string>
+    <string name="display_name_helper">ঐচ্ছিক - ইউজারনেমের পরিবর্তে দেখানো হবে</string>
+    <string name="bio_hint">আপনার সম্পর্কে আমাদের বলুন (ঐচ্ছিক)</string>
+    <string name="username_hint">ইউজারনেম লিখুন</string>
+    <string name="username_helper">@ইউজারনেম ফরম্যাট</string>
+    <string name="biography">বায়ো</string>
+    <string name="gender_title">লিঙ্গ</string>
+    <string name="gender_subtitle">আপনার প্রোফাইলে লিঙ্গ উল্লেখ করে আপনি অন্যদের কাছে নিজেকে পরিচিত করতে পারেন এবং ফিল্টার ব্যবহারকারী ব্যক্তিদের কাছে সুপারিশ পেতে পারেন, যা আপনার মিথস্ক্রিয়া বৃদ্ধি করবে।</string>
+    <string name="male">পুরুষ</string>
+    <string name="female">মহিলা</string>
+    <string name="gender_gone_title">আমি উল্লেখ করতে চাই না</string>
+    <string name="skip_button">এড়িয়ে যান</string>
+    <string name="invalid_email_adress">অকার্যকর ই-মেইল ঠিকানা</string>
+    <string name="info">তথ্য</string>
+    <string name="cancel_complete_profile_warn">আপনি প্রোফাইল সম্পন্ন করার ধাপটি বাতিল করতে চলেছেন! আপনি যদি এই পর্যায় থেকে চলে যান, তবে আপনার ই-মেইল অ্যাকাউন্টটি সংরক্ষিত থাকবে, তারপর অ্যাকাউন্ট তৈরির পরিবর্তে লগইন করার মাধ্যমে আপনাকে এই পৃষ্ঠায় পুনরায় পাঠানো হবে। আপনি চাইলে আমাদের সার্ভার থেকে আপনার ই-মেইলটি মুছে ফেলতে পারেন।</string>
+    <string name="cancel_complete_profile_warn2">আপনি কি নিশ্চিত যে আপনি প্রোফাইল সম্পন্ন করার ধাপটি বাতিল করতে চান?</string>
+    <string name="yes">হ্যাঁ</string>
+    <string name="no">না</string>
+    <string name="email_verification_title">ইমেইল যাচাইকরণ</string>
+    <string name="email_verification_subtitle">এখনই আপনার অ্যাকাউন্টের সাথে যুক্ত ইমেইল অ্যাকাউন্টটি যাচাই করুন। আপনার ই-মেইল অ্যাকাউন্ট যাচাই না করে চালিয়ে গেলে, আপনি কেবল অ্যাপ্লিকেশনের বিষয়বস্তু প্রিভিউ করতে পারবেন এবং মিথস্ক্রিয়া করতে পারবেন না।</string>
+    <string name="send">পাঠান</string>
+    <string name="email_verification_success_text">আপনার ই-মেইল ঠিকানায় সফলভাবে যাচাইকরণ লিঙ্ক পাঠানো হয়েছে! ইনকামিং লিঙ্কে ক্লিক করে আপনার ই-মেইল ঠিকানা নিশ্চিত করুন, তারপর রিফ্রেশ বোতামে ক্লিক করে এটি পরীক্ষা করুন। যদি আপনি ইমেইল লিঙ্কটি খুঁজে না পান, তবে স্প্যাম ফোল্ডারটি পরীক্ষা করুন।</string>
+    <string name="email_verification_resent">যাচাইকরণ ইমেল পুনরায় পাঠানো হয়েছে!</string>
+    <string name="email_verification_resend_wait">%1$d সেকেন্ড পর পুনরায় পাঠান</string>
+    <string name="resend_email">ইমেল পুনরায় পাঠান</string>
+    <string name="okay">ঠিক আছে</string>
+    <string name="email_verified">ই-মেইল যাচাই করা হয়েছে</string>
+    <string name="email_not_verified">ই-মেইল যাচাই করা হয়নি</string>
+    <string name="something_went_wrong">কিছু ভুল হয়েছে</string>
+    <string name="enter_username">অনুগ্রহ করে ইউজারনেম লিখুন</string>
+    <string name="username_err_empty">ইউজারনেম খালি হতে পারে না</string>
+    <string name="username_err_3_characters">ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে</string>
+    <string name="username_err_20_characters">ইউজারনেম সর্বোচ্চ ২০ অক্ষরের হতে হবে</string>
+    <string name="username_err_25_characters">ইউজারনেম ২৫ অক্ষর পর্যন্ত হতে পারে</string>
+    <string name="username_err_one_letter">ইউজারনেমে কমপক্ষে একটি অক্ষর থাকতে হবে</string>
+    <string name="username_err_invalid_characters">ইউজারনেমে অকার্যকর অক্ষর রয়েছে</string>
+    <string name="username_err_invalid_chars_desc">ইউজারনেমে কেবল অক্ষর, সংখ্যা এবং আন্ডারস্কোর থাকতে পারে</string>
+    <string name="username_err_already_taken">এই ইউজারনেমটি ইতিমধ্যে নেওয়া হয়েছে</string>
+    <string name="username_err_invalid">অকার্যকর ইউজারনেম</string>
+    <string name="nickname_err_30_characters">ডাকনাম সর্বোচ্চ ৩০ অক্ষরের হতে পারে</string>
+    <string name="biography_err_250_characters">জীবনী সর্বোচ্চ ২৫০ অক্ষরের হতে পারে</string>
+    <string name="cancel_create_account_warn">আপনি অ্যাকাউন্ট তৈরি বাতিল করতে চলেছেন! আপনি যদি এই কাজটি বাতিল করেন, তবে আপনার ই-মেইল তথ্য আমাদের সার্ভার থেকে মুছে ফেলা হবে। তাই পরে আবার লগইন করার সময় আপনাকে নতুন অ্যাকাউন্ট তৈরির পৃষ্ঠায় নিবন্ধন করতে হবে এবং পুনরায় ইমেল নিশ্চিত করতে হবে।</string>
+    <string name="cancel_create_account_warn2">আপনি কি নিশ্চিত যে আপনি অ্যাকাউন্ট তৈরি বাতিল করতে চান?</string>
+    <string name="invalid_profile_image_file">আপনার নির্বাচিত প্রোফাইল ছবিটি একটি অসমর্থিত ফাইলের ধরন হিসেবে প্রদর্শিত হচ্ছে! অনুগ্রহ করে \"png\" বা \"jpg\" ধরনের ছবি বেছে নিন।</string>
+    <string name="add_story">স্টোরি যোগ করুন</string>
+    <string name="home_hello">হ্যালো</string>
+    <string name="whats_new_today">আপনার মনে কি চলছে?</string>
+    <string name="text_post_err_500_characters">টেক্সট পোস্ট সর্বোচ্চ ৫০০ অক্ষর পর্যন্ত দীর্ঘ হতে পারে।</string>
+    <string name="please_enter_text">অনুগ্রহ করে ক্যাপশন লিখুন</string>
+    <string name="publish">পোস্ট করুন</string>
+    <string name="post_publish_success">সফলভাবে পোস্ট করা হয়েছে</string>
+    <string name="oh_there_us_a_problem">ওহ! কিছু ভুল হয়েছে :(</string>
+    <string name="reasons_may_be">সম্ভাব্য কারণগুলো:</string>
+    <string name="err_no_internet">• আপনার ইন্টারনেট সংযোগ নেই বা খুব দুর্বল।</string>
+    <string name="err_app_maintenance">• অ্যাপ্লিকেশনটি রক্ষণাবেক্ষণের অধীনে থাকতে পারে।</string>
+    <string name="err_problem_on_our_side">• আমাদের পাশে প্রযুক্তিগত সমস্যা থাকতে পারে।</string>
+    <string name="retry">আবার চেষ্টা করুন</string>
+    <string name="stories">স্টোরিগুলো</string>
+    <string name="image_posts">ছবি পোস্ট</string>
+    <string name="text_posts">টেক্সট পোস্ট</string>
+    <string name="video_posts">ভিডিও পোস্ট</string>
+    <string name="recommended_users">সুপারিশকৃত ব্যবহারকারীগণ</string>
+    <string name="recommended_posts">সুপারিশকৃত পোস্টসমূহ</string>
+    <string name="followed_users_posts">ফলো করা ব্যবহারকারীদের পোস্টসমূহ</string>
+    <string name="search">অনুসন্ধান</string>
+    <string name="no_user_found">এই ইউজারনেম দিয়ে কোন ব্যবহারকারী পাওয়া যায়নি :(</string>
+    <string name="no_description">কোন বর্ণনা নেই</string>
+    <string name="original_sound">মূল শব্দ</string>
+    <string name="comments">মন্তব্যসমূহ</string>
+    <string name="comment">মন্তব্য</string>
+    <string name="no_comment_yet">এখনও কোন মন্তব্য নেই!</string>
+    <string name="write_firts_comment">প্রথম মন্তব্যকারী হোন।</string>
+    <string name="liked_by_publisher">প্রকাশক পছন্দ করেছেন</string>
+    <string name="show_more_comments">আরও মন্তব্য দেখুন।</string>
+    <string name="comment_liked_by_publisher">এই মন্তব্যটি প্রকাশক পছন্দ করেছেন</string>
+    <string name="seconds_ago">কয়েক সেকেন্ড আগে</string>
+    <string name="minutes_ago">কয়েক মিনিট আগে</string>
+    <string name="hours_ago">কয়েক ঘণ্টা আগে</string>
+    <string name="days_ago">কয়েক দিন আগে</string>
+    <string name="create_post">পোস্ট তৈরি করুন</string>
+    <string name="whats_on_your_mind">আপনার মনে কি চলছে?</string>
+    <string name="photo">ছবি</string>
+    <string name="video">ভিডিও</string>
+    <string name="post_settings">পোস্ট সেটিংস</string>
+    <string name="post_visibility">পোস্ট দৃশ্যমানতা</string>
+    <string name="hide_views_count">ভিউ সংখ্যা লুকান</string>
+    <string name="hide_like_count">লাইক সংখ্যা লুকান</string>
+    <string name="hide_comments_count">মন্তব্য সংখ্যা লুকান</string>
+    <string name="create_complete_post_details">পোস্টের বিবরণ সম্পন্ন করুন</string>
+    <string name="create_complete_post_description">পোস্টের বর্ণনা</string>
+    <string name="debug_subtitle">আমরা দুঃখিত! অ্যাপ্লিকেশনে একটি ত্রুটি ঘটেছে, অনুগ্রহ করে এই ত্রুটিটি আমাদের কাছে রিপোর্ট করুন। আমরা এটি সমাধান করার চেষ্টা করব।</string>
+    <string name="close_app">অ্যাপ বন্ধ করুন</string>
+    <string name="report_error">ত্রুটি রিপোর্ট করুন</string>
+    <string name="profile_tab">প্রোফাইল</string>
+    <string name="posts_tab">পোস্টসমূহ</string>
+    <string name="online">অনলাইন</string>
+    <string name="offline">অফলাইন</string>
+    <string name="admin">অ্যাডমিন</string>
+    <string name="moderator">মডারেটর</string>
+    <string name="supporter">সমর্থক</string>
+    <string name="verified_account">যাচাইকৃত অ্যাকাউন্ট</string>
+    <string name="chat">চ্যাট</string>
+    <string name="gift">উপহার</string>
+    <string name="block">ব্লক করুন</string>
+    <string name="share">শেয়ার করুন</string>
+    <string name="report">রিপোর্ট করুন</string>
+    <string name="posts">পোস্টসমূহ</string>
+    <string name="follower">ফলোয়ার</string>
+    <string name="followers">ফলোয়ারগণ</string>
+    <string name="following">ফলো করছেন</string>
+    <string name="edit_profile">প্রোফাইল সম্পাদনা করুন</string>
+    <string name="buy_premium">প্রিমিয়াম কিনুন</string>
+    <string name="follow">ফলো করুন</string>
+    <string name="unfollow">আনফলো করুন</string>
+    <string name="follow_dialog">আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে ফলো করতে চান?</string>
+    <string name="unfollow_dialog">আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে আনফলো করতে চান?</string>
+    <string name="m_edit">সম্পাদনা</string>
+    <string name="m_reply">উত্তর দিন</string>
+    <string name="m_copy">কপি করুন</string>
+    <string name="m_translate">অনুবাদ করুন</string>
+    <string name="m_delete">ডিলিট করুন</string>
+    <string name="m_message">মেসেজ পাঠান</string>
+    <string name="m_no_inbox">চ্যাট করার জন্য আপনার কাছে এখনও কেউ নেই</string>
+    <string name="m_no_posts">এই ব্যবহারকারী এখনও কোন পোস্ট শেয়ার করেননি</string>
+    <string name="m_no_chats">এই ব্যবহারকারীর সাথে আপনার এখনও কোন চ্যাট নেই</string>
+    <string name="explore">এক্সপ্লোর</string>
+    <string name="no_posts">এখনও কোন পোস্ট নেই</string>
+    <string name="no_posts_follow_desc">এখনও কোন পোস্ট নেই। পোস্ট দেখতে মানুষদের ফলো করুন!</string>
+    <string name="statistics_settings">পরিসংখ্যান সেটিংস</string>
+    <string name="hide_the_number_of_views">ভিউ সংখ্যা লুকান</string>
+    <string name="hide_the_number_of_views_subtitle">ভিউ সংখ্যা লুকানো হবে।</string>
+    <string name="hide_the_number_of_likes">লাইক সংখ্যা লুকান</string>
+    <string name="hide_the_number_of_likes_subtitle">লাইক সংখ্যা লুকানো হবে।</string>
+    <string name="hide_the_number_of_comments">মন্তব্য সংখ্যা লুকান</string>
+    <string name="hide_the_number_of_comments_subtitle">মন্তব্য সংখ্যা লুকানো হবে।</string>
+    <string name="privacy_settings">গোপনীয়তা সেটিংস</string>
+    <string name="hide_post_from_everyone">পোস্ট প্রাইভেট করুন</string>
+    <string name="hide_post_from_everyone_subtitle">কেবলমাত্র আপনি এই পোস্টটি দেখতে পাবেন।</string>
+    <string name="disable_saving_to_favorites">সংরক্ষণ নিষ্ক্রিয় করুন</string>
+    <string name="disable_saving_to_favorites_subtitle">ব্যবহারকারীরা এই পোস্টটি তাদের ফেভারিটে সংরক্ষণ করতে পারবেন না।</string>
+    <string name="disable_comments">মন্তব্য নিষ্ক্রিয় করুন</string>
+    <string name="disable_comments_subtitle">কেউ এই পোস্টে মন্তব্য করতে পারবে না।</string>
+    <string name="use_url">ইউআরএল ব্যবহার করুন</string>
+    <string name="profile_image_url">প্রোফাইল ছবির ইউআরএল</string>
+    <string name="profile_cover_image_url">কভার ছবির ইউআরএল</string>
+    <string name="fill_all_items">সমস্ত আইটেম পূরণ করুন</string>
+    <string name="add_bio_placeholder">অন্যদের নিজের সম্পর্কে আরও জানাতে একটি বায়ো যোগ করুন</string>
+    <string name="changes_saved">পরিবর্তনগুলো সংরক্ষিত হয়েছে</string>
+    <string name="local_psts">স্থানীয়</string>
+    <string name="public_psts">গ্লোবাল</string>
+    <string name="followed_psts">ফলো করা</string>
+    <string name="favorites_psts">ফেভারিট</string>
+    <string name="not_found_public_posts">এখনও কোন গ্লোবাল পোস্ট নেই।</string>
+    <string name="not_found_local_posts">এখনও কোন স্থানীয় পোস্ট নেই।</string>
+    <string name="not_found_followings">আপনি এখনও কাউকে ফলো করেননি।</string>
+    <string name="not_found_followed_users_posts">আপনি যাদের ফলো করেন তারা এখনও কোন পোস্ট প্রকাশ করেননি।</string>
+    <string name="not_found_favorite_posts">আপনার এখনও কোন ফেভারিট পোস্ট নেই।</string>
+    <string name="new_update_dialog_title">নতুন আপডেট উপলব্ধ</string>
+    <string name="new_update_dialog_subtitle">অ্যাপের সমস্ত নতুন বৈশিষ্ট্য উপভোগ করতে এবং অ্যাপটি ব্যবহার করতে অনুগ্রহ করে অ্যাপটি আপডেট করুন।</string>
+    <string name="maintenance_dialog_title">রক্ষণাবেক্ষণ</string>
+    <string name="maintenance_dialog_subtitle">অ্যাপটি সাময়িকভাবে রক্ষণাবেক্ষণের অধীনে রয়েছে! অনুগ্রহ করে পরে আবার চেষ্টা করুন।</string>
+    <string name="banned_access_denied">প্রবেশাধিকার অস্বীকার করা হয়েছে</string>
+    <string name="banned_access_denied_subtext">সম্প্রতি, আমরা লক্ষ্য করেছি যে আপনি আপনার অ্যাকাউন্টে আমাদের কমিউনিটি নির্দেশিকার পরিপন্থী কার্যক্রম করছেন, এবং ফলস্বরূপ, আমরা আপনার অ্যাকাউন্টটি ব্লক করেছি।</string>
+    <string name="banned_create_request">অনুরোধ তৈরি করুন</string>
+    <string name="banned_user_info_text">এই ব্যবহারকারীর অ্যাকাউন্টটি ব্লক করা হয়েছে</string>
+    <string name="delete_post_dialog_message">আপনি কি নিশ্চিত যে আপনি স্থায়ীভাবে এই পোস্টটি ডিলিট করতে চান? এই কাজটি আর ফিরিয়ে আনা সম্ভব নয়।</string>
+    <string name="post_deleted_toast">পোস্ট ডিলিট করা হয়েছে</string>
+    <string name="user_id">UID : </string>
+    <string name="join_date">যোগদানের তারিখ : </string>
+    <string name="popularity">জনপ্রিয়তা</string>
+    <string name="level">লেভেল</string>
+    <string name="gifts">উপহারসমূহ</string>
+    <string name="subscribers">সাবস্ক্রাইবারগণ</string>
+    <string name="select_with_gallery">গ্যালারি থেকে নির্বাচন করুন</string>
+    <string name="delete_message_dialog_message">আপনি কি নিশ্চিত যে আপনি এই মেসেজটি ডিলিট করতে চান? এটি উভয় ব্যবহারকারীর কাছ থেকে স্থায়ীভাবে ডিলিট হয়ে যাবে।</string>
+    <string name="subscribe_user">সাবস্ক্রাইব করুন</string>
+    <string name="region">অঞ্চল</string>
+    <string name="region_subtitle">অঞ্চল সেট করে আপনি আপনার সম্পূর্ণ প্রোফাইলে আপনার দেশের পতাকার ব্যাজ প্রদর্শন করতে পারেন এবং আপনার পছন্দের দেশ অনুযায়ী ফিল্টার করা স্থানীয় পোস্টগুলো সক্রিয় করতে পারেন।</string>
+    <string name="select_region">অঞ্চল নির্বাচন করুন</string>
+    <string name="no_internet_connection">কোন ইন্টারনেট সংযোগ নেই</string>
+    <string name="m_chat_tab_messages">মেসেজসমূহ</string>
+    <string name="m_chat_tab_requests">অনুরোধসমূহ</string>
+    <string name="m_no_chat_requests">কোন পেন্ডিং চ্যাট অনুরোধ নেই</string>
+    <string name="settings">সেটিংস</string>
+    <string name="shop">শপ</string>
+    <string name="copy_link">লিঙ্ক কপি করুন</string>
+    <string name="settings_application_t">অ্যাপ্লিকেশন</string>
+    <string name="settings_theme_t">থিম</string>
+    <string name="settings_language_t">ভাষা</string>
+    <string name="settings_account_t">অ্যাকাউন্ট</string>
+    <string name="settings_privacy_t">গোপনীয়তা</string>
+    <string name="settings_security_t">নিরাপত্তা</string>
+    <string name="settings_logout_t">লগ আউট</string>
+    <string name="logout_dialog_inf">আপনি কি নিশ্চিত যে আপনি আপনার অ্যাকাউন্ট থেকে লগ আউট করতে চান?</string>
+    <string name="change_profile_image">প্রোফাইল ছবি পরিবর্তন করুন</string>
+    <string name="change_profile_cover_image">কভার ছবি পরিবর্তন করুন</string>
+    <string name="profile_history_title">প্রোফাইল ছবির ইতিহাস</string>
+    <string name="profile_history_subtitle">আপনি আপনার আগে যোগ করা সমস্ত প্রোফাইল ছবি এখান থেকে ম্যানেজ করতে পারেন।</string>
+    <string name="profile_history_empty_title">কোন প্রোফাইল ছবি নেই</string>
+    <string name="profile_history_empty_subtitle">আপনার আগে আপলোড করা কোন প্রোফাইল ছবি নেই! প্রতিবার যখন আপনি আপনার প্রোফাইল ছবি পরিবর্তন করেন, তা এখানে যোগ করা হয়।</string>
+    <string name="profile_cover_history_title">কভার ছবির ইতিহাস</string>
+    <string name="profile_cover_history_subtitle">আপনি আপনার আগে যোগ করা সমস্ত কভার ছবি এখান থেকে ম্যানেজ করতে পারেন।</string>
+    <string name="profile_cover_history_empty_title">কোন কভার ছবি নেই</string>
+    <string name="profile_cover_history_empty_subtitle">আপনার আগে আপলোড করা কোন কভার ছবি নেই! প্রতিবার যখন আপনি আপনার কভার ছবি পরিবর্তন করেন, তা এখানে যোগ করা হয়।</string>
+    <string name="no_followed">এই ব্যবহারকারী কাউকেই ফলো করছেন না</string>
+    <string name="show_replies">উত্তরগুলো দেখুন</string>
+    <string name="hide_replies">উত্তরগুলো লুকান</string>
+    <string name="see_more">আরও দেখুন</string>
+    <string name="show_less">কম দেখুন</string>
+    <string name="no_replies_yet">এখনও কোন উত্তর নেই</string>
+    <string name="reply_to_user_hint">%1$s কে উত্তর দিন</string>
+    <string name="status_text_seconds">কয়েক সেকেন্ড আগে</string>
+    <string name="status_text_minutes">কয়েক মিনিট আগে</string>
+    <string name="status_text_hours">কয়েক ঘণ্টা আগে</string>
+    <string name="status_text_days">কয়েক দিন আগে</string>
+    <string name="status_text_week">১ সপ্তাহ আগে</string>
+    <string name="status_text_month">১ মাস আগে</string>
+    <string name="status_text_years">১ বছর আগে</string>
+    <!-- Placeholder texts -->
+    <string name="placeholder_button_text">বোতামের টেক্সট</string>
+    <string name="placeholder_title">শিরোনাম</string>
+    <string name="placeholder_subtitle">উপশিরোনাম</string>
+    <string name="text_copied_toast">টেক্সট কপি করা হয়েছে</string>
+    <string name="no_text_to_copy">কপি করার মতো কোন টেক্সট নেই</string>
+    <string name="share_post_subject">পোস্ট শেয়ার করুন</string>
+    <string name="share_post_chooser_title">এর মাধ্যমে শেয়ার করুন</string>
+    <string name="share_error">বিষয়বস্তু শেয়ার করতে ত্রুটি হয়েছে</string>
+    <!-- New strings to add -->
+    <string name="no_user_data_found">ব্যবহারকারীর কোন তথ্য পাওয়া যায়নি</string>
+    <string name="reasons_no_user_data">আপনার ইউজার প্রোফাইল লোড করা সম্ভব হয়নি। এটি আপনার অ্যাকাউন্টের কোন সমস্যা বা ডাটাবেস সমস্যার ইঙ্গিত হতে পারে।</string>
+    <string name="error_loading_user_data">ব্যবহারকারীর তথ্য লোড করতে ত্রুটি</string>
+    <string name="disappearing_message_description">আরও গোপনীয়তা এবং স্টোরেজের জন্য, রাখা হয়েছে এমন মেসেজ বাদে নতুন মেসেজগুলো নির্বাচিত সময়ের পরে সবার জন্য এই চ্যাট থেকে অদৃশ্য হয়ে যাবে। চ্যাটের যে কেউ এই সেটিং পরিবর্তন করতে পারেন। আরও জানুন</string>
+    <string name="text_loading">...</string>
+    <string name="cant_reply">আপনি এই কথোপকথনে উত্তর দিতে পারবেন না। আরও জানুন।</string>
+    <string name="ph_name">নাম</string>
+    <string name="ph_username">ইউজারনেম</string>
+    <string name="write_message">একটি মেসেজ লিখুন</string>
+    <string name="ph_message">আমিও ভালো আছি ভাই।</string>
+    <string name="age_agreement">আমি নিশ্চিত করছি যে আমার বয়স কমপক্ষে ১২ বছর।</string>
+    <string name="ph_replied_message">আমি ভালো আছি, আপনি?</string>
+
+    <!-- Gemini AI Feature Strings -->
+    <string name="gemini_summary_title">সারসংক্ষেপ</string>
+    <string name="gemini_explanation_title">ব্যাখ্যা</string>
+    <string name="gemini_error_summary">সারসংক্ষেপ পেতে ত্রুটি: </string>
+    <string name="gemini_error_explanation">ব্যাখ্যা পেতে ত্রুটি: </string>
+    <string name="gemini_system_instruction_summary">আপনি একজন টেক্সট সারসংক্ষেপকারী। প্রদত্ত টেক্সটের একটি সংক্ষিপ্ত সারসংক্ষেপ প্রদান করুন।</string>
+    <string name="gemini_system_instruction_explanation">আপনি একজন সাহায্যকারী সহকারী। নিচের টেক্সটটি পরিষ্কার এবং বিস্তারিতভাবে ব্যাখ্যা করুন, ফরম্যাটিংয়ের জন্য মার্কডাউন ব্যবহার করুন।</string>
+    <string name="explain_button_text">ব্যাখ্যা করুন</string>
+    <string name="gemini_explanation_prompt">আমার এবং %1$s এর মধ্যকার একটি চ্যাট কথোপকথনের অংশ এখানে দেওয়া হলো:
+---
+%2$s
+---
+অনুগ্রহ করে কথোপকথনের প্রেক্ষাপট বিবেচনা করে %3$s থেকে আসা নিচের মেসেজটি বিস্তারিতভাবে ব্যাখ্যা করুন:
+%4$s
+---
+%5$s
+---
+</string>
+    <string name="navigation_drawer_open">নেভিগেশন ড্রয়ার খুলুন</string>
+    <string name="navigation_drawer_close">নেভিগেশন ড্রয়ার বন্ধ করুন</string>
+    <string name="search_hint">ব্যবহারকারী খুঁজুন</string>
+
+    <!-- Chat Settings -->
+    <string name="chat_settings_title">চ্যাট সেটিংস</string>
+
+    <string name="chat_settings_header_chat">চ্যাট</string>
+    <string name="chat_settings_message_text_size_title">মেসেজ টেক্সট সাইজ</string>
+    <string name="chat_settings_message_text_size_summary">এই ফন্ট সাইজ পরিবর্তন করলে তা পুরো অ্যাপে প্রভাব ফেলবে না।</string>
+    <string name="chat_settings_message_corner_round_title">মেসেজ কর্নার রাউন্ড</string>
+    <string name="chat_settings_message_corner_round_summary">এটি অন্যান্য ইউআই কর্নারের ব্যাসার্ধকে প্রভাবিত করে না</string>
+    <string name="chat_settings_background_wallpapers_title">ব্যাকগ্রাউন্ড ওয়ালপেপার</string>
+    <string name="chat_settings_background_wallpapers_summary">ডিফল্ট</string>
+    <string name="chat_settings_theme_store_title">থিম স্টোর</string>
+    <string name="chat_settings_theme_store_summary">থিম অ্যাপের সামগ্রিক ইন্টারফেস, রং, ফন্ট এবং ছবি পরিবর্তন করে</string>
+
+    <string name="chat_settings_header_media_and_sound">মিডিয়া এবং শব্দ</string>
+    <string name="chat_settings_tap_to_show_next_media_title">পরবর্তী মিডিয়া দেখতে ট্যাপ করুন</string>
+    <string name="chat_settings_tap_to_show_next_media_summary">মিডিয়া দেখার সময় নেভিগেট করার জন্য স্ক্রিনের প্রান্তের কাছে ট্যাপ করুন</string>
+    <string name="chat_settings_rise_to_listen_title">কানের কাছে নিয়ে শুনুন</string>
+    <string name="chat_settings_rise_to_listen_summary">ফোনটি আপনার কানের কাছে নিয়ে সাউন্ড ইয়ারপিসে স্থানান্তর করুন</string>
+    <string name="chat_settings_pause_music_while_recording_title">রেকর্ডিং করার সময় মিউজিক থামান</string>
+    <string name="chat_settings_pause_music_while_recording_summary">ভিডিও মেসেজ রেকর্ড করা শুরু করলে মিউজিক থামিয়ে দিন</string>
+
+    <string name="chat_settings_header_security_and_services">নিরাপত্তা এবং সার্ভিসসমূহ</string>
+    <string name="chat_settings_app_lock_title">অ্যাপ লক</string>
+    <string name="chat_settings_keep_alive_service_title">কিপ-অ্যালাইভ সার্ভিস</string>
+    <string name="chat_settings_keep_alive_service_summary">ব্যাকগ্রাউন্ডে সার্ভিসগুলো চালু রাখুন।</string>
+    <string name="chat_settings_background_connection_title">ব্যাকগ্রাউন্ড সংযোগ</string>
+    <string name="chat_settings_background_connection_summary">কম পাওয়ার ব্যবহার করে প্রসেসিং চালু রাখুন</string>
+    <string name="chat_settings_theme_title">থিম</string>
+    <string name="chat_settings_theme_summary">ডিফল্ট</string>
+
+    <string name="chat_settings_header_app_theming">অ্যাপ থিমিং</string>
+    <string name="chat_settings_language_title">ভাষা</string>
+    <string name="chat_settings_language_summary">বাংলা (বাংলাদেশ)</string>
+
+    <string name="chat_settings_header_storage_and_network">স্টোরেজ এবং নেটওয়ার্ক</string>
+    <string name="chat_settings_storage_uses_title">স্টোরেজ ব্যবহার</string>
+    <string name="chat_settings_storage_uses_summary">আপনার ডিভাইসের ১% স্টোরেজ ব্যবহার করা হয়েছে</string>
+    <string name="chat_settings_data_uses_title">ডেটা ব্যবহার</string>
+    <string name="chat_settings_data_uses_summary">গত মাস থেকে এই ডেটা রেকর্ড করা হয়েছে</string>
+    <string name="chat_settings_streaming_video_title">ভিডিও স্ট্রিমিং</string>
+    <string name="chat_settings_streaming_video_summary">ডাউনলোড না করেই ভিডিও স্ট্রিম করুন</string>
+
+    <string name="chat_settings_header_ai_and_automations">AI এবং অটোমেশনসমূহ</string>
+    <string name="chat_settings_synapse_premium_title">Synapse Premium</string>
+    <string name="chat_settings_buy_credits_title">ক্রেডিট কিনুন</string>
+    <string name="chat_settings_ai_settings_title">AI সেটিংস</string>
+    <string name="chat_settings_ai_settings_summary">আপনার কৃত্রিম বুদ্ধিমত্তা সেটিংস সেটআপ করুন</string>
+    <string name="cancel">বাতিল</string>
+
+    <!-- Error messages -->
+    <string name="failed_to_send">পাঠাতে ব্যর্থ হয়েছে</string>
+    <string name="tap_to_retry">আবার চেষ্টা করতে ট্যাপ করুন</string>
+    <string name="error_icon">ত্রুটি আইকন</string>
+
+    <!-- Message Actions -->
+    <string name="action_reply">উত্তর দিন</string>
+    <string name="action_forward">ফরওয়ার্ড করুন</string>
+    <string name="action_edit">সম্পাদনা করুন</string>
+    <string name="action_delete">ডিলিট করুন</string>
+    <string name="action_ai_summary">AI সারসংক্ষেপ</string>
+
+    <!-- Delete Message Dialog -->
+    <string name="warning_icon">সতর্কবাণী আইকন</string>
+    <string name="delete_message_confirmation">এই মেসেজটি ডিলিট করবেন?</string>
+    <string name="delete_messages_confirmation">%d টি মেসেজ ডিলিট করবেন?</string>
+    <string name="delete_for_me">আমার জন্য ডিলিট করুন</string>
+    <string name="delete_for_me_explanation">এই মেসেজটি কেবল আপনার ডিভাইস থেকে মুছে ফেলা হবে। অন্যান্য অংশগ্রহণকারীরা এটি দেখতে পাবেন।</string>
+    <string name="delete_for_everyone">সবার জন্য ডিলিট করুন</string>
+    <string name="delete_for_everyone_explanation">এই মেসেজটি এই কথোপকথনের সমস্ত অংশগ্রহণকারীদের জন্য মুছে ফেলা হবে। এই কাজটি আর ফিরিয়ে আনা সম্ভব নয়।</string>
+    <string name="delete">ডিলিট</string>
+    <string name="comment_options">মন্তব্য অপশনসমূহ</string>
+    <string name="hide_comment">মন্তব্য লুকান</string>
+    <string name="pin_comment">মন্তব্য পিন করুন</string>
+    <string name="unpin_comment">মন্তব্য আনপিন করুন</string>
+    <string name="report_comment">মন্তব্য রিপোর্ট করুন</string>
+    <string name="comment_hidden">মন্তব্য লুকানো হয়েছে</string>
+    <string name="comment_pinned">মন্তব্য পিন করা হয়েছে</string>
+    <string name="comment_unpinned">মন্তব্য আনপিন করা হয়েছে</string>
+    <string name="comment_reported">মন্তব্য রিপোর্ট করা হয়েছে</string>
+    <string name="comment_deleted">মন্তব্য ডিলিট করা হয়েছে</string>
+    <string name="comment_edited">মন্তব্য সম্পাদিত হয়েছে</string>
+    <string name="comment_copied">মন্তব্য কপি করা হয়েছে</string>
+    <string name="select_report_reason">একটি কারণ নির্বাচন করুন</string>
+    <string name="report_reason_spam">স্প্যাম</string>
+    <string name="report_reason_harassment">হয়রানি</string>
+    <string name="report_reason_hate_speech">বিদ্বেষপূর্ণ বক্তব্য</string>
+    <string name="report_reason_violence">সহিংসতা</string>
+    <string name="report_reason_misinformation">ভুল তথ্য</string>
+    <string name="report_reason_other">অন্যান্য</string>
+    <string name="report_description_hint">অতিরিক্ত বিবরণ (ঐচ্ছিক)</string>
+    <string name="delete_comment">মন্তব্য ডিলিট করুন</string>
+    <string name="edit_comment">মন্তব্য সম্পাদনা করুন</string>
+    <string name="edit">সম্পাদনা</string>
+    <string name="save">সংরক্ষণ করুন</string>
+    <string name="deleted_comment">[মুছে ফেলা হয়েছে]</string>
+    <string name="message_deleted_successfully">মেসেজ সফলভাবে ডিলিট করা হয়েছে</string>
+    <string name="failed_to_delete_message">মেসেজ ডিলিট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+
+    <!-- Comprehensive Error Messages for Message Actions -->
+
+    <!-- Reply Errors -->
+    <string name="error_reply_generic">এই মেসেজে উত্তর দেওয়া সম্ভব হচ্ছে না</string>
+    <string name="error_reply_deleted">এই মেসেজটি ডিলিট করা হয়েছে</string>
+
+    <!-- Forward Errors -->
+    <string name="error_forward_generic">মেসেজ ফরওয়ার্ড করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_forward_no_permission">%1$s এ মেসেজ পাঠানোর অনুমতি আপনার নেই</string>
+    <string name="error_forward_partial">%2$d টি কথোপকথনের মধ্যে %1$d টিতে ফরওয়ার্ড করা হয়েছে</string>
+    <string name="error_forward_no_network">কোন নেটওয়ার্ক সংযোগ নেই। অনলাইন হলে মেসেজ ফরওয়ার্ড করা হবে।</string>
+    <string name="success_forward_count">%1$d টি কথোপকথনে মেসেজ ফরওয়ার্ড করা হয়েছে</string>
+
+    <!-- Edit Errors -->
+    <string name="error_edit_generic">মেসেজ সম্পাদনা করা সম্ভব হচ্ছে না। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_edit_too_old">এই মেসেজটি সম্পাদনের জন্য অনেক পুরোনো (>৪৮ ঘণ্টা)</string>
+    <string name="error_edit_empty">মেসেজের বিষয়বস্তু খালি হতে পারবে না</string>
+    <string name="error_edit_not_found">মেসেজ পাওয়া যায়নি</string>
+    <string name="error_edit_no_network">সম্পাদনা কিউ করা হয়েছে। অনলাইন হলে কার্যকর হবে।</string>
+    <string name="success_edit">মেসেজ সফলভাবে সম্পাদিত হয়েছে</string>
+
+    <!-- Delete Errors -->
+    <string name="error_delete_generic">মেসেজ ডিলিট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_delete_already_deleted">সবার জন্য ডিলিট করা সম্ভব হচ্ছে না। মেসেজটি হয়তো ইতিমধ্যে ডিলিট করা হয়েছে।</string>
+    <string name="error_delete_no_network">ডিলিট কিউ করা হয়েছে। অনলাইন হলে কার্যকর হবে।</string>
+    <string name="success_delete_for_me">মেসেজ আপনার জন্য ডিলিট করা হয়েছে</string>
+    <string name="success_delete_for_everyone">মেসেজ সবার জন্য ডিলিট করা হয়েছে</string>
+
+    <!-- AI Summary Errors -->
+    <string name="error_ai_summary_generic">সারসংক্ষেপ তৈরি করা সম্ভব হচ্ছে না। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_ai_summary_unavailable">AI সার্ভিস সাময়িকভাবে অনুপলব্ধ</string>
+    <string name="error_ai_summary_rate_limit">রেট লিমিট পৌঁছেছে। %1$d মিনিট পর আবার চেষ্টা করুন</string>
+    <string name="error_ai_summary_too_short">মেসেজটি সারসংক্ষেপ করার জন্য খুব ছোট</string>
+    <string name="error_ai_summary_network">নেটওয়ার্ক ত্রুটি। অনুগ্রহ করে আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="error_ai_summary_timeout">অনুরোধের সময় শেষ হয়ে গেছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_ai_summary_api_key">AI সার্ভিস কনফিগার করা নেই। অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।</string>
+
+    <!-- Network Errors -->
+    <string name="error_network_timeout">অনুরোধের সময় শেষ হয়ে গেছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_network_connection">সংযোগ ব্যর্থ হয়েছে। অনুগ্রহ করে আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।</string>
+    <string name="error_network_unavailable">কোন ইন্টারনেট সংযোগ নেই</string>
+
+    <!-- Generic Errors -->
+    <string name="error_unexpected">একটি অপ্রত্যাশিত ত্রুটি ঘটেছে</string>
+    <string name="error_retry_action">আবার চেষ্টা করুন</string>
+    <string name="error_dismiss_action">বাতিল করুন</string>
+
+    <!-- Success Messages -->
+    <string name="success_action_queued">কাজ কিউ করা হয়েছে। অনলাইন হলে সম্পন্ন হবে।</string>
+    <string name="success_processing_queued_actions">পেন্ডিং কাজগুলো প্রসেস করা হচ্ছে…</string>
+
+    <!-- Typing Indicator -->
+    <string name="typing_indicator_text">টাইপ করছেন</string>
+
+    <!-- Media Picker -->
+    <string name="media_picker_title">মিডিয়ার ধরন নির্বাচন করুন</string>
+    <string name="media_picker_option_photos">ছবিসমূহ</string>
+    <string name="media_picker_option_videos">ভিডিওসমূহ</string>
+    <string name="media_picker_option_audio">অডিও</string>
+    <string name="media_picker_option_documents">নথিপত্র</string>
+    <string name="media_picker_option_icon">মিডিয়া অপশন আইকন</string>
+    <string name="label_attachment">সংযুক্তি</string>
+
+    <!-- Media Preview -->
+    <string name="media_preview_title">প্রিভিউ</string>
+    <string name="media_preview_title_with_count">প্রিভিউ (%1$d/%2$d)</string>
+    <string name="media_preview_upload_info">আপলোড তথ্য</string>
+    <string name="media_preview_total_size">মোট সাইজ</string>
+    <string name="media_preview_estimated_time">সম্ভাব্য সময়</string>
+    <string name="media_preview_caption_hint">একটি ক্যাপশন যোগ করুন (ঐচ্ছিক)</string>
+    <string name="media_preview_add_more">আরও যোগ করুন</string>
+    <string name="media_preview_file_too_large">বড় ফাইল সতর্কতা</string>
+    <string name="media_preview_warning_large_file">এই ফাইলটি ৫০ মেগাবাইটের চেয়ে বড় এবং আপলোড হতে কিছুটা সময় নিতে পারে। চালিয়ে যাবেন?</string>
+    <string name="media_preview_warning_large_file_detailed">মোট সাইজ: %1$s\nসম্ভাব্য আপলোড সময়: %2$s\n\nএটি আপলোড হতে কিছুটা সময় নিতে পারে। চালিয়ে যাবেন?</string>
+    <string name="media_preview_error_no_files">কোন ফাইল নির্বাচিত হয়নি</string>
+    <string name="media_preview_error_file_too_large">ফাইল %1$s এর সর্বোচ্চ সাইজ অতিক্রম করেছে</string>
+    <string name="media_preview_error_file_not_accessible">ফাইলটি এক্সেস করা যাচ্ছে না</string>
+    <string name="media_preview_error_file_validation">ফাইল যাচাইকরণে ত্রুটি</string>
+
+    <!-- Image Gallery -->
+    <string name="download_image">ছবি ডাউনলোড করুন</string>
+    <string name="failed_to_load_image">ছবি লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="image_downloaded">ছবি গ্যালারিতে সংরক্ষিত হয়েছে</string>
+    <string name="failed_to_download_image">ছবি ডাউনলোড করতে ব্যর্থ হয়েছে</string>
+    <string name="loading_image">ছবি লোড হচ্ছে…</string>
+
+    <!-- MD3 Post Card Accessibility Strings -->
+    <string name="author_avatar">লেখকের প্রোফাইল ছবি</string>
+    <string name="post_options">পোস্টের আরও অপশন</string>
+    <string name="post_image">পোস্টের ছবি</string>
+    <string name="like_post">পোস্ট পছন্দ করুন</string>
+    <string name="like_post_with_count">পোস্ট পছন্দ করুন, %1$d টি লাইক</string>
+    <string name="like_post_liked">পোস্ট অপছন্দ করুন, %1$d টি লাইক</string>
+    <string name="comment_on_post">পোস্টে মন্তব্য করুন</string>
+    <string name="comment_on_post_with_count">পোস্টে মন্তব্য করুন, %1$d টি মন্তব্য</string>
+    <string name="share_post">পোস্ট শেয়ার করুন</string>
+    <string name="post_by_user">%1$s এর পোস্ট</string>
+    <string name="post_timestamp">%1$s পোস্ট করা হয়েছে</string>
+
+    <string name="downloading_image">ডাউনলোড হচ্ছে…</string>
+
+    <!-- Video Player -->
+    <string name="play_pause">চালান/থামান</string>
+    <string name="play">চালান</string>
+    <string name="pause">থামান</string>
+    <string name="rewind">পিছনে যান</string>
+    <string name="forward">সামনে যান</string>
+    <string name="fullscreen_toggle">ফুলস্ক্রিন টগল করুন</string>
+    <string name="video_loading">ভিডিও লোড হচ্ছে…</string>
+    <string name="video_buffering">বাফারিং হচ্ছে…</string>
+    <string name="video_error">ভিডিও চালাতে ত্রুটি হয়েছে</string>
+    <string name="video_error_retry">আবার চেষ্টা করতে ট্যাপ করুন</string>
+
+    <!-- Audio Player -->
+    <string name="play_audio">অডিও চালান</string>
+    <string name="pause_audio">অডিও থামান</string>
+    <string name="audio_loading">অডিও লোড হচ্ছে…</string>
+    <string name="audio_buffering">বাফারিং হচ্ছে…</string>
+    <string name="audio_error">অডিও চালাতে ত্রুটি হয়েছে</string>
+
+    <!-- Document Viewer -->
+    <string name="download_document">নথি ডাউনলোড করুন</string>
+    <string name="open_document">নথি খুলুন</string>
+    <string name="document_downloaded">নথি সংরক্ষিত হয়েছে</string>
+    <string name="failed_to_download_document">নথি ডাউনলোড করতে ব্যর্থ হয়েছে</string>
+
+    <!-- Pagination -->
+    <string name="loading_more_posts">আরও পোস্ট লোড হচ্ছে…</string>
+    <string name="posts_loaded">পোস্ট লোড করা হয়েছে</string>
+    <string name="no_more_posts_available">আরও কোন পোস্ট উপলব্ধ নেই</string>
+    <string name="failed_to_load_posts">পোস্ট লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="check_internet_connection">আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন</string>
+    <string name="pull_to_refresh">রিফ্রেশ করতে নিচে টানুন</string>
+    <string name="refreshing_posts">পোস্ট রিফ্রেশ হচ্ছে…</string>
+    <string name="loading_indicator">লোডিং নির্দেশক</string>
+    <string name="error_loading_posts">পোস্ট লোড করা সম্ভব হচ্ছে না</string>
+    <string name="error_network_posts">পোস্ট লোড করার সময় নেটওয়ার্ক ত্রুটি হয়েছে</string>
+    <string name="error_unknown_posts">একটি অপ্রত্যাশিত ত্রুটি ঘটেছে</string>
+    <string name="loading_more_messages">আরও মেসেজ লোড হচ্ছে…</string>
+    <string name="messages_loaded">মেসেজ লোড করা হয়েছে</string>
+    <string name="no_more_messages_available">আরও কোন মেসেজ উপলব্ধ নেই</string>
+    <string name="failed_to_load_messages">মেসেজ লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="end_of_list">আপনি শেষ প্রান্তে পৌঁছেছেন</string>
+
+    <!-- Social Authentication -->
+    <string name="social_auth_divider">অথবা অ্যাকাউন্ট দিয়ে চালিয়ে যান</string>
+    <string name="sign_in_with_google">গুগল দিয়ে সাইন ইন করুন</string>
+    <string name="sign_in_with_facebook">ফেসবুক দিয়ে সাইন ইন করুন</string>
+    <string name="sign_in_with_apple">অ্যাপল দিয়ে সাইন ইন করুন</string>
+    <string name="forgot_password_link">পাসওয়ার্ড ভুলে গেছেন?</string>
+
+    <!-- Forgot Password Screen -->
+    <string name="forgot_password_title">পাসওয়ার্ড পুনরুদ্ধার</string>
+    <string name="forgot_password_subtitle">আপনার ইমেইল ঠিকানা লিখুন এবং আমরা আপনাকে পাসওয়ার্ড রিসেট করার একটি লিঙ্ক পাঠাব</string>
+    <string name="forgot_password_continue">চালিয়ে যান</string>
+    <string name="forgot_password_back">সাইন ইনে ফিরে যান</string>
+    <string name="forgot_password_success">পাসওয়ার্ড রিসেট লিঙ্ক পাঠানো হয়েছে! অনুগ্রহ করে আপনার ইমেইল পরীক্ষা করুন।</string>
+    <string name="forgot_password_error">রিসেট লিঙ্ক পাঠাতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="forgot_password_sent_title">আপনার ইমেইল পরীক্ষা করুন</string>
+    <string name="forgot_password_sent_message">আমরা %1$s এ একটি পাসওয়ার্ড রিসেট লিঙ্ক পাঠিয়েছি</string>
+
+    <!-- Message Deletion Error Messages -->
+    <string name="error_deletion_network">মেসেজ ডিলিট করা সম্ভব হচ্ছে না। অনুগ্রহ করে আপনার সংযোগ পরীক্ষা করুন।</string>
+    <string name="error_deletion_permission">আপনি সবার জন্য কেবল নিজের মেসেজ ডিলিট করতে পারেন।</string>
+    <string name="error_deletion_generic">মেসেজ ডিলিট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="error_deletion_no_messages">কোন মেসেজ নির্বাচিত হয়নি</string>
+    <string name="error_deletion_user_required">ইউজার আইডি প্রয়োজন</string>
+
+    <!-- Message Deletion Success Messages -->
+    <string name="success_deletion_single">মেসেজ ডিলিট করা হয়েছে</string>
+    <string name="success_deletion_multiple">%d টি মেসেজ ডিলিট করা হয়েছে</string>
+    <string name="success_deletion_for_me">মেসেজ আপনার জন্য ডিলিট করা হয়েছে</string>
+    <string name="success_deletion_for_everyone">মেসেজ সবার জন্য ডিলিট করা হয়েছে</string>
+
+    <!-- Message Deletion Loading Messages -->
+    <string name="loading_deletion">মেসেজ ডিলিট হচ্ছে…</string>
+
+    <!-- Connection Status -->
+    <string name="connection_status_connected">সংযুক্ত</string>
+    <string name="connection_status_connecting">সংযোগ করা হচ্ছে…</string>
+    <string name="connection_status_disconnected">কোন সংযোগ নেই</string>
+    <string name="connection_status_reconnecting">পুনরায় সংযোগ করা হচ্ছে…</string>
+    <string name="connection_type_wifi">Wi-Fi</string>
+    <string name="connection_type_cellular">মোবাইল ডেটা</string>
+    <string name="connection_type_ethernet">ইথারনেট</string>
+    <string name="connection_retry">আবার চেষ্টা করুন</string>
+
+    <!-- Loading States -->
+    <string name="loading_messages">মেসেজ লোড হচ্ছে…</string>
+    <string name="loading_profile">প্রোফাইল লোড হচ্ছে…</string>
+    <string name="loading_posts">পোস্ট লোড হচ্ছে…</string>
+    <string name="loading_posts_error">পোস্ট লোড করতে ত্রুটি</string>
+    <string name="loading_comments">মন্তব্য লোড হচ্ছে…</string>
+    <string name="sending_message">পাঠানো হচ্ছে…</string>
+    <string name="message_sent">পাঠানো হয়েছে</string>
+
+    <!-- Pull to Refresh -->
+    <string name="pull_to_refresh_messages">মেসেজ রিফ্রেশ করতে নিচে টানুন</string>
+    <string name="release_to_refresh">রিফ্রেশ করতে ছেড়ে দিন</string>
+    <string name="refreshing">রিফ্রেশ হচ্ছে…</string>
+
+    <!-- Haptic Feedback Settings -->
+    <string name="haptic_feedback_title">হ্যাপটিক ফিডব্যাক</string>
+    <string name="haptic_feedback_subtitle">মিথস্ক্রিয়ায় ভাইব্রেট করুন</string>
+
+    <!-- Smooth Animations -->
+    <string name="animations_title">অ্যানিমেশনসমূহ</string>
+    <string name="animations_subtitle">স্মুথ ট্রানজিশন সক্রিয় করুন</string>
+    <string name="reduce_animations_title">অ্যানিমেশন কমান</string>
+    <string name="reduce_animations_subtitle">অ্যাক্সেসিবিলিটির জন্য মোশন কমিয়ে দিন</string>
+
+    <!-- Inline Reply Accessibility -->
+    <string name="cancel_reply">উত্তর বাতিল করুন</string>
+    <string name="replying_to">%s কে উত্তর দিচ্ছেন</string>
+    <string name="reply_media_preview">উত্তর মিডিয়া প্রিভিউ</string>
+
+    <!-- Create Post -->
+    <string name="post">পোস্ট</string>
+    <string name="public_visibility">পাবলিক</string>
+    <string name="add_media">ছবি বা ভিডিও যোগ করুন</string>
+    <string name="add_poll">পোল যোগ করুন</string>
+    <string name="add_youtube">ইউটিউব ভিডিও যোগ করুন</string>
+    <string name="add_location">অবস্থান যোগ করুন</string>
+    <string name="remove_all">সব সরিয়ে ফেলুন</string>
+    <string name="poll">পোল</string>
+    <string name="post_settings_description">অন্যরা আপনার পোস্টের সাথে কীভাবে মিথস্ক্রিয়া করবে তা নিয়ন্ত্রণ করুন</string>
+    <string name="hide_view_count">ভিউ সংখ্যা লুকান</string>
+    <string name="hide_view_count_desc">অন্যরা ভিউ সংখ্যা দেখতে পাবে না</string>
+    <string name="hide_like_count_desc">অন্যরা লাইক সংখ্যা দেখতে পাবে না</string>
+    <string name="hide_comment_count">মন্তব্য সংখ্যা লুকান</string>
+    <string name="hide_comment_count_desc">অন্যরা মন্তব্য সংখ্যা দেখতে পাবে না</string>
+    <string name="poll_question_hint">একটি প্রশ্ন জিজ্ঞাসা করুন…</string>
+    <string name="poll_options">অপশনসমূহ</string>
+    <string name="add_option">অপশন যোগ করুন</string>
+    <string name="create_poll">পোল তৈরি করুন</string>
+    <string name="youtube_url_hint">https://youtube.com/watch?v=…</string>
+    <string name="location_name_hint">অবস্থানের নাম লিখুন</string>
+
+    <!-- Post Detail -->
+    <string name="post_detail_title">পোস্ট</string>
+    <string name="comments_title">মন্তব্যসমূহ</string>
+    <string name="comments_count">%d টি মন্তব্য</string>
+    <string name="no_comments">এখনও কোন মন্তব্য নেই। প্রথম মন্তব্যকারী হোন!</string>
+    <string name="comment_hint">একটি মন্তব্য লিখুন…</string>
+    <string name="reply_hint">%s কে উত্তর দিন…</string>
+    <string name="author_badge">লেখক</string>
+    <string name="edited_indicator">সম্পাদিত</string>
+    <string name="view_replies">%d টি উত্তর দেখুন</string>
+    <string name="reaction_like">লাইক</string>
+    <string name="reaction_love">লাভ</string>
+    <string name="reaction_haha">হাহা</string>
+    <string name="reaction_wow">ওয়াও</string>
+    <string name="reaction_sad">স্যাড</string>
+    <string name="reaction_angry">অ্যাংরি</string>
+    <string name="poll_ended">পোল শেষ হয়েছে</string>
+    <string name="poll_ends_in">শেষ হবে %s এর মধ্যে</string>
+    <string name="vote_count">%d টি ভোট</string>
+    <string name="bookmark_added">পোস্ট সংরক্ষিত হয়েছে</string>
+    <string name="bookmark_removed">সংরক্ষিত থেকে সরিয়ে ফেলা হয়েছে</string>
+    <string name="reshare_title">পোস্ট পুনরায় শেয়ার করুন</string>
+    <string name="reshare_hint">একটি মন্তব্য যোগ করুন (ঐচ্ছিক)</string>
+    <string name="report_title">পোস্ট রিপোর্ট করুন</string>
+    <string name="report_submitted">রিপোর্ট জমা দেওয়া হয়েছে</string>
+    <string name="reply">উত্তর</string>
+    <string name="more_options">আরও অপশন</string>
+    <string name="more_options_cd">আরও অপশন</string>
+    <string name="media">মিডিয়া</string>
+    <string name="play_video">ভিডিও চালান</string>
+    <string name="private_visibility">প্রাইভেট</string>
+
+    <!-- Settings -->
+    <string name="settings_account">অ্যাকাউন্ট</string>
+    <string name="settings_account_subtitle">আপনার প্রোফাইল সম্পাদনা করুন</string>
+    <string name="settings_privacy">গোপনীয়তা</string>
+    <string name="settings_privacy_subtitle">চ্যাট গোপনীয়তা সেটিংস</string>
+    <string name="settings_notifications">নোটিফিকেশন</string>
+    <string name="settings_notifications_subtitle">নোটিফিকেশন পছন্দসমূহ ম্যানেজ করুন</string>
+    <string name="settings_logout">লগ আউট</string>
+
+    <!-- Settings Hub -->
+    <string name="settings_hub_title">সেটিংস</string>
+    <string name="settings_hub_back">পিছনে</string>
+
+    <!-- Settings Categories -->
+    <string name="settings_category_account">অ্যাকাউন্ট</string>
+    <string name="settings_category_account_subtitle">আপনার অ্যাকাউন্ট এবং প্রোফাইল ম্যানেজ করুন</string>
+    <string name="settings_category_privacy_security">গোপনীয়তা ও নিরাপত্তা</string>
+    <string name="settings_category_privacy_security_subtitle">আপনার বিষয়বস্তু কারা দেখতে পাবে তা নিয়ন্ত্রণ করুন</string>
+    <string name="settings_category_appearance">চেহারা (Appearance)</string>
+    <string name="settings_category_appearance_subtitle">থিম, রং এবং ডিসপ্লে</string>
+    <string name="settings_category_notifications">নোটিফিকেশন</string>
+    <string name="settings_category_notifications_subtitle">নোটিফিকেশন পছন্দসমূহ ম্যানেজ করুন</string>
+    <string name="settings_category_chat">চ্যাট সেটিংস</string>
+    <string name="settings_category_chat_subtitle">মেসেজিং আচরণ কনফিগার করুন</string>
+    <string name="settings_category_storage">স্টোরেজ ও ডেটা</string>
+    <string name="settings_category_storage_subtitle">অ্যাপ স্টোরেজ এবং ডেটা ব্যবহার ম্যানেজ করুন</string>
+    <string name="settings_category_language">ভাষা ও অঞ্চল</string>
+    <string name="settings_category_language_subtitle">ভাষা পছন্দসমূহ সেট করুন</string>
+    <string name="settings_category_about">সম্পর্কে ও সাপোর্ট</string>
+    <string name="settings_category_about_subtitle">অ্যাপ তথ্য এবং সাহায্য রিসোর্স</string>
+
+    <!-- Account Settings -->
+    <string name="account_settings_title">অ্যাকাউন্ট</string>
+    <string name="account_settings_edit_profile">প্রোফাইল সম্পাদনা করুন</string>
+    <string name="account_settings_edit_profile_subtitle">আপনার প্রোফাইল তথ্য আপডেট করুন</string>
+    <string name="account_settings_change_email">ইমেইল পরিবর্তন করুন</string>
+    <string name="account_settings_change_email_subtitle">আপনার ইমেইল ঠিকানা আপডেট করুন</string>
+    <string name="account_settings_change_password">পাসওয়ার্ড পরিবর্তন করুন</string>
+    <string name="account_settings_change_password_subtitle">আপনার পাসওয়ার্ড আপডেট করুন</string>
+    <string name="account_settings_linked_accounts">যুক্ত অ্যাকাউন্টসমূহ</string>
+    <string name="account_settings_linked_accounts_subtitle">সোশ্যাল অ্যাকাউন্ট সংযোগসমূহ ম্যানেজ করুন</string>
+    <string name="account_settings_delete_account">অ্যাকাউন্ট ডিলিট করুন</string>
+    <string name="account_settings_delete_account_subtitle">স্থায়ীভাবে আপনার অ্যাকাউন্ট ডিলিট করুন</string>
+    <string name="account_settings_connect">যুক্ত করুন</string>
+    <string name="account_settings_disconnect">বিচ্ছিন্ন করুন</string>
+    <string name="account_settings_google">গুগল</string>
+    <string name="account_settings_facebook">ফেসবুক</string>
+    <string name="account_settings_apple">অ্যাপল</string>
+
+    <!-- Change Email Dialog -->
+    <string name="change_email_dialog_title">ইমেইল পরিবর্তন করুন</string>
+    <string name="change_email_dialog_message">পরিবর্তনটি যাচাই করতে আপনার নতুন ইমেইল ঠিকানা এবং বর্তমান পাসওয়ার্ড লিখুন।</string>
+    <string name="change_email_new_email">নতুন ইমেইল</string>
+    <string name="change_email_new_email_placeholder">email@example.com</string>
+    <string name="change_email_current_password">বর্তমান পাসওয়ার্ড</string>
+    <string name="change_email_current_password_placeholder">আপনার পাসওয়ার্ড লিখুন</string>
+    <string name="change_email_button">ইমেইল পরিবর্তন করুন</string>
+    <string name="change_email_success">ইমেইল সফলভাবে পরিবর্তিত হয়েছে</string>
+    <string name="change_email_error">ইমেইল পরিবর্তন করতে ব্যর্থ হয়েছে</string>
+
+    <!-- Change Password Dialog -->
+    <string name="change_password_dialog_title">পাসওয়ার্ড পরিবর্তন করুন</string>
+    <string name="change_password_dialog_message">আপনার বর্তমান পাসওয়ার্ড লিখুন এবং একটি নতুন পাসওয়ার্ড চয়ন করুন।</string>
+    <string name="change_password_current">বর্তমান পাসওয়ার্ড</string>
+    <string name="change_password_new">নতুন পাসওয়ার্ড</string>
+    <string name="change_password_confirm">নতুন পাসওয়ার্ড নিশ্চিত করুন</string>
+    <string name="change_password_button">পাসওয়ার্ড পরিবর্তন করুন</string>
+    <string name="change_password_success">পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে</string>
+    <string name="change_password_error">পাসওয়ার্ড পরিবর্তন করতে ব্যর্থ হয়েছে</string>
+    <string name="change_password_mismatch">পাসওয়ার্ড মিলছে না</string>
+    <string name="change_password_weak">পাসওয়ার্ড খুবই দুর্বল</string>
+    <string name="change_password_strength_weak">দুর্বল</string>
+    <string name="change_password_strength_medium">মাঝারি</string>
+    <string name="change_password_strength_strong">শক্তিশালী</string>
+
+    <!-- Delete Account Dialog -->
+    <string name="delete_account_dialog_title">অ্যাকাউন্ট ডিলিট করুন</string>
+    <string name="delete_account_dialog_message">এই কাজটি আর ফিরিয়ে আনা সম্ভব নয়। আপনার সমস্ত ডেটা, পোস্ট, মেসেজ এবং প্রোফাইল তথ্য স্থায়ীভাবে মুছে ফেলা হবে।</string>
+    <string name="delete_account_confirmation_phrase">DELETE MY ACCOUNT</string>
+    <string name="delete_account_confirmation_label">নিশ্চিতকরণ</string>
+    <string name="delete_account_confirmation_placeholder">উপরের বাক্যাংশটি লিখুন</string>
+    <string name="delete_account_button">অ্যাকাউন্ট ডিলিট করুন</string>
+    <string name="delete_account_success">অ্যাকাউন্ট সফলভাবে ডিলিট করা হয়েছে</string>
+    <string name="delete_account_error">অ্যাকাউন্ট ডিলিট করতে ব্যর্থ হয়েছে</string>
+
+    <!-- Privacy & Security Settings -->
+    <string name="privacy_security_title">গোপনীয়তা ও নিরাপত্তা</string>
+    <string name="privacy_section_profile">প্রোফাইল গোপনীয়তা</string>
+    <string name="privacy_profile_visibility">প্রোফাইল দৃশ্যমানতা</string>
+    <string name="privacy_profile_visibility_subtitle">আপনার প্রোফাইল কারা দেখতে পাবে তা নিয়ন্ত্রণ করুন</string>
+    <string name="privacy_visibility_public">পাবলিক</string>
+    <string name="privacy_visibility_followers">কেবল ফলোয়ারগণ</string>
+    <string name="privacy_visibility_private">প্রাইভেট</string>
+    <string name="privacy_content_visibility">বিষয়বস্তু দৃশ্যমানতা</string>
+    <string name="privacy_content_visibility_subtitle">আপনার পোস্টগুলো কারা দেখতে পাবে তা নিয়ন্ত্রণ করুন</string>
+    <string name="privacy_content_everyone">সবাই</string>
+    <string name="privacy_content_followers">ফলোয়ারগণ</string>
+    <string name="privacy_content_only_me">কেবল আমি</string>
+    <string name="privacy_section_security">নিরাপত্তা</string>
+    <string name="privacy_two_factor">টু-ফ্যাক্টর অথেন্টিকেশন</string>
+    <string name="privacy_two_factor_subtitle">নিরাপত্তার একটি অতিরিক্ত স্তর যোগ করুন</string>
+    <string name="privacy_biometric_lock">বায়োমেট্রিক লক</string>
+    <string name="privacy_biometric_lock_subtitle">আনলক করতে আঙুলের ছাপ বা মুখ ব্যবহার করুন</string>
+    <string name="privacy_section_blocking">ব্লকিং</string>
+    <string name="privacy_blocked_users">ব্লক করা ব্যবহারকারীগণ</string>
+    <string name="privacy_blocked_users_subtitle">ব্লক করা অ্যাকাউন্টগুলো ম্যানেজ করুন</string>
+    <string name="privacy_muted_users">মিউট করা ব্যবহারকারীগণ</string>
+    <string name="privacy_muted_users_subtitle">মিউট করা অ্যাকাউন্টগুলো ম্যানেজ করুন</string>
+    <string name="privacy_active_sessions">সক্রিয় সেশনসমূহ</string>
+    <string name="privacy_active_sessions_subtitle">লগ-ইন করা ডিভাইসগুলো ম্যানেজ করুন</string>
+
+    <!-- Appearance Settings -->
+    <string name="appearance_title">চেহারা (Appearance)</string>
+    <string name="appearance_theme_mode">থিম</string>
+    <string name="appearance_theme_mode_subtitle">আপনার পছন্দের থিম চয়ন করুন</string>
+    <string name="appearance_theme_light">লাইট</string>
+    <string name="appearance_theme_dark">ডার্ক</string>
+    <string name="appearance_theme_system">সিস্টেম ডিফল্ট</string>
+    <string name="appearance_dynamic_color">ডাইনামিক কালার</string>
+    <string name="appearance_dynamic_color_subtitle">আপনার ওয়ালপেপার থেকে রং ব্যবহার করুন</string>
+    <string name="appearance_font_size">ফন্ট সাইজ</string>
+    <string name="appearance_font_size_subtitle">টেক্সট সাইজ অ্যাডজাস্ট করুন</string>
+    <string name="appearance_font_small">ছোট</string>
+    <string name="appearance_font_medium">মাঝারি</string>
+    <string name="appearance_font_large">বড়</string>
+    <string name="appearance_font_extra_large">অতিরিক্ত বড়</string>
+    <string name="appearance_font_preview">প্রিভিউ: চটপটে বাদামী শেয়ালটি অলস কুকুরের ওপর দিয়ে লাফিয়ে পড়ে</string>
+    <string name="appearance_chat_customization">চ্যাট কাস্টমাইজেশন</string>
+    <string name="appearance_chat_customization_subtitle">চ্যাট বাবল এবং ব্যাকগ্রাউন্ড কাস্টমাইজ করুন</string>
+
+    <!-- Notification Settings -->
+    <string name="notification_settings_title">নোটিফিকেশন</string>
+    <string name="notification_section_activity">অ্যাক্টিভিটি</string>
+    <string name="notification_likes">লাইকসমূহ</string>
+    <string name="notification_likes_subtitle">যখন কেউ আপনার পোস্ট পছন্দ করে</string>
+    <string name="notification_comments">মন্তব্যসমূহ</string>
+    <string name="notification_comments_subtitle">যখন কেউ আপনার পোস্টে মন্তব্য করে</string>
+    <string name="notification_follows">ফলোসমূহ</string>
+    <string name="notification_follows_subtitle">যখন কেউ আপনাকে ফলো করে</string>
+    <string name="notification_messages">মেসেজসমূহ</string>
+    <string name="notification_messages_subtitle">যখন আপনি নতুন মেসেজ পান</string>
+    <string name="notification_mentions">মেনশনসমূহ</string>
+    <string name="notification_mentions_subtitle">যখন কেউ আপনাকে মেনশন করে</string>
+    <string name="notification_section_preferences">পছন্দসমূহ</string>
+    <string name="notification_sound">নোটিফিকেশন সাউন্ড</string>
+    <string name="notification_sound_subtitle">নোটিফিকেশন সাউন্ড চয়ন করুন</string>
+    <string name="notification_dnd">বিরক্ত করবেন না (DND)</string>
+    <string name="notification_dnd_subtitle">শান্ত সময় সেট করুন</string>
+    <string name="notification_in_app">ইন-অ্যাপ নোটিফিকেশন</string>
+    <string name="notification_in_app_subtitle">অ্যাপের ভেতরে নোটিফিকেশন প্রদর্শন করুন</string>
+
+    <!-- Chat Settings -->
+    <string name="chat_settings_title_new">চ্যাট সেটিংস</string>
+    <string name="chat_read_receipts">রিড রিসিপ্ট</string>
+    <string name="chat_read_receipts_subtitle">মেসেজ কখন পড়া হয়েছে তা প্রদর্শন করুন</string>
+    <string name="chat_typing_indicators">টাইপিং ইনডিকেটর</string>
+    <string name="chat_typing_indicators_subtitle">যখন আপনি টাইপ করছেন তখন প্রদর্শন করুন</string>
+    <string name="chat_media_auto_download">মিডিয়া অটো-ডাউনলোড</string>
+    <string name="chat_media_auto_download_subtitle">স্বয়ংক্রিয়ভাবে মিডিয়া ডাউনলোড করুন</string>
+    <string name="chat_media_wifi_only">কেবল WiFi</string>
+    <string name="chat_media_always">সবসময়</string>
+    <string name="chat_media_never">কখনও নয়</string>
+    <string name="chat_message_requests">মেসেজ অনুরোধসমূহ</string>
+    <string name="chat_message_requests_subtitle">যারা আপনাকে ফলো করে না তাদের কাছ থেকে পেন্ডিং মেসেজ</string>
+    <string name="chat_privacy">চ্যাট গোপনীয়তা</string>
+    <string name="chat_privacy_subtitle">উন্নত চ্যাট গোপনীয়তা সেটিংস</string>
+
+    <!-- Storage & Data Settings -->
+    <string name="storage_data_title">স্টোরেজ ও ডেটা</string>
+    <string name="storage_section_usage">স্টোরেজ ব্যবহার</string>
+    <string name="storage_cache_size">ক্যাশ সাইজ</string>
+    <string name="storage_cache_size_value">%1$s MB</string>
+    <string name="storage_clear_cache">ক্যাশ পরিষ্কার করুন</string>
+    <string name="storage_clearing_cache">পরিষ্কার করা হচ্ছে…</string>
+    <string name="storage_cache_cleared">ক্যাশ পরিষ্কার করা হয়েছে: %1$s MB মুক্ত হয়েছে</string>
+    <string name="storage_total_usage">অ্যাপের মোট স্টোরেজ</string>
+    <string name="storage_total_usage_value">%1$s MB</string>
+    <string name="storage_section_data">ডেটা সেটিংস</string>
+    <string name="storage_data_saver">ডেটা সেভার</string>
+    <string name="storage_data_saver_subtitle">ডেটা ব্যবহার কমান</string>
+    <string name="storage_section_configuration">কনফিগারেশন</string>
+    <string name="storage_provider_config">স্টোরেজ প্রোভাইডার কনফিগারেশন</string>
+    <string name="storage_provider_config_subtitle">ছবি এবং ফাইল স্টোরেজ কনফিগার করুন</string>
+    <string name="storage_ai_config">AI কনফিগারেশন</string>
+    <string name="storage_ai_config_subtitle">AI প্রোভাইডার সেটিংস কনফিগার করুন</string>
+
+    <!-- Language & Region Settings -->
+    <string name="language_region_title">ভাষা ও অঞ্চল</string>
+    <string name="language_current">বর্তমান ভাষা</string>
+    <string name="language_available">উপলব্ধ ভাষাসমূহ</string>
+    <string name="language_english">English (ইংরেজি)</string>
+    <string name="language_spanish">Español (স্প্যানিশ)</string>
+    <string name="language_french">Français (ফরাসি)</string>
+    <string name="language_german">Deutsch (জার্মান)</string>
+    <string name="language_japanese">日本語 (জাপানি)</string>
+    <string name="language_chinese">中文 (চীনা)</string>
+    <string name="language_korean">한국어 (কোরিয়ান)</string>
+    <string name="language_portuguese">Português (পর্তুগিজ)</string>
+    <string name="language_russian">Русский (রুশ)</string>
+    <string name="language_arabic">العربية (আরবি)</string>
+    <string name="language_region_preferences">অঞ্চল পছন্দসমূহ</string>
+    <string name="language_region_preferences_subtitle">তারিখ এবং সময় ফরম্যাট সেটিংস</string>
+
+    <!-- About & Support Settings -->
+    <string name="about_support_title">সম্পর্কে ও সাপোর্ট</string>
+    <string name="about_app_info">অ্যাপ তথ্য</string>
+    <string name="about_version">ভার্সন</string>
+    <string name="about_build">বিল্ড</string>
+    <string name="about_copyright">© ২০২৪ Synapse। সর্বস্বত্ব সংরক্ষিত।</string>
+    <string name="about_section_legal">আইনি</string>
+    <string name="about_terms">পরিষেবার শর্তাবলী</string>
+    <string name="about_terms_subtitle">আমাদের শর্তাবলী পড়ুন</string>
+    <string name="about_privacy_policy">গোপনীয়তা নীতি</string>
+    <string name="about_privacy_policy_subtitle">আমরা কীভাবে আপনার ডেটা হ্যান্ডেল করি</string>
+    <string name="about_section_support">সাপোর্ট</string>
+    <string name="about_help_center">হেল্প সেন্টার</string>
+    <string name="about_help_center_subtitle">বিরামহীন প্রশ্ন এবং সাহায্য রিসোর্স</string>
+    <string name="about_report_problem">একটি সমস্যা রিপোর্ট করুন</string>
+    <string name="about_report_problem_subtitle">আমাদের ফিডব্যাক পাঠান</string>
+    <string name="about_check_updates">আপডেট চেক করুন</string>
+    <string name="about_check_updates_subtitle">নতুন ভার্সন উপলব্ধ আছে কিনা দেখুন</string>
+    <string name="about_licenses">ওপেন সোর্স লাইসেন্সসমূহ</string>
+    <string name="about_licenses_subtitle">থার্ড-পার্টি লাইব্রেরি অ্যাট্রিবিউশন</string>
+    <string name="update_available_title">আপডেট উপলব্ধ</string>
+    <string name="update_available_message_version">ভার্সন %1$s উপলব্ধ আছে।</string>
+    <string name="update_action">আপডেট করুন</string>
+    <string name="update_later">পরে</string>
+    <string name="app_is_up_to_date">অ্যাপটি আপ-টু-ডেট আছে</string>
+    <string name="update_check_failed">আপডেট চেক করতে ব্যর্থ হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।</string>
+    <string name="update_check_failed_short">আপডেট চেক করতে ব্যর্থ হয়েছে</string>
+    <string name="no_version_info">সার্ভারে কোন ভার্সন তথ্য পাওয়া যায়নি</string>
+    <string name="checking_updates">আপডেট চেক করা হচ্ছে…</string>
+
+    <!-- Feedback Dialog -->
+    <string name="feedback_dialog_title">একটি সমস্যা রিপোর্ট করুন</string>
+    <string name="feedback_dialog_message">আপনার সমস্যার বর্ণনা দিয়ে আমাদের আরও উন্নত হতে সাহায্য করুন।</string>
+    <string name="feedback_category">ক্যাটাগরি</string>
+    <string name="feedback_category_bug">বাগ রিপোর্ট</string>
+    <string name="feedback_category_feature">ফিচার রিকোয়েস্ট</string>
+    <string name="feedback_category_other">অন্যান্য</string>
+    <string name="feedback_description">বর্ণনা</string>
+    <string name="feedback_description_placeholder">সমস্যা বা পরামর্শের বর্ণনা দিন…</string>
+    <string name="feedback_submit">জমা দিন</string>
+    <string name="feedback_submitting">জমা দেওয়া হচ্ছে…</string>
+    <string name="feedback_success">ফিডব্যাক সফলভাবে জমা দেওয়া হয়েছে</string>
+    <string name="feedback_error">ফিডব্যাক জমা দিতে ব্যর্থ হয়েছে</string>
+
+    <!-- Common Settings Actions -->
+    <string name="settings_dismiss">বাতিল করুন</string>
+    <string name="settings_cancel">বাতিল</string>
+    <string name="settings_save">সংরক্ষণ করুন</string>
+    <string name="settings_done">সম্পন্ন</string>
+    <string name="settings_loading">লোড হচ্ছে…</string>
+    <string name="settings_error">ত্রুটি</string>
+    <string name="settings_success">সফল</string>
+
+    <!-- Settings Error Messages -->
+    <string name="settings_error_load_profile">প্রোফাইল লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="settings_error_save_settings">সেটিংস সংরক্ষণ করতে ব্যর্থ হয়েছে</string>
+    <string name="settings_error_network">নেটওয়ার্ক ত্রুটি। অনুগ্রহ করে আপনার সংযোগ পরীক্ষা করুন।</string>
+    <string name="settings_error_generic">কিছু ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="settings_error_permission">অনুমতি অস্বীকার করা হয়েছে</string>
+    <string name="settings_error_invalid_input">অকার্যকর ইনপুট</string>
+
+    <!-- Accessibility Descriptions -->
+    <string name="settings_icon_description">সেটিংস আইকন</string>
+    <string name="settings_back_description">পিছনে যান</string>
+    <string name="settings_profile_avatar_description">প্রোফাইল ছবি</string>
+    <string name="settings_category_icon_description">ক্যাটাগরি আইকন</string>
+    <string name="settings_chevron_description">বিস্তারিত দেখতে যান</string>
+    <string name="settings_toggle_description">সেটিং টগল করুন</string>
+    <string name="settings_dropdown_description">অপশন নির্বাচন করুন</string>
+    <string name="settings_slider_description">মান অ্যাডজাস্ট করুন</string>
+    <string name="settings_loading_description">বিষয়বস্তু লোড হচ্ছে</string>
+    <string name="settings_error_icon_description">ত্রুটি নির্দেশক</string>
+    <string name="settings_success_icon_description">সাফল্য নির্দেশক</string>
+    <string name="settings_warning_icon_description">সতর্কবাণী নির্দেশক</string>
+
+    <!-- Poll Strings -->
+    <plurals name="poll_votes_count">
+        <item quantity="one">%d টি ভোট</item>
+        <item quantity="other">%d টি ভোট</item>
+    </plurals>
+    <string name="poll_vote_submitted">ভোট জমা দেওয়া হয়েছে</string>
+    <string name="poll_vote_failed">ভোট দিতে ব্যর্থ হয়েছে: %1$s</string>
+
+    <!-- Profile Screen Strings -->
+    <string name="profile_photos">ছবিসমূহ</string>
+    <string name="profile_posts">পোস্টসমূহ</string>
+    <string name="profile_reels">রিলস</string>
+    <string name="profile_more">আরও</string>
+    <string name="profile_loading_error">প্রোফাইল লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="profile_empty_photos">এখনও কোন ছবি নেই</string>
+    <string name="profile_empty_posts">এখনও কোন পোস্ট নেই</string>
+    <string name="profile_empty_reels">এখনও কোন রিলস নেই</string>
+    <string name="profile_image">প্রোফাইল ছবি</string>
+
+    <!-- Search Screen Strings -->
+    <string name="search_media_type_video">ভিডিও</string>
+    <string name="search_media_type_photo">ছবি</string>
+    <string name="recent_searches">সাম্প্রতিক অনুসন্ধানসমূহ</string>
+    <string name="clear_all">সব মুছে ফেলুন</string>
+    <string name="remove">সরিয়ে ফেলুন</string>
+
+    <string name="tab_chats">চ্যাটসমূহ</string>
+    <string name="tab_calls">কলসমূহ</string>
+    <string name="tab_contacts">ব্যক্তিবর্গ</string>
+    <string name="cd_new_chat">নতুন চ্যাট</string>
+    <string name="cd_options_menu">অপশন মেনু</string>
+    <string name="menu_mark_as_read">সব পড়া হয়েছে হিসেবে চিহ্নিত করুন</string>
+    <string name="menu_chat_settings">চ্যাট সেটিংস</string>
+    <string name="menu_settings">সেটিংস</string>
+    <string name="header_messages">মেসেজসমূহ</string>
+
+    <!-- Chat Message Status & Accessibility -->
+    <string name="msg_status_sending">পাঠানো হচ্ছে</string>
+    <string name="msg_status_sent">পাঠানো হয়েছে</string>
+    <string name="msg_status_delivered">পৌঁছেছে</string>
+    <string name="msg_status_read">পড়া হয়েছে</string>
+    <string name="msg_status_failed">পাঠাতে ব্যর্থ হয়েছে</string>
+    <string name="msg_edited">সম্পাদিত</string>
+    <string name="msg_forwarded">ফরওয়ার্ড করা হয়েছে</string>
+    <string name="msg_deleted">এই মেসেজটি ডিলিট করা হয়েছে</string>
+    <string name="cd_link_preview">লিঙ্ক প্রিভিউ ছবি</string>
+    <string name="cd_media_attachment">মিডিয়া সংযুক্তি</string>
+    <string name="cd_play_video">ভিডিও চালান</string>
+    <string name="cd_pause_video">ভিডিও থামান</string>
+    <string name="cd_play_audio">অডিও চালান</string>
+    <string name="cd_pause_audio">অডিও থামান</string>
+    <string name="cd_message_options">মেসেজ অপশনসমূহ</string>
+    <string name="cd_deleted_message">ডিলিট করা মেসেজ আইকন</string>
+    <string name="cd_typing_indicator">ব্যবহারকারী টাইপ করছেন</string>
+
+    <!-- Active Status Strings -->
+    <string name="status_online">অনলাইন</string>
+    <string name="status_away">দূরে আছেন</string>
+    <string name="status_typing">টাইপ করছেন</string>
+    <string name="status_recently_active">সম্প্রতি সক্রিয়</string>
+    <string name="status_offline">অফলাইন</string>
+    <string name="last_seen_just_now">এইমাত্র দেখা গেছে</string>
+    <string name="last_seen_minutes_ago">%d মিনিট আগে শেষ দেখা গেছে</string>
+    <string name="last_seen_hours_ago">%d ঘণ্টা আগে শেষ দেখা গেছে</string>
+    <string name="last_seen_days_ago">%d দিন আগে শেষ দেখা গেছে</string>
+
+    <!-- Navigation -->
+    <string name="home">হোম</string>
+    <string name="inbox">ইনবক্স</string>
+    <string name="profile">প্রোফাইল</string>
+    <string name="reels">রিলস</string>
+    <string name="notifications">নোটিফিকেশন</string>
+
+    <!-- Action strings -->
+    <string name="action_attach">সংযুক্ত করুন</string>
+    <string name="action_send_message">মেসেজ পাঠান</string>
+    <string name="action_record_audio">অডিও রেকর্ড করুন</string>
+
+    <!-- Error strings -->
+    <string name="error_network">নেটওয়ার্ক ত্রুটি</string>
+    <string name="error_authentication">অথেন্টিকেশন ত্রুটি</string>
+    <string name="error_permission">অনুমতি ত্রুটি</string>
+    <string name="error_validation">যাচাইকরণ ত্রুটি</string>
+    <string name="error_server">সার্ভার ত্রুটি</string>
+    <string name="error_unknown">অজানা ত্রুটি</string>
+    <string name="error_unknown_short">অজানা</string>
+
+    <!-- Request Account Info -->
+    <string name="request_account_info_title">অ্যাকাউন্ট তথ্যের অনুরোধ</string>
+    <string name="request_account_info_subtitle">আপনার অ্যাকাউন্ট তথ্যের একটি রিপোর্ট পান</string>
+    <string name="request_report">রিপোর্ট অনুরোধ করুন</string>
+    <string name="request_sent">অনুরোধ পাঠানো হয়েছে</string>
+    <string name="request_sent_date">%1$s এর মধ্যে প্রস্তুত হবে</string>
+    <string name="account_information_section">অ্যাকাউন্ট তথ্য</string>
+    <string name="account_report_desc">আপনার অ্যাকাউন্ট তথ্য এবং সেটিংসের একটি রিপোর্ট তৈরি করুন। এই রিপোর্টে আপনার মেসেজগুলো অন্তর্ভুক্ত থাকবে না।</string>
+    <string name="create_reports_automatically">স্বয়ংক্রিয়ভাবে রিপোর্ট তৈরি করুন</string>
+    <string name="create_account_reports_auto_desc">প্রতি মাসে একটি নতুন রিপোর্ট তৈরি করা হবে।</string>
+    <string name="channels_activity_section">চ্যানেলের কার্যক্রম</string>
+    <string name="channels_report_desc">আপনার চ্যানেল আপডেট এবং চ্যানেল সেটিংসের একটি রিপোর্ট তৈরি করুন।</string>
+    <string name="create_channels_reports_auto_desc">প্রতি মাসে একটি নতুন রিপোর্ট তৈরি করা হবে।</string>
+    <string name="report_available_message">আপনার রিপোর্টটি প্রায় ৩ দিনের মধ্যে তৈরি হবে। এটি উপলব্ধ হওয়ার পর ডাউনলোডের জন্য আপনার কয়েক সপ্তাহ সময় থাকবে।</string>
+    <string name="request_account_report_success">অনুরোধ পাঠানো হয়েছে। আপনার রিপোর্টটি কয়েক দিনের মধ্যে প্রস্তুত হবে।</string>
+    <string name="request_channels_report_success">অনুরোধ পাঠানো হয়েছে। আপনার রিপোর্টটি কয়েক দিনের মধ্যে প্রস্তুত হবে।</string>
+    <string name="save_post">পোস্ট সংরক্ষণ করুন</string>
+    <string name="unsave_post">সংরক্ষিত থেকে সরিয়ে ফেলুন</string>
+    <string name="notification_like_post">%1$s আপনার পোস্ট পছন্দ করেছেন</string>
+    <string name="notification_comment_post">%1$s আপনার পোস্টে মন্তব্য করেছেন</string>
+    <string name="notification_like_comment">%1$s আপনার মন্তব্য পছন্দ করেছেন</string>
+    <string name="notification_follow">%1$s আপনাকে ফলো করা শুরু করেছেন</string>
+    <string name="notification_mention">%1$s আপনাকে একটি %2$s এ মেনশন করেছেন</string>
+    <string name="notification_new_activity">নতুন কার্যক্রম</string>
+    <string name="notification_fallback_message">আপনার একটি নতুন নোটিফিকেশন আছে</string>
+    <string name="someone">কেউ একজন</string>
+    <!-- Synapse Plus Strings -->
+    <string name="synapse_plus_title">Synapse Plus</string>
+    <string name="synapse_plus_hero_title">Synapse Plus</string>
+    <string name="synapse_plus_hero_subtitle">যাচাইকৃত হন এবং এক্সক্লুসিভ ফিচার আনলক করুন</string>
+    <string name="synapse_plus_section_verification">যাচাইকরণ</string>
+    <string name="synapse_plus_toggle_verified_badge">যাচাইকৃত ব্যাজ প্রদর্শন করুন</string>
+    <string name="synapse_plus_toggle_verified_badge_desc">আপনার প্রোফাইলে যাচাইকরণ ব্যাজ প্রদর্শন করুন</string>
+    <string name="synapse_plus_section_features">প্রিমিয়াম ফিচারসমূহ</string>
+    <string name="synapse_plus_upgrade_title">প্লাসে আপগ্রেড করুন</string>
+    <string name="synapse_plus_upgrade_subtitle">প্রিমিয়াম ফিচার এবং যাচাইকরণ আনলক করুন</string>
+    <string name="synapse_plus_feature_verified">যাচাইকৃত ব্যাজ</string>
+    <string name="synapse_plus_feature_verified_desc">সেই নীল টিক চিহ্নটি পান</string>
+    <string name="synapse_plus_feature_ad_free">বিজ্ঞাপনমুক্ত</string>
+    <string name="synapse_plus_feature_ad_free_desc">কোন বাধা ছাড়াই</string>
+    <string name="synapse_plus_feature_analytics">অ্যানালিটিক্স</string>
+    <string name="synapse_plus_feature_analytics_desc">গভীর ইনসাইট</string>
+    <string name="synapse_plus_feature_themes">কাস্টম থিম</string>
+    <string name="synapse_plus_feature_themes_desc">নিজেকে প্রকাশ করুন</string>
+    <string name="synapse_plus_feature_support">অগ্রাধিকার সাপোর্ট</string>
+    <string name="synapse_plus_feature_support_desc">সবার আগে সেবা পান</string>
+    <string name="synapse_plus_feature_extended">বর্ধিত পোস্ট</string>
+    <string name="synapse_plus_feature_extended_desc">৪০০০ অক্ষর পর্যন্ত লিখুন</string>
+    <string name="synapse_plus_upgrade_button">এখনই আপগ্রেড করুন</string>
+    <string name="synapse_plus_price">$৪.৯৯/মাস</string>
+    <string name="profile_get_user_info_failed">ব্যবহারকারীর তথ্য পেতে ব্যর্থ হয়েছে।</string>
+    <string name="invalid_user_id">অকার্যকর ইউজার আইডি</string>
+    <string name="profile_message_self_error">আপনি নিজেকে মেসেজ পাঠাতে পারবেন না</string>
+    <string name="chat_not_implemented">চ্যাট ফিচারটি এখনও বাস্তবায়িত হয়নি</string>
+    <string name="chat_error_start">চ্যাট শুরু করতে ত্রুটি: %1$s</string>
+    <string name="action_add">যোগ করুন</string>
+    <string name="error_loading_profile">প্রোফাইল লোড করতে ত্রুটি</string>
+    <string name="profile_not_found_msg">এই প্রোফাইলটি নেই বা সরিয়ে ফেলা হয়েছে।</string>
+    <!-- Feed Screen -->
+    <string name="error_unknown_feed">অজানা ত্রুটি</string>
+    <string name="error_loading_more_posts">আরও লোড করতে ত্রুটি</string>
+    <!-- Create Post Screen -->
+    <string name="error_crop_failed">ক্রপ করতে ব্যর্থ হয়েছে: %1$s</string>
+    <string name="post_updated_toast">পোস্ট আপডেট করা হয়েছে!</string>
+    <string name="post_created_toast">পোস্ট তৈরি করা হয়েছে!</string>
+    <string name="warn_remove_poll_for_media">মিডিয়া যোগ করতে পোল সরিয়ে ফেলুন</string>
+    <string name="title_edit_post">পোস্ট সম্পাদনা</string>
+    <string name="title_create_post">পোস্ট তৈরি করুন</string>
+    <string name="cd_close">বন্ধ করুন</string>
+    <string name="button_posting">পোস্ট করা হচ্ছে...</string>
+    <string name="hint_whats_on_your_mind">আপনার মনে কি চলছে?</string>
+    <string name="title_edit_image">ছবি সম্পাদনা</string>
+    <string name="action_save">সংরক্ষণ করুন</string>
+    <string name="warn_remove_media_for_poll">পোল যোগ করতে মিডিয়া সরিয়ে ফেলুন</string>
+    <string name="dialog_title_add_youtube">ইউটিউব ভিডিও যোগ করুন</string>
+    <string name="label_youtube_url">ইউটিউব ইউআরএল</string>
+    <string name="error_invalid_youtube_url">অকার্যকর ইউটিউব ইউআরএল</string>
+    <string name="cd_remove">সরিয়ে ফেলুন</string>
+    <string name="label_youtube_video">ইউটিউব ভিডিও</string>
+    <!-- Empty States -->
+    <string name="empty_posts_title">এখনও কোন পোস্ট নেই</string>
+    <string name="empty_posts_message">আপনি যখন পোস্ট শেয়ার করবেন, তা এখানে প্রদর্শিত হবে</string>
+    <string name="empty_photos_title">দেখানোর মতো কোন ছবি নেই</string>
+    <string name="empty_photos_message">আপনার শেয়ার করা ছবিগুলো এখানে প্রদর্শিত হবে</string>
+    <string name="empty_reels_title">এখনও কোন রিলস নেই</string>
+    <string name="empty_reels_message">আপনার তৈরি করা রিলসগুলো এখানে প্রদর্শিত হবে</string>
+    <string name="empty_following_title">কাউকে ফলো করছেন না</string>
+    <string name="empty_following_message">মানুষদের খুঁজে বের করুন এবং কানেক্ট করুন</string>
+    <!-- Profile Screen -->
+    <string name="toast_link_copied">লিঙ্ক ক্লিপবোর্ডে কপি করা হয়েছে</string>
+    <string name="toast_share_story_soon">স্টোরিতে শেয়ার করার সুবিধা শীঘ্রই আসছে</string>
+    <string name="toast_share_message_soon">মেসেজের মাধ্যমে শেয়ার করার সুবিধা শীঘ্রই আসছে</string>
+    <string name="share_profile_text">এই প্রোফাইলটি দেখুন: %1$s</string>
+    <string name="title_share_profile">প্রোফাইল শেয়ার করুন</string>
+    <string name="toast_toggle_comments_impl">মন্তব্য টগল করা এখনও বাস্তবায়িত হয়নি</string>
+    <string name="toast_reported_from_profile">প্রোফাইল থেকে রিপোর্ট করা হয়েছে</string>
+    <string name="toast_report_submitted">রিপোর্ট জমা দেওয়া হয়েছে</string>
+    <string name="toast_revoke_vote_impl">ভোট প্রত্যাহার এখনও বাস্তবায়িত হয়নি</string>
+    <string name="share_post_text">এই পোস্টটি দেখুন: %1$s</string>
+    <string name="title_share_post">পোস্ট শেয়ার করুন</string>
+    <string name="empty_profile_photos_title">কোন ছবি নেই</string>
+    <string name="empty_profile_photos_msg">আপনার শেয়ার করা ছবিগুলো এখানে প্রদর্শিত হবে।</string>
+    <string name="empty_own_posts_title">এখনও কোন পোস্ট নেই</string>
+    <string name="empty_own_posts_msg">বিশ্বের সাথে আপনার প্রথম পোস্টটি শেয়ার করুন!</string>
+    <string name="empty_user_posts_title">কোন পোস্ট নেই</string>
+    <string name="empty_user_posts_msg">এই ব্যবহারকারী এখনও কিছু পোস্ট করেননি।</string>
+    <string name="empty_profile_reels_title">কোন রিলস নেই</string>
+    <string name="empty_profile_reels_msg">আপনার তৈরি করা রিলসগুলো এখানে প্রদর্শিত হবে।</string>
+    <string name="toast_reels_viewer_soon">রিলস ভিউয়ার শীঘ্রই আসছে</string>
+    <string name="error_invalid_link_scheme">অকার্যকর লিঙ্ক স্কিম</string>
+    <string name="error_cannot_open_link">লিঙ্কটি খোলা যাচ্ছে না</string>
+    <string name="default_user_name">ব্যবহারকারী</string>
+    <!-- Post Detail Screen -->
+    <string name="share_post_synapse_text">সাইন্যপসে এই পোস্টটি দেখুন: synapse://post/%1$s</string>
+    <string name="toast_comment_copied">মন্তব্য কপি করা হয়েছে</string>
+    <string name="title_share_comment">মন্তব্য শেয়ার করুন</string>
+    <string name="title_post_detail">পোস্ট</string>
+    <string name="cd_back">পিছনে</string>
+    <string name="error_prefix">ত্রুটি: %1$s</string>
+    <!-- Inbox Screen -->
+    <string name="title_inbox">ইনবক্স</string>
+    <string name="tab_contacts_label">কন্টাক্টসমূহ</string>
+    <string name="tab_messages">মেসেজসমূহ</string>
+</resources>

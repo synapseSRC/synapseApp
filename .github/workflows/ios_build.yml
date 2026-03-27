@@ -1,0 +1,35 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [ "main", "ios-*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build iOS and Shared Framework
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: gradle
+
+      - name: Grant Execute Permission for Gradle Wrapper
+        run: chmod +x gradlew
+
+      - name: Build KMP Shared Framework for iOS
+        run: ./gradlew :shared:compileKotlinIosSimulatorArm64
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build iOS Application (Skipped due to missing xcodeproj in repo)
+        run: echo "Skipping xcodebuild as xcodeproj is not tracked in the repository per project guidelines."

@@ -1,0 +1,31 @@
+package com.synapse.social.studioasinc.domain.model
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+
+
+
+@Serializable
+data class MediaItem(
+    val id: String,
+    val url: String,
+    val type: MediaType,
+    val thumbnailUrl: String? = null,
+    val duration: Long? = null,
+    val size: Long? = null,
+    val mimeType: String? = null,
+    @Transient
+    val likesCount: Int = 0,
+    @Transient
+    val replyCount: Int = 0,
+    @Transient
+    val userHasLiked: Boolean = false
+)
+
+
+
+@Serializable
+enum class MediaType {
+    IMAGE,
+    VIDEO
+}

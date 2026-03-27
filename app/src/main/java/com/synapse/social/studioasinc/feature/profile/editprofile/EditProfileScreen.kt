@@ -1,0 +1,157 @@
+package com.synapse.social.studioasinc.presentation.editprofile
+
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.presentation.editprofile.components.EditProfileContent
+import com.synapse.social.studioasinc.presentation.editprofile.components.EditProfileTopBar
+import com.synapse.social.studioasinc.presentation.editprofile.components.GenderSelector
+import com.synapse.social.studioasinc.presentation.editprofile.components.ProfileFormFields
+import com.synapse.social.studioasinc.presentation.editprofile.components.ProfileImageSection
+import com.synapse.social.studioasinc.ui.settings.SettingsCard
+import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
+import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditProfileScreen(
+    viewModel: EditProfileViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit,
+    onNavigateToRegionSelection: (String) -> Unit,
+    onNavigateToPhotoHistory: (String) -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+
+    val avatarPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onEvent(EditProfileEvent.AvatarSelected(uri))
+        }
+    }
+
+    val coverPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onEvent(EditProfileEvent.CoverSelected(uri))
+        }
+    }
+
+    fun launchAvatarPicker() {
+        try {
+            avatarPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        } catch (e: android.content.ActivityNotFoundException) {
+            Toast.makeText(context, "No photo picker app found. Please install a file manager.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun launchCoverPicker() {
+        try {
+            coverPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        } catch (e: android.content.ActivityNotFoundException) {
+            Toast.makeText(context, "No photo picker app found. Please install a file manager.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+
+    LaunchedEffect(viewModel) {
+        viewModel.navigationEvents.collect { event ->
+            when (event) {
+                EditProfileNavigation.NavigateBack -> onNavigateBack()
+                EditProfileNavigation.NavigateToRegionSelection -> {
+                    onNavigateToRegionSelection(viewModel.uiState.value.selectedRegion ?: "")
+                }
+                EditProfileNavigation.NavigateToProfileHistory -> {
+                    onNavigateToPhotoHistory("PROFILE")
+                }
+                EditProfileNavigation.NavigateToCoverHistory -> {
+                    onNavigateToPhotoHistory("COVER")
+                }
+            }
+        }
+    }
+
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { error ->
+            snackbarHostState.showSnackbar(error)
+        }
+    }
+
+    SynapseTheme {
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                EditProfileTopBar(
+                    isSaving = uiState.isSaving,
+                    canSave = uiState.hasChanges &&
+                            uiState.usernameValidation !is UsernameValidation.Error &&
+                            uiState.nicknameError == null &&
+                            uiState.bioError == null,
+                    scrollBehavior = scrollBehavior,
+                    onBackClick = { viewModel.onEvent(EditProfileEvent.BackClicked) },
+                    onSaveClick = { viewModel.onEvent(EditProfileEvent.SaveClicked) }
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    ExpressiveLoadingIndicator()
+                }
+            } else {
+                EditProfileContent(
+                    uiState = uiState,
+                    paddingValues = paddingValues,
+                    onAvatarClick = { launchAvatarPicker() },
+                    onCoverClick = { launchCoverPicker() },
+                    onNavigateToRegionSelection = onNavigateToRegionSelection,
+                    onEvent = viewModel::onEvent
+                )
+            }
+        }
+    }
+}

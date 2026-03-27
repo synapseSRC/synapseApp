@@ -1,0 +1,57 @@
+package com.synapse.social.studioasinc.shared.data.source.remote
+
+import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
+import com.synapse.social.studioasinc.shared.domain.model.UploadError
+import com.synapse.social.studioasinc.shared.util.TimeProvider
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.storage.resumable.*
+import io.github.jan.supabase.storage.storage
+import io.github.aakira.napier.Napier
+import io.ktor.utils.io.ByteReadChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+
+class SupabaseUploadService(private val supabase: SupabaseClient) : UploadService {
+    override suspend fun upload(
+        fileProvider: suspend (Long) -> ByteReadChannel,
+        fileSize: Long,
+        fileName: String,
+        config: StorageConfig,
+        bucketName: String?,
+        onProgress: (Float) -> Unit
+    ): String {
+        val targetBucket = bucketName ?: config.supabaseBucket
+        val bucketToUse = if (targetBucket.isBlank()) "public" else targetBucket
+
+        Napier.d("Uploading to Supabase bucket: $bucketToUse, file: $fileName", tag = "SupabaseUpload")
+
+        try {
+            val bucket = supabase.storage.from(bucketToUse)
+            val path = "${TimeProvider.nowMillis()}_$fileName"
+
+            coroutineScope {
+                val upload = bucket.resumable.createOrContinueUpload(
+                    source = path,
+                    path = path,
+                    size = fileSize,
+                    channel = fileProvider
+                )
+
+                val job = upload.stateFlow.onEach { state ->
+                    onProgress(state.progress)
+                }.launchIn(this)
+
+                upload.startOrResumeUploading()
+                job.cancel()
+            }
+
+            val publicUrl = bucket.publicUrl(path)
+            Napier.d("Supabase upload successful: $publicUrl", tag = "SupabaseUpload")
+            return publicUrl
+        } catch (e: Exception) {
+            Napier.e("Supabase upload failed to bucket: $bucketToUse", e, tag = "SupabaseUpload")
+            throw UploadError.SupabaseError("Supabase upload failed: ${e.message}")
+        }
+    }
+}

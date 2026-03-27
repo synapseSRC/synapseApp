@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "123456789012",
+    "project_id": "synapse-social-dummy",
+    "storage_bucket": "synapse-social-dummy.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789012:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.synapse.social.studioasinc"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "dummy-api-key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789012:android:0000000000000000000001",
+        "android_client_info": {
+          "package_name": "com.synapse.social.studioasinc.debug"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "dummy-api-key-debug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

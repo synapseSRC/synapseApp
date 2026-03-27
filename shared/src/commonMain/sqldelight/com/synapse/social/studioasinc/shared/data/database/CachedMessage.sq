@@ -1,0 +1,48 @@
+CREATE TABLE CachedMessage (
+    id TEXT NOT NULL PRIMARY KEY,
+    chat_id TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'text',
+    media_url TEXT,
+    delivery_status TEXT NOT NULL DEFAULT 'sent',
+    read_by TEXT,
+    is_encrypted INTEGER NOT NULL DEFAULT 0,
+    encrypted_content TEXT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT,
+    reply_to_id TEXT,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    is_edited INTEGER NOT NULL DEFAULT 0,
+    cached_at INTEGER NOT NULL
+);
+
+upsertMessage:
+INSERT OR REPLACE INTO CachedMessage VALUES ?;
+
+selectByChatId:
+SELECT * FROM CachedMessage
+WHERE chat_id = :chatId AND is_deleted = 0
+ORDER BY created_at ASC
+LIMIT :limit;
+
+deleteOldestBeyondLimit:
+DELETE FROM CachedMessage
+WHERE chat_id = :chatId AND id NOT IN (
+    SELECT id FROM CachedMessage
+    WHERE chat_id = :chatId
+    ORDER BY created_at DESC
+    LIMIT :limit
+);
+
+deleteById:
+DELETE FROM CachedMessage WHERE id = :id;
+
+updateContent:
+UPDATE CachedMessage SET content = :content, is_edited = 1 WHERE id = :id;
+
+markDeleted:
+UPDATE CachedMessage SET is_deleted = 1 WHERE id = :id;
+
+deleteAll:
+DELETE FROM CachedMessage;
