@@ -486,15 +486,15 @@ class CreatePostViewModel @Inject constructor(
 
             if (state.isEditMode) {
                 val result = submitPostUseCase(
-                    request = request,
+                    requests = listOf(request),
                     currentUserId = currentUser.id,
-                    originalPost = originalPost,
                     onProgress = { progress ->
                         _uiState.update { it.copy(uploadProgress = progress) }
                     }
                 )
 
-                result.onSuccess { post ->
+                result.onSuccess { posts ->
+                    val post = posts.firstOrNull()
                     clearDraft()
                     if (post != null) {
                         com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(
@@ -516,7 +516,7 @@ class CreatePostViewModel @Inject constructor(
                                 )
                             }
                             if (threadRequests.isNotEmpty()) {
-                                submitPostUseCase.submitPosts(threadRequests, currentUser.id) {}.onSuccess { threadPosts ->
+                                submitPostUseCase(threadRequests, currentUser.id) {}.onSuccess { threadPosts ->
                                     threadPosts.forEach { newPost ->
                                         com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(
                                             com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Created(newPost)
@@ -547,7 +547,7 @@ class CreatePostViewModel @Inject constructor(
                     }
                 }
 
-                val result = submitPostUseCase.submitPosts(
+                val result = submitPostUseCase(
                     requests = allRequests,
                     currentUserId = currentUser.id,
                     onProgress = { progress ->

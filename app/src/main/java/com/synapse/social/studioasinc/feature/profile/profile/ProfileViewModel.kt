@@ -18,7 +18,10 @@ import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCa
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.GetFollowingUseCase
-import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileContentUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.GetProfilePostsUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.GetProfilePhotosUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileReelsUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileRepliesUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.SearchUsersUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.IsFollowingUseCase
@@ -90,7 +93,10 @@ class ProfileViewModel @Inject constructor(
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val searchUsersUseCase: SearchUsersUseCase,
     private val getProfileUseCase: GetProfileUseCase,
-    private val getProfileContentUseCase: GetProfileContentUseCase,
+    private val getProfilePostsUseCase: GetProfilePostsUseCase,
+    private val getProfilePhotosUseCase: GetProfilePhotosUseCase,
+    private val getProfileReelsUseCase: GetProfileReelsUseCase,
+    private val getProfileRepliesUseCase: GetProfileRepliesUseCase,
     private val getFollowingUseCase: GetFollowingUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
@@ -457,22 +463,22 @@ class ProfileViewModel @Inject constructor(
 
             when (filter) {
                 ProfileContentFilter.POSTS -> {
-                    getProfileContentUseCase.getPosts(userId).onSuccess { posts ->
+                    getProfilePostsUseCase(userId).onSuccess { posts ->
                         _state.update { it.copy(posts = posts, postsOffset = posts.size) }
                     }
                 }
                 ProfileContentFilter.PHOTOS -> {
-                    getProfileContentUseCase.getPhotos(userId).onSuccess { photos ->
+                    getProfilePhotosUseCase(userId).onSuccess { photos ->
                         _state.update { it.copy(photos = photos, photosOffset = photos.size) }
                     }
                 }
                 ProfileContentFilter.REELS -> {
-                    getProfileContentUseCase.getReels(userId).onSuccess { reels ->
+                    getProfileReelsUseCase(userId).onSuccess { reels ->
                         _state.update { it.copy(reels = reels, reelsOffset = reels.size) }
                     }
                 }
                 ProfileContentFilter.REPLIES -> {
-                    getProfileContentUseCase.getReplies(userId).onSuccess { replies ->
+                    getProfileRepliesUseCase(userId).onSuccess { replies ->
                         _state.update { it.copy(replies = replies, repliesOffset = replies.size) }
                     }
                 }
