@@ -31,11 +31,11 @@ import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
-class ChatMessagingRepository @Inject constructor(
+class ChatMessagingRepositoryImpl @Inject constructor(
     private val client: SupabaseClient
 ) {
     companion object {
-        private const val TAG = "ChatMessagingRepository"
+        private const val TAG = "ChatMessagingRepositoryImpl"
     }
 
     /**

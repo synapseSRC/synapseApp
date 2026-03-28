@@ -25,7 +25,7 @@ internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
     companion object {
         const val PREF_LAST_SYNC_TIME = "last_post_sync_time"
         const val CACHE_EXPIRATION_MS = 5 * 60 * 1000L
-        const val TAG = "PostRepository"
+        const val TAG = "PostRepositoryImpl"
         val PGRST_REGEX = Regex("PGRST\\d+")
         val COLUMN_REGEX = Regex("column \"([^\"]+)\"")
 

@@ -19,7 +19,7 @@ object NotificationUtils {
                 val authService = SupabaseAuthenticationService()
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 val currentUser = authService.getCurrentUser()
                 if (currentUser == null || currentUser.id == postAuthorUid) {
@@ -53,7 +53,7 @@ object NotificationUtils {
                 val authService = SupabaseAuthenticationService()
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 val currentUser = authService.getCurrentUser()
                 if (currentUser == null || currentUser.id == postAuthorUid) {
@@ -88,7 +88,7 @@ object NotificationUtils {
                 val authService = SupabaseAuthenticationService()
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 val currentUser = authService.getCurrentUser()
                 if (currentUser == null || currentUser.id == commentAuthorUid) {
@@ -123,7 +123,7 @@ object NotificationUtils {
                 val authService = SupabaseAuthenticationService()
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 val currentUser = authService.getCurrentUser()
                 if (currentUser == null || currentUser.id == followedUid) {
@@ -157,7 +157,7 @@ object NotificationUtils {
                 val authService = SupabaseAuthenticationService()
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 val currentUser = authService.getCurrentUser()
                 if (currentUser == null || currentUser.id == recipientUid) {
@@ -199,7 +199,7 @@ object NotificationUtils {
                 val authService = SupabaseAuthenticationService()
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 val currentUser = authService.getCurrentUser()
                 if (currentUser == null || currentUser.id == mentionedUid) {

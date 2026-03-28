@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 
 
 
-class FeedbackRepository {
+class FeedbackRepositoryImpl {
     private val client = SupabaseClient.client
 
     @Serializable
@@ -49,6 +49,6 @@ class FeedbackRepository {
     }
 
     companion object {
-        private const val TAG = "FeedbackRepository"
+        private const val TAG = "FeedbackRepositoryImpl"
     }
 }

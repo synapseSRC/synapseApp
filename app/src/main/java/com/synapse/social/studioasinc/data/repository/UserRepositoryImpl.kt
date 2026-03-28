@@ -20,7 +20,7 @@ import com.synapse.social.studioasinc.shared.core.network.SupabaseClient as Shar
 import com.synapse.social.studioasinc.shared.core.util.sanitizeSearchQuery
 
 @Singleton
-class UserRepository @Inject constructor(
+class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val client: SupabaseClient = SharedSupabaseClient.client
 ) {
@@ -63,7 +63,7 @@ class UserRepository @Inject constructor(
                  Result.success(null)
             }
         } catch (e: Exception) {
-            return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to refresh user: $userId")
+            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to refresh user: $userId")
         }
     }
 
@@ -103,8 +103,8 @@ class UserRepository @Inject constructor(
             }
             Result.success(user)
         } catch (e: Exception) {
-            android.util.Log.e("UserRepository", "Failed to fetch user by ID: $userId", e)
-            return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to fetch user by ID: $userId")
+            android.util.Log.e("UserRepositoryImpl", "Failed to fetch user by ID: $userId", e)
+            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to fetch user by ID: $userId")
         }
     }
 
@@ -131,7 +131,7 @@ class UserRepository @Inject constructor(
 
             Result.success(updatedUser)
         } catch (e: Exception) {
-            return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to fetch user by username: $username")
+            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to fetch user by username: $username")
         }
     }
 
@@ -163,10 +163,10 @@ class UserRepository @Inject constructor(
                     }
                 }
 
-            android.util.Log.d("UserRepository", "User updated successfully: ${user.uid}")
+            android.util.Log.d("UserRepositoryImpl", "User updated successfully: ${user.uid}")
             Result.success(user)
         } catch (e: Exception) {
-            return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to update user: ${user.uid}")
+            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to update user: ${user.uid}")
         }
     }
 
@@ -195,10 +195,10 @@ class UserRepository @Inject constructor(
                     user.copy(avatar = avatarUrl)
                 }
 
-            android.util.Log.d("UserRepository", "Search found ${users.size} users for query: $sanitizedQuery")
+            android.util.Log.d("UserRepositoryImpl", "Search found ${users.size} users for query: $sanitizedQuery")
             Result.success(users)
         } catch (e: Exception) {
-            return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to search users with query: $query")
+            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to search users with query: $query")
         }
     }
 
@@ -214,7 +214,7 @@ class UserRepository @Inject constructor(
 
             Result.success(existingUser == null)
         } catch (e: Exception) {
-            return SupabaseErrorHandler.toResult(e, "UserRepository", "Failed to check username availability: $username")
+            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to check username availability: $username")
         }
     }
 

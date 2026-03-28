@@ -1,11 +1,11 @@
 package com.synapse.social.studioasinc.domain.usecase.reaction
 
-import com.synapse.social.studioasinc.data.repository.ReactionRepository
+import com.synapse.social.studioasinc.data.repository.ReactionRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.ReactionType
 import javax.inject.Inject
 
 class ToggleMessageReactionUseCase @Inject constructor(
-    private val repository: ReactionRepository
+    private val repository: ReactionRepositoryImpl
 ) {
     suspend operator fun invoke(
         messageId: String,

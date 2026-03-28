@@ -11,7 +11,7 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ChatRepository(
+class ChatRepositoryImpl(
     private val client: SupabaseClient,
     private val signalRepository: SignalRepository,
     private val signalProtocolManager: SignalProtocolManager

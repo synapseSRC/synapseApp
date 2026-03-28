@@ -12,7 +12,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LocationRepository @Inject constructor() {
+class LocationRepositoryImpl @Inject constructor() {
 
     companion object {
         private const val CONNECT_TIMEOUT = 10000
@@ -79,7 +79,7 @@ class LocationRepository @Inject constructor() {
                 Result.failure(Exception("HTTP Error: $responseCode"))
             }
         } catch (e: Exception) {
-            android.util.Log.e("LocationRepository", "Location search failed", e)
+            android.util.Log.e("LocationRepositoryImpl", "Location search failed", e)
             Result.failure(e)
         }
     }

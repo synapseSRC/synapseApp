@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 
 
-class ReportRepository @Inject constructor(
+class ReportRepositoryImpl @Inject constructor(
     private val client: SupabaseClient
 ) : com.synapse.social.studioasinc.domain.repository.ReportRepository {
 
@@ -45,6 +45,6 @@ class ReportRepository @Inject constructor(
     }
 
     companion object {
-        private const val TAG = "ReportRepository"
+        private const val TAG = "ReportRepositoryImpl"
     }
 }

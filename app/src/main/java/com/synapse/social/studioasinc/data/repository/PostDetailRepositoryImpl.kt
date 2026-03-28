@@ -20,13 +20,13 @@ import kotlinx.coroutines.CancellationException
 
 
 
-class PostDetailRepository @Inject constructor(
+class PostDetailRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
-    private val reactionRepository: ReactionRepository
+    private val reactionRepository: ReactionRepositoryImpl
 ) {
 
     companion object {
-        private const val TAG = "PostDetailRepository"
+        private const val TAG = "PostDetailRepositoryImpl"
     }
 
     suspend fun getPostWithDetails(postId: String): Result<PostDetail> = withContext(Dispatchers.IO) {

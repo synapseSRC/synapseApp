@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.domain.usecase.search
 
-import com.synapse.social.studioasinc.data.repository.UserRepository
+import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.User
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class SearchUsersForPostUseCase @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepositoryImpl
 ) {
     operator fun invoke(query: String): Flow<Result<List<User>>> = flow {
         if (query.isBlank()) {

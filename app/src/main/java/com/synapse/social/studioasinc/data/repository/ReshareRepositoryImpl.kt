@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 
 
-class ReshareRepository @Inject constructor(
+class ReshareRepositoryImpl @Inject constructor(
     private val client: SupabaseClient = com.synapse.social.studioasinc.shared.core.network.SupabaseClient.client
 ) {
 
@@ -94,6 +94,6 @@ class ReshareRepository @Inject constructor(
 
 
     companion object {
-        private const val TAG = "ReshareRepository"
+        private const val TAG = "ReshareRepositoryImpl"
     }
 }

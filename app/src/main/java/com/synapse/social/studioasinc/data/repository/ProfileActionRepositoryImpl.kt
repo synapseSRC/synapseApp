@@ -5,7 +5,7 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ProfileActionRepository {
+class ProfileActionRepositoryImpl {
     private val supabase = SupabaseClient.client
 
     suspend fun lockProfile(userId: String, isLocked: Boolean): Result<Unit> = withContext(Dispatchers.IO) {

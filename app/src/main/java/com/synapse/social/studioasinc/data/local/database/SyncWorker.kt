@@ -3,7 +3,7 @@ package com.synapse.social.studioasinc.data.local.database
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.synapse.social.studioasinc.data.repository.PostRepository
+import com.synapse.social.studioasinc.data.repository.PostRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
@@ -96,7 +96,7 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters):
 @dagger.hilt.EntryPoint
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 interface SyncWorkerEntryPoint {
-    fun postRepository(): PostRepository
+    fun postRepository(): PostRepositoryImpl
     fun offlineActionRepository(): OfflineActionRepository
     fun chatRepository(): ChatRepository
 }

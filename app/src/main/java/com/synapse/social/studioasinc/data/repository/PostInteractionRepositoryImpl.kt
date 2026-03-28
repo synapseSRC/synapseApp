@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-class PostInteractionRepository : com.synapse.social.studioasinc.domain.repository.PostInteractionRepository {
+class PostInteractionRepositoryImpl : com.synapse.social.studioasinc.domain.repository.PostInteractionRepository {
     private val client = SupabaseClient.client
 
     override suspend fun likePost(postId: String, userId: String): Result<Unit> = withContext(Dispatchers.IO) {

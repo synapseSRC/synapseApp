@@ -28,7 +28,7 @@ internal class PostReactionHelper(
     private val offlineActionRepository: OfflineActionRepository
 ) {
 
-    private val reactionRepository = com.synapse.social.studioasinc.data.repository.ReactionRepository(client)
+    private val reactionRepository = com.synapse.social.studioasinc.data.repository.ReactionRepositoryImpl(client)
 
     suspend fun toggleReaction(
         postId: String,

@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.domain.usecase.post
 
-import com.synapse.social.studioasinc.data.repository.UserRepository
+import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.CreatePostRequest
 import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 class SubmitPostUseCase @Inject constructor(
     private val postRepository: PostRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryImpl,
     private val mediaUploadHandler: MediaUploadHandler,
     private val reelSubmissionHandler: ReelSubmissionHandler
 ) {

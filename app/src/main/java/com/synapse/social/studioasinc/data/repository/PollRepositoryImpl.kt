@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 
 
-class PollRepository @Inject constructor(
+class PollRepositoryImpl @Inject constructor(
     private val client: SupabaseClient
 ) : com.synapse.social.studioasinc.domain.repository.PollRepository {
 
@@ -197,6 +197,6 @@ class PollRepository @Inject constructor(
     }
 
     companion object {
-        private const val TAG = "PollRepository"
+        private const val TAG = "PollRepositoryImpl"
     }
 }

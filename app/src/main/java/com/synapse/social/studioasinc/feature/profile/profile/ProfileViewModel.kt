@@ -30,7 +30,7 @@ import com.synapse.social.studioasinc.domain.usecase.profile.MuteUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.story.HasActiveStoryUseCase
-import com.synapse.social.studioasinc.data.repository.PostRepository
+import com.synapse.social.studioasinc.data.repository.PostRepositoryImpl
 import com.synapse.social.studioasinc.feature.profile.profile.components.FollowingUser
 import com.synapse.social.studioasinc.feature.profile.profile.components.ViewAsMode
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
@@ -112,7 +112,7 @@ class ProfileViewModel @Inject constructor(
     private val muteUserUseCase: MuteUserUseCase,
     private val isFollowingUseCase: IsFollowingUseCase,
     private val hasActiveStoryUseCase: HasActiveStoryUseCase,
-    private val postRepository: PostRepository,
+    private val postRepository: PostRepositoryImpl,
     private val summarizePostUseCase: SummarizePostUseCase
 ) : ViewModel() {
 

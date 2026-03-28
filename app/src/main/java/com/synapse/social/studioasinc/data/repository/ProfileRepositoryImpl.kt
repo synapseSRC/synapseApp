@@ -31,10 +31,10 @@ private data class FollowingIdResponse(
 
 class ProfileRepositoryImpl(
     private val client: SupabaseClientType,
-    private val commentRepository: CommentRepository
+    private val commentRepository: CommentRepositoryImpl
 ) : ProfileRepository {
 
-    private val postsRepository = ProfilePostsRepository(
+    private val postsRepository = ProfilePostsRepositoryImpl(
         client = client,
         commentRepository = commentRepository,
         constructMediaUrl = ::constructMediaUrl,
@@ -180,7 +180,7 @@ class ProfileRepositoryImpl(
 
                             val postCount = try {
                                 client.from("posts").select(columns = Columns.raw("count")) {
-                                    filter { eq(ProfilePostsRepository.KEY_AUTHOR_UID, actualUserId) }
+                                    filter { eq(ProfilePostsRepositoryImpl.KEY_AUTHOR_UID, actualUserId) }
                                     count(io.github.jan.supabase.postgrest.query.Count.EXACT)
                                 }.countOrNull() ?: 0
                             } catch (e: Exception) {
@@ -205,7 +205,7 @@ class ProfileRepositoryImpl(
 
             val postCount = try {
                 client.from("posts").select(columns = Columns.raw("count")) {
-                    filter { eq(ProfilePostsRepository.KEY_AUTHOR_UID, actualUserId) }
+                    filter { eq(ProfilePostsRepositoryImpl.KEY_AUTHOR_UID, actualUserId) }
                     count(io.github.jan.supabase.postgrest.query.Count.EXACT)
                 }.countOrNull() ?: 0
             } catch (e: Exception) {

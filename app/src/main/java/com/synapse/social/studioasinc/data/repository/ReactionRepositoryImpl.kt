@@ -25,12 +25,12 @@ import kotlinx.coroutines.CancellationException
 
 
 
-class ReactionRepository @Inject constructor(
+class ReactionRepositoryImpl @Inject constructor(
     private val client: SupabaseClient
 ) : com.synapse.social.studioasinc.domain.repository.ReactionRepository {
 
     companion object {
-        private const val TAG = "ReactionRepository"
+        private const val TAG = "ReactionRepositoryImpl"
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 100L
     }
@@ -164,7 +164,7 @@ class ReactionRepository @Inject constructor(
                 } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-                    Log.e("ReactionRepository", "RPC call failed, falling back to direct query", e)
+                    Log.e("ReactionRepositoryImpl", "RPC call failed, falling back to direct query", e)
                     // Fall through to fallback query
                 }
             } else if (targetType.equals("comment", ignoreCase = true)) {
@@ -181,7 +181,7 @@ class ReactionRepository @Inject constructor(
                 } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-                    Log.e("ReactionRepository", "RPC call failed, falling back to direct query", e)
+                    Log.e("ReactionRepositoryImpl", "RPC call failed, falling back to direct query", e)
                     // Fall through to fallback query
                 }
             }

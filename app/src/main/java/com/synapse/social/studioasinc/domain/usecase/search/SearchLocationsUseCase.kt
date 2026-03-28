@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.domain.usecase.search
 
-import com.synapse.social.studioasinc.data.repository.LocationRepository
+import com.synapse.social.studioasinc.data.repository.LocationRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.LocationData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class SearchLocationsUseCase @Inject constructor(
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepositoryImpl
 ) {
     operator fun invoke(query: String): Flow<Result<List<LocationData>>> = flow {
         if (query.isBlank()) {

@@ -107,7 +107,7 @@ class MarkdownRenderer private constructor(private val markwon: Markwon) {
                             try {
                                 val entryPoint = EntryPointAccessors.fromApplication(ctx.applicationContext, DatabaseEntryPoint::class.java)
                                 val userDao = entryPoint.getUserDao()
-                                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                                 val userResult = userRepository.getUserByUsername(username)
 

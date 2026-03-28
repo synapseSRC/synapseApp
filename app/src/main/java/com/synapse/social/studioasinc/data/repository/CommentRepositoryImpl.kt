@@ -19,17 +19,17 @@ import javax.inject.Singleton
 
 @Singleton
 
-class CommentRepository constructor(
+class CommentRepositoryImpl constructor(
     private val localDataSource: CommentLocalDataSource,
     private val remoteDataSource: CommentRemoteDataSource,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryImpl,
     @Named("ApplicationScope") private val externalScope: CoroutineScope,
-    private val reactionRepository: ReactionRepository
+    private val reactionRepository: ReactionRepositoryImpl
 ) {
-    private val TAG = "CommentRepository"
+    private val TAG = "CommentRepositoryImpl"
 
     companion object {
-        private const val TAG = "CommentRepository"
+        private const val TAG = "CommentRepositoryImpl"
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 100L
     }

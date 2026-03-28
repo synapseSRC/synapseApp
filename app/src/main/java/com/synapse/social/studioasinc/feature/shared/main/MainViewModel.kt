@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
-import com.synapse.social.studioasinc.data.repository.UserRepository
+import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.ui.navigation.AppDestination
 import com.synapse.social.studioasinc.domain.usecase.update.GetUpdateStateUseCase
 import com.synapse.social.studioasinc.domain.usecase.update.UpdateState
@@ -26,7 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryImpl,
     private val getUpdateStateUseCase: GetUpdateStateUseCase,
     private val shouldShowProfilePicSuggestionUseCase: ShouldShowProfilePicSuggestionUseCase,
     private val settingsRepository: SettingsRepository

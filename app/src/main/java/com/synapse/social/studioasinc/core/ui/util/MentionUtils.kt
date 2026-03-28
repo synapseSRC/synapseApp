@@ -41,7 +41,7 @@ object MentionUtils {
                             try {
                                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                                 val userDao = entryPoint.getUserDao()
-                                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                                 val userResult = userRepository.getUserByUsername(username)
 
@@ -104,7 +104,7 @@ object MentionUtils {
             try {
                 val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
                 val userDao = entryPoint.getUserDao()
-                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+                val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
                 for (username in mentionedUsernames) {
                     val userResult = userRepository.getUserByUsername(username)
@@ -136,7 +136,7 @@ object MentionUtils {
             val authService = com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService()
             val entryPoint = EntryPointAccessors.fromApplication(context.applicationContext, DatabaseEntryPoint::class.java)
             val userDao = entryPoint.getUserDao()
-            val userRepository = com.synapse.social.studioasinc.data.repository.UserRepository(userDao)
+            val userRepository = com.synapse.social.studioasinc.data.repository.UserRepositoryImpl(userDao)
 
             val currentUser = authService.getCurrentUser()
             if (currentUser == null || currentUser.id == mentionedUid) {

@@ -1,7 +1,7 @@
 package com.synapse.social.studioasinc.feature.createpost.createpost.handlers
 
-import com.synapse.social.studioasinc.data.repository.LocationRepository
-import com.synapse.social.studioasinc.data.repository.UserRepository
+import com.synapse.social.studioasinc.data.repository.LocationRepositoryImpl
+import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.FeelingActivity
 import com.synapse.social.studioasinc.domain.model.LocationData
 import com.synapse.social.studioasinc.domain.model.User
@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SearchHandler @Inject constructor(
-    private val userRepository: UserRepository,
-    private val locationRepository: LocationRepository
+    private val userRepository: UserRepositoryImpl,
+    private val locationRepository: LocationRepositoryImpl
 ) {
     private val activeJobs = mutableListOf<Job>()
 

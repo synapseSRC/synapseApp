@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 
 
-class BookmarkRepository @Inject constructor(
+class BookmarkRepositoryImpl @Inject constructor(
     private val client: SupabaseClient = com.synapse.social.studioasinc.shared.core.network.SupabaseClient.client
 ) {
 
@@ -71,6 +71,6 @@ class BookmarkRepository @Inject constructor(
     }
 
     companion object {
-        private const val TAG = "BookmarkRepository"
+        private const val TAG = "BookmarkRepositoryImpl"
     }
 }

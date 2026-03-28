@@ -111,8 +111,8 @@ object UserModule {
     }
     @Provides
     @Singleton
-    fun provideUserRepository(userDao: UserDao, client: SupabaseClientType): UserRepository {
-        return UserRepository(userDao, client)
+    fun provideUserRepository(userDao: UserDao, client: SupabaseClientType): com.synapse.social.studioasinc.data.repository.UserRepositoryImpl {
+        return UserRepositoryImpl(userDao, client)
     }
     @Provides
     @Singleton
@@ -125,14 +125,14 @@ object UserModule {
     }
     @Provides
     @Singleton
-    fun provideUsernameRepository(): UsernameRepository {
-        return UsernameRepository()
+    fun provideUsernameRepository(): UsernameRepositoryImpl {
+        return UsernameRepositoryImpl()
     }
     @Provides
     @Singleton
     fun provideProfileRepository(
         client: SupabaseClientType,
-        commentRepository: CommentRepository
+        commentRepository: CommentRepositoryImpl
     ): ProfileRepository {
         return ProfileRepositoryImpl(client, commentRepository)
     }

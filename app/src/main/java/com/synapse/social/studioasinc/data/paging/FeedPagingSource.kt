@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
-import com.synapse.social.studioasinc.data.repository.ReactionRepository
+import com.synapse.social.studioasinc.data.repository.ReactionRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.FeedItem
 import com.synapse.social.studioasinc.domain.model.Post
 import io.github.jan.supabase.auth.auth
@@ -28,8 +28,8 @@ class FeedPagingSource(
     private val postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao
 ) : PagingSource<Int, FeedItem>() {
 
-    private val reactionRepository = ReactionRepository(SupabaseClient.client)
-    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepository(SupabaseClient.client)
+    private val reactionRepository = ReactionRepositoryImpl(SupabaseClient.client)
+    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(SupabaseClient.client)
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FeedItem> {
         val position = params.key ?: 0

@@ -109,43 +109,43 @@ object PostModule {
         postDao: PostDao,
         client: SupabaseClientType,
         offlineActionRepository: OfflineActionRepository
-    ): PostRepository {
-        return PostRepository(postDao, client, offlineActionRepository)
+    ): PostRepositoryImpl {
+        return PostRepositoryImpl(postDao, client, offlineActionRepository)
     }
     @Provides
     @Singleton
-    fun provideDomainPostRepository(postRepository: PostRepository): com.synapse.social.studioasinc.domain.repository.PostRepository {
+    fun provideDomainPostRepository(postRepository: PostRepositoryImpl): com.synapse.social.studioasinc.domain.repository.PostRepository {
         return postRepository
     }
     @Provides
     @Singleton
     fun providePostActionsRepository(
-        postRepository: PostRepository
+        postRepository: PostRepositoryImpl
     ): PostActionsRepository {
         return postRepository
     }
     @Provides
     @Singleton
     fun providePostInteractionRepository(): com.synapse.social.studioasinc.domain.repository.PostInteractionRepository {
-        return PostInteractionRepository()
+        return PostInteractionRepositoryImpl()
     }
     @Provides
     @Singleton
-    fun provideProfileActionRepository(): ProfileActionRepository {
-        return ProfileActionRepository()
+    fun provideProfileActionRepository(): ProfileActionRepositoryImpl {
+        return ProfileActionRepositoryImpl()
     }
     @Provides
     @Singleton
     fun provideReactionRepository(client: SupabaseClientType): com.synapse.social.studioasinc.domain.repository.ReactionRepository {
-        return ReactionRepository(client)
+        return ReactionRepositoryImpl(client)
     }
     @Provides
     @Singleton
     fun providePostDetailRepository(
         client: SupabaseClientType,
-        reactionRepository: com.synapse.social.studioasinc.domain.repository.ReactionRepository
-    ): PostDetailRepository {
-        return PostDetailRepository(client, reactionRepository as ReactionRepository)
+        reactionRepository: ReactionRepositoryImpl
+    ): PostDetailRepositoryImpl {
+        return PostDetailRepositoryImpl(client, reactionRepository as ReactionRepositoryImpl)
     }
     @Provides
     @Singleton
@@ -165,42 +165,42 @@ object PostModule {
     fun provideCommentRepository(
         localDataSource: com.synapse.social.studioasinc.data.source.CommentLocalDataSource,
         remoteDataSource: com.synapse.social.studioasinc.data.source.CommentRemoteDataSource,
-        userRepository: UserRepository,
-        reactionRepository: com.synapse.social.studioasinc.domain.repository.ReactionRepository,
+        userRepository: com.synapse.social.studioasinc.data.repository.UserRepositoryImpl,
+        reactionRepository: ReactionRepositoryImpl,
         @Named("ApplicationScope") externalScope: CoroutineScope
-    ): CommentRepository {
-        return CommentRepository(
+    ): CommentRepositoryImpl {
+        return CommentRepositoryImpl(
             localDataSource = localDataSource,
             remoteDataSource = remoteDataSource,
             userRepository = userRepository,
             externalScope = externalScope,
-            reactionRepository = reactionRepository as ReactionRepository
+            reactionRepository = reactionRepository as ReactionRepositoryImpl
         )
     }
     @Provides
     @Singleton
     fun providePollRepository(client: SupabaseClientType): com.synapse.social.studioasinc.domain.repository.PollRepository {
-        return PollRepository(client)
+        return PollRepositoryImpl(client)
     }
     @Provides
     @Singleton
-    fun provideConcretePollRepository(client: SupabaseClientType): PollRepository {
-        return PollRepository(client)
+    fun provideConcretePollRepository(client: SupabaseClientType): com.synapse.social.studioasinc.data.repository.PollRepositoryImpl {
+        return PollRepositoryImpl(client)
     }
     @Provides
     @Singleton
-    fun provideBookmarkRepository(client: SupabaseClientType): BookmarkRepository {
-        return BookmarkRepository(client)
+    fun provideBookmarkRepository(client: SupabaseClientType): BookmarkRepositoryImpl {
+        return BookmarkRepositoryImpl(client)
     }
     @Provides
     @Singleton
-    fun provideReshareRepository(client: SupabaseClientType): ReshareRepository {
-        return ReshareRepository(client)
+    fun provideReshareRepository(client: SupabaseClientType): ReshareRepositoryImpl {
+        return ReshareRepositoryImpl(client)
     }
     @Provides
     @Singleton
     fun provideReportRepository(client: SupabaseClientType): com.synapse.social.studioasinc.domain.repository.ReportRepository {
-        return ReportRepository(client)
+        return ReportRepositoryImpl(client)
     }
     @Provides
     @Singleton

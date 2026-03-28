@@ -33,8 +33,8 @@ internal class PostFeedHelper(
     private val utils: PostRepositoryUtils
 ) {
 
-    private val reactionRepository = com.synapse.social.studioasinc.data.repository.ReactionRepository(client)
-    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepository(client)
+    private val reactionRepository = com.synapse.social.studioasinc.data.repository.ReactionRepositoryImpl(client)
+    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(client)
 
     fun getPostsPaged(): Flow<PagingData<Post>> {
         return Pager(

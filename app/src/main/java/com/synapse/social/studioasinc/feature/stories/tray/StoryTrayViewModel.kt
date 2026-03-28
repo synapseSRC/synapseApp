@@ -3,7 +3,7 @@ package com.synapse.social.studioasinc.feature.stories.tray
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.repository.StoryRepository
-import com.synapse.social.studioasinc.data.repository.UserRepository
+import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.model.StoryTrayState
 import com.synapse.social.studioasinc.domain.model.StoryWithUser
@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StoryTrayViewModel @Inject constructor(
     private val storyRepository: StoryRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryImpl,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 

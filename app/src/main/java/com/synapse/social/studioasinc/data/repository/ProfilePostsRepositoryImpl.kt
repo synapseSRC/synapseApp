@@ -19,16 +19,16 @@ import com.synapse.social.studioasinc.data.repository.ProfileRepositoryImpl.Comp
 import com.synapse.social.studioasinc.data.repository.ProfileRepositoryImpl.Companion.KEY_AVATAR
 import com.synapse.social.studioasinc.data.repository.ProfileRepositoryImpl.Companion.KEY_VERIFY
 
-internal class ProfilePostsRepository(
+internal class ProfilePostsRepositoryImpl(
     private val client: SupabaseClient,
-    private val commentRepository: CommentRepository,
+    private val commentRepository: CommentRepositoryImpl,
     private val constructMediaUrl: (String) -> String,
     private val constructAvatarUrl: (String) -> String,
     private val resolveUserId: (String) -> String?
 ) {
 
-    private val reactionRepository = ReactionRepository(client)
-    private val pollRepository = PollRepository(client)
+    private val reactionRepository = ReactionRepositoryImpl(client)
+    private val pollRepository = PollRepositoryImpl(client)
 
     companion object {
         internal const val KEY_ID = "id"
