@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.presentation.editprofile
+package com.synapse.social.studioasinc.data.repository
 
 import android.content.Context
 import com.synapse.social.studioasinc.shared.domain.usecase.UploadMediaUseCase
@@ -31,7 +31,7 @@ import kotlinx.serialization.json.longOrNull
 import java.util.UUID
 import kotlin.coroutines.resume
 
-class EditProfileRepository @Inject constructor(
+class EditProfileRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val uploadMediaUseCase: UploadMediaUseCase
 ) {

@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.synapse.social.studioasinc.presentation.editprofile.EditProfileRepository
+import com.synapse.social.studioasinc.data.repository.EditProfileRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AvatarViewModel @Inject constructor(
-    private val editProfileRepository: EditProfileRepository
+    private val editProfileRepository: EditProfileRepositoryImpl
 ) : ViewModel() {
 
     data class UiState(
