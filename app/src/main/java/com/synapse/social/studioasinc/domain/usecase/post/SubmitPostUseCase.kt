@@ -28,7 +28,7 @@ class SubmitPostUseCase @Inject constructor(
     private val reelSubmissionHandler: ReelSubmissionHandler
 ) {
 
-    suspend fun submitPosts(
+    suspend operator fun invoke(
         requests: List<CreatePostRequest>,
         currentUserId: String,
         onProgress: (Float) -> Unit
@@ -143,7 +143,7 @@ class SubmitPostUseCase @Inject constructor(
         }
     }
 
-    suspend operator fun invoke(
+    private suspend operator fun invoke(
         request: CreatePostRequest,
         currentUserId: String,
         originalPost: Post?,

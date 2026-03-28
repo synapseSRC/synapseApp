@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.domain.parser
+package com.synapse.social.studioasinc.core.ui.util
 
 import android.content.Context
 import android.content.Intent

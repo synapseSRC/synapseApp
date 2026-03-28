@@ -226,7 +226,7 @@ class CommentRepository constructor(
                     parentCommentId = comment.replyCommentKey,
                     content = comment.comment,
                     mediaUrl = null,
-                    createdAt = comment.push_time,
+                    createdAt = comment.pushTime,
                     updatedAt = null,
                     likesCount = 0,
                     repliesCount = 0,
@@ -505,7 +505,7 @@ private fun CommentWithUser.toComment(): Comment {
         postKey = this.postId,
         uid = this.userId,
         comment = this.content,
-        push_time = this.createdAt.toString(),
+        pushTime = this.createdAt.toString(),
         replyCommentKey = this.parentCommentId
     )
 }
