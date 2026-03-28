@@ -23,6 +23,20 @@ val linkPreviewListAdapter = object : ColumnAdapter<List<LinkPreview>, String> {
     }
 }
 
+val linkPreviewAdapter = object : ColumnAdapter<LinkPreview, String> {
+    override fun decode(databaseValue: String): LinkPreview {
+        return try {
+            Json.decodeFromString<LinkPreview>(databaseValue)
+        } catch (e: Exception) {
+            LinkPreview("")
+        }
+    }
+
+    override fun encode(value: LinkPreview): String {
+        return Json.encodeToString(value)
+    }
+}
+
 val mediaItemListAdapter = object : ColumnAdapter<List<MediaItem>, String> {
     override fun decode(databaseValue: String): List<MediaItem> {
         return if (databaseValue.isBlank()) emptyList() else try {

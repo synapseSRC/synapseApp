@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.shared.domain.model.chat
 
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
+import com.synapse.social.studioasinc.shared.domain.model.LinkPreview
 
 data class Message(
     val id: String,
@@ -22,7 +23,7 @@ data class Message(
     val encryptionFailureReason: String? = null,
     val reactions: Map<ReactionType, Int> = emptyMap(),
     val userReaction: ReactionType? = null,
-    val linkPreview: com.synapse.social.studioasinc.shared.domain.model.LinkPreview? = null
+    val linkPreview: LinkPreview? = null
 ) {
     fun isFromMe(currentUserId: String): Boolean = senderId == currentUserId
 }

@@ -41,8 +41,8 @@ class SqlDelightCommentDao(
             username = username,
             avatarUrl = avatarUrl,
             parentCommentId = parentCommentId,
-            linkPreview = null,
-            viewsCount = 0
+            linkPreview = linkPreview,
+            viewsCount = viewsCount
         )
     }
 
@@ -58,7 +58,9 @@ class SqlDelightCommentDao(
             isDeleted = false,
             parentCommentId = parentCommentId,
             username = username,
-            avatarUrl = avatarUrl
+            avatarUrl = avatarUrl,
+            linkPreview = linkPreview,
+            viewsCount = viewsCount
         )
     }
 }

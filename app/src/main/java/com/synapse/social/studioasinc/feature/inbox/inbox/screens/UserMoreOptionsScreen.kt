@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,17 +73,17 @@ fun UserMoreOptionsScreen(
                             onDismissRequest = { moreOptionsExpanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Search") },
+                                text = { Text(stringResource(R.string.search)) },
                                 onClick = {
                                     moreOptionsExpanded = false
-                                    Toast.makeText(context, "Search not yet supported", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, R.string.search_not_yet_supported, Toast.LENGTH_SHORT).show()
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Share") },
+                                text = { Text(stringResource(R.string.share)) },
                                 onClick = {
                                     moreOptionsExpanded = false
-                                    Toast.makeText(context, "Share not yet supported", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, R.string.share_not_yet_supported, Toast.LENGTH_SHORT).show()
                                 }
                             )
                         }
@@ -150,19 +151,19 @@ fun UserMoreOptionsScreen(
                     icon = Icons.Default.NotificationsOff,
                     label = "Mute",
                     modifier = Modifier.weight(1f),
-                    onClick = { Toast.makeText(context, "Muted", Toast.LENGTH_SHORT).show() }
+                    onClick = { Toast.makeText(context, R.string.muted, Toast.LENGTH_SHORT).show() }
                 )
                 ActionButton(
                     icon = Icons.Default.Call,
                     label = "Call",
                     modifier = Modifier.weight(1f),
-                    onClick = { Toast.makeText(context, "Calling not yet supported", Toast.LENGTH_SHORT).show() }
+                    onClick = { Toast.makeText(context, R.string.calling_not_yet_supported, Toast.LENGTH_SHORT).show() }
                 )
                 ActionButton(
                     icon = Icons.Default.Videocam,
                     label = "Video",
                     modifier = Modifier.weight(1f),
-                    onClick = { Toast.makeText(context, "Video calls not yet supported", Toast.LENGTH_SHORT).show() }
+                    onClick = { Toast.makeText(context, R.string.video_calls_not_yet_supported, Toast.LENGTH_SHORT).show() }
                 )
             }
 

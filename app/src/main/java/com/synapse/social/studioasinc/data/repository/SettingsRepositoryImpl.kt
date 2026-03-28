@@ -36,6 +36,13 @@ class SettingsRepositoryImpl private constructor(
     companion object {
         private const val TAG = "SettingsRepositoryImpl"
 
+        private const val KEY_APP_LOCK_ENABLED = "app_lock_enabled"
+        private const val KEY_APP_LOCK_TIMEOUT = "app_lock_timeout"
+        private const val KEY_APP_LOCK_METHOD = "app_lock_method"
+        private const val KEY_CHAT_LOCK_ENABLED = "chat_lock_enabled"
+        private const val KEY_LOCKED_CHAT_IDS = "locked_chat_ids"
+        private const val KEY_CHAT_LOCK_METHOD = "chat_lock_method"
+
         @Volatile
         private var INSTANCE: SettingsRepositoryImpl? = null
 
@@ -377,17 +384,15 @@ class SettingsRepositoryImpl private constructor(
     }
 
     override suspend fun setAppLockEnabled(enabled: Boolean) {
-        secureStorage.save("app_lock_enabled", enabled.toString())
-        secureStorage.save("app_lock_timeout", "immediate")
-        secureStorage.save("app_lock_method", "biometric")
-        settingsDataStore.setAppLockEnabled(enabled)
+        secureStorage.save(KEY_APP_LOCK_ENABLED, enabled.toString())
+        secureStorage.save(KEY_APP_LOCK_TIMEOUT, "immediate")
+        secureStorage.save(KEY_APP_LOCK_METHOD, "biometric")
     }
 
     override suspend fun setChatLockEnabled(enabled: Boolean) {
-        secureStorage.save("chat_lock_enabled", enabled.toString())
-        secureStorage.save("locked_chat_ids", "")
-        secureStorage.save("chat_lock_method", "biometric")
-        settingsDataStore.setChatLockEnabled(enabled)
+        secureStorage.save(KEY_CHAT_LOCK_ENABLED, enabled.toString())
+        secureStorage.save(KEY_LOCKED_CHAT_IDS, "")
+        secureStorage.save(KEY_CHAT_LOCK_METHOD, "biometric")
     }
 
 
