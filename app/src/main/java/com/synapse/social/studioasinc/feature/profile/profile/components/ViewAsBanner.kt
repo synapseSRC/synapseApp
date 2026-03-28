@@ -41,7 +41,7 @@ fun ViewAsBanner(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "This is how your profile appears to others",
+                    text = stringResource(R.string.view_as_banner_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )

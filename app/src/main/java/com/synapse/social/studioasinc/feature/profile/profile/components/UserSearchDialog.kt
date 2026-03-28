@@ -62,7 +62,7 @@ fun UserSearchDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Search User",
+                        text = stringResource(R.string.search_user),
                         style = MaterialTheme.typography.titleLarge
                     )
                     IconButton(onClick = onDismiss) {
@@ -100,7 +100,7 @@ fun UserSearchDialog(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "No users found",
+                                        text = stringResource(R.string.no_users_found),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

@@ -57,6 +57,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @Composable
 fun DateDividerChip(label: String) {
@@ -67,9 +69,9 @@ fun DateDividerChip(label: String) {
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(Sizes.CornerDefault),
             color = MaterialTheme.colorScheme.surfaceVariant,
-            tonalElevation = 1.dp
+            tonalElevation = Sizes.BorderThin
         ) {
             Text(
                 text = label,
@@ -179,7 +181,7 @@ fun MessageBubble(
     val offsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val threshold = with(density) { 50.dp.toPx() }
+    val threshold = with(density) { Sizes.AvatarDefault.toPx() }
 
 
 
@@ -197,8 +199,8 @@ fun MessageBubble(
                 indication = null
             )
             .padding(
-                top = if (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) Spacing.Small else 0.dp,
-                bottom = 0.dp
+                top = if (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) Spacing.Small else Spacing.None,
+                bottom = Spacing.Tiny
             )
             .offset { IntOffset(offsetX.value.toInt(), 0) }
             .pointerInput(Unit) {
@@ -458,14 +460,14 @@ fun MessageBubble(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "Sent",
                                 tint = iconTint,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(Sizes.IconSemiSmall)
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.DoneAll,
                                 contentDescription = if (isRead) "Read" else "Delivered",
                                 tint = iconTint,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(Sizes.IconSemiSmall)
                             )
                         }
                     }

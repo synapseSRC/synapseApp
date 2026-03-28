@@ -40,7 +40,7 @@ fun UploadProgressOverlay(
             Column(modifier = Modifier.padding(Spacing.Medium)) {
                 if (error != null) {
                     Text(
-                        text = "Upload Failed",
+                        text = stringResource(R.string.upload_failed),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -63,7 +63,7 @@ fun UploadProgressOverlay(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Uploading Reel...",
+                            text = stringResource(R.string.uploading_reel),
                             style = MaterialTheme.typography.titleSmall
                         )
                         Text(

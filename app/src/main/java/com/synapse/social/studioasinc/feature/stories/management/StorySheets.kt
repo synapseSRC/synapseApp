@@ -66,7 +66,7 @@ fun ViewerListSheet(
                 )
                 Spacer(modifier = Modifier.width(Spacing.SmallMedium))
                 Text(
-                    text = "Seen by ${viewers.size}",
+                    text = stringResource(R.string.seen_by_count, viewers.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -101,7 +101,7 @@ fun ViewerListSheet(
                             )
                             Spacer(modifier = Modifier.height(Spacing.SmallMedium))
                             Text(
-                                text = "No views yet",
+                                text = stringResource(R.string.no_views_yet),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

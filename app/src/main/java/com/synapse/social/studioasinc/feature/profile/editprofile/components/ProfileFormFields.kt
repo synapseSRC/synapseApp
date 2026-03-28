@@ -51,7 +51,7 @@ fun ProfileFormFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        tonalElevation = Spacing.None
     ) {
         Column(
             modifier = Modifier.padding(Spacing.Medium)
@@ -211,7 +211,7 @@ fun LocationFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        tonalElevation = Spacing.None
     ) {
         Column(modifier = Modifier.padding(Spacing.Medium)) {
             Text(stringResource(R.string.section_location), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
@@ -233,7 +233,7 @@ fun WorkAndEducationFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        tonalElevation = Spacing.None
     ) {
         Column(modifier = Modifier.padding(Spacing.Medium)) {
             Text(stringResource(R.string.section_work_education), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
@@ -257,7 +257,7 @@ fun SocialLinksFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        tonalElevation = Spacing.None
     ) {
         Column(modifier = Modifier.padding(Spacing.Medium)) {
             Text(stringResource(R.string.section_social_web), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))

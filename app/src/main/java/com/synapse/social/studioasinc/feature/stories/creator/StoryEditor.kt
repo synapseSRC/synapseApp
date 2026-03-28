@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import com.synapse.social.studioasinc.domain.model.StoryPrivacy
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.StoryColorOrange
+import com.synapse.social.studioasinc.feature.shared.theme.StoryColorGreen
+import com.synapse.social.studioasinc.feature.shared.theme.StoryColorPurple
 
 @Composable
 internal fun StoryEditor(
@@ -61,7 +64,7 @@ internal fun StoryEditor(
     val userProfile by viewModel.userProfile.collectAsState()
 
     val drawingColors = remember {
-        listOf(Color.White, Color.Black, Color.Red, Color(0xFFFF9800), Color.Yellow, Color(0xFF4CAF50), Color.Cyan, Color(0xFF9C27B0))
+        listOf(Color.White, Color.Black, Color.Red, StoryColorOrange, Color.Yellow, StoryColorGreen, Color.Cyan, StoryColorPurple)
     }
     val stickerEmojis = remember {
         listOf("😊", "😂", "❤️", "🔥", "✨", "👍", "🎉", "😍", "🙌", "💯", "😎", "🥳")

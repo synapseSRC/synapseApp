@@ -31,6 +31,8 @@ import coil.compose.AsyncImagePainter
 import kotlinx.coroutines.delay
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 data class MediaItem(
     val id: String,
@@ -258,12 +260,12 @@ private fun PhotoGridEmptyState(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
             Text(
-                text = "No photos yet",
+                text = stringResource(R.string.no_photos_yet),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Share your first photo",
+                text = stringResource(R.string.share_first_photo),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

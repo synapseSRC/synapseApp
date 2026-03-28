@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,14 +36,14 @@ fun SharePostBottomSheet(
                 .padding(vertical = Spacing.Medium)
         ) {
             Text(
-                text = "Share Post",
+                text = stringResource(R.string.share_post),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
             )
 
             ShareOption(
                 icon = Icons.Default.Link,
-                text = "Copy Link",
+                text = stringResource(R.string.copy_link),
                 onClick = {
                     onCopyLink()
                     onDismiss()
@@ -50,7 +52,7 @@ fun SharePostBottomSheet(
 
             ShareOption(
                 icon = Icons.Default.AddCircle,
-                text = "Share to Story",
+                text = stringResource(R.string.share_to_story),
                 onClick = {
                     onShareToStory()
                     onDismiss()
@@ -59,7 +61,7 @@ fun SharePostBottomSheet(
 
             ShareOption(
                 icon = Icons.AutoMirrored.Filled.Send,
-                text = "Share via Message",
+                text = stringResource(R.string.share_via_message),
                 onClick = {
                     onShareViaMessage()
                     onDismiss()
@@ -68,7 +70,7 @@ fun SharePostBottomSheet(
 
             ShareOption(
                 icon = Icons.Default.Share,
-                text = "Share to Other Apps",
+                text = stringResource(R.string.share_to_other_apps),
                 onClick = {
                     onShareExternal()
                     onDismiss()

@@ -49,7 +49,7 @@ fun GenderSelector(
         modifier = modifier.fillMaxWidth(),
         shape = SettingsShapes.sectionShape,
         color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        tonalElevation = Spacing.None
     ) {
         Column(
             modifier = Modifier.padding(Spacing.Medium)
@@ -118,7 +118,7 @@ fun CompactGenderOption(
         onClick = onClick,
         shape = SettingsShapes.itemShape,
         color = backgroundColor,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
+        border = BorderStroke(if (selected) Sizes.BorderDefault else Sizes.BorderThin, borderColor),
         modifier = modifier
     ) {
         Column(
@@ -132,7 +132,7 @@ fun CompactGenderOption(
                 modifier = Modifier.size(Sizes.IconDefault)
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(Spacing.ExtraSmallMedium))
 
             Text(
                 text = label,
@@ -165,7 +165,7 @@ fun GenderOption(
         onClick = onClick,
         shape = SettingsShapes.itemShape,
         color = backgroundColor,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
+        border = BorderStroke(if (selected) Sizes.BorderDefault else Sizes.BorderThin, borderColor),
         modifier = Modifier.scale(scale)
     ) {
         Row(
@@ -173,7 +173,7 @@ fun GenderOption(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Spacing.Medium)
-                .heightIn(min = 56.dp)
+                .heightIn(min = Sizes.HeightDefault)
         ) {
             Icon(
                 imageVector = icon,

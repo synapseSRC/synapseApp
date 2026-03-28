@@ -413,7 +413,7 @@ fun UpdateDialog(
                 Spacer(modifier = Modifier.height(Spacing.Small))
 
                 Text(
-                    text = "Version ",
+                    text = stringResource(R.string.version_prefix),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -457,10 +457,10 @@ fun ProfilePicSuggestionDialog(
 
     AlertDialog(
         onDismissRequest = { onDismiss(hideAgain) },
-        title = { Text(text = "Add a Profile Picture") },
+        title = { Text(text = stringResource(R.string.add_profile_picture_title)) },
         text = {
             Column {
-                Text(text = "A profile picture helps your friends recognize you. Would you like to upload one now?")
+                Text(text = stringResource(R.string.add_profile_picture_message))
                 Spacer(modifier = Modifier.height(Spacing.Medium))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -471,7 +471,7 @@ fun ProfilePicSuggestionDialog(
                         onCheckedChange = null
                     )
                     Text(
-                        text = "Don't show again",
+                        text = stringResource(R.string.dont_show_again),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -479,12 +479,12 @@ fun ProfilePicSuggestionDialog(
         },
         confirmButton = {
             Button(onClick = onUpload) {
-                Text("Upload")
+                Text(stringResource(R.string.upload))
             }
         },
         dismissButton = {
             TextButton(onClick = { onDismiss(hideAgain) }) {
-                Text("Later")
+                Text(stringResource(R.string.later))
             }
         }
     )
@@ -507,7 +507,7 @@ fun ErrorDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Error",
+                    text = stringResource(R.string.error_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error
