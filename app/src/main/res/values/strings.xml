@@ -659,7 +659,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="reply_hint">Reply to %s…</string>
     <string name="author_badge">Author</string>
     <string name="edited_indicator">Edited</string>
-    <string name="view_replies">View %d replies</string>
+    <string name="view_replies">View %1$d replies</string>
     <string name="reaction_like">Like</string>
     <string name="reaction_love">Love</string>
     <string name="reaction_haha">Haha</string>
@@ -1671,4 +1671,20 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="muted">Muted</string>
     <string name="calling_not_yet_supported">Calling not yet supported</string>
     <string name="video_calls_not_yet_supported">Video calls not yet supported</string>
+
+    <string name="or_continue_with">Or continue with</string>
+    <string name="password_strength">Password Strength:</string>
+    <string name="editing_comment">Editing comment</string>
+    <string name="gender">Gender</string>
+    <string name="gender_male">Male</string>
+    <string name="gender_female">Female</string>
+    <string name="gender_other">Other</string>
+    <string name="edited">Edited</string>
+    <string name="error_icon_warning">⚠️</string>
+    <string name="password_strength_weak">Weak</string>
+    <string name="password_strength_fair">Fair</string>
+    <string name="password_strength_strong">Strong</string>
+    <string name="replying_to_user">Replying to %1$s</string>
+    <string name="select_members">Select Members (%1$d)</string>
+    <string name="members_count">Members (%1$d)</string>
 </resources>

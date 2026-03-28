@@ -19,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
@@ -55,13 +57,13 @@ fun PasswordStrengthIndicator(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Password Strength:",
+                text = stringResource(id = R.string.password_strength),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Spacing.Small))
             Text(
-                text = strength.label,
+                text = stringResource(id = strength.labelResId),
                 style = MaterialTheme.typography.labelMedium,
                 color = animatedColor
             )
@@ -87,11 +89,11 @@ val PasswordStrength.color: Color
         PasswordStrength.Strong -> InteractionRepostActive
     }
 
-val PasswordStrength.label: String
+val PasswordStrength.labelResId: Int
     get() = when(this) {
-        PasswordStrength.Weak -> "Weak"
-        PasswordStrength.Fair -> "Fair"
-        PasswordStrength.Strong -> "Strong"
+        PasswordStrength.Weak -> R.string.password_strength_weak
+        PasswordStrength.Fair -> R.string.password_strength_fair
+        PasswordStrength.Strong -> R.string.password_strength_strong
     }
 
 val PasswordStrength.progress: Float

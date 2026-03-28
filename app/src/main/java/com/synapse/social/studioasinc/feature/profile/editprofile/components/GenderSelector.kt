@@ -30,7 +30,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Gender
 import com.synapse.social.studioasinc.ui.settings.SettingsColors
 import com.synapse.social.studioasinc.ui.settings.SettingsShapes
@@ -53,7 +55,7 @@ fun GenderSelector(
             modifier = Modifier.padding(Spacing.Medium)
         ) {
             Text(
-                text = "Gender",
+                text = stringResource(id = R.string.gender),
                 style = MaterialTheme.typography.titleMedium,
                 color = SettingsColors.sectionTitle
             )
@@ -64,7 +66,7 @@ fun GenderSelector(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 CompactGenderOption(
-                    label = "Male",
+                    label = stringResource(id = R.string.gender_male),
                     icon = Icons.Filled.Male,
                     selected = selectedGender == Gender.Male,
                     onClick = { onGenderSelected(Gender.Male) },
@@ -74,7 +76,7 @@ fun GenderSelector(
                 Spacer(modifier = Modifier.width(Spacing.Small))
 
                 CompactGenderOption(
-                    label = "Female",
+                    label = stringResource(id = R.string.gender_female),
                     icon = Icons.Filled.Female,
                     selected = selectedGender == Gender.Female,
                     onClick = { onGenderSelected(Gender.Female) },
@@ -84,7 +86,7 @@ fun GenderSelector(
                 Spacer(modifier = Modifier.width(Spacing.Small))
 
                 CompactGenderOption(
-                    label = "Other",
+                    label = stringResource(id = R.string.gender_other),
                     icon = Icons.Filled.Person,
                     selected = selectedGender == Gender.Hidden,
                     onClick = { onGenderSelected(Gender.Hidden) },

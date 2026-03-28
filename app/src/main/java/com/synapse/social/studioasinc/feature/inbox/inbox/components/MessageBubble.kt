@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
@@ -437,7 +438,7 @@ fun MessageBubble(
                     }
                     if (message.isEdited) {
                         Text(
-                            text = "Edited",
+                            text = stringResource(id = R.string.edited),
                             style = MaterialTheme.typography.labelSmall,
                             color = contentColor.copy(alpha = 0.6f),
                             fontStyle = androidx.compose.ui.text.font.FontStyle.Italic

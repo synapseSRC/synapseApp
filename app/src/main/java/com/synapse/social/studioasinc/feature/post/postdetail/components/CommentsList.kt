@@ -21,6 +21,8 @@ import com.synapse.social.studioasinc.domain.model.CommentWithUser
 import com.synapse.social.studioasinc.domain.model.CommentAction
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
 import com.synapse.social.studioasinc.domain.model.ReactionType
 
@@ -137,7 +139,7 @@ fun CommentsList(
                     if (comment.repliesCount > replies.size && !replyLoadingState.contains(comment.id)) {
                         val remainingReplies = comment.repliesCount - replies.size
                         Text(
-                            text = "View $remainingReplies replies",
+                            text = stringResource(id = R.string.view_replies, remainingReplies),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
@@ -263,7 +265,7 @@ private fun RenderReplies(
             if (reply.repliesCount > nestedReplies.size && !replyLoadingState.contains(reply.id)) {
                 val remainingReplies = reply.repliesCount - nestedReplies.size
                 Text(
-                    text = "View $remainingReplies replies",
+                    text = stringResource(id = R.string.view_replies, remainingReplies),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,

@@ -47,7 +47,7 @@ fun EmailVerificationScreen(
             Icon(
                 imageVector = Icons.Filled.Email,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(Sizes.AvatarSemiLarge),
                 tint = MaterialTheme.colorScheme.primary
             )
 
