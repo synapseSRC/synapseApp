@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.CommentWithUser
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -29,7 +31,7 @@ fun ReplyIndicator(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Replying to ${replyTo.user?.username ?: "User"}",
+                text = stringResource(id = R.string.replying_to_user, replyTo.user?.username ?: "User"),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -61,7 +63,7 @@ fun EditIndicator(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Editing comment",
+                text = stringResource(id = R.string.editing_comment),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
@@ -68,7 +70,7 @@ fun ErrorCard(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
                 ) {
                     Text(
-                        text = "⚠️",
+                        text = stringResource(id = R.string.error_icon_warning),
                         style = MaterialTheme.typography.titleLarge
                     )
 

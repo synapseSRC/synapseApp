@@ -84,7 +84,7 @@ fun CreateGroupScreen(
             )
 
             Text(
-                text = "Select Members (${selectedUsers.size})",
+                text = stringResource(id = R.string.select_members, selectedUsers.size),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
             )

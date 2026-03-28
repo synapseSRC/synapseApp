@@ -19,6 +19,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 
 
@@ -37,7 +38,7 @@ fun LoadingOverlay(
                 .fillMaxSize()
                 .then(
                     if (isLoading && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                         Modifier.blur(radius = 10.dp)
+                         Modifier.blur(radius = Spacing.SmallPlus)
                     } else {
                         Modifier
                     }

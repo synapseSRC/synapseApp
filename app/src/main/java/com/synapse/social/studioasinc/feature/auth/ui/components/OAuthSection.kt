@@ -13,7 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
@@ -32,11 +34,11 @@ fun OAuthSection(
         Spacer(
             modifier = Modifier
                 .weight(1f)
-                .height(1.dp)
+                .height(Sizes.BorderThin)
                 .background(MaterialTheme.colorScheme.outlineVariant)
         )
         Text(
-            text = "Or continue with",
+            text = stringResource(id = R.string.or_continue_with),
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(horizontal = Spacing.Medium),
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -44,7 +46,7 @@ fun OAuthSection(
         Spacer(
             modifier = Modifier
                 .weight(1f)
-                .height(1.dp)
+                .height(Sizes.BorderThin)
                 .background(MaterialTheme.colorScheme.outlineVariant)
         )
     }

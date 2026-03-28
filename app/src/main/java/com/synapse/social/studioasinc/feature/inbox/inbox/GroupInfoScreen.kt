@@ -153,7 +153,7 @@ fun GroupInfoScreen(
             }
 
             Text(
-                text = "Members (${members.size})",
+                text = stringResource(id = R.string.members_count, members.size),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
             )
