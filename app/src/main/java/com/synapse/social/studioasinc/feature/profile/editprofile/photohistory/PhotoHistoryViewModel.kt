@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import com.synapse.social.studioasinc.presentation.editprofile.EditProfileRepository
+import com.synapse.social.studioasinc.data.repository.EditProfileRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +29,7 @@ sealed class PhotoHistoryEvent {
 @HiltViewModel
 class PhotoHistoryViewModel @Inject constructor(
     application: Application,
-    private val repository: EditProfileRepository
+    private val repository: EditProfileRepositoryImpl
 ) : AndroidViewModel(application) {
 
 

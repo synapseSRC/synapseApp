@@ -20,11 +20,12 @@ import kotlinx.coroutines.launch
 import java.io.File
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import com.synapse.social.studioasinc.data.repository.EditProfileRepositoryImpl
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     application: Application,
-    private val repository: EditProfileRepository
+    private val repository: EditProfileRepositoryImpl
 ) : AndroidViewModel(application) {
 
 
