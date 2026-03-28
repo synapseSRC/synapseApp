@@ -40,7 +40,7 @@ private fun EmptyFavouritesCard() {
             Spacer(modifier = Modifier.height(Spacing.Medium))
             
             Text(
-                text = "No Favourites Yet",
+                text = stringResource(R.string.no_favourites_yet),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -48,7 +48,7 @@ private fun EmptyFavouritesCard() {
             Spacer(modifier = Modifier.height(Spacing.Small))
             
             Text(
-                text = "Add contacts to your favourites for quick access",
+                text = stringResource(R.string.add_contacts_favourites),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -94,26 +94,26 @@ fun FavouritesScreen(
             }
 
             item {
-                SettingsSection(title = "Manage Favourites") {
+                SettingsSection(title = stringResource(R.string.manage_favourites)) {
                     SettingsNavigationItem(
-                        title = "Add to Favourites",
-                        subtitle = "Select contacts to add to favourites",
+                        title = stringResource(R.string.add_to_favourites),
+                        subtitle = stringResource(R.string.select_contacts_favourites),
                         imageVector = Icons.Filled.Add,
                         position = SettingsItemPosition.Top,
                         onClick = { }
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Reorder Favourites",
-                        subtitle = "Change the order of favourite contacts",
+                        title = stringResource(R.string.reorder_favourites),
+                        subtitle = stringResource(R.string.change_order_favourites),
                         imageVector = Icons.Filled.Reorder,
                         position = SettingsItemPosition.Middle,
                         onClick = { }
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Remove from Favourites",
-                        subtitle = "Remove contacts from favourites list",
+                        title = stringResource(R.string.remove_from_favourites),
+                        subtitle = stringResource(R.string.remove_contacts_favourites),
                         imageVector = Icons.Filled.Delete,
                         position = SettingsItemPosition.Bottom,
                         onClick = { }
@@ -122,10 +122,10 @@ fun FavouritesScreen(
             }
 
             item {
-                SettingsSection(title = "Display Options") {
+                SettingsSection(title = stringResource(R.string.display_options)) {
                     SettingsToggleItem(
-                        title = "Show Favourites in Chat List",
-                        subtitle = "Display favourite contacts at the top",
+                        title = stringResource(R.string.show_favourites_chat_list),
+                        subtitle = stringResource(R.string.display_favourite_contacts_top),
                         imageVector = Icons.Filled.Chat,
                         checked = true,
                         onCheckedChange = { },
@@ -133,8 +133,8 @@ fun FavouritesScreen(
                     )
                     SettingsDivider()
                     SettingsToggleItem(
-                        title = "Show Favourite Badge",
-                        subtitle = "Display a star icon on favourite contacts",
+                        title = stringResource(R.string.show_favourite_badge),
+                        subtitle = stringResource(R.string.display_star_icon),
                         imageVector = Icons.Filled.Favorite,
                         checked = true,
                         onCheckedChange = { },

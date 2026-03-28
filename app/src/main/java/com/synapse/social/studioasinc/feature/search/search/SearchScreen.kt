@@ -130,16 +130,16 @@ fun SearchScreen(
                         expanded = false,
                         onExpandedChange = {},
                         placeholder = { Text(stringResource(R.string.search_synapse_hint)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
                         trailingIcon = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (uiState.query.isNotEmpty()) {
                                     IconButton(onClick = viewModel::clearSearch) {
-                                        Icon(Icons.Default.Close, contentDescription = "Clear")
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear))
                                     }
                                 } else {
-                                    IconButton(onClick = { Toast.makeText(context, "Voice Search", Toast.LENGTH_SHORT).show() }) {
-                                        Icon(Icons.Default.Mic, contentDescription = "Voice Search")
+                                    IconButton(onClick = { Toast.makeText(context, context.getString(R.string.voice_search), Toast.LENGTH_SHORT).show() }) {
+                                        Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.voice_search))
                                     }
                                 }
                             }
@@ -160,7 +160,7 @@ fun SearchScreen(
                 val history = uiState.searchHistory
                 if (history.isNotEmpty()) {
                     Text(
-                        text = "Recent Searches",
+                        text = stringResource(R.string.recent_searches),
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
                     )
@@ -228,7 +228,7 @@ fun SearchScreen(
                         when (tab) {
                             SearchTab.FOR_YOU -> {
                                 if (uiState.posts.isEmpty() && uiState.accounts.isEmpty() && uiState.hashtags.isEmpty()) {
-                                    EmptyState("No content found")
+                                    EmptyState(stringResource(R.string.no_content_found))
                                 } else {
                                     LazyVerticalStaggeredGrid(
                                         columns = StaggeredGridCells.Fixed(2),
@@ -301,7 +301,7 @@ fun SearchScreen(
                                         SearchTab.FOR_YOU -> {} // Handled above
                                 SearchTab.PEOPLE -> {
                                     if (uiState.accounts.isEmpty()) {
-                                        item { EmptyState("No accounts found") }
+                                        item { EmptyState(stringResource(R.string.no_accounts_found)) }
                                     } else {
                                         itemsIndexed(uiState.accounts, key = { index, it -> "${it.id}_${index}" }) { index, account ->
                                             AccountCard(
@@ -318,7 +318,7 @@ fun SearchScreen(
                                 }
                                 SearchTab.TRENDING, SearchTab.LISTS -> {
                                     if (uiState.hashtags.isEmpty()) {
-                                        item { EmptyState("No hashtags found") }
+                                        item { EmptyState(stringResource(R.string.no_hashtags_found)) }
                                     } else {
                                         itemsIndexed(uiState.hashtags, key = { index, it -> "${it.id}_${index}" }) { index, hashtag ->
                                             HashtagCard(
@@ -334,7 +334,7 @@ fun SearchScreen(
                                 }
                                 SearchTab.NEWS, SearchTab.SPORTS, SearchTab.ENTERTAINMENT -> {
                                     if (uiState.news.isEmpty()) {
-                                        item { EmptyState("No news found") }
+                                        item { EmptyState(stringResource(R.string.no_news_found)) }
                                     } else {
                                         itemsIndexed(uiState.news, key = { index, it -> "${it.id}_${index}" }) { index, news ->
                                             NewsCard(
@@ -354,7 +354,7 @@ fun SearchScreen(
                                 }
                                 SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
                                     if (uiState.posts.isEmpty()) {
-                                        item { EmptyState("No posts found") }
+                                        item { EmptyState(stringResource(R.string.empty_posts_title)) }
                                     } else {
                                         itemsIndexed(uiState.posts, key = { index, it -> "${it.id}_${index}" }) { index, post ->
                                             val actions = remember(viewModel) {
@@ -404,16 +404,16 @@ fun SearchScreen(
             onShare = {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Check out this post on Synapse: synapse://post/${post.id}")
+                    putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_post_synapse_text, post.id))
                 }
-                context.startActivity(Intent.createChooser(shareIntent, "Share Post"))
+                context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.title_share_post)))
                 selectedPost = null
             },
             onCopyLink = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText(postLinkLabel, "synapse://post/${post.id}")
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
                 selectedPost = null
             },
             onBookmark = {
