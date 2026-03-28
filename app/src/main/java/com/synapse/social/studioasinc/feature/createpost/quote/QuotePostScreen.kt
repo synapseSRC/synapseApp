@@ -40,7 +40,7 @@ fun QuotePostScreen(
                 title = { Text(stringResource(R.string.quote_post_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -74,7 +74,7 @@ fun QuotePostScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.Medium))
 
             Text(
-                text = "Quoting",
+                text = stringResource(R.string.quoting),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(Spacing.Medium)
             )

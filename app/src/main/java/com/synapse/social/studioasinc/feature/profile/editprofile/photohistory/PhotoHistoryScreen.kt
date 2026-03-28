@@ -89,8 +89,8 @@ fun PhotoHistoryScreen(
                 title = {
                     Text(
                         text = when (type) {
-                            PhotoType.PROFILE -> "Profile Photos"
-                            PhotoType.COVER -> "Cover Photos"
+                            PhotoType.PROFILE -> stringResource(R.string.profile_photos_title)
+                            PhotoType.COVER -> stringResource(R.string.cover_photos_title)
                         }
                     )
                 },
@@ -98,7 +98,7 @@ fun PhotoHistoryScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -157,7 +157,7 @@ fun PhotoHistoryScreen(
                     Spacer(modifier = Modifier.height(Sizes.HeightSmall))
 
                     Text(
-                        text = "No history yet",
+                        text = stringResource(R.string.no_history_yet),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -165,7 +165,7 @@ fun PhotoHistoryScreen(
                     Spacer(modifier = Modifier.height(Spacing.Small))
 
                     Text(
-                        text = "Your previous photos will appear here",
+                        text = stringResource(R.string.previous_photos_here),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -223,7 +223,7 @@ fun PhotoHistoryItem(
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = item.imageUrl,
-                contentDescription = "History Photo",
+                contentDescription = stringResource(R.string.history_photo),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -243,7 +243,7 @@ fun PhotoHistoryItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.cd_selected),
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .size(Sizes.IconHuge)

@@ -61,7 +61,7 @@ private fun AvatarPreviewCard(
                     if (avatarUrl != null && avatarUrl.isNotBlank()) {
                         AsyncImage(
                             model = ImageLoader.buildImageRequest(context, avatarUrl),
-                            contentDescription = "Current profile photo",
+                            contentDescription = stringResource(R.string.current_profile_photo),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(CircleShape),
@@ -79,7 +79,7 @@ private fun AvatarPreviewCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Person,
-                                    contentDescription = "Default avatar",
+                                    contentDescription = stringResource(R.string.default_avatar),
                                     modifier = Modifier.size(Sizes.AvatarLarge),
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
@@ -92,7 +92,7 @@ private fun AvatarPreviewCard(
             Spacer(modifier = Modifier.height(Spacing.Medium))
             
             Text(
-                text = if (isUploading) "Uploading..." else "Current Profile Photo",
+                text = if (isUploading) stringResource(R.string.uploading) else stringResource(R.string.current_profile_photo_label),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -100,7 +100,7 @@ private fun AvatarPreviewCard(
             if (!isUploading) {
                 Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                 Text(
-                    text = "Choose an option below to update",
+                    text = stringResource(R.string.choose_option_below),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -162,7 +162,7 @@ fun AvatarScreen(
                         viewModel.removeProfilePhoto(
                             onSuccess = {
                                 showRemoveDialog = false
-                                Toast.makeText(context, "Profile photo removed", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.profile_photo_removed), Toast.LENGTH_SHORT).show()
                             },
                             onError = { error ->
                                 showRemoveDialog = false
@@ -223,38 +223,38 @@ fun AvatarScreen(
             }
 
             item {
-                SettingsSection(title = "Profile Photo") {
+                SettingsSection(title = stringResource(R.string.profile_photo_section)) {
                     SettingsNavigationItem(
-                        title = "Choose from Gallery",
-                        subtitle = "Select a photo from your device",
+                        title = stringResource(R.string.choose_from_gallery),
+                        subtitle = stringResource(R.string.choose_from_gallery_subtitle),
                         imageVector = Icons.Filled.Image,
                         position = SettingsItemPosition.Top,
                         onClick = {
                             try {
                                 photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             } catch (e: android.content.ActivityNotFoundException) {
-                                Toast.makeText(context, "No photo picker available", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.no_photo_picker), Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Take Photo",
-                        subtitle = "Capture a new photo with camera",
+                        title = stringResource(R.string.take_photo),
+                        subtitle = stringResource(R.string.take_photo_subtitle),
                         imageVector = Icons.Filled.CameraAlt,
                         position = SettingsItemPosition.Middle,
                         onClick = {
                             try {
                                 cameraLauncher.launch(null)
                             } catch (e: android.content.ActivityNotFoundException) {
-                                Toast.makeText(context, "No camera available", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.no_camera_available), Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Remove Profile Photo",
-                        subtitle = "Use default avatar",
+                        title = stringResource(R.string.remove_profile_photo_title),
+                        subtitle = stringResource(R.string.remove_profile_photo_subtitle),
                         imageVector = Icons.Filled.Delete,
                         position = SettingsItemPosition.Bottom,
                         onClick = { showRemoveDialog = true }
@@ -263,24 +263,24 @@ fun AvatarScreen(
             }
 
             item {
-                SettingsSection(title = "Avatar Creation") {
+                SettingsSection(title = stringResource(R.string.avatar_creation_section)) {
                     SettingsNavigationItem(
-                        title = "Create Avatar",
-                        subtitle = "Design a custom avatar",
+                        title = stringResource(R.string.create_avatar),
+                        subtitle = stringResource(R.string.create_avatar_subtitle),
                         imageVector = Icons.Filled.Add,
                         position = SettingsItemPosition.Top,
                         onClick = {
-                            Toast.makeText(context, "Avatar creator coming soon", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.avatar_creator_soon), Toast.LENGTH_SHORT).show()
                         }
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Edit Avatar",
-                        subtitle = "Modify existing avatar",
+                        title = stringResource(R.string.edit_avatar),
+                        subtitle = stringResource(R.string.edit_avatar_subtitle),
                         imageVector = Icons.Filled.Edit,
                         position = SettingsItemPosition.Bottom,
                         onClick = {
-                            Toast.makeText(context, "Avatar editor coming soon", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.avatar_editor_soon), Toast.LENGTH_SHORT).show()
                         }
                     )
                 }

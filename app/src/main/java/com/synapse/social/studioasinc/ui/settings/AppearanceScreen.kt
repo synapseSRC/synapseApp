@@ -74,11 +74,11 @@ fun AppearanceScreen(
         ) {
 
             item {
-                SettingsSection(title = "Theme") {
+                SettingsSection(title = stringResource(R.string.settings_theme_t)) {
 
                     SettingsSelectionItem(
-                        title = "Theme Mode",
-                        subtitle = "Choose your preferred theme",
+                        title = stringResource(R.string.appearance_theme_mode),
+                        subtitle = stringResource(R.string.appearance_theme_mode_subtitle),
                         icon = Icons.Filled.Palette,
                         options = viewModel.getThemeModeOptions(),
                         selectedOption = viewModel.getThemeModeDisplayName(appearanceSettings.themeMode),
@@ -93,8 +93,8 @@ fun AppearanceScreen(
                     if (viewModel.isDynamicColorSupported) {
                         SettingsDivider()
                         SettingsToggleItem(
-                            title = "Dynamic Color",
-                            subtitle = "Use colors from your wallpaper",
+                            title = stringResource(R.string.appearance_dynamic_color),
+                            subtitle = stringResource(R.string.appearance_dynamic_color_subtitle),
                             imageVector = Icons.Filled.Palette,
                             checked = appearanceSettings.dynamicColorEnabled,
                             onCheckedChange = { viewModel.setDynamicColorEnabled(it) },
@@ -106,11 +106,11 @@ fun AppearanceScreen(
 
 
             item {
-                SettingsSection(title = "Display") {
+                SettingsSection(title = stringResource(R.string.appearance_display)) {
 
                     SettingsSliderItem(
-                        title = "Font Size",
-                        subtitle = "Adjust text size for better readability",
+                        title = stringResource(R.string.appearance_font_size),
+                        subtitle = stringResource(R.string.appearance_font_size_subtitle),
                         value = viewModel.getSliderValueFromFontScale(appearanceSettings.fontScale),
                         valueRange = 0f..3f,
                         steps = 2,
@@ -130,7 +130,7 @@ fun AppearanceScreen(
 
 
             item {
-                SettingsSection(title = "Media Layout (Beta)") {
+                SettingsSection(title = stringResource(R.string.appearance_media_layout_beta)) {
                     val options = viewModel.getPostViewStyleOptions()
                     val selected = viewModel.getPostViewStyleFromDisplayName(appearanceSettings.postViewStyle.displayName()).displayName()
 
@@ -140,13 +140,13 @@ fun AppearanceScreen(
                             .padding(horizontal = SettingsSpacing.itemHorizontalPadding, vertical = SettingsSpacing.itemVerticalPadding)
                     ) {
                         Text(
-                            text = "Post Media Grid",
+                            text = stringResource(R.string.appearance_post_media_grid),
                             style = SettingsTypography.itemTitle,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         Text(
-                            text = "Choose how multiple images/videos are displayed",
+                            text = stringResource(R.string.appearance_post_media_grid_subtitle),
                             style = SettingsTypography.itemSubtitle,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -176,7 +176,7 @@ fun AppearanceScreen(
                                                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                                 ) {
                                                     Text(
-                                                        text = "Beta",
+                                                        text = stringResource(R.string.appearance_beta),
                                                         style = MaterialTheme.typography.labelSmall,
                                                         modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = 0.dp)
                                                     )

@@ -18,8 +18,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
@@ -51,7 +53,7 @@ fun ResetPasswordScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Set New Password",
+                text = stringResource(R.string.reset_password_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -65,7 +67,7 @@ fun ResetPasswordScreen(
             AuthTextField(
                 value = state.password,
                 onValueChange = onPasswordChanged,
-                label = "New Password",
+                label = stringResource(R.string.change_password_new),
                 error = state.passwordError,
                 isValid = false,
                 isPassword = true,
@@ -87,7 +89,7 @@ fun ResetPasswordScreen(
             AuthTextField(
                 value = state.confirmPassword,
                 onValueChange = onConfirmPasswordChanged,
-                label = "Confirm Password",
+                label = stringResource(R.string.change_password_confirm),
                 error = state.confirmPasswordError,
                 isValid = state.confirmPassword.isNotEmpty() && state.confirmPassword == state.password,
                 isPassword = true,
@@ -106,7 +108,7 @@ fun ResetPasswordScreen(
             Spacer(modifier = Modifier.height(Spacing.Large))
 
             AuthButton(
-                text = "Reset Password",
+                text = stringResource(R.string.reset_password_button),
                 loading = state.isLoading,
                 onClick = {
                     focusManager.clearFocus()

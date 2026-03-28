@@ -111,10 +111,10 @@ fun AboutSupportScreen(
 
 
             item {
-                SettingsSection(title = "Legal") {
+                SettingsSection(title = stringResource(R.string.about_section_legal)) {
                     SettingsNavigationItem(
-                        title = "Terms of Service",
-                        subtitle = "View our terms and conditions",
+                        title = stringResource(R.string.about_terms),
+                        subtitle = stringResource(R.string.about_terms_subtitle),
                         imageVector = Icons.Filled.Description,
                         onClick = {
                             val url = viewModel.getTermsOfServiceUrl()
@@ -123,8 +123,8 @@ fun AboutSupportScreen(
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Privacy Policy",
-                        subtitle = "Learn how we protect your data",
+                        title = stringResource(R.string.about_privacy_policy),
+                        subtitle = stringResource(R.string.about_privacy_policy_subtitle),
                         imageVector = Icons.Filled.Shield,
                         onClick = {
                             val url = viewModel.getPrivacyPolicyUrl()
@@ -133,8 +133,8 @@ fun AboutSupportScreen(
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Open Source Licenses",
-                        subtitle = "View third-party library attributions",
+                        title = stringResource(R.string.about_licenses),
+                        subtitle = stringResource(R.string.about_licenses_subtitle),
                         imageVector = Icons.Filled.BugReport,
                         onClick = {
                             viewModel.navigateToLicenses()
@@ -146,10 +146,10 @@ fun AboutSupportScreen(
 
 
             item {
-                SettingsSection(title = "Support") {
+                SettingsSection(title = stringResource(R.string.about_section_support)) {
                     SettingsNavigationItem(
-                        title = "Help Center",
-                        subtitle = "FAQs and support resources",
+                        title = stringResource(R.string.about_help_center),
+                        subtitle = stringResource(R.string.about_help_center_subtitle),
                         imageVector = Icons.Filled.Info,
                         onClick = {
                             val url = viewModel.getHelpCenterUrl()
@@ -158,8 +158,8 @@ fun AboutSupportScreen(
                     )
                     SettingsDivider()
                     SettingsNavigationItem(
-                        title = "Report a Problem",
-                        subtitle = "Send us feedback or report issues",
+                        title = stringResource(R.string.about_report_problem),
+                        subtitle = stringResource(R.string.about_report_problem_subtitle),
                         imageVector = Icons.Filled.BugReport,
                         onClick = {
                             IntentUtils.openUrl(context, AboutSupportConstants.URL_GITHUB_BUG_REPORT)
@@ -170,10 +170,10 @@ fun AboutSupportScreen(
 
 
             item {
-                SettingsSection(title = "Updates") {
+                SettingsSection(title = stringResource(R.string.about_updates)) {
                     SettingsNavigationItem(
-                        title = "Check for Updates",
-                        subtitle = "See if a new version is available",
+                        title = stringResource(R.string.about_check_updates),
+                        subtitle = stringResource(R.string.about_check_updates_subtitle),
                         imageVector = Icons.Filled.Download,
                         onClick = {
                             IntentUtils.openUrl(context, AboutSupportConstants.URL_APP_WEBSITE)
@@ -185,7 +185,7 @@ fun AboutSupportScreen(
 
             item {
                 Text(
-                    text = "© 2024 Synapse Social. All rights reserved.",
+                    text = stringResource(R.string.about_copyright),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -222,13 +222,13 @@ private fun AppInfoHeaderCard(
 
             Image(
                 painter = painterResource(R.drawable.ic_launcher_foreground),
-                contentDescription = "Synapse Logo",
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.size(Sizes.AvatarExtraLarge)
             )
 
 
             Text(
-                text = "Synapse",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -239,12 +239,12 @@ private fun AppInfoHeaderCard(
                 verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
             ) {
                 Text(
-                    text = "Version $appVersion",
+                    text = stringResource(R.string.about_version) + " $appVersion",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Build $buildNumber",
+                    text = stringResource(R.string.about_build) + " $buildNumber",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )

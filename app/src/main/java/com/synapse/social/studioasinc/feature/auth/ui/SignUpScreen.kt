@@ -16,8 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
@@ -64,13 +66,13 @@ fun SignUpScreen(
 private fun SignUpHeader() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = "Create Account",
+            text = stringResource(R.string.sign_up_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(Spacing.Small))
         Text(
-            text = "Sign up to get started",
+            text = stringResource(R.string.sign_up_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -92,7 +94,7 @@ private fun SignUpForm(
     AuthTextField(
         value = state.username,
         onValueChange = onUsernameChanged,
-        label = "Username",
+        label = stringResource(R.string.username_label),
         error = state.usernameError,
         isValid = state.username.length >= 3 && state.usernameError == null,
         isLoading = state.isCheckingUsername,
@@ -103,7 +105,7 @@ private fun SignUpForm(
     AuthTextField(
         value = state.email,
         onValueChange = onEmailChanged,
-        label = "Email",
+        label = stringResource(R.string.email_label),
         error = state.emailError,
         isValid = state.isEmailValid,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -113,7 +115,7 @@ private fun SignUpForm(
     AuthTextField(
         value = state.password,
         onValueChange = onPasswordChanged,
-        label = "Password",
+        label = stringResource(R.string.password),
         error = state.passwordError,
         isValid = false,
         isPassword = true,
@@ -141,7 +143,7 @@ private fun SignUpForm(
     Spacer(modifier = Modifier.height(Spacing.Small))
 
     AuthButton(
-        text = "Sign Up",
+        text = stringResource(R.string.action_sign_up),
         onClick = {
             focusManager.clearFocus()
             onSignUpClick()
@@ -158,9 +160,9 @@ private fun SignUpForm(
     Spacer(modifier = Modifier.height(Spacing.Large))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = "Already have an account? ", style = MaterialTheme.typography.bodyMedium)
+        Text(text = stringResource(R.string.already_have_account), style = MaterialTheme.typography.bodyMedium)
         Text(
-            text = "Sign In",
+            text = stringResource(R.string.action_sign_in),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.clickable { onToggleModeClick() }

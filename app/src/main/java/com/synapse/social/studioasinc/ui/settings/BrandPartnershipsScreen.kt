@@ -39,7 +39,7 @@ fun BrandPartnershipsScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Brand Partnerships feature coming soon",
+                text = stringResource(R.string.brand_partnerships_coming_soon),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
