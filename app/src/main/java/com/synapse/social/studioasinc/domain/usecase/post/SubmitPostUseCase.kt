@@ -18,7 +18,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import java.util.UUID
 import javax.inject.Inject
 
 class SubmitPostUseCase @Inject constructor(
@@ -82,7 +81,7 @@ class SubmitPostUseCase @Inject constructor(
             }
 
             requests.forEachIndexed { index, request ->
-                val postId = UUID.randomUUID().toString()
+                val postId = "${kotlin.random.Random.nextLong().toULong().toString(16)}-${kotlin.random.Random.nextLong().toULong().toString(16)}"
                 val mediaItems = allMediaResults.find { it.first == index }?.second ?: emptyList<MediaItem>()
 
                 val postType = when {
@@ -143,7 +142,7 @@ class SubmitPostUseCase @Inject constructor(
         }
     }
 
-    private suspend operator fun invoke(
+    private suspend fun buildAndSubmitSingle(
         request: CreatePostRequest,
         currentUserId: String,
         originalPost: Post?,
@@ -181,7 +180,7 @@ class SubmitPostUseCase @Inject constructor(
             }
 
             val post = Post(
-                id = request.editPostId ?: UUID.randomUUID().toString(),
+                id = request.editPostId ?: "${kotlin.random.Random.nextLong().toULong().toString(16)}-${kotlin.random.Random.nextLong().toULong().toString(16)}",
                 key = originalPost?.key ?: "post_${timestamp}_${(1000..9999).random()}",
                 authorUid = currentUserId,
                 postText = text.ifEmpty { null },

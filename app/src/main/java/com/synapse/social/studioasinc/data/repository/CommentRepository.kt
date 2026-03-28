@@ -26,7 +26,6 @@ class CommentRepository constructor(
     @Named("ApplicationScope") private val externalScope: CoroutineScope,
     private val reactionRepository: ReactionRepository
 ) {
-    private val TAG = "CommentRepository"
 
     companion object {
         private const val TAG = "CommentRepository"
