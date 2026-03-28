@@ -29,6 +29,8 @@ import coil.compose.AsyncImagePainter
 import kotlinx.coroutines.delay
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 
 
@@ -147,13 +149,13 @@ private fun AnimatedReelItem(
         ) {
             Icon(
                 imageVector = Icons.Default.PlayArrow,
-                contentDescription = "Reel",
+                contentDescription = stringResource(R.string.reel),
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(Sizes.IconSmall)
             )
             Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
             Text(
-                text = "Reel",
+                text = stringResource(R.string.reel),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onPrimary
             )
@@ -205,12 +207,12 @@ private fun ReelsGridEmptyState(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
             Text(
-                text = "No reels yet",
+                text = stringResource(R.string.no_reels_yet),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Create your first reel",
+                text = stringResource(R.string.create_first_reel),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -111,3 +111,7 @@ val ChatPresetColor4 = Color(0xFFBF360C)
 val ChatPresetColor5 = Color(0xFFFF5722)
 val ChatPresetColor6 = Color(0xFF9E9E9E)
 val ChatPresetColor7 = Color(0xFFE0E0E0)
+
+val StoryColorOrange = Color(0xFFFF9800)
+val StoryColorGreen = Color(0xFF4CAF50)
+val StoryColorPurple = Color(0xFF9C27B0)

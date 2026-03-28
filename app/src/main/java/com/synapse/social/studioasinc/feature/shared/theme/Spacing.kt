@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.dp
 
 object Spacing {
 
+    val None = 0.dp
+
     val Tiny = 2.dp
 
     val ExtraSmall = 4.dp
@@ -71,6 +73,8 @@ object Sizes {
     val HeightMedium = 40.dp
     val HeightDefault = 56.dp
     val HeightLarge = 80.dp
+    val Height100 = 100.dp
+    val Height120 = 120.dp
     val HeightPreview = 300.dp
     val HeightStoryTray = 180.dp
     val HeightMediaSingle = 600.dp

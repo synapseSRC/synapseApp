@@ -12,6 +12,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,7 @@ fun ShareBottomSheet(
                 .padding(bottom = Spacing.ExtraLarge)
         ) {
             Text(
-                text = "Share Reel",
+                text = stringResource(R.string.share_reel),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(Spacing.Medium).align(Alignment.CenterHorizontally)
             )
@@ -46,7 +48,7 @@ fun ShareBottomSheet(
 
             ActionItem(
                 icon = Icons.Default.ContentCopy,
-                title = "Copy Link",
+                title = stringResource(R.string.copy_link),
                 onClick = {
                     clipboardManager.setText(AnnotatedString(videoUrl))
                     onDismiss()

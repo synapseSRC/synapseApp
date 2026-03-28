@@ -1687,4 +1687,27 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="replying_to_user">Replying to %1$s</string>
     <string name="select_members">Select Members (%1$d)</string>
     <string name="members_count">Members (%1$d)</string>
+    <string name="version_prefix">Version </string>
+    <string name="add_profile_picture_title">Add a Profile Picture</string>
+    <string name="add_profile_picture_message">A profile picture helps your friends recognize you. Would you like to upload one now?</string>
+    <string name="dont_show_again">Don\'t show again</string>
+    <string name="upload">Upload</string>
+    <string name="later">Later</string>
+    <string name="error_title">Error</string>
+    <string name="share_to_other_apps">Share to Other Apps</string>
+    <string name="reel">Reel</string>
+    <string name="no_reels_yet">No reels yet</string>
+    <string name="create_first_reel">Create your first reel</string>
+    <string name="no_photos_yet">No photos yet</string>
+    <string name="share_first_photo">Share your first photo</string>
+    <string name="search_user">Search User</string>
+    <string name="activity_log_empty_message">Your activity history will appear here. This feature is coming soon.</string>
+    <string name="upload_failed">Upload Failed</string>
+    <string name="uploading_reel">Uploading Reel...</string>
+    <string name="no_views_yet">No views yet</string>
+    <string name="view_as_banner_message">This is how your profile appears to others</string>
+    <string name="no_reels_found">No reels found.</string>
+    <string name="share_reel">Share Reel</string>
+    <string name="seen_by_count">Seen by %1$d</string>
+    <string name="default_avatar_letter">A</string>
 </resources>

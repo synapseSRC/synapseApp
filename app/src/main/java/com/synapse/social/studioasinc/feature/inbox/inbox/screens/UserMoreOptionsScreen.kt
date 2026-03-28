@@ -197,7 +197,7 @@ fun UserMoreOptionsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.Large))
 
             // Tabs for Posts, Media, Files, GIFs
             var selectedTabIndex by remember { mutableIntStateOf(1) }
@@ -209,7 +209,7 @@ fun UserMoreOptionsScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(50))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(4.dp),
+                    .padding(Spacing.ExtraSmall),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 tabs.forEachIndexed { index, title ->
@@ -219,7 +219,7 @@ fun UserMoreOptionsScreen(
                             .clip(RoundedCornerShape(50))
                             .clickable { selectedTabIndex = index }
                             .background(if (selectedTabIndex == index) MaterialTheme.colorScheme.surface else Color.Transparent)
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = Spacing.Small),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -232,13 +232,13 @@ fun UserMoreOptionsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.Medium))
 
             // Grid for media
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall),
+                verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(6) { index ->
@@ -265,11 +265,11 @@ fun ActionButton(
     Surface(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(Spacing.Medium),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier.padding(vertical = Spacing.SmallMedium),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -278,7 +278,7 @@ fun ActionButton(
                 contentDescription = label,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,

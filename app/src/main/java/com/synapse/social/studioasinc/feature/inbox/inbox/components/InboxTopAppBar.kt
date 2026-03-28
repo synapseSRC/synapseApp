@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 
 
@@ -71,7 +73,7 @@ fun InboxLargeTopAppBar(
                      )
                  } else {
                      Text(
-                         text = "A",
+                         text = stringResource(R.string.default_avatar_letter),
                          style = MaterialTheme.typography.titleMedium,
                          color = MaterialTheme.colorScheme.onPrimary
                      )

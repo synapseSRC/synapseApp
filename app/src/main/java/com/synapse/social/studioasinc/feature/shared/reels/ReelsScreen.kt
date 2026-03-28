@@ -162,7 +162,7 @@ fun EmptyFeed(onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "No reels found.", color = MaterialTheme.colorScheme.onBackground)
+        Text(text = stringResource(R.string.no_reels_found), color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(Spacing.Medium))
         Button(onClick = onRetry) {
             Text(stringResource(R.string.action_refresh))

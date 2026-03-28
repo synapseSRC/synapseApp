@@ -88,13 +88,13 @@ private fun ActivityLogScreen(
                         modifier = Modifier.padding(Spacing.Medium)
                     ) {
                         Text(
-                            text = "Activity Log",
+                            text = stringResource(R.string.activity_log),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(Spacing.Small))
                         Text(
-                            text = "Your activity history will appear here. This feature is coming soon.",
+                            text = stringResource(R.string.activity_log_empty_message),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

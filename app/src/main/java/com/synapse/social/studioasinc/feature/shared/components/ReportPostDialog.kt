@@ -35,7 +35,7 @@ fun ReportPostDialog(
         text = {
             Column {
                 Text(
-                    text = "Why are you reporting this post?",
+                    text = stringResource(R.string.report_post_title),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = Spacing.Small)
                 )

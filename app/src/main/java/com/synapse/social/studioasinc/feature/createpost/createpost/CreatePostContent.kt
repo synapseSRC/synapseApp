@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.height
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.ui.createpost.CreatePostSearchUiState
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @Composable
 fun CreatePostContent(
@@ -94,7 +95,7 @@ fun CreatePostContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = 120.dp),
+                        .defaultMinSize(minHeight = Sizes.Height120),
                     contentAlignment = Alignment.TopStart
                 ) {
                     if (uiState.postText.isEmpty()) {
@@ -180,7 +181,7 @@ fun CreatePostContent(
                 Box(
                     modifier = Modifier
                         .padding(end = Spacing.Medium)
-                        .width(2.dp)
+                        .width(Spacing.Tiny)
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
                 )
@@ -193,7 +194,7 @@ fun CreatePostContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .defaultMinSize(minHeight = 80.dp),
+                                .defaultMinSize(minHeight = Sizes.HeightLarge),
                             contentAlignment = Alignment.TopStart
                         ) {
                             if (threadPost.postText.isEmpty()) {
@@ -266,7 +267,7 @@ fun CreatePostContent(
 
 
         item {
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(Sizes.Height100))
         }
     }
 }
