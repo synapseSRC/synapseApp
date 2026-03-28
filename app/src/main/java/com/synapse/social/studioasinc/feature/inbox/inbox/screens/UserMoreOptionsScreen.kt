@@ -24,10 +24,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import android.widget.Toast
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.UserMoreOptionsViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -47,6 +50,8 @@ fun UserMoreOptionsScreen(
 
     val userProfile by viewModel.userProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val context = LocalContext.current
+    var moreOptionsExpanded by remember { mutableStateOf(false) }
 
     // Scaffold matching the dark theme Telegram look using Material 3 Expressive
     Scaffold(
@@ -59,8 +64,29 @@ fun UserMoreOptionsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    Box {
+                        IconButton(onClick = { moreOptionsExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        }
+                        DropdownMenu(
+                            expanded = moreOptionsExpanded,
+                            onDismissRequest = { moreOptionsExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.search)) },
+                                onClick = {
+                                    moreOptionsExpanded = false
+                                    Toast.makeText(context, R.string.search_not_yet_supported, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.share)) },
+                                onClick = {
+                                    moreOptionsExpanded = false
+                                    Toast.makeText(context, R.string.share_not_yet_supported, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -125,19 +151,19 @@ fun UserMoreOptionsScreen(
                     icon = Icons.Default.NotificationsOff,
                     label = "Mute",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = { Toast.makeText(context, R.string.muted, Toast.LENGTH_SHORT).show() }
                 )
                 ActionButton(
                     icon = Icons.Default.Call,
                     label = "Call",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = { Toast.makeText(context, R.string.calling_not_yet_supported, Toast.LENGTH_SHORT).show() }
                 )
                 ActionButton(
                     icon = Icons.Default.Videocam,
                     label = "Video",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = { Toast.makeText(context, R.string.video_calls_not_yet_supported, Toast.LENGTH_SHORT).show() }
                 )
             }
 

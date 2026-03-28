@@ -77,6 +77,8 @@ val storageModule = module {
             CommentAdapter = Comment.Adapter(
                 likesCountAdapter = intAdapter,
                 repliesCountAdapter = intAdapter,
+                linkPreviewAdapter = com.synapse.social.studioasinc.shared.data.database.linkPreviewAdapter,
+                viewsCountAdapter = intAdapter
             ),
             UserAdapter = User.Adapter(
                 emailAdapter = EncryptedStringAdapter(get()),

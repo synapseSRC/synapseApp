@@ -22,14 +22,9 @@ data class Comment(
     val parentCommentId: String? = null,
     val username: String? = null,
     @SerialName("avatar_url")
-    val avatarUrl: String? = null
-    // TODO: Add link preview support
-    // - linkPreview: LinkPreview? = null
-    // - Parse URLs from text and generate preview cards
-    // - Store preview metadata in database
-    
-    // TODO: Implement views count for comments
-    // - Add viewsCount field to track comment visibility
-    // - Implement increment logic similar to posts
-    // - Update database schema and DTOs
+    val avatarUrl: String? = null,
+    @SerialName("link_preview")
+    val linkPreview: LinkPreview? = null,
+    @SerialName("views_count")
+    val viewsCount: Int = 0
 )

@@ -22,6 +22,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.LinkPreview
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -93,7 +94,7 @@ fun LinkPreviewCard(
                     try {
                         uriHandler.openUri(url)
                     } catch (e: Exception) {
-                        // TODO: Log this exception with a proper logger
+                        Napier.e("Failed to open URI: $url", e)
                     }
                 }
         ) {

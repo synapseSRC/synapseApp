@@ -1,5 +1,6 @@
 import kotlin.Boolean;
 import kotlin.Int;
+import com.synapse.social.studioasinc.shared.domain.model.LinkPreview;
 
 CREATE TABLE Comment (
     id TEXT NOT NULL PRIMARY KEY,
@@ -12,12 +13,14 @@ CREATE TABLE Comment (
     isDeleted INTEGER AS Boolean NOT NULL DEFAULT 0,
     parentCommentId TEXT,
     username TEXT,
-    avatarUrl TEXT
+    avatarUrl TEXT,
+    linkPreview TEXT AS LinkPreview,
+    viewsCount INTEGER AS Int NOT NULL DEFAULT 0
 );
 
 insertComment:
 INSERT OR REPLACE INTO Comment(
-    id, postId, authorId, text, timestamp, likesCount, repliesCount, isDeleted, parentCommentId, username, avatarUrl
+    id, postId, authorId, text, timestamp, likesCount, repliesCount, isDeleted, parentCommentId, username, avatarUrl, linkPreview, viewsCount
 ) VALUES ?;
 
 selectByPostId:
@@ -35,7 +38,9 @@ SELECT
     C.isDeleted,
     C.parentCommentId,
     U.username,
-    U.avatarUrl
+    U.avatarUrl,
+    C.linkPreview,
+    C.viewsCount
 FROM Comment C
 LEFT JOIN User U ON C.authorId = U.id
 WHERE C.postId = ?
