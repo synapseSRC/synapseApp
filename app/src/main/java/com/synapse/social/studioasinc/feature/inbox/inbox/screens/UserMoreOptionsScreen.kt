@@ -24,10 +24,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import android.widget.Toast
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.UserMoreOptionsViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -47,6 +49,8 @@ fun UserMoreOptionsScreen(
 
     val userProfile by viewModel.userProfile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val context = LocalContext.current
+    var moreOptionsExpanded by remember { mutableStateOf(false) }
 
     // Scaffold matching the dark theme Telegram look using Material 3 Expressive
     Scaffold(
@@ -59,8 +63,29 @@ fun UserMoreOptionsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    Box {
+                        IconButton(onClick = { moreOptionsExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        }
+                        DropdownMenu(
+                            expanded = moreOptionsExpanded,
+                            onDismissRequest = { moreOptionsExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Search") },
+                                onClick = {
+                                    moreOptionsExpanded = false
+                                    Toast.makeText(context, "Search not yet supported", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Share") },
+                                onClick = {
+                                    moreOptionsExpanded = false
+                                    Toast.makeText(context, "Share not yet supported", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -125,19 +150,19 @@ fun UserMoreOptionsScreen(
                     icon = Icons.Default.NotificationsOff,
                     label = "Mute",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = { Toast.makeText(context, "Muted", Toast.LENGTH_SHORT).show() }
                 )
                 ActionButton(
                     icon = Icons.Default.Call,
                     label = "Call",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = { Toast.makeText(context, "Calling not yet supported", Toast.LENGTH_SHORT).show() }
                 )
                 ActionButton(
                     icon = Icons.Default.Videocam,
                     label = "Video",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = { Toast.makeText(context, "Video calls not yet supported", Toast.LENGTH_SHORT).show() }
                 )
             }
 

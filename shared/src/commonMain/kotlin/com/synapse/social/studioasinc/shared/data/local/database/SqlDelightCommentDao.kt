@@ -40,7 +40,9 @@ class SqlDelightCommentDao(
             timestamp = timestamp,
             username = username,
             avatarUrl = avatarUrl,
-            parentCommentId = parentCommentId
+            parentCommentId = parentCommentId,
+            linkPreview = null,
+            viewsCount = 0
         )
     }
 
