@@ -64,7 +64,7 @@ fun CommentInput(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.Medium, vertical = Spacing.Medium),
             verticalAlignment = Alignment.Top
         ) {
             com.synapse.social.studioasinc.ui.components.CircularAvatar(
@@ -81,12 +81,18 @@ fun CommentInput(
                         "Replying to @$postAuthorUsername and @$replyingToUsername"
                     else
                         "Replying to @$replyingToUsername"
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = Spacing.Medium, bottom = Spacing.ExtraSmall, top = Spacing.ExtraSmall)
-                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(Sizes.CornerSmall),
+                        modifier = Modifier.padding(start = Spacing.Small, bottom = Spacing.ExtraSmall, top = Spacing.ExtraSmall)
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = Spacing.SmallMedium, vertical = Spacing.ExtraSmall)
+                        )
+                    }
                 }
                 TextField(
                     value = text,
@@ -98,7 +104,7 @@ fun CommentInput(
                         Text(
                             "Post your reply",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         ) 
                     },
                     maxLines = 10,
@@ -108,7 +114,8 @@ fun CommentInput(
                         disabledContainerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
+                        disabledIndicatorColor = Color.Transparent,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     ),
                     textStyle = MaterialTheme.typography.bodyLarge,
                     enabled = !isSending
@@ -117,8 +124,9 @@ fun CommentInput(
                 if (selectedMediaUri != null) {
                     Box(
                         modifier = Modifier
-                            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
-                            .size(Sizes.MediaPreviewSmall)
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.Small, vertical = Spacing.Small)
+                            .height(Sizes.HeightMediaGridSmall)
                             .clip(RoundedCornerShape(Sizes.CornerDefault))
                             .border(
                                 Sizes.BorderThin,
@@ -138,22 +146,21 @@ fun CommentInput(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(Spacing.Small)
-                                .size(Sizes.IconLarge)
-                                .clickable { selectedMediaUri = null }
+                                .size(Sizes.IconMassive)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Remove media",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(Spacing.ExtraSmall)
-                            )
+                            IconButton(onClick = { selectedMediaUri = null }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove media",
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
                         }
                     }
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
@@ -171,6 +178,8 @@ fun CommentInput(
                         )
                     }
 
+                    Spacer(modifier = Modifier.weight(1f))
+
                     Button(
                         onClick = {
                             if ((text.isNotBlank() || selectedMediaUri != null) && !isSending) {
@@ -182,7 +191,7 @@ fun CommentInput(
                             }
                         },
                         enabled = (text.isNotBlank() || selectedMediaUri != null) && !isSending,
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.None),
+                        contentPadding = PaddingValues(horizontal = Spacing.Large, vertical = Spacing.None),
                         modifier = Modifier.height(Sizes.HeightChip),
                         shape = RoundedCornerShape(Sizes.CornerLarge),
                         colors = ButtonDefaults.buttonColors(
