@@ -30,7 +30,6 @@ import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadReposi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -248,6 +247,10 @@ class SupabaseChatRepository(
             encryptionFailureReason = if (!isEncrypted) failureReason else null
         )
         val domainMessage = decryptedDto.toDomain()
+        // Populate decryptedMessageCache so the realtime echo doesn't flash a placeholder
+        if (isEncrypted && message.id != null) {
+            encryptionHelper.decryptedMessageCache[message.id] = content
+        }
         cachedMessageDao?.upsert(domainMessage)
         Result.success(domainMessage)
     } catch (e: Exception) {
@@ -346,21 +349,20 @@ class SupabaseChatRepository(
                 val groupMembers = dataSource.getGroupMembers(chatId)
                 val otherParticipants = groupMembers.map { it.first.uid }.filter { it != currentUserId }
 
-                if (otherParticipants.isNotEmpty()) {
+                // Include sender so their copy is also Signal-encrypted (not plaintext)
+                val allParticipants = (otherParticipants + currentUserId).distinct()
+                if (allParticipants.isNotEmpty()) {
                     val payloadMap = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
-                    val contentBytes = newContent.encodeToByteArray()
-
-                    for (otherUserId in otherParticipants) {
-                        ensureSession(otherUserId)
-                        val encryptedForReceiver = signalProtocolManager.encryptMessage(otherUserId, contentBytes)
-                        payloadMap[otherUserId] = Json.encodeToJsonElement(EncryptedMessage.serializer(), encryptedForReceiver)
-                    }
-
-                    // Store sender's own plaintext copy (NOT Signal-encrypted)
                     val jsonPayload = kotlinx.serialization.json.buildJsonObject {
                         put("content", newContent)
                     }.toString()
-                    payloadMap[currentUserId!!] = JsonPrimitive(jsonPayload)
+                    val contentBytes = jsonPayload.encodeToByteArray()
+
+                    for (participantId in allParticipants) {
+                        ensureSession(participantId)
+                        val encryptedForParticipant = signalProtocolManager.encryptMessage(participantId, contentBytes)
+                        payloadMap[participantId] = Json.encodeToJsonElement(EncryptedMessage.serializer(), encryptedForParticipant)
+                    }
 
                     val payloads = JsonObject(payloadMap)
 
@@ -413,15 +415,31 @@ class SupabaseChatRepository(
     }
 
     override fun subscribeToMessages(chatId: String): Flow<Message> =
-        dataSource.subscribeToMessages(chatId).map { 
+        dataSource.subscribeToMessages(chatId).map { dto ->
             val userId = getCurrentUserId() ?: ""
-            if (userId.isNotBlank()) with(encryptionHelper) { it.decryptIfNecessary(userId).toDomain() } else it.toDomain()
+            if (userId.isBlank()) return@map dto.toDomain()
+            val messageId = dto.id
+            // If we already decrypted this message (e.g. just sent), use the cache to avoid flash
+            val cached = messageId?.let { encryptionHelper.decryptedMessageCache[it] }
+            if (cached != null && dto.isEncrypted == true) {
+                dto.toDomain().copy(content = cached)
+            } else {
+                with(encryptionHelper) { dto.decryptIfNecessary(userId).toDomain() }
+            }
         }
 
     override fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message> =
-        dataSource.subscribeToInboxUpdates(chatIds).map { 
+        dataSource.subscribeToInboxUpdates(chatIds).map { dto ->
             val userId = getCurrentUserId() ?: ""
-            if (userId.isNotBlank()) with(encryptionHelper) { it.decryptIfNecessary(userId).toDomain() } else it.toDomain()
+            if (userId.isBlank()) return@map dto.toDomain()
+            val messageId = dto.id
+            // If we already decrypted this message (e.g. just sent), use the cache to avoid flash
+            val cached = messageId?.let { encryptionHelper.decryptedMessageCache[it] }
+            if (cached != null && dto.isEncrypted == true) {
+                dto.toDomain().copy(content = cached)
+            } else {
+                with(encryptionHelper) { dto.decryptIfNecessary(userId).toDomain() }
+            }
         }
 
     override fun subscribeToTypingStatus(chatId: String): Flow<TypingStatus> =

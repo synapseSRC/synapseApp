@@ -8,7 +8,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 
@@ -44,11 +43,15 @@ class SendMessageUseCase(
                 val groupMembersResult = repository.getParticipantIds(chatId)
                 if (groupMembersResult.isSuccess) {
                     val groupMembers = groupMembersResult.getOrThrow()
-                    var otherParticipants = groupMembers.filter { it != currentUserId }
-                    if (otherParticipants.isEmpty() && groupMembers.isNotEmpty()) { otherParticipants = groupMembers } // Chatting with self
-                    Napier.d("E2EE_ENCRYPT: Other participants: $otherParticipants", tag = "E2EE")
+                    val otherParticipants = groupMembers.filter { it != currentUserId }
+                    if (otherParticipants.isEmpty() && groupMembers.isNotEmpty()) {
+                        // Chatting with self — still encrypt for self
+                    }
+                    // Include sender so their copy is also Signal-encrypted (not plaintext)
+                    val allParticipants = (otherParticipants + currentUserId!!).distinct()
+                    Napier.d("E2EE_ENCRYPT: All participants (incl. sender): $allParticipants", tag = "E2EE")
 
-                    if (otherParticipants.isNotEmpty()) {
+                    if (allParticipants.isNotEmpty()) {
                         val payloadMap = mutableMapOf<String, JsonElement>()
                         val jsonPayload = kotlinx.serialization.json.buildJsonObject {
                             put("content", content)
@@ -59,10 +62,7 @@ class SendMessageUseCase(
                         val contentBytes = jsonPayload.encodeToByteArray()
                         val failures = mutableListOf<String>()
 
-                        // Encrypt for all other participants
-                        // We no longer self-encrypt a copy to avoid Double Ratchet desync.
-                        // Rely on local caching (Option A).
-                        for (userId in otherParticipants) {
+                        for (userId in allParticipants) {
                             try {
                                 Napier.d("E2EE_ENCRYPT: Establishing/Verifying session with $userId", tag = "E2EE")
                                 repository.ensureSession(userId)
@@ -81,11 +81,6 @@ class SendMessageUseCase(
                         }
 
                         if (failures.isEmpty() && payloadMap.isNotEmpty()) {
-                            // Store sender's own plaintext copy (NOT Signal-encrypted)
-                            // so the sender can read their own messages from the server.
-                            // This is safe because the blob is already stored encrypted at rest.
-                            payloadMap[currentUserId!!] = JsonPrimitive(jsonPayload)
-
                             val payloads = JsonObject(payloadMap)
 
                             isEncrypted = true

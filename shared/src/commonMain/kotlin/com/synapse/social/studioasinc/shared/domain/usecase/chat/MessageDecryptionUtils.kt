@@ -55,54 +55,30 @@ internal suspend fun decryptMessageIfNecessary(
         val senderId = message.senderId
         val messageId = message.id
 
-        if (senderId == currentUserId) {
-            // SENDER COPY — stored as a plaintext JsonPrimitive (not Signal-encrypted)
-            // in the encrypted blob to avoid Double Ratchet desync.
-            val myPayloadElement = jsonElement[currentUserId]
-            if (myPayloadElement != null) {
+        // Unified decrypt path — sender's copy is now Signal-encrypted just like recipients'.
+        val myPayloadElement = jsonElement[currentUserId]
+        if (myPayloadElement != null) {
+            // Try Signal decrypt first (new format)
+            try {
+                val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
+                val decryptedBytes = signalProtocolManager.decryptMessage(senderId, myPayload)
+                val decryptedString = decryptedBytes.decodeToString()
+                Napier.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
+                val (content, mediaUrl) = extractFromJsonPayload(decryptedString)
+                return message.copy(content = content, mediaUrl = mediaUrl ?: message.mediaUrl)
+            } catch (signalError: Exception) {
+                // Backward-compat: old messages stored sender copy as plaintext JsonPrimitive
                 try {
                     val plainText = myPayloadElement.jsonPrimitive.content
+                    Napier.d("E2EE_DECRYPT: Falling back to legacy plaintext sender copy for $messageId", tag = "E2EE")
                     val (content, mediaUrl) = extractFromJsonPayload(plainText)
-                    Napier.d("E2EE_DECRYPT: Retrieved sender's plaintext copy for $messageId", tag = "E2EE")
-                    return message.copy(
-                        content = content,
-                        mediaUrl = mediaUrl ?: message.mediaUrl
-                    )
+                    return message.copy(content = content, mediaUrl = mediaUrl ?: message.mediaUrl)
                 } catch (_: Exception) {
-                    Napier.w("E2EE_DECRYPT: Sender copy exists but not a primitive for $messageId", tag = "E2EE")
+                    Napier.e("E2EE_DECRYPT: Decryption failed for message $messageId.", tag = "E2EE", throwable = signalError)
                 }
-            }
-            // Fallback: no plaintext copy found (old message format)
-            Napier.d("E2EE_DECRYPT: No sender plaintext copy for $messageId, using cached/local content", tag = "E2EE")
-            return if (message.content == "Message is encrypted" || message.content == "🔒 Encrypted message") {
-                message.copy(content = "🔒 You sent an encrypted message")
-            } else {
-                message
             }
         } else {
-            // RECIPIENT COPY — decrypt using Signal Protocol
-            val myPayloadElement = jsonElement[currentUserId]
-            if (myPayloadElement != null) {
-                try {
-                    val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
-                    val decryptedBytes = signalProtocolManager.decryptMessage(senderId, myPayload)
-                    val decryptedString = decryptedBytes.decodeToString()
-                    Napier.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
-
-                    // Extract the actual content from the JSON payload
-                    val (content, mediaUrl) = extractFromJsonPayload(decryptedString)
-                    return message.copy(
-                        content = content,
-                        mediaUrl = mediaUrl ?: message.mediaUrl
-                    )
-                } catch (e: Exception) {
-                    Napier.e("E2EE_DECRYPT: Decryption failed for message $messageId. Content might stay encrypted.", tag = "E2EE", throwable = e)
-                    // We DO NOT delete the session here anymore. Automatic session deletion is too destructive
-                    // and causes "un-encrypted" messages if triggered by double-decryption or temporary desync.
-                }
-            } else {
-                Napier.w("E2EE_DECRYPT: No payload found for current user in message $messageId. Available keys: ${jsonElement.keys}", tag = "E2EE")
-            }
+            Napier.w("E2EE_DECRYPT: No payload found for current user in message $messageId. Available keys: ${jsonElement.keys}", tag = "E2EE")
         }
     } catch (e: Exception) {
         Napier.e("E2EE_DECRYPT: Critical failure parsing payload for message ${message.id}: ${e.message}", tag = "E2EE", throwable = e)

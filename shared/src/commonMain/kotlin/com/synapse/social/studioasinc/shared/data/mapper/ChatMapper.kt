@@ -24,7 +24,7 @@ object ChatMapper {
         id = id ?: "",
         chatId = chatId,
         senderId = senderId,
-        content = content,
+        content = if (isEncrypted == true) "" else content,
         messageType = when (messageType) {
             "image" -> MessageType.IMAGE
             "video" -> MessageType.VIDEO

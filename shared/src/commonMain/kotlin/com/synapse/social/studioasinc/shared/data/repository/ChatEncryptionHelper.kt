@@ -82,41 +82,28 @@ internal class ChatEncryptionHelper(
                 if (myPayloadElement != null) {
                     val senderId = this.senderId
 
-                    // SENDER PATH — plaintext stored as JsonPrimitive
-                    if (senderId == currentUserId) {
-                        val plainText = try {
-                            myPayloadElement.jsonPrimitive.content
-                        } catch (_: Exception) { null }
-                        if (plainText != null) {
-                            Logger.d("E2EE_DECRYPT: Retrieved sender's plaintext copy for message $messageId", tag = "E2EE")
-                            decryptedMessageCache[messageId] = plainText
-                            val (content, mediaUrl) = extractContent(plainText)
-                            // Persist to local DB so it survives restarts
-                            try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
-                            return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl)
-                        }
-                        Logger.d("E2EE_DECRYPT: Sender copy not plaintext, trying legacy decrypt", tag = "E2EE")
-                    }
-
-                    // RECIPIENT PATH — Signal Protocol decrypt
-                    val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
+                    // Unified decrypt path — sender's copy is now Signal-encrypted just like recipients'.
                     try {
-                        val decryptedBytes = signalProtocolManager.decryptMessage(
-                            senderId = senderId,
-                            message = myPayload
-                        )
+                        val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
+                        val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
                         val decryptedContent = decryptedBytes.decodeToString()
                         Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
                         decryptedMessageCache[messageId] = decryptedContent
                         val (content, mediaUrl) = extractContent(decryptedContent)
-                        // Persist to local DB so we never need to re-decrypt
                         try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
                         return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl)
-                    } catch (decryptError: Exception) {
-                        Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId. Deleting session and identity to force recovery.", tag = "E2EE", throwable = decryptError)
-                        // Delete session and identity to force a fresh session establishment next time
-                        signalProtocolManager.deleteSession(senderId)
-                        signalProtocolManager.deleteIdentity(senderId)
+                    } catch (signalError: Exception) {
+                        // Backward-compat: old messages stored sender copy as plaintext JsonPrimitive
+                        try {
+                            val plainText = myPayloadElement.jsonPrimitive.content
+                            Logger.d("E2EE_DECRYPT: Falling back to legacy plaintext sender copy for $messageId", tag = "E2EE")
+                            decryptedMessageCache[messageId] = plainText
+                            val (content, mediaUrl) = extractContent(plainText)
+                            try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
+                            return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl)
+                        } catch (_: Exception) {
+                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = signalError)
+                        }
                     }
                 } else {
                     Logger.w("E2EE_DECRYPT: No payload found for current user in message $messageId. Available keys: ${jsonElement.keys}", tag = "E2EE")
