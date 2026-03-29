@@ -187,6 +187,8 @@ data class Post(
     var isBookmarked: Boolean = false,
     @Transient
     var isReshared: Boolean = false,
+    @Transient
+    var resharedByUsername: String? = null,
 
     @SerialName("metadata")
     val metadata: PostMetadata? = null

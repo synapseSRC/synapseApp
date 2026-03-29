@@ -87,7 +87,12 @@ class FeedPagingSource(
                 return LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)
             }
 
-            val postIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "post" }.mapNotNull { it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
+            val postIds = timelineResponse.mapNotNull {
+                val type = it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                if (type == "post" || type == "reshare") {
+                    it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                } else null
+            }
             val commentIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { it["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
 
             // 1. Fetch full Posts
@@ -169,27 +174,31 @@ class FeedPagingSource(
                 )
             }.toMap().toMutableMap()
             
-            // Fetch users for comments
-            val commentUserIds = commentsMap.values.map { it.userId }.distinct()
-            if (commentUserIds.isNotEmpty()) {
+            // Fetch users for comments and reshares
+            val commentUserIds = commentsMap.values.map { it.userId }
+            val reshareUserIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "reshare" }.mapNotNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
+            val allUserIds = (commentUserIds + reshareUserIds).distinct()
+
+            val userMap = if (allUserIds.isNotEmpty()) {
                 val usersResponse = withContext(Dispatchers.IO) {
                     client.from("users").select(Columns.list("uid", "username", "display_name", "avatar", "verify")) {
-                        filter { isIn("uid", commentUserIds) }
+                        filter { isIn("uid", allUserIds) }
                     }.decodeList<JsonObject>()
                 }
-                val userMap = usersResponse.associateBy { it["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
-                commentsMap.keys.forEach { id ->
-                    val commentItem = commentsMap[id] ?: return@forEach
-                    val user = userMap[commentItem.userId]
-                    commentsMap[id] = commentItem.copy(
-                        username = user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
-                        userFullName = user?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
-                        avatarUrl = user?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
-                            SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
-                        },
-                        isVerified = user?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
-                    )
-                }
+                usersResponse.associateBy { it["uid"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
+            } else emptyMap()
+
+            commentsMap.keys.forEach { id ->
+                val commentItem = commentsMap[id] ?: return@forEach
+                val user = userMap[commentItem.userId]
+                commentsMap[id] = commentItem.copy(
+                    username = user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                    userFullName = user?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
+                    avatarUrl = user?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
+                        SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
+                    },
+                    isVerified = user?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
+                )
             }
 
             // Build final unified list
@@ -197,7 +206,18 @@ class FeedPagingSource(
                 val id = item["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                 val type = item["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 if (type == "post") {
-                    enrichedPostsMap[id]?.let { FeedItem.PostItem(it) }
+                    val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: id
+                    enrichedPostsMap[postId]?.let { FeedItem.PostItem(it) }
+                } else if (type == "reshare") {
+                    val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
+                    val resharerId = item["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
+                    val post = enrichedPostsMap[postId] ?: return@mapNotNull null
+                    val resharerUsername = userMap[resharerId]?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+
+                    val resharedPost = post.copy().apply {
+                        resharedByUsername = resharerUsername
+                    }
+                    FeedItem.PostItem(resharedPost)
                 } else if (type == "comment") {
                     commentsMap[id]
                 } else null
