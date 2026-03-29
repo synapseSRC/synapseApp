@@ -118,7 +118,7 @@ fun CommentInput(
                     Box(
                         modifier = Modifier
                             .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
-                            .size(160.dp)
+                            .size(Sizes.MediaPreviewSmall)
                             .clip(RoundedCornerShape(Sizes.CornerDefault))
                             .border(
                                 Sizes.BorderThin,
@@ -182,8 +182,8 @@ fun CommentInput(
                             }
                         },
                         enabled = (text.isNotBlank() || selectedMediaUri != null) && !isSending,
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = 0.dp),
-                        modifier = Modifier.height(32.dp),
+                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.None),
+                        modifier = Modifier.height(Sizes.HeightChip),
                         shape = RoundedCornerShape(Sizes.CornerLarge),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,

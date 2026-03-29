@@ -64,7 +64,7 @@ fun ProfileImageSection(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = 2.dp
+        tonalElevation = Spacing.Tiny
     ) {
         Column {
 
@@ -154,17 +154,17 @@ fun ProfileImageSection(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-48).dp),
+                    .offset(y = Sizes.ProfileImageOffset),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(96.dp)
+                        .size(Sizes.AvatarProfile)
                         .clickable(onClick = onAvatarClick)
                 ) {
                     Surface(
                         shape = CircleShape,
-                        border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.surface),
+                        border = androidx.compose.foundation.BorderStroke(Sizes.AvatarBorder, MaterialTheme.colorScheme.surface),
                         color = MaterialTheme.colorScheme.surface,
                         modifier = Modifier.fillMaxSize()
                     ) {

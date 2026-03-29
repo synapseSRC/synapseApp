@@ -124,7 +124,7 @@ fun HomeScreen(
                                 com.synapse.social.studioasinc.ui.components.CircularAvatar(
                                     imageUrl = userAvatarUrl,
                                     contentDescription = stringResource(R.string.profile),
-                                    size = 28.dp,
+                                    size = Sizes.AvatarTiny,
                                     modifier = Modifier.padding(start = Spacing.ExtraSmall, end = Spacing.Small),
                                     onClick = { onNavigateToProfile("me") }
                                 )
@@ -153,7 +153,7 @@ fun HomeScreen(
                 onNavigateToCreateReel = onNavigateToCreateReel,
                 onNavigateToCreatePost = { onNavigateToCreatePost(null) },
                 modifier = Modifier.padding(innerPadding),
-                bottomPadding = 80.dp
+                bottomPadding = Sizes.HeightLarge
             )
         }
 
@@ -235,7 +235,7 @@ fun HomeScreen(
             uploadManager = reelUploadManager,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 100.dp)
+                .padding(top = Sizes.Height100)
         )
     }
 }
