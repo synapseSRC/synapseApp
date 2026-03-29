@@ -161,7 +161,7 @@ fun MessageBubble(
     }
 
     // UI logic applied carefully matching sender side for sharpness:
-    val radius = cornerRadius.dp
+    val radius = androidx.compose.ui.unit.Dp(cornerRadius.toFloat())
     val shape = if (isFromMe) {
         when (position) {
             GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
@@ -264,7 +264,7 @@ fun MessageBubble(
                             Text(
                                 text = replyToMessage.content ?: "",
                                 style = androidx.compose.ui.text.TextStyle(
-                                    fontSize = (MaterialTheme.typography.bodySmall.fontSize.value * fontScale).sp,
+                                    fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 maxLines = 1,
@@ -321,7 +321,7 @@ fun MessageBubble(
                             Text(
                                 text = (message.content ?: "").ifEmpty { stringResource(R.string.chat_media_attachment) },
                                 color = contentColor,
-                                fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value * fontScale).sp,
+                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
@@ -368,7 +368,7 @@ fun MessageBubble(
                             text = annotatedString,
                             style = androidx.compose.ui.text.TextStyle(
                                 color = contentColor,
-                                fontSize = (MaterialTheme.typography.bodyMedium.fontSize.value * fontScale).sp,
+                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
                             ),
                             onTextLayout = { layoutResult = it },
                             modifier = Modifier.pointerInput(Unit) {

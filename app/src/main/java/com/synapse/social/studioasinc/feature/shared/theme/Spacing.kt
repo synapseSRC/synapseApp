@@ -121,4 +121,8 @@ object Sizes {
     val LogoSize = 85.dp
     val QRCodeSize = 250.dp
     val HeartSize = 100.dp
+
+    val MaxGridHeight = 2000.dp
+    val AvatarBorder = 4.dp
+    val ProfileImageOffset = (-48).dp
 }

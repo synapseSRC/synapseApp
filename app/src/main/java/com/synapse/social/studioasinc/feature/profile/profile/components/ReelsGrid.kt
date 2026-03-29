@@ -48,7 +48,7 @@ fun ReelsGrid(
     } else {
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
-            modifier = modifier.heightIn(max = 2000.dp),
+            modifier = modifier.heightIn(max = Sizes.MaxGridHeight),
             contentPadding = PaddingValues(spacing.dp),
             horizontalArrangement = Arrangement.spacedBy(spacing.dp),
             verticalArrangement = Arrangement.spacedBy(spacing.dp)
