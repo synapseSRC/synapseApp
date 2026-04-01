@@ -72,9 +72,13 @@ internal class PostCrudHelper(
 
             if (posts.isEmpty()) return@withContext Result.success(emptyList())
 
+            val localProfileCache = mutableMapOf<String, ProfileData?>()
+
             val enrichedPosts = posts.map { post ->
                 if (post.username == null) {
-                    val profile = utils.fetchUserProfile(post.authorUid)
+                    val profile = localProfileCache.getOrPut(post.authorUid) {
+                        utils.fetchUserProfile(post.authorUid)
+                    }
                     if (profile != null) {
                         post.username = profile.username
                         post.avatarUrl = profile.avatarUrl
