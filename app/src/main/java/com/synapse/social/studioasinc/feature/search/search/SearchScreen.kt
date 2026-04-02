@@ -10,10 +10,6 @@ import androidx.compose.animation.*
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -230,12 +226,10 @@ fun SearchScreen(
                                 if (uiState.posts.isEmpty() && uiState.accounts.isEmpty() && uiState.hashtags.isEmpty()) {
                                     EmptyState(stringResource(R.string.no_content_found))
                                 } else {
-                                    LazyVerticalStaggeredGrid(
-                                        columns = StaggeredGridCells.Fixed(2),
+                                    LazyColumn(
                                         modifier = Modifier.fillMaxSize(),
                                         contentPadding = PaddingValues(Spacing.Medium),
-                                        verticalItemSpacing = Spacing.Medium,
-                                        horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                                        verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
                                     ) {
                                         items(uiState.hashtags) { hashtag ->
                                             Card(
