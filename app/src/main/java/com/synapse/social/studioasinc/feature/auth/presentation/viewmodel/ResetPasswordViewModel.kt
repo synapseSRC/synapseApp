@@ -4,10 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
-import com.synapse.social.studioasinc.shared.domain.model.ValidationResult
-import com.synapse.social.studioasinc.shared.domain.usecase.auth.CalculatePasswordStrengthUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.auth.ResetPasswordUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.auth.ValidatePasswordUseCase
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
+import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
+import com.synapse.social.studioasinc.shared.domain.usecase.auth.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ResetPasswordViewModel @Inject constructor(
-    private val validatePasswordUseCase: ValidatePasswordUseCase,
+    private val validateNewPasswordUseCase: ValidateNewPasswordUseCase,
     private val calculatePasswordStrengthUseCase: CalculatePasswordStrengthUseCase,
     private val resetPasswordUseCase: ResetPasswordUseCase
 ) : ViewModel() {
@@ -33,24 +32,27 @@ class ResetPasswordViewModel @Inject constructor(
 
     fun onPasswordChanged(password: String) {
         val strength = calculatePasswordStrengthUseCase(password)
-        val state = _uiState.value as? AuthUiState.ResetPassword ?: return
-        _uiState.value = state.copy(password = password, passwordError = null)
+        _uiState.value = AuthInputHelper.handlePasswordChanged(_uiState.value, password, strength)
     }
 
     fun onConfirmPasswordChanged(confirmPassword: String) {
-        val state = _uiState.value as? AuthUiState.ResetPassword ?: return
-        _uiState.value = state.copy(confirmPassword = confirmPassword, confirmPasswordError = null)
+         val state = _uiState.value as? AuthUiState.ResetPassword ?: return
+         _uiState.value = state.copy(
+             confirmPassword = confirmPassword,
+             validationErrors = state.validationErrors - AuthField.CONFIRM_PASSWORD
+         )
     }
 
     fun onSubmitNewPassword() {
         val state = _uiState.value as? AuthUiState.ResetPassword ?: return
-        val passwordValidation = validatePasswordUseCase(state.password)
-        if (passwordValidation is ValidationResult.Invalid) {
-            _uiState.value = state.copy(passwordError = passwordValidation.errorMessage)
-            return
-        }
-        if (state.password != state.confirmPassword) {
-            _uiState.value = state.copy(confirmPasswordError = "Passwords do not match")
+
+        val validation = validateNewPasswordUseCase(state.password, state.confirmPassword)
+
+        if (!validation.isValid) {
+            val errors = mutableMapOf<AuthField, String?>()
+            validation.passwordError?.let { errors[AuthField.PASSWORD] = it }
+            validation.confirmPasswordError?.let { errors[AuthField.CONFIRM_PASSWORD] = it }
+            _uiState.value = state.copy(validationErrors = errors)
             return
         }
 
@@ -62,7 +64,10 @@ class ResetPasswordViewModel @Inject constructor(
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
                 },
                 onFailure = { error ->
-                    _uiState.value = state.copy(isLoading = false, passwordError = error.message)
+                    _uiState.value = state.copy(
+                        isLoading = false,
+                        validationErrors = mapOf(AuthField.PASSWORD to error.message)
+                    )
                 }
             )
         }

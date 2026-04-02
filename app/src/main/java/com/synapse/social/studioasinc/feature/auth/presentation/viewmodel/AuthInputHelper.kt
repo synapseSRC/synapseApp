@@ -1,28 +1,46 @@
 package com.synapse.social.studioasinc.feature.auth.presentation.viewmodel
 
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
 import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
-import com.synapse.social.studioasinc.shared.domain.model.ValidationResult
 
 object AuthInputHelper {
     fun handleEmailChanged(state: AuthUiState, email: String, isValid: Boolean): AuthUiState {
         return when (state) {
-            is AuthUiState.SignIn -> state.copy(email = email, emailError = null, isEmailValid = isValid)
-            is AuthUiState.SignUp -> state.copy(email = email, emailError = null, isEmailValid = isValid)
-            is AuthUiState.ForgotPassword -> state.copy(email = email, emailError = null, isEmailValid = isValid)
+            is AuthUiState.SignIn -> state.copy(
+                email = email,
+                isEmailValid = isValid,
+                validationErrors = state.validationErrors - AuthField.EMAIL
+            )
+            is AuthUiState.SignUp -> state.copy(
+                email = email,
+                isEmailValid = isValid,
+                validationErrors = state.validationErrors - AuthField.EMAIL
+            )
+            is AuthUiState.ForgotPassword -> state.copy(
+                email = email,
+                isEmailValid = isValid,
+                validationErrors = state.validationErrors - AuthField.EMAIL
+            )
             else -> state
         }
     }
 
     fun handlePasswordChanged(state: AuthUiState, password: String, strength: PasswordStrength): AuthUiState {
         return when (state) {
-            is AuthUiState.SignIn -> state.copy(password = password, passwordError = null)
+            is AuthUiState.SignIn -> state.copy(
+                password = password,
+                validationErrors = state.validationErrors - AuthField.PASSWORD
+            )
             is AuthUiState.SignUp -> state.copy(
                 password = password,
-                passwordError = null,
-                passwordStrength = strength
+                passwordStrength = strength,
+                validationErrors = state.validationErrors - AuthField.PASSWORD
             )
-            is AuthUiState.ResetPassword -> state.copy(password = password, passwordError = null)
+            is AuthUiState.ResetPassword -> state.copy(
+                password = password,
+                validationErrors = state.validationErrors - AuthField.PASSWORD
+            )
             else -> state
         }
     }
@@ -31,11 +49,13 @@ object AuthInputHelper {
         return when (state) {
             is AuthUiState.SignIn -> state.copy(
                 isLoading = false,
-                generalError = errorMessage
+                generalError = errorMessage,
+                isErrorDismissed = false
             )
             is AuthUiState.SignUp -> state.copy(
                 isLoading = false,
-                generalError = errorMessage
+                generalError = errorMessage,
+                isErrorDismissed = false
             )
             else -> state
         }
@@ -53,11 +73,13 @@ object AuthInputHelper {
         return when (state) {
             is AuthUiState.SignIn -> state.copy(
                 isLoading = false,
-                generalError = errorMessage
+                generalError = errorMessage,
+                isErrorDismissed = false
             )
             is AuthUiState.SignUp -> state.copy(
                 isLoading = false,
-                generalError = errorMessage
+                generalError = errorMessage,
+                isErrorDismissed = false
             )
             else -> state
         }

@@ -29,6 +29,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.AuthTextField
 import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.auth.ui.components.PasswordStrengthIndicator
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 
 @Composable
 fun ResetPasswordScreen(
@@ -60,15 +61,11 @@ fun ResetPasswordScreen(
 
             Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
 
-            ErrorCard(
-                error = state.passwordError ?: state.confirmPasswordError
-            )
-
             AuthTextField(
                 value = state.password,
                 onValueChange = onPasswordChanged,
                 label = stringResource(R.string.change_password_new),
-                error = state.passwordError,
+                error = state.validationErrors[AuthField.PASSWORD],
                 isValid = false,
                 isPassword = true,
                 keyboardOptions = KeyboardOptions(
@@ -90,7 +87,7 @@ fun ResetPasswordScreen(
                 value = state.confirmPassword,
                 onValueChange = onConfirmPasswordChanged,
                 label = stringResource(R.string.change_password_confirm),
-                error = state.confirmPasswordError,
+                error = state.validationErrors[AuthField.CONFIRM_PASSWORD],
                 isValid = state.confirmPassword.isNotEmpty() && state.confirmPassword == state.password,
                 isPassword = true,
                 keyboardOptions = KeyboardOptions(

@@ -141,13 +141,26 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
             when (val profileState = state.profileState) {
-                is ProfileUiState.Loading -> {
-                    ProfileSkeletonScreen()
+                is ProfileUiState.Error -> {
+                    ErrorState(
+                        title = stringResource(R.string.error_loading_profile),
+                        message = profileState.message,
+                        onRetry = { viewModel.refreshProfile(userId) }
+                    )
                 }
-                is ProfileUiState.Success -> {
+                is ProfileUiState.Empty -> {
+                    EmptyState(
+                        icon = Icons.Default.Person,
+                        title = stringResource(R.string.no_user_data_found),
+                        message = stringResource(R.string.profile_not_found_msg)
+                    )
+                }
+                else -> {
+                    val profile = (profileState as? ProfileUiState.Success)?.profile
                     ProfileContent(
                         state = effectiveState,
-                        profile = profileState.profile,
+                        profile = profile,
+                        isLoading = profileState is ProfileUiState.Loading,
                         listState = listState,
                         scrollProgress = scrollProgress.value,
                         viewModel = viewModel,
@@ -170,27 +183,13 @@ fun ProfileScreen(
                         }
                     )
                 }
-                is ProfileUiState.Error -> {
-                    ErrorState(
-                        title = stringResource(R.string.error_loading_profile),
-                        message = profileState.message,
-                        onRetry = { viewModel.refreshProfile(userId) }
-                    )
-                }
-                is ProfileUiState.Empty -> {
-                    EmptyState(
-                        icon = Icons.Default.Person,
-                        title = stringResource(R.string.no_user_data_found),
-                        message = stringResource(R.string.profile_not_found_msg)
-                    )
-                }
             }
         }
         }
 
         val profile = (state.profileState as? ProfileUiState.Success)?.profile
         ProfileTopAppBar(
-            displayName = profile?.name ?: profile?.username ?: "",
+            displayName = profile?.name ?: profile?.username ?: state.viewAsUserName ?: "",
             scrollProgress = scrollProgress.value,
             onBackClick = onNavigateBack,
             onMoreClick = { viewModel.toggleMoreMenu() }
@@ -263,4 +262,3 @@ fun ProfileScreen(
         )
     }
 }
-

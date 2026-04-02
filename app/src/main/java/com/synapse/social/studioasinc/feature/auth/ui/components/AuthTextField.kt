@@ -1,6 +1,10 @@
 package com.synapse.social.studioasinc.feature.auth.ui.components
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -41,8 +45,6 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
-
-
 @Composable
 fun AuthTextField(
     value: String,
@@ -60,7 +62,6 @@ fun AuthTextField(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     var passwordVisible by remember { mutableStateOf(false) }
-
 
     val scale by animateFloatAsState(
         targetValue = if (isFocused) 1.02f else 1f,
@@ -91,7 +92,7 @@ fun AuthTextField(
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 } else if (isValid) {
@@ -114,6 +115,13 @@ fun AuthTextField(
             singleLine = true,
             isError = error != null,
             interactionSource = interactionSource,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                errorLabelColor = MaterialTheme.colorScheme.error,
+                errorSupportingTextColor = MaterialTheme.colorScheme.error
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = Sizes.HeightDefault)
@@ -128,14 +136,19 @@ fun AuthTextField(
                 }
         )
 
-
-        if (error != null) {
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = Spacing.Medium, top = Spacing.ExtraSmall)
-            )
+        AnimatedVisibility(
+            visible = error != null,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            if (error != null) {
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = Spacing.Medium, top = Spacing.ExtraSmall)
+                )
+            }
         }
     }
 }

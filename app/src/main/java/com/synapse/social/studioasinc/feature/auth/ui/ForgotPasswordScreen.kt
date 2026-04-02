@@ -27,6 +27,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthTextField
 import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 
 @Composable
 fun ForgotPasswordScreen(
@@ -84,15 +85,11 @@ fun ForgotPasswordScreen(
                 )
             } else {
 
-                ErrorCard(
-                    error = state.emailError
-                )
-
                 AuthTextField(
                     value = state.email,
                     onValueChange = onEmailChanged,
                     label = stringResource(R.string.email),
-                    error = state.emailError,
+                    error = state.validationErrors[AuthField.EMAIL],
                     isValid = state.isEmailValid,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,

@@ -12,7 +12,8 @@ fun ProfileSkeletonScreen() {
         userScrollEnabled = false
     ) {
         item {
-            ProfileHeaderSkeleton()
+            ProfileHeaderShimmer()
+            ProfileBioShimmer()
         }
         items(3) {
             PostCardSkeleton()

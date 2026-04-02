@@ -5,12 +5,15 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -18,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.liveRegion
@@ -31,8 +33,6 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 
-
-
 @Composable
 fun ErrorCard(
     error: String?,
@@ -43,10 +43,10 @@ fun ErrorCard(
 
     AnimatedVisibility(
         visible = error != null,
-        enter = if (reducedMotion) androidx.compose.animation.EnterTransition.None
-                else fadeIn() + expandVertically(),
-        exit = if (reducedMotion) androidx.compose.animation.ExitTransition.None
-               else fadeOut() + shrinkVertically(),
+        enter = if (reducedMotion) fadeIn()
+                else fadeIn() + slideInVertically { -it },
+        exit = if (reducedMotion) fadeOut()
+               else fadeOut() + slideOutVertically { -it },
         modifier = modifier
     ) {
         if (error != null) {
@@ -55,9 +55,10 @@ fun ErrorCard(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = Spacing.Small)
+                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
                     .semantics {
                         liveRegion = LiveRegionMode.Assertive
                     }
@@ -69,9 +70,10 @@ fun ErrorCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.error_icon_warning),
-                        style = MaterialTheme.typography.titleLarge
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
                     )
 
                     Text(
