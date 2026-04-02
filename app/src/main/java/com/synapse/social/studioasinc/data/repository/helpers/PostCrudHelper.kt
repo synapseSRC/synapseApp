@@ -72,9 +72,18 @@ internal class PostCrudHelper(
 
             if (posts.isEmpty()) return@withContext Result.success(emptyList())
 
+            val missingProfileUids = posts.filter { it.username == null }
+                .map { it.authorUid }
+                .distinct()
+
+            val batchedProfiles = mutableMapOf<String, ProfileData>()
+            missingProfileUids.chunked(50).forEach { chunk ->
+                batchedProfiles.putAll(utils.fetchUserProfilesBatch(chunk))
+            }
+
             val enrichedPosts = posts.map { post ->
                 if (post.username == null) {
-                    val profile = utils.fetchUserProfile(post.authorUid)
+                    val profile = batchedProfiles[post.authorUid] ?: utils.fetchUserProfile(post.authorUid)
                     if (profile != null) {
                         post.username = profile.username
                         post.avatarUrl = profile.avatarUrl

@@ -99,7 +99,8 @@ internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
         }
     }
 
-    suspend fun fetchUserProfilesBatch(userIds: List<String>) {
+    suspend fun fetchUserProfilesBatch(userIds: List<String>): Map<String, ProfileData> {
+        val result = mutableMapOf<String, ProfileData>()
         try {
             val users = client.from("users").select {
                 filter { isIn("uid", userIds) }
@@ -114,11 +115,13 @@ internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
                     isVerified = user["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
                 profileCache[uid] = CacheEntry(profile)
+                result[uid] = profile
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to batch fetch user profiles", e)
         }
+        return result
     }
 }
