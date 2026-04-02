@@ -431,8 +431,8 @@ private fun PostDetailTopBar(onNavigateBack: () -> Unit) {
         },
         modifier = Modifier.statusBarsPadding(),
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     )
 }
