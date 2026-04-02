@@ -43,8 +43,9 @@ struct SwiftMessage: Identifiable {
     let createdAt: String
     let updatedAt: String?
     let readBy: [String]
-    let isEncrypted: Bool
     let expiresAt: String?
+    let reactions: [shared.ReactionType: Int]
+    let userReaction: shared.ReactionType?
 
     init(from kmpMessage: shared.Message) {
         self.id = kmpMessage.id
@@ -60,7 +61,8 @@ struct SwiftMessage: Identifiable {
         self.createdAt = kmpMessage.createdAt
         self.updatedAt = kmpMessage.updatedAt
         self.readBy = kmpMessage.readBy
-        self.isEncrypted = kmpMessage.isEncrypted
         self.expiresAt = kmpMessage.expiresAt
+        self.reactions = kmpMessage.reactions as? [shared.ReactionType: Int] ?? [:]
+        self.userReaction = kmpMessage.userReaction
     }
 }

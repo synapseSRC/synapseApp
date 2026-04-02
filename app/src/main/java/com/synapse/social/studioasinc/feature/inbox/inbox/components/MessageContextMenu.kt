@@ -48,8 +48,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.domain.model.ReactionType as AppReactionType
-import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
+import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
@@ -59,7 +58,7 @@ fun MessageContextMenu(
     selectedMessage: Message?,
     currentUserId: String,
     onDismissRequest: () -> Unit,
-    onReactionSelected: (String, SharedReactionType) -> Unit,
+    onReactionSelected: (String, ReactionType) -> Unit,
     onStartEditing: (Message) -> Unit,
     onDeleteMessageForMe: (String) -> Unit,
     onDeleteMessageForEveryone: (String) -> Unit,
@@ -77,7 +76,6 @@ fun MessageContextMenu(
 ) {
     if (selectedMessage == null) return
 
-    @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
 
     ModalBottomSheet(
@@ -96,17 +94,13 @@ fun MessageContextMenu(
                     .padding(Spacing.Medium),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                com.synapse.social.studioasinc.domain.model.ReactionType.getAllReactions().forEach { reaction ->
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .background(color = MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape)
-                            .clickable {
-                                val sharedReaction = SharedReactionType.fromString(reaction.name)
-                                selectedMessage.id?.let { onReactionSelected(it, sharedReaction) }
-                                onDismissRequest()
-                            }
+                ReactionType.values().forEach { reaction ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            selectedMessage.id?.let { onReactionSelected(it, reaction) }
+                            onDismissRequest()
+                        }
                     ) {
                         Text(
                             text = reaction.emoji,

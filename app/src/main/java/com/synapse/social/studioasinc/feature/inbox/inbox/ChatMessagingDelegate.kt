@@ -9,7 +9,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageFo
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
-import com.synapse.social.studioasinc.domain.usecase.reaction.PopulateMessageReactionsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.shared.data.datasource
 
 import com.synapse.social.studioasinc.shared.util.UUIDUtils
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.MessageReactionDto
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
@@ -37,11 +38,11 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         withContext(Dispatchers.IO) {
             try {
                 val currentUserId = getCurrentUserId() ?: return@withContext
-                val channel = client.realtime.channel("chat-$chatId")
+                val channel = client.realtime.channel("chat-\$chatId")
 
                 if (channel.status.value != io.github.jan.supabase.realtime.RealtimeChannel.Status.SUBSCRIBED) {
                     try {
-                        Napier.d("Subscribing to typing channel: chat-$chatId")
+                        Napier.d("Subscribing to typing channel: chat-\$chatId")
                         channel.subscribe(blockUntilSubscribed = true)
                     } catch (e: Exception) {
                         Napier.e("Error subscribing to typing channel", e)
@@ -57,8 +58,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
     fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
-        val channelId = "chat-messages-$chatId-${UUIDUtils.randomUUID()}"
-        Napier.d("Creating channel: $channelId")
+        val channelId = "chat-messages-\$chatId-\${UUIDUtils.randomUUID()}"
+        Napier.d("Creating channel: \$channelId")
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
@@ -73,7 +74,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(Dispatchers.IO) {
             try {
-                Napier.d("Subscribing to channel: $channelId")
+                Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -84,25 +85,23 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         awaitClose {
-            Napier.d("Closing channel: $channelId")
+            Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {
-                    Napier.w("Failed to unsubscribe/remove channel: $channelId", e)
+                    Napier.w("Failed to unsubscribe/remove channel: \$channelId", e)
                 }
             }
         }
     }
 
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
-        val channelId = "inbox-updates-${UUIDUtils.randomUUID()}"
-        Napier.d("Creating channel: $channelId")
+        val channelId = "inbox-updates-\${UUIDUtils.randomUUID()}"
+        Napier.d("Creating channel: \$channelId")
         val channel = client.realtime.channel(channelId)
-        // No filter on chatId here - let Supabase RLS filter it to only messages the user has access to.
-        // This allows us to receive the first message of a NEW chat that wasn't in the 'chatIds' list yet.
         val flow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
         }
@@ -111,8 +110,6 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             flow.collect { action ->
                 try {
                     val message = action.decodeRecord<MessageDto>()
-                    // Even though RLS filters it, we can still filter by chatIds if we want
-                    // to be very specific, but for Inbox we want to know about ANY chat.
                     trySend(message)
                 } catch (e: Exception) {
                     Napier.e("Error decoding real-time message in inbox", e)
@@ -122,7 +119,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch {
             try {
-                Napier.d("Subscribing to channel: $channelId")
+                Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
             } catch (e: Exception) {
                 Napier.e("Failed to subscribe to inbox channel", e)
@@ -131,22 +128,22 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         awaitClose {
-            Napier.d("Closing channel: $channelId")
+            Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {
-                    Napier.w("Failed to unsubscribe/remove channel: $channelId", e)
+                    Napier.w("Failed to unsubscribe/remove channel: \$channelId", e)
                 }
             }
         }
     }
 
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> = callbackFlow {
-        val channelId = "chat-$chatId-${UUIDUtils.randomUUID()}"
-        Napier.d("Creating channel: $channelId")
+        val channelId = "chat-\$chatId-\${UUIDUtils.randomUUID()}"
+        Napier.d("Creating channel: \$channelId")
         val channel = client.realtime.channel(channelId)
 
         val collector = launch {
@@ -171,7 +168,6 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                         val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
 
                         if (userId != null) {
-                            // When user leaves presence, typing status is false
                             trySend(mapOf("user_id" to userId, "is_typing" to false))
                         }
                     } catch (e: Exception) {
@@ -183,7 +179,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(Dispatchers.IO) {
             try {
-                Napier.d("Subscribing to channel: $channelId")
+                Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -194,22 +190,22 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         awaitClose {
-            Napier.d("Closing channel: $channelId")
+            Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {
-                    Napier.w("Failed to unsubscribe/remove channel: $channelId", e)
+                    Napier.w("Failed to unsubscribe/remove channel: \$channelId", e)
                 }
             }
         }
     }
 
     fun subscribeToReadReceipts(chatId: String): Flow<MessageDto> = callbackFlow {
-        val channelId = "read-receipts-$chatId-${UUIDUtils.randomUUID()}"
-        Napier.d("Creating channel: $channelId")
+        val channelId = "read-receipts-\$chatId-\${UUIDUtils.randomUUID()}"
+        Napier.d("Creating channel: \$channelId")
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction.Update>(schema = "public") {
             table = "messages"
@@ -224,7 +220,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(Dispatchers.IO) {
             try {
-                Napier.d("Subscribing to channel: $channelId")
+                Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -235,15 +231,50 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         awaitClose {
-            Napier.d("Closing channel: $channelId")
+            Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {
-                    Napier.w("Failed to unsubscribe/remove channel: $channelId", e)
+                    Napier.w("Failed to unsubscribe/remove channel: \$channelId", e)
                 }
+            }
+        }
+    }
+
+    fun subscribeToMessageReactions(): Flow<MessageReactionDto> = callbackFlow {
+        val channelId = "message-reactions-\${UUIDUtils.randomUUID()}"
+        val channel = client.realtime.channel(channelId)
+        val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "message_reactions"
+        }
+
+        val collector = launch {
+            flow.collect { action ->
+                when (action) {
+                    is PostgresAction.Insert -> try { trySend(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
+                    is PostgresAction.Update -> try { trySend(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
+                    is PostgresAction.Delete -> try { trySend(action.decodeOldRecord<MessageReactionDto>()) } catch(e: Exception) {}
+                    else -> {}
+                }
+            }
+        }
+
+        launch {
+            try {
+                channel.subscribe()
+            } catch (e: Exception) {
+                close(e)
+            }
+        }
+
+        awaitClose {
+            collector.cancel()
+            launch {
+                channel.unsubscribe()
+                client.realtime.removeChannel(channel)
             }
         }
     }

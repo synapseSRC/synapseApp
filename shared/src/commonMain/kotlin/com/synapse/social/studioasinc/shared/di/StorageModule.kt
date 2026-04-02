@@ -23,6 +23,8 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDa
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedMessageDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedConversationDao
+import com.synapse.social.studioasinc.shared.data.local.database.MessageReactionDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightMessageReactionDao
 import com.synapse.social.studioasinc.shared.data.adapter.EncryptedStringAdapter
 
 
@@ -97,6 +99,7 @@ val storageModule = module {
     single<PendingActionDao> { SqlDelightPendingActionDao(get()) }
     single<CachedMessageDao> { SqlDelightCachedMessageDao(get()) }
     single<CachedConversationDao> { SqlDelightCachedConversationDao(get()) }
+    single<MessageReactionDao> { SqlDelightMessageReactionDao(get()) }
     single<OfflineActionRepository> { OfflineActionRepositoryImpl(get()) }
 
 

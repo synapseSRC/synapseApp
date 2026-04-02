@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.shared.domain.repository
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
+import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
@@ -40,5 +41,9 @@ interface ChatRepository {
     suspend fun leaveGroup(chatId: String): Result<Unit>
     suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean): Result<Unit>
     suspend fun getChatInfo(chatId: String): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo?>
+    suspend fun toggleMessageReaction(messageId: String, emoji: String): Result<Unit>
+    suspend fun getReactionsForMessage(messageId: String): Result<List<MessageReaction>>
+    suspend fun getReactionsForMessages(messages: List<Message>): List<Message>
+    fun subscribeToMessageReactions(): Flow<MessageReaction>
 
 }

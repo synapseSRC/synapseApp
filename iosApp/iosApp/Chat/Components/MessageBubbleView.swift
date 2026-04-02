@@ -4,6 +4,7 @@ import shared
 struct MessageBubbleView: View {
     let message: SwiftMessage
     let isFromMe: Bool
+    var onReactionSelected: ((shared.ReactionType) -> Void)? = nil
 
     var body: some View {
         HStack {
@@ -12,7 +13,6 @@ struct MessageBubbleView: View {
             }
 
             VStack(alignment: isFromMe ? .trailing : .leading, spacing: 4) {
-                // Media attachment (e.g. Image/Video placeholder)
                 if message.messageType == .image || message.messageType == .video, let urlStr = message.mediaUrl, let url = URL(string: urlStr) {
                     AsyncImage(url: url) { image in
                         image
@@ -28,7 +28,6 @@ struct MessageBubbleView: View {
                     .cornerRadius(12)
                 }
 
-                // Text Content
                 if !message.content.isEmpty {
                     Text(message.content)
                         .padding(12)
@@ -37,7 +36,33 @@ struct MessageBubbleView: View {
                         .cornerRadius(16)
                 }
 
-                // Timestamp and Status
+                if !message.reactions.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(Array(message.reactions.keys), id: \.self) { type in
+                            if let count = message.reactions[type] {
+                                Button(action: {
+                                    onReactionSelected?(type)
+                                }) {
+                                    HStack(spacing: 2) {
+                                        Text(type.emoji)
+                                            .font(.system(size: 12))
+                                        if count > 1 {
+                                            Text("\(count)")
+                                                .font(.system(size: 10))
+                                        }
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(message.userReaction == type ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                    .clipShape(Capsule())
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                    }
+                    .padding(.top, -8)
+                }
+
                 HStack(spacing: 4) {
                     Text(formatTime(message.createdAt))
                         .font(.caption2)

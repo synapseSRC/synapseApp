@@ -11,21 +11,23 @@ class ChatViewModel: ObservableObject {
     @Published var smartReplies: [String] = []
     @Published var isParticipantTyping: Bool = false
 
-    // Using UseCases to interface with KMP Shared layer
     private let getMessagesUseCase: shared.GetMessagesUseCase?
     private let subscribeToMessagesUseCase: shared.SubscribeToMessagesUseCase?
     private let sendMessageUseCase: shared.SendMessageUseCase?
     private let uploadMediaUseCase: shared.UploadMediaUseCase?
     private let broadcastTypingStatusUseCase: shared.BroadcastTypingStatusUseCase?
     private let subscribeToTypingStatusUseCase: shared.SubscribeToTypingStatusUseCase?
+    private let toggleMessageReactionUseCase: shared.ToggleMessageReactionUseCase?
+    private let subscribeToMessageReactionsUseCase: shared.SubscribeToMessageReactionsUseCase?
+    private let populateMessageReactionsUseCase: shared.PopulateMessageReactionsUseCase?
 
     private var chatId: String? = nil
     private var subscriptionTask: Task<Void, Never>? = nil
     private var typingSubscriptionTask: Task<Void, Never>? = nil
+    private var reactionsSubscriptionTask: Task<Void, Never>? = nil
     private let typingSubject = PassthroughSubject<Bool, Never>()
     private var typingCancellable: AnyCancellable? = nil
     
-    // Replace with current user ID from Auth context
     private let currentUserId = "my_user_id" 
 
     init(
@@ -34,7 +36,10 @@ class ChatViewModel: ObservableObject {
         sendMessageUseCase: shared.SendMessageUseCase? = KMPHelper.sharedHelper.sendMessageUseCase,
         uploadMediaUseCase: shared.UploadMediaUseCase? = KMPHelper.sharedHelper.uploadMediaUseCase,
         broadcastTypingStatusUseCase: shared.BroadcastTypingStatusUseCase? = KMPHelper.sharedHelper.broadcastTypingStatusUseCase,
-        subscribeToTypingStatusUseCase: shared.SubscribeToTypingStatusUseCase? = KMPHelper.sharedHelper.subscribeToTypingStatusUseCase
+        subscribeToTypingStatusUseCase: shared.SubscribeToTypingStatusUseCase? = KMPHelper.sharedHelper.subscribeToTypingStatusUseCase,
+        toggleMessageReactionUseCase: shared.ToggleMessageReactionUseCase? = KMPHelper.sharedHelper.toggleMessageReactionUseCase,
+        subscribeToMessageReactionsUseCase: shared.SubscribeToMessageReactionsUseCase? = KMPHelper.sharedHelper.subscribeToMessageReactionsUseCase,
+        populateMessageReactionsUseCase: shared.PopulateMessageReactionsUseCase? = KMPHelper.sharedHelper.populateMessageReactionsUseCase
     ) {
         self.getMessagesUseCase = getMessagesUseCase
         self.subscribeToMessagesUseCase = subscribeToMessagesUseCase
@@ -42,6 +47,9 @@ class ChatViewModel: ObservableObject {
         self.uploadMediaUseCase = uploadMediaUseCase
         self.broadcastTypingStatusUseCase = broadcastTypingStatusUseCase
         self.subscribeToTypingStatusUseCase = subscribeToTypingStatusUseCase
+        self.toggleMessageReactionUseCase = toggleMessageReactionUseCase
+        self.subscribeToMessageReactionsUseCase = subscribeToMessageReactionsUseCase
+        self.populateMessageReactionsUseCase = populateMessageReactionsUseCase
     }
 
     func setup(chatId: String) {
@@ -49,6 +57,7 @@ class ChatViewModel: ObservableObject {
         fetchMessages()
         subscribeToMessages()
         subscribeToTypingStatus()
+        subscribeToMessageReactions()
         setupTypingDebounce()
     }
 
@@ -69,8 +78,9 @@ class ChatViewModel: ObservableObject {
                 }
             }
     }
+
     func fetchMessages() {
-        guard let useCase = getMessagesUseCase, let chatId = chatId else {
+        guard let useCase = getMessagesUseCase, let populateUseCase = populateMessageReactionsUseCase, let chatId = chatId else {
             self.errorMessage = "Dependencies not initialized"
             return
         }
@@ -81,7 +91,8 @@ class ChatViewModel: ObservableObject {
             do {
                 let result = try await useCase.invoke(chatId: chatId, limit: 50, before: nil)
                 if let data = result.getOrNull() as? [shared.Message] {
-                    self.messages = data.map { SwiftMessage(from: $0) }.sorted(by: { $0.createdAt < $1.createdAt })
+                    let populatedData = try await populateUseCase.invoke(messages: data)
+                    self.messages = populatedData.map { SwiftMessage(from: $0) }.sorted(by: { $0.createdAt < $1.createdAt })
                 } else if let error = result.exceptionOrNull() {
                     self.errorMessage = error.message
                 }
@@ -112,10 +123,7 @@ class ChatViewModel: ObservableObject {
                         let existing = self.messages[index]
                         if !encryptedPlaceholders.contains(existing.content) &&
                             encryptedPlaceholders.contains(swiftMsg.content) {
-                            // Keep existing decrypted content; only update delivery metadata
-                            // (prevents flash of "Message is encrypted" over plaintext)
                         } else {
-                            // Preserve isEdited unless content actually changed
                             var merged = swiftMsg
                             if existing.content == swiftMsg.content {
                                 merged.isEdited = existing.isEdited
@@ -132,7 +140,6 @@ class ChatViewModel: ObservableObject {
             }
         }
     }
-
 
     func subscribeToTypingStatus() {
         guard let useCase = subscribeToTypingStatusUseCase, let chatId = chatId else { return }
@@ -152,8 +159,33 @@ class ChatViewModel: ObservableObject {
         }
     }
 
+    func subscribeToMessageReactions() {
+        guard let useCase = subscribeToMessageReactionsUseCase else { return }
+
+        reactionsSubscriptionTask?.cancel()
+        reactionsSubscriptionTask = Task {
+            let flow = useCase.invoke()
+            do {
+                for try await reaction in flow.asAsyncStream(type: shared.MessageReaction.self) {
+                    if let index = self.messages.firstIndex(where: { $0.id == reaction.messageId }) {
+                        fetchMessages() // Refresh for simplicity, or update locally
+                    }
+                }
+            } catch {
+                print("Reaction flow collection failed: \(error)")
+            }
+        }
+    }
+
     func onTyping() {
         typingSubject.send(true)
+    }
+
+    func toggleReaction(messageId: String, emoji: String) {
+        guard let useCase = toggleMessageReactionUseCase else { return }
+        Task {
+            let _ = try? await useCase.invoke(messageId: messageId, emoji: emoji)
+        }
     }
 
     func sendMessage(content: String) {
@@ -191,14 +223,7 @@ class ChatViewModel: ObservableObject {
 
         Task {
             do {
-                // Swift Data to KotlinByteArray mapping might be needed depending on KMP bindings.
-                // Assuming standard interop bridging allows Data or wrapping it.
-                // We mock the KotlinByteArray creation since Swift Data to KotlinByteArray bridging
-                // requires specific standard library bindings like `shared.KotlinByteArray(size: data.count)`.
-                // A correct approach uses KMP-NativeCoroutines or explicit mappings.
                 let kotlinArray = shared.KotlinByteArray(size: Int32(data.count))
-                // Filling the array is skipped for brevity as it requires loop bridging in pure Swift
-                // without a dedicated extension.
 
                 let uploadResult = try await uploadUseCase.invoke(
                     chatId: chatId,
@@ -210,7 +235,7 @@ class ChatViewModel: ObservableObject {
                 if let mediaUrl = uploadResult.getOrNull() as? String {
                     let result = try await sendUseCase.invoke(
                         chatId: chatId,
-                        content: "Media", // Or empty
+                        content: "Media",
                         mediaUrl: mediaUrl,
                         messageType: "IMAGE",
                         expiresAt: nil,

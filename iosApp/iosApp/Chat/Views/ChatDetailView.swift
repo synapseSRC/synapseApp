@@ -7,13 +7,10 @@ struct ChatDetailView: View {
 
     @StateObject private var viewModel = ChatViewModel()
 
-    // In a real app we'd inject currentUserId to know which messages are "mine"
-    // Assuming we have a mock "my_user_id" or get it from auth context
     private let currentUserId = "my_user_id"
 
     var body: some View {
         VStack(spacing: 0) {
-            // Message List
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
@@ -24,7 +21,10 @@ struct ChatDetailView: View {
                             ForEach(viewModel.messages) { message in
                                 MessageBubbleView(
                                     message: message,
-                                    isFromMe: message.senderId == currentUserId
+                                    isFromMe: message.senderId == currentUserId,
+                                    onReactionSelected: { type in
+                                        viewModel.toggleReaction(messageId: message.id, emoji: type.emoji)
+                                    }
                                 )
                                 .id(message.id)
                             }
@@ -33,7 +33,6 @@ struct ChatDetailView: View {
                     .padding()
                 }
                 .onChange(of: viewModel.messages.count) { _ in
-                    // Scroll to bottom when new message arrives
                     if let lastMessage = viewModel.messages.last {
                         withAnimation {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
@@ -47,7 +46,6 @@ struct ChatDetailView: View {
                 }
             }
 
-            // Error banner if any
             if let error = viewModel.errorMessage {
                 Text(error)
                     .font(.caption)
@@ -58,7 +56,6 @@ struct ChatDetailView: View {
                     .padding(.bottom, 4)
             }
 
-            // Smart Replies
             if !viewModel.smartReplies.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -80,7 +77,6 @@ struct ChatDetailView: View {
                 }
             }
 
-            // Input Area
             ChatInputView(
                 isSending: viewModel.isSending,
                 onSendText: { text in

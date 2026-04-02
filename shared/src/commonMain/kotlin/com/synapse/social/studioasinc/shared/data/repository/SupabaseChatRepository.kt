@@ -2,10 +2,13 @@ package com.synapse.social.studioasinc.shared.data.repository
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
+import com.synapse.social.studioasinc.shared.data.datasource.ChatReactionDataSource
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
+import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
+import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
@@ -54,6 +57,7 @@ class SupabaseChatRepository(
 
     private val encryptionHelper = ChatEncryptionHelper(signalProtocolManager, dataSource, cachedMessageDao)
     private val groupRepository = ChatGroupRepository(dataSource)
+    private val reactionDataSource = ChatReactionDataSource(client)
 
     override suspend fun ensureSession(userId: String) = encryptionHelper.ensureSession(userId)
 
@@ -99,7 +103,6 @@ class SupabaseChatRepository(
     }
 
     override suspend fun getConversations(): Result<List<Conversation>> = try {
-        // Cache-first
         val cached = cachedConversationDao?.getAll() ?: emptyList()
         if (cached.isNotEmpty()) {
             externalScope.launch {
@@ -112,7 +115,6 @@ class SupabaseChatRepository(
             }
             Result.success(cached)
         } else {
-            // No cache: fetch, store, return
             val conversations = fetchConversationsFromNetwork()
             cachedConversationDao?.upsertAll(conversations)
             Result.success(conversations)
@@ -136,10 +138,8 @@ class SupabaseChatRepository(
                 try {
                     val fresh = dataSource.getMessages(chatId, limit, null)
                     val decrypted = fresh.map { with(encryptionHelper) { it.decryptIfNecessary(currentUserId).toDomain() } }
-                    // Re-read the latest cache to preserve messages that failed re-decryption
                     val latestCached = cachedMessageDao?.getMessages(chatId, limit * 2) ?: emptyList()
                     val mergedMessages = decrypted.map { freshMsg ->
-                        // If content still looks like an encrypted blob (JSON with user keys), keep cached version
                         val looksEncrypted = freshMsg.content.startsWith("{")
                         if (looksEncrypted) {
                             latestCached.find { it.id == freshMsg.id && !it.content.startsWith("{") } ?: freshMsg
@@ -155,7 +155,6 @@ class SupabaseChatRepository(
             }
             Result.success(cached)
         } else {
-            // No cache or paginating: fetch from network
             val messageDtos = dataSource.getMessages(chatId, limit, before)
             val decrypted = messageDtos.map { with(encryptionHelper) { it.decryptIfNecessary(currentUserId).toDomain() } }
 
@@ -166,7 +165,6 @@ class SupabaseChatRepository(
             Result.success(decrypted)
         }
     } catch (e: Exception) {
-        // Network failed - return cache as fallback
         val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
         if (cached.isNotEmpty()) {
             Result.success(cached)
@@ -221,7 +219,6 @@ class SupabaseChatRepository(
             }
         }
 
-        // Cache sender's plaintext locally — never stored on server
         val domainMessage = message.toDomain()
         if (senderPlaintext != null) {
             val displayContent = try {
@@ -259,7 +256,6 @@ class SupabaseChatRepository(
 
     override suspend fun deleteConversation(chatId: String): Result<Unit> = try {
         dataSource.deleteConversation(chatId)
-        // Also remove from local cache
         cachedConversationDao?.deleteByChatId(chatId)
         Result.success(Unit)
     } catch (e: Exception) {
@@ -366,7 +362,6 @@ class SupabaseChatRepository(
 
 
     override suspend fun uploadMedia(chatId: String, filePath: String, fileName: String, contentType: String, provider: StorageProvider?, config: StorageConfig?, onProgress: ((Int) -> Unit)?): Result<String> = try {
-        // Use the chat attachments bucket. The fileName is assumed to already contain the necessary prefix (e.g., chat_media/chatId/fileName).
         val bucketName = "chat_attachments"
         mediaUploadRepository.upload(
             filePath = filePath,
@@ -435,4 +430,52 @@ class SupabaseChatRepository(
     override suspend fun leaveGroup(chatId: String) = groupRepository.leaveGroup(chatId)
     override suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) = groupRepository.toggleOnlyAdminsCanMessage(chatId, enabled)
     override suspend fun getChatInfo(chatId: String) = groupRepository.getChatInfo(chatId)
+
+    override suspend fun toggleMessageReaction(messageId: String, emoji: String): Result<Unit> =
+        reactionDataSource.toggleReaction(messageId, emoji)
+
+    override suspend fun getReactionsForMessage(messageId: String): Result<List<MessageReaction>> = try {
+        val reactions = reactionDataSource.getReactionsForMessage(messageId).map { dto ->
+            MessageReaction(
+                messageId = dto.messageId,
+                userId = dto.userId,
+                reactionEmoji = dto.reactionEmoji,
+                timestamp = 0L
+            )
+        }
+        Result.success(reactions)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun getReactionsForMessages(messages: List<Message>): List<Message> = try {
+        val currentUserId = getCurrentUserId()
+        val allReactions = reactionDataSource.getReactionsForMessages(messages.map { it.id })
+
+        messages.map { message ->
+            val messageReactions = allReactions.filter { it.messageId == message.id }
+            val summary = messageReactions
+                .groupBy { it.reactionEmoji }
+                .mapKeys { ReactionType.values().find { rt -> rt.emoji == it.key } ?: ReactionType.LIKE }
+                .mapValues { it.value.size }
+
+            val userReaction = messageReactions.find { it.userId == currentUserId }?.reactionEmoji?.let { emoji ->
+                ReactionType.values().find { rt -> rt.emoji == emoji }
+            }
+
+            message.copy(reactions = summary, userReaction = userReaction)
+        }
+    } catch (e: Exception) {
+        messages
+    }
+
+    override fun subscribeToMessageReactions(): Flow<MessageReaction> =
+        dataSource.subscribeToMessageReactions().map { dto ->
+            MessageReaction(
+                messageId = dto.messageId,
+                userId = dto.userId,
+                reactionEmoji = dto.reactionEmoji,
+                timestamp = 0L
+            )
+        }
 }

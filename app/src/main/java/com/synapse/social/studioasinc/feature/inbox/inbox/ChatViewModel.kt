@@ -3,8 +3,8 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.core.util.UploadProgressManager
-import com.synapse.social.studioasinc.domain.usecase.reaction.PopulateMessageReactionsUseCase
-import com.synapse.social.studioasinc.domain.usecase.reaction.ToggleMessageReactionUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.ToggleMessageReactionUseCase
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode

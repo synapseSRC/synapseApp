@@ -79,6 +79,10 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInbo
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToTypingStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.ToggleMessageReactionUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageReactionsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToMessageReactionsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowingUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.notification.GetNotificationsUseCase
@@ -281,6 +285,34 @@ object ChatModule {
         chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
     ): com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase {
         return EditMessageUseCase(chatRepository)
+    }
+    @Provides
+    @Singleton
+    fun provideToggleMessageReactionUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.ToggleMessageReactionUseCase {
+        return ToggleMessageReactionUseCase(chatRepository)
+    }
+    @Provides
+    @Singleton
+    fun provideGetMessageReactionsUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageReactionsUseCase {
+        return GetMessageReactionsUseCase(chatRepository)
+    }
+    @Provides
+    @Singleton
+    fun providePopulateMessageReactionsUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase {
+        return PopulateMessageReactionsUseCase(chatRepository)
+    }
+    @Provides
+    @Singleton
+    fun provideSubscribeToMessageReactionsUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToMessageReactionsUseCase {
+        return SubscribeToMessageReactionsUseCase(chatRepository)
     }
 
 }
