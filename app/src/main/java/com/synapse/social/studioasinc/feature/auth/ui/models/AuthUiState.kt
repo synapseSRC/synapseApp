@@ -2,6 +2,10 @@ package com.synapse.social.studioasinc.feature.auth.ui.models
 
 import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
 
+enum class AuthField {
+    EMAIL, PASSWORD, USERNAME, CONFIRM_PASSWORD
+}
+
 sealed class AuthUiState {
 
     object Initial : AuthUiState()
@@ -11,21 +15,20 @@ sealed class AuthUiState {
     data class SignIn(
         val email: String = "",
         val password: String = "",
-        val emailError: String? = null,
-        val passwordError: String? = null,
+        val validationErrors: Map<AuthField, String?> = emptyMap(),
         val generalError: String? = null,
+        val isErrorDismissed: Boolean = false,
         val isEmailValid: Boolean = false,
-        val isLoading: Boolean = false // Added isLoading field to support inline loading state
+        val isLoading: Boolean = false
     ) : AuthUiState()
 
     data class SignUp(
         val email: String = "",
         val password: String = "",
         val username: String = "",
-        val emailError: String? = null,
-        val passwordError: String? = null,
-        val usernameError: String? = null,
+        val validationErrors: Map<AuthField, String?> = emptyMap(),
         val generalError: String? = null,
+        val isErrorDismissed: Boolean = false,
         val isEmailValid: Boolean = false,
         val passwordStrength: PasswordStrength = PasswordStrength.Weak,
         val isCheckingUsername: Boolean = false,
@@ -38,24 +41,23 @@ sealed class AuthUiState {
         val canResend: Boolean = true,
         val resendCooldownSeconds: Int = 0,
         val isResent: Boolean = false,
-        val isLoading: Boolean = false // Added isLoading field
+        val isLoading: Boolean = false
     ) : AuthUiState()
 
     data class ForgotPassword(
         val email: String = "",
-        val emailError: String? = null,
+        val validationErrors: Map<AuthField, String?> = emptyMap(),
         val isEmailValid: Boolean = false,
         val isEmailSent: Boolean = false,
-        val isLoading: Boolean = false // Added isLoading field
+        val isLoading: Boolean = false
     ) : AuthUiState()
 
     data class ResetPassword(
         val password: String = "",
         val confirmPassword: String = "",
-        val passwordError: String? = null,
-        val confirmPasswordError: String? = null,
+        val validationErrors: Map<AuthField, String?> = emptyMap(),
         val passwordStrength: PasswordStrength = PasswordStrength.Weak,
-        val isLoading: Boolean = false // Added isLoading field
+        val isLoading: Boolean = false
     ) : AuthUiState()
 
     data class Success(val message: String) : AuthUiState()

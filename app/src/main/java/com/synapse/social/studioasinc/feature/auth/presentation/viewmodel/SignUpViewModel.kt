@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.core.config.Constants
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
+import com.synapse.social.studioasinc.shared.core.util.UiEvent
+import com.synapse.social.studioasinc.shared.core.util.UiEventManager
 import com.synapse.social.studioasinc.shared.domain.model.ValidationResult
 import com.synapse.social.studioasinc.shared.domain.usecase.auth.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,6 +27,7 @@ class SignUpViewModel @Inject constructor(
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val validatePasswordUseCase: ValidatePasswordUseCase,
     private val validateUsernameUseCase: ValidateUsernameUseCase,
+    private val validateSignUpCredentialsUseCase: ValidateSignUpCredentialsUseCase,
     private val calculatePasswordStrengthUseCase: CalculatePasswordStrengthUseCase,
     private val checkUsernameAvailabilityUseCase: CheckUsernameAvailabilityUseCase,
     private val signUpUseCase: SignUpUseCase,
@@ -40,24 +44,26 @@ class SignUpViewModel @Inject constructor(
 
     fun onEmailChanged(email: String) {
         val isValid = validateEmailUseCase(email) is ValidationResult.Valid
-        val state = _uiState.value as? AuthUiState.SignUp ?: return
-        _uiState.value = state.copy(email = email, emailError = null, isEmailValid = isValid)
+        _uiState.value = AuthInputHelper.handleEmailChanged(_uiState.value, email, isValid)
     }
 
     fun onPasswordChanged(password: String) {
         val strength = calculatePasswordStrengthUseCase(password)
-        val state = _uiState.value as? AuthUiState.SignUp ?: return
-        _uiState.value = state.copy(
-            password = password,
-            passwordError = null,
-            passwordStrength = strength
-        )
+        _uiState.value = AuthInputHelper.handlePasswordChanged(_uiState.value, password, strength)
     }
 
     fun onUsernameChanged(username: String) {
-        val state = _uiState.value as? AuthUiState.SignUp ?: return
-        _uiState.value = state.copy(username = username, usernameError = null, isCheckingUsername = true)
-        checkUsernameAvailability(username)
+        when (val state = _uiState.value) {
+            is AuthUiState.SignUp -> {
+                _uiState.value = state.copy(
+                    username = username,
+                    validationErrors = state.validationErrors - AuthField.USERNAME,
+                    isCheckingUsername = true
+                )
+                checkUsernameAvailability(username)
+            }
+            else -> {}
+        }
     }
 
     private fun checkUsernameAvailability(username: String) {
@@ -66,18 +72,18 @@ class SignUpViewModel @Inject constructor(
             delay(500) // Debounce
             val validation = validateUsernameUseCase(username)
             if (validation is ValidationResult.Invalid) {
-                updateSignUpState { copy(usernameError = validation.errorMessage, isCheckingUsername = false) }
+                updateSignUpValidationErrors(AuthField.USERNAME, validation.errorMessage)
+                updateSignUpState { copy(isCheckingUsername = false) }
                 return@launch
             }
 
             checkUsernameAvailabilityUseCase(username).fold(
                 onSuccess = { isAvailable ->
-                    updateSignUpState {
-                        copy(
-                            usernameError = if (isAvailable) null else "Username is already taken",
-                            isCheckingUsername = false
-                        )
-                    }
+                    updateSignUpValidationErrors(
+                        AuthField.USERNAME,
+                        if (isAvailable) null else "Username is already taken"
+                    )
+                    updateSignUpState { copy(isCheckingUsername = false) }
                 },
                 onFailure = {
                     updateSignUpState { copy(isCheckingUsername = false) }
@@ -89,35 +95,41 @@ class SignUpViewModel @Inject constructor(
     fun onSignUpClick() {
         val state = _uiState.value as? AuthUiState.SignUp ?: return
 
-        val emailValidation = validateEmailUseCase(state.email)
-        val passwordValidation = validatePasswordUseCase(state.password)
-        val usernameValidation = validateUsernameUseCase(state.username)
+        val validation = validateSignUpCredentialsUseCase(state.email, state.password, state.username)
 
-        if (emailValidation is ValidationResult.Invalid ||
-            passwordValidation is ValidationResult.Invalid ||
-            usernameValidation is ValidationResult.Invalid) {
+        if (!validation.isValid) {
+            val errors = mutableMapOf<AuthField, String?>()
+            validation.emailError?.let { errors[AuthField.EMAIL] = it }
+            validation.passwordError?.let { errors[AuthField.PASSWORD] = it }
+            validation.usernameError?.let { errors[AuthField.USERNAME] = it }
 
-            _uiState.value = state.copy(
-                emailError = (emailValidation as? ValidationResult.Invalid)?.errorMessage,
-                passwordError = (passwordValidation as? ValidationResult.Invalid)?.errorMessage,
-                usernameError = (usernameValidation as? ValidationResult.Invalid)?.errorMessage
-            )
+            _uiState.value = state.copy(validationErrors = errors)
+            viewModelScope.launch { UiEventManager.emit(UiEvent.Error("Validation failed")) }
             return
         }
 
-        if (state.usernameError != null) return
+        if (state.validationErrors[AuthField.USERNAME] != null) return
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, generalError = null)
+            _uiState.value = state.copy(isLoading = true, generalError = null, isErrorDismissed = false)
             signUpUseCase(state.email, state.password, state.username).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false, showSuccessDialog = true)
                 },
                 onFailure = { error ->
-                    _uiState.value = state.copy(isLoading = false, generalError = error.message ?: "Registration failed")
+                    _uiState.value = state.copy(
+                        isLoading = false,
+                        generalError = error.message ?: "Registration failed",
+                        isErrorDismissed = false
+                    )
                 }
             )
         }
+    }
+
+    fun onDismissError() {
+        val state = _uiState.value as? AuthUiState.SignUp ?: return
+        _uiState.value = state.copy(isErrorDismissed = true)
     }
 
     fun onToggleModeClick() {
@@ -150,6 +162,12 @@ class SignUpViewModel @Inject constructor(
     private inline fun updateSignUpState(block: AuthUiState.SignUp.() -> AuthUiState.SignUp) {
         val state = _uiState.value as? AuthUiState.SignUp ?: return
         _uiState.value = state.block()
+    }
+
+    private fun updateSignUpValidationErrors(field: AuthField, error: String?) {
+        val state = _uiState.value as? AuthUiState.SignUp ?: return
+        val newErrors = if (error == null) state.validationErrors - field else state.validationErrors + (field to error)
+        _uiState.value = state.copy(validationErrors = newErrors)
     }
 
     override fun onCleared() {

@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,6 +32,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.OAuthSection
 import com.synapse.social.studioasinc.feature.auth.ui.components.PasswordStrengthIndicator
 import com.synapse.social.studioasinc.feature.auth.ui.components.UserCreatedDialog
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 
 @Composable
 fun SignUpScreen(
@@ -40,7 +43,8 @@ fun SignUpScreen(
     onSignUpClick: () -> Unit,
     onToggleModeClick: () -> Unit,
     onOAuthClick: (String) -> Unit,
-    onDismissSuccessDialog: () -> Unit
+    onDismissSuccessDialog: () -> Unit,
+    onDismissError: () -> Unit
 ) {
     if (state.showSuccessDialog) {
         UserCreatedDialog(onDismiss = onDismissSuccessDialog)
@@ -56,7 +60,8 @@ fun SignUpScreen(
                 onUsernameChanged = onUsernameChanged,
                 onSignUpClick = onSignUpClick,
                 onToggleModeClick = onToggleModeClick,
-                onOAuthClick = onOAuthClick
+                onOAuthClick = onOAuthClick,
+                onDismissError = onDismissError
             )
         }
     )
@@ -87,16 +92,23 @@ private fun SignUpForm(
     onUsernameChanged: (String) -> Unit,
     onSignUpClick: () -> Unit,
     onToggleModeClick: () -> Unit,
-    onOAuthClick: (String) -> Unit
+    onOAuthClick: (String) -> Unit,
+    onDismissError: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val haptic = LocalHapticFeedback.current
+
+    ErrorCard(
+        error = if (state.isErrorDismissed) null else state.generalError,
+        onDismiss = onDismissError
+    )
 
     AuthTextField(
         value = state.username,
         onValueChange = onUsernameChanged,
         label = stringResource(R.string.username_label),
-        error = state.usernameError,
-        isValid = state.username.length >= 3 && state.usernameError == null,
+        error = state.validationErrors[AuthField.USERNAME],
+        isValid = state.username.length >= 3 && state.validationErrors[AuthField.USERNAME] == null,
         isLoading = state.isCheckingUsername,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
@@ -106,7 +118,7 @@ private fun SignUpForm(
         value = state.email,
         onValueChange = onEmailChanged,
         label = stringResource(R.string.email_label),
-        error = state.emailError,
+        error = state.validationErrors[AuthField.EMAIL],
         isValid = state.isEmailValid,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
@@ -116,12 +128,13 @@ private fun SignUpForm(
         value = state.password,
         onValueChange = onPasswordChanged,
         label = stringResource(R.string.password),
-        error = state.passwordError,
+        error = state.validationErrors[AuthField.PASSWORD],
         isValid = false,
         isPassword = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = {
             focusManager.clearFocus()
+            if (state.validationErrors.isNotEmpty()) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             onSignUpClick()
         })
     )
@@ -135,17 +148,11 @@ private fun SignUpForm(
 
     Spacer(modifier = Modifier.height(Spacing.Medium))
 
-    state.generalError?.let { errorMsg ->
-        ErrorCard(error = errorMsg)
-        Spacer(modifier = Modifier.height(Spacing.Medium))
-    }
-
-    Spacer(modifier = Modifier.height(Spacing.Small))
-
     AuthButton(
         text = stringResource(R.string.action_sign_up),
         onClick = {
             focusManager.clearFocus()
+            if (state.validationErrors.isNotEmpty()) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             onSignUpClick()
         },
         loading = state.isLoading

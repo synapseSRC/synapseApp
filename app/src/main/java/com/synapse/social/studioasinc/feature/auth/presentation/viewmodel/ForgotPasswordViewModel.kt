@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 import com.synapse.social.studioasinc.shared.domain.model.ValidationResult
-import com.synapse.social.studioasinc.shared.domain.usecase.auth.SendPasswordResetUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.auth.ValidateEmailUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.auth.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ForgotPasswordViewModel @Inject constructor(
     private val validateEmailUseCase: ValidateEmailUseCase,
+    private val validateResetPasswordEmailUseCase: ValidateResetPasswordEmailUseCase,
     private val sendPasswordResetUseCase: SendPasswordResetUseCase
 ) : ViewModel() {
 
@@ -31,15 +32,15 @@ class ForgotPasswordViewModel @Inject constructor(
 
     fun onEmailChanged(email: String) {
         val isValid = validateEmailUseCase(email) is ValidationResult.Valid
-        val state = _uiState.value as? AuthUiState.ForgotPassword ?: return
-        _uiState.value = state.copy(email = email, emailError = null, isEmailValid = isValid)
+        _uiState.value = AuthInputHelper.handleEmailChanged(_uiState.value, email, isValid)
     }
 
     fun onSubmitNewPassword() {
          val state = _uiState.value as? AuthUiState.ForgotPassword ?: return
-         val emailValidation = validateEmailUseCase(state.email)
-         if (emailValidation is ValidationResult.Invalid) {
-             _uiState.value = state.copy(emailError = emailValidation.errorMessage)
+         val validation = validateResetPasswordEmailUseCase(state.email)
+
+         if (!validation.isValid) {
+             _uiState.value = state.copy(validationErrors = mapOf(AuthField.EMAIL to validation.emailError))
              return
          }
 
@@ -50,13 +51,13 @@ class ForgotPasswordViewModel @Inject constructor(
                      _uiState.value = state.copy(isLoading = false, isEmailSent = true)
                  },
                  onFailure = { error ->
-                     _uiState.value = state.copy(isLoading = false, )
+                     _uiState.value = state.copy(isLoading = false)
                  }
              )
          }
     }
 
     fun onBackToSignInClick() {
-        viewModelScope.launch { _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn) }
+        viewModelScope.launch { _navigationEvent.emit(AuthNavigationEvent.NavigateBack) }
     }
 }

@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.core.config.Constants
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager
 import com.synapse.social.studioasinc.shared.domain.model.OAuthDeepLink
 import com.synapse.social.studioasinc.shared.domain.model.ValidationResult
+import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
 import com.synapse.social.studioasinc.shared.domain.usecase.auth.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
@@ -26,6 +28,7 @@ import javax.inject.Inject
 class SignInViewModel @Inject constructor(
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val validatePasswordUseCase: ValidatePasswordUseCase,
+    private val validateSignInCredentialsUseCase: ValidateSignInCredentialsUseCase,
     private val signInUseCase: SignInUseCase,
     private val getOAuthUrlUseCase: GetOAuthUrlUseCase,
     private val handleOAuthCallbackUseCase: HandleOAuthCallbackUseCase,
@@ -40,41 +43,49 @@ class SignInViewModel @Inject constructor(
 
     fun onEmailChanged(email: String) {
         val isValid = validateEmailUseCase(email) is ValidationResult.Valid
-        val state = _uiState.value as? AuthUiState.SignIn ?: return
-        _uiState.value = state.copy(email = email, emailError = null, isEmailValid = isValid)
+        _uiState.value = AuthInputHelper.handleEmailChanged(_uiState.value, email, isValid)
     }
 
     fun onPasswordChanged(password: String) {
-        val state = _uiState.value as? AuthUiState.SignIn ?: return
-        _uiState.value = state.copy(password = password, passwordError = null)
+        _uiState.value = AuthInputHelper.handlePasswordChanged(_uiState.value, password, PasswordStrength.Weak)
     }
 
     fun onSignInClick() {
         val state = _uiState.value as? AuthUiState.SignIn ?: return
 
-        val emailValidation = validateEmailUseCase(state.email)
-        val passwordValidation = validatePasswordUseCase(state.password)
+        val validation = validateSignInCredentialsUseCase(state.email, state.password)
 
-        if (emailValidation is ValidationResult.Invalid || passwordValidation is ValidationResult.Invalid) {
-            _uiState.value = state.copy(
-                emailError = (emailValidation as? ValidationResult.Invalid)?.errorMessage,
-                passwordError = (passwordValidation as? ValidationResult.Invalid)?.errorMessage
-            )
+        if (!validation.isValid) {
+            val errors = mutableMapOf<AuthField, String?>()
+            validation.emailError?.let { errors[AuthField.EMAIL] = it }
+            validation.passwordError?.let { errors[AuthField.PASSWORD] = it }
+
+            _uiState.value = state.copy(validationErrors = errors)
+            viewModelScope.launch { UiEventManager.emit(UiEvent.Error("Validation failed")) }
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, generalError = null)
+            _uiState.value = state.copy(isLoading = true, generalError = null, isErrorDismissed = false)
             signInUseCase(state.email, state.password).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
                 },
                 onFailure = { error ->
-                    _uiState.value = state.copy(isLoading = false, generalError = error.message ?: "Login failed")
+                    _uiState.value = state.copy(
+                        isLoading = false,
+                        generalError = error.message ?: "Login failed",
+                        isErrorDismissed = false
+                    )
                 }
             )
         }
+    }
+
+    fun onDismissError() {
+        val state = _uiState.value as? AuthUiState.SignIn ?: return
+        _uiState.value = state.copy(isErrorDismissed = true)
     }
 
     fun onForgotPasswordClick() {
@@ -105,24 +116,16 @@ class SignInViewModel @Inject constructor(
 
     fun handleGoogleIdToken(idToken: String) {
         viewModelScope.launch {
-            val currentState = _uiState.value as? AuthUiState.SignIn
-            if (currentState != null) {
-                _uiState.value = currentState.copy(isLoading = true, generalError = null)
-            }
+            _uiState.value = AuthInputHelper.handleGoogleIdTokenLoading(_uiState.value)
 
             signInWithGoogleIdTokenUseCase(idToken).fold(
                 onSuccess = {
-                    val state = _uiState.value as? AuthUiState.SignIn
-                    if (state != null) {
-                        _uiState.value = state.copy(isLoading = false)
-                    }
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
                 },
                 onFailure = { error ->
-                    val state = _uiState.value as? AuthUiState.SignIn ?: return@fold
-                    _uiState.value = state.copy(
-                        isLoading = false,
-                        generalError = error.message ?: "Google Sign-In failed"
+                    _uiState.value = AuthInputHelper.handleGoogleIdTokenFailure(
+                        _uiState.value,
+                        error.message ?: "Google Sign-In failed"
                     )
                 }
             )
@@ -130,65 +133,20 @@ class SignInViewModel @Inject constructor(
     }
 
     fun handleGoogleSignInError(errorMessage: String) {
-        val state = _uiState.value as? AuthUiState.SignIn ?: return
-        _uiState.value = state.copy(
-            isLoading = false,
-            generalError = errorMessage
-        )
+        _uiState.value = AuthInputHelper.handleGoogleSignInError(_uiState.value, errorMessage)
     }
 
     fun handleDeepLink(uri: Uri?) {
-        if (uri == null) return
+        val deepLink = AuthOAuthHelper.parseDeepLink(uri) ?: return
 
-        Napier.d("Handling deep link: $uri", tag = "SignInViewModel")
-
-        val code = uri.getQueryParameter("code")
-        val fragment = uri.fragment
-
-        var accessToken: String? = null
-        var refreshToken: String? = null
-        var error: String? = null
-        var errorDescription: String? = null
-
-        if (fragment != null) {
-            Napier.d("Deep link has fragment: $fragment", tag = "SignInViewModel")
-            val params = fragment.split("&").associate {
-                val parts = it.split("=")
-                if (parts.size == 2) parts[0] to parts[1] else "" to ""
-            }
-            accessToken = params["access_token"]
-            refreshToken = params["refresh_token"]
-            error = params["error"]
-            errorDescription = params["error_description"]
-        }
-
-        if (uri.getQueryParameter("error") != null) {
-            error = uri.getQueryParameter("error")
-            errorDescription = uri.getQueryParameter("error_description")
-            Napier.e("OAuth error in deep link: $error - $errorDescription", tag = "SignInViewModel")
-        }
-
-        val deepLink = OAuthDeepLink(
-            provider = null,
-            code = code,
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            type = if (code != null) "pkce" else "implicit",
-            error = error,
-            errorCode = null,
-            errorDescription = errorDescription
-        )
-
-        Napier.d("Processing OAuth callback - code: ${code != null}, accessToken: ${accessToken != null}", tag = "SignInViewModel")
+        Napier.d("Processing OAuth callback", tag = "SignInViewModel")
 
         viewModelScope.launch {
             handleOAuthCallbackUseCase(deepLink).fold(
                 onSuccess = {
-                    Napier.d("OAuth callback successful, navigating to main", tag = "SignInViewModel")
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
                 },
                 onFailure = { e ->
-                    Napier.e("OAuth callback failed: ${e.message}", e, tag = "SignInViewModel")
                     _uiState.value = AuthUiState.SignIn()
                     viewModelScope.launch { UiEventManager.emit(UiEvent.Error(e.message ?: "Error")) }
                 }

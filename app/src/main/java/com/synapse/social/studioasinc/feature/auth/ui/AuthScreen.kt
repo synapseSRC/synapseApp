@@ -100,7 +100,8 @@ fun AuthScreen(
                     onSignInClick = signInViewModel::onSignInClick,
                     onForgotPasswordClick = signInViewModel::onForgotPasswordClick,
                     onToggleModeClick = signInViewModel::onToggleModeClick,
-                    onOAuthClick = signInViewModel::onOAuthClick
+                    onOAuthClick = signInViewModel::onOAuthClick,
+                    onDismissError = signInViewModel::onDismissError
                 )
             }
 
@@ -120,7 +121,8 @@ fun AuthScreen(
                     onSignUpClick = viewModel::onSignUpClick,
                     onToggleModeClick = viewModel::onToggleModeClick,
                     onOAuthClick = viewModel::onOAuthClick,
-                    onDismissSuccessDialog = viewModel::onDismissSuccessDialog
+                    onDismissSuccessDialog = viewModel::onDismissSuccessDialog,
+                    onDismissError = viewModel::onDismissError
                 )
             }
 
