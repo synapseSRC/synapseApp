@@ -202,6 +202,8 @@ class ProfileViewModel @Inject constructor(
     fun followUser(userId: String) {
         viewModelScope.launch {
             val currentUserId = _state.value.currentUserId
+            if (currentUserId.isBlank() || currentUserId == userId) return@launch
+
             _state.update { it.copy(isFollowLoading = true) }
             followUserUseCase(currentUserId, userId).onSuccess {
                 _state.update { it.copy(isFollowing = true, isFollowLoading = false) }
@@ -214,6 +216,8 @@ class ProfileViewModel @Inject constructor(
     fun unfollowUser(userId: String) {
          viewModelScope.launch {
             val currentUserId = _state.value.currentUserId
+            if (currentUserId.isBlank() || currentUserId == userId) return@launch
+
             _state.update { it.copy(isFollowLoading = true) }
             unfollowUserUseCase(currentUserId, userId).onSuccess {
                 _state.update { it.copy(isFollowing = false, isFollowLoading = false) }
