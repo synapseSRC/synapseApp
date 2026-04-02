@@ -189,11 +189,12 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
             client.postgrest.from("chats").insert(newChat)
 
             // Create participants
-            val participants = mutableListOf<ChatParticipantDto>()
-            participants.add(ChatParticipantDto(chatId = chatId, userId = currentUserId, isAdmin = true))
-            for (userId in participantIds) {
-                if (userId != currentUserId) {
-                    participants.add(ChatParticipantDto(chatId = chatId, userId = userId))
+            val participants = buildList(participantIds.size + 1) {
+                add(ChatParticipantDto(chatId = chatId, userId = currentUserId, isAdmin = true))
+                participantIds.forEach {
+                    if (it != currentUserId) {
+                        add(ChatParticipantDto(chatId = chatId, userId = it))
+                    }
                 }
             }
 

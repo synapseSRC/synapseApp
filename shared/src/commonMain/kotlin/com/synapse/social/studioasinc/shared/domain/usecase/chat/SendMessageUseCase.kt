@@ -1,4 +1,7 @@
 package com.synapse.social.studioasinc.shared.domain.usecase.chat
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
@@ -49,13 +52,17 @@ class SendMessageUseCase(
             }.toString()
             val contentBytes = jsonPayload.encodeToByteArray()
 
-            val payloadMap = mutableMapOf<String, JsonElement>()
-            for (userId in otherParticipants) {
-                Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
-                repository.ensureSession(userId)
-                val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
-                payloadMap[userId] = Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
+            val payloadMap = coroutineScope {
+                otherParticipants.map { userId ->
+                    async {
+                        Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
+                        repository.ensureSession(userId)
+                        val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
+                        userId to Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
+                    }
+                }.awaitAll().toMap()
             }
+
 
             val encryptedPayload = JsonObject(payloadMap).toString()
             Napier.d("E2EE_ENCRYPT: Message encrypted for ${payloadMap.size} recipients", tag = "E2EE")

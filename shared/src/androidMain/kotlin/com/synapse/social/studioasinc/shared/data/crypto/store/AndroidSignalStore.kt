@@ -191,16 +191,17 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         val allKeys = prefs.all.keys
         var deletedCount = 0
 
+        val prefix = "session_"
         for (key in allKeys) {
-            if (key.startsWith("session_")) {
+            if (key.startsWith(prefix)) {
                 if (name == null) {
                     editor.remove(key)
                     deletedCount++
                 } else {
                     val lastUnderscoreIndex = key.lastIndexOf('_')
-                    if (lastUnderscoreIndex > "session_".length) {
-                        val storedName = key.substring("session_".length, lastUnderscoreIndex)
-                        if (storedName == name) {
+                    if (lastUnderscoreIndex > prefix.length) {
+                        val storedNameLength = lastUnderscoreIndex - prefix.length
+                        if (storedNameLength == name.length && key.regionMatches(prefix.length, name, 0, storedNameLength)) {
                             editor.remove(key)
                             deletedCount++
                         }

@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import shared
 
@@ -21,7 +22,8 @@ class ChatViewModel: ObservableObject {
     private var chatId: String? = nil
     private var subscriptionTask: Task<Void, Never>? = nil
     private var typingSubscriptionTask: Task<Void, Never>? = nil
-    private var typingDebounceTask: Task<Void, Never>? = nil
+    private let typingSubject = PassthroughSubject<Bool, Never>()
+    private var typingCancellable: AnyCancellable? = nil
     
     // Replace with current user ID from Auth context
     private let currentUserId = "my_user_id" 
@@ -47,14 +49,26 @@ class ChatViewModel: ObservableObject {
         fetchMessages()
         subscribeToMessages()
         subscribeToTypingStatus()
+        setupTypingDebounce()
     }
 
-    deinit {
-        subscriptionTask?.cancel()
-        typingSubscriptionTask?.cancel()
-        typingDebounceTask?.cancel()
+    private func setupTypingDebounce() {
+        typingCancellable = typingSubject
+            .removeDuplicates()
+            .handleEvents(receiveOutput: { isTyping in
+                if isTyping {
+                    Task { try? await self.broadcastTypingStatusUseCase?.invoke(chatId: self.chatId ?? "", isTyping: true) }
+                }
+            })
+            .debounce(for: .seconds(2), scheduler: RunLoop.main)
+            .sink { isTyping in
+                if isTyping {
+                    self.typingSubject.send(false)
+                } else {
+                    Task { try? await self.broadcastTypingStatusUseCase?.invoke(chatId: self.chatId ?? "", isTyping: false) }
+                }
+            }
     }
-
     func fetchMessages() {
         guard let useCase = getMessagesUseCase, let chatId = chatId else {
             self.errorMessage = "Dependencies not initialized"
@@ -139,20 +153,7 @@ class ChatViewModel: ObservableObject {
     }
 
     func onTyping() {
-        guard let useCase = broadcastTypingStatusUseCase, let chatId = chatId else { return }
-        
-        typingDebounceTask?.cancel()
-        
-        Task {
-            let _ = try? await useCase.invoke(chatId: chatId, isTyping: true)
-        }
-        
-        typingDebounceTask = Task {
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-            if !Task.isCancelled {
-                let _ = try? await useCase.invoke(chatId: chatId, isTyping: false)
-            }
-        }
+        typingSubject.send(true)
     }
 
     func sendMessage(content: String) {

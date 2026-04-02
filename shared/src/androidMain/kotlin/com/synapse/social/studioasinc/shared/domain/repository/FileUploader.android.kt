@@ -74,29 +74,24 @@ actual class FileUploader(private val context: Context) {
     }
 
     actual suspend fun readFile(path: String, offset: Long): ByteReadChannel {
-        val inputStream: InputStream = if (path.startsWith("content://")) {
+        return if (path.startsWith("content://")) {
             val uri = Uri.parse(path)
-            context.contentResolver.openInputStream(uri)
-                ?: throw Exception("Failed to open input stream for $path")
-        } else {
-            FileInputStream(File(path))
-        }
+            val pfd = context.contentResolver.openFileDescriptor(uri, "r")
+                ?: throw Exception("Failed to open file descriptor for $path")
 
-        if (offset > 0) {
-            try {
-                var skipped = 0L
-                while (skipped < offset) {
-                    val s = inputStream.skip(offset - skipped)
-                    if (s <= 0) break
-                    skipped += s
-                }
-            } catch (e: Exception) {
-                inputStream.close()
-                throw e
+            if (offset > 0) {
+                android.system.Os.lseek(pfd.fileDescriptor, offset, android.system.OsConstants.SEEK_SET)
             }
-        }
 
-        return inputStream.toByteReadChannel(context = Dispatchers.IO)
+            FileInputStream(pfd.fileDescriptor).toByteReadChannel(context = Dispatchers.IO)
+        } else {
+            val file = File(path)
+            val fis = FileInputStream(file)
+            if (offset > 0) {
+                fis.channel.position(offset)
+            }
+            fis.toByteReadChannel(context = Dispatchers.IO)
+        }
     }
 
     actual fun deleteFile(path: String) {
