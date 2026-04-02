@@ -82,7 +82,7 @@ fun MessageContextMenu(
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -101,7 +101,7 @@ fun MessageContextMenu(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .background(color = Color(0xFF2C2C2C), shape = CircleShape)
+                            .background(color = MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape)
                             .clickable {
                                 val sharedReaction = SharedReactionType.fromString(reaction.name)
                                 selectedMessage.id?.let { onReactionSelected(it, sharedReaction) }
