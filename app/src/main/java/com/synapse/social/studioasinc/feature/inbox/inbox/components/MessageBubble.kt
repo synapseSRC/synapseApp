@@ -458,7 +458,7 @@ fun MessageBubble(
             Row(
                 modifier = Modifier
                     .padding(horizontal = Spacing.Small)
-                    .padding(top = (-8).dp),
+                    .offset(y = (-8).dp),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
             ) {
                 message.reactions.forEach { (type, count) ->
