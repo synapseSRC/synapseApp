@@ -1,6 +1,9 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.widget.Toast
+import android.Manifest
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -150,6 +153,15 @@ fun AvatarScreen(
             viewModel.uploadBitmap(bitmap)
         }
     }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(null)
+        } else {
+            Toast.makeText(context, context.getString(R.string.camera_permission_required), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     if (showRemoveDialog) {
         AlertDialog(
@@ -244,10 +256,15 @@ fun AvatarScreen(
                         imageVector = Icons.Filled.CameraAlt,
                         position = SettingsItemPosition.Middle,
                         onClick = {
-                            try {
-                                cameraLauncher.launch(null)
-                            } catch (e: android.content.ActivityNotFoundException) {
-                                Toast.makeText(context, context.getString(R.string.no_camera_available), Toast.LENGTH_SHORT).show()
+                            val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                                try {
+                                    cameraLauncher.launch(null)
+                                } catch (e: android.content.ActivityNotFoundException) {
+                                    Toast.makeText(context, context.getString(R.string.no_camera_available), Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                             }
                         }
                     )

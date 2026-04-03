@@ -67,12 +67,14 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         val collector = launch {
+            kotlinx.coroutines.yield()
             flow.map { it.decodeRecord<MessageDto>() }.collect { message ->
                 trySend(message)
             }
         }
 
         launch(Dispatchers.IO) {
+            kotlinx.coroutines.yield()
             try {
                 Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
@@ -88,6 +90,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
+            kotlinx.coroutines.yield()
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -107,6 +110,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         val collector = launch {
+            kotlinx.coroutines.yield()
             flow.collect { action ->
                 try {
                     val message = action.decodeRecord<MessageDto>()
@@ -118,6 +122,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch {
+            kotlinx.coroutines.yield()
             try {
                 Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
@@ -131,6 +136,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
+            kotlinx.coroutines.yield()
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -147,6 +153,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val channel = client.realtime.channel(channelId)
 
         val collector = launch {
+            kotlinx.coroutines.yield()
             channel.presenceChangeFlow().collect { presenceChange ->
                 presenceChange.joins.values.forEach { presence ->
                     try {
@@ -178,6 +185,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch(Dispatchers.IO) {
+            kotlinx.coroutines.yield()
             try {
                 Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
@@ -193,6 +201,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
+            kotlinx.coroutines.yield()
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -213,12 +222,14 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         val collector = launch {
+            kotlinx.coroutines.yield()
             flow.map { it.decodeRecord<MessageDto>() }.collect { message ->
                 trySend(message)
             }
         }
 
         launch(Dispatchers.IO) {
+            kotlinx.coroutines.yield()
             try {
                 Napier.d("Subscribing to channel: \$channelId")
                 channel.subscribe()
@@ -234,6 +245,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing channel: \$channelId")
             collector.cancel()
             launch {
+            kotlinx.coroutines.yield()
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -252,6 +264,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         val collector = launch {
+            kotlinx.coroutines.yield()
             flow.collect { action ->
                 when (action) {
                     is PostgresAction.Insert -> try { trySend(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
@@ -263,6 +276,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch {
+            kotlinx.coroutines.yield()
             try {
                 channel.subscribe()
             } catch (e: Exception) {
@@ -273,6 +287,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         awaitClose {
             collector.cancel()
             launch {
+            kotlinx.coroutines.yield()
                 channel.unsubscribe()
                 client.realtime.removeChannel(channel)
             }
