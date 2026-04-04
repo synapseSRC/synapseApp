@@ -77,13 +77,14 @@ class SupabaseNotificationRepository(
                 filter("recipient_id", FilterOperator.EQ, userId)
             }
 
-            val collector = launch {
+            val collector = launch(Dispatchers.IO) {
                 flow.map { it.decodeRecord<NotificationDto>() }.collect {
                     trySend(it.toDomain())
                 }
             }
 
             launch(Dispatchers.IO) {
+                kotlinx.coroutines.yield()
                 try {
                     channel.subscribe()
                 } catch (e: Exception) {

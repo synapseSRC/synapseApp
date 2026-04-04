@@ -247,13 +247,14 @@ class ChatMessagingRepositoryImpl @Inject constructor(
                 filter("chat_id", FilterOperator.EQ, chatId)
             }
 
-            val collector = launch {
+            val collector = launch(Dispatchers.IO) {
                 flow.map { it.decodeRecord<ChatMessage>() }.collect { message ->
                     trySend(message)
                 }
             }
 
             launch(Dispatchers.IO) {
+                kotlinx.coroutines.yield()
                 try {
                     channel.subscribe()
                 } catch (e: Exception) {

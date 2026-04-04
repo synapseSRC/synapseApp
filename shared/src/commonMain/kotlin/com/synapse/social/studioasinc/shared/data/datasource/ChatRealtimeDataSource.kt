@@ -121,7 +121,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch {
+        launch(Dispatchers.IO) {
             kotlinx.coroutines.yield()
             try {
                 Napier.d("Subscribing to channel: \$channelId")
@@ -275,7 +275,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch {
+        launch(Dispatchers.IO) {
             kotlinx.coroutines.yield()
             try {
                 channel.subscribe()
