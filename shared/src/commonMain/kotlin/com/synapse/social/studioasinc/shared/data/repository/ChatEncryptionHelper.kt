@@ -92,9 +92,7 @@ internal class ChatEncryptionHelper(
                     try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
                     return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl)
                 } catch (decryptError: Exception) {
-                    Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId. Deleting session to force recovery.", tag = "E2EE", throwable = decryptError)
-                    signalProtocolManager.deleteSession(senderId)
-                    signalProtocolManager.deleteIdentity(senderId)
+                    Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
 
                     // Return placeholder instead of leaking raw encrypted JSON on failure
                     val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
