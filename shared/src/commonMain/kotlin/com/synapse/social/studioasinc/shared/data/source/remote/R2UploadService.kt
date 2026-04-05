@@ -9,6 +9,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.content.ByteArrayContent
+import io.ktor.http.ContentType
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.encodeURLPathPart
 import io.ktor.http.isSuccess
@@ -38,7 +40,8 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             throw UploadError.R2Error("R2 configuration is incomplete")
         }
 
-        val encodedFileName = fileName.encodeURLPathPart()
+        val cleanFileName = fileName.removePrefix("/")
+        val encodedFileName = cleanFileName.split('/').joinToString("/") { it.encodeURLPathPart() }
 
         val (host, url) = if (accountId.startsWith("http://") || accountId.startsWith("https://")) {
             val endpoint = accountId.removePrefix("https://").removePrefix("http://")
@@ -59,8 +62,8 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             val channel = fileProvider(0)
             val bytes = channel.readRemaining().readBytes()
             
-            // Calculate SHA256 hash of the payload for signature
-            val payloadHash = PlatformUtils.sha256(bytes)
+            // Use UNSIGNED-PAYLOAD to avoid signature mismatches caused by Ktor chunking or modifying the payload stream
+            val payloadHash = "UNSIGNED-PAYLOAD"
             
             val signedHeaders = S3Signer.signS3(
                 method = "PUT",
@@ -76,11 +79,10 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             
             val response = client.put(url) {
                 signedHeaders.forEach { (k, v) ->
-                    headers[k] = v
+                    headers.append(k, v)
                 }
                 
-                headers["Content-Length"] = bytes.size.toString()
-                setBody(bytes)
+                setBody(ByteArrayContent(bytes, ContentType.Application.OctetStream))
                 
                 onUpload { bytesSentTotal, totalBytes ->
                      val total = totalBytes ?: bytes.size.toLong()
