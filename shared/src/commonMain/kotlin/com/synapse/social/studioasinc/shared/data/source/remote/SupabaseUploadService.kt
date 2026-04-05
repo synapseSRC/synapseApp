@@ -4,7 +4,6 @@ import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.UploadError
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.storage.upload
 import io.github.jan.supabase.storage.storage
 import io.github.aakira.napier.Napier
 import io.ktor.utils.io.ByteReadChannel
