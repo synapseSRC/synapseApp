@@ -580,7 +580,6 @@ fun MessageBubble(
         if (message.reactions.isNotEmpty()) {
             Row(
                 modifier = Modifier
-                    .align(if (isFromMe) Alignment.BottomEnd else Alignment.BottomStart)
                     .offset(y = 12.dp)
                     .padding(horizontal = Spacing.Small),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
