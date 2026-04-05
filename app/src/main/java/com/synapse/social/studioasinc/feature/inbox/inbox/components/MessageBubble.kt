@@ -633,9 +633,8 @@ fun MessageBubble(
         if (replyCount > 0) {
             RepliesIndicatorRow(count = replyCount)
         }
-            } // Column
-        } // Row
-    } // Box
+        } // Column
+    } // Row/Box
 }
 
 /**
