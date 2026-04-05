@@ -49,10 +49,10 @@ class UploadMediaUseCase(
         if (providersToTry.isEmpty()) {
             val mediaType = if (isImage) "image" else if (isVideo) "video" else "file"
             val errorMessage = if (provider != StorageProvider.DEFAULT) {
-                "Selected storage provider '\$provider' is not configured for \$mediaType upload. " +
+                "Selected storage provider '$provider' is not configured for $mediaType upload. " +
                     "Please configure it in Settings -> Storage Providers, or select 'Default' to use any available provider."
             } else {
-                "No configured storage provider available for \$mediaType upload. " +
+                "No configured storage provider available for $mediaType upload. " +
                     "Please configure at least one provider (ImgBB, Cloudinary, Supabase, or Cloudflare R2) in Settings -> Storage Providers."
             }
             return Result.failure(IllegalStateException(errorMessage))

@@ -36,7 +36,7 @@ data class StorageConfig(
             StorageProvider.IMGBB -> imgBBKey.isNotBlank()
             StorageProvider.CLOUDINARY -> cloudinaryCloudName.isNotBlank() &&
                 (cloudinaryUploadPreset.isNotBlank() || (cloudinaryApiKey.isNotBlank() && cloudinaryApiSecret.isNotBlank()))
-            StorageProvider.SUPABASE -> supabaseUrl.isNotBlank() && supabaseKey.isNotBlank() && supabaseBucket.isNotBlank()
+            StorageProvider.SUPABASE -> supabaseUrl.isNotBlank() && supabaseKey.isNotBlank()
             StorageProvider.CLOUDFLARE_R2 -> r2AccountId.isNotBlank() && r2AccessKeyId.isNotBlank() && r2SecretAccessKey.isNotBlank() && r2BucketName.isNotBlank()
 
         }
