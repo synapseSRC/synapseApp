@@ -1,0 +1,7 @@
+CREATE TABLE MessageReaction (
+    message_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    reaction_emoji TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    PRIMARY KEY (message_id, user_id, reaction_emoji)
+);

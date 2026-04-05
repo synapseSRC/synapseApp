@@ -1,0 +1,26 @@
+CREATE TABLE MessageReaction (
+    message_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    reaction_emoji TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    PRIMARY KEY (message_id, user_id, reaction_emoji)
+);
+
+insertReaction:
+INSERT OR REPLACE INTO MessageReaction(message_id, user_id, reaction_emoji, timestamp)
+VALUES ?;
+
+deleteReaction:
+DELETE FROM MessageReaction
+WHERE message_id = :messageId AND user_id = :userId AND reaction_emoji = :reactionEmoji;
+
+selectByMessageId:
+SELECT * FROM MessageReaction
+WHERE message_id = :messageId;
+
+deleteAllByMessageId:
+DELETE FROM MessageReaction
+WHERE message_id = :messageId;
+
+deleteAll:
+DELETE FROM MessageReaction;
