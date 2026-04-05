@@ -90,7 +90,7 @@ object Sizes {
     val HeightMassive = 250.dp
     val WidthLarge = 80.dp
     val WidthExtraLarge = 100.dp
-    val WidthMassive = 150.dp
+    val WidthMassive = 110.dp
 
     val ShimmerTextSmall = 14.dp
     val ShimmerTextMedium = 28.dp

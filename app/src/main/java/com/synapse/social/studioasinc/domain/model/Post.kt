@@ -184,11 +184,11 @@ data class Post(
     @Transient
     var latestCommentAuthor: String? = null,
     @Transient
-    var isBookmarked: Boolean = false,
+    val isBookmarked: Boolean = false,
     @Transient
-    var isReshared: Boolean = false,
+    val isReshared: Boolean = false,
     @Transient
-    var resharedByUsername: String? = null,
+    val resharedByUsername: String? = null,
 
     @SerialName("metadata")
     val metadata: PostMetadata? = null

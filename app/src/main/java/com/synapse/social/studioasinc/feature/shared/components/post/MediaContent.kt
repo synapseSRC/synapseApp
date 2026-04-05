@@ -60,6 +60,8 @@ fun MediaContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = Sizes.HeightMediaSingle)
+                    .clip(RoundedCornerShape(Sizes.CornerMedium)),
+                contentScale = ContentScale.Fit
             )
             if (isVideo) {
                 Icon(
@@ -208,6 +210,7 @@ fun MediaGridItem(
             .build(),
         contentDescription = "Post Image",
         modifier = modifier
+            .clip(RoundedCornerShape(Sizes.CornerMedium))
             .clickable(onClick = onClick),
         contentScale = ContentScale.Crop
     )
