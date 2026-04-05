@@ -112,7 +112,6 @@ class ReactionRepositoryImpl @Inject constructor(
                             client.from(tableName)
                                 .update({
                                     set("reaction_type", reactionType.name.lowercase())
-                                    set("updated_at", java.time.Instant.now().toString())
                                 }) { filter { eq(idColumn, targetId); eq("user_id", userId) } }
                             Log.d(TAG, "Reaction updated to ${reactionType.name} for $targetType $targetId")
                             ReactionToggleResult.UPDATED
@@ -409,86 +408,42 @@ class ReactionRepositoryImpl @Inject constructor(
 
     suspend fun populateCommentReactions(comments: List<CommentWithUser>): List<CommentWithUser> = withContext(Dispatchers.IO) {
         if (comments.isEmpty()) return@withContext comments
-
+        // Comments are now posts — use the reactions table with post_id
         try {
-            val allCommentIds = comments.map { it.id }
+            val commentIds = comments.map { it.id }
+            val currentUser = client.auth.currentUserOrNull()
             val semaphore = Semaphore(5)
 
             val summaries = supervisorScope {
-                 allCommentIds.chunked(20).map { chunkIds ->
-                     async {
-                         semaphore.withPermit {
-                             try {
-                                 val rpcSummaries = client.postgrest.rpc(
-                                    "get_comments_reactions_summary",
-                                    buildJsonObject {
-                                        put("comment_ids", buildJsonArray {
-                                            chunkIds.forEach { add(it) }
-                                        })
-                                    }
-                                 ).decodeList<CommentReactionSummary>()
+                commentIds.chunked(20).map { chunkIds ->
+                    async {
+                        semaphore.withPermit {
+                            val reactions = client.from("reactions")
+                                .select(io.github.jan.supabase.postgrest.query.Columns.raw("post_id, user_id, reaction_type")) {
+                                    filter { isIn("post_id", chunkIds) }
+                                }
+                                .decodeList<JsonObject>()
 
-                                 val currentUser = client.auth.currentUserOrNull()
-                                 if (currentUser != null) {
-                                     val userReactions = client.from("comment_reactions")
-                                         .select(io.github.jan.supabase.postgrest.query.Columns.raw("comment_id, reaction_type")) {
-                                             filter {
-                                                 isIn("comment_id", chunkIds)
-                                                 eq("user_id", currentUser.id)
-                                             }
-                                         }.decodeList<JsonObject>()
+                            val byId = reactions.groupBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
 
-                                     val userReactionMap = userReactions.associate {
-                                         it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull to it.getStringOrNull("reaction_type")
-                                     }
-
-                                     rpcSummaries.map { summary ->
-                                         val userReaction = userReactionMap[summary.commentId]
-                                         if (userReaction != null) {
-                                             summary.copy(userReaction = userReaction)
-                                         } else {
-                                             summary
-                                         }
-                                     }
-                                 } else {
-                                     rpcSummaries
-                                 }
-                             } catch(e: Exception) {
-                                 Log.e(TAG, "Failed to fetch reaction summaries for comment chunk via RPC, falling back", e)
-                                 val reactions = client.from("comment_reactions")
-                                     .select { filter { isIn("comment_id", chunkIds) } }
-                                     .decodeList<JsonObject>()
-
-                                 val currentUser = client.auth.currentUserOrNull()
-
-                                 val reactionsByCommentId = reactions.groupBy { it["comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
-
-                                 chunkIds.map { commentId ->
-                                     val commentReactions = reactionsByCommentId[commentId] ?: emptyList()
-                                     val summary = commentReactions
-                                         .groupBy { ReactionType.fromString(it.getStringOrNull("reaction_type") ?: "LIKE") }
-                                         .mapValues { it.value.size }
-                                         .mapKeys { it.key.name.lowercase() }
-
-                                     val userReaction = currentUser?.let { user ->
-                                         commentReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
-                                             ?.getStringOrNull("reaction_type")
-                                     }
-
-                                     CommentReactionSummary(
-                                         commentId = commentId,
-                                         reactionCounts = summary,
-                                         userReaction = userReaction
-                                     )
-                                 }
-                             }
-                         }
-                     }
-                 }.awaitAll().flatten()
+                            chunkIds.map { commentId ->
+                                val commentReactions = byId[commentId] ?: emptyList()
+                                val summary = commentReactions
+                                    .groupBy { ReactionType.fromString(it.getStringOrNull("reaction_type") ?: "LIKE") }
+                                    .mapValues { it.value.size }
+                                    .mapKeys { it.key.name.lowercase() }
+                                val userReaction = currentUser?.let { user ->
+                                    commentReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
+                                        ?.getStringOrNull("reaction_type")
+                                }
+                                CommentReactionSummary(commentId = commentId, reactionCounts = summary, userReaction = userReaction)
+                            }
+                        }
+                    }
+                }.awaitAll().flatten()
             }
 
             applyCommentReactionSummaries(comments, summaries)
-
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -595,18 +550,16 @@ suspend fun togglePostReaction(postId: String, reactionType: ReactionType, oldRe
 
     private fun getTableName(targetType: String): String {
         return when (targetType.lowercase()) {
-            "post" -> "reactions"
+            "post", "comment" -> "reactions"
             "message" -> "message_reactions"
-            "comment" -> "comment_reactions"
             else -> "reactions"
         }
     }
 
     private fun getIdColumn(targetType: String): String {
         return when (targetType.lowercase()) {
-            "post" -> "post_id"
+            "post", "comment" -> "post_id"
             "message" -> "message_id"
-            "comment" -> "comment_id"
             else -> "post_id"
         }
     }

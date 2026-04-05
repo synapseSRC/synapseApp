@@ -93,7 +93,7 @@ data class Post(
     @SerialName("reshares_count")
     val resharesCount: Int = 0,
 
-        @SerialName("reply_to_post_id")
+        @SerialName("in_reply_to_post_id")
     val inReplyToPostId: String? = null,
     @SerialName("root_post_id")
     val rootPostId: String? = null,
