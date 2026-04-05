@@ -49,8 +49,8 @@ internal fun ChatMessageList(
             .fillMaxSize(),
         // Extra bottom padding so last messages aren't hidden behind the floating input
         contentPadding = PaddingValues(
-            start = Spacing.Medium,
-            end = Spacing.Medium,
+            start = Spacing.Small,
+            end = Spacing.Small,
             top = Spacing.Medium,
             bottom = Sizes.WidthLarge
         ),
