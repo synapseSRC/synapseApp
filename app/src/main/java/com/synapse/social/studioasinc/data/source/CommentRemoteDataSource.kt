@@ -89,7 +89,7 @@ class CommentRemoteDataSource @Inject constructor(
             .select(Columns.raw(POST_COLUMNS)) {
                 filter {
                     eq("author_uid", userId)
-                    filter("in_reply_to_post_id", io.github.jan.supabase.postgrest.query.filter.FilterOperator.IS_NOT, "null")
+                    filterNot("in_reply_to_post_id", io.github.jan.supabase.postgrest.query.filter.FilterOperator.IS, "null")
                     eq("is_deleted", false)
                 }
                 order("created_at", Order.DESCENDING)
