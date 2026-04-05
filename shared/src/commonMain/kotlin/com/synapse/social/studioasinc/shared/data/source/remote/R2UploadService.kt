@@ -38,7 +38,7 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             throw UploadError.R2Error("R2 configuration is incomplete")
         }
 
-        val encodedFileName = fileName.encodeURLPathPart()
+        val encodedFileName = fileName.split('/').joinToString("/") { it.encodeURLPathPart() }
 
         val (host, url) = if (accountId.startsWith("http://") || accountId.startsWith("https://")) {
             val endpoint = accountId.removePrefix("https://").removePrefix("http://")
