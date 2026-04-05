@@ -309,6 +309,16 @@ class ChatViewModel @Inject constructor(
         initializationDelegate.initialize(chatId, participantId, currentChatId)
     }
 
+    /** Re-fetches messages for the current chat (e.g. after screen resumes from off). */
+    fun refreshMessages() {
+        val chatId = currentChatId ?: return
+        viewModelScope.launch {
+            getMessagesUseCase(chatId).onSuccess { messages ->
+                messagingDelegate.setMessages(messages)
+            }
+        }
+    }
+
     private fun handleIncomingMessage(newMessage: Message) {
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
         messagingDelegate._messages.update { current ->

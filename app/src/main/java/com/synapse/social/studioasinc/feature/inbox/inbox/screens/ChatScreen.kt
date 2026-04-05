@@ -164,6 +164,18 @@ fun ChatScreen(
         viewModel.initialize(chatId, participantId)
     }
 
+    // Re-fetch messages when screen resumes (catches messages missed while screen was off)
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshMessages()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     val messages by viewModel.messages.collectAsState()
     val chatItems by viewModel.chatItems.collectAsState()
     val inputText by viewModel.inputText.collectAsState()
