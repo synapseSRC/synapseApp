@@ -4,10 +4,12 @@ import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.UploadError
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.storage.resumable.*
+import io.github.jan.supabase.storage.upload
 import io.github.jan.supabase.storage.storage
 import io.github.aakira.napier.Napier
 import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.core.readBytes
+import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -31,19 +33,12 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
             val path = "${TimeProvider.nowMillis()}_$fileName"
 
             coroutineScope {
-                val upload = bucket.resumable.createOrContinueUpload(
-                    source = path,
-                    path = path,
-                    size = fileSize,
-                    channel = fileProvider
-                )
-
-                val job = upload.stateFlow.onEach { state ->
-                    onProgress(state.progress)
-                }.launchIn(this)
-
-                upload.startOrResumeUploading()
-                job.cancel()
+                val channel = fileProvider(0L)
+                val bytes = channel.readRemaining().readBytes()
+                bucket.upload(path, bytes) {
+                    this.upsert = false
+                }
+                onProgress(1.0f)
             }
 
             val publicUrl = bucket.publicUrl(path)

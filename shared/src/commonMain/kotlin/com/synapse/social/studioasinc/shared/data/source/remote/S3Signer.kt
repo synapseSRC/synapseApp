@@ -27,7 +27,7 @@ object S3Signer {
                 "x-amz-date:${amzDate.trim()}\n"
         val signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date"
         val canonicalQuery = ""
-        val canonicalRequest = "$method\n$canonicalPath\n$canonicalQuery\n$canonicalHeaders$signedHeaders\n$payloadToSign"
+        val canonicalRequest = "$method\n$canonicalPath\n$canonicalQuery\n$canonicalHeaders\n$signedHeaders\n$payloadToSign"
         val credentialScope = "$dateStamp/$region/$S3_SERVICE/aws4_request"
         val stringToSign = "AWS4-HMAC-SHA256\n$amzDate\n$credentialScope\n${PlatformUtils.sha256(canonicalRequest)}"
 
