@@ -71,6 +71,7 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_CHAT_FOLDERS)
             preferences.remove(SettingsConstants.KEY_CHAT_MAX_MESSAGE_CHUNK_SIZE)
             preferences.remove(SettingsConstants.KEY_MESSAGE_SUGGESTION_ENABLED)
+            preferences.remove(SettingsConstants.KEY_CHAT_AVATAR_DISABLED)
 
             preferences.remove(SettingsConstants.KEY_DATA_SAVER_ENABLED)
 
@@ -126,6 +127,7 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_CHAT_FOLDERS)
             preferences[SettingsConstants.KEY_CHAT_MAX_MESSAGE_CHUNK_SIZE] = SettingsConstants.DEFAULT_CHAT_MAX_MESSAGE_CHUNK_SIZE
             preferences[SettingsConstants.KEY_MESSAGE_SUGGESTION_ENABLED] = SettingsConstants.DEFAULT_MESSAGE_SUGGESTION_ENABLED
+            preferences[SettingsConstants.KEY_CHAT_AVATAR_DISABLED] = SettingsConstants.DEFAULT_CHAT_AVATAR_DISABLED
 
             preferences[SettingsConstants.KEY_DATA_SAVER_ENABLED] = SettingsConstants.DEFAULT_DATA_SAVER_ENABLED
 

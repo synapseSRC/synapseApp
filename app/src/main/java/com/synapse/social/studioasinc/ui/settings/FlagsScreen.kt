@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,6 +20,7 @@ fun FlagsScreen(
     onBackClick: () -> Unit
 ) {
     val messageSuggestionEnabled by viewModel.messageSuggestionEnabled.collectAsState()
+    val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
 
     Scaffold(
         containerColor = SettingsColors.screenBackground,
@@ -61,7 +63,15 @@ fun FlagsScreen(
                             imageVector = Icons.Filled.Build,
                             checked = messageSuggestionEnabled,
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
-                            position = SettingsItemPosition.Single
+                            position = SettingsItemPosition.Top
+                        )
+                        SettingsToggleItem(
+                            title = "Disable Chat Avatars",
+                            subtitle = "Hide sender avatars in chat",
+                            imageVector = Icons.Filled.Person,
+                            checked = chatAvatarDisabled,
+                            onCheckedChange = { viewModel.setChatAvatarDisabled(it) },
+                            position = SettingsItemPosition.Bottom
                         )
                     }
                 }

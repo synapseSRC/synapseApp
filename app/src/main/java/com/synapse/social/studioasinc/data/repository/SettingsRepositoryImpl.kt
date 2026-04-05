@@ -206,6 +206,12 @@ class SettingsRepositoryImpl private constructor(
         settingsDataStore.setMessageSuggestionEnabled(enabled)
     }
 
+    override val chatAvatarDisabled: Flow<Boolean> = settingsDataStore.chatAvatarDisabled
+
+    override suspend fun setChatAvatarDisabled(enabled: Boolean) {
+        settingsDataStore.setChatAvatarDisabled(enabled)
+    }
+
     override val chatMaxMessageChunkSize: Flow<Int> = settingsDataStore.chatMaxMessageChunkSize
 
     override suspend fun setChatMaxMessageChunkSize(size: Int) {

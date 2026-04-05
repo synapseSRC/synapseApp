@@ -17,4 +17,5 @@ class GetChatSettingsUseCase @Inject constructor(
     val chatMessageCornerRadius: Flow<Int> = settingsRepository.chatMessageCornerRadius
     val chatMaxMessageChunkSize: Flow<Int> = settingsRepository.chatMaxMessageChunkSize
     val messageSuggestionEnabled: Flow<Boolean> = settingsRepository.messageSuggestionEnabled
+    val chatAvatarDisabled: Flow<Boolean> = settingsRepository.chatAvatarDisabled
 }

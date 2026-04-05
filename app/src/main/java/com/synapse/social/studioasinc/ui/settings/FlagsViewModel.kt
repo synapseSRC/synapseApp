@@ -22,9 +22,22 @@ class FlagsViewModel @Inject constructor(
             initialValue = false
         )
 
+    val chatAvatarDisabled: StateFlow<Boolean> = settingsRepository.chatAvatarDisabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     fun setMessageSuggestionEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setMessageSuggestionEnabled(enabled)
+        }
+    }
+
+    fun setChatAvatarDisabled(disabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setChatAvatarDisabled(disabled)
         }
     }
 }

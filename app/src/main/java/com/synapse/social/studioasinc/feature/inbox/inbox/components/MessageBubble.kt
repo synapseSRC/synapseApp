@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.AddReaction
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -62,6 +64,67 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @Composable
+fun RepliesIndicatorRow(count: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Spacing.Small),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$count replies",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f).padding(start = Spacing.Small))
+    }
+}
+
+@Composable
+fun SenderHeaderRow(
+    avatarUrl: String?,
+    displayName: String,
+    timestamp: String,
+    isStarred: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = Spacing.Small),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = "Sender Avatar",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Spacer(modifier = Modifier.width(Spacing.Small))
+        Column {
+            Text(
+                text = displayName,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = timestamp,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Icon(
+            imageVector = Icons.Filled.Star,
+            contentDescription = "Starred",
+            tint = if (isStarred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 fun DateDividerChip(label: String) {
     Box(
         modifier = Modifier
@@ -85,6 +148,30 @@ fun DateDividerChip(label: String) {
 }
 
 @Composable
+private fun WavyDivider(modifier: Modifier, color: Color) {
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val path = androidx.compose.ui.graphics.Path()
+        val waveLength = 12.dp.toPx()
+        val amplitude = 3.dp.toPx()
+        var currentX = 0f
+        path.moveTo(0f, size.height / 2f)
+        while (currentX < size.width) {
+            path.relativeQuadraticTo(waveLength / 4f, -amplitude, waveLength / 2f, 0f)
+            path.relativeQuadraticTo(waveLength / 4f, amplitude, waveLength / 2f, 0f)
+            currentX += waveLength
+        }
+        drawPath(
+            path = path,
+            color = color,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = 1.5.dp.toPx(),
+                cap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+        )
+    }
+}
+
+@Composable
 fun UnreadDividerRow(count: Int) {
     Row(
         modifier = Modifier
@@ -92,14 +179,14 @@ fun UnreadDividerRow(count: Int) {
             .padding(vertical = Spacing.Small),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
         Text(
             text = stringResource(if (count == 1) R.string.chat_divider_unread_one else R.string.chat_divider_unread_other, count),
             modifier = Modifier.padding(horizontal = Spacing.Medium),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
     }
 }
 
@@ -133,7 +220,12 @@ fun MessageBubble(
     getLinkMetadataUseCase: GetLinkMetadataUseCase? = null,
     fontScale: Float = 1.0f,
     cornerRadius: Int = 16,
-    themePreset: ChatThemePreset = ChatThemePreset.DEFAULT
+    themePreset: ChatThemePreset = ChatThemePreset.DEFAULT,
+    showAvatar: Boolean = true,
+    senderName: String? = null,
+    senderAvatarUrl: String? = null,
+    reactions: List<Pair<String, Int>> = emptyList(),
+    replyCount: Int = 0
 ) {
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
 
@@ -141,26 +233,26 @@ fun MessageBubble(
 
     val containerColor = if (isFromMe) {
         when (themePreset) {
-            ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.primary
+            ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.primaryContainer
             ChatThemePreset.OCEAN -> if (isDark) DarkPrimaryContainer else LightPrimaryContainer
             ChatThemePreset.FOREST -> if (isDark) ForestBubbleText else ForestBubbleBackground
             ChatThemePreset.SUNSET -> if (isDark) SunsetBubbleText else SunsetBubbleBackground
             ChatThemePreset.MONOCHROME -> if (isDark) Gray700 else Gray200
         }
     } else {
-        MaterialTheme.colorScheme.secondaryContainer
+        MaterialTheme.colorScheme.surfaceContainerHighest
     }
 
     val contentColor = if (isFromMe) {
         when (themePreset) {
-            ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.onPrimary
+            ChatThemePreset.DEFAULT -> MaterialTheme.colorScheme.onPrimaryContainer
             ChatThemePreset.OCEAN -> if (isDark) DarkOnPrimaryContainer else DarkPrimaryContainer
             ChatThemePreset.FOREST -> if (isDark) ForestBubbleBackground else ForestBubbleText
             ChatThemePreset.SUNSET -> if (isDark) SunsetBubbleBackground else SunsetBubbleText
             ChatThemePreset.MONOCHROME -> if (isDark) Gray200 else Gray900
         }
     } else {
-        MaterialTheme.colorScheme.onSecondaryContainer
+        MaterialTheme.colorScheme.onSurface
     }
 
     // UI logic applied carefully matching sender side for sharpness:
@@ -241,6 +333,17 @@ fun MessageBubble(
             },
         contentAlignment = alignment
     ) {
+        Column(
+            horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
+        ) {
+            if (!isFromMe && (position == GroupPosition.SINGLE || position == GroupPosition.FIRST) && showAvatar) {
+                SenderHeaderRow(
+                    avatarUrl = senderAvatarUrl,
+                    displayName = senderName ?: "",
+                    timestamp = formatMessageTime(message.createdAt),
+                    isStarred = false
+                )
+            }
         Surface(
             color = containerColor,
             contentColor = contentColor,
@@ -258,21 +361,28 @@ fun MessageBubble(
                             .fillMaxWidth()
                             .padding(bottom = Spacing.ExtraSmall)
                     ) {
-                        Column(modifier = Modifier.padding(Spacing.Small)) {
-                            Text(
-                                text = if (replyToMessage.senderId == message.senderId) "You" else "Them",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = replyToMessage.content ?: "",
-                                style = androidx.compose.ui.text.TextStyle(
-                                    fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
+                        Row(modifier = Modifier.padding(Spacing.Small), verticalAlignment = Alignment.CenterVertically) {
+                            Text("❝", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(end = Spacing.ExtraSmall))
+
+                            // Given that we don't have access to the replyToMessage senderName and avatarURL on the base Message data class natively (we'd have to look them up),
+                            // we'll attempt to provide a fallback name for now since we don't have sender name on the model.
+                            // If they were on the model: AsyncImage(model=replyToMessage.senderAvatarUrl) + text=(replyToMessage.senderName ?: "").uppercase()
+                            Column {
+                                Text(
+                                    text = (if (replyToMessage.senderId == message.senderId) "You" else "Them").uppercase(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = replyToMessage.content ?: "",
+                                    style = androidx.compose.ui.text.TextStyle(
+                                        fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
@@ -449,6 +559,47 @@ fun MessageBubble(
                     }
                 }
             }
+        }
+
+        if (reactions.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = Spacing.ExtraSmall),
+                horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                reactions.forEach { (emoji, count) ->
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier.padding(end = Spacing.ExtraSmall)
+                    ) {
+                        Text(
+                            text = "$emoji $count",
+                            modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Tiny),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onLongClick,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AddReaction,
+                        contentDescription = "Add Reaction",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        if (replyCount > 0) {
+            RepliesIndicatorRow(count = replyCount)
+        }
         }
     }
 }

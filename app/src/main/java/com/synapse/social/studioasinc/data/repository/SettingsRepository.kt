@@ -157,6 +157,9 @@ interface SettingsRepository {
     val messageSuggestionEnabled: Flow<Boolean>
     suspend fun setMessageSuggestionEnabled(enabled: Boolean)
 
+    val chatAvatarDisabled: Flow<Boolean>
+    suspend fun setChatAvatarDisabled(enabled: Boolean)
+
     val chatMaxMessageChunkSize: Flow<Int>
     suspend fun setChatMaxMessageChunkSize(size: Int)
 

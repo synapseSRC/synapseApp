@@ -19,6 +19,7 @@ interface ChatStore {
     val chatSwipeGesture: Flow<com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture>
     val chatMaxMessageChunkSize: Flow<Int>
     val chatFoldersJson: Flow<String?>
+    val chatAvatarDisabled: Flow<Boolean>
 
     suspend fun setChatFontScale(scale: Float)
     suspend fun setChatThemePreset(preset: ChatThemePreset)
@@ -30,6 +31,7 @@ interface ChatStore {
     suspend fun setChatSwipeGesture(gesture: com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture)
     suspend fun setChatMaxMessageChunkSize(size: Int)
     suspend fun setChatFoldersJson(json: String)
+    suspend fun setChatAvatarDisabled(enabled: Boolean)
 }
 
 class ChatStoreImpl(private val dataStore: DataStore<Preferences>) : ChatStore {
@@ -143,6 +145,16 @@ class ChatStoreImpl(private val dataStore: DataStore<Preferences>) : ChatStore {
     override suspend fun setChatFoldersJson(json: String) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_CHAT_FOLDERS] = json
+        }
+    }
+
+    override val chatAvatarDisabled: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_CHAT_AVATAR_DISABLED] ?: SettingsConstants.DEFAULT_CHAT_AVATAR_DISABLED
+    }
+
+    override suspend fun setChatAvatarDisabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_CHAT_AVATAR_DISABLED] = enabled
         }
     }
 }

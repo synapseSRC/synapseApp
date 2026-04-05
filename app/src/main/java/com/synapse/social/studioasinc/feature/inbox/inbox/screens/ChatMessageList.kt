@@ -30,6 +30,8 @@ internal fun ChatMessageList(
     chatFontScale: Float,
     chatMessageCornerRadius: Int,
     chatThemePreset: ChatThemePreset,
+    chatAvatarDisabled: Boolean,
+    participantProfile: com.synapse.social.studioasinc.shared.domain.model.User?,
     listState: LazyListState,
     onToggleSelection: (String) -> Unit,
     onSwipeToReply: (Message) -> Unit,
@@ -96,7 +98,10 @@ internal fun ChatMessageList(
                         onReactionSelected = { reaction -> message.id?.let { onReactionSelected(it, reaction) } },
                         fontScale = chatFontScale,
                         cornerRadius = chatMessageCornerRadius,
-                        themePreset = chatThemePreset
+                        themePreset = chatThemePreset,
+                        showAvatar = !chatAvatarDisabled,
+                        senderName = participantProfile?.displayName ?: participantProfile?.name,
+                        senderAvatarUrl = participantProfile?.avatar
                     )
                 }
             }
