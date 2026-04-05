@@ -23,6 +23,16 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.AddReaction
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +51,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
@@ -99,7 +108,7 @@ fun SenderHeaderRow(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(36.dp)
-                .clip(androidx.compose.foundation.shape.CircleShape)
+                .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         )
         Spacer(modifier = Modifier.width(Spacing.Small))
@@ -149,8 +158,8 @@ fun DateDividerChip(label: String) {
 
 @Composable
 private fun WavyDivider(modifier: Modifier, color: Color) {
-    androidx.compose.foundation.Canvas(modifier = modifier) {
-        val path = androidx.compose.ui.graphics.Path()
+    Canvas(modifier = modifier) {
+        val path = Path()
         val waveLength = 12.dp.toPx()
         val amplitude = 3.dp.toPx()
         var currentX = 0f
@@ -163,9 +172,9 @@ private fun WavyDivider(modifier: Modifier, color: Color) {
         drawPath(
             path = path,
             color = color,
-            style = androidx.compose.ui.graphics.drawscope.Stroke(
+            style = Stroke(
                 width = 1.5.dp.toPx(),
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                cap = StrokeCap.Round
             )
         )
     }
@@ -216,6 +225,7 @@ fun MessageBubble(
     onSwipeToReply: () -> Unit = {},
     replyToMessage: Message? = null,
     onLongClick: () -> Unit = {},
+    onShowReactionPicker: () -> Unit = {},
     onReactionSelected: (SharedReactionType) -> Unit = {},
     getLinkMetadataUseCase: GetLinkMetadataUseCase? = null,
     fontScale: Float = 1.0f,
@@ -256,7 +266,7 @@ fun MessageBubble(
     }
 
     // UI logic applied carefully matching sender side for sharpness:
-    val radius = androidx.compose.ui.unit.Dp(cornerRadius.toFloat())
+    val radius = Dp(cornerRadius.toFloat())
     val shape = if (isFromMe) {
         when (position) {
             GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
@@ -340,7 +350,7 @@ fun MessageBubble(
                 SenderHeaderRow(
                     avatarUrl = senderAvatarUrl,
                     displayName = senderName ?: "",
-                    timestamp = formatMessageTime(message.createdAt),
+                    timestamp = remember(message.createdAt) { formatMessageTime(message.createdAt) },
                     isStarred = false
                 )
             }
@@ -375,12 +385,12 @@ fun MessageBubble(
                                 )
                                 Text(
                                     text = replyToMessage.content ?: "",
-                                    style = androidx.compose.ui.text.TextStyle(
+                                    style = TextStyle(
                                         fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     ),
                                     maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -436,7 +446,7 @@ fun MessageBubble(
                                 color = contentColor,
                                 fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
                                 maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
@@ -479,7 +489,7 @@ fun MessageBubble(
                         var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                         Text(
                             text = annotatedString,
-                            style = androidx.compose.ui.text.TextStyle(
+                            style = TextStyle(
                                 color = contentColor,
                                 fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
                             ),
@@ -529,11 +539,11 @@ fun MessageBubble(
                             text = stringResource(id = R.string.edited),
                             style = MaterialTheme.typography.labelSmall,
                             color = contentColor.copy(alpha = 0.6f),
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            fontStyle = FontStyle.Italic
                         )
                     }
                     Text(
-                        text = formatMessageTime(message.createdAt),
+                        text = remember(message.createdAt) { formatMessageTime(message.createdAt) },
                         style = MaterialTheme.typography.labelSmall,
                         color = contentColor.copy(alpha = 0.6f)
                     )
@@ -572,7 +582,7 @@ fun MessageBubble(
                 reactions.forEach { (emoji, count) ->
                     Surface(
                         shape = RoundedCornerShape(50),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         color = MaterialTheme.colorScheme.surface,
                         modifier = Modifier.padding(end = Spacing.ExtraSmall)
                     ) {
@@ -585,7 +595,7 @@ fun MessageBubble(
                 }
 
                 IconButton(
-                    onClick = onLongClick,
+                    onClick = onShowReactionPicker,
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
