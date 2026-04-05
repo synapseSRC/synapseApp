@@ -62,8 +62,8 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             val channel = fileProvider(0)
             val bytes = channel.readRemaining().readBytes()
             
-            // Calculate SHA256 hash of the payload for signature
-            val payloadHash = PlatformUtils.sha256(bytes)
+            // Use UNSIGNED-PAYLOAD to avoid signature mismatches caused by Ktor chunking or modifying the payload stream
+            val payloadHash = "UNSIGNED-PAYLOAD"
             
             val signedHeaders = S3Signer.signS3(
                 method = "PUT",
@@ -79,10 +79,9 @@ class R2UploadService(private val client: HttpClient) : UploadService {
             
             val response = client.put(url) {
                 signedHeaders.forEach { (k, v) ->
-                    headers[k] = v
+                    headers.append(k, v)
                 }
                 
-                headers["Content-Length"] = bytes.size.toString()
                 setBody(ByteArrayContent(bytes, ContentType.Application.OctetStream))
                 
                 onUpload { bytesSentTotal, totalBytes ->
