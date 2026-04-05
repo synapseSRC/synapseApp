@@ -393,7 +393,7 @@ private fun getLicenses(): List<License> {
             developer = "The Android Open Source Project",
             year = "2024",
             licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         ),
         License(
@@ -401,7 +401,7 @@ private fun getLicenses(): List<License> {
             developer = "JetBrains",
             year = "2024",
             licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         ),
         License(
@@ -409,15 +409,7 @@ private fun getLicenses(): List<License> {
             developer = "Square, Inc.",
             year = "2024",
             licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
-            licenseContent = APACHE_2_0
-        ),
-        License(
-            library = "Retrofit",
-            developer = "Square, Inc.",
-            year = "2024",
-            licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         ),
         License(
@@ -425,7 +417,7 @@ private fun getLicenses(): List<License> {
             developer = "Coil Contributors",
             year = "2024",
             licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         ),
         License(
@@ -441,24 +433,207 @@ private fun getLicenses(): List<License> {
             developer = "JetBrains",
             year = "2024",
             licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         ),
-         License(
+        License(
             library = "Google Gson",
             developer = "Google Inc.",
             year = "2024",
             licenseType = "Apache 2.0",
-            licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         ),
-         License(
-            library = "Glide",
-            developer = "Sam Judd - Google",
+        License(
+            library = "Hilt",
+            developer = "Google",
             year = "2024",
-            licenseType = "BSD, part MIT and Apache 2.0",
-            licenseUrl = "https://github.com/bumptech/glide/blob/master/LICENSE",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Koin",
+            developer = "insert-koin.io",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "SQLDelight",
+            developer = "Cash App",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Firebase SDK",
+            developer = "Google",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Google GenAI SDK",
+            developer = "Google",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Accompanist",
+            developer = "Google",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "ZXing Core",
+            developer = "ZXing Authors",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Markwon",
+            developer = "Noties",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Media3 / ExoPlayer",
+            developer = "Google",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "OneSignal",
+            developer = "OneSignal",
+            year = "2024",
+            licenseType = "MIT License",
+            licenseUrl = "https://opensource.org/licenses/MIT",
+            licenseContent = MIT_LICENSE
+        ),
+        License(
+            library = "Napier",
+            developer = "Aakira",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "kotlinx-coroutines",
+            developer = "JetBrains",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "kotlinx-serialization",
+            developer = "JetBrains",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "kotlinx-datetime",
+            developer = "JetBrains",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Vico Charts",
+            developer = "Patryk Goworowski",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "PhotoView",
+            developer = "Chris Banes",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "android-image-cropper",
+            developer = "Vanniktech",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Multiplatform Settings",
+            developer = "Russell Wolf",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "Signal Protocol Android",
+            developer = "Signal Messenger",
+            year = "2024",
+            licenseType = "GPLv3",
+            licenseUrl = "https://www.gnu.org/licenses/gpl-3.0.txt",
+            licenseContent = GPL_V3
+        ),
+        License(
+            library = "ksoup",
+            developer = "Fleeksoft",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "LeakCanary",
+            developer = "Square",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
+            licenseContent = APACHE_2_0
+        ),
+        License(
+            library = "CameraX",
+            developer = "Google",
+            year = "2024",
+            licenseType = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0.txt",
             licenseContent = APACHE_2_0
         )
     )
 }
+
+private const val GPL_V3 = """
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
