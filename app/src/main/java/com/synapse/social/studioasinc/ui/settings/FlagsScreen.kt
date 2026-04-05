@@ -65,6 +65,7 @@ fun FlagsScreen(
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
                             position = SettingsItemPosition.Top
                         )
+                        SettingsDivider()
                         SettingsToggleItem(
                             title = "Disable Chat Avatars",
                             subtitle = "Hide sender avatars in chat",

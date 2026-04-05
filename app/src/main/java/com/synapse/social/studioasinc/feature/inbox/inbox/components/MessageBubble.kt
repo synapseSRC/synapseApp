@@ -347,12 +347,14 @@ fun MessageBubble(
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start
         ) {
-            if (!isFromMe) {
-                if (showAvatar && (position == GroupPosition.LAST || position == GroupPosition.SINGLE)) {
+            if (!isFromMe && showAvatar) {
+                if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
                     AsyncImage(
                         model = senderAvatarUrl,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
+                        placeholder = rememberVectorPainter(Icons.Filled.Person),
+                        error = rememberVectorPainter(Icons.Filled.Person),
                         modifier = Modifier
                             .size(Sizes.AvatarSmall)
                             .clip(CircleShape)
@@ -410,6 +412,8 @@ fun MessageBubble(
                                 model = if (isOwnReply) null else senderAvatarUrl,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
+                                placeholder = rememberVectorPainter(Icons.Filled.Person),
+                                error = rememberVectorPainter(Icons.Filled.Person),
                                 modifier = Modifier
                                     .size(Sizes.AvatarTiny)
                                     .clip(CircleShape)
@@ -430,7 +434,7 @@ fun MessageBubble(
                                         fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     ),
-                                    maxLines = 1,
+                                    maxLines = 4,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
@@ -575,6 +579,8 @@ fun MessageBubble(
                 model = senderAvatarUrl,
                 contentDescription = stringResource(R.string.chat_cd_reader_avatar),
                 contentScale = ContentScale.Crop,
+                placeholder = rememberVectorPainter(Icons.Filled.Person),
+                error = rememberVectorPainter(Icons.Filled.Person),
                 modifier = Modifier
                     .padding(top = Spacing.Tiny)
                     .size(Sizes.AvatarTiny)
