@@ -80,9 +80,16 @@ fun CommentInput(
 
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
                 if (replyToParticipants.isNotEmpty()) {
-                    val label = when {
-                        replyToParticipants.size == 1 -> "Replying to @${replyToParticipants[0]}"
-                        else -> "Replying to @${replyToParticipants[0]} and ${replyToParticipants.size - 1} others"
+                    val maxShown = 3
+                    val shown = replyToParticipants.take(maxShown)
+                    val overflow = replyToParticipants.size - shown.size
+                    val label = buildString {
+                        append("Replying to ")
+                        shown.forEachIndexed { i, username ->
+                            if (i > 0) append(if (i == shown.lastIndex && overflow == 0) " and " else ", ")
+                            append("@$username")
+                        }
+                        if (overflow > 0) append(" and $overflow other${if (overflow > 1) "s" else ""}")
                     }
                     Text(
                         text = label,

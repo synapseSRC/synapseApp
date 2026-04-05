@@ -204,7 +204,7 @@ fun ChatScreen(
     val chatFontScale by viewModel.chatFontScale.collectAsState()
     val chatThemePreset by viewModel.chatThemePreset.collectAsState()
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
-
+    val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
 
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
 
@@ -329,6 +329,8 @@ fun ChatScreen(
                         chatFontScale = chatFontScale,
                         chatMessageCornerRadius = chatMessageCornerRadius,
                         chatThemePreset = chatThemePreset,
+                        chatAvatarDisabled = chatAvatarDisabled,
+                        participantProfile = participantProfile,
                         listState = listState,
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },

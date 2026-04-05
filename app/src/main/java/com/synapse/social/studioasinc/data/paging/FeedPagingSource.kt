@@ -103,7 +103,7 @@ class FeedPagingSource(
                             columns = Columns.raw("""
                                 *,
                                 users!author_uid(username, display_name, avatar, verify),
-                                latest_comments:comments(id, content, user_id, created_at, users(username)),
+                                latest_comments:posts!in_reply_to_post_id(id, post_text, author_uid, created_at, users!author_uid(username)),
                                 quoted_post:posts!quoted_post_id(*, users!author_uid(username, display_name, avatar, verify))
                             """.trimIndent())
                         ) {
@@ -127,7 +127,7 @@ class FeedPagingSource(
                                 .maxByOrNull { it["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
 
                             if (latestComment != null) {
-                                post.latestCommentText = latestComment["content"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                post.latestCommentText = latestComment["post_text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                                 val commentUser = latestComment["users"]?.jsonObject
                                 post.latestCommentAuthor = commentUser?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                             }

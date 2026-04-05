@@ -1329,6 +1329,9 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="chat_action_open_file">Open File</string>
     <string name="chat_action_open_link">Open Link</string>
     <string name="chat_cd_file">File</string>
+    <string name="chat_reply_you">YOU</string>
+    <string name="chat_reply_them">THEM</string>
+    <string name="chat_cd_reader_avatar">Read by</string>
     <string name="chat_type_message">Type a message...</string>
     <string name="user_created_title">Account Created!</string>
     <string name="user_created_message">Your account has been created successfully. Please check your email to verify your account.</string>

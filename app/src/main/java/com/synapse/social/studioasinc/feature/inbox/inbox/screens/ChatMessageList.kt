@@ -1,8 +1,8 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -17,6 +17,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.components.isWithinTim
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
@@ -30,6 +31,8 @@ internal fun ChatMessageList(
     chatFontScale: Float,
     chatMessageCornerRadius: Int,
     chatThemePreset: ChatThemePreset,
+    chatAvatarDisabled: Boolean,
+    participantProfile: com.synapse.social.studioasinc.shared.domain.model.User?,
     listState: LazyListState,
     onToggleSelection: (String) -> Unit,
     onSwipeToReply: (Message) -> Unit,
@@ -46,12 +49,11 @@ internal fun ChatMessageList(
             .fillMaxSize(),
         // Extra bottom padding so last messages aren't hidden behind the floating input
         contentPadding = PaddingValues(
-            start = Spacing.Medium,
-            end = Spacing.Medium,
+            start = Spacing.Small,
+            end = Spacing.Small,
             top = Spacing.Medium,
             bottom = Sizes.WidthLarge
         ),
-        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall),
         reverseLayout = true
     ) {
         val reversedItems = chatItems.reversed()
@@ -78,7 +80,9 @@ internal fun ChatMessageList(
                         else -> GroupPosition.MIDDLE
                     }
                     val isSelected = message.id in selectedMessageIds
+                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.Small else Spacing.Tiny
                     MessageBubble(
+                        modifier = Modifier.padding(bottom = bottomGap),
                         message = message,
                         isFromMe = message.isFromMe(currentUserId),
                         position = position,
@@ -96,7 +100,12 @@ internal fun ChatMessageList(
                         onReactionSelected = { reaction -> message.id?.let { onReactionSelected(it, reaction) } },
                         fontScale = chatFontScale,
                         cornerRadius = chatMessageCornerRadius,
-                        themePreset = chatThemePreset
+                        themePreset = chatThemePreset,
+                        showAvatar = !chatAvatarDisabled,
+                        senderName = participantProfile?.displayName ?: participantProfile?.name,
+                        senderAvatarUrl = participantProfile?.avatar?.let {
+                            if (it.startsWith("http")) it else SupabaseClient.constructAvatarUrl(it)
+                        }
                     )
                 }
             }

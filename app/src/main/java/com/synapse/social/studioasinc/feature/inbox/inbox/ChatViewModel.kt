@@ -106,6 +106,9 @@ class ChatViewModel @Inject constructor(
     val messageSuggestionEnabled = getChatSettingsUseCase.messageSuggestionEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val chatAvatarDisabled = getChatSettingsUseCase.chatAvatarDisabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     private val _selectedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedMessageIds: StateFlow<Set<String>> = _selectedMessageIds.asStateFlow()
 
