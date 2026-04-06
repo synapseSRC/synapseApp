@@ -568,19 +568,18 @@ fun MessageBubble(
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(Spacing.Tiny))
-                    if (message.isEdited) {
-                        Text(
-                            text = stringResource(id = R.string.edited),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = contentColor.copy(alpha = 0.6f),
-                            fontStyle = FontStyle.Italic,
-                            modifier = Modifier.align(Alignment.End)
-                        )
-                    }
                 }
                 } // close Box
+                Spacer(modifier = Modifier.height(Spacing.Tiny))
+                if (message.isEdited) {
+                    Text(
+                        text = stringResource(id = R.string.edited),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.6f),
+                        fontStyle = FontStyle.Italic,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                }
             }
         }
         if (message.reactions.isNotEmpty()) {
