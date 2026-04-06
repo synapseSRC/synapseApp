@@ -31,8 +31,8 @@ internal fun ChatBackground(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(resId)
-                    .placeholder(resId)
                     .crossfade(false)
+                    .decoderFactory(SvgDecoder.Factory())
                     .build(),
                 contentDescription = "Background",
                 modifier = modifier.fillMaxSize().blur(radius = (chatWallpaperBlur * MAX_BLUR_RADIUS).dp),

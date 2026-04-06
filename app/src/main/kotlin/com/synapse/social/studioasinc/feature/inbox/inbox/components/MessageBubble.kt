@@ -238,6 +238,7 @@ fun MessageBubble(
     showAvatar: Boolean = true,
     senderName: String? = null,
     senderAvatarUrl: String? = null,
+    replyToSenderName: String? = null,
     reactions: List<Pair<String, Int>> = emptyList(),
     replyCount: Int = 0,
     modifier: Modifier = Modifier
@@ -400,49 +401,47 @@ fun MessageBubble(
                         shape = RoundedCornerShape(Sizes.CornerMedium),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = Spacing.Small)
+                            .padding(bottom = Spacing.Tiny)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(Spacing.Small),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "❝",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(end = Spacing.Small)
-                            )
-                            val isOwnReply = replyToMessage.senderId == message.senderId
-                            AsyncImage(
-                                model = if (isOwnReply) null else senderAvatarUrl,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                placeholder = rememberVectorPainter(Icons.Filled.Person),
-                                error = rememberVectorPainter(Icons.Filled.Person),
-                                modifier = Modifier
-                                    .size(Sizes.AvatarTiny)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-                            Column {
+                        val isOwnReply = replyToMessage.senderId == message.senderId
+                        val quotedName = replyToSenderName
+                            ?: if (isOwnReply xor isFromMe) senderName ?: "You" else "You"
+                        Column(modifier = Modifier.padding(Spacing.Small)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = if (isOwnReply) stringResource(R.string.chat_reply_you)
-                                           else (senderName?.uppercase() ?: stringResource(R.string.chat_reply_them)),
+                                    text = "❝",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(end = Spacing.ExtraSmall)
+                                )
+                                AsyncImage(
+                                    model = if (isOwnReply) null else senderAvatarUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    placeholder = rememberVectorPainter(Icons.Filled.Person),
+                                    error = rememberVectorPainter(Icons.Filled.Person),
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                Text(
+                                    text = quotedName ?: "",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Text(
-                                    text = replyToMessage.content ?: "",
-                                    style = TextStyle(
-                                        fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    ),
-                                    maxLines = 4,
-                                    overflow = TextOverflow.Ellipsis
-                                )
                             }
+                            Text(
+                                text = replyToMessage.content ?: "",
+                                style = TextStyle(
+                                    fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                maxLines = 4,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
