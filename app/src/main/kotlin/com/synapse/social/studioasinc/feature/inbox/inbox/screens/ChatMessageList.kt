@@ -33,12 +33,14 @@ internal fun ChatMessageList(
     chatAvatarDisabled: Boolean,
     participantProfile: com.synapse.social.studioasinc.shared.domain.model.User?,
     participantAvatarUrl: String?,
+    isGroupChat: Boolean,
     listState: LazyListState,
     onToggleSelection: (String) -> Unit,
     onSwipeToReply: (Message) -> Unit,
     onLongClick: (Message) -> Unit,
     onReactionSelected: (String, SharedReactionType) -> Unit,
     onShowReactionPicker: (Message) -> Unit,
+    onNavigateToProfile: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val messagesMap = remember(messages) {
@@ -108,6 +110,16 @@ internal fun ChatMessageList(
                         senderAvatarUrl = participantAvatarUrl
                     )
                 }
+            }
+        }
+
+        if (!isGroupChat) {
+            item(key = "chat_intro_header") {
+                com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatIntroHeader(
+                    participantProfile = participantProfile,
+                    avatarUrl = participantAvatarUrl,
+                    onViewProfile = { participantProfile?.uid?.let(onNavigateToProfile) }
+                )
             }
         }
     }

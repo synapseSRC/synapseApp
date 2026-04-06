@@ -71,6 +71,9 @@ class ChatViewModel @Inject constructor(
     private val _isParticipantActive = MutableStateFlow(false)
     val isParticipantActive: StateFlow<Boolean> = _isParticipantActive.asStateFlow()
 
+    private val _isGroupChat = MutableStateFlow(false)
+    val isGroupChat: StateFlow<Boolean> = _isGroupChat.asStateFlow()
+
     private val _isCurrentUserAdmin = MutableStateFlow(false)
     val isCurrentUserAdmin: StateFlow<Boolean> = _isCurrentUserAdmin.asStateFlow()
 
@@ -267,6 +270,7 @@ class ChatViewModel @Inject constructor(
         _error = _error,
         _participantProfile = _participantProfile,
         _isE2EEReady = _isE2EEReady,
+        _isGroupChat = _isGroupChat,
         _onlyAdminsCanMessage = _onlyAdminsCanMessage,
         _isCurrentUserAdmin = _isCurrentUserAdmin,
         _isParticipantActive = _isParticipantActive,

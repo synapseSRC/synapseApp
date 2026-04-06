@@ -35,6 +35,7 @@ class ChatInitializationDelegate(
     private val _error: MutableStateFlow<String?>,
     private val _participantProfile: MutableStateFlow<User?>,
     private val _isE2EEReady: MutableStateFlow<Boolean>,
+    private val _isGroupChat: MutableStateFlow<Boolean>,
     private val _onlyAdminsCanMessage: MutableStateFlow<Boolean>,
     private val _isCurrentUserAdmin: MutableStateFlow<Boolean>,
     private val _isParticipantActive: MutableStateFlow<Boolean>,
@@ -87,6 +88,7 @@ class ChatInitializationDelegate(
             }
 
             getChatInfoUseCase(actualChatId).onSuccess { chatDto ->
+                _isGroupChat.value = chatDto?.isGroup == true
                 if (chatDto?.isGroup == true) {
                     _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
                     getGroupMembersUseCase(actualChatId).onSuccess { members ->
