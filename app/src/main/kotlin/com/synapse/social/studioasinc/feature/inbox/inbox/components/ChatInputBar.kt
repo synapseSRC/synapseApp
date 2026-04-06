@@ -230,6 +230,12 @@ fun ChatInputBar(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
                     ),
+                    contentPadding = TextFieldDefaults.contentPaddingWithoutLabel(
+                        top = Spacing.Small,
+                        bottom = Spacing.Small,
+                        start = Spacing.None,
+                        end = Spacing.None
+                    ),
                     maxLines = 4
                 )
 
