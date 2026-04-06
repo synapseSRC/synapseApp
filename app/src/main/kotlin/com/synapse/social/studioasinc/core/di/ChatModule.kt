@@ -192,6 +192,13 @@ object ChatModule {
     }
     @Provides
     @Singleton
+    fun provideGetMessageByIdUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase {
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase(chatRepository)
+    }
+    @Provides
+    @Singleton
     fun provideSendMessageUseCase(
         chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
         signalProtocolManager: com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager

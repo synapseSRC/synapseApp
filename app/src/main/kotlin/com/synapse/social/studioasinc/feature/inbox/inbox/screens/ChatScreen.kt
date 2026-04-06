@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -259,13 +260,17 @@ fun ChatScreen(
         }
     }
 
+    // Hide list until initial scroll is done to prevent header flicker on first render
+    var listReady by remember { mutableStateOf(false) }
+
     // Auto-scroll to bottom when new messages arrive
     var previousMessagesSize by remember { mutableStateOf(0) }
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             if (previousMessagesSize == 0) {
-                // Initial load: Snap to bottom instantly without animation to prevent scroll jump
+                // Initial load: Snap to bottom instantly, then reveal the list
                 listState.scrollToItem(0)
+                listReady = true
             } else if (messages.size > previousMessagesSize) {
                 // New message arrived: Animate scroll
                 listState.animateScrollToItem(0)
@@ -342,6 +347,7 @@ fun ChatScreen(
                 }
                 else -> {
                     ChatMessageList(
+                        modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
                         currentUserId = currentUserId,

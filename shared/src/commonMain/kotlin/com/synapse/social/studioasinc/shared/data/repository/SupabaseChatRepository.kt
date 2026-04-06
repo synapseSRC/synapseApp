@@ -174,6 +174,15 @@ class SupabaseChatRepository(
         }
     }
 
+    override suspend fun getMessageById(messageId: String): Result<Message?> = try {
+        val userId = getCurrentUserId() ?: return Result.success(null)
+        val dto = dataSource.getMessageById(messageId) ?: return Result.success(null)
+        val decrypted = with(encryptionHelper) { dto.decryptIfNecessary(userId) }
+        Result.success(decrypted.toDomain())
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
     override suspend fun sendMessage(
         chatId: String, 
         content: String,

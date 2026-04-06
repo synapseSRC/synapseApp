@@ -44,6 +44,7 @@ class ChatViewModel @Inject constructor(
     private val getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase,
     private val getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase,
     private val getGroupMembersUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase,
+    private val getMessageByIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.domain.usecase.ai.GenerateSmartRepliesUseCase,
     private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase,
@@ -375,6 +376,20 @@ class ChatViewModel @Inject constructor(
             }
         }
         aiDelegate.generateSmartReplies(messages.value)
+
+        // Race condition: realtime message arrived before Signal session was ready → retry decryption
+        if (newMessage.senderId != currentUserId && newMessage.content in encryptedPlaceholders) {
+            viewModelScope.launch {
+                delay(2.seconds)
+                getMessageByIdUseCase(newMessage.id).onSuccess { refreshed ->
+                    if (refreshed != null && refreshed.content !in encryptedPlaceholders) {
+                        messagingDelegate._messages.update { current ->
+                            with(messagingDelegate) { current.replaceById(newMessage.id, refreshed) }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fun summarizeChat() {
