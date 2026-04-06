@@ -52,8 +52,26 @@ class SynapseApplication : Application(), ImageLoaderFactory {
             resources,
             BitmapFactory.decodeResource(resources, R.raw.placeholder)
         )
+        val okHttpClient = okhttp3.OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val url = request.url.toString()
+                val needsAuth = url.contains("supabase.co/storage") && !url.contains("/public/")
+                if (needsAuth) {
+                    chain.proceed(
+                        request.newBuilder()
+                            .addHeader("Authorization", "Bearer ${BuildConfig.SUPABASE_ANON_KEY}")
+                            .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                            .build()
+                    )
+                } else {
+                    chain.proceed(request)
+                }
+            }
+            .build()
         return ImageLoader.Builder(this)
             .placeholder(placeholder)
+            .okHttpClient(okHttpClient)
             .build()
     }
 
