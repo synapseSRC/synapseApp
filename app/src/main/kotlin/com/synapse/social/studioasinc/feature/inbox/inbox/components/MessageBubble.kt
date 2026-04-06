@@ -393,7 +393,7 @@ fun MessageBubble(
                 .widthIn(max = bubbleMaxWidth)
                 .padding(bottom = if (message.reactions.isNotEmpty()) 12.dp else 0.dp)
         ) {
-            Column(modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.ExtraSmall)) {
+            Column(modifier = Modifier.padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)) {
 
                 if (replyToMessage != null) {
                     val quoteCardColor = if (isFromMe)
