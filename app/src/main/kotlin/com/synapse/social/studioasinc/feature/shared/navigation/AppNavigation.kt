@@ -152,6 +152,9 @@ fun NavGraphBuilder.inboxGraph(navController: NavHostController) {
                     },
                     onNavigateToUserMoreOptions = { userId ->
                         navController.navigate(AppDestination.UserMoreOptions(userId))
+                    },
+                    onNavigateToProfile = { userId ->
+                        navController.navigate(AppDestination.Profile(userId))
                     }
                 )
             }

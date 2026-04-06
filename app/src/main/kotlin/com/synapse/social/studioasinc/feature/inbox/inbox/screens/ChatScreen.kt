@@ -157,6 +157,7 @@ fun ChatScreen(
     onNavigateBack: () -> Unit,
     onNavigateToGroupInfo: (String, String) -> Unit = { _, _ -> },
     onNavigateToUserMoreOptions: (String) -> Unit = {},
+    onNavigateToProfile: (String) -> Unit = {},
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     // Initialize the ViewModel with the chat ID
@@ -195,6 +196,7 @@ fun ChatScreen(
     val selectedMessageIds by viewModel.selectedMessageIds.collectAsState()
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
+    val isGroupChat by viewModel.isGroupChat.collectAsState()
 
     val currentUserId = viewModel.currentUserId ?: ""
 
@@ -258,10 +260,18 @@ fun ChatScreen(
     }
 
     // Auto-scroll to bottom when new messages arrive
+    var previousMessagesSize by remember { mutableStateOf(0) }
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(0)
+            if (previousMessagesSize == 0) {
+                // Initial load: Snap to bottom instantly without animation to prevent scroll jump
+                listState.scrollToItem(0)
+            } else if (messages.size > previousMessagesSize) {
+                // New message arrived: Animate scroll
+                listState.animateScrollToItem(0)
+            }
         }
+        previousMessagesSize = messages.size
     }
 
     Scaffold(
@@ -341,13 +351,16 @@ fun ChatScreen(
                         chatThemePreset = chatThemePreset,
                         chatAvatarDisabled = chatAvatarDisabled,
                         participantProfile = participantProfile,
+                        initialParticipantName = initialParticipantName,
                         participantAvatarUrl = participantAvatarUrl,
+                        isGroupChat = isGroupChat,
                         listState = listState,
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },
                         onLongClick = { selectedMessageForMenu = it },
                         onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
-                        onShowReactionPicker = { selectedMessageForMenu = it }
+                        onShowReactionPicker = { selectedMessageForMenu = it },
+                        onNavigateToProfile = onNavigateToProfile
                     )
 
                     // Context Menu and Reactions for messages

@@ -1338,6 +1338,8 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="ok">OK</string>
 
     <!-- Added strings for no hardcoded values -->
+    <string name="view_profile">View Profile</string>
+    <string name="messages_are_end_to_end_encrypted">Messages are end-to-end encrypted</string>
     <string name="share_profile">Share Profile</string>
     <string name="view_as">View As...</string>
     <string name="new_message">New Message</string>
