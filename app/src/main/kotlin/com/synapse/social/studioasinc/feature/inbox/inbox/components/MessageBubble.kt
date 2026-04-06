@@ -242,6 +242,7 @@ fun MessageBubble(
     replyToSenderName: String? = null,
     reactions: List<Pair<String, Int>> = emptyList(),
     replyCount: Int = 0,
+    onQuoteClick: (messageId: String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
@@ -405,6 +406,7 @@ fun MessageBubble(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 1.dp)
+                            .clickable { replyToMessage.id?.let { onQuoteClick(it) } }
                     ) {
                         val isOwnReply = replyToMessage.senderId == message.senderId
                         val quotedName = replyToSenderName

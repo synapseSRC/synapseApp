@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.DateDividerChip
@@ -52,6 +54,7 @@ internal fun ChatMessageList(
     onNavigateToProfile: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scope = rememberCoroutineScope()
     val messagesMap = remember(messages) {
         messages.associateBy { it.id }
     }
@@ -131,6 +134,14 @@ internal fun ChatMessageList(
                         },
                         onReactionSelected = { reaction -> message.id?.let { onReactionSelected(it, reaction) } },
                         onShowReactionPicker = { onShowReactionPicker(message) },
+                        onQuoteClick = { targetId ->
+                            val targetIndex = reversedItems.indexOfFirst {
+                                it is ChatListItem.MessageItem && it.message.id == targetId
+                            }
+                            if (targetIndex >= 0) scope.launch {
+                                listState.animateScrollToItem(targetIndex)
+                            }
+                        },
                         fontScale = chatFontScale,
                         cornerRadius = chatMessageCornerRadius,
                         themePreset = chatThemePreset,
