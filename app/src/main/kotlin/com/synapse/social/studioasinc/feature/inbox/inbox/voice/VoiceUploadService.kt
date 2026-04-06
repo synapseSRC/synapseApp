@@ -3,24 +3,27 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 import android.content.Context
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.data.source.remote.ImgBBUploadService
-import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
+import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class VoiceUploadService @Inject constructor(
     private val imgBBUploadService: ImgBBUploadService,
+    private val storageRepository: StorageRepository,
     @ApplicationContext private val context: Context
 ) {
-    suspend fun upload(audioFile: File, config: StorageConfig): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun upload(audioFile: File): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // Read audio bytes
+            val config = storageRepository.getStorageConfig().first()
             val audioBytes = audioFile.readBytes()
 
-            // Read carrier PNG bytes from res/raw/carrier_97b.png
             val carrierBytes = context.resources.openRawResource(R.raw.carrier_97b).use { it.readBytes() }
 
             // Encode: Carrier + Audio

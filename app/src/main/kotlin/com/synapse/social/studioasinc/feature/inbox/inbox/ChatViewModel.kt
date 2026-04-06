@@ -509,17 +509,35 @@ class ChatViewModel @Inject constructor(
 
     fun sendVoiceMessage(mediaUrl: String, durationMs: Long) {
         val chatId = currentChatId ?: return
+        val tempId = java.util.UUID.randomUUID().toString()
+        val optimisticMessage = com.synapse.social.studioasinc.shared.domain.model.chat.Message(
+            id = tempId,
+            chatId = chatId,
+            senderId = currentUserId ?: "",
+            content = "Voice Message (${durationMs / 1000}s)",
+            messageType = com.synapse.social.studioasinc.shared.domain.model.chat.MessageType.AUDIO,
+            mediaUrl = mediaUrl,
+            deliveryStatus = com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENT,
+            createdAt = java.time.Instant.now().toString()
+        )
+        messagingDelegate.pendingTempIds.update { it + tempId }
+        messagingDelegate._messages.update { current ->
+            (current + optimisticMessage).sortedBy { it.createdAt }
+        }
         viewModelScope.launch {
             sendMessageUseCase(
                 chatId = chatId,
-                content = "Voice Message (${durationMs / 1000}s)",
+                content = optimisticMessage.content,
                 mediaUrl = mediaUrl,
                 messageType = "audio"
             ).onSuccess { actualMessage ->
+                messagingDelegate.pendingTempIds.update { it - tempId }
                 messagingDelegate._messages.update { current ->
-                    (current + actualMessage).distinctBy { it.id }.sortedBy { it.createdAt }
+                    current.map { if (it.id == tempId) actualMessage else it }
                 }
             }.onFailure { e ->
+                messagingDelegate.pendingTempIds.update { it - tempId }
+                messagingDelegate._messages.update { current -> current.filter { it.id != tempId } }
                 _error.value = "Failed to send voice message: ${e.message}"
             }
         }

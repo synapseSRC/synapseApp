@@ -501,7 +501,7 @@ fun ChatScreen(
                             val outputFile = voiceRecorder.stop()
                             if (outputFile != null && recordingDurationMs > 500) { // minimum 0.5s to prevent accidental taps
                                 coroutineScope.launch {
-                                    val result = voiceUploadService.upload(outputFile, com.synapse.social.studioasinc.shared.domain.model.StorageConfig())
+                                    val result = voiceUploadService.upload(outputFile)
                                     result.onSuccess { url ->
                                         viewModel.sendVoiceMessage(url, recordingDurationMs)
                                         outputFile.delete()
