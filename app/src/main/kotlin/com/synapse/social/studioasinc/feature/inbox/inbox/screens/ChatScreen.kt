@@ -206,6 +206,13 @@ fun ChatScreen(
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
 
+    // Resolve avatar URL: prefer loaded profile, fall back to nav arg (constructing full URL if needed)
+    val participantAvatarUrl = participantProfile?.avatar
+        ?: initialParticipantAvatar?.let {
+            if (it.startsWith("http")) it
+            else com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(it)
+        }
+
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
 
     @Suppress("DEPRECATION")
@@ -334,6 +341,7 @@ fun ChatScreen(
                         chatThemePreset = chatThemePreset,
                         chatAvatarDisabled = chatAvatarDisabled,
                         participantProfile = participantProfile,
+                        participantAvatarUrl = participantAvatarUrl,
                         listState = listState,
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },

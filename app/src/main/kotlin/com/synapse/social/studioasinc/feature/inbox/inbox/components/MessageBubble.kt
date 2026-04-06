@@ -401,7 +401,7 @@ fun MessageBubble(
                         shape = RoundedCornerShape(Sizes.CornerMedium),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = Spacing.Tiny)
+                            .padding(bottom = 1.dp)
                     ) {
                         val isOwnReply = replyToMessage.senderId == message.senderId
                         val quotedName = replyToSenderName
