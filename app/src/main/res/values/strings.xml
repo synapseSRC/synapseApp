@@ -1327,8 +1327,12 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="chat_action_play_audio">Play Audio</string>
     <string name="chat_action_pause_audio">Pause Audio</string>
     <string name="voice_cancel_hint">Slide to cancel \u2039</string>
+    <string name="voice_hold_to_record">Hold to record</string>
+    <string name="voice_download">Download voice message</string>
+    <string name="voice_mic_permission_required">Microphone permission required</string>
     <string name="chat_action_open_file">Open File</string>
     <string name="chat_action_open_link">Open Link</string>
+    <string name="chat_action_send">Send</string>
     <string name="chat_cd_file">File</string>
     <string name="chat_reply_you">YOU</string>
     <string name="chat_reply_them">THEM</string>

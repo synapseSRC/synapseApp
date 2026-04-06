@@ -86,7 +86,7 @@ object SupabaseClient {
         } catch (e: Exception) {
             throw ConfigurationException("Invalid Supabase URL configured: $supabaseUrl", e)
         }
-        supabaseUrl.trimEnd('/')
+        supabaseUrl
     }
 
     fun constructStorageUrl(bucket: String, path: String): String {

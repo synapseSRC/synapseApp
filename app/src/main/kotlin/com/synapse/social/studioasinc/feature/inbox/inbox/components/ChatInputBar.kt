@@ -26,9 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import kotlinx.coroutines.delay
@@ -335,45 +334,38 @@ fun ChatInputBar(
                 Surface(
                     modifier = Modifier
                         .size(Sizes.SendButtonCompact)
-                        .pointerInput(inputText, canSendMessage, isRecording) {
-                            awaitEachGesture {
-                                val down = awaitFirstDown(requireUnconsumed = false)
-                                if (inputText.isEmpty() && canSendMessage) {
-                                    down.consume()
-                                    isSwipeToCancel = false
-                                    onMicHeld()
-                                    var cancelled = false
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        val change = event.changes.firstOrNull() ?: break
-                                        // Swipe left to cancel
-                                        if (change.position.x - change.previousPosition.x < -40f) {
-                                            cancelled = true
-                                            isSwipeToCancel = true
-                                            change.consume()
-                                            onRecordingCancelled()
-                                            break
-                                        }
-                                        if (change.changedToUp()) {
-                                            change.consume()
-                                            break
-                                        }
-                                    }
-                                    if (!cancelled) onMicReleased()
-                                } else {
-                                    // Wait for release then send
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        val change = event.changes.firstOrNull() ?: break
-                                        if (change.changedToUp()) {
-                                            change.consume()
-                                            if (inputText.isNotEmpty()) {
-                                                onSendMessage()
-                                                dismissedPreviewUrl = null
+                        .pointerInput(inputText, canSendMessage) {
+                            detectTapGestures(
+                                onPress = {
+                                    if (inputText.isEmpty() && canSendMessage) {
+                                        isSwipeToCancel = false
+                                        onMicHeld()
+                                        try {
+                                            tryAwaitRelease()
+                                            if (!isSwipeToCancel) {
+                                                onMicReleased()
                                             }
-                                            break
+                                        } catch (e: Exception) {
+                                            onRecordingCancelled()
                                         }
+                                    } else {
+                                        // Normal send logic
+                                        tryAwaitRelease()
                                     }
+                                },
+                                onTap = {
+                                    if (inputText.isNotEmpty()) {
+                                        onSendMessage()
+                                        dismissedPreviewUrl = null
+                                    }
+                                }
+                            )
+                        }
+                        .pointerInput(inputText) {
+                            detectHorizontalDragGestures { change, dragAmount ->
+                                if (isRecording && dragAmount < -20f) {
+                                    isSwipeToCancel = true
+                                    onRecordingCancelled()
                                 }
                             }
                         },
@@ -389,7 +381,7 @@ fun ChatInputBar(
                         }
                         Icon(
                             icon,
-                            contentDescription = if (inputText.isEmpty()) "Hold to record" else "Send",
+                            contentDescription = stringResource(if (inputText.isEmpty()) R.string.voice_hold_to_record else R.string.chat_action_send),
                             modifier = Modifier.size(Sizes.IconDefault)
                         )
                     }

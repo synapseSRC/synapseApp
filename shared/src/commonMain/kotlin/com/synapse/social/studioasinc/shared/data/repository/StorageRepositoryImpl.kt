@@ -49,7 +49,6 @@ class StorageRepositoryImpl(
         val imgBBKeyDeferred = async(Dispatchers.IO) {
             secureStorage.getString(KEY_IMGBB)?.takeIf { it.isNotBlank() }
                 ?: row.imgbb_key.takeIf { it.isNotBlank() }
-                ?: SynapseConfig.IMGBB_API_KEY.takeIf { it.isNotBlank() }
                 ?: ""
         }
 

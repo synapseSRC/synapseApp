@@ -252,7 +252,7 @@ fun ChatScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (!isGranted) {
-                android.widget.Toast.makeText(context, "Microphone permission required", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.voice_mic_permission_required), android.widget.Toast.LENGTH_SHORT).show()
             }
         }
     )
@@ -501,9 +501,14 @@ fun ChatScreen(
                             val outputFile = voiceRecorder.stop()
                             if (outputFile != null && recordingDurationMs > 500) { // minimum 0.5s to prevent accidental taps
                                 coroutineScope.launch {
-                                    val result = voiceUploadService.upload(outputFile)
+                                    val result = voiceUploadService.upload(outputFile, com.synapse.social.studioasinc.shared.domain.model.StorageConfig())
                                     result.onSuccess { url ->
-                                        viewModel.sendVoiceMessage(url, recordingDurationMs)
+                                        viewModel.uploadAndSendMedia(
+                                            filePath = url,
+                                            fileName = "voice_message.m4a",
+                                            contentType = "audio/mp4",
+                                            messageType = "audio"
+                                        )
                                         outputFile.delete()
                                     }
                                 }

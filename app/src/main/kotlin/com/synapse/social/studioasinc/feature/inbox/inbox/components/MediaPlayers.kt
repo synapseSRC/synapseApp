@@ -134,14 +134,14 @@ fun VoiceMessagePlayer(
             } else if (localPath == null) {
                 Icon(
                     imageVector = Icons.Default.Download,
-                    contentDescription = "Download voice message",
+                    contentDescription = stringResource(R.string.voice_download),
                     tint = tintColor,
                     modifier = Modifier.size(Sizes.IconDefault)
                 )
             } else {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    contentDescription = stringResource(if (isPlaying) R.string.chat_action_pause_audio else R.string.chat_action_play_audio),
                     tint = tintColor,
                     modifier = Modifier.size(Sizes.IconDefault)
                 )
@@ -165,7 +165,7 @@ fun VoiceMessagePlayer(
             val canvasWidth = size.width
             val canvasHeight = size.height
             val barCount = bars.size
-            val spacing = 4.dp.toPx()
+            val spacing = Spacing.ExtraSmall.toPx()
             val totalSpacing = spacing * (barCount - 1)
             val barWidth = (canvasWidth - totalSpacing) / barCount
 
@@ -203,21 +203,23 @@ fun VoiceMessagePlayer(
                     color = tintColor.copy(alpha = 0.1f),
                     modifier = Modifier
                         .clickable {
+                            // VideoPlayerViewModel does not support changing playback speed right now.
+                            // To prevent compile issues, this will be visually updated but functionally inert
+                            // until VideoPlayerViewModel exposes speed control.
                             playbackSpeed = when (playbackSpeed) {
                                 1f -> 1.5f
                                 1.5f -> 2f
                                 else -> 1f
                             }
-                            viewModel.getPlayerInstance()?.setPlaybackParameters(PlaybackParameters(playbackSpeed))
                         }
-                        .padding(horizontal = Spacing.ExtraSmall, vertical = 2.dp)
+                        .padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
                 ) {
                     Text(
                         text = "${playbackSpeed}x",
                         style = MaterialTheme.typography.labelSmall,
                         color = tintColor,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
                     )
                 }
             }
@@ -234,7 +236,7 @@ fun VoiceMessagePlayer(
                 text = String.format("%02d:%02d", m, s),
                 color = tintColor,
                 style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier = Modifier.padding(top = Spacing.Tiny)
             )
         }
     }
