@@ -50,9 +50,6 @@ class ChatMediaDelegate(
                 return@launch
             }
 
-            val notificationId = kotlin.random.Random.nextInt()
-            uploadProgressManager.showProgress(notificationId, 0, "Uploading media")
-
             // Optimistic update
             val tempId = UUID.randomUUID().toString()
 
@@ -91,13 +88,13 @@ class ChatMediaDelegate(
                     messageType = messageType
                 ).onSuccess { actualMessage ->
                     onOptimisticMessageSuccess(tempId, actualMessage)
-                    uploadProgressManager.dismissProgress(notificationId)
+                    uploadProgressManager.dismissProgress(chatId, fileName)
                 }.onFailure { e ->
-                    uploadProgressManager.finishProgress(notificationId, false, "Upload Failed")
+                    uploadProgressManager.finishProgress(chatId, fileName, false, "Upload Failed")
                     onOptimisticMessageFailed(tempId, "Failed to send: ${e.message}")
                 }
             }.onFailure { e ->
-                uploadProgressManager.finishProgress(notificationId, false, "Upload Failed")
+                uploadProgressManager.finishProgress(chatId, fileName, false, "Upload Failed")
                 onOptimisticMessageFailed(tempId, "Upload failed: ${e.message}")
             }
         }

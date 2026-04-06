@@ -34,6 +34,20 @@ class UploadProgressManager @Inject constructor(
         NotificationHelper.showProgressNotification(context, id, progress, title)
     }
 
+    fun dismissProgress(chatId: String, fileName: String) {
+        val key = "${chatId}_$fileName"
+        val id = uploadIds.remove(key) ?: return
+        NotificationHelper.dismissNotification(context, id)
+    }
+
+    fun finishProgress(chatId: String, fileName: String, success: Boolean, title: String) {
+        val key = "${chatId}_$fileName"
+        val id = uploadIds.getOrPut(key) { notificationIdGenerator.incrementAndGet() }
+        val progress = if (success) 100 else 0
+        NotificationHelper.showProgressNotification(context, id, progress, title)
+        if (!success) uploadIds.remove(key)
+    }
+
     fun dismissProgress(id: Int) {
         NotificationHelper.dismissNotification(context, id)
     }
