@@ -490,7 +490,7 @@ fun MessageBubble(
                         }
                         MessageType.AUDIO -> {
                             message.mediaUrl?.let {
-                                AudioPlayer(mediaUrl = it, tintColor = contentColor)
+                                VoiceMessagePlayer(mediaUrl = it, tintColor = contentColor, isFromMe = isFromMe)
                             }
                             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         }

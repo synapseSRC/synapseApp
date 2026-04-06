@@ -94,6 +94,12 @@ import com.synapse.social.studioasinc.R
 
 import androidx.compose.ui.draw.blur
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecorder
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatShimmer
@@ -265,6 +271,29 @@ fun ChatScreen(
     // Hide list until initial scroll is done to prevent header flicker on first render
     var listReady by remember { mutableStateOf(false) }
 
+    // Voice Recording State
+    val voiceRecorder = remember { VoiceRecorder(context) }
+    val scope = rememberCoroutineScope()
+    var isRecording by remember { mutableStateOf(false) }
+    var recordingStartTime by remember { mutableStateOf(0L) }
+    var recordingDurationMs by remember { mutableStateOf(0L) }
+    val recordingAmplitude by voiceRecorder.amplitudeFlow.collectAsState()
+
+    val chatEntryPoint = remember { dagger.hilt.android.EntryPointAccessors.fromApplication<com.synapse.social.studioasinc.core.di.ChatEntryPoint>(context) }
+    val voiceUploadService = remember { chatEntryPoint.voiceUploadService() }
+    val settingsRepository = remember { chatEntryPoint.settingsRepository() }
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            while (true) {
+                recordingDurationMs = System.currentTimeMillis() - recordingStartTime
+                delay(100)
+            }
+        } else {
+            recordingDurationMs = 0
+        }
+    }
+
     // Auto-scroll to bottom when new messages arrive
     var previousMessagesSize by remember { mutableStateOf(0) }
     LaunchedEffect(messages.size) {
@@ -431,7 +460,30 @@ fun ChatScreen(
                     onSendMessage = viewModel::sendMessage,
                     onCancelReply = viewModel::cancelReply,
                     onCancelEditing = viewModel::cancelEditing,
-                    onUploadAndSendMedia = viewModel::uploadAndSendMedia
+                    onUploadAndSendMedia = viewModel::uploadAndSendMedia,
+                    isRecording = isRecording,
+                    recordingDurationMs = recordingDurationMs,
+                    recordingAmplitude = recordingAmplitude,
+                    onMicHeld = {
+                        val tempFile = File(context.cacheDir, "temp_voice.m4a")
+                        voiceRecorder.start(tempFile)
+                        recordingStartTime = System.currentTimeMillis()
+                        isRecording = true
+                    },
+                    onMicReleased = {
+                        isRecording = false
+                        val outputFile = voiceRecorder.stop()
+                        scope.launch {
+                            val storageConfig = com.synapse.social.studioasinc.shared.domain.model.StorageConfig()
+                            voiceUploadService.upload(outputFile, storageConfig).onSuccess { url ->
+                                viewModel.uploadAndSendMedia(outputFile.absolutePath, "voice_message.m4a", "audio/mp4", "audio", null)
+                            }
+                        }
+                    },
+                    onRecordingCancelled = {
+                        isRecording = false
+                        voiceRecorder.cancel()
+                    }
                 )
             }
 

@@ -113,7 +113,7 @@ fun MediaPreviewDialog(
                             VideoPlayerBox(mediaUrl = currentMediaUri.toString())
                         }
                         "audio" -> {
-                            AudioPlayer(mediaUrl = currentMediaUri.toString(), tintColor = MaterialTheme.colorScheme.primary)
+                            VoiceMessagePlayer(mediaUrl = currentMediaUri.toString(), tintColor = MaterialTheme.colorScheme.primary, isFromMe = true)
                         }
                         else -> {
                             Icon(

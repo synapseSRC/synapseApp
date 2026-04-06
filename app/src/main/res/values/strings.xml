@@ -1725,4 +1725,5 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_font_preview">The quick brown fox jumps over the lazy dog</string>
     <string name="settings_font_selected">Selected</string>
     <string name="action_back">Back</string>
+    <string name="chat_swipe_cancel">Slide to cancel</string>
 </resources>
