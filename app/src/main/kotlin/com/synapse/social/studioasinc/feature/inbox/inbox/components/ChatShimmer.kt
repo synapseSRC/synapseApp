@@ -20,14 +20,13 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 @Composable
 fun ChatShimmer(
     modifier: Modifier = Modifier,
-    messageCount: Int = 10
+    messageCount: Int = 5
 ) {
     val listState = rememberLazyListState()
     
     LazyColumn(
         modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .wrapContentHeight(),
         state = listState,
         contentPadding = PaddingValues(Spacing.Medium),
         verticalArrangement = Arrangement.spacedBy(Spacing.Small),

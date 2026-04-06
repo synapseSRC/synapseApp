@@ -292,17 +292,20 @@ fun ChatScreen(
                 .imePadding()
         ) {
 
-            if (!isLoading || messages.isNotEmpty()) {
-                ChatBackground(
-                    chatWallpaperType = chatWallpaperType,
-                    chatWallpaperValue = chatWallpaperValue,
-                    chatWallpaperBlur = chatWallpaperBlur
-                )
-            }
+            ChatBackground(
+                chatWallpaperType = chatWallpaperType,
+                chatWallpaperValue = chatWallpaperValue,
+                chatWallpaperBlur = chatWallpaperBlur
+            )
 
             when {
                 isLoading && messages.isEmpty() -> {
-                    ChatShimmer(modifier = Modifier.fillMaxSize())
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        ChatShimmer(modifier = Modifier.fillMaxWidth())
+                    }
                 }
                 error != null && messages.isEmpty() -> {
                     Column(
