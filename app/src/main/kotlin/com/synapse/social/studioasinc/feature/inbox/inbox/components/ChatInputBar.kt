@@ -223,7 +223,7 @@ fun ChatInputBar(
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = 1.dp)
-                        .padding(top = Spacing.Small, bottom = Spacing.Small),
+                        .padding(top = Spacing.ExtraSmall, bottom = Spacing.ExtraSmall),
                     enabled = canSendMessage,
                     placeholder = { Text(stringResource(R.string.chat_type_message)) },
                     colors = TextFieldDefaults.colors(
