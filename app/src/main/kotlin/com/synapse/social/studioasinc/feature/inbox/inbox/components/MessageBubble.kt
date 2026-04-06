@@ -452,6 +452,7 @@ fun MessageBubble(
                 val uriHandler = LocalUriHandler.current
                 val context = LocalContext.current
 
+                Box(modifier = Modifier.padding(horizontal = Spacing.Small)) {
                 when (message.messageType) {
                     MessageType.IMAGE -> {
                             AsyncImage(
@@ -577,6 +578,7 @@ fun MessageBubble(
                         )
                     }
                 }
+                } // close Box
             }
         }
         if (message.reactions.isNotEmpty()) {
