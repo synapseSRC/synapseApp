@@ -104,6 +104,9 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController, reelUploadManage
                     onNavigateToCreatePost = { postId ->
                         navController.navigate(AppDestination.CreatePost(postId = postId))
                     },
+                    onNavigateToQuotePost = { postId ->
+                        navController.navigate(AppDestination.QuotePost(postId))
+                    },
                     onNavigateToStoryViewer = { userId ->
                         navController.navigate(AppDestination.StoryViewer(userId))
                     },

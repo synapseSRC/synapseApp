@@ -48,6 +48,7 @@ fun HomeNavGraph(
     navController: NavHostController,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToEditPost: (String) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
     onNavigateToStoryViewer: (String) -> Unit = {},
     onNavigateToCreateReel: () -> Unit = {},
     onNavigateToCreatePost: () -> Unit = {},
@@ -67,7 +68,7 @@ fun HomeNavGraph(
                 onPostClick = { postId -> navController.navigate(HomeDestinations.PostDetail(postId)) },
                 onUserClick = { userId -> onNavigateToProfile(userId) },
                 onCommentClick = { postId -> navController.navigate(HomeDestinations.PostDetail(postId)) },
-                onQuoteClick = { postId -> navController.navigate(AppDestination.QuotePost(postId)) },
+                onQuoteClick = { postId -> onNavigateToQuotePost(postId) },
                 onMediaClick = { },
                 onEditPost = onNavigateToEditPost,
                 onStoryClick = { userId ->

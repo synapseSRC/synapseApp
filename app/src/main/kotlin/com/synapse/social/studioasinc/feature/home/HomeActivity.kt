@@ -88,6 +88,12 @@ class HomeActivity : AppCompatActivity() {
                             Intent(this, CreatePostActivity::class.java)
                         )
                     },
+                    onNavigateToQuotePost = { postId ->
+                        val intent = Intent(this, com.synapse.social.studioasinc.feature.shared.main.MainActivity::class.java).apply {
+                            putExtra("destination", "quote")
+                        }
+                        startActivity(intent)
+                    },
                     onNavigateToStoryViewer = { userId ->
                         val intent = Intent(this@HomeActivity, StoryViewerActivity::class.java).apply {
                             putExtra("user_id", userId)

@@ -59,6 +59,7 @@ fun HomeScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToInbox: () -> Unit,
     onNavigateToCreatePost: (String?) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
     onNavigateToStoryViewer: (String) -> Unit,
     onNavigateToCreateReel: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
@@ -148,6 +149,7 @@ fun HomeScreen(
             HomeNavGraph(
                 navController = navController,
                 onNavigateToProfile = onNavigateToProfile,
+                onNavigateToQuotePost = onNavigateToQuotePost,
                 onNavigateToEditPost = { postId -> onNavigateToCreatePost(postId) },
                 onNavigateToStoryViewer = onNavigateToStoryViewer,
                 onNavigateToCreateReel = onNavigateToCreateReel,
