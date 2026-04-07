@@ -105,6 +105,7 @@ class NotificationsViewModel @Inject constructor(
         return UiNotification(
             id = notification.id,
             type = notification.type,
+            actorId = notification.actorId,
             actorName = actorName,
             actorAvatar = notification.actorAvatar,
             message = message,
