@@ -68,7 +68,7 @@ internal fun ChatMessageList(
         }
     }
     LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value) onLoadMore()
+        if (shouldLoadMore.value && !isLoadingMore) onLoadMore()
     }
 
     LazyColumn(
@@ -84,13 +84,6 @@ internal fun ChatMessageList(
         ),
         reverseLayout = true
     ) {
-        if (isLoadingMore) {
-            item(key = "loading_more") {
-                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.Small), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-        }
         val reversedItems = chatItems.reversed()
         itemsIndexed(reversedItems, key = { index, item ->
             when (item) {
@@ -161,6 +154,14 @@ internal fun ChatMessageList(
                     avatarUrl = participantAvatarUrl,
                     onViewProfile = { participantProfile?.uid?.let(onNavigateToProfile) }
                 )
+            }
+        }
+
+        if (isLoadingMore) {
+            item(key = "loading_more") {
+                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.Small), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }

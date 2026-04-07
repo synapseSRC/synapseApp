@@ -345,6 +345,8 @@ class ChatViewModel @Inject constructor(
                         (older + current).distinctBy { it.id }.sortedBy { it.createdAt }
                     }
                 }
+            }.onFailure { e ->
+                _error.value = "Failed to load older messages: ${e.message}"
             }
             _isLoadingMore.value = false
         }

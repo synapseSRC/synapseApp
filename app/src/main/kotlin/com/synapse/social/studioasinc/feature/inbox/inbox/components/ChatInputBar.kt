@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import android.content.Context
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -22,7 +23,15 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Stop
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,10 +60,18 @@ fun ChatInputBar(
     onSendMessage: () -> Unit,
     onCancelReply: () -> Unit,
     onCancelEditing: () -> Unit,
-    onUploadAndSendMedia: (filePath: String, fileName: String, contentType: String, messageType: String, caption: String?) -> Unit
+    onUploadAndSendMedia: (filePath: String, fileName: String, contentType: String, messageType: String, caption: String?) -> Unit,
+    isRecording: Boolean = false,
+    recordingDurationMs: Long = 0L,
+    recordingAmplitude: Int = 0,
+    onMicHeld: () -> Unit = {},
+    onMicReleased: () -> Unit = {},
+    onRecordingCancelled: () -> Unit = {}
 ) {
     var dismissedPreviewUrl by remember { mutableStateOf<String?>(null) }
     var showAttachmentMenu by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    var isSwipeToCancel by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -173,6 +190,74 @@ fun ChatInputBar(
             )
         }
 
+        // Recording Indicator Row
+        AnimatedVisibility(
+            visible = isRecording,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "recordingIndicator")
+                    val alpha by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 0.2f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(800, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "alpha"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(Sizes.IconSmall)
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = alpha), CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    val totalSeconds = recordingDurationMs / 1000
+                    val m = totalSeconds / 60
+                    val s = totalSeconds % 60
+                    Text(
+                        text = String.format("%02d:%02d", m, s),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.width(Spacing.Medium))
+
+                    // Mini amplitude visualizer
+                    val maxAmp = 32767f // Max amplitude for 16-bit audio
+                    val normalizedAmp = (recordingAmplitude / maxAmp).coerceIn(0.1f, 1f)
+                    val animatedHeight by animateFloatAsState(targetValue = normalizedAmp, label = "amp")
+
+                    Box(
+                        modifier = Modifier
+                            .width(Sizes.IconSmall)
+                            .height(Sizes.IconSmall),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(Sizes.IconSmall * animatedHeight)
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(Sizes.CornerSmall))
+                        )
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.voice_cancel_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         // Floating input row
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -249,16 +334,56 @@ fun ChatInputBar(
                 Surface(
                     modifier = Modifier
                         .size(Sizes.SendButtonCompact)
-                        .combinedClickable(
-                            onClick = { onSendMessage(); dismissedPreviewUrl = null }
-                        ),
+                        .pointerInput(inputText, canSendMessage) {
+                            detectTapGestures(
+                                onPress = {
+                                    if (inputText.isEmpty() && canSendMessage) {
+                                        isSwipeToCancel = false
+                                        onMicHeld()
+                                        try {
+                                            tryAwaitRelease()
+                                            if (!isSwipeToCancel) {
+                                                onMicReleased()
+                                            }
+                                        } catch (e: Exception) {
+                                            onRecordingCancelled()
+                                        }
+                                    } else {
+                                        // Normal send logic
+                                        tryAwaitRelease()
+                                    }
+                                },
+                                onTap = {
+                                    if (inputText.isNotEmpty()) {
+                                        onSendMessage()
+                                        dismissedPreviewUrl = null
+                                    }
+                                }
+                            )
+                        }
+                        .pointerInput(inputText) {
+                            detectHorizontalDragGestures { change, dragAmount ->
+                                if (isRecording && dragAmount < -20f) {
+                                    isSwipeToCancel = true
+                                    onRecordingCancelled()
+                                }
+                            }
+                        },
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        val icon = if (editingMessage != null) Icons.Default.Check else Icons.AutoMirrored.Filled.Send
-                        Icon(icon, contentDescription = if (editingMessage != null) "Save" else "Send", modifier = Modifier.size(Sizes.IconDefault))
+                        val icon = when {
+                            editingMessage != null -> Icons.Default.Check
+                            inputText.isEmpty() && canSendMessage -> Icons.Default.Mic
+                            else -> Icons.AutoMirrored.Filled.Send
+                        }
+                        Icon(
+                            icon,
+                            contentDescription = stringResource(if (inputText.isEmpty()) R.string.voice_hold_to_record else R.string.chat_action_send),
+                            modifier = Modifier.size(Sizes.IconDefault)
+                        )
                     }
                 }
 

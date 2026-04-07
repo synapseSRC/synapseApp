@@ -146,6 +146,11 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.core.util.IntentUtils
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecorder
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -227,6 +232,51 @@ fun ChatScreen(
 
     var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
     var selectedMediaType by remember { mutableStateOf("") }
+
+    // Voice Recording State
+    var isRecording by remember { mutableStateOf(false) }
+    var recordingDurationMs by remember { mutableStateOf(0L) }
+    var recordingAmplitude by remember { mutableStateOf(0) }
+
+    val voiceRecorder = remember { VoiceRecorder(context) }
+    // Hilt entry point lookup for VoiceUploadService
+    val voiceUploadService = remember {
+        dagger.hilt.android.EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            VoiceUploadServiceEntryPoint::class.java
+        ).getVoiceUploadService()
+    }
+    val coroutineScope = rememberCoroutineScope()
+
+    val recordPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
+                android.widget.Toast.makeText(context, context.getString(R.string.voice_mic_permission_required), android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+
+    // Collection of amplitude and timer
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            val startTime = System.currentTimeMillis()
+            launch {
+                voiceRecorder.amplitudeFlow.collect { amp ->
+                    recordingAmplitude = amp
+                }
+            }
+            launch {
+                while (isRecording) {
+                    recordingDurationMs = System.currentTimeMillis() - startTime
+                    delay(100)
+                }
+            }
+        } else {
+            recordingDurationMs = 0L
+            recordingAmplitude = 0
+        }
+    }
 
     val handleFileSelection = { uri: Uri?, type: String, caption: String? ->
         uri?.let {
@@ -431,7 +481,48 @@ fun ChatScreen(
                     onSendMessage = viewModel::sendMessage,
                     onCancelReply = viewModel::cancelReply,
                     onCancelEditing = viewModel::cancelEditing,
-                    onUploadAndSendMedia = viewModel::uploadAndSendMedia
+                    onUploadAndSendMedia = viewModel::uploadAndSendMedia,
+                    isRecording = isRecording,
+                    recordingDurationMs = recordingDurationMs,
+                    recordingAmplitude = recordingAmplitude,
+                    onMicHeld = {
+                        val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                        if (hasPermission) {
+                            val tempFile = File(context.cacheDir, "temp_voice_${System.currentTimeMillis()}.m4a")
+                            voiceRecorder.start(tempFile)
+                            isRecording = true
+                        } else {
+                            recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    onMicReleased = {
+                        if (isRecording) {
+                            isRecording = false
+                            val outputFile = voiceRecorder.stop()
+                            if (outputFile != null && recordingDurationMs > 500) { // minimum 0.5s to prevent accidental taps
+                                coroutineScope.launch {
+                                    val result = voiceUploadService.upload(outputFile, com.synapse.social.studioasinc.shared.domain.model.StorageConfig())
+                                    result.onSuccess { url ->
+                                        viewModel.uploadAndSendMedia(
+                                            filePath = url,
+                                            fileName = "voice_message.m4a",
+                                            contentType = "audio/mp4",
+                                            messageType = "audio"
+                                        )
+                                        outputFile.delete()
+                                    }
+                                }
+                            } else {
+                                outputFile?.delete()
+                            }
+                        }
+                    },
+                    onRecordingCancelled = {
+                        if (isRecording) {
+                            isRecording = false
+                            voiceRecorder.cancel()
+                        }
+                    }
                 )
             }
 
@@ -459,3 +550,8 @@ fun ChatScreen(
     }
 }
 
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface VoiceUploadServiceEntryPoint {
+    fun getVoiceUploadService(): VoiceUploadService
+}
