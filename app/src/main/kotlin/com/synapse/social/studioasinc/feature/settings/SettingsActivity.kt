@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import javax.inject.Inject
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
+import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.AuthActivity
 import com.synapse.social.studioasinc.feature.profile.ProfileEditActivity
@@ -32,6 +34,12 @@ class SettingsActivity : ComponentActivity() {
 
     @Inject
     lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var cachedConversationDao: CachedConversationDao
+
+    @Inject
+    lateinit var cachedMessageDao: CachedMessageDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         android.util.Log.d("SettingsActivity", "onCreate called")
@@ -94,6 +102,8 @@ class SettingsActivity : ComponentActivity() {
 
     private fun performLogout() {
         lifecycleScope.launch {
+            cachedConversationDao.deleteAll()
+            cachedMessageDao.deleteAll()
             authRepository.signOut()
             startActivity(Intent(this@SettingsActivity, AuthActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
