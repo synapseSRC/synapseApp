@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.mapper.toDomain
 import com.synapse.social.studioasinc.shared.data.mapper.toDto
@@ -27,7 +28,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.realtime.channel
 import kotlinx.coroutines.flow.emptyFlow
@@ -77,13 +77,13 @@ class SupabaseNotificationRepository(
                 filter("recipient_id", FilterOperator.EQ, userId)
             }
 
-            val collector = launch(Dispatchers.IO) {
+            val collector = launch(AppDispatchers.IO) {
                 flow.map { it.decodeRecord<NotificationDto>() }.collect {
                     trySend(it.toDomain())
                 }
             }
 
-            launch(Dispatchers.IO) {
+            launch(AppDispatchers.IO) {
                 kotlinx.coroutines.yield()
                 try {
                     if (channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED || channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED) {

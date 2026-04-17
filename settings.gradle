@@ -38,3 +38,5 @@ dependencyResolutionManagement {
 rootProject.name = "Synapse"
 include ':app'
 include ':shared'
+include ':web'
+include ':desktop'

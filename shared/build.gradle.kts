@@ -13,6 +13,21 @@ version = project.findProperty("projectVersion") as String
 kotlin {
     applyDefaultHierarchyTemplate()
 
+    jvm()
+    wasmJs {
+        browser {
+            commonWebpackConfig {
+                devServer = (devServer ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer()).apply {
+                    static = (static ?: mutableListOf()).apply {
+                        // Serve sources to debug inside browser
+                        add(project.projectDir.path + "/src/wasmJsMain/resources")
+                    }
+                }
+            }
+        }
+        binaries.executable()
+    }
+
     androidTarget {
         publishLibraryVariants("release", "debug")
         compilerOptions {
@@ -62,7 +77,7 @@ kotlin {
                 implementation("io.github.jan-tennert.supabase:storage-kt")
                 implementation("io.github.jan-tennert.supabase:functions-kt")
                 implementation("io.ktor:ktor-client-core:3.4.2")
-                implementation("com.fleeksoft.ksoup:ksoup:0.1.2")
+                implementation("com.fleeksoft.ksoup:ksoup:0.2.0")
                 implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
 
@@ -88,6 +103,19 @@ kotlin {
                 // SQLDelight
                 implementation("app.cash.sqldelight:runtime:2.3.2")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.3.2")
+            }
+        }
+
+
+        val jvmMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-okhttp:3.4.2")
+                implementation("app.cash.sqldelight:sqlite-driver:2.3.2")
+            }
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation("app.cash.sqldelight:web-worker-driver:2.3.2")
             }
         }
 

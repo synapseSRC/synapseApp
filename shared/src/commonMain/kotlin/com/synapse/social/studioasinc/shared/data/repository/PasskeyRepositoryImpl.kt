@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.model.PasskeyDto
@@ -19,7 +20,7 @@ class PasskeyRepositoryImpl(
         private const val PASSKEY_VERIFICATION_FUNCTION = "verify-passkey-registration"
     }
 
-    override suspend fun getPasskeys(userId: String): Result<List<Passkey>> = withContext(Dispatchers.Default) {
+    override suspend fun getPasskeys(userId: String): Result<List<Passkey>> = withContext(AppDispatchers.IO) {
         runCatching {
             val result = client.postgrest["user_passkeys"]
                 .select {
@@ -40,7 +41,7 @@ class PasskeyRepositoryImpl(
         }
     }
 
-    override suspend fun deletePasskey(id: String): Result<Unit> = withContext(Dispatchers.Default) {
+    override suspend fun deletePasskey(id: String): Result<Unit> = withContext(AppDispatchers.IO) {
         runCatching {
             client.postgrest["user_passkeys"].delete {
                 filter {
@@ -51,7 +52,7 @@ class PasskeyRepositoryImpl(
         }
     }
 
-    override suspend fun generatePasskeyChallenge(): Result<String> = withContext(Dispatchers.Default) {
+    override suspend fun generatePasskeyChallenge(): Result<String> = withContext(AppDispatchers.IO) {
         runCatching {
             val response = client.functions.invoke("generate-passkey-challenge")
             val body = response.body<Map<String, String>>()
@@ -59,7 +60,7 @@ class PasskeyRepositoryImpl(
         }
     }
 
-    override suspend fun registerPasskey(registrationResponseJson: String, deviceName: String): Result<Unit> = withContext(Dispatchers.Default) {
+    override suspend fun registerPasskey(registrationResponseJson: String, deviceName: String): Result<Unit> = withContext(AppDispatchers.IO) {
         runCatching {
             val result = client.functions.invoke(
                 function = PASSKEY_VERIFICATION_FUNCTION,

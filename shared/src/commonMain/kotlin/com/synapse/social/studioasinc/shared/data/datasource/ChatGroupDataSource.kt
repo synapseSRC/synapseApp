@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.domain.model.User
@@ -7,14 +8,13 @@ import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
-    suspend fun getGroupMembers(chatId: String): List<Pair<User, Boolean>> = withContext(Dispatchers.IO) {
+    suspend fun getGroupMembers(chatId: String): List<Pair<User, Boolean>> = withContext(AppDispatchers.IO) {
         try {
             val participants = client.postgrest.from("chat_participants").select {
                 filter { eq("chat_id", chatId) }
@@ -37,7 +37,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(Dispatchers.IO) {
+    suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(AppDispatchers.IO) {
         try {
             val participants = userIds.map { ChatParticipantDto(chatId = chatId, userId = it) }
             client.postgrest.from("chat_participants").insert(participants)
@@ -47,7 +47,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun removeGroupMember(chatId: String, userId: String) = withContext(Dispatchers.IO) {
+    suspend fun removeGroupMember(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("chat_participants").delete {
                 filter {
@@ -61,7 +61,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun promoteToAdmin(chatId: String, userId: String) = withContext(Dispatchers.IO) {
+    suspend fun promoteToAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("chat_participants").update({
                 set("is_admin", true)
@@ -77,7 +77,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun demoteAdmin(chatId: String, userId: String) = withContext(Dispatchers.IO) {
+    suspend fun demoteAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("chat_participants").update({
                 set("is_admin", false)
@@ -93,7 +93,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun leaveGroup(chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun leaveGroup(chatId: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             client.postgrest.from("chat_participants").delete {
@@ -108,7 +108,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) = withContext(Dispatchers.IO) {
+    suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("chats").update({
                 set("only_admins_can_message", enabled)

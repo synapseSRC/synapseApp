@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewMessageDto
@@ -12,7 +13,6 @@ import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -23,7 +23,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null): List<MessageDto> =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             try {
                 client.postgrest.from("messages").select {
                     filter {
@@ -54,13 +54,13 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         expiresAt: String? = null,
         replyToId: String? = null
     ): MessageDto =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             val senderId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             val newMessage = NewMessageDto(chatId, senderId, content, messageType, mediaUrl, expiresAt, replyToId)
             client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
         }
 
-    suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) = withContext(AppDispatchers.IO) {
         try {
             client.functions.invoke("send-push-notification", buildJsonObject {
                 put("recipient_id", recipientId)
@@ -76,7 +76,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun getMessageById(messageId: String): MessageDto? = withContext(Dispatchers.IO) {
+    suspend fun getMessageById(messageId: String): MessageDto? = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("messages").select {
                 filter { eq("id", messageId) }
@@ -91,7 +91,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     suspend fun editMessage(
         messageId: String,
         newContent: String
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("messages").update({
                 set("content", newContent)
@@ -106,7 +106,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     }
 
     suspend fun deleteMessage(messageId: String): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             try {
                 client.postgrest.from("messages").update({
                     set("is_deleted", true)
@@ -120,7 +120,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         }
 
     suspend fun deleteMessages(messageIds: List<String>): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             try {
                 client.postgrest.from("messages").update({
                     set("is_deleted", true)
@@ -134,20 +134,20 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         }
 
     suspend fun deleteMessageForMe(messageId: String): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             val userId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             val deletion = UserDeletedMessageDto(messageId = messageId, userId = userId)
             client.postgrest.from("user_deleted_messages").insert(deletion)
         }
 
     suspend fun deleteMessagesForMe(messageIds: List<String>): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             val userId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             val deletions = messageIds.map { UserDeletedMessageDto(messageId = it, userId = userId) }
             client.postgrest.from("user_deleted_messages").insert(deletions)
         }
 
-    suspend fun markMessagesAsRead(chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun markMessagesAsRead(chatId: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext
             val now = kotlinx.datetime.Clock.System.now().toString()
@@ -175,7 +175,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun markMessagesAsDelivered(chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun markMessagesAsDelivered(chatId: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext
             client.postgrest.from("messages").update({

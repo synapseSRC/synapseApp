@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.local.database
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
@@ -7,7 +8,6 @@ import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import com.synapse.social.studioasinc.shared.data.database.PendingAction as DbPendingAction
 
@@ -16,23 +16,23 @@ class SqlDelightPendingActionDao(
 ) : PendingActionDao {
 
     override suspend fun insert(action: PendingAction) {
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             db.pendingActionQueries.insertAction(toDbAction(action))
         }
     }
 
     override suspend fun delete(id: String) {
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             db.pendingActionQueries.deleteAction(id)
         }
     }
 
-    override suspend fun getAll(): List<PendingAction> = withContext(Dispatchers.IO) {
+    override suspend fun getAll(): List<PendingAction> = withContext(AppDispatchers.IO) {
         db.pendingActionQueries.selectAllActions().executeAsList().map { toDomain(it) }
     }
 
     override suspend fun update(id: String, retryCount: Int, lastAttemptAt: Long?) {
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             db.pendingActionQueries.updateAction(retryCount, lastAttemptAt, id)
         }
     }
@@ -40,7 +40,7 @@ class SqlDelightPendingActionDao(
     override fun getAllAsFlow(): Flow<List<PendingAction>> {
         return db.pendingActionQueries.selectAllActions()
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(AppDispatchers.IO)
             .map { list -> list.map { toDomain(it) } }
     }
 

@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageReactionDto
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
@@ -7,14 +8,13 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 internal class ChatReactionDataSource(private val client: SupabaseClient) {
 
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
-    suspend fun toggleReaction(messageId: String, emoji: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun toggleReaction(messageId: String, emoji: String): Result<Unit> = withContext(AppDispatchers.IO) {
         try {
             val userId = getCurrentUserId() ?: return@withContext Result.failure(Exception("Not authenticated"))
 
@@ -52,7 +52,7 @@ internal class ChatReactionDataSource(private val client: SupabaseClient) {
         }
     }
 
-    suspend fun getReactionsForMessage(messageId: String): List<MessageReactionDto> = withContext(Dispatchers.IO) {
+    suspend fun getReactionsForMessage(messageId: String): List<MessageReactionDto> = withContext(AppDispatchers.IO) {
         try {
             client.from("message_reactions").select {
                 filter { eq("message_id", messageId) }
@@ -63,7 +63,7 @@ internal class ChatReactionDataSource(private val client: SupabaseClient) {
         }
     }
 
-    suspend fun getReactionsForMessages(messageIds: List<String>): List<MessageReactionDto> = withContext(Dispatchers.IO) {
+    suspend fun getReactionsForMessages(messageIds: List<String>): List<MessageReactionDto> = withContext(AppDispatchers.IO) {
         if (messageIds.isEmpty()) return@withContext emptyList()
         try {
             client.from("message_reactions").select {

@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.model.UserProfileInsert
@@ -52,7 +53,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun signUp(email: String, password: String): Result<String> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val user = client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
@@ -87,7 +88,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun ensureProfileExists(userId: String, email: String, username: String?): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 Napier.d("Checking if user profile exists for userId: $userId", tag = TAG)
                 val count = client.from("users").select(columns = Columns.list("id")) {
                     count(Count.EXACT)
@@ -129,7 +130,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun signIn(email: String, password: String): Result<String> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
@@ -148,7 +149,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun signOut(): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.signOut()
                 Napier.d("User signed out", tag = TAG)
                 Result.success(Unit)
@@ -190,7 +191,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun refreshSession(): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.refreshCurrentSession()
                 Napier.d("Session refreshed", tag = TAG)
                 Result.success(Unit)
@@ -212,7 +213,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.resetPasswordForEmail(email)
                 Napier.d("Password reset email sent", tag = TAG)
                 Result.success(Unit)
@@ -225,7 +226,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun resendVerificationEmail(email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.resendEmail(OtpType.Email.SIGNUP, email)
                 Napier.d("Verification email resent", tag = TAG)
                 Result.success(Unit)
@@ -238,7 +239,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun updatePassword(password: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.updateUser {
                     this.password = password
                 }
@@ -253,7 +254,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun updatePhoneNumber(phone: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.updateUser {
                     this.phone = phone
                 }
@@ -300,7 +301,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun handleOAuthCallback(code: String?, accessToken: String?, refreshToken: String?): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 when {
                     code != null -> {
                         client.auth.exchangeCodeForSession(code)
@@ -324,7 +325,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     override suspend fun signInWithOAuth(provider: SocialProvider, redirectUrl: String): Result<Unit> {
         val supabaseProvider: OAuthProvider = mapSocialProviderToOAuthProvider(provider)
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.signInWith(supabaseProvider, redirectUrl)
                 Napier.d("OAuth sign-in initiated for ${supabaseProvider.name} with redirect URI: $redirectUrl", tag = TAG)
                 Result.success(Unit)
@@ -337,7 +338,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun signInWithGoogleIdToken(idToken: String): Result<String> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 // Use the ID token to sign in with Google
                 client.auth.signInWith(IDToken) {
                     this.idToken = idToken
@@ -365,7 +366,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     override suspend fun linkIdentity(provider: SocialProvider): Result<Unit> {
         val supabaseProvider: OAuthProvider = mapSocialProviderToOAuthProvider(provider)
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.linkIdentity(supabaseProvider)
                 Napier.d("Link identity initiated for ${supabaseProvider.name}", tag = TAG)
                 Result.success(Unit)
@@ -378,7 +379,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun unlinkIdentity(identityId: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.unlinkIdentity(identityId)
                 Napier.d("Unlinked identity: $identityId", tag = TAG)
                 Result.success(Unit)
@@ -391,7 +392,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun getLinkedIdentities(): Result<List<String>> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val identities = client.from("user_identities")
                     .select()
                     .decodeList<JsonObject>()
@@ -409,7 +410,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun updateEmail(email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.updateUser {
                     this.email = email
                 }
@@ -424,7 +425,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     override suspend fun deleteAccount(): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.functions.invoke("delete-account")
                 client.auth.signOut()
                 Napier.d("Account deleted", tag = TAG)

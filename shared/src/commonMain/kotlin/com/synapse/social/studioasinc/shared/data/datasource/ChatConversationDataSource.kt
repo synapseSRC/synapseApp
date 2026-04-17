@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
@@ -13,14 +14,13 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 internal class ChatConversationDataSource(private val client: SupabaseClientLib) {
 
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
-    suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(Dispatchers.IO) {
+    suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(AppDispatchers.IO) {
         val currentUserId = getCurrentUserId() ?: return@withContext emptyList()
 
         try {
@@ -79,7 +79,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getLastMessage(chatId: String): MessageDto? = withContext(Dispatchers.IO) {
+    suspend fun getLastMessage(chatId: String): MessageDto? = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("messages").select {
                 filter {
@@ -99,7 +99,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getUnreadCount(chatId: String, lastReadAt: String?): Int = withContext(Dispatchers.IO) {
+    suspend fun getUnreadCount(chatId: String, lastReadAt: String?): Int = withContext(AppDispatchers.IO) {
         if (lastReadAt == null) return@withContext 0
         try {
             val messages = client.postgrest.from("messages").select {
@@ -120,7 +120,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getOrCreateChat(otherUserId: String): String? = withContext(Dispatchers.IO) {
+    suspend fun getOrCreateChat(otherUserId: String): String? = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
 
@@ -179,7 +179,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): String? = withContext(Dispatchers.IO) {
+    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): String? = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
 
@@ -206,7 +206,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getChatInfo(chatId: String): ChatDto? = withContext(Dispatchers.IO) {
+    suspend fun getChatInfo(chatId: String): ChatDto? = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("chats").select {
                 filter { eq("id", chatId) }
@@ -218,7 +218,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getParticipantIds(chatId: String): List<String> = withContext(Dispatchers.IO) {
+    suspend fun getParticipantIds(chatId: String): List<String> = withContext(AppDispatchers.IO) {
         try {
             client.postgrest.from("chat_participants")
                 .select(columns = Columns.list("chat_id", "user_id")) {
@@ -230,7 +230,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) = withContext(Dispatchers.IO) {
+    suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             client.postgrest.from("chat_participants").update({
@@ -247,7 +247,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun deleteConversation(chatId: String) = withContext(Dispatchers.IO) {
+    suspend fun deleteConversation(chatId: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             // Instead of deleting the participant which might break group logic, we might just soft-delete or remove the participant

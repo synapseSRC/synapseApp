@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.local.database
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.database.CachedConversation
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
@@ -12,7 +13,7 @@ class SqlDelightCachedConversationDao(
     private val db: StorageDatabase
 ) : CachedConversationDao {
 
-    override suspend fun upsertAll(conversations: List<Conversation>) = withContext(Dispatchers.Default) {
+    override suspend fun upsertAll(conversations: List<Conversation>) = withContext(AppDispatchers.IO) {
         val now = Clock.System.now().toEpochMilliseconds()
         db.transaction {
             conversations.forEach { conv ->
@@ -21,15 +22,15 @@ class SqlDelightCachedConversationDao(
         }
     }
 
-    override suspend fun getAll(): List<Conversation> = withContext(Dispatchers.Default) {
+    override suspend fun getAll(): List<Conversation> = withContext(AppDispatchers.IO) {
         db.cachedConversationQueries.selectAll().executeAsList().map { toDomainConversation(it) }
     }
 
         override suspend fun deleteByChatId(chatId: String) {
-        withContext(Dispatchers.Default) { db.cachedConversationQueries.deleteConversation(chatId) }
+        withContext(AppDispatchers.IO) { db.cachedConversationQueries.deleteConversation(chatId) }
     }
     override suspend fun deleteAll() {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.cachedConversationQueries.deleteAll()
         }
     }

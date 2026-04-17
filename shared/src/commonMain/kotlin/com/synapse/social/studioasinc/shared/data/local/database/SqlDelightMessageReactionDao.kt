@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.local.database
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.data.database.MessageReaction as CachedReaction
@@ -11,13 +12,13 @@ class SqlDelightMessageReactionDao(
 ) : MessageReactionDao {
 
     override suspend fun insert(reaction: MessageReaction) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.messageReactionQueries.insertReaction(toCachedReaction(reaction))
         }
     }
 
     override suspend fun insertAll(reactions: List<MessageReaction>) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.transaction {
                 reactions.forEach { reaction ->
                     db.messageReactionQueries.insertReaction(toCachedReaction(reaction))
@@ -26,24 +27,24 @@ class SqlDelightMessageReactionDao(
         }
     }
 
-    override suspend fun getByMessageId(messageId: String): List<MessageReaction> = withContext(Dispatchers.Default) {
+    override suspend fun getByMessageId(messageId: String): List<MessageReaction> = withContext(AppDispatchers.IO) {
         db.messageReactionQueries.selectByMessageId(messageId).executeAsList().map { toDomainReaction(it) }
     }
 
     override suspend fun delete(messageId: String, userId: String, emoji: String) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.messageReactionQueries.deleteReaction(messageId, userId, emoji)
         }
     }
 
     override suspend fun deleteAllByMessageId(messageId: String) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.messageReactionQueries.deleteAllByMessageId(messageId)
         }
     }
 
     override suspend fun deleteAll() {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.messageReactionQueries.deleteAll()
         }
     }

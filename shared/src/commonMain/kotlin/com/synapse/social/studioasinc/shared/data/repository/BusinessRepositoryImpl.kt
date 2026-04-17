@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.model.BusinessAccountDto
@@ -20,7 +21,7 @@ class BusinessRepositoryImpl(
     private val client: SupabaseClientType = SupabaseClient.client
 ) : BusinessRepository {
 
-    override suspend fun getBusinessAccount(userId: String): Result<BusinessAccount?> = withContext(Dispatchers.Default) {
+    override suspend fun getBusinessAccount(userId: String): Result<BusinessAccount?> = withContext(AppDispatchers.IO) {
         runCatching {
             val dto = client.postgrest["business_accounts"].select {
                 filter {
@@ -47,7 +48,7 @@ class BusinessRepositoryImpl(
         }
     }
 
-    override suspend fun createBusinessAccount(userId: String): Result<Unit> = withContext(Dispatchers.Default) {
+    override suspend fun createBusinessAccount(userId: String): Result<Unit> = withContext(AppDispatchers.IO) {
         runCatching {
             val newAccount = BusinessAccountDto(
                 user_id = userId,
@@ -60,7 +61,7 @@ class BusinessRepositoryImpl(
         }
     }
 
-    override suspend fun updateMonetization(userId: String, enabled: Boolean): Result<Unit> = withContext(Dispatchers.Default) {
+    override suspend fun updateMonetization(userId: String, enabled: Boolean): Result<Unit> = withContext(AppDispatchers.IO) {
         runCatching {
             client.postgrest["business_accounts"].update(
                 {
@@ -75,7 +76,7 @@ class BusinessRepositoryImpl(
         }
     }
 
-    override suspend fun applyForVerification(userId: String): Result<Unit> = withContext(Dispatchers.Default) {
+    override suspend fun applyForVerification(userId: String): Result<Unit> = withContext(AppDispatchers.IO) {
         runCatching {
             client.postgrest["business_accounts"].update(
                 {
@@ -90,7 +91,7 @@ class BusinessRepositoryImpl(
         }
     }
 
-    override suspend fun getAnalytics(userId: String): Result<AnalyticsData> = withContext(Dispatchers.Default) {
+    override suspend fun getAnalytics(userId: String): Result<AnalyticsData> = withContext(AppDispatchers.IO) {
         runCatching {
             // Mock data as per original ViewModel
              val points = (0..6).map { dayOffset ->
@@ -113,7 +114,7 @@ class BusinessRepositoryImpl(
         }
     }
 
-    override suspend fun getRevenue(userId: String): Result<RevenueData> = withContext(Dispatchers.Default) {
+    override suspend fun getRevenue(userId: String): Result<RevenueData> = withContext(AppDispatchers.IO) {
         runCatching {
              // Mock data as per original ViewModel
             RevenueData(

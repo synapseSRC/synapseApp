@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.UserPublicKeyDto
@@ -8,7 +9,6 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 internal class ChatKeyDataSource(private val client: SupabaseClientLib) {
@@ -19,7 +19,7 @@ internal class ChatKeyDataSource(private val client: SupabaseClientLib) {
      * Looks up the other participant in a chat from the chat_participants table.
      * This is more reliable than parsing chatId strings.
      */
-    suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? = withContext(Dispatchers.IO) {
+    suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? = withContext(AppDispatchers.IO) {
         try {
             val participants = client.postgrest.from("chat_participants")
                 .select(columns = Columns.list("chat_id", "user_id")) {
@@ -36,7 +36,7 @@ internal class ChatKeyDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun getUserPublicKey(userId: String): UserPublicKeyDto? = withContext(Dispatchers.IO) {
+    suspend fun getUserPublicKey(userId: String): UserPublicKeyDto? = withContext(AppDispatchers.IO) {
         try {
             Napier.d("E2EE_KEY_FETCH: Fetching public key for user $userId", tag = "E2EE")
             val result = client.postgrest.from("user_public_keys").select {
@@ -56,7 +56,7 @@ internal class ChatKeyDataSource(private val client: SupabaseClientLib) {
         }
     }
 
-    suspend fun uploadUserPublicKey(publicKey: String) = withContext(Dispatchers.IO) {
+    suspend fun uploadUserPublicKey(publicKey: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             val dto = UserPublicKeyDto(currentUserId, publicKey)
