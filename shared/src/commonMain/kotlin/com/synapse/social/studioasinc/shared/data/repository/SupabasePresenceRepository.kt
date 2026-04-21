@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
+import kotlinx.coroutines.Dispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
@@ -34,7 +36,7 @@ class SupabasePresenceRepository(
             return Result.failure(Exception("No user ID"))
         }
         
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             try {
                 client.postgrest.from("user_presence").upsert(
                     buildJsonObject {
@@ -88,7 +90,7 @@ class SupabasePresenceRepository(
         
         // Start heartbeat
         heartbeatJob?.cancel()
-        heartbeatJob = CoroutineScope(Dispatchers.Default).launch {
+        heartbeatJob = CoroutineScope(AppDispatchers.IO).launch {
             while (isActive) {
                 delay(30_000) // 30s heartbeat
                 updatePresence(true).onSuccess {

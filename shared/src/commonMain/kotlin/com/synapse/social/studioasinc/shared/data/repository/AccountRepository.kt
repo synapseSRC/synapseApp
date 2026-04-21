@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.domain.model.auth.SocialProvider
@@ -22,7 +23,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun getSecurityNotificationsEnabled(): Result<Boolean> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val currentUser = client.auth.currentUserOrNull()
                     ?: throw Exception("User not authenticated")
 
@@ -41,7 +42,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun setSecurityNotificationsEnabled(enabled: Boolean): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val currentUser = client.auth.currentUserOrNull()
                     ?: throw Exception("User not authenticated")
 
@@ -63,7 +64,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun getLinkedIdentities(): Result<List<String>> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val identities = client.from("user_identities")
                     .select()
                     .decodeList<JsonObject>()
@@ -81,7 +82,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun linkIdentity(provider: SocialProvider): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val supabaseProvider = when (provider) {
                     SocialProvider.GOOGLE -> Google
                     SocialProvider.FACEBOOK -> Facebook
@@ -103,7 +104,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun unlinkIdentity(provider: SocialProvider): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val currentUser = client.auth.currentUserOrNull()
                     ?: throw Exception("User not authenticated")
 
@@ -127,7 +128,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun changeEmail(newEmail: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.updateUser {
                     email = newEmail
                 }
@@ -141,7 +142,7 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
 
     suspend fun deleteAccount(): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.functions.invoke(function = "delete-account")
                 client.auth.signOut()
                 Result.success(Unit)

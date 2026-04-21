@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.domain.model.User
 import io.github.jan.supabase.SupabaseClient
@@ -13,7 +14,7 @@ class SupabaseUserDataSource(
     private val client: SupabaseClient
 ) : UserDataSource {
 
-    override suspend fun isUsernameAvailable(username: String): Result<Boolean> = withContext(Dispatchers.Default) {
+    override suspend fun isUsernameAvailable(username: String): Result<Boolean> = withContext(AppDispatchers.IO) {
         runCatching {
             val count = client.postgrest["users"].select {
                 filter {
@@ -25,7 +26,7 @@ class SupabaseUserDataSource(
         }
     }
 
-    override suspend fun getUserProfile(uid: String): Result<User?> = withContext(Dispatchers.Default) {
+    override suspend fun getUserProfile(uid: String): Result<User?> = withContext(AppDispatchers.IO) {
         runCatching {
             client.postgrest["users"].select {
                 filter {
@@ -35,7 +36,7 @@ class SupabaseUserDataSource(
         }
     }
 
-    override suspend fun searchUsers(query: String): Result<List<User>> = withContext(Dispatchers.Default) {
+    override suspend fun searchUsers(query: String): Result<List<User>> = withContext(AppDispatchers.IO) {
         runCatching {
             client.postgrest["users"].select {
                 filter {
@@ -49,7 +50,7 @@ class SupabaseUserDataSource(
         }
     }
 
-    override suspend fun updateUserProfile(uid: String, updates: Map<String, Any?>): Result<User?> = withContext(Dispatchers.Default) {
+    override suspend fun updateUserProfile(uid: String, updates: Map<String, Any?>): Result<User?> = withContext(AppDispatchers.IO) {
         runCatching {
             client.postgrest["users"].update(updates) {
                 filter {
@@ -60,7 +61,7 @@ class SupabaseUserDataSource(
         }
     }
 
-    override suspend fun getCurrentUserAvatar(): Result<String?> = withContext(Dispatchers.Default) {
+    override suspend fun getCurrentUserAvatar(): Result<String?> = withContext(AppDispatchers.IO) {
         runCatching {
             val currentUserId = client.auth.currentUserOrNull()?.id ?: return@runCatching null
 

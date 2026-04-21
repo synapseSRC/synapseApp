@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
@@ -16,7 +17,7 @@ class FollowRepositoryImpl(
 ) : FollowRepository {
 
     override suspend fun getFollowers(userId: String): Result<List<User>> {
-        return withContext(Dispatchers.Default) {
+        return withContext(AppDispatchers.IO) {
             try {
                 if (!SupabaseClient.isConfigured()) {
                     return@withContext Result.success(emptyList())
@@ -55,7 +56,7 @@ class FollowRepositoryImpl(
     }
 
     override suspend fun getFollowing(userId: String): Result<List<User>> {
-        return withContext(Dispatchers.Default) {
+        return withContext(AppDispatchers.IO) {
             try {
                 if (!SupabaseClient.isConfigured()) {
                     return@withContext Result.success(emptyList())

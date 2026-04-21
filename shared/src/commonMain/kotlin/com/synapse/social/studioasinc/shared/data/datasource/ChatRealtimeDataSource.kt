@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.datasource
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.util.UUIDUtils
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
@@ -15,7 +16,6 @@ import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -37,7 +37,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) =
-        withContext(Dispatchers.IO) {
+        withContext(AppDispatchers.IO) {
             try {
                 val currentUserId = getCurrentUserId() ?: return@withContext
                 val channelId = "broadcast-typing-$chatId"
@@ -69,7 +69,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
-        val collector = launch(Dispatchers.Default) {
+        val collector = launch(AppDispatchers.IO) {
             flow.collect { action ->
                 try {
                     val message = action.decodeRecord<MessageDto>()
@@ -80,7 +80,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(AppDispatchers.IO) {
             yield()
             try {
                 val status = channel.status.value
@@ -120,7 +120,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             table = "messages"
         }
 
-        val collector = launch(Dispatchers.Default) {
+        val collector = launch(AppDispatchers.IO) {
             flow.collect { action ->
                 try {
                     val message = action.decodeRecord<MessageDto>()
@@ -131,7 +131,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(AppDispatchers.IO) {
             yield()
             try {
                 val status = channel.status.value
@@ -163,7 +163,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val channel = client.realtime.channel(channelId)
         val presenceFlow = channel.presenceChangeFlow()
 
-        val collector = launch(Dispatchers.Default) {
+        val collector = launch(AppDispatchers.IO) {
             presenceFlow.collect { presenceChange ->
                 presenceChange.joins.values.forEach { presence ->
                     try {
@@ -194,7 +194,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(AppDispatchers.IO) {
             yield()
             try {
                 val status = channel.status.value
@@ -231,7 +231,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
-        val collector = launch(Dispatchers.Default) {
+        val collector = launch(AppDispatchers.IO) {
             flow.collect { action ->
                 try {
                     val message = action.decodeRecord<MessageDto>()
@@ -240,7 +240,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(AppDispatchers.IO) {
             yield()
             try {
                 val status = channel.status.value
@@ -276,7 +276,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             table = "message_reactions"
         }
 
-        val collector = launch(Dispatchers.Default) {
+        val collector = launch(AppDispatchers.IO) {
             flow.collect { action ->
                 when (action) {
                     is PostgresAction.Insert -> try { trySend(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
@@ -287,7 +287,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch(Dispatchers.IO) {
+        launch(AppDispatchers.IO) {
             yield()
             try {
                 val status = channel.status.value

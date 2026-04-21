@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
@@ -16,11 +17,11 @@ class UserRepositoryImpl(
     private val userDataSource: UserDataSource
 ) : UserRepository {
 
-    override suspend fun isUsernameAvailable(username: String): Result<Boolean> = withContext(Dispatchers.Default) {
+    override suspend fun isUsernameAvailable(username: String): Result<Boolean> = withContext(AppDispatchers.IO) {
         userDataSource.isUsernameAvailable(username)
     }
 
-    override suspend fun getUserProfile(uid: String): Result<User?> = withContext(Dispatchers.Default) {
+    override suspend fun getUserProfile(uid: String): Result<User?> = withContext(AppDispatchers.IO) {
         runCatching {
             // Try local DB first
             val localUser = database.userQueries.selectById(uid).executeAsOneOrNull()?.let { mapDbUser(it) }
@@ -38,7 +39,7 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun searchUsers(query: String): Result<List<User>> = withContext(Dispatchers.Default) {
+    override suspend fun searchUsers(query: String): Result<List<User>> = withContext(AppDispatchers.IO) {
         runCatching {
             val sanitizedQuery = sanitizeSearchQuery(query)
             if (sanitizedQuery.isBlank()) return@runCatching emptyList()
@@ -50,7 +51,7 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun updateUserProfile(uid: String, updates: Map<String, Any?>): Result<Boolean> = withContext(Dispatchers.Default) {
+    override suspend fun updateUserProfile(uid: String, updates: Map<String, Any?>): Result<Boolean> = withContext(AppDispatchers.IO) {
         runCatching {
             val user = userDataSource.updateUserProfile(uid, updates).getOrThrow()
             val mappedUser = user?.let { it.copy(avatar = it.avatar?.let { avatar -> constructAvatarUrl(avatar) }) }
@@ -61,7 +62,7 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun getCurrentUserAvatar(): Result<String?> = withContext(Dispatchers.Default) {
+    override suspend fun getCurrentUserAvatar(): Result<String?> = withContext(AppDispatchers.IO) {
         runCatching {
             userDataSource.getCurrentUserAvatar().getOrThrow()?.let { constructAvatarUrl(it) }
         }

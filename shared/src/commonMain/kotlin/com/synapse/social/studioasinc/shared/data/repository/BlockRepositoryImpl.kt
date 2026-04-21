@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseBlockDataSource
 import com.synapse.social.studioasinc.shared.data.mapper.BlockMapper
@@ -29,7 +30,7 @@ class BlockRepositoryImpl(
      * @return Result containing Unit on success, or error if already blocked or operation fails
      */
     override suspend fun blockUser(targetUserId: String): Result<Unit> = 
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             // Check if already blocked
             val isBlocked = dataSource.isUserBlocked(targetUserId)
                 .getOrElse { return@withContext Result.failure(it) }
@@ -52,7 +53,7 @@ class BlockRepositoryImpl(
      * @return Result containing Unit on success, or error if operation fails
      */
     override suspend fun unblockUser(targetUserId: String): Result<Unit> = 
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             dataSource.deleteBlock(targetUserId)
         }
     
@@ -63,7 +64,7 @@ class BlockRepositoryImpl(
      * @return Result containing list of BlockedUser domain models or error if operation fails
      */
     override suspend fun getBlockedUsers(): Result<List<BlockedUser>> = 
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             dataSource.getBlockedUsers()
                 .map { dtos -> BlockMapper.toDomainList(dtos) }
         }
@@ -75,7 +76,7 @@ class BlockRepositoryImpl(
      * @return Result containing boolean (true if blocked, false otherwise) or error if operation fails
      */
     override suspend fun isUserBlocked(targetUserId: String): Result<Boolean> = 
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             dataSource.isUserBlocked(targetUserId)
         }
 }

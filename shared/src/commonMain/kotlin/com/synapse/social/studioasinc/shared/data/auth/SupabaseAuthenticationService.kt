@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.auth
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.local.SecureStorage
@@ -41,7 +42,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun signUp(email: String, password: String): Result<String> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val user = client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
@@ -72,7 +73,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun createUserProfile(userId: String, email: String, username: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val profileInsert = UserProfileInsert(
                     uid = userId,
                     username = username
@@ -93,7 +94,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun ensureProfileExists(userId: String, email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 val count = client.from("users").select(columns = Columns.list("id")) {
                     count(Count.EXACT)
                     filter {
@@ -115,7 +116,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun signIn(email: String, password: String): Result<String> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
@@ -146,7 +147,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun signOut(): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.signOut()
                 clearStoredTokens()
                 Napier.d("User signed out successfully")
@@ -190,7 +191,7 @@ class SupabaseAuthenticationService(
     @OptIn(ExperimentalTime::class)
     override suspend fun refreshSession(): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.refreshCurrentSession()
 
                 val session = client.auth.currentSessionOrNull()
@@ -216,7 +217,7 @@ class SupabaseAuthenticationService(
     @OptIn(ExperimentalTime::class)
     override suspend fun restoreSession(): Boolean {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 var session = client.auth.currentSessionOrNull()
 
                 if (session == null && secureStorage != null) {
@@ -244,7 +245,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.resetPasswordForEmail(email)
                 Napier.d("Password reset email sent successfully")
                 Result.success(Unit)
@@ -257,7 +258,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun resendVerificationEmail(email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.resendEmail(OtpType.Email.SIGNUP, email)
                 Napier.d("Verification email resent successfully")
                 Result.success(Unit)
@@ -270,7 +271,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun updatePassword(password: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.updateUser {
                     this.password = password
                 }
@@ -285,7 +286,7 @@ class SupabaseAuthenticationService(
 
     override suspend fun updateEmail(email: String): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 client.auth.updateUser {
                     this.email = email
                 }
@@ -324,7 +325,7 @@ class SupabaseAuthenticationService(
     @OptIn(ExperimentalTime::class)
     override suspend fun handleOAuthCallback(code: String?, accessToken: String?, refreshToken: String?): Result<Unit> {
         return try {
-            withContext(Dispatchers.Default) {
+            withContext(AppDispatchers.IO) {
                 when {
                     code != null -> {
                         client.auth.exchangeCodeForSession(code)

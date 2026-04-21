@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.shared.data.local.database
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.database.CachedMessage
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
@@ -15,7 +16,7 @@ class SqlDelightCachedMessageDao(
 ) : CachedMessageDao {
 
     override suspend fun upsertAll(messages: List<Message>) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
             db.transaction {
                 messages.forEach { message ->
@@ -25,7 +26,7 @@ class SqlDelightCachedMessageDao(
         }
     }
 
-    override suspend fun getMessages(chatId: String, limit: Int): List<Message> = withContext(Dispatchers.Default) {
+    override suspend fun getMessages(chatId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
         db.cachedMessageQueries.selectByChatId(
             chatId = chatId,
             limit = limit.toLong()
@@ -45,14 +46,14 @@ class SqlDelightCachedMessageDao(
     }
 
     override suspend fun upsert(message: Message) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
             db.cachedMessageQueries.upsertMessage(toCachedMessage(message, now))
         }
     }
 
     override suspend fun updateContent(id: String, content: String) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.cachedMessageQueries.updateContent(
                 content = content,
                 id = id
@@ -61,13 +62,13 @@ class SqlDelightCachedMessageDao(
     }
 
     override suspend fun markDeleted(id: String) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.cachedMessageQueries.markDeleted(id)
         }
     }
 
     override suspend fun markDeleted(ids: List<String>) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.transaction {
                 ids.forEach { id ->
                     db.cachedMessageQueries.markDeleted(id)
@@ -77,7 +78,7 @@ class SqlDelightCachedMessageDao(
     }
 
     override suspend fun trimToLimit(chatId: String, limit: Int) {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.cachedMessageQueries.deleteOldestBeyondLimit(
                 chatId = chatId,
                 limit = limit.toLong()
@@ -86,7 +87,7 @@ class SqlDelightCachedMessageDao(
     }
 
     override suspend fun deleteAll() {
-        withContext(Dispatchers.Default) {
+        withContext(AppDispatchers.IO) {
             db.cachedMessageQueries.deleteAll()
         }
     }

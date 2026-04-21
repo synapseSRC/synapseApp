@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.shared.data.repository
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
+import kotlinx.coroutines.Dispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
@@ -52,7 +54,7 @@ class SupabaseChatRepository(
     private val offlineActionRepository: OfflineActionRepository? = null,
     private val cachedMessageDao: CachedMessageDao? = null,
     private val cachedConversationDao: CachedConversationDao? = null,
-    private val externalScope: CoroutineScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+    private val externalScope: CoroutineScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + com.synapse.social.studioasinc.shared.core.util.AppDispatchers.IO)
 ) : ChatRepository {
 
     private val encryptionHelper = ChatEncryptionHelper(signalProtocolManager, dataSource, cachedMessageDao)
