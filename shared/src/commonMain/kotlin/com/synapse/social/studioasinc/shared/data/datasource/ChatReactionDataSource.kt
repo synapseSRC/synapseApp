@@ -23,7 +23,7 @@ internal class ChatReactionDataSource(private val client: SupabaseClient) {
                 filter {
                     eq("message_id", messageId)
                     eq("user_id", userId)
-                    eq("reaction_emoji", emoji)
+                    eq("reaction_type", emoji)
                 }
             }.decodeSingleOrNull<MessageReactionDto>()
 
@@ -33,7 +33,7 @@ internal class ChatReactionDataSource(private val client: SupabaseClient) {
                     filter {
                         eq("message_id", messageId)
                         eq("user_id", userId)
-                        eq("reaction_emoji", emoji)
+                        eq("reaction_type", emoji)
                     }
                 }
             } else {

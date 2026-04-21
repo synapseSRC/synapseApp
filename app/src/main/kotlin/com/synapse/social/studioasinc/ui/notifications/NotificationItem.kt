@@ -41,6 +41,7 @@ sealed interface UiText {
 data class UiNotification(
     val id: String,
     val type: String,
+    val actorId: String?,
     val actorName: UiText,
     val actorAvatar: String?,
     val message: UiText,
@@ -70,7 +71,7 @@ fun NotificationItem(
             imageUrl = notification.actorAvatar,
             contentDescription = "Avatar",
             size = Sizes.IconGiant,
-            onClick = { onUserClick(actorNameString) }
+            onClick = { onUserClick(notification.actorId ?: "") }
         )
 
         Spacer(modifier = Modifier.width(Spacing.Medium))
@@ -81,7 +82,7 @@ fun NotificationItem(
                     text = actorNameString,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable(onClick = { onUserClick(actorNameString) })
+                    modifier = Modifier.clickable(onClick = { onUserClick(notification.actorId ?: "") })
                 )
                 Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
                 Text(

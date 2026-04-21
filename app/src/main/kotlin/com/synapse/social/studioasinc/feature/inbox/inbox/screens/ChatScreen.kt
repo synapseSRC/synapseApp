@@ -411,6 +411,7 @@ fun ChatScreen(
                         participantProfile = participantProfile,
                         initialParticipantName = initialParticipantName,
                         participantAvatarUrl = participantAvatarUrl,
+                        participantId = participantId,
                         isGroupChat = isGroupChat,
                         listState = listState,
                         isLoadingMore = isLoadingMore,

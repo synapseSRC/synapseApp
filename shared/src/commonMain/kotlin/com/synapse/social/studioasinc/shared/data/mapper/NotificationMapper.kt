@@ -11,12 +11,13 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
 fun NotificationDto.toDomain(): Notification {
-    val messageBody = body["en"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+    val messageBody = body?.get("en")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
     val messageType = if (messageBody != null) NotificationMessageType.CUSTOM else NotificationMessageType.FALLBACK
 
     return Notification(
         id = id,
         type = type,
+        actorId = senderId,
         actorName = actor?.displayName,
         actorAvatar = actor?.avatar,
         message = messageBody,

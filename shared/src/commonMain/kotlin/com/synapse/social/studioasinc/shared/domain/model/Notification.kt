@@ -14,6 +14,7 @@ enum class NotificationMessageType {
 data class Notification(
     val id: String,
     val type: String,
+    val actorId: String?,
     val actorName: String?,
     val actorAvatar: String?,
     val message: String?,

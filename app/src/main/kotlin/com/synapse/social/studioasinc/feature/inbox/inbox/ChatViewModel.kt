@@ -53,6 +53,7 @@ class ChatViewModel @Inject constructor(
     private val fileUploader: FileUploader,
     private val toggleMessageReactionUseCase: ToggleMessageReactionUseCase,
     private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
+    private val subscribeToMessageReactionsUseCase: SubscribeToMessageReactionsUseCase,
     private val getChatSettingsUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase,
     private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase
 ) : ViewModel() {
@@ -162,12 +163,16 @@ class ChatViewModel @Inject constructor(
     private val subscriptionDelegate = ChatSubscriptionDelegate(
         subscribeToMessagesUseCase = subscribeToMessagesUseCase,
         subscribeToTypingStatusUseCase = subscribeToTypingStatusUseCase,
+        subscribeToMessageReactionsUseCase = subscribeToMessageReactionsUseCase,
         markMessagesAsReadUseCase = markMessagesAsReadUseCase,
         markMessagesAsDeliveredUseCase = markMessagesAsDeliveredUseCase,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId },
         onNewMessage = { newMessage ->
             handleIncomingMessage(newMessage)
+        },
+        onReactionEvent = { reaction ->
+            handleIncomingReaction(reaction)
         }
     )
 
@@ -368,7 +373,9 @@ class ChatViewModel @Inject constructor(
                 } else {
                     val contentChanged = existing.content != newMessage.content
                     newMessage.copy(
-                        isEdited = if (contentChanged) newMessage.isEdited else existing.isEdited
+                        isEdited = if (contentChanged) newMessage.isEdited else existing.isEdited,
+                        reactions = if (newMessage.reactions.isEmpty()) existing.reactions else newMessage.reactions,
+                        userReaction = if (newMessage.reactions.isEmpty()) existing.userReaction else newMessage.userReaction
                     )
                 }
                 with(messagingDelegate) { current.replaceById(newMessage.id, mergedMessage) }
@@ -412,6 +419,21 @@ class ChatViewModel @Inject constructor(
                             with(messagingDelegate) { current.replaceById(newMessage.id, refreshed) }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun handleIncomingReaction(reaction: com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction) {
+        val reactionType = com.synapse.social.studioasinc.shared.domain.model.ReactionType.values()
+            .find { it.emoji == reaction.reactionEmoji } ?: return
+        messagingDelegate._messages.update { current ->
+            with(messagingDelegate) {
+                current.updateById(reaction.messageId) { msg ->
+                    val counts = msg.reactions.toMutableMap()
+                    counts[reactionType] = (counts[reactionType] ?: 0) + 1
+                    val userReaction = if (reaction.userId == currentUserId) reactionType else msg.userReaction
+                    msg.copy(reactions = counts, userReaction = userReaction)
                 }
             }
         }

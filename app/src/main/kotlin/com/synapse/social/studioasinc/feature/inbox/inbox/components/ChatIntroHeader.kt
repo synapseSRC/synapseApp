@@ -43,8 +43,11 @@ fun ChatIntroHeader(
 
         Spacer(modifier = Modifier.height(Spacing.Medium))
 
+        val rawName = participantProfile?.displayName ?: participantProfile?.name
+            ?: participantProfile?.username?.replace("_", " ")?.split(" ")?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+            ?: initialParticipantName ?: ""
         Text(
-            text = participantProfile?.displayName ?: participantProfile?.name ?: participantProfile?.username ?: initialParticipantName ?: "",
+            text = rawName,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )

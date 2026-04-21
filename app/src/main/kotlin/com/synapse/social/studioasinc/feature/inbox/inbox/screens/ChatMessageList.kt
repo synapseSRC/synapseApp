@@ -42,6 +42,7 @@ internal fun ChatMessageList(
     participantProfile: com.synapse.social.studioasinc.shared.domain.model.User?,
     initialParticipantName: String?,
     participantAvatarUrl: String?,
+    participantId: String?,
     isGroupChat: Boolean,
     listState: LazyListState,
     isLoadingMore: Boolean,
@@ -152,7 +153,7 @@ internal fun ChatMessageList(
                     participantProfile = participantProfile,
                     initialParticipantName = initialParticipantName,
                     avatarUrl = participantAvatarUrl,
-                    onViewProfile = { participantProfile?.uid?.let(onNavigateToProfile) }
+                    onViewProfile = { (participantProfile?.uid ?: participantId)?.let(onNavigateToProfile) }
                 )
             }
         }
