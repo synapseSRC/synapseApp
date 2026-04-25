@@ -5,7 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.isSuccess
 
-class SharedImageLoader(private val httpClient: HttpClient = HttpClient()) {
+class SharedImageLoader(private val httpClient: HttpClient) {
 
     suspend fun loadImageBytes(url: String): ByteArray {
         val response = httpClient.get(url)

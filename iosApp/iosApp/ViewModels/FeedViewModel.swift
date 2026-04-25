@@ -28,7 +28,14 @@ class FeedViewModel: ObservableObject {
         self.error = nil
 
         do {
-            let searchPosts = try await searchPostsUseCase.invoke(query: "")
+            let result = try await searchPostsUseCase.invoke(query: "")
+            guard let searchPosts = result.getOrNull() as? [shared.SearchPost] else {
+                if let error = result.exceptionOrNull() {
+                    self.error = error.message ?? "Unknown error"
+                }
+                return
+            }
+
             let mappedPosts = searchPosts.map { searchPost -> Post in
                 var mediaItems: [MediaItem]? = nil
                 if let urls = searchPost.mediaUrls, !urls.isEmpty {
@@ -100,7 +107,11 @@ class FeedViewModel: ObservableObject {
     func loadMore() {
         guard !isLoading && canLoadMore else { return }
         // Pagination logic not fully implemented in SearchRepositoryImpl for infinite scrolling yet.
-        // We'll leave it as a no-op or trigger the same call for now.
+        // We'll trigger the same call but append to existing posts to mimic infinite scroll behavior
+        // without losing the functionality in the UI layer.
+        Task {
+            await fetchFromUseCase(isRefresh: false)
+        }
     }
 
     func toggleLike(for post: Post) {

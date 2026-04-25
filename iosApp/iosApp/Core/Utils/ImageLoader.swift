@@ -1,14 +1,17 @@
 import Foundation
 import UIKit
 
+@MainActor
 class ImageLoader: ObservableObject {
     @Published var image: UIImage?
     private var cache = ImageCache.shared
     private var currentUrlString: String?
+    private var currentTask: Task<Void, Never>?
 
     init() {}
 
     func load(urlString: String) {
+        currentTask?.cancel()
         self.currentUrlString = urlString
 
         if let cachedImage = cache.get(forKey: urlString) {
@@ -18,9 +21,9 @@ class ImageLoader: ObservableObject {
 
         self.image = nil
 
-        Task {
+        currentTask = Task {
             do {
-                let sharedLoader = shared.SharedImageLoader()
+                let sharedLoader = KMPHelper.sharedHelper.sharedImageLoader
                 let byteArray = try await sharedLoader.loadImageBytes(url: urlString)
 
                 // Convert KotlinByteArray to Data
@@ -33,14 +36,14 @@ class ImageLoader: ObservableObject {
                 if let newImage = UIImage(data: data) {
                     self.cache.set(newImage, forKey: urlString)
 
-                    await MainActor.run {
-                        if self.currentUrlString == urlString {
-                            self.image = newImage
-                        }
+                    if self.currentUrlString == urlString {
+                        self.image = newImage
                     }
                 }
             } catch {
-                print("Failed to load image via shared logic: \(error)")
+                if !Task.isCancelled {
+                    print("Failed to load image via shared logic: \(error)")
+                }
             }
         }
     }
