@@ -1,0 +1,67 @@
+name: 🚀 Desktop Build
+
+on:
+  push:
+    branches:
+      - '**'          # ✅ Triggers on every push to any branch
+    paths:
+      - 'desktop/**'
+      - 'shared/**'
+      - '.github/workflows/**'
+  workflow_dispatch:  # 🖱️ Allows manual run from the Actions tab
+
+jobs:
+  build-desktop:
+    name: Build & Notify (${{ matrix.os_name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # 🚀 Prevents cancelling Windows/macOS if Linux fails
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os_name: Linux
+          - os: windows-latest
+            os_name: Windows
+          - os: macos-latest
+            os_name: macOS
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to get accurate git log for the notification script
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: 🔨 Build Desktop App
+        # This dynamically builds .deb for Linux, .msi/.exe for Windows, and .dmg for macOS
+        run: ./gradlew :desktop:packageDistributionForCurrentOS --no-daemon
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
+
+      - name: 📦 Upload Artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os_name }}-build-${{ github.sha }}
+          path: desktop/build/compose/binaries/main/
+          if-no-files-found: error
+
+      - name: 📢 Notify Telegram
+        if: always() # 🔔 Runs on success AND failure to keep you updated
+        # Note: Changed 'python3' to 'python' to ensure cross-platform compatibility (Windows runners use 'python')
+        run: python .github/workflows/notify_telegram.py
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TOPIC_ID: ${{ secrets.TELEGRAM_TOPIC_ID }} # Optional: for Telegram groups with topics
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BUILD_STATUS: ${{ job.status }} # Passes 'success', 'failure', or 'cancelled'
+          OS_NAME: ${{ matrix.os_name }}  # (Optional) Passed just in case you want to use it in your py script later
