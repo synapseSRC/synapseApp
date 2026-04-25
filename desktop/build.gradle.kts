@@ -12,6 +12,11 @@ kotlin {
             dependencies {
                 implementation(project(":shared"))
                 implementation("io.insert-koin:koin-core:4.1.1")
+                implementation("io.github.jan-tennert.supabase:postgrest-kt:3.4.1")
+                implementation("io.github.jan-tennert.supabase:auth-kt:3.4.1")
+                implementation("io.github.jan-tennert.supabase:realtime-kt:3.4.1")
+                implementation("io.github.jan-tennert.supabase:storage-kt:3.4.1")
+                implementation("io.github.jan-tennert.supabase:functions-kt:3.4.1")
                 implementation(compose.desktop.currentOs)
                 implementation(compose.material3)
                 implementation(compose.ui)
