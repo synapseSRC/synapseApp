@@ -19,7 +19,7 @@ env:
   IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
   ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
   
-  # FIXED GRADLE_OPTS: Removed single quotes around jvmargs for Windows compatibility
+  # FIXED GRADLE_OPTS: No nested single quotes. Compatible with Windows/Linux/macOS
   GRADLE_OPTS: -Xmx4g -XX:MaxMetaspaceSize=1g -Dorg.gradle.daemon=false
 
 jobs:
@@ -111,7 +111,9 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # CRITICAL: This ensures notify_telegram.py is actually present in this job
+      - name: Checkout Code
+        uses: actions/checkout@v4
       
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
@@ -138,8 +140,11 @@ jobs:
         run: |
           APK_FILE=$(find ./all-artifacts/android-pkg -name "*.apk" | head -n 1)
           if [ -f "$APK_FILE" ]; then
+            echo "Uploading Android APK: $APK_FILE"
             export ARTIFACT_PATH="$APK_FILE"
             python .github/workflows/notify_telegram.py
+          else
+            echo "No APK file found to upload."
           fi
 
       - name: Upload Desktop Binaries
@@ -152,11 +157,12 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           for OS in Windows Linux macOS; do
+            # Find common installers: msi, deb, dmg, exe
             FILE=$(find "./all-artifacts/desktop-$OS" -type f \( -name "*.msi" -o -name "*.deb" -o -name "*.dmg" -o -name "*.exe" \) | head -n 1)
             if [ -f "$FILE" ]; then
+              echo "Uploading $OS Desktop Build: $FILE"
               export ARTIFACT_PATH="$FILE"
               export BUILD_STATUS="success"
-              echo "Uploading $OS build: $FILE"
               python .github/workflows/notify_telegram.py
             fi
           done
@@ -171,5 +177,5 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
           -d chat_id="${CHAT_ID}" \
           -d message_thread_id="${TOPIC_ID}" \
-          -d text="✅ <b>Build Pipeline Complete</b>%0AAll platforms for branch <code>${{ github.ref_name }}</code> uploaded successfully." \
+          -d text="✅ <b>Build Pipeline Complete</b>%0AAll artifacts for branch <code>${{ github.ref_name }}</code> have been sent to Telegram." \
           -d parse_mode="HTML"
