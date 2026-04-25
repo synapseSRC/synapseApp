@@ -3,16 +3,18 @@ name: 🚀 Desktop Build
 on:
   push:
     branches:
-      - '**'          # 🛠️ Matches every branch (including nested ones like feature/xyz)
+      - '**'          # ✅ Triggers on every push to any branch
     paths:
       - 'desktop/**'
       - 'shared/**'
       - '.github/workflows/**'
-  workflow_dispatch:  # 🖱️ Allows manual triggering from any branch
+  workflow_dispatch:  # 🖱️ Allows manual run from the Actions tab
 
 jobs:
   build-desktop:
+    name: Build & Notify
     runs-on: ubuntu-latest
+    
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -33,14 +35,16 @@ jobs:
       - name: 📦 Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-build-${{ github.ref_name }} # 🏷️ Named after the branch
+          name: desktop-build-${{ github.ref_name }} # 🏷️ Includes branch name
           path: desktop/build/compose/binaries/main/
+          if-no-files-found: error
 
       - name: 📢 Notify Telegram
-        if: always()
+        if: always() # 🔔 Runs even if build fails to notify you of the error
         run: python3 .github/workflows/notify_telegram.py
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Fixed: These match the os.environ.get() keys in your script
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_STATUS: ${{ job.status }}
