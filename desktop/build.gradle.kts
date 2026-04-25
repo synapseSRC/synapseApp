@@ -17,6 +17,7 @@ kotlin {
                 implementation("io.github.jan-tennert.supabase:realtime-kt:3.4.1")
                 implementation("io.github.jan-tennert.supabase:storage-kt:3.4.1")
                 implementation("io.github.jan-tennert.supabase:functions-kt:3.4.1")
+                implementation("io.github.aakira:napier:2.7.1")
                 implementation(compose.desktop.currentOs)
                 implementation(compose.material3)
                 implementation(compose.ui)

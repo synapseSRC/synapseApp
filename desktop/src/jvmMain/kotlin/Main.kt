@@ -8,6 +8,7 @@ import com.synapse.social.studioasinc.desktop.ui.DesktopMainScreen
 import com.synapse.social.studioasinc.shared.di.storageModule
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import org.koin.core.context.startKoin
+import io.github.aakira.napier.Napier
 
 fun main() = application {
     try {
@@ -16,10 +17,10 @@ fun main() = application {
         }
 
         // Ensure Supabase is initialized
-        val initializedClient = SupabaseClient.client
+        SupabaseClient.client
     } catch (e: Exception) {
         // Koin might already be started in dev reload, or Supabase missing config
-        e.printStackTrace()
+        Napier.e("Failed to initialize backend services", e)
     }
 
     Window(

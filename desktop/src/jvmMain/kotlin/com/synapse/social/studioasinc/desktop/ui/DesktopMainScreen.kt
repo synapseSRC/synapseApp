@@ -17,8 +17,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.desktop.model.ChatItem
 
-data class ChatItem(val id: String, val name: String, val lastMessage: String)
+
 
 @Composable
 fun DesktopMainScreen() {
@@ -68,8 +69,9 @@ fun DesktopMainScreen() {
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (selectedChat != null) {
-                ChatDetailView(chat = selectedChat!!)
+            val chat = selectedChat
+            if (chat != null) {
+                ChatDetailView(chat = chat)
             } else {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -170,7 +172,10 @@ fun ChatDetailView(chat: ChatItem) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
-                    onClick = { messageText = "" },
+                    onClick = {
+                        // TODO: Implement actual message sending logic here instead of just clearing the text
+                        messageText = ""
+                    },
                     enabled = messageText.isNotBlank()
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
