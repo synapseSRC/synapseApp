@@ -73,6 +73,12 @@ class CreateGroupViewModel @Inject constructor(
         _selectedUsers.value = current
     }
 
+    fun removeMember(user: User) {
+        val current = _selectedUsers.value.toMutableList()
+        current.removeAll { it.uid == user.uid }
+        _selectedUsers.value = current
+    }
+
     fun updateGroupName(name: String) {
         _groupName.value = name
     }

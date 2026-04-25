@@ -3,6 +3,14 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 import androidx.compose.foundation.clickable
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -12,6 +20,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,12 +38,12 @@ fun CreateGroupScreen(
     onGroupCreated: (String) -> Unit,
     viewModel: CreateGroupViewModel = hiltViewModel()
 ) {
-    val users by viewModel.users.collectAsState()
-    val selectedUsers by viewModel.selectedUsers.collectAsState()
-    val groupName by viewModel.groupName.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val successChatId by viewModel.successChatId.collectAsState()
+    val users by viewModel.users.collectAsStateWithLifecycle()
+    val selectedUsers by viewModel.selectedUsers.collectAsStateWithLifecycle()
+    val groupName by viewModel.groupName.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val successChatId by viewModel.successChatId.collectAsStateWithLifecycle()
 
     LaunchedEffect(successChatId) {
         successChatId?.let { onGroupCreated(it) }
@@ -71,6 +80,27 @@ fun CreateGroupScreen(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(Spacing.Medium)
                 )
+            }
+
+
+            AnimatedVisibility(
+                visible = selectedUsers.isNotEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                ) {
+                    items(selectedUsers, key = { it.uid }) { user ->
+                        SelectedUserItem(
+                            user = user,
+                            onRemove = { viewModel.removeMember(user) }
+                        )
+                    }
+                }
             }
 
             OutlinedTextField(
@@ -143,5 +173,51 @@ private fun UserSelectionItem(
                 tint = MaterialTheme.colorScheme.primary
             )
         }
+    }
+}
+
+
+@Composable
+private fun SelectedUserItem(
+    user: User,
+    onRemove: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(Sizes.AvatarLarge)
+    ) {
+        Box {
+            AsyncImage(
+                model = user.avatar ?: "",
+                contentDescription = null,
+                modifier = Modifier
+                    .size(Sizes.AvatarDefault)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier
+                    .size(Sizes.IconDefault)
+                    .align(Alignment.TopEnd)
+                    .offset(x = Spacing.Small, y = (-Spacing.ExtraSmall))
+                    .clickable(onClick = onRemove)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove",
+                    modifier = Modifier.padding(Spacing.Tiny),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Text(
+            text = user.displayName?.split(" ")?.firstOrNull() ?: user.username ?: "Unknown",
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
