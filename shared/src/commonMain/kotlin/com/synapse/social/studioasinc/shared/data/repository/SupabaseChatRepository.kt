@@ -459,6 +459,11 @@ class SupabaseChatRepository(
         Result.failure(e)
     }
 
+    override suspend fun clearLocalCache() {
+        cachedConversationDao?.deleteAll()
+        cachedMessageDao?.deleteAll()
+    }
+
     override suspend fun getReactionsForMessages(messages: List<Message>): List<Message> = try {
         val currentUserId = getCurrentUserId()
         val allReactions = reactionDataSource.getReactionsForMessages(messages.map { it.id })

@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
 import com.synapse.social.studioasinc.shared.domain.model.ValidationResult
 import com.synapse.social.studioasinc.core.config.Constants
 import com.synapse.social.studioasinc.shared.domain.usecase.auth.*
+import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 import kotlinx.coroutines.Job
@@ -38,6 +39,8 @@ class AuthViewModel @Inject constructor(
     private val calculatePasswordStrengthUseCase: CalculatePasswordStrengthUseCase,
     private val checkUsernameAvailabilityUseCase: CheckUsernameAvailabilityUseCase,
     private val signInUseCase: SignInUseCase,
+    private val chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
+    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository,
     private val signUpUseCase: SignUpUseCase,
     private val sendPasswordResetUseCase: SendPasswordResetUseCase,
     private val resetPasswordUseCase: ResetPasswordUseCase,
@@ -304,6 +307,21 @@ class AuthViewModel @Inject constructor(
             )
         }
     }
+
+    init {
+        observeAuthStatus()
+    }
+
+    private fun observeAuthStatus() {
+        viewModelScope.launch {
+            authRepository.sessionStatus.collect { status ->
+                if (status == AuthSessionStatus.NOT_AUTHENTICATED) {
+                    chatRepository.clearLocalCache()
+                }
+            }
+        }
+    }
+
 
     fun onBackToSignInClick() {
         _uiState.value = AuthUiState.SignIn()

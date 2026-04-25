@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUs
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,7 +30,8 @@ class InboxViewModel @Inject constructor(
     private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val settingsRepository: SettingsRepository,
-    private val chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    private val chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
+    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 ) : ViewModel() {
 
     private val _currentUserProfile = MutableStateFlow<User?>(null)
@@ -84,6 +86,7 @@ class InboxViewModel @Inject constructor(
     }
 
     init {
+        observeAuthStatus()
         viewModelScope.launch {
             initializeE2EUseCase().onFailure { e ->
                 _error.value = "Failed to initialize E2EE: ${e.message}"
@@ -113,6 +116,17 @@ class InboxViewModel @Inject constructor(
             }.onFailure { e ->
                 _error.value = "Failed to load conversations: ${e.message}"
                 _isLoading.value = false
+            }
+        }
+    }
+
+    private fun observeAuthStatus() {
+        viewModelScope.launch {
+            authRepository.sessionStatus.collect { status ->
+                if (status == AuthSessionStatus.NOT_AUTHENTICATED) {
+                    _conversations.value = emptyList()
+                    _currentUserProfile.value = null
+                }
             }
         }
     }

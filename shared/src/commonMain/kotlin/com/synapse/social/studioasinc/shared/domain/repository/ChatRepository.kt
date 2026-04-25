@@ -45,6 +45,7 @@ interface ChatRepository {
     suspend fun toggleMessageReaction(messageId: String, emoji: String): Result<Unit>
     suspend fun getReactionsForMessage(messageId: String): Result<List<MessageReaction>>
     suspend fun getReactionsForMessages(messages: List<Message>): List<Message>
+    suspend fun clearLocalCache()
     fun subscribeToMessageReactions(): Flow<MessageReaction>
 
 }
