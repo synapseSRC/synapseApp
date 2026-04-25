@@ -20,6 +20,8 @@ class KMPHelper {
 
     let uploadMediaUseCase: shared.UploadMediaUseCase
 
+    let searchPostsUseCase: shared.SearchPostsUseCase
+
     init() {
         let fileUploader = shared.FileUploader()
         let imgBBService = shared.ImgBBUploadService(httpClient: shared.SupabaseClient.shared.httpClient)
@@ -59,5 +61,7 @@ class KMPHelper {
 
         let storageRepository = shared.IOSDependencies.shared.getStorageRepository()
         self.uploadMediaUseCase = shared.UploadMediaUseCase(repository: chatRepository, storageRepository: storageRepository, mediaUploadRepository: mediaUploadRepository, fileUploader: fileUploader)
+
+        self.searchPostsUseCase = shared.SearchPostsUseCase(repository: shared.SearchRepositoryImpl(client: shared.SupabaseClient.shared.client))
     }
 }

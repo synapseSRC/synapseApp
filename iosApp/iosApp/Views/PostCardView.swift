@@ -63,33 +63,11 @@ struct PostCardView: View {
             // Media Content (Image/Video)
             if let mediaItems = post.mediaItems, let firstMedia = mediaItems.first {
                 if firstMedia.type == .image {
-                    AsyncImage(url: URL(string: firstMedia.url)) { phase in
-                        switch phase {
-                        case .empty:
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 250)
-                                .overlay(ProgressView())
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(maxHeight: 300)
-                                .clipped()
-                                .cornerRadius(12)
-                        case .failure:
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 200)
-                                .overlay(
-                                    Image(systemName: "photo")
-                                        .foregroundColor(.gray)
-                                )
-                        @unknown default:
-                            EmptyView()
-                        }
-                    }
-                    .padding(.horizontal)
+                    CachedImageView(urlString: firstMedia.url)
+                        .frame(maxHeight: 300)
+                        .clipped()
+                        .cornerRadius(12)
+                        .padding(.horizontal)
                 } else if firstMedia.type == .video {
                     // Video Placeholder
                     Rectangle()
