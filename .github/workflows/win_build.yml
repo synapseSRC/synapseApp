@@ -1,42 +1,42 @@
-name: 🖥️ Desktop Build & Notify
+name: 🚀 Desktop Build
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - '**'          # 🛠️ Matches every branch (including nested ones like feature/xyz)
     paths:
       - 'desktop/**'
       - 'shared/**'
-      - '.github/workflows/desktop_build.yml'
-  workflow_dispatch:
+      - '.github/workflows/**'
+  workflow_dispatch:  # 🖱️ Allows manual triggering from any branch
 
 jobs:
   build-desktop:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
           cache: 'gradle'
 
-      - name: Build Desktop App
+      - name: 🔨 Build Desktop App
         run: ./gradlew :desktop:packageDistributionForCurrentOS
         env:
-          # Add any required env variables for your build here
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
-      - name: Upload Artifacts
+      - name: 📦 Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-build
+          name: desktop-build-${{ github.ref_name }} # 🏷️ Named after the branch
           path: desktop/build/compose/binaries/main/
 
-      - name: Notify Telegram
+      - name: 📢 Notify Telegram
         if: always()
         run: python3 .github/workflows/notify_telegram.py
         env:
