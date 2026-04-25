@@ -12,9 +12,19 @@ on:
 
 jobs:
   build-desktop:
-    name: Build & Notify
-    runs-on: ubuntu-latest
-    
+    name: Build & Notify (${{ matrix.os_name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # 🚀 Prevents cancelling Windows/macOS if Linux fails
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os_name: Linux
+          - os: windows-latest
+            os_name: Windows
+          - os: macos-latest
+            os_name: macOS
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -29,7 +39,7 @@ jobs:
           cache: 'gradle'
 
       - name: 🔨 Build Desktop App
-        # This builds the Linux (.deb) distribution since the runner is ubuntu-latest
+        # This dynamically builds .deb for Linux, .msi/.exe for Windows, and .dmg for macOS
         run: ./gradlew :desktop:packageDistributionForCurrentOS --no-daemon
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
@@ -39,13 +49,14 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-linux-build-${{ github.sha }}
+          name: desktop-${{ matrix.os_name }}-build-${{ github.sha }}
           path: desktop/build/compose/binaries/main/
           if-no-files-found: error
 
       - name: 📢 Notify Telegram
         if: always() # 🔔 Runs on success AND failure to keep you updated
-        run: python3 .github/workflows/notify_telegram.py
+        # Note: Changed 'python3' to 'python' to ensure cross-platform compatibility (Windows runners use 'python')
+        run: python .github/workflows/notify_telegram.py
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -53,3 +64,4 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_STATUS: ${{ job.status }} # Passes 'success', 'failure', or 'cancelled'
+          OS_NAME: ${{ matrix.os_name }}  # (Optional) Passed just in case you want to use it in your py script later
