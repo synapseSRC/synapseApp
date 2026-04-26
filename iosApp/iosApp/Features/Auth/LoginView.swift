@@ -15,12 +15,29 @@ struct LoginView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                }
+
+                TextField("Email", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                SecureField("Password", text: $viewModel.password)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
                 Spacer()
 
                 Button(action: {
                     viewModel.login(navigator: navigator)
                 }) {
-                    Text("Simulate Login")
+                    Text("Log In")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
