@@ -15,12 +15,38 @@ struct RegisterView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                }
+
+                TextField("Email", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                TextField("Username", text: $viewModel.username)
+                    .autocapitalization(.none)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                SecureField("Password", text: $viewModel.password)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                SecureField("Confirm Password", text: $viewModel.confirmPassword)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
                 Spacer()
 
                 Button(action: {
                     viewModel.register(navigator: navigator)
                 }) {
-                    Text("Simulate Registration")
+                    Text("Register")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
