@@ -63,6 +63,12 @@ interface SettingsRepository {
     val messageSuggestionEnabled: Flow<Boolean>
     suspend fun setMessageSuggestionEnabled(enabled: Boolean)
 
+    val chatAvatarDisabled: Flow<Boolean>
+    suspend fun setChatAvatarDisabled(enabled: Boolean)
+
+    val chatMessagePaginationLimit: Flow<Int>
+    suspend fun setChatMessagePaginationLimit(limit: Int)
+
     val chatListLayout: Flow<ChatListLayout>
     suspend fun setChatListLayout(layout: ChatListLayout)
     val chatSwipeGesture: Flow<ChatSwipeGesture>

@@ -124,6 +124,11 @@ class DomainSettingsRepositoryAdapter @Inject constructor(
     override suspend fun getStorageBreakdown(): StorageUsageBreakdown = delegate.getStorageBreakdown().toDomain()
     override suspend fun getLargeFiles(minSizeBytes: Long): List<LargeFileInfo> = delegate.getLargeFiles(minSizeBytes).map { it.toDomain() }
 
+    override val chatAvatarDisabled: Flow<Boolean> = delegate.chatAvatarDisabled
+    override suspend fun setChatAvatarDisabled(enabled: Boolean) = delegate.setChatAvatarDisabled(enabled)
+    override val chatMessagePaginationLimit: Flow<Int> = delegate.chatMessagePaginationLimit
+    override suspend fun setChatMessagePaginationLimit(limit: Int) = delegate.setChatMessagePaginationLimit(limit)
+
     // --- Misc ---
     override val dataSaverEnabled: Flow<Boolean> = delegate.dataSaverEnabled
     override suspend fun setDataSaverEnabled(enabled: Boolean) = delegate.setDataSaverEnabled(enabled)
