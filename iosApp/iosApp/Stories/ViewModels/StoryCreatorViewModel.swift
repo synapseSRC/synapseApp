@@ -3,6 +3,7 @@ import shared
 import UIKit
 import AVFoundation
 
+@MainActor
 class StoryCreatorViewModel: ObservableObject {
     @Published var mediaURL: URL? = nil
     @Published var textOverlay: String = ""
@@ -13,6 +14,9 @@ class StoryCreatorViewModel: ObservableObject {
     // Caching media resources so the view doesn't recreate them every render cycle
     @Published var cachedImage: UIImage? = nil
     var cachedPlayer: AVPlayer? = nil
+
+    private let createStoryUseCase = KMPHelper.sharedHelper.createStoryUseCase
+    private let uploadMediaUseCase = KMPHelper.sharedHelper.uploadMediaUseCase
 
     func setMedia(url: URL) {
         self.mediaURL = url
@@ -43,7 +47,7 @@ class StoryCreatorViewModel: ObservableObject {
     }
 
     func submitStory() {
-        guard let _ = mediaURL else {
+        guard let url = mediaURL else {
             self.error = "Media is required for a story."
             return
         }
@@ -51,13 +55,38 @@ class StoryCreatorViewModel: ObservableObject {
         self.isLoading = true
         self.error = nil
 
-        // Simulate interaction with KMP use case for story submission
-        // e.g., submitStoryUseCase.execute(media: mediaURL, text: textOverlay)
+        let isVideo = url.pathExtension.lowercased() == "mov" || url.pathExtension.lowercased() == "mp4"
+        let mediaType = isVideo ? shared.MediaType.video : shared.MediaType.photo
+        let mediaTypeString = isVideo ? "video" : "photo"
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.isLoading = false
-            self.isStoryPosted = true
-            self.clearMedia()
+        Task {
+            do {
+                // 1. Upload Media
+                let result = try await uploadMediaUseCase.invoke(
+                    filePath: url.path,
+                    mediaType: mediaType,
+                    bucketName: "stories",
+                    onProgress: { _ in }
+                )
+
+                // Kotlin's Result automatically unboxes in Swift
+                let uploadedUrl = result as! String
+
+                // 2. Save Story Record
+                try await createStoryUseCase.invoke(
+                    mediaUrl: uploadedUrl,
+                    mediaType: mediaTypeString,
+                    textOverlay: self.textOverlay.isEmpty ? nil : self.textOverlay
+                )
+
+                self.isLoading = false
+                self.isStoryPosted = true
+                self.clearMedia()
+
+            } catch {
+                self.error = error.localizedDescription
+                self.isLoading = false
+            }
         }
     }
 

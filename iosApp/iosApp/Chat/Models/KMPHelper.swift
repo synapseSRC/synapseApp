@@ -22,6 +22,9 @@ class KMPHelper {
 
     let searchPostsUseCase: shared.SearchPostsUseCase
 
+    let createStoryUseCase: shared.CreateStoryUseCase
+    let getStoriesUseCase: shared.GetStoriesUseCase
+
     let sharedImageLoader: shared.SharedImageLoader
 
     init() {
@@ -65,6 +68,10 @@ class KMPHelper {
         self.uploadMediaUseCase = shared.UploadMediaUseCase(repository: chatRepository, storageRepository: storageRepository, mediaUploadRepository: mediaUploadRepository, fileUploader: fileUploader)
 
         self.searchPostsUseCase = shared.SearchPostsUseCase(repository: shared.SearchRepositoryImpl(client: shared.SupabaseClient.shared.client))
+
+        let storyRepository = shared.SupabaseStoryRepository()
+        self.createStoryUseCase = shared.CreateStoryUseCase(repository: storyRepository)
+        self.getStoriesUseCase = shared.GetStoriesUseCase(repository: storyRepository)
 
         self.sharedImageLoader = shared.SharedImageLoader(httpClient: shared.Ktor_client_coreHttpClient())
     }
