@@ -13,11 +13,21 @@ struct EditProfileView: View {
 
     var body: some View {
         Form {
+            if let error = viewModel.generalError {
+                Section {
+                    Text(error)
+                        .foregroundColor(.red)
+                }
+            }
+
             Section {
                 HStack {
                     Spacer()
                     VStack {
-                        if let profileImage = profileImage {
+                        if viewModel.isUploading {
+                            ProgressView()
+                                .frame(width: 100, height: 100)
+                        } else if let profileImage = profileImage {
                             profileImage
                                 .resizable()
                                 .scaledToFill()
@@ -33,6 +43,12 @@ struct EditProfileView: View {
                         PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
                             Text("Change Profile Photo")
                                 .foregroundColor(.blue)
+                        }
+
+                        if let error = viewModel.uploadError {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .font(.caption)
                         }
                     }
                     Spacer()
@@ -61,7 +77,9 @@ struct EditProfileView: View {
             Button("Save Changes") {
                 Task {
                     await viewModel.updateProfile(displayName: displayName, bio: bio)
-                    presentationMode.wrappedValue.dismiss()
+                    if viewModel.generalError == nil {
+                        presentationMode.wrappedValue.dismiss()
+                    }
                 }
             }
         }
@@ -72,10 +90,11 @@ struct EditProfileView: View {
         }
         .onChange(of: selectedItem) { newItem in
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    profileImage = Image(uiImage: uiImage)
-                    // TODO: Implement image upload to KMP StorageService
+                if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                    if let uiImage = UIImage(data: data) {
+                        profileImage = Image(uiImage: uiImage)
+                    }
+                    await viewModel.uploadProfileImage(data: data)
                 }
             }
         }

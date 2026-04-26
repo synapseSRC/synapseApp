@@ -10,6 +10,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.blocking.UnblockUser
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockedUsersUseCase
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
+import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -21,6 +22,7 @@ object IOSDependencies : KoinComponent {
     fun getUserPreferencesRepository() = UserPreferencesRepositoryImpl(SupabaseClient.client)
 
     // Inject StorageRepository from Koin
+    fun getAuthRepository(): AuthRepository = getKoin().get()
     fun getStorageRepository(): com.synapse.social.studioasinc.shared.domain.repository.StorageRepository = getKoin().get()
 
     // Create use cases on demand
