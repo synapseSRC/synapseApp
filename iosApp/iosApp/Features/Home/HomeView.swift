@@ -7,43 +7,69 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $navigator.homePath) {
             ZStack {
-                if let errorMessage = viewModel.errorMessage {
+                if viewModel.uiState.isLoading && viewModel.uiState.posts.isEmpty {
+                    LoadingView(message: "Loading feed...")
+                } else if let errorMessage = viewModel.uiState.errorMessage, viewModel.uiState.posts.isEmpty {
                     ErrorBoundaryView(title: "Error", message: errorMessage) {
                         viewModel.fetchHomeData()
                     }
-                } else if viewModel.isLoading {
-                    LoadingView(message: "Loading feed...")
                 } else {
-                    VStack {
-                        Text("Home Feed")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(viewModel.uiState.posts) { post in
+                                NavigationLink(value: post) {
+                                    PostCardView(
+                                        post: post,
+                                        onLike: { viewModel.toggleLike(for: post) },
+                                        onComment: { /* handled by nav */ },
+                                        onShare: { /* share action */ },
+                                        onBookmark: { viewModel.toggleBookmark(for: post) }
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
 
-                        Spacer()
-
-                        Button("Go to Settings") {
-                            navigator.navigate(to: .settings, on: .home)
+                            if viewModel.uiState.isLoading && !viewModel.uiState.posts.isEmpty {
+                                ProgressView()
+                                    .padding()
+                            }
                         }
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-
-                        Spacer()
+                    }
+                    .refreshable {
+                        viewModel.refresh()
                     }
                 }
             }
             .navigationTitle("Synapse")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { navigator.navigate(to: .profile, on: .home) }) {
+                        Image(systemName: "person.crop.circle")
+                            .font(.system(size: 24))
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { navigator.navigate(to: .create, on: .home) }) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.system(size: 24))
+                    }
+                }
+            }
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .settings:
                     SettingsView()
                 case .profile:
                     ProfileView()
-                default:
-                    Text("Unknown route")
+                case .create:
+                    CreateView()
+                case .home, .search, .notifications, .login, .register:
+                    EmptyView()
                 }
+            }
+            .navigationDestination(for: Post.self) { post in
+                PostDetailView(post: post)
             }
             .onAppear {
                 viewModel.fetchHomeData()
