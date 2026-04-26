@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,71 +31,84 @@ fun DesktopMainScreen(
     val selectedConversation by viewModel.selectedConversation.collectAsState()
     val isLoadingConversations by viewModel.isLoadingConversations.collectAsState()
     val isLoadingMessages by viewModel.isLoadingMessages.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        // Master View (Left Sidebar)
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "Chats",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp)
-                )
-                HorizontalDivider()
+    LaunchedEffect(error) {
+        error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
 
-                if (isLoadingConversations) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (conversations.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No conversations found")
-                    }
-                } else {
-                    LazyColumn {
-                        items(conversations) { conversation ->
-                            ChatListItem(
-                                conversation = conversation,
-                                isSelected = conversation.chatId == selectedConversation?.chatId,
-                                onClick = { viewModel.selectConversation(conversation) }
-                            )
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // Master View (Left Sidebar)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = "Chats",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    HorizontalDivider()
+
+                    if (isLoadingConversations) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (conversations.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("No conversations found")
+                        }
+                    } else {
+                        LazyColumn {
+                            items(conversations) { conversation ->
+                                ChatListItem(
+                                    conversation = conversation,
+                                    isSelected = conversation.chatId == selectedConversation?.chatId,
+                                    onClick = { viewModel.selectConversation(conversation) }
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Detail View (Right Content)
-        Box(
-            modifier = Modifier
-                .weight(2f)
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            val conversation = selectedConversation
-            if (conversation != null) {
-                ChatDetailView(
-                    conversation = conversation,
-                    messages = messages,
-                    isLoading = isLoadingMessages,
-                    onSendMessage = { text -> viewModel.sendMessage(text) }
-                )
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Select a chat to start messaging",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            // Detail View (Right Content)
+            Box(
+                modifier = Modifier
+                    .weight(2f)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                val conversation = selectedConversation
+                if (conversation != null) {
+                    ChatDetailView(
+                        conversation = conversation,
+                        messages = messages,
+                        isLoading = isLoadingMessages,
+                        onSendMessage = { text -> viewModel.sendMessage(text) }
                     )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Select a chat to start messaging",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }
@@ -201,7 +215,19 @@ fun ChatDetailView(
                 OutlinedTextField(
                     value = messageText,
                     onValueChange = { messageText = it },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onKeyEvent {
+                            if (it.type == KeyEventType.KeyDown && it.key == Key.Enter && !it.isShiftPressed) {
+                                if (messageText.isNotBlank()) {
+                                    onSendMessage(messageText)
+                                    messageText = ""
+                                }
+                                true
+                            } else {
+                                false
+                            }
+                        },
                     placeholder = { Text("Type a message...") },
                     shape = CircleShape
                 )

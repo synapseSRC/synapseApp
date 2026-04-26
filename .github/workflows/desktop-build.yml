@@ -50,7 +50,9 @@ jobs:
       with:
         name: synapse-desktop-${{ matrix.os }}
         path: |
-          desktop/build/compose/binaries/main/**/*.deb
-          desktop/build/compose/binaries/main/**/*.dmg
-          desktop/build/compose/binaries/main/**/*.msi
+          desktop/build/compose/binaries/main/deb/*.deb
+          desktop/build/compose/binaries/main/dmg/*.dmg
+          desktop/build/compose/binaries/main/msi/*.msi
+          desktop/build/compose/binaries/main/exe/*.exe
+          desktop/build/compose/binaries/main/app/*.app
         if-no-files-found: warn
