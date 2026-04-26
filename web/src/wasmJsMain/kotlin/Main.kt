@@ -7,25 +7,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.CanvasBasedWindow
 import com.synapse.social.studioasinc.shared.di.storageModule
+import com.synapse.social.studioasinc.web.di.webModule
+import com.synapse.social.studioasinc.web.ui.WebAuthScreen
+import com.synapse.social.studioasinc.web.ui.WebFeedScreen
 import org.koin.core.context.startKoin
+
+enum class WebScreen {
+    Landing, Login, Feed
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     startKoin {
-        modules(storageModule)
+        modules(storageModule, webModule)
     }
 
     CanvasBasedWindow(canvasElementId = "ComposeTarget") {
         MaterialTheme {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                WebPremiumLandingPage()
+                var currentScreen by remember { mutableStateOf(WebScreen.Landing) }
+
+                when (currentScreen) {
+                    WebScreen.Landing -> WebPremiumLandingPage(onGetStarted = { currentScreen = WebScreen.Login })
+                    WebScreen.Login -> WebAuthScreen(onLoginSuccess = { currentScreen = WebScreen.Feed })
+                    WebScreen.Feed -> WebFeedScreen()
+                }
             }
         }
     }
 }
 
 @Composable
-fun WebPremiumLandingPage() {
+fun WebPremiumLandingPage(onGetStarted: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -50,7 +63,7 @@ fun WebPremiumLandingPage() {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Status: Online", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { /* Navigate to Login */ }) {
+                Button(onClick = onGetStarted) {
                     Text("Get Started")
                 }
             }
