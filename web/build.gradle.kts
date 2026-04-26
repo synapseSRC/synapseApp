@@ -21,6 +21,7 @@ kotlin {
             dependencies {
                 implementation(project(":shared"))
                 implementation("io.insert-koin:koin-core:4.1.1")
+                implementation("io.insert-koin:koin-compose:4.1.1")
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
