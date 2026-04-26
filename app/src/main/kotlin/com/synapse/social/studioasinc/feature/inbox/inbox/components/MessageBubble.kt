@@ -11,6 +11,8 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -165,15 +167,21 @@ fun DateDividerChip(label: String) {
 private fun WavyDivider(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         val path = Path()
-        val waveLength = 12.dp.toPx()
+        val waveLength = 24.dp.toPx()
         val amplitude = 3.dp.toPx()
-        var currentX = 0f
+
+        // Use a true sine wave approach using cubic beziers for smoothness
         path.moveTo(0f, size.height / 2f)
+        var currentX = 0f
         while (currentX < size.width) {
-            path.relativeQuadraticTo(waveLength / 4f, -amplitude, waveLength / 2f, 0f)
-            path.relativeQuadraticTo(waveLength / 4f, amplitude, waveLength / 2f, 0f)
+            path.cubicTo(
+                currentX + waveLength * 0.3642f, size.height / 2f - amplitude * 1.5f,
+                currentX + waveLength * 0.6358f, size.height / 2f + amplitude * 1.5f,
+                currentX + waveLength, size.height / 2f
+            )
             currentX += waveLength
         }
+
         drawPath(
             path = path,
             color = color,
@@ -193,14 +201,14 @@ fun UnreadDividerRow(count: Int) {
             .padding(vertical = Spacing.Small),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary)
         Text(
             text = stringResource(if (count == 1) R.string.chat_divider_unread_one else R.string.chat_divider_unread_other, count),
             modifier = Modifier.padding(horizontal = Spacing.Medium),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -354,24 +362,6 @@ fun MessageBubble(
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start
         ) {
-            if (!isFromMe && showAvatar) {
-                if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
-                    AsyncImage(
-                        model = senderAvatarUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        placeholder = rememberVectorPainter(Icons.Filled.Person),
-                        error = rememberVectorPainter(Icons.Filled.Person),
-                        modifier = Modifier
-                            .size(Sizes.AvatarSmall)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
-                }
-                Spacer(modifier = Modifier.width(Spacing.Small))
-            }
             Column(
                 horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
             ) {
@@ -394,6 +384,15 @@ fun MessageBubble(
                 )
             }
         }
+        if (!isFromMe && showAvatar && (position == GroupPosition.FIRST || position == GroupPosition.SINGLE)) {
+            SenderHeaderRow(
+                avatarUrl = senderAvatarUrl,
+                displayName = senderName ?: "",
+                timestamp = remember(message.createdAt) { formatMessageTime(message.createdAt) },
+                isStarred = false
+            )
+        }
+
         Box {
         Surface(
             color = containerColor,
@@ -431,7 +430,7 @@ fun MessageBubble(
                                     modifier = Modifier.padding(end = Spacing.ExtraSmall)
                                 )
                                 AsyncImage(
-                                    model = if (isOwnReply) null else senderAvatarUrl,
+                                    model = if (isOwnReply) null else senderAvatarUrl, // Real implementation should pass correct url
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     placeholder = rememberVectorPainter(Icons.Filled.Person),
@@ -443,12 +442,13 @@ fun MessageBubble(
                                 )
                                 Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
                                 Text(
-                                    text = quotedName ?: "",
+                                    text = (quotedName ?: "").uppercase(),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
+                            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                             Text(
                                 text = replyToMessage.content ?: "",
                                 style = TextStyle(
@@ -584,11 +584,13 @@ fun MessageBubble(
             }
         }
         if (message.reactions.isNotEmpty()) {
-            Row(
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
                 modifier = Modifier
                     .offset(y = 12.dp)
                     .padding(horizontal = Spacing.Small),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny),
+                verticalArrangement = Arrangement.spacedBy(Spacing.Tiny)
             ) {
                 message.reactions.forEach { (type, count) ->
                     Surface(
