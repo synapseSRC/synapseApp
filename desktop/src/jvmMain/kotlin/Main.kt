@@ -6,6 +6,7 @@ import androidx.compose.ui.window.application
 import com.synapse.social.studioasinc.desktop.theme.SynapseTheme
 import com.synapse.social.studioasinc.desktop.ui.DesktopMainScreen
 import com.synapse.social.studioasinc.shared.di.storageModule
+import com.synapse.social.studioasinc.desktop.di.desktopModule
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import org.koin.core.context.startKoin
 import io.github.aakira.napier.Napier
@@ -13,7 +14,7 @@ import io.github.aakira.napier.Napier
 fun main() = application {
     try {
         startKoin {
-            modules(storageModule)
+            modules(storageModule, desktopModule)
         }
 
         // Ensure Supabase is initialized
