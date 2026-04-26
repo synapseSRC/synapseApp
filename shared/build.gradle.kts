@@ -37,7 +37,7 @@ kotlin {
     }
 
     // Define iOS targets only on Mac OS to avoid build failures on other platforms
-    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+    if (true) {
         listOf(
             iosX64(),
             iosArm64(),
@@ -144,7 +144,7 @@ kotlin {
             }
         }
 
-        if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+        if (true) {
             val iosMain by getting {
                 dependencies {
                     implementation("io.ktor:ktor-client-darwin:3.4.2")
