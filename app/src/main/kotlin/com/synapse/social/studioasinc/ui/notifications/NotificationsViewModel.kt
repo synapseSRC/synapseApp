@@ -30,7 +30,8 @@ data class NotificationsUiState(
     val notifications: List<UiNotification> = emptyList(),
     val isLoading: Boolean = false,
     val unreadCount: Int = 0,
-    val groupedNotifications: Map<UiText, List<UiNotification>> = emptyMap()
+    val groupedNotifications: Map<UiText, List<UiNotification>> = emptyMap(),
+    val error: UiText? = null
 )
 
 @HiltViewModel
@@ -52,7 +53,7 @@ class NotificationsViewModel @Inject constructor(
     fun loadNotifications() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
 
             getNotificationsUseCase().collect { result ->
                 result.onSuccess { notifications ->
@@ -65,16 +66,21 @@ class NotificationsViewModel @Inject constructor(
                             groupedNotifications = uiNotifications.groupBy { formatDateHeader(it.timestamp) }
                         )
                     }
-                    subscribeToRealtime()
                 }.onFailure { error ->
                     Napier.e("Failed to load notifications: $error")
-                    _uiState.update { it.copy(isLoading = false) }
+                    val uiError = when (error) {
+                        is com.synapse.social.studioasinc.shared.domain.model.NotificationError.NetworkError -> UiText.StringResource(R.string.error_network)
+                        is com.synapse.social.studioasinc.shared.domain.model.NotificationError.Unauthorized -> UiText.StringResource(R.string.error_authentication)
+                        else -> UiText.StringResource(R.string.error_unknown)
+                    }
+                    _uiState.update { it.copy(isLoading = false, error = uiError) }
                 }
             }
         }
     }
 
-    private fun subscribeToRealtime() {
+    fun startRealtime() {
+        if (realtimeJob?.isActive == true) return
         realtimeJob?.cancel()
         realtimeJob = viewModelScope.launch {
             try {
@@ -119,6 +125,15 @@ class NotificationsViewModel @Inject constructor(
         loadNotifications()
     }
 
+    fun stopRealtime() {
+        realtimeJob?.cancel()
+        realtimeJob = null
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+
     fun markAsRead(notificationId: String) {
         viewModelScope.launch {
             // Optimistic update
@@ -126,6 +141,12 @@ class NotificationsViewModel @Inject constructor(
 
             markNotificationAsReadUseCase(notificationId).onFailure { e ->
                 Napier.e("Failed to mark as read for notification $notificationId", e)
+                val uiError = when (e) {
+                    is com.synapse.social.studioasinc.shared.domain.model.NotificationError.NetworkError -> UiText.StringResource(R.string.error_network)
+                    is com.synapse.social.studioasinc.shared.domain.model.NotificationError.Unauthorized -> UiText.StringResource(R.string.error_authentication)
+                    else -> UiText.StringResource(R.string.error_unknown)
+                }
+                _uiState.update { it.copy(error = uiError) }
                 // Revert optimistic update
                 setNotificationReadState(notificationId, isRead = false)
             }
