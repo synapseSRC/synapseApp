@@ -37,6 +37,9 @@ class DesktopChatViewModel(
     private val _isLoadingMessages = MutableStateFlow(false)
     val isLoadingMessages: StateFlow<Boolean> = _isLoadingMessages.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         loadConversations()
     }
@@ -44,10 +47,12 @@ class DesktopChatViewModel(
     private fun loadConversations() {
         viewModelScope.launch {
             _isLoadingConversations.value = true
+            _error.value = null
             getConversationsUseCase().onSuccess { result ->
                 _conversations.value = result
             }.onFailure { error ->
                 Napier.e("Failed to load conversations", error)
+                _error.value = "Failed to load conversations: ${error.message}"
             }
             _isLoadingConversations.value = false
         }
@@ -61,11 +66,13 @@ class DesktopChatViewModel(
     private fun loadMessages(chatId: String) {
         viewModelScope.launch {
             _isLoadingMessages.value = true
+            _error.value = null
             getMessagesUseCase(chatId = chatId).onSuccess { result ->
                 _messages.value = result
             }.onFailure { error ->
                 Napier.e("Failed to load messages", error)
                 _messages.value = emptyList()
+                _error.value = "Failed to load messages: ${error.message}"
             }
             _isLoadingMessages.value = false
         }
@@ -74,6 +81,7 @@ class DesktopChatViewModel(
     fun sendMessage(content: String) {
         val chatId = _selectedConversation.value?.chatId ?: return
         viewModelScope.launch {
+            _error.value = null
             sendMessageUseCase(
                 chatId = chatId,
                 content = content
@@ -82,7 +90,12 @@ class DesktopChatViewModel(
                 loadMessages(chatId)
             }.onFailure { error ->
                 Napier.e("Failed to send message", error)
+                _error.value = "Failed to send message: ${error.message}"
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
