@@ -17,22 +17,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.synapse.social.studioasinc.desktop.model.ChatItem
-
-
+import org.koin.compose.koinInject
+import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
+import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
 @Composable
-fun DesktopMainScreen() {
-    val chats = remember {
-        listOf(
-            ChatItem("1", "Alice", "Hey, how are you?"),
-            ChatItem("2", "Bob", "See you tomorrow!"),
-            ChatItem("3", "Charlie", "Got the documents."),
-            ChatItem("4", "Diana", "Sounds good to me.")
-        )
-    }
-
-    var selectedChat by remember { mutableStateOf<ChatItem?>(null) }
+fun DesktopMainScreen(
+    viewModel: DesktopChatViewModel = koinInject()
+) {
+    val conversations by viewModel.conversations.collectAsState()
+    val messages by viewModel.messages.collectAsState()
+    val selectedConversation by viewModel.selectedConversation.collectAsState()
+    val isLoadingConversations by viewModel.isLoadingConversations.collectAsState()
+    val isLoadingMessages by viewModel.isLoadingMessages.collectAsState()
 
     Row(modifier = Modifier.fillMaxSize()) {
         // Master View (Left Sidebar)
@@ -50,13 +47,24 @@ fun DesktopMainScreen() {
                     modifier = Modifier.padding(16.dp)
                 )
                 HorizontalDivider()
-                LazyColumn {
-                    items(chats) { chat ->
-                        ChatListItem(
-                            chat = chat,
-                            isSelected = chat == selectedChat,
-                            onClick = { selectedChat = chat }
-                        )
+
+                if (isLoadingConversations) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (conversations.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No conversations found")
+                    }
+                } else {
+                    LazyColumn {
+                        items(conversations) { conversation ->
+                            ChatListItem(
+                                conversation = conversation,
+                                isSelected = conversation.chatId == selectedConversation?.chatId,
+                                onClick = { viewModel.selectConversation(conversation) }
+                            )
+                        }
                     }
                 }
             }
@@ -69,9 +77,14 @@ fun DesktopMainScreen() {
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            val chat = selectedChat
-            if (chat != null) {
-                ChatDetailView(chat = chat)
+            val conversation = selectedConversation
+            if (conversation != null) {
+                ChatDetailView(
+                    conversation = conversation,
+                    messages = messages,
+                    isLoading = isLoadingMessages,
+                    onSendMessage = { text -> viewModel.sendMessage(text) }
+                )
             } else {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -89,7 +102,7 @@ fun DesktopMainScreen() {
 }
 
 @Composable
-fun ChatListItem(chat: ChatItem, isSelected: Boolean, onClick: () -> Unit) {
+fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -109,14 +122,19 @@ fun ChatListItem(chat: ChatItem, isSelected: Boolean, onClick: () -> Unit) {
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = chat.name, fontWeight = FontWeight.Bold)
-            Text(text = chat.lastMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = conversation.participantName, fontWeight = FontWeight.Bold)
+            Text(text = conversation.lastMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
-fun ChatDetailView(chat: ChatItem) {
+fun ChatDetailView(
+    conversation: Conversation,
+    messages: List<Message>,
+    isLoading: Boolean,
+    onSendMessage: (String) -> Unit
+) {
     var messageText by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -139,19 +157,36 @@ fun ChatDetailView(chat: ChatItem) {
                     Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                Text(text = chat.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = conversation.participantName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
 
-        // Chat History Placeholder
+        // Chat History
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+                .padding(16.dp)
         ) {
-            Text("This is the beginning of your chat history with ${chat.name}.")
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (messages.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("This is the beginning of your chat history with ${conversation.participantName}.")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    reverseLayout = true
+                ) {
+                    items(messages) { message ->
+                        MessageItem(message)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
         }
 
         // Message Input
@@ -173,8 +208,10 @@ fun ChatDetailView(chat: ChatItem) {
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
                     onClick = {
-                        // TODO: Implement actual message sending logic here instead of just clearing the text
-                        messageText = ""
+                        if (messageText.isNotBlank()) {
+                            onSendMessage(messageText)
+                            messageText = ""
+                        }
                     },
                     enabled = messageText.isNotBlank()
                 ) {
@@ -182,5 +219,21 @@ fun ChatDetailView(chat: ChatItem) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MessageItem(message: Message) {
+    // For simplicity, just rendering content, aligned left
+    // Real implementation would align based on sender ID (message.isFromMe(currentUserId))
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = message.content,
+            modifier = Modifier.padding(12.dp)
+        )
     }
 }
