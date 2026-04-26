@@ -1,0 +1,27 @@
+<<<<<<< SEARCH
+                    if currentStory.type == .image {
+                        AsyncImage(url: currentStory.mediaURL) { image in
+                            image
+                                .resizable()
+                                .scaledToFit()
+                        } placeholder: {
+                            Color.gray
+                        }
+                    } else {
+                        // Implement Video Player logic similar to Creator if needed
+                         Color.gray.overlay(Text("Video Unsupported Mock"))
+                    }
+=======
+                    if currentStory.type == .image {
+                        AsyncImage(url: currentStory.mediaURL) { image in
+                            image
+                                .resizable()
+                                .scaledToFit()
+                        } placeholder: {
+                            Color.gray
+                        }
+                    } else {
+                        // Implement Video Player logic similar to Creator if needed
+                         Color.gray.overlay(Text("Video Unsupported Mock"))
+                    }
+>>>>>>> REPLACE

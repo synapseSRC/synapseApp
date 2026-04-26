@@ -1,0 +1,33 @@
+<<<<<<< SEARCH
+    let searchPostsUseCase: shared.SearchPostsUseCase
+
+    let sharedImageLoader: shared.SharedImageLoader
+
+    init() {
+=======
+    let searchPostsUseCase: shared.SearchPostsUseCase
+
+    let createStoryUseCase: shared.CreateStoryUseCase
+    let getStoriesUseCase: shared.GetStoriesUseCase
+
+    let sharedImageLoader: shared.SharedImageLoader
+
+    init() {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        self.searchPostsUseCase = shared.SearchPostsUseCase(repository: shared.SearchRepositoryImpl(client: shared.SupabaseClient.shared.client))
+
+        self.sharedImageLoader = shared.SharedImageLoader(httpClient: shared.Ktor_client_coreHttpClient())
+    }
+}
+=======
+        self.searchPostsUseCase = shared.SearchPostsUseCase(repository: shared.SearchRepositoryImpl(client: shared.SupabaseClient.shared.client))
+
+        let storyRepository = shared.SupabaseStoryRepository()
+        self.createStoryUseCase = shared.CreateStoryUseCase(repository: storyRepository)
+        self.getStoriesUseCase = shared.GetStoriesUseCase(repository: storyRepository)
+
+        self.sharedImageLoader = shared.SharedImageLoader(httpClient: shared.Ktor_client_coreHttpClient())
+    }
+}
+>>>>>>> REPLACE
