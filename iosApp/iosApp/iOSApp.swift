@@ -11,6 +11,7 @@ struct iOSApp: App {
         self.crashReporter = DependencyContainer.shared.crashReportingService
         self.analyticsService = DependencyContainer.shared.analyticsService
 
+        crashReporter.start()
         crashReporter.log("App Initialized")
         analyticsService.trackEvent("app_launched", parameters: nil)
     }
