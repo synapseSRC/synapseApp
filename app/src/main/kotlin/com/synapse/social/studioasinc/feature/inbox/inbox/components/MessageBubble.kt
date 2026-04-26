@@ -101,7 +101,8 @@ fun SenderHeaderRow(
     avatarUrl: String?,
     displayName: String,
     timestamp: String,
-    isStarred: Boolean
+    isStarred: Boolean,
+    showAvatar: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -109,16 +110,18 @@ fun SenderHeaderRow(
             .padding(bottom = Spacing.Small),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = avatarUrl,
-            contentDescription = "Sender Avatar",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-        )
-        Spacer(modifier = Modifier.width(Spacing.Small))
+        if (showAvatar) {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = "Sender Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Spacer(modifier = Modifier.width(Spacing.Small))
+        }
         Column {
             Text(
                 text = displayName,
@@ -168,7 +171,7 @@ private fun WavyDivider(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         val path = Path()
         val waveLength = 24.dp.toPx()
-        val amplitude = 3.dp.toPx()
+        val amplitude = 2.dp.toPx()
 
         // Use a true sine wave approach using cubic beziers for smoothness
         path.moveTo(0f, size.height / 2f)
@@ -384,12 +387,13 @@ fun MessageBubble(
                 )
             }
         }
-        if (!isFromMe && showAvatar && (position == GroupPosition.FIRST || position == GroupPosition.SINGLE)) {
+        if (!isFromMe && (position == GroupPosition.FIRST || position == GroupPosition.SINGLE)) {
             SenderHeaderRow(
                 avatarUrl = senderAvatarUrl,
                 displayName = senderName ?: "",
                 timestamp = remember(message.createdAt) { formatMessageTime(message.createdAt) },
-                isStarred = false
+                isStarred = false,
+                showAvatar = showAvatar
             )
         }
 
