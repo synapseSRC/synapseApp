@@ -1,13 +1,11 @@
 package com.synapse.social.studioasinc.shared.data.repository
-import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
-import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -101,7 +99,7 @@ class FollowRepositoryImpl(
         val avatarPath = jsonObject["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content
         val verify = jsonObject["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.content?.toBoolean() ?: false
 
-        val avatarUrl = avatarPath?.let { constructAvatarUrl(it) }
+        val avatarUrl = avatarPath?.let { SupabaseClient.constructAvatarUrl(it) }
 
         return User(
             uid = uid,
@@ -110,12 +108,5 @@ class FollowRepositoryImpl(
             avatar = avatarUrl,
             verify = verify
         )
-    }
-
-    private fun constructAvatarUrl(path: String): String {
-        if (path.startsWith("http")) return path
-        val baseUrl = SynapseConfig.SUPABASE_URL
-        val cleanBaseUrl = if (baseUrl.endsWith("/")) baseUrl.dropLast(1) else baseUrl
-        return "$cleanBaseUrl/storage/v1/object/public/avatars/$path"
     }
 }

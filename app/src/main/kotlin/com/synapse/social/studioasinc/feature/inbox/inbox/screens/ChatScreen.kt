@@ -241,13 +241,6 @@ fun ChatScreen(
     var recordingAmplitude by remember { mutableStateOf(0) }
 
     val voiceRecorder = remember { VoiceRecorder(context) }
-    // Hilt entry point lookup for VoiceUploadService
-    val voiceUploadService = remember {
-        dagger.hilt.android.EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            VoiceUploadServiceEntryPoint::class.java
-        ).getVoiceUploadService()
-    }
     val coroutineScope = rememberCoroutineScope()
 
     val recordPermissionLauncher = rememberLauncherForActivityResult(
@@ -515,19 +508,8 @@ fun ChatScreen(
                         if (isRecording) {
                             isRecording = false
                             val outputFile = voiceRecorder.stop()
-                            if (outputFile != null && recordingDurationMs > 500) { // minimum 0.5s to prevent accidental taps
-                                coroutineScope.launch {
-                                    val result = voiceUploadService.upload(outputFile, com.synapse.social.studioasinc.shared.domain.model.StorageConfig())
-                                    result.onSuccess { url ->
-                                        viewModel.sendMediaMessage(
-                                            mediaUrl = url,
-                                            fileName = "voice_message.m4a",
-                                            contentType = "audio/mp4",
-                                            messageType = "audio"
-                                        )
-                                        outputFile.delete()
-                                    }
-                                }
+                            if (outputFile != null && recordingDurationMs > 500) {
+                                viewModel.uploadVoiceMessage(outputFile)
                             } else {
                                 outputFile?.delete()
                             }

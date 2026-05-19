@@ -90,14 +90,16 @@ object SupabaseClient {
     }
 
     fun constructStorageUrl(bucket: String, path: String): String {
+        if (path.isBlank()) return ""
         if (path.startsWith("http://") || path.startsWith("https://")) {
             return path
         }
 
         // Remove leading slash if present to avoid double slashes
         val cleanPath = if (path.startsWith("/")) path.substring(1) else path
+        val cleanBaseUrl = if (validatedSupabaseUrl.endsWith("/")) validatedSupabaseUrl.dropLast(1) else validatedSupabaseUrl
 
-        return "$validatedSupabaseUrl/storage/v1/object/public/$bucket/$cleanPath"
+        return "$cleanBaseUrl/storage/v1/object/public/$bucket/$cleanPath"
     }
 
     fun constructMediaUrl(storagePath: String): String {
@@ -106,5 +108,9 @@ object SupabaseClient {
 
     fun constructAvatarUrl(storagePath: String): String {
         return constructStorageUrl(BUCKET_USER_AVATARS, storagePath)
+    }
+
+    fun constructCoverUrl(storagePath: String): String {
+        return constructStorageUrl(BUCKET_USER_COVERS, storagePath)
     }
 }

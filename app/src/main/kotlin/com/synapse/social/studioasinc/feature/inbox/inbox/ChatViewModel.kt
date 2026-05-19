@@ -15,6 +15,8 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
+import java.io.File
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
@@ -57,7 +59,8 @@ class ChatViewModel @Inject constructor(
     private val getChatSettingsUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase,
     private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase,
     private val setDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase,
-    private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase
+    private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
+    private val voiceUploadService: VoiceUploadService
 ) : ViewModel() {
 
     private val _inputText = MutableStateFlow("")
@@ -546,6 +549,28 @@ class ChatViewModel @Inject constructor(
 
     fun setDisappearingMode(mode: DisappearingMode) {
         settingsDelegate.setDisappearingMode(mode)
+    }
+    fun uploadVoiceMessage(audioFile: File) {
+        viewModelScope.launch {
+            try {
+                val result = voiceUploadService.upload(audioFile, com.synapse.social.studioasinc.shared.domain.model.StorageConfig())
+                result.onSuccess { url ->
+                    sendMediaMessage(
+                        mediaUrl = url,
+                        fileName = "voice_message.m4a",
+                        contentType = "audio/mp4",
+                        messageType = "audio"
+                    )
+                    audioFile.delete()
+                }.onFailure {
+                    _error.value = "Failed to upload voice message"
+                    audioFile.delete()
+                }
+            } catch (e: Exception) {
+                _error.value = "Upload error: ${e.message}"
+                audioFile.delete()
+            }
+        }
     }
 
     fun sendMediaMessage(mediaUrl: String, fileName: String, contentType: String, messageType: String, caption: String? = null) {
