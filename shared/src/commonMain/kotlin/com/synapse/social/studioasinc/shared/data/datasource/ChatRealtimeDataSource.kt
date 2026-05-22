@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -79,6 +80,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch(AppDispatchers.IO) {
+            // Give a small window for the postgresChangeFlow collector to register its filters
+            // with the client before we send the subscription request to the server.
+            delay(100)
             yield()
             try {
                 val status = channel.status.value
@@ -88,7 +92,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to messages channel", e)
-                    close(e)
+                    // Don't close(e) here to keep the flow alive for potential reconnection
                 }
             }
         }
@@ -128,15 +132,17 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch(AppDispatchers.IO) {
+            delay(100)
             yield()
             try {
                 val status = channel.status.value
-                if (status == RealtimeChannel.Status.UNSUBSCRIBED || status == RealtimeChannel.Status.UNSUBSCRIBED) {
+                if (status == RealtimeChannel.Status.UNSUBSCRIBED) {
                     channel.subscribe()
                 }
             } catch (e: Exception) {
-                Napier.e("Failed to subscribe to inbox channel", e)
-                close(e)
+                if (e !is CancellationException) {
+                    Napier.e("Failed to subscribe to inbox channel", e)
+                }
             }
         }
 
@@ -191,16 +197,16 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch(AppDispatchers.IO) {
+            delay(100)
             yield()
             try {
                 val status = channel.status.value
-                if (status == RealtimeChannel.Status.UNSUBSCRIBED || status == RealtimeChannel.Status.UNSUBSCRIBED) {
+                if (status == RealtimeChannel.Status.UNSUBSCRIBED) {
                     channel.subscribe()
                 }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to chat presence", e)
-                    close(e)
                 }
             }
         }
@@ -237,16 +243,16 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch(AppDispatchers.IO) {
+            delay(100)
             yield()
             try {
                 val status = channel.status.value
-                if (status == RealtimeChannel.Status.UNSUBSCRIBED || status == RealtimeChannel.Status.UNSUBSCRIBED) {
+                if (status == RealtimeChannel.Status.UNSUBSCRIBED) {
                     channel.subscribe()
                 }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to read receipts", e)
-                    close(e)
                 }
             }
         }
@@ -288,14 +294,17 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         launch(AppDispatchers.IO) {
+            delay(100)
             yield()
             try {
                 val status = channel.status.value
-                if (status == RealtimeChannel.Status.UNSUBSCRIBED || status == RealtimeChannel.Status.UNSUBSCRIBED) {
+                if (status == RealtimeChannel.Status.UNSUBSCRIBED) {
                     channel.subscribe()
                 }
             } catch (e: Exception) {
-                close(e)
+                if (e !is CancellationException) {
+                    Napier.e("Failed to subscribe to reactions channel", e)
+                }
             }
         }
 

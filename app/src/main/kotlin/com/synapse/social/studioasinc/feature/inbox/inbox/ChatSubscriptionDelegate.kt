@@ -43,12 +43,30 @@ class ChatSubscriptionDelegate(
     fun startSubscriptions(chatId: String) {
         messageSubscriptionJob = viewModelScope.launch {
             subscribeToMessagesUseCase(chatId).collect { newMessage ->
-                onNewMessage(newMessage)
+                try {
+                    onNewMessage(newMessage)
+                } catch (e: Exception) {
+                    io.github.aakira.napier.Napier.e("Error processing new realtime message", e)
+                }
 
-                // Only mark as read/delivered if the message is from someone else
+                // Only mark as read/delivered if the message is from someone else.
+                // Execute in separate coroutines to prevent network delays or failures
+                // from blocking the main message processing flow.
                 if (newMessage.senderId != currentUserIdProvider()) {
-                    markMessagesAsReadUseCase(chatId)
-                    markMessagesAsDeliveredUseCase(chatId)
+                    viewModelScope.launch {
+                        try {
+                            markMessagesAsReadUseCase(chatId)
+                        } catch (e: Exception) {
+                            io.github.aakira.napier.Napier.e("Failed to mark messages as read", e)
+                        }
+                    }
+                    viewModelScope.launch {
+                        try {
+                            markMessagesAsDeliveredUseCase(chatId)
+                        } catch (e: Exception) {
+                            io.github.aakira.napier.Napier.e("Failed to mark messages as delivered", e)
+                        }
+                    }
                 }
             }
         }
