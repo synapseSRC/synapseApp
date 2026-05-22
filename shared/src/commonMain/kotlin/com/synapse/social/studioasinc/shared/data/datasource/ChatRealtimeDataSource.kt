@@ -92,7 +92,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to messages channel", e)
-                    // Don't close(e) here to keep the flow alive for potential reconnection
+                    // We re-throw or close to notify the caller of a fatal initial subscription failure.
+                    // Supabase-kt's internal reconnection logic usually handles subsequent drops.
+                    close(e)
                 }
             }
         }
@@ -142,6 +144,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to inbox channel", e)
+                    close(e)
                 }
             }
         }
@@ -207,6 +210,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to chat presence", e)
+                    close(e)
                 }
             }
         }
@@ -253,6 +257,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to read receipts", e)
+                    close(e)
                 }
             }
         }
@@ -304,6 +309,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to reactions channel", e)
+                    close(e)
                 }
             }
         }

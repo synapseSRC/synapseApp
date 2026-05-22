@@ -178,17 +178,27 @@ fun ChatScreen(
     var isFirstResume by remember { mutableStateOf(true) }
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                if (isFirstResume) {
-                    isFirstResume = false
-                } else {
-                    viewModel.restartSubscriptions()
-                    viewModel.refreshMessages()
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
+                    viewModel.onVisibilityChanged(true)
+                    if (isFirstResume) {
+                        isFirstResume = false
+                    } else {
+                        viewModel.restartSubscriptions()
+                        viewModel.refreshMessages()
+                    }
                 }
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
+                    viewModel.onVisibilityChanged(false)
+                }
+                else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onVisibilityChanged(false)
+        }
     }
 
     val messages by viewModel.messages.collectAsState()
@@ -334,6 +344,7 @@ fun ChatScreen(
     var showDisappearingModeDialog by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom when new messages arrive
+    var previousMessagesSize by remember { mutableStateOf(0) }
     val newestMessageId = remember(messages) { messages.lastOrNull()?.id }
     LaunchedEffect(newestMessageId) {
         if (messages.isNotEmpty()) {
@@ -341,10 +352,9 @@ fun ChatScreen(
                 // Initial load: Snap to bottom instantly, then reveal the list
                 listState.scrollToItem(0)
                 listReady = true
-            } else {
-                // New message arrived: Animate scroll only if it's from the current user
-                // or if the user is already near the bottom of the list.
-                // Note: listState.firstVisibleItemIndex <= 1 because the list is reversed.
+            } else if (messages.size > previousMessagesSize) {
+                // New message arrived (ID changed AND size increased): Animate scroll
+                // only if it's from the current user or if the user is already near the bottom.
                 val latestMessage = messages.lastOrNull()
                 val isFromMe = latestMessage?.senderId == currentUserId
                 val isNearBottom = listState.firstVisibleItemIndex <= 1
@@ -354,6 +364,7 @@ fun ChatScreen(
                 }
             }
         }
+        previousMessagesSize = messages.size
     }
 
     Scaffold(

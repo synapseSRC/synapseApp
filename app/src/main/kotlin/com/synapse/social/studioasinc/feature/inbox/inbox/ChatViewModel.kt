@@ -137,6 +137,9 @@ class ChatViewModel @Inject constructor(
     private val _isE2EEReady = MutableStateFlow(false)
     val isE2EEReady: StateFlow<Boolean> = _isE2EEReady.asStateFlow()
 
+    private val _isScreenVisible = MutableStateFlow(false)
+    val isScreenVisible: StateFlow<Boolean> = _isScreenVisible.asStateFlow()
+
     private var currentChatId: String? = null
 
     val currentUserId: String?
@@ -173,6 +176,7 @@ class ChatViewModel @Inject constructor(
         markMessagesAsDeliveredUseCase = markMessagesAsDeliveredUseCase,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId },
+        isScreenVisibleProvider = { _isScreenVisible.value },
         onNewMessage = { newMessage ->
             handleIncomingMessage(newMessage)
         },
@@ -326,6 +330,17 @@ class ChatViewModel @Inject constructor(
     val chatSummary: StateFlow<String?> = aiDelegate.chatSummary
     val messageSummary: StateFlow<String?> = aiDelegate.messageSummary
     val isSummarizingMessage: StateFlow<Boolean> = aiDelegate.isSummarizingMessage
+
+    fun onVisibilityChanged(visible: Boolean) {
+        _isScreenVisible.value = visible
+        if (visible) {
+            currentChatId?.let {
+                viewModelScope.launch {
+                    markMessagesAsReadUseCase(it)
+                }
+            }
+        }
+    }
 
     fun initialize(chatId: String, participantId: String? = null) {
         // Always restart subscriptions when entering the screen, even for the same chat.
