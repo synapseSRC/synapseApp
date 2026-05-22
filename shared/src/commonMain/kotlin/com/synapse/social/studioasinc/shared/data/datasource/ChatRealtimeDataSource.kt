@@ -15,7 +15,6 @@ import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -60,20 +58,20 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
     fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
-        val channelId = "msgs_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
+        val channelId = "msgs_flow_${chatId}_${UUIDUtils.randomUUID()}"
         Napier.d("Creating realtime channel for messages: $channelId")
 
         val channel = client.realtime.channel(channelId)
-        val flow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+
+        val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
         val collector = launch(AppDispatchers.IO) {
-            flow.collect { action ->
+            changeFlow.collect { action ->
                 try {
-                    val message = action.decodeRecord<MessageDto>()
-                    trySend(message)
+                    trySend(action.decodeRecord<MessageDto>())
                 } catch (e: Exception) {
                     Napier.e("Error decoding realtime message", e)
                 }
@@ -84,14 +82,12 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             yield()
             try {
                 val status = channel.status.value
-                if (status == RealtimeChannel.Status.UNSUBSCRIBED || status == RealtimeChannel.Status.UNSUBSCRIBED) {
+                if (status == RealtimeChannel.Status.UNSUBSCRIBED) {
                     channel.subscribe()
-                } else {
-                    Napier.w("Channel $channelId already in state $status, skip subscribe")
                 }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
-                    Napier.e("Failed to subscribe to messages", e)
+                    Napier.e("Failed to subscribe to messages channel", e)
                     close(e)
                 }
             }

@@ -35,6 +35,11 @@ class ChatSubscriptionDelegate(
     val _typingStatus = MutableStateFlow<TypingStatus?>(null)
     val typingStatus: StateFlow<TypingStatus?> = _typingStatus.asStateFlow()
 
+    fun restartSubscriptions(chatId: String) {
+        cleanup()
+        startSubscriptions(chatId)
+    }
+
     fun startSubscriptions(chatId: String) {
         messageSubscriptionJob = viewModelScope.launch {
             subscribeToMessagesUseCase(chatId).collect { newMessage ->

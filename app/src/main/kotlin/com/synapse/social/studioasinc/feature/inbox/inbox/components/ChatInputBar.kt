@@ -24,6 +24,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.random.Random
 import androidx.compose.ui.Alignment
@@ -80,6 +82,7 @@ fun ChatInputBar(
     val coroutineScope = rememberCoroutineScope()
     var isSwipeToCancel by remember { mutableStateOf(false) }
     var slideOffset by remember { mutableFloatStateOf(0f) }
+    val focusRequester = remember { FocusRequester() }
 
     val micScale by animateFloatAsState(
         targetValue = if (isRecording) 1.2f else 1f,
@@ -192,6 +195,7 @@ fun ChatInputBar(
                         onClick = {
                             onInputTextChange(reply)
                             onSendMessage()
+                            focusRequester.requestFocus()
                         },
                         label = { Text(reply) },
                         leadingIcon = {
@@ -393,6 +397,7 @@ fun ChatInputBar(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = Spacing.Small)
+                        .focusRequester(focusRequester)
                         .onFocusChanged { isFocused = it.isFocused },
                     enabled = canSendMessage,
                     maxLines = 4,
@@ -482,6 +487,7 @@ fun ChatInputBar(
                                     if (inputText.isNotEmpty()) {
                                         onSendMessage()
                                         dismissedPreviewUrl = null
+                                        focusRequester.requestFocus()
                                     }
                                 }
                             )

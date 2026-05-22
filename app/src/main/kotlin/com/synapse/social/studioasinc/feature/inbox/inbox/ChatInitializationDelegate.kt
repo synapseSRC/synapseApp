@@ -45,6 +45,12 @@ class ChatInitializationDelegate(
 ) {
 
     fun initialize(chatId: String, participantId: String?, currentChatId: String?) {
+        // If re-entering the same chat, only restart subscriptions — skip the heavy init.
+        if (chatId != "new" && chatId == currentChatId) {
+            subscriptionDelegate.startSubscriptions(chatId)
+            return
+        }
+
         _isLoading.value = true
         _error.value = null
 

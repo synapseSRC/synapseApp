@@ -328,8 +328,8 @@ class ChatViewModel @Inject constructor(
     val isSummarizingMessage: StateFlow<Boolean> = aiDelegate.isSummarizingMessage
 
     fun initialize(chatId: String, participantId: String? = null) {
-        if (currentChatId == chatId && chatId != "new") return
-        
+        // Always restart subscriptions when entering the screen, even for the same chat.
+        // Subscriptions may have been torn down by a previous cleanup() on navigation away.
         cleanup()
         initializationDelegate.initialize(chatId, participantId, currentChatId)
     }
@@ -343,6 +343,12 @@ class ChatViewModel @Inject constructor(
                 messagingDelegate.setMessages(messages)
             }
         }
+    }
+
+    /** Restarts real-time subscriptions (e.g. after app resumes from background). */
+    fun restartSubscriptions() {
+        val chatId = currentChatId ?: return
+        subscriptionDelegate.restartSubscriptions(chatId)
     }
 
     fun loadMoreMessages() {

@@ -135,11 +135,13 @@ fun SenderHeaderRow(
             )
         }
         Spacer(modifier = Modifier.weight(1f))
-        Icon(
-            imageVector = Icons.Filled.Star,
-            contentDescription = "Starred",
-            tint = if (isStarred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (isStarred) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = "Starred",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
