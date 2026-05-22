@@ -63,24 +63,11 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         val channel = client.realtime.channel(channelId)
 
-        // Register the postgres change listener BEFORE subscribing — required by supabase-kt
         val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
-        // Subscribe first (blocks until the WebSocket channel is SUBSCRIBED)
-        try {
-            channel.subscribe(blockUntilSubscribed = true)
-        } catch (e: Exception) {
-            if (e !is CancellationException) {
-                Napier.e("Failed to subscribe to messages channel", e)
-                close(e)
-                return@callbackFlow
-            }
-        }
-
-        // Now collect — channel is guaranteed to be active
         val collector = launch(AppDispatchers.IO) {
             changeFlow.collect { action ->
                 try {
@@ -91,10 +78,26 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
+        launch(AppDispatchers.IO) {
+            yield()
+            try {
+                val status = channel.status.value
+                if (status == RealtimeChannel.Status.UNSUBSCRIBED) {
+                    channel.subscribe()
+                }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.e("Failed to subscribe to messages channel", e)
+                    close(e)
+                }
+            }
+        }
+
         awaitClose {
             collector.cancel()
             launch {
                 try {
+                    yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {
