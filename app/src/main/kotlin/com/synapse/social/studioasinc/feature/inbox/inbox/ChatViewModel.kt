@@ -390,7 +390,7 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun handleIncomingMessage(newMessage: Message) {
-        Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId}", tag = "ChatViewModel")
+        Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
         messagingDelegate._messages.update { current ->
             val existing = current.find { it.id == newMessage.id }
