@@ -168,7 +168,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     // Initialize the ViewModel with the chat ID
-    LaunchedEffect(chatId) {
+    LaunchedEffect(chatId, participantId) {
         viewModel.initialize(chatId, participantId)
     }
 
@@ -250,6 +250,13 @@ fun ChatScreen(
     val voiceRecorder = remember { VoiceRecorder(context) }
     val coroutineScope = rememberCoroutineScope()
 
+    // Ensure voice recorder resources are released when the screen is disposed
+    DisposableEffect(voiceRecorder) {
+        onDispose {
+            voiceRecorder.cancel()
+        }
+    }
+
     val recordPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -327,19 +334,26 @@ fun ChatScreen(
     var showDisappearingModeDialog by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom when new messages arrive
-    var previousMessagesSize by remember { mutableStateOf(0) }
-    LaunchedEffect(messages.size) {
+    val newestMessageId = remember(messages) { messages.lastOrNull()?.id }
+    LaunchedEffect(newestMessageId) {
         if (messages.isNotEmpty()) {
-            if (previousMessagesSize == 0) {
+            if (!listReady) {
                 // Initial load: Snap to bottom instantly, then reveal the list
                 listState.scrollToItem(0)
                 listReady = true
-            } else if (messages.size > previousMessagesSize) {
-                // New message arrived: Animate scroll
-                listState.animateScrollToItem(0)
+            } else {
+                // New message arrived: Animate scroll only if it's from the current user
+                // or if the user is already near the bottom of the list.
+                // Note: listState.firstVisibleItemIndex <= 1 because the list is reversed.
+                val latestMessage = messages.lastOrNull()
+                val isFromMe = latestMessage?.senderId == currentUserId
+                val isNearBottom = listState.firstVisibleItemIndex <= 1
+
+                if (isFromMe || isNearBottom) {
+                    listState.animateScrollToItem(0)
+                }
             }
         }
-        previousMessagesSize = messages.size
     }
 
     Scaffold(

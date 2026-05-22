@@ -44,8 +44,12 @@ class ChatSubscriptionDelegate(
         messageSubscriptionJob = viewModelScope.launch {
             subscribeToMessagesUseCase(chatId).collect { newMessage ->
                 onNewMessage(newMessage)
-                markMessagesAsReadUseCase(chatId)
-                markMessagesAsDeliveredUseCase(chatId)
+
+                // Only mark as read/delivered if the message is from someone else
+                if (newMessage.senderId != currentUserIdProvider()) {
+                    markMessagesAsReadUseCase(chatId)
+                    markMessagesAsDeliveredUseCase(chatId)
+                }
             }
         }
 
