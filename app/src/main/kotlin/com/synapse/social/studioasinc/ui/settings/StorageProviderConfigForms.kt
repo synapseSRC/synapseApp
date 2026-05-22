@@ -1,11 +1,16 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -13,17 +18,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Help
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,21 +43,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun ImgBBConfigContent(
     apiKey: String,
     onApiKeyChange: (String) -> Unit
 ) {
+    var localApiKey by remember(apiKey) { mutableStateOf(apiKey) }
+    var isSaving by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         StorageSecureTextField(
-            value = apiKey,
-            onValueChange = onApiKeyChange,
+            value = localApiKey,
+            onValueChange = { localApiKey = it },
             label = "API Key"
         )
         HelpText(text = "Get your free API key from api.imgbb.com")
+
+        SaveConnectButton(
+            isLoading = isSaving,
+            onClick = {
+                isSaving = true
+            },
+            onComplete = {
+                onApiKeyChange(localApiKey)
+                isSaving = false
+            }
+        )
     }
 }
 
@@ -65,6 +89,7 @@ internal fun CloudinaryConfigContent(
     var localApiKey by remember(apiKey) { mutableStateOf(apiKey) }
     var localApiSecret by remember(apiSecret) { mutableStateOf(apiSecret) }
     var localUploadPreset by remember(uploadPreset) { mutableStateOf(uploadPreset) }
+    var isSaving by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         OutlinedTextField(
@@ -79,7 +104,7 @@ internal fun CloudinaryConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Spacing.SmallMedium),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -98,12 +123,17 @@ internal fun CloudinaryConfigContent(
             label = "API Secret (signed, optional)"
         )
         HelpText(text = "Use an Upload Preset for unsigned uploads, or API Key + Secret for signed uploads. Find these in your Cloudinary dashboard.")
-        Button(
-            onClick = { onConfigChange(localCloudName, localApiKey, localApiSecret, localUploadPreset) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.action_save))
-        }
+
+        SaveConnectButton(
+            isLoading = isSaving,
+            onClick = {
+                isSaving = true
+            },
+            onComplete = {
+                onConfigChange(localCloudName, localApiKey, localApiSecret, localUploadPreset)
+                isSaving = false
+            }
+        )
     }
 }
 
@@ -114,15 +144,20 @@ internal fun SupabaseConfigContent(
     bucketName: String,
     onConfigChange: (String, String, String) -> Unit
 ) {
+    var localUrl by remember(url) { mutableStateOf(url) }
+    var localApiKey by remember(apiKey) { mutableStateOf(apiKey) }
+    var localBucketName by remember(bucketName) { mutableStateOf(bucketName) }
+    var isSaving by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         OutlinedTextField(
-            value = url,
-            onValueChange = { newVal -> onConfigChange(newVal, apiKey, bucketName) },
+            value = localUrl,
+            onValueChange = { localUrl = it },
             label = { Text(stringResource(R.string.label_project_url)) },
             placeholder = { Text(stringResource(R.string.placeholder_project_url)) },
             trailingIcon = {
-                if (url.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange("", apiKey, bucketName) }) {
+                if (localUrl.isNotEmpty()) {
+                    IconButton(onClick = { localUrl = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -131,21 +166,21 @@ internal fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Spacing.SmallMedium),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
-            value = apiKey,
-            onValueChange = { newVal -> onConfigChange(url, newVal, bucketName) },
+            value = localApiKey,
+            onValueChange = { localApiKey = it },
             label = "Service Role / API Key"
         )
         OutlinedTextField(
-            value = bucketName,
-            onValueChange = { newVal -> onConfigChange(url, apiKey, newVal) },
+            value = localBucketName,
+            onValueChange = { localBucketName = it },
             label = { Text(stringResource(R.string.label_bucket_name)) },
             trailingIcon = {
-                if (bucketName.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange(url, apiKey, "") }) {
+                if (localBucketName.isNotEmpty()) {
+                    IconButton(onClick = { localBucketName = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -154,10 +189,21 @@ internal fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Spacing.SmallMedium),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         HelpText(text = "Create a bucket in Supabase Storage and ensure policies allow read/write operations")
+
+        SaveConnectButton(
+            isLoading = isSaving,
+            onClick = {
+                isSaving = true
+            },
+            onComplete = {
+                onConfigChange(localUrl, localApiKey, localBucketName)
+                isSaving = false
+            }
+        )
     }
 }
 
@@ -169,14 +215,20 @@ internal fun R2ConfigContent(
     bucketName: String,
     onConfigChange: (String, String, String, String) -> Unit
 ) {
+    var localAccountId by remember(accountId) { mutableStateOf(accountId) }
+    var localAccessKeyId by remember(accessKeyId) { mutableStateOf(accessKeyId) }
+    var localSecretAccessKey by remember(secretAccessKey) { mutableStateOf(secretAccessKey) }
+    var localBucketName by remember(bucketName) { mutableStateOf(bucketName) }
+    var isSaving by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
         OutlinedTextField(
-            value = accountId,
-            onValueChange = { newVal -> onConfigChange(newVal, accessKeyId, secretAccessKey, bucketName) },
+            value = localAccountId,
+            onValueChange = { localAccountId = it },
             label = { Text(stringResource(R.string.label_account_id)) },
             trailingIcon = {
-                if (accountId.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange("", accessKeyId, secretAccessKey, bucketName) }) {
+                if (localAccountId.isNotEmpty()) {
+                    IconButton(onClick = { localAccountId = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -185,26 +237,26 @@ internal fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Spacing.SmallMedium),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
-            value = accessKeyId,
-            onValueChange = { newVal -> onConfigChange(accountId, newVal, secretAccessKey, bucketName) },
+            value = localAccessKeyId,
+            onValueChange = { localAccessKeyId = it },
             label = "Access Key ID"
         )
         StorageSecureTextField(
-            value = secretAccessKey,
-            onValueChange = { newVal -> onConfigChange(accountId, accessKeyId, newVal, bucketName) },
+            value = localSecretAccessKey,
+            onValueChange = { localSecretAccessKey = it },
             label = "Secret Access Key"
         )
         OutlinedTextField(
-            value = bucketName,
-            onValueChange = { newVal -> onConfigChange(accountId, accessKeyId, secretAccessKey, newVal) },
+            value = localBucketName,
+            onValueChange = { localBucketName = it },
             label = { Text(stringResource(R.string.label_bucket_name)) },
             trailingIcon = {
-                if (bucketName.isNotEmpty()) {
-                    IconButton(onClick = { onConfigChange(accountId, accessKeyId, secretAccessKey, "") }) {
+                if (localBucketName.isNotEmpty()) {
+                    IconButton(onClick = { localBucketName = "" }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear"
@@ -213,10 +265,88 @@ internal fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Spacing.SmallMedium),
+            shape = SettingsShapes.inputShape,
             singleLine = true
         )
         HelpText(text = "Create an R2 bucket in your Cloudflare dashboard and generate API tokens")
+
+        SaveConnectButton(
+            isLoading = isSaving,
+            onClick = {
+                isSaving = true
+            },
+            onComplete = {
+                onConfigChange(localAccountId, localAccessKeyId, localSecretAccessKey, localBucketName)
+                isSaving = false
+            }
+        )
+    }
+}
+
+@Composable
+internal fun SaveConnectButton(
+    isLoading: Boolean,
+    onClick: () -> Unit,
+    onComplete: () -> Unit
+) {
+    var showSuccess by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            delay(800) // Mock validation/connection time
+            showSuccess = true
+            delay(1000)
+            showSuccess = false
+            onComplete()
+        }
+    }
+
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        enabled = !isLoading,
+        shape = SettingsShapes.itemShape
+    ) {
+        AnimatedContent(
+            targetState = if (isLoading) (if (showSuccess) "success" else "loading") else "idle",
+            transitionSpec = {
+                fadeIn() togetherWith fadeOut()
+            },
+            label = "buttonContent"
+        ) { state ->
+            when (state) {
+                "loading" -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Text(stringResource(R.string.storage_connecting))
+                    }
+                }
+                "success" -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Text(stringResource(R.string.upload_complete))
+                    }
+                }
+                else -> {
+                    Text(
+                        text = stringResource(R.string.storage_action_save_connect),
+                        style = SettingsTypography.buttonText
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -226,17 +356,17 @@ internal fun HelpText(text: String) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Spacing.Small))
+            .clip(RoundedCornerShape(Spacing.SmallMedium))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(Spacing.SmallMedium)
+            .padding(Spacing.Medium)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Outlined.Help,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(Spacing.Medium)
+            modifier = Modifier.size(Spacing.MediumLarge)
         )
-        Spacer(modifier = Modifier.width(Spacing.Small))
+        Spacer(modifier = Modifier.width(Spacing.Medium))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
@@ -286,7 +416,7 @@ internal fun StorageSecureTextField(
             )
         },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Spacing.SmallMedium),
+        shape = SettingsShapes.inputShape,
         singleLine = true
     )
 }
