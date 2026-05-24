@@ -424,9 +424,27 @@ class SupabaseChatRepository(
     }
 
     override fun subscribeToMessages(chatId: String): Flow<Message> =
-        dataSource.subscribeToMessages(chatId).map { 
+        dataSource.subscribeToMessages(chatId).map { dto ->
             val userId = getCurrentUserId() ?: ""
-            if (userId.isNotBlank()) with(encryptionHelper) { it.decryptIfNecessary(userId).toDomain() } else it.toDomain()
+            val domainMessage = if (userId.isNotBlank()) {
+                with(encryptionHelper) { dto.decryptIfNecessary(userId).toDomain() }
+            } else {
+                dto.toDomain()
+            }
+
+            // If the message is still encrypted after decryption attempt, it's a Signal session race.
+            // The ViewModel has a retry mechanism via getMessageById for these cases.
+            val placeholders = setOf(
+                "Message is encrypted",
+                "🔒 Encrypted message",
+                "🔒 You sent an encrypted message",
+                "🔒 You sent an encrypted message (Copy)"
+            )
+            if (domainMessage.content in placeholders) {
+                Logger.w("Realtime message arrived encrypted for chat $chatId. DTO content looks like: ${dto.content.take(20)}...", tag = "Realtime")
+            }
+
+            domainMessage
         }
 
     override fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message> =
