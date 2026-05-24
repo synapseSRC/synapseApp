@@ -277,6 +277,10 @@ class SupabaseChatRepository(
     }
     override suspend fun markMessagesAsRead(chatId: String): Result<Unit> = try {
         dataSource.markMessagesAsRead(chatId)
+        val currentUserId = getCurrentUserId()
+        if (currentUserId != null) {
+            cachedMessageDao?.markRead(chatId, currentUserId)
+        }
         Result.success(Unit)
     } catch (e: Exception) {
         Logger.e("Error marking messages as read", throwable = e)

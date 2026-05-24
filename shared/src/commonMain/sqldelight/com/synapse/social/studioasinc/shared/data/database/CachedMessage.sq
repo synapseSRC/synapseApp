@@ -42,5 +42,8 @@ UPDATE CachedMessage SET content = :content, is_edited = 1 WHERE id = :id;
 markDeleted:
 UPDATE CachedMessage SET is_deleted = 1 WHERE id = :id;
 
+updateReadBy:
+UPDATE CachedMessage SET read_by = :read_by WHERE id = :id;
+
 deleteAll:
 DELETE FROM CachedMessage;

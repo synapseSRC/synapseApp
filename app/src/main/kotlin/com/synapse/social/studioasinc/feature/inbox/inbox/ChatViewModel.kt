@@ -620,6 +620,7 @@ class ChatViewModel @Inject constructor(
         subscriptionDelegate.cleanup()
         inputDelegate.cleanup()
         messagingDelegate.pendingTempIds.value = emptySet()
+        messagingDelegate.clearMessages()
         _hasMoreMessages.value = true
     }
 

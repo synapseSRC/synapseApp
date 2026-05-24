@@ -44,7 +44,13 @@ class ChatMessagingDelegate(
 
     suspend fun setMessages(messages: List<Message>) {
         val populated = populateMessageReactionsUseCase(messages)
-        _messages.value = populated.distinctBy { it.id }.sortedBy { it.createdAt } // oldest first for UI
+        _messages.update { current ->
+            (current + populated).distinctBy { it.id }.sortedBy { it.createdAt } // oldest first for UI
+        }
+    }
+
+    fun clearMessages() {
+        _messages.value = emptyList()
     }
 
     fun splitIntoChunks(text: String, chunkSize: Int): List<String> {
