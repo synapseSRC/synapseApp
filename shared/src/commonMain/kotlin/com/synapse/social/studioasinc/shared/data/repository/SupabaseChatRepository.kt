@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.awaitAll
@@ -62,6 +63,7 @@ class SupabaseChatRepository(
     private val encryptionHelper = ChatEncryptionHelper(signalProtocolManager, dataSource, cachedMessageDao)
     private val groupRepository = ChatGroupRepository(dataSource)
     private val reactionDataSource = ChatReactionDataSource(client)
+    private val conversationMutex = kotlinx.coroutines.sync.Mutex()
 
     override suspend fun ensureSession(userId: String) = encryptionHelper.ensureSession(userId)
 
@@ -439,14 +441,16 @@ class SupabaseChatRepository(
             externalScope.launch {
                 cachedMessageDao?.upsert(domainMessage)
 
-                // Update conversation last message
-                cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
-                    cachedConversationDao.upsertAll(listOf(
-                        existing.copy(
-                            lastMessage = domainMessage.content,
-                            lastMessageTime = domainMessage.createdAt
-                        )
-                    ))
+                // Update conversation last message safely using a Mutex to prevent race conditions
+                conversationMutex.withLock {
+                    cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
+                        cachedConversationDao?.upsertAll(listOf(
+                            existing.copy(
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt
+                            )
+                        ))
+                    }
                 }
             }
 
@@ -473,32 +477,37 @@ class SupabaseChatRepository(
             externalScope.launch {
                 cachedMessageDao?.upsert(domainMessage)
 
-                // Also update the conversation list to reflect the new last message
                 val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
-                if (existing != null) {
-                    cachedConversationDao?.upsertAll(listOf(
-                        existing.copy(
-                            lastMessage = domainMessage.content,
-                            lastMessageTime = domainMessage.createdAt,
-                            unreadCount = existing.unreadCount + 1
-                        )
-                    ))
-                } else {
-                    val chatInfo = dataSource.getChatInfo(domainMessage.chatId)
-                    val isGroup = chatInfo?.isGroup ?: false
-                    cachedConversationDao?.upsertAll(listOf(
-                        Conversation(
-                            chatId = domainMessage.chatId,
-                            participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
-                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else "Unknown User",
-                            participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
-                            lastMessage = domainMessage.content,
-                            lastMessageTime = domainMessage.createdAt,
-                            unreadCount = 1,
-                            isOnline = false,
-                            isGroup = isGroup
-                        )
-                    ))
+                val chatInfo = if (existing == null) dataSource.getChatInfo(domainMessage.chatId) else null
+
+                // Update the conversation list safely using a Mutex to prevent race conditions
+                conversationMutex.withLock {
+                    val isOwnMessage = domainMessage.senderId == userId
+                    val currentExisting = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
+                    if (currentExisting != null) {
+                        cachedConversationDao?.upsertAll(listOf(
+                            currentExisting.copy(
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt,
+                                unreadCount = if (isOwnMessage) currentExisting.unreadCount else currentExisting.unreadCount + 1
+                            )
+                        ))
+                    } else {
+                        val isGroup = chatInfo?.isGroup ?: false
+                        cachedConversationDao?.upsertAll(listOf(
+                            Conversation(
+                                chatId = domainMessage.chatId,
+                                participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
+                                participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else "Unknown User",
+                                participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt,
+                                unreadCount = if (isOwnMessage) 0 else 1,
+                                isOnline = false,
+                                isGroup = isGroup
+                            )
+                        ))
+                    }
                 }
             }
 
