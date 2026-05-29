@@ -28,7 +28,8 @@ import com.synapse.social.studioasinc.ui.components.CircularAvatar
 fun QuickPostArea(
     userProfileUrl: String?,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    displayName: String? = null
 ) {
     Card(
         modifier = modifier
@@ -49,7 +50,8 @@ fun QuickPostArea(
                 CircularAvatar(
                     imageUrl = userProfileUrl,
                     contentDescription = stringResource(R.string.profile),
-                    size = Sizes.AvatarMedium
+                    size = Sizes.AvatarMedium,
+                    displayName = displayName
                 )
 
                 Spacer(modifier = Modifier.width(Spacing.Small))

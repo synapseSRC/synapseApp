@@ -19,6 +19,7 @@ fun UserAvatarWithStatus(
     size: Dp = 40.dp,
     showActiveStatus: Boolean = true,
     modifier: Modifier = Modifier,
+    displayName: String? = null,
     viewModel: UserPresenceViewModel = hiltViewModel()
 ) {
     val isActive by viewModel.observeUserStatus(userId).collectAsState(initial = false)
@@ -28,6 +29,7 @@ fun UserAvatarWithStatus(
         UserAvatar(
             avatarUrl = avatarUrl,
             size = size,
+            displayName = displayName,
             modifier = Modifier.align(Alignment.Center)
         )
         

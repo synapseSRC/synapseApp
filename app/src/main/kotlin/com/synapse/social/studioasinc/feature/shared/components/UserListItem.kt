@@ -31,7 +31,8 @@ fun UserListItem(
             userId = user.uid,
             avatarUrl = user.avatar,
             size = Sizes.AvatarDefault,
-            showActiveStatus = true
+            showActiveStatus = true,
+            displayName = user.displayName ?: user.username
         )
         
         Spacer(modifier = Modifier.width(Spacing.SmallMedium))

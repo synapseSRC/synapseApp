@@ -85,7 +85,8 @@ fun ChatTopAppBar(
                         userId = participantId ?: "",
                         avatarUrl = participantProfile?.avatar ?: initialParticipantAvatar,
                         size = Sizes.IconMassive,
-                        showActiveStatus = true
+                        showActiveStatus = true,
+                        displayName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
                     Spacer(modifier = Modifier.width(Spacing.SmallMedium))
                     Column {
