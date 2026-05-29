@@ -75,7 +75,8 @@ class UserRepositoryImpl(
 
             val users = userDataSource.searchUsers(sanitizedQuery).getOrThrow()
             users.map { user ->
-                user.copy(avatar = user.avatar?.let { SupabaseClient.constructAvatarUrl(it) })
+                // Construct full avatar URLs for search results to ensure they load in the UI
+                user.copy(avatar = user.avatar?.let { avatar -> SupabaseClient.constructAvatarUrl(avatar) })
             }
         }
     }
@@ -98,7 +99,8 @@ class UserRepositoryImpl(
             if (mappedUser != null) {
                 database.userQueries.insertUser(mapDomainUser(mappedUser))
             }
-            true
+            // Success is tied to whether a valid user object was returned/mapped
+            mappedUser != null
         }
     }
 
