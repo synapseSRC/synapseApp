@@ -47,6 +47,16 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDa
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.MessageReactionDao
 
+/**
+ * Repository implementation for managing chat data using Supabase as the remote backend.
+ *
+ * This repository serves as a central hub for:
+ * - Fetching and sending messages (including group chats).
+ * - Handling End-to-End Encryption (E2EE) using Signal Protocol.
+ * - Managing offline message queuing via [OfflineActionRepository] for reliability in poor network conditions.
+ * - Synchronizing remote data with local caches ([CachedMessageDao], [CachedConversationDao])
+ *   to provide an offline-first user experience.
+ */
 class SupabaseChatRepository(
     private val dataSource: SupabaseChatDataSource = SupabaseChatDataSource(),
     private val client: SupabaseClientLib = SupabaseClient.client,
@@ -108,6 +118,12 @@ class SupabaseChatRepository(
         }.sortedByDescending { it.lastMessageTime ?: "" }
     }
 
+    /**
+     * Retrieves the list of conversations for the current user.
+     *
+     * Returns cached data immediately if available, then triggers a background sync with the network
+     * to ensure the UI remains responsive while data is updated.
+     */
     override suspend fun getConversations(): Result<List<Conversation>> = try {
         val cached = cachedConversationDao?.getAll() ?: emptyList()
         if (cached.isNotEmpty()) {
@@ -135,6 +151,12 @@ class SupabaseChatRepository(
         }
     }
 
+    /**
+     * Retrieves a list of messages for a specific chat.
+     *
+     * Supports pagination via [before] and [beforeId]. Like [getConversations], it prioritizes
+     * local cache for the initial page of messages to enable instant loading.
+     */
     override suspend fun getMessages(chatId: String, limit: Int, before: String?, beforeId: String?): Result<List<Message>> = try {
         val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
         
@@ -143,6 +165,7 @@ class SupabaseChatRepository(
             externalScope.launch {
                 try {
                     val fresh = dataSource.getMessages(chatId, limit, null, null)
+                    // Attempt to decrypt messages before saving to cache
                     val decrypted = fresh.map { with(encryptionHelper) { it.decryptIfNecessary(currentUserId).toDomain() } }
                     val latestCached = cachedMessageDao?.getMessages(chatId, limit * 2) ?: emptyList()
                     val mergedMessages = decrypted.map { freshMsg ->
@@ -189,6 +212,12 @@ class SupabaseChatRepository(
         Result.failure(e)
     }
 
+    /**
+     * Sends a message to a chat.
+     *
+     * If the network is unavailable, the message is queued as a [PendingAction] in the
+     * [offlineActionRepository] to be retried later.
+     */
     override suspend fun sendMessage(
         chatId: String, 
         content: String,
@@ -203,6 +232,7 @@ class SupabaseChatRepository(
         val message = try {
             dataSource.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId)
         } catch (e: Exception) {
+            // Queue for background synchronization if the initial network request fails
             if (offlineActionRepository != null) {
                 Logger.w("Failed to send message via network, queuing for background sync", tag = "CHAT", throwable = e)
                 val actionId = UUIDUtils.randomUUID()
@@ -252,6 +282,9 @@ class SupabaseChatRepository(
         Result.failure(e)
     }
 
+    /**
+     * Finds an existing one-to-one chat with [otherUserId] or creates a new one if none exists.
+     */
     override suspend fun getOrCreateChat(otherUserId: String): Result<String> = try {
         val chatId = dataSource.getOrCreateChat(otherUserId) ?: throw Exception("Failed to create chat")
         Result.success(chatId)
@@ -277,6 +310,9 @@ class SupabaseChatRepository(
         Logger.e("Error deleting conversation", throwable = e)
         Result.failure(e)
     }
+    /**
+     * Marks all messages in a chat as read for the current user.
+     */
     override suspend fun markMessagesAsRead(chatId: String): Result<Unit> = try {
         dataSource.markMessagesAsRead(chatId)
         val currentUserId = getCurrentUserId()
@@ -429,6 +465,9 @@ class SupabaseChatRepository(
         Result.failure(e)
     }
 
+    /**
+     * Subscribes to new messages in a specific chat using real-time updates.
+     */
     override fun subscribeToMessages(chatId: String): Flow<Message> =
         dataSource.subscribeToMessages(chatId).map { dto ->
             val userId = getCurrentUserId() ?: ""
@@ -441,7 +480,8 @@ class SupabaseChatRepository(
             externalScope.launch {
                 cachedMessageDao?.upsert(domainMessage)
 
-                // Update conversation last message safely using a Mutex to prevent race conditions
+                // Use a mutex to prevent concurrent updates to the conversation cache,
+                // which could lead to inconsistent state (e.g. incorrect unread counts).
                 conversationMutex.withLock {
                     cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
                         cachedConversationDao?.upsertAll(listOf(
@@ -469,6 +509,12 @@ class SupabaseChatRepository(
             domainMessage
         }
 
+    /**
+     * Subscribes to updates for all chats in the user's inbox.
+     *
+     * This allows the inbox list to stay synchronized in real-time as new messages arrive in
+     * any conversation.
+     */
     override fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message> =
         dataSource.subscribeToInboxUpdates(chatIds).map { dto ->
             val userId = getCurrentUserId() ?: ""
@@ -480,7 +526,8 @@ class SupabaseChatRepository(
                 val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
                 val chatInfo = if (existing == null) dataSource.getChatInfo(domainMessage.chatId) else null
 
-                // Update the conversation list safely using a Mutex to prevent race conditions
+                // Synchronize conversation updates to avoid race conditions when multiple
+                // messages arrive simultaneously.
                 conversationMutex.withLock {
                     val isOwnMessage = domainMessage.senderId == userId
                     val currentExisting = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
