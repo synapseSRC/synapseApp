@@ -30,6 +30,7 @@ import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,7 +165,7 @@ private fun UserSelectionItem(
             .padding(Spacing.Medium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+        UserAvatar(
             avatarUrl = user.avatar,
             displayName = user.displayName ?: user.username,
             size = Sizes.IconMassive
@@ -196,7 +197,7 @@ private fun SelectedUserItem(
         modifier = Modifier.width(Sizes.AvatarLarge)
     ) {
         Box {
-            com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+            UserAvatar(
                 avatarUrl = user.avatar,
                 displayName = user.displayName ?: user.username,
                 size = Sizes.AvatarDefault

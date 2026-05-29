@@ -52,6 +52,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.ui.components.CircularAvatar
 import com.synapse.social.studioasinc.ui.navigation.HomeDestinations
 import com.synapse.social.studioasinc.ui.navigation.HomeNavGraph
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
@@ -147,7 +148,7 @@ fun HomeScreen(
 
 
                             if (userAvatarUrl != null) {
-                                com.synapse.social.studioasinc.ui.components.CircularAvatar(
+                                CircularAvatar(
                                     imageUrl = userAvatarUrl,
                                     contentDescription = stringResource(R.string.profile),
                                     size = Sizes.AvatarTiny,

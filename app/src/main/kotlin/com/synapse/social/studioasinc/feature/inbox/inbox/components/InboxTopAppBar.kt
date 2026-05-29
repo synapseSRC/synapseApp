@@ -16,6 +16,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 
 
 
@@ -56,7 +57,7 @@ fun InboxLargeTopAppBar(
         },
         actions = {
 
-             com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+             UserAvatar(
                  avatarUrl = avatarUrl,
                  displayName = title,
                  size = Sizes.IconMassive,

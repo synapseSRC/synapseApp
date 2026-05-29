@@ -23,6 +23,7 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import com.synapse.social.studioasinc.core.util.ImageLoader
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -52,7 +53,7 @@ fun ProfileHeaderCard(
             Box(
                 modifier = Modifier.size(SettingsSpacing.avatarSize)
             ) {
-                com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+                UserAvatar(
                     avatarUrl = avatarUrl,
                     displayName = displayName,
                     size = SettingsSpacing.avatarSize,

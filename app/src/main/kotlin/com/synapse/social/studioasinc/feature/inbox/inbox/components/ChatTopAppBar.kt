@@ -19,6 +19,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.User
 import java.time.Instant
 import java.time.ZoneId
@@ -33,7 +34,7 @@ fun ChatTopAppBar(
     participantProfile: User?,
     initialParticipantName: String?,
     initialParticipantAvatar: String?,
-    typingStatus: com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus?,
+    typingStatus: TypingStatus?,
     isParticipantActive: Boolean,
     chatId: String,
     disappearingMode: DisappearingMode,
@@ -85,7 +86,8 @@ fun ChatTopAppBar(
                         userId = participantId ?: "",
                         avatarUrl = participantProfile?.avatar ?: initialParticipantAvatar,
                         size = Sizes.IconMassive,
-                        showActiveStatus = true
+                        showActiveStatus = true,
+                        displayName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
                     Spacer(modifier = Modifier.width(Spacing.SmallMedium))
                     Column {

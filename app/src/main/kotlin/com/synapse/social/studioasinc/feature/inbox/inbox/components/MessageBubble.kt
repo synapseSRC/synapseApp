@@ -63,6 +63,7 @@ import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.*
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
@@ -660,9 +661,9 @@ fun MessageBubble(
 
         if (isFromMe && (position == GroupPosition.LAST || position == GroupPosition.SINGLE)
             && message.deliveryStatus == DeliveryStatus.READ) {
-            com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+            UserAvatar(
                 avatarUrl = senderAvatarUrl,
-                displayName = null,
+                displayName = senderName,
                 size = Sizes.AvatarTiny,
                 modifier = Modifier.padding(top = Spacing.Tiny)
             )

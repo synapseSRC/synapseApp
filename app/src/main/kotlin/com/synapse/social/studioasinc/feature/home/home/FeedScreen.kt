@@ -42,6 +42,10 @@ import com.synapse.social.studioasinc.domain.model.FeedItem
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.StoryWithUser
 import com.synapse.social.studioasinc.feature.home.home.FeedViewModel
+import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
+import com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadataUseCase
+import com.synapse.social.studioasinc.domain.model.ReactionType
+import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 import com.synapse.social.studioasinc.feature.shared.components.post.PostActions
 import com.synapse.social.studioasinc.feature.shared.components.post.PostActionsFactory
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
@@ -57,7 +61,7 @@ import com.synapse.social.studioasinc.feature.stories.tray.StoryTrayViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
-    linkViewModel: com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
+    linkViewModel: LinkPreviewViewModel = hiltViewModel(),
     viewModel: FeedViewModel = hiltViewModel(),
     storyTrayViewModel: StoryTrayViewModel = hiltViewModel(),
     onPostClick: (String) -> Unit,
@@ -181,7 +185,7 @@ fun FeedScreen(
                         posts.itemCount == 0 && 
                         !isRefreshing
 
-        androidx.compose.runtime.CompositionLocalProvider(com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadataUseCase provides linkViewModel.getLinkMetadataUseCase) {
+        androidx.compose.runtime.CompositionLocalProvider(LocalLinkMetadataUseCase provides linkViewModel.getLinkMetadataUseCase) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -192,7 +196,8 @@ fun FeedScreen(
                 item {
                     QuickPostArea(
                         userProfileUrl = currentUser?.avatar,
-                        onClick = onCreatePostClick
+                        onClick = onCreatePostClick,
+                        displayName = currentUser?.displayName ?: currentUser?.username
                     )
                 }
 
@@ -337,7 +342,7 @@ fun FeedScreen(
 @Composable
 private fun FeedCommentItem(
     feedItem: FeedItem.CommentItem,
-    postViewStyle: com.synapse.social.studioasinc.ui.settings.PostViewStyle,
+    postViewStyle: PostViewStyle,
     viewModel: FeedViewModel,
     onCommentClick: (String) -> Unit,
     onUserClick: (String) -> Unit,
@@ -349,7 +354,7 @@ private fun FeedCommentItem(
         PostUiMapper.toPostCardState(feedItem)
     }
 
-    val onLikeClick = remember(feedItem.id) { { viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) } }
+    val onLikeClick = remember(feedItem.id) { { viewModel.reactToComment(feedItem.id, ReactionType.LIKE) } }
     val onCommentClickAction = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> onCommentClick(postId) } ?: Unit } }
     val onShareClick = remember(feedItem.id) { { /* Share comment link? */ } }
     val onRepostClick = remember(commentState.post) { { viewModel.resharePost(commentState.post) } }
@@ -360,7 +365,7 @@ private fun FeedCommentItem(
     val onMediaClickAction = remember(feedItem.id) { { index: Int -> onMediaClick(index) } }
     val onOptionsClickAction = remember(commentState.post) { { onOptionsClick(commentState.post) } }
     val onPollVote = remember(feedItem.id) { { _: String -> } }
-    val onReactionSelected = remember(feedItem.id) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }
+    val onReactionSelected = remember(feedItem.id) { { reaction: ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }
     val onParentAuthorClick = remember(feedItem.id) { { /* Navigate to parent author */ } }
 
     PostCard(

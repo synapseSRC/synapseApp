@@ -49,6 +49,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyS
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxShimmer
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.ui.inbox.theme.InboxTheme
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.EmptyStateType
@@ -302,7 +303,7 @@ private fun ConversationItem(
         ) {
         // Avatar with online indicator
         Box {
-            com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+            UserAvatar(
                 avatarUrl = conversation.participantAvatar,
                 displayName = conversation.participantName,
                 size = InboxTheme.dimens.AvatarSize,

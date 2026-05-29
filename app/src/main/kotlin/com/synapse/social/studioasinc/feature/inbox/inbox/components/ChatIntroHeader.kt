@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
 
@@ -36,7 +37,7 @@ fun ChatIntroHeader(
             ?: participantProfile?.username?.replace("_", " ")?.split(" ")?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
             ?: initialParticipantName ?: ""
 
-        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+        UserAvatar(
             avatarUrl = avatarUrl,
             displayName = rawName,
             size = 96.dp,

@@ -31,6 +31,7 @@ import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.domain.model.UserStatus
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 
@@ -126,6 +127,7 @@ private fun CoverPlaceholder(
 fun CoverPhotoWithProfile(
     coverImageUrl: String?,
     avatar: String?,
+    displayName: String? = null,
     status: UserStatus? = null,
     scrollOffset: Float = 0f,
     isOwnProfile: Boolean = false,
@@ -157,6 +159,7 @@ fun CoverPhotoWithProfile(
         ) {
             ProfileImageWithRing(
                 avatar = avatar,
+                displayName = displayName,
                 size = profileImageSize,
                 status = status,
                 hasStory = hasStory,
@@ -172,6 +175,7 @@ fun CoverPhotoWithProfile(
 @Composable
 fun ProfileImageWithRing(
     avatar: String?,
+    displayName: String? = null,
     size: Dp,
     status: UserStatus? = null,
     hasStory: Boolean = false,
@@ -257,9 +261,9 @@ fun ProfileImageWithRing(
                 .clip(shape),
             contentAlignment = Alignment.Center
         ) {
-            com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+            UserAvatar(
                 avatarUrl = avatar,
-                displayName = null,
+                displayName = displayName,
                 size = size,
                 modifier = Modifier.fillMaxSize()
             )

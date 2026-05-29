@@ -41,6 +41,7 @@ import com.synapse.social.studioasinc.domain.model.FeelingActivity
 import com.synapse.social.studioasinc.domain.model.FeelingType
 import com.synapse.social.studioasinc.domain.model.LocationData
 import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.ui.components.CircularAvatar
 import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
 import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
 import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
@@ -65,32 +66,12 @@ fun UserHeader(
             .padding(vertical = Spacing.Medium)
     ) {
 
-        if (user?.avatar != null) {
-            AsyncImage(
-                model = user.avatar,
-                contentDescription = stringResource(R.string.cd_profile_picture),
-                modifier = Modifier
-                    .size(Sizes.IconGiant)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop,
-                placeholder = rememberVectorPainter(Icons.Filled.Person),
-                error = rememberVectorPainter(Icons.Filled.Person)
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(Sizes.IconGiant)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        CircularAvatar(
+            imageUrl = user?.avatar,
+            contentDescription = stringResource(R.string.cd_profile_picture),
+            size = Sizes.IconGiant,
+            displayName = user?.displayName ?: user?.username
+        )
 
         Spacer(modifier = Modifier.width(Spacing.SmallMedium))
 

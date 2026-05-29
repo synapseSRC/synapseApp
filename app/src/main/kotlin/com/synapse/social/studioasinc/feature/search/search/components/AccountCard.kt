@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.shared.domain.model.SearchAccount
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -58,7 +59,7 @@ fun AccountCard(
             .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+        UserAvatar(
             avatarUrl = account.avatarUrl,
             displayName = account.displayName ?: account.handle,
             size = Sizes.IconGiant

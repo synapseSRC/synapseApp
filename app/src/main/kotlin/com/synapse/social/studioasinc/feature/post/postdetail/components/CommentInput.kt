@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.ui.components.CircularAvatar
 
 @Composable
 fun CommentInput(
@@ -70,7 +71,7 @@ fun CommentInput(
                 .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
             verticalAlignment = Alignment.Bottom
         ) {
-            com.synapse.social.studioasinc.ui.components.CircularAvatar(
+            CircularAvatar(
                 imageUrl = userAvatarUrl,
                 contentDescription = "My Avatar",
                 size = Sizes.AvatarSmall
