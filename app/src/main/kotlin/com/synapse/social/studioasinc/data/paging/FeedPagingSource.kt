@@ -37,7 +37,7 @@ class FeedPagingSource(
         val position = params.key ?: 0
         val pageSize = params.loadSize
         return try {
-            Log.d("FeedPagingSource", "Loading feed timeline at position: , pageSize: ")
+            Log.d("FeedPagingSource", "Loading feed timeline at position: $position, pageSize: $pageSize")
 
             if (position > 0) {
                 val localPostsEntity = postDao.getPostsPaged(pageSize.toLong(), position.toLong())
@@ -97,9 +97,8 @@ class FeedPagingSource(
                         .select(
                             columns = Columns.raw("""
                                 *,
-                                users:users!author_uid(username, display_name, avatar, verify),
-                                latest_comments:comments(post_text, created_at, users:users!user_id(username)),
-                                quoted_post:posts!quoted_post_id(*, users!author_uid(username, display_name, avatar, verify))
+                                users:users!author_uid(uid, username, display_name, avatar, verify),
+                                quoted_post:posts!quoted_post_id(*, users:users!author_uid(uid, username, display_name, avatar, verify))
                             """.trimIndent())
                         ) {
                             filter { isIn("id", postIds) }
@@ -112,23 +111,26 @@ class FeedPagingSource(
                         post.username = userData?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         post.displayName = userData?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         post.avatarUrl = userData?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
-                            SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
+                            SupabaseClient.constructAvatarUrl(avatarPath)
                         }
                         post.isVerified = userData?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
 
-                        val commentsArray = jsonElement["latest_comments"]?.jsonArray
-                        if (!commentsArray.isNullOrEmpty()) {
-                            val latestComment = commentsArray.map { it.jsonObject }
-                                .maxByOrNull { it["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
-
-                            if (latestComment != null) {
-                                post.latestCommentText = latestComment["post_text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                                val commentUser = latestComment["users"]?.jsonObject
-                                post.latestCommentAuthor = commentUser?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                        // Quoted post handling
+                        jsonElement["quoted_post"]?.jsonObject?.let { qpJson ->
+                            val qpUserData = qpJson["users"]?.jsonObject
+                            post.quotedPost?.let { qp ->
+                                qp.username = qpUserData?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                qp.displayName = qpUserData?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                qp.avatarUrl = qpUserData?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
+                                    SupabaseClient.constructAvatarUrl(avatarPath)
+                                }
+                                qp.isVerified = qpUserData?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                             }
                         }
+
                         post.id to post
                     } catch (e: Exception) {
+                        Log.e("FeedPagingSource", "Error decoding post ${jsonElement["id"]}", e)
                         null
                     }
                 }.toMap()
@@ -141,7 +143,7 @@ class FeedPagingSource(
             val postsWithInteractions = populateUserInteractions(postsWithPolls)
             val enrichedPostsMap = postsWithInteractions.associateBy { it.id }
 
-            // 2. Map Comments from timeline response (not present in get_ranked_post_ids but keeping structure)
+            // 2. Map Comments (if any in timeline)
             val commentsMap = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
                 val id = timelineItem["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                 val userId = timelineItem["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: ""
@@ -189,7 +191,7 @@ class FeedPagingSource(
                     username = user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                     userFullName = user?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                     avatarUrl = user?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
-                        SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
+                        SupabaseClient.constructAvatarUrl(avatarPath)
                     },
                     isVerified = user?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
