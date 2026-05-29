@@ -192,7 +192,8 @@ fun FeedScreen(
                 item {
                     QuickPostArea(
                         userProfileUrl = currentUser?.avatar,
-                        onClick = onCreatePostClick
+                        onClick = onCreatePostClick,
+                        displayName = currentUser?.displayName ?: currentUser?.username
                     )
                 }
 

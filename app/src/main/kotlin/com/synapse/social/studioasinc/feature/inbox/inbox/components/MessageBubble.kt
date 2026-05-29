@@ -662,7 +662,7 @@ fun MessageBubble(
             && message.deliveryStatus == DeliveryStatus.READ) {
             com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
                 avatarUrl = senderAvatarUrl,
-                displayName = null,
+                displayName = senderName,
                 size = Sizes.AvatarTiny,
                 modifier = Modifier.padding(top = Spacing.Tiny)
             )

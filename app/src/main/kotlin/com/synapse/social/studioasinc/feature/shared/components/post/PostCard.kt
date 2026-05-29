@@ -176,7 +176,8 @@ fun PostCard(
                     imageUrl = state.user.avatar,
                     contentDescription = "Avatar of ${state.user.username}",
                     onClick = onUserClick,
-                    size = avatarSize
+                    size = avatarSize,
+                    displayName = state.user.displayName ?: state.user.username
                 )
             }
 

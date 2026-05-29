@@ -65,32 +65,13 @@ fun UserHeader(
             .padding(vertical = Spacing.Medium)
     ) {
 
-        if (user?.avatar != null) {
-            AsyncImage(
-                model = user.avatar,
-                contentDescription = stringResource(R.string.cd_profile_picture),
-                modifier = Modifier
-                    .size(Sizes.IconGiant)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop,
-                placeholder = rememberVectorPainter(Icons.Filled.Person),
-                error = rememberVectorPainter(Icons.Filled.Person)
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(Sizes.IconGiant)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        com.synapse.social.studioasinc.ui.components.CircularAvatar(
+            imageUrl = user?.avatar,
+            contentDescription = stringResource(R.string.cd_profile_picture),
+            modifier = Modifier,
+            size = Sizes.IconGiant,
+            displayName = user?.displayName ?: user?.username
+        )
 
         Spacer(modifier = Modifier.width(Spacing.SmallMedium))
 

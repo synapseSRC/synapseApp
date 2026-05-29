@@ -177,7 +177,8 @@ private fun ContactListItem(
     ) {
         UserAvatar(
             avatarUrl = null, // Contacts don't have avatar URLs in this implementation yet, using default
-            size = Sizes.AvatarMedium
+            size = Sizes.AvatarMedium,
+            displayName = file.fileName
         )
 
         Spacer(modifier = Modifier.width(Spacing.Medium))
