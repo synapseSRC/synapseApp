@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.awaitAll
@@ -62,6 +63,7 @@ class SupabaseChatRepository(
     private val encryptionHelper = ChatEncryptionHelper(signalProtocolManager, dataSource, cachedMessageDao)
     private val groupRepository = ChatGroupRepository(dataSource)
     private val reactionDataSource = ChatReactionDataSource(client)
+    private val conversationMutex = kotlinx.coroutines.sync.Mutex()
 
     override suspend fun ensureSession(userId: String) = encryptionHelper.ensureSession(userId)
 
@@ -436,6 +438,22 @@ class SupabaseChatRepository(
                 dto.toDomain()
             }
 
+            externalScope.launch {
+                cachedMessageDao?.upsert(domainMessage)
+
+                // Update conversation last message safely using a Mutex to prevent race conditions
+                conversationMutex.withLock {
+                    cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
+                        cachedConversationDao?.upsertAll(listOf(
+                            existing.copy(
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt
+                            )
+                        ))
+                    }
+                }
+            }
+
             // If the message is still encrypted after decryption attempt, it's a Signal session race.
             // The ViewModel has a retry mechanism via getMessageById for these cases.
             val placeholders = setOf(
@@ -452,9 +470,48 @@ class SupabaseChatRepository(
         }
 
     override fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message> =
-        dataSource.subscribeToInboxUpdates(chatIds).map { 
+        dataSource.subscribeToInboxUpdates(chatIds).map { dto ->
             val userId = getCurrentUserId() ?: ""
-            if (userId.isNotBlank()) with(encryptionHelper) { it.decryptIfNecessary(userId).toDomain() } else it.toDomain()
+            val domainMessage = if (userId.isNotBlank()) with(encryptionHelper) { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
+
+            externalScope.launch {
+                cachedMessageDao?.upsert(domainMessage)
+
+                val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
+                val chatInfo = if (existing == null) dataSource.getChatInfo(domainMessage.chatId) else null
+
+                // Update the conversation list safely using a Mutex to prevent race conditions
+                conversationMutex.withLock {
+                    val isOwnMessage = domainMessage.senderId == userId
+                    val currentExisting = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
+                    if (currentExisting != null) {
+                        cachedConversationDao?.upsertAll(listOf(
+                            currentExisting.copy(
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt,
+                                unreadCount = if (isOwnMessage) currentExisting.unreadCount else currentExisting.unreadCount + 1
+                            )
+                        ))
+                    } else {
+                        val isGroup = chatInfo?.isGroup ?: false
+                        cachedConversationDao?.upsertAll(listOf(
+                            Conversation(
+                                chatId = domainMessage.chatId,
+                                participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
+                                participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else "Unknown User",
+                                participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt,
+                                unreadCount = if (isOwnMessage) 0 else 1,
+                                isOnline = false,
+                                isGroup = isGroup
+                            )
+                        ))
+                    }
+                }
+            }
+
+            domainMessage
         }
 
     override fun subscribeToTypingStatus(chatId: String): Flow<TypingStatus> =

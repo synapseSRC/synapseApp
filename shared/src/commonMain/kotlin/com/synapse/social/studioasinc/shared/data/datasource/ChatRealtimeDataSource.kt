@@ -15,10 +15,12 @@ import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.*
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -78,20 +80,24 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
+        val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            changeFlow.collect { action ->
-                try {
-                    val record = action.decodeRecord<MessageDto>()
-                    Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
-                    send(record) // Suspending send ensures no data loss
-                } catch (e: Exception) {
-                    Napier.e("Error decoding realtime message", e, tag = "Realtime")
+            changeFlow
+                .onStart { subscriptionReady.complete(Unit) }
+                .collect { action ->
+                    try {
+                        val record = action.decodeRecord<MessageDto>()
+                        Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
+                        send(record) // Suspending send ensures no data loss
+                    } catch (e: Exception) {
+                        Napier.e("Error decoding realtime message", e, tag = "Realtime")
+                    }
                 }
-            }
         }
 
         launch(AppDispatchers.IO) {
             try {
+                subscriptionReady.await()
                 // Wait for confirmation of subscription
                 channel.subscribe(blockUntilSubscribed = true)
                 Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
@@ -131,20 +137,24 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             table = "messages"
         }
 
+        val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            flow.collect { action ->
-                try {
-                    val message = action.decodeRecord<MessageDto>()
-                    Napier.d("Realtime inbox update received: ${message.id}", tag = "Realtime")
-                    send(message)
-                } catch (e: Exception) {
-                    Napier.e("Error decoding real-time message in inbox", e, tag = "Realtime")
+            flow
+                .onStart { subscriptionReady.complete(Unit) }
+                .collect { action ->
+                    try {
+                        val message = action.decodeRecord<MessageDto>()
+                        Napier.d("Realtime inbox update received: ${message.id}", tag = "Realtime")
+                        send(message)
+                    } catch (e: Exception) {
+                        Napier.e("Error decoding real-time message in inbox", e, tag = "Realtime")
+                    }
                 }
-            }
         }
 
         launch(AppDispatchers.IO) {
             try {
+                subscriptionReady.await()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -177,39 +187,43 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val channel = client.realtime.channel(channelId)
         val presenceFlow = channel.presenceChangeFlow()
 
+        val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            presenceFlow.collect { presenceChange ->
-                presenceChange.joins.values.forEach { presence ->
-                    try {
-                        val state = presence.state
-                        val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
-                        val isTyping = state["is_typing"]?.jsonPrimitive?.booleanOrNull
+            presenceFlow
+                .onStart { subscriptionReady.complete(Unit) }
+                .collect { presenceChange ->
+                    presenceChange.joins.values.forEach { presence ->
+                        try {
+                            val state = presence.state
+                            val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
+                            val isTyping = state["is_typing"]?.jsonPrimitive?.booleanOrNull
 
-                        if (userId != null && isTyping != null) {
-                            send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                            if (userId != null && isTyping != null) {
+                                send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                            }
+                        } catch (e: Exception) {
+                            Napier.e("Error decoding presence state", e, tag = "Realtime")
                         }
-                    } catch (e: Exception) {
-                        Napier.e("Error decoding presence state", e, tag = "Realtime")
+                    }
+
+                    presenceChange.leaves.values.forEach { presence ->
+                        try {
+                            val state = presence.state
+                            val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
+
+                            if (userId != null) {
+                                send(mapOf("user_id" to userId, "is_typing" to false))
+                            }
+                        } catch (e: Exception) {
+                            Napier.e("Error decoding presence leave state", e, tag = "Realtime")
+                        }
                     }
                 }
-
-                presenceChange.leaves.values.forEach { presence ->
-                    try {
-                        val state = presence.state
-                        val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
-
-                        if (userId != null) {
-                            send(mapOf("user_id" to userId, "is_typing" to false))
-                        }
-                    } catch (e: Exception) {
-                        Napier.e("Error decoding presence leave state", e, tag = "Realtime")
-                    }
-                }
-            }
         }
 
         launch(AppDispatchers.IO) {
             try {
+                subscriptionReady.await()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -245,17 +259,21 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
+        val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            flow.collect { action ->
-                try {
-                    val message = action.decodeRecord<MessageDto>()
-                    send(message)
-                } catch (e: Exception) {}
-            }
+            flow
+                .onStart { subscriptionReady.complete(Unit) }
+                .collect { action ->
+                    try {
+                        val message = action.decodeRecord<MessageDto>()
+                        send(message)
+                    } catch (e: Exception) {}
+                }
         }
 
         launch(AppDispatchers.IO) {
             try {
+                subscriptionReady.await()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -291,22 +309,26 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
+        val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            flow.collect { action ->
-                when (action) {
-                    is PostgresAction.Insert -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
-                    is PostgresAction.Update -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
-                    is PostgresAction.Delete -> try {
-                        val oldRecord = action.decodeOldRecord<MessageReactionDto>()
-                        send(oldRecord.copy(isDeleteEvent = true))
-                    } catch(e: Exception) {}
-                    else -> {}
+            flow
+                .onStart { subscriptionReady.complete(Unit) }
+                .collect { action ->
+                    when (action) {
+                        is PostgresAction.Insert -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
+                        is PostgresAction.Update -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
+                        is PostgresAction.Delete -> try {
+                            val oldRecord = action.decodeOldRecord<MessageReactionDto>()
+                            send(oldRecord.copy(isDeleteEvent = true))
+                        } catch(e: Exception) {}
+                        else -> {}
+                    }
                 }
-            }
         }
 
         launch(AppDispatchers.IO) {
             try {
+                subscriptionReady.await()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
