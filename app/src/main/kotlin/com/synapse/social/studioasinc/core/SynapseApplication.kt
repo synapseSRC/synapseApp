@@ -81,8 +81,6 @@ class SynapseApplication : Application(), ImageLoaderFactory {
 
         setupLifecycleObserver()
 
-        setupLifecycleObserver()
-
         SupabaseAuthenticationService.initialize(this)
 
 
@@ -215,7 +213,7 @@ class SynapseApplication : Application(), ImageLoaderFactory {
             }
         }
 
-        // Observe Supabase Auth changes to sync with OneSignal
+        // Observe Supabase Auth changes to sync with OneSignal and manage Realtime connection
         applicationScope.launch(Dispatchers.IO) {
             try {
                 // Wait for Supabase to be initialized via service
@@ -226,6 +224,15 @@ class SynapseApplication : Application(), ImageLoaderFactory {
                         is SessionStatus.Authenticated -> {
                             val userId = status.session.user?.id
                             if (userId != null) {
+                                try {
+                                    // Connect to realtime when authenticated
+                                    val rt = io.github.jan.supabase.realtime.Realtime
+                                    SupabaseClient.client.pluginManager.getPlugin(rt).connect()
+                                    Napier.d("✅ Supabase Realtime connected globally for user: $userId")
+                                } catch (e: Exception) {
+                                    Napier.e("❌ Failed to connect to Supabase Realtime", e)
+                                }
+
                                 withContext(Dispatchers.Main) {
                                     android.util.Log.d("OneSignal", "Syncing identity for authenticated user: $userId")
                                     OneSignal.login(userId)
@@ -246,6 +253,12 @@ class SynapseApplication : Application(), ImageLoaderFactory {
                             }
                         }
                         is SessionStatus.NotAuthenticated -> {
+                            try {
+                                val rt = io.github.jan.supabase.realtime.Realtime
+                                SupabaseClient.client.pluginManager.getPlugin(rt).disconnect()
+                                Napier.d("Supabase Realtime disconnected on logout")
+                            } catch (e: Exception) {}
+
                             withContext(Dispatchers.Main) {
                                 android.util.Log.d("OneSignal", "User logged out, logging out from OneSignal")
                                 OneSignal.logout()

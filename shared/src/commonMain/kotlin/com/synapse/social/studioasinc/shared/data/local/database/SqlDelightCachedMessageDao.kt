@@ -95,6 +95,24 @@ class SqlDelightCachedMessageDao(
     override suspend fun updateReactions(messageId: String, reactions: Map<ReactionType, Int>, userReaction: ReactionType?) {
     }
 
+    override suspend fun markRead(chatId: String, userId: String) {
+        withContext(AppDispatchers.IO) {
+            val allMessages = db.cachedMessageQueries.selectByChatId(chatId, 500).executeAsList()
+            db.transaction {
+                allMessages.forEach { cached ->
+                    val readBy = cached.read_by?.split(",")?.toMutableSet() ?: mutableSetOf()
+                    if (userId !in readBy) {
+                        readBy.add(userId)
+                        db.cachedMessageQueries.updateReadBy(
+                            read_by = readBy.joinToString(","),
+                            id = cached.id
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     private fun toCachedMessage(domain: Message, cachedAt: Long): CachedMessage {
         return CachedMessage(
             id = domain.id,

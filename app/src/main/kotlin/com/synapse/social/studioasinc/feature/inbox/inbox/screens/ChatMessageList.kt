@@ -75,6 +75,8 @@ internal fun ChatMessageList(
         if (shouldLoadMore.value && !isLoadingMore) onLoadMore()
     }
 
+    val reversedItems = remember(chatItems) { chatItems.reversed() }
+
     LazyColumn(
         state = listState,
         modifier = modifier
@@ -94,12 +96,11 @@ internal fun ChatMessageList(
             }
         }
 
-        val reversedItems = chatItems.reversed()
-        itemsIndexed(reversedItems, key = { index, item ->
+        itemsIndexed(reversedItems, key = { _, item ->
             when (item) {
-                 is ChatListItem.DateDivider -> "date_${item.label}_$index"
-                 is ChatListItem.UnreadDivider -> "unread_$index"
-                 is ChatListItem.MessageItem -> item.message.id ?: "msg_$index" // Provide a fallback if id is null
+                 is ChatListItem.DateDivider -> "date_${item.label}"
+                 is ChatListItem.UnreadDivider -> "unread_divider"
+                 is ChatListItem.MessageItem -> item.message.id ?: "msg_${item.message.createdAt}"
              }
          }) { index, item ->
             when (item) {

@@ -23,6 +23,7 @@ class ChatSubscriptionDelegate(
     private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
     private val viewModelScope: CoroutineScope,
     private val currentUserIdProvider: () -> String?,
+    private val isScreenVisibleProvider: () -> Boolean,
     private val onNewMessage: (Message) -> Unit,
     private val onReactionEvent: (MessageReaction) -> Unit
 ) {
@@ -43,9 +44,33 @@ class ChatSubscriptionDelegate(
     fun startSubscriptions(chatId: String) {
         messageSubscriptionJob = viewModelScope.launch {
             subscribeToMessagesUseCase(chatId).collect { newMessage ->
-                onNewMessage(newMessage)
-                markMessagesAsReadUseCase(chatId)
-                markMessagesAsDeliveredUseCase(chatId)
+                try {
+                    onNewMessage(newMessage)
+                } catch (e: Exception) {
+                    io.github.aakira.napier.Napier.e("Error processing new realtime message", e)
+                }
+
+                // Only mark as read/delivered if the message is from someone else.
+                // We also check if the screen is currently visible to the user.
+                val currentUserId = currentUserIdProvider()
+                if (currentUserId != null && newMessage.senderId != currentUserId) {
+                    viewModelScope.launch {
+                        try {
+                            if (isScreenVisibleProvider()) {
+                                markMessagesAsReadUseCase(chatId)
+                            }
+                        } catch (e: Exception) {
+                            io.github.aakira.napier.Napier.e("Failed to mark messages as read", e)
+                        }
+                    }
+                    viewModelScope.launch {
+                        try {
+                            markMessagesAsDeliveredUseCase(chatId)
+                        } catch (e: Exception) {
+                            io.github.aakira.napier.Napier.e("Failed to mark messages as delivered", e)
+                        }
+                    }
+                }
             }
         }
 

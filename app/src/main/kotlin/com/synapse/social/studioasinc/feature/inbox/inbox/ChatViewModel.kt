@@ -137,6 +137,9 @@ class ChatViewModel @Inject constructor(
     private val _isE2EEReady = MutableStateFlow(false)
     val isE2EEReady: StateFlow<Boolean> = _isE2EEReady.asStateFlow()
 
+    private val _isScreenVisible = MutableStateFlow(false)
+    val isScreenVisible: StateFlow<Boolean> = _isScreenVisible.asStateFlow()
+
     private var currentChatId: String? = null
 
     val currentUserId: String?
@@ -173,6 +176,7 @@ class ChatViewModel @Inject constructor(
         markMessagesAsDeliveredUseCase = markMessagesAsDeliveredUseCase,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId },
+        isScreenVisibleProvider = { _isScreenVisible.value },
         onNewMessage = { newMessage ->
             handleIncomingMessage(newMessage)
         },
@@ -327,6 +331,17 @@ class ChatViewModel @Inject constructor(
     val messageSummary: StateFlow<String?> = aiDelegate.messageSummary
     val isSummarizingMessage: StateFlow<Boolean> = aiDelegate.isSummarizingMessage
 
+    fun onVisibilityChanged(visible: Boolean) {
+        _isScreenVisible.value = visible
+        if (visible) {
+            currentChatId?.let {
+                viewModelScope.launch {
+                    markMessagesAsReadUseCase(it)
+                }
+            }
+        }
+    }
+
     fun initialize(chatId: String, participantId: String? = null) {
         // Always restart subscriptions when entering the screen, even for the same chat.
         // Subscriptions may have been torn down by a previous cleanup() on navigation away.
@@ -375,17 +390,23 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun handleIncomingMessage(newMessage: Message) {
+        Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
+
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
         messagingDelegate._messages.update { current ->
+            // 1. Check if message already exists (e.g. from REST response)
             val existing = current.find { it.id == newMessage.id }
+
             if (existing != null) {
+                // Merge state, preserving decrypted content if realtime is still encrypted
                 val mergedMessage = if (
                     existing.content !in encryptedPlaceholders &&
                     newMessage.content in encryptedPlaceholders
                 ) {
                     existing.copy(
                         deliveryStatus = newMessage.deliveryStatus,
-                        readBy = newMessage.readBy
+                        readBy = newMessage.readBy,
+                        updatedAt = newMessage.updatedAt
                     )
                 } else {
                     val contentChanged = existing.content != newMessage.content
@@ -396,11 +417,15 @@ class ChatViewModel @Inject constructor(
                     )
                 }
                 with(messagingDelegate) { current.replaceById(newMessage.id, mergedMessage) }
-            } else if (newMessage.senderId == currentUserId && messagingDelegate.pendingTempIds.value.isNotEmpty()) {
+            } else {
+                // 2. Check if this resolves a pending optimistic message
                 val tempId = messagingDelegate.pendingTempIds.value.firstOrNull { id ->
-                    current.any { it.id == id }
+                    current.any { it.id == id && it.senderId == newMessage.senderId }
+                    // Additional check: maybe compare content hash or message type?
+                    // For now, if we sent something and a message arrives from us, we assume it might be the resolution.
                 }
-                if (tempId != null) {
+
+                if (tempId != null && newMessage.senderId == currentUserId) {
                     messagingDelegate.pendingTempIds.update { it - tempId }
                     val tempMsg = current.find { it.id == tempId }
                     val finalMessage = if (
@@ -412,16 +437,18 @@ class ChatViewModel @Inject constructor(
                     } else {
                         newMessage
                     }
+
                     with(messagingDelegate) {
                         current.replaceById(tempId, finalMessage)
                             .distinctBy { it.id }
                             .sortedBy { it.createdAt }
                     }
                 } else {
-                    (current + newMessage).distinctBy { it.id }.sortedBy { it.createdAt }
+                    // 3. Brand new message from someone else (or local message without temp ID match)
+                    (current + newMessage)
+                        .distinctBy { it.id }
+                        .sortedBy { it.createdAt }
                 }
-            } else {
-                (current + newMessage).distinctBy { it.id }.sortedBy { it.createdAt }
             }
         }
         aiDelegate.generateSmartReplies(messages.value)
@@ -593,6 +620,7 @@ class ChatViewModel @Inject constructor(
         subscriptionDelegate.cleanup()
         inputDelegate.cleanup()
         messagingDelegate.pendingTempIds.value = emptySet()
+        messagingDelegate.clearMessages()
         _hasMoreMessages.value = true
     }
 

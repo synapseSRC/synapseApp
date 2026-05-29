@@ -12,4 +12,5 @@ interface CachedMessageDao {
     suspend fun trimToLimit(chatId: String, limit: Int)
     suspend fun deleteAll()
     suspend fun updateReactions(messageId: String, reactions: Map<com.synapse.social.studioasinc.shared.domain.model.ReactionType, Int>, userReaction: com.synapse.social.studioasinc.shared.domain.model.ReactionType?)
+    suspend fun markRead(chatId: String, userId: String)
 }
