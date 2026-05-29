@@ -2,8 +2,7 @@ package com.synapse.social.studioasinc.feature.createpost.quote
 
 import androidx.compose.foundation.layout.*
 import com.synapse.social.studioasinc.R
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -13,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
-import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
 
 import androidx.compose.ui.Alignment
@@ -54,61 +52,71 @@ fun QuotePostScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
         ) {
-            OutlinedTextField(
-                value = quoteText,
-                onValueChange = { quoteText = it },
-                placeholder = { Text(stringResource(R.string.quote_post_hint)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(Spacing.Medium)
-                    .heightIn(min = 120.dp),
-                maxLines = 10
-            )
+            item {
+                OutlinedTextField(
+                    value = quoteText,
+                    onValueChange = { quoteText = it },
+                    placeholder = { Text(stringResource(R.string.quote_post_hint)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.Medium)
+                        .heightIn(min = 120.dp),
+                    maxLines = 10
+                )
+            }
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.Medium))
+            item {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.Medium))
 
-            Text(
-                text = stringResource(R.string.quoting),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(Spacing.Medium)
-            )
+                Text(
+                    text = stringResource(R.string.quoting),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(Spacing.Medium)
+                )
+            }
 
             if (state.isLoading && state.post == null) {
-                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.ExtraLarge), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(Spacing.ExtraLarge), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
             } else if (state.post != null) {
-                Surface(
-                    modifier = Modifier.padding(horizontal = Spacing.Medium),
-                    tonalElevation = 1.dp,
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    state.post?.let { PostUiMapper.toPostCardState(it) }?.let { PostCard(
- state = it,
-
-                        onLikeClick = {},
-                        onCommentClick = {},
-                        onShareClick = {},
-                        onRepostClick = {},
-                        onBookmarkClick = {},
-                        onUserClick = {},
-                        onPostClick = {},
-                        onMediaClick = { _ -> },
-                        onOptionsClick = {},
-                        onPollVote = {},
-                        onQuoteClick = {},
-                        modifier = Modifier.padding(Spacing.Small)
-                    ) }
+                item {
+                    Surface(
+                        modifier = Modifier.padding(horizontal = Spacing.Medium),
+                        tonalElevation = 1.dp,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        state.post?.let { PostUiMapper.toPostCardState(it) }?.let { cardState ->
+                            PostCard(
+                                state = cardState,
+                                onLikeClick = {},
+                                onCommentClick = {},
+                                onShareClick = {},
+                                onRepostClick = {},
+                                onBookmarkClick = {},
+                                onUserClick = {},
+                                onPostClick = {},
+                                onMediaClick = { _ -> },
+                                onOptionsClick = {},
+                                onPollVote = {},
+                                onQuoteClick = {},
+                                modifier = Modifier.padding(Spacing.Small)
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            item {
+                Spacer(modifier = Modifier.height(Spacing.Medium))
+            }
         }
     }
 }

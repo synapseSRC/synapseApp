@@ -8,8 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandMore
@@ -157,7 +157,7 @@ fun LicenseItem(license: License) {
                                 text = license.licenseContent,
                                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                                 color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.verticalScroll(rememberScrollState())
+                                modifier = Modifier
                             )
                         }
                     }
