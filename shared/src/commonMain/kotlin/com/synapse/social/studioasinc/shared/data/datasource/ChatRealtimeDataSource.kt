@@ -92,6 +92,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(AppDispatchers.IO) {
             try {
+                yield()
+                delay(100)
                 // Wait for confirmation of subscription
                 channel.subscribe(blockUntilSubscribed = true)
                 Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
@@ -145,6 +147,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(AppDispatchers.IO) {
             try {
+                yield()
+                delay(100)
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -210,6 +214,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(AppDispatchers.IO) {
             try {
+                yield()
+                delay(100)
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -256,6 +262,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(AppDispatchers.IO) {
             try {
+                yield()
+                delay(100)
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -307,6 +315,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         launch(AppDispatchers.IO) {
             try {
+                yield()
+                delay(100)
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {

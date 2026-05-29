@@ -436,6 +436,20 @@ class SupabaseChatRepository(
                 dto.toDomain()
             }
 
+            externalScope.launch {
+                cachedMessageDao?.upsert(domainMessage)
+
+                // Update conversation last message
+                cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
+                    cachedConversationDao.upsertAll(listOf(
+                        existing.copy(
+                            lastMessage = domainMessage.content,
+                            lastMessageTime = domainMessage.createdAt
+                        )
+                    ))
+                }
+            }
+
             // If the message is still encrypted after decryption attempt, it's a Signal session race.
             // The ViewModel has a retry mechanism via getMessageById for these cases.
             val placeholders = setOf(
@@ -452,9 +466,43 @@ class SupabaseChatRepository(
         }
 
     override fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message> =
-        dataSource.subscribeToInboxUpdates(chatIds).map { 
+        dataSource.subscribeToInboxUpdates(chatIds).map { dto ->
             val userId = getCurrentUserId() ?: ""
-            if (userId.isNotBlank()) with(encryptionHelper) { it.decryptIfNecessary(userId).toDomain() } else it.toDomain()
+            val domainMessage = if (userId.isNotBlank()) with(encryptionHelper) { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
+
+            externalScope.launch {
+                cachedMessageDao?.upsert(domainMessage)
+
+                // Also update the conversation list to reflect the new last message
+                val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
+                if (existing != null) {
+                    cachedConversationDao?.upsertAll(listOf(
+                        existing.copy(
+                            lastMessage = domainMessage.content,
+                            lastMessageTime = domainMessage.createdAt,
+                            unreadCount = existing.unreadCount + 1
+                        )
+                    ))
+                } else {
+                    val chatInfo = dataSource.getChatInfo(domainMessage.chatId)
+                    val isGroup = chatInfo?.isGroup ?: false
+                    cachedConversationDao?.upsertAll(listOf(
+                        Conversation(
+                            chatId = domainMessage.chatId,
+                            participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
+                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else "Unknown User",
+                            participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
+                            lastMessage = domainMessage.content,
+                            lastMessageTime = domainMessage.createdAt,
+                            unreadCount = 1,
+                            isOnline = false,
+                            isGroup = isGroup
+                        )
+                    ))
+                }
+            }
+
+            domainMessage
         }
 
     override fun subscribeToTypingStatus(chatId: String): Flow<TypingStatus> =
