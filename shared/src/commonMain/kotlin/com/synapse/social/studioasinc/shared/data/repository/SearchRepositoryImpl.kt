@@ -36,16 +36,30 @@ private data class AuthorDto(
     val avatar: String? = null
 )
 
+/**
+ * Concrete implementation of [ISearchRepository] that interfaces with Supabase Postgrest
+ * to provide search capabilities across posts, hashtags, news, and users.
+ *
+ * This implementation focuses on remote-first data retrieval with basic sanitization
+ * to prevent query injection while maintaining flexibility for partial matches.
+ */
 class SearchRepositoryImpl(
     private val client: io.github.jan.supabase.SupabaseClient = SupabaseClient.client
 ) : ISearchRepository {
 
+    /**
+     * Searches for posts containing the given query string.
+     * Uses [ilike] for case-insensitive partial matching on the 'post_text' column.
+     *
+     * Result set includes joined author data from the 'users' table to minimize round-trips
+     * when displaying feed items.
+     */
     override suspend fun searchPosts(query: String): Result<List<SearchPost>> = runCatching {
 
         val columns = Columns.raw("id, post_text, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, author:users!posts_author_uid_fkey(display_name, username, avatar)")
 
-        // For Full Text Search, we do not escape % and _ as they are not wildcards in FTS.
-        val sanitizedQuery = query.trim().take(100)
+        // We trim, limit, and escape wildcards to prevent query injection and strain on the backend.
+        val sanitizedQuery = sanitizeSearchQuery(query)
 
         val result = client.postgrest["posts"].select(columns = columns) {
             if (sanitizedQuery.isNotBlank()) {
@@ -78,6 +92,10 @@ class SearchRepositoryImpl(
         }
     }
 
+    /**
+     * Finds hashtags starting with the query string.
+     * Matches are prioritized by 'usage_count' to surface the most relevant/popular tags first.
+     */
     override suspend fun searchHashtags(query: String): Result<List<SearchHashtag>> = runCatching {
         val sanitizedQuery = sanitizeSearchQuery(query)
 
@@ -92,6 +110,9 @@ class SearchRepositoryImpl(
         }.decodeList<SearchHashtag>()
     }
 
+    /**
+     * Retrieves the top trending hashtags based purely on overall usage count.
+     */
     override suspend fun getTrendingHashtags(): Result<List<SearchHashtag>> = runCatching {
         client.postgrest["hashtags"].select {
             order("usage_count", Order.DESCENDING)
@@ -99,6 +120,10 @@ class SearchRepositoryImpl(
         }.decodeList<SearchHashtag>()
     }
 
+    /**
+     * Searches news articles by headline.
+     * Results are ordered by publication date to ensure the most recent news is shown first.
+     */
     override suspend fun searchNews(query: String): Result<List<SearchNews>> = runCatching {
         val sanitizedQuery = sanitizeSearchQuery(query)
 
@@ -110,9 +135,13 @@ class SearchRepositoryImpl(
             }
             order("published_at", Order.DESCENDING)
             limit(20)
-        }.decodeList()
+        }.decodeList<SearchNews>()
     }
 
+    /**
+     * Searches for users based on username, display name, or bio.
+     * If no query is provided, it falls back to suggesting accounts with the highest follower counts.
+     */
     override suspend fun getSuggestedAccounts(query: String): Result<List<SearchAccount>> = runCatching {
         val sanitizedQuery = sanitizeSearchQuery(query)
 
@@ -126,8 +155,8 @@ class SearchRepositoryImpl(
                     }
                 }
             } else {
-
-                 order("followers_count", Order.DESCENDING)
+                // Fallback for discovery mode when the search field is empty
+                order("followers_count", Order.DESCENDING)
             }
             limit(20)
         }.decodeList()
