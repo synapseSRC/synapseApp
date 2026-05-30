@@ -5,6 +5,7 @@ import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.data.database.Post
 import com.synapse.social.studioasinc.shared.data.database.Comment
 import com.synapse.social.studioasinc.shared.data.database.User
+import com.synapse.social.studioasinc.shared.data.database.StoryEntity
 import com.synapse.social.studioasinc.shared.data.database.linkPreviewListAdapter
 import com.synapse.social.studioasinc.shared.data.database.mediaItemListAdapter
 import com.synapse.social.studioasinc.shared.data.database.pollOptionListAdapter
@@ -25,6 +26,8 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedConversat
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.MessageReactionDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightMessageReactionDao
+import com.synapse.social.studioasinc.shared.data.local.database.StoryDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightStoryDao
 import com.synapse.social.studioasinc.shared.data.adapter.EncryptedStringAdapter
 
 
@@ -100,6 +103,7 @@ val storageModule = module {
     single<CachedMessageDao> { SqlDelightCachedMessageDao(get()) }
     single<CachedConversationDao> { SqlDelightCachedConversationDao(get()) }
     single<MessageReactionDao> { SqlDelightMessageReactionDao(get()) }
+    single<StoryDao> { SqlDelightStoryDao(get()) }
     single<OfflineActionRepository> { OfflineActionRepositoryImpl(get()) }
 
 
