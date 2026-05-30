@@ -132,6 +132,7 @@ gha-creds-*.json
 !README.md
 !AGENTS.md
 !CONTRIBUTING.md
+!REVIEW.md
 /*.py
 /*.sh
 
