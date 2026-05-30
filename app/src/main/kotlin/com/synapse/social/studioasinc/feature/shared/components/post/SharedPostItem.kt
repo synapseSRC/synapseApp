@@ -1,5 +1,8 @@
 package com.synapse.social.studioasinc.feature.shared.components.post
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -11,13 +14,17 @@ import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SharedPostItem(
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     post: Post,
     currentProfile: UserProfile? = null,
     postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
     actions: PostActions,
     isExpanded: Boolean = false,
+    parallaxOffset: Float = 0f,
     modifier: Modifier = Modifier
 ) {
 
@@ -54,6 +61,15 @@ fun SharedPostItem(
         }
     }
 
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            modifier.sharedBounds(
+                rememberSharedContentState(key = "post_${post.id}"),
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+        }
+    } else modifier
+
     PostCard(
         state = state,
         postViewStyle = postViewStyle,
@@ -68,8 +84,8 @@ fun SharedPostItem(
         onMediaClick = onMediaClick,
         onOptionsClick = onOptionsClick,
         onPollVote = onPollVote,
-
+        parallaxOffset = parallaxOffset,
         onReactionSelected = { reaction -> actions.onReactionSelected(post, reaction) },
-        modifier = modifier
+        modifier = sharedModifier
     )
 }

@@ -5,6 +5,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -44,8 +47,11 @@ import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.paging.compose.LazyPagingItems
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PostDetailScreen(
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     postId: String,
     rootCommentId: String? = null,
     onNavigateToProfile: (String) -> Unit,
@@ -213,7 +219,17 @@ fun PostDetailScreen(
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            Modifier.sharedBounds(
+                rememberSharedContentState(key = "post_$postId"),
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+        }
+    } else Modifier
+
     Scaffold(
+        modifier = sharedModifier,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { PostDetailTopBar(onNavigateBack) },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },

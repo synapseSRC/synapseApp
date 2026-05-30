@@ -92,6 +92,7 @@ fun PostCard(
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,
     onParentAuthorClick: (() -> Unit)? = null,
+    parallaxOffset: Float = 0f,
     modifier: Modifier = Modifier
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
@@ -213,6 +214,7 @@ fun PostCard(
                     quotedPost = state.post.quotedPost,
                     linkPreviews = state.post.linkPreviews,
                     isExpanded = state.isExpanded,
+                    parallaxOffset = parallaxOffset,
                     modifier = Modifier
                 )
 

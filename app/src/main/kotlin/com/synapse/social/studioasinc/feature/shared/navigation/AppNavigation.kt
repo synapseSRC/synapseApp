@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.fillMaxSize
@@ -374,6 +375,8 @@ fun NavGraphBuilder.postGraph(
     composable<AppDestination.PostDetail> { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.PostDetail>()
                 PostDetailScreen(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@composable,
                     postId = args.postId,
                     rootCommentId = args.commentId,
                     onNavigateBack = { navController.popBackStack() },

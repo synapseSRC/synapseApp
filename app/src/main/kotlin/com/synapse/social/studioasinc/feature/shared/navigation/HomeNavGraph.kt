@@ -1,6 +1,9 @@
 package com.synapse.social.studioasinc.ui.navigation
 
 import android.content.Intent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,8 +46,11 @@ sealed interface HomeDestinations {
     data object CreateReelPlaceholder : HomeDestinations
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeNavGraph(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     navController: NavHostController,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToEditPost: (String) -> Unit,
@@ -65,6 +71,8 @@ fun HomeNavGraph(
     ) {
         composable<HomeDestinations.Feed> {
             FeedScreen(
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = this@composable,
                 onPostClick = { postId -> navController.navigate(HomeDestinations.PostDetail(postId)) },
                 onUserClick = { userId -> onNavigateToProfile(userId) },
                 onCommentClick = { postId -> navController.navigate(HomeDestinations.PostDetail(postId)) },
@@ -102,6 +110,8 @@ fun HomeNavGraph(
         composable<HomeDestinations.PostDetail> { backStackEntry ->
              val args = backStackEntry.toRoute<HomeDestinations.PostDetail>()
              PostDetailScreen(
+                 sharedTransitionScope = sharedTransitionScope,
+                 animatedVisibilityScope = this@composable,
                  postId = args.postId,
                  rootCommentId = args.commentId,
                  onNavigateBack = { navController.popBackStack() },

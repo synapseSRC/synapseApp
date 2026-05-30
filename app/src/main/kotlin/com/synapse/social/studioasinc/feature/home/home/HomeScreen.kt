@@ -3,7 +3,7 @@ package com.synapse.social.studioasinc.ui.home
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +38,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -55,6 +57,8 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.ui.navigation.HomeDestinations
 import com.synapse.social.studioasinc.ui.navigation.HomeNavGraph
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
+import com.synapse.social.studioasinc.feature.shared.theme.DarkPrimary
+import com.synapse.social.studioasinc.feature.shared.theme.glassmorphic
 import com.synapse.social.studioasinc.feature.shared.reels.components.UploadProgressOverlay
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -124,6 +128,11 @@ fun HomeScreen(
             topBar = {
                 if (!isPostDetail) {
                     TopAppBar(
+                        modifier = Modifier.glassmorphic(blurRadius = 40f),
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            scrolledContainerColor = Color.Transparent
+                        ),
                         title = {
                             Text(
                                 text = stringResource(R.string.app_name),
@@ -172,6 +181,8 @@ fun HomeScreen(
             }
         ) { innerPadding ->
             HomeNavGraph(
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
                 navController = navController,
                 onNavigateToProfile = onNavigateToProfile,
                 onNavigateToQuotePost = onNavigateToQuotePost,
@@ -187,12 +198,34 @@ fun HomeScreen(
         }
 
 
+        val infiniteTransition = rememberInfiniteTransition(label = "NavGlow")
+        val glowScale by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.4f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "GlowScale"
+        )
+        val glowAlpha by infiniteTransition.animateFloat(
+            initialValue = 0.2f,
+            targetValue = 0.5f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "GlowAlpha"
+        )
+
         NavigationBar(
+            containerColor = Color.Transparent,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .graphicsLayer {
                     translationY = navBarTranslationY * size.height
                 }
+                .glassmorphic(blurRadius = 40f)
         ) {
             NavigationBarItem(
                 selected = currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Feed>() } == true,
@@ -206,9 +239,18 @@ fun HomeScreen(
                     }
                 },
                 icon = {
+                    val isSelected = currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Feed>() } == true
                     Icon(
-                        imageVector = if (currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Feed>() } == true) Icons.Filled.Home else Icons.Outlined.Home,
-                        contentDescription = stringResource(R.string.home)
+                        imageVector = if (isSelected) Icons.Filled.Home else Icons.Outlined.Home,
+                        contentDescription = stringResource(R.string.home),
+                        modifier = if (isSelected) {
+                            Modifier.drawBehind {
+                                drawCircle(
+                                    color = DarkPrimary.copy(alpha = glowAlpha),
+                                    radius = size.maxDimension * 0.8f * glowScale
+                                )
+                            }
+                        } else Modifier
                     )
                 },
                 label = { Text(stringResource(R.string.home)) }
@@ -226,9 +268,18 @@ fun HomeScreen(
                     }
                 },
                 icon = {
+                    val isSelected = currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Reels>() } == true
                     Icon(
-                        imageVector = if (currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Reels>() } == true) Icons.Filled.PlayCircle else Icons.Outlined.PlayCircle,
-                        contentDescription = stringResource(R.string.reels)
+                        imageVector = if (isSelected) Icons.Filled.PlayCircle else Icons.Outlined.PlayCircle,
+                        contentDescription = stringResource(R.string.reels),
+                        modifier = if (isSelected) {
+                            Modifier.drawBehind {
+                                drawCircle(
+                                    color = DarkPrimary.copy(alpha = glowAlpha),
+                                    radius = size.maxDimension * 0.8f * glowScale
+                                )
+                            }
+                        } else Modifier
                     )
                 },
                 label = { Text(stringResource(R.string.reels)) }
@@ -246,12 +297,21 @@ fun HomeScreen(
                     }
                 },
                 icon = {
+                    val isSelected = currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Notifications>() } == true
                     BadgedBox(
                         badge = { }
                     ) {
                         Icon(
-                            imageVector = if (currentDestination?.hierarchy?.any { it.hasRoute<HomeDestinations.Notifications>() } == true) Icons.Filled.Notifications else Icons.Outlined.Notifications,
-                            contentDescription = stringResource(R.string.notifications)
+                            imageVector = if (isSelected) Icons.Filled.Notifications else Icons.Outlined.Notifications,
+                            contentDescription = stringResource(R.string.notifications),
+                            modifier = if (isSelected) {
+                                Modifier.drawBehind {
+                                    drawCircle(
+                                        color = DarkPrimary.copy(alpha = glowAlpha),
+                                        radius = size.maxDimension * 0.8f * glowScale
+                                    )
+                                }
+                            } else Modifier
                         )
                     }
                 },

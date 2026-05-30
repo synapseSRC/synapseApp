@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -26,6 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.filter
@@ -54,9 +61,11 @@ import com.synapse.social.studioasinc.ui.components.ExpressivePullToRefreshIndic
 import com.synapse.social.studioasinc.feature.stories.tray.StoryTray
 import com.synapse.social.studioasinc.feature.stories.tray.StoryTrayViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun FeedScreen(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     linkViewModel: com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
     viewModel: FeedViewModel = hiltViewModel(),
     storyTrayViewModel: StoryTrayViewModel = hiltViewModel(),
@@ -136,6 +145,8 @@ fun FeedScreen(
         )
     }
 
+    val listState = rememberLazyListState()
+
     LaunchedEffect(isUserRefreshing) {
         if (isUserRefreshing) {
             // Give time for loaders to transition to Loading state
@@ -183,6 +194,7 @@ fun FeedScreen(
 
         androidx.compose.runtime.CompositionLocalProvider(com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadataUseCase provides linkViewModel.getLinkMetadataUseCase) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
@@ -233,12 +245,27 @@ fun FeedScreen(
                 ) { index ->
                     val feedItem = posts[index]
                     if (feedItem != null) {
+                        val itemOffset by remember {
+                            derivedStateOf {
+                                val layoutInfo = listState.layoutInfo
+                                val visibleItem = layoutInfo.visibleItemsInfo.find { it.index == index + 2 } // +2 for header and tray
+                                if (visibleItem != null) {
+                                    val viewPortHeight = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
+                                    val itemCenter = visibleItem.offset + visibleItem.size / 2f
+                                    (itemCenter - viewPortHeight / 2f) / (viewPortHeight / 2f)
+                                } else 0f
+                            }
+                        }
+
                         when (feedItem) {
                             is FeedItem.PostItem -> {
                                 SharedPostItem(
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     post = feedItem.post,
                                     postViewStyle = uiState.postViewStyle,
-                                    actions = actions
+                                    actions = actions,
+                                    parallaxOffset = itemOffset
                                 )
                             }
                             is FeedItem.CommentItem -> {

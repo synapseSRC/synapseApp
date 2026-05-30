@@ -77,6 +77,12 @@ object SynapseColors {
     val StoryColorGreen = 0xFF4CAF50
     val StoryColorPurple = 0xFF9C27B0
 
+    val GlassStroke = 0x33FFFFFF
+    val GlassBackgroundLight = 0x1AFFFFFF
+    val GlassBackgroundDark = 0x1A000000
+    val LuminescentGlow = 0xFFD0BCFF
+    val SilkStroke = 0x1AFFFFFF
+
     val Light = SynapseColorScheme(
         primary = 0xFF6750A4,
         onPrimary = 0xFFFFFFFF,

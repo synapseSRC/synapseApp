@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
@@ -45,7 +46,8 @@ fun MediaContent(
     isVideo: Boolean,
     onMediaClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    postViewStyle: PostViewStyle = PostViewStyle.SWIPE
+    postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
+    parallaxOffset: Float = 0f
 ) {
     if (mediaUrls.isEmpty()) return
     val atmosphereState = LocalUiAtmosphere.current
@@ -69,6 +71,9 @@ fun MediaContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = Sizes.HeightMediaSingle)
+                    .graphicsLayer {
+                        translationY = parallaxOffset * 50f
+                    }
                     .clip(RoundedCornerShape(Sizes.CornerMedium)),
                 contentScale = ContentScale.Fit,
                 onSuccess = { result ->
@@ -122,6 +127,9 @@ fun MediaContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = Sizes.HeightMediaSingle)
+                            .graphicsLayer {
+                                translationY = parallaxOffset * 50f
+                            }
                             .clip(RoundedCornerShape(Sizes.CornerMedium)),
                         contentScale = ContentScale.Fit,
                         onSuccess = { result ->

@@ -67,6 +67,7 @@ fun PostContent(
     quotedPost: Post? = null,
     linkPreviews: List<LinkPreview>? = null,
     isExpanded: Boolean = false,
+    parallaxOffset: Float = 0f,
     modifier: Modifier = Modifier,
     getLinkMetadataUseCase: com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase? = null
 ) {
@@ -156,6 +157,7 @@ fun PostContent(
                 isVideo = isVideo,
                 postViewStyle = postViewStyle,
                 onMediaClick = onMediaClick,
+                parallaxOffset = parallaxOffset,
                 modifier = Modifier
             )
         }
