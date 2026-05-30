@@ -2,6 +2,15 @@
 # General and Operating System Exclusions
 # ---------------------------------------------------
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+Network Trash Folder
+Temporary Items
+.Spotlight-V100
+.Trashes
+thumbs.db
+desktop.ini
 .gradle
 /build
 .idea/
@@ -60,10 +69,26 @@ crashlytics-build.properties
 debug.keystore
 
 # ---------------------------------------------------
+# Environment and Secrets
+# ---------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+*.env.*
+.venv/
+venv/
+ENV/
+env/
+
+# ---------------------------------------------------
 # External Tooling & Logs
 # ---------------------------------------------------
 # Log files
 *.log
+# Dependency directories
+node_modules/
+bower_components/
 # Text files in root
 /*.txt
 # macOS specific
@@ -106,6 +131,8 @@ gha-creds-*.json
 /*.md
 !README.md
 !AGENTS.md
+!CONTRIBUTING.md
+!REVIEW.md
 /*.py
 /*.sh
 
