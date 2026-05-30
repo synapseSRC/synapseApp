@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -150,7 +151,7 @@ fun SynapseTheme(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(colorScheme.background)
-                    .drawWithCache {
+                    .drawBehind {
                         val brush = Brush.radialGradient(
                             colors = listOf(
                                 dominantColor.copy(alpha = if (darkTheme) 0.2f else 0.15f),
@@ -160,9 +161,7 @@ fun SynapseTheme(
                             center = androidx.compose.ui.geometry.Offset(size.width * 0.8f, size.height * 0.2f),
                             radius = size.maxDimension * 0.8f
                         )
-                        onDrawBehind {
-                            drawRect(brush)
-                        }
+                        drawRect(brush)
                     }
                     .background(
                         brush = Brush.verticalGradient(

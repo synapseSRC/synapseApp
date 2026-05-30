@@ -47,7 +47,7 @@ fun MediaContent(
     onMediaClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
-    parallaxOffset: Float = 0f
+    parallaxOffset: () -> Float = { 0f }
 ) {
     if (mediaUrls.isEmpty()) return
     val atmosphereState = LocalUiAtmosphere.current
@@ -72,7 +72,7 @@ fun MediaContent(
                     .fillMaxWidth()
                     .heightIn(max = Sizes.HeightMediaSingle)
                     .graphicsLayer {
-                        translationY = parallaxOffset * 50f
+                        translationY = parallaxOffset() * 50f
                     }
                     .clip(RoundedCornerShape(Sizes.CornerMedium)),
                 contentScale = ContentScale.Fit,
@@ -128,7 +128,7 @@ fun MediaContent(
                             .fillMaxWidth()
                             .heightIn(max = Sizes.HeightMediaSingle)
                             .graphicsLayer {
-                                translationY = parallaxOffset * 50f
+                                translationY = parallaxOffset() * 50f
                             }
                             .clip(RoundedCornerShape(Sizes.CornerMedium)),
                         contentScale = ContentScale.Fit,

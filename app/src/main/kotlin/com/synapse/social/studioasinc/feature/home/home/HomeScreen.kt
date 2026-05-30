@@ -218,6 +218,13 @@ fun HomeScreen(
             label = "GlowAlpha"
         )
 
+        val glowEffect = Modifier.drawBehind {
+            drawCircle(
+                color = DarkPrimary.copy(alpha = glowAlpha),
+                radius = size.maxDimension * 0.8f * glowScale
+            )
+        }
+
         NavigationBar(
             containerColor = Color.Transparent,
             modifier = Modifier
@@ -243,14 +250,7 @@ fun HomeScreen(
                     Icon(
                         imageVector = if (isSelected) Icons.Filled.Home else Icons.Outlined.Home,
                         contentDescription = stringResource(R.string.home),
-                        modifier = if (isSelected) {
-                            Modifier.drawBehind {
-                                drawCircle(
-                                    color = DarkPrimary.copy(alpha = glowAlpha),
-                                    radius = size.maxDimension * 0.8f * glowScale
-                                )
-                            }
-                        } else Modifier
+                        modifier = if (isSelected) glowEffect else Modifier
                     )
                 },
                 label = { Text(stringResource(R.string.home)) }
@@ -272,14 +272,7 @@ fun HomeScreen(
                     Icon(
                         imageVector = if (isSelected) Icons.Filled.PlayCircle else Icons.Outlined.PlayCircle,
                         contentDescription = stringResource(R.string.reels),
-                        modifier = if (isSelected) {
-                            Modifier.drawBehind {
-                                drawCircle(
-                                    color = DarkPrimary.copy(alpha = glowAlpha),
-                                    radius = size.maxDimension * 0.8f * glowScale
-                                )
-                            }
-                        } else Modifier
+                        modifier = if (isSelected) glowEffect else Modifier
                     )
                 },
                 label = { Text(stringResource(R.string.reels)) }
@@ -304,14 +297,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = if (isSelected) Icons.Filled.Notifications else Icons.Outlined.Notifications,
                             contentDescription = stringResource(R.string.notifications),
-                            modifier = if (isSelected) {
-                                Modifier.drawBehind {
-                                    drawCircle(
-                                        color = DarkPrimary.copy(alpha = glowAlpha),
-                                        radius = size.maxDimension * 0.8f * glowScale
-                                    )
-                                }
-                            } else Modifier
+                            modifier = if (isSelected) glowEffect else Modifier
                         )
                     }
                 },

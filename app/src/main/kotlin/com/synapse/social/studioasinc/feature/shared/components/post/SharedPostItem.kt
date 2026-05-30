@@ -24,7 +24,7 @@ fun SharedPostItem(
     postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
     actions: PostActions,
     isExpanded: Boolean = false,
-    parallaxOffset: Float = 0f,
+    parallaxOffset: () -> Float = { 0f },
     modifier: Modifier = Modifier
 ) {
 

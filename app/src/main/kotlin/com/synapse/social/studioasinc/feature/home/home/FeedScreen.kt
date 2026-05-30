@@ -245,8 +245,8 @@ fun FeedScreen(
                 ) { index ->
                     val feedItem = posts[index]
                     if (feedItem != null) {
-                        val itemOffset by remember {
-                            derivedStateOf {
+                        val itemOffset = remember {
+                            {
                                 val layoutInfo = listState.layoutInfo
                                 val visibleItem = layoutInfo.visibleItemsInfo.find { it.index == index + 2 } // +2 for header and tray
                                 if (visibleItem != null) {
