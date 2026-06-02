@@ -40,6 +40,15 @@ import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 
+/**
+ * Implementation of [AuthRepository] that utilizes Supabase Auth for session management
+ * and Postgrest for user profile synchronization.
+ *
+ * This repository handles the full authentication lifecycle, including traditional
+ * email/password flows, OAuth integrations, and account management.
+ *
+ * @property client The [SupabaseClientLib] instance used for authentication and database operations.
+ */
 class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseClient.client) : AuthRepository {
     override val sessionStatus: Flow<AuthSessionStatus> get() = client.auth.sessionStatus.map {
         when (it) {
@@ -51,6 +60,11 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
     private val TAG = "AuthRepository"
 
+    /**
+     * Registers a new user account with the provided email and password.
+     *
+     * @return A [Result] containing the new user's ID if successful.
+     */
     override suspend fun signUp(email: String, password: String): Result<String> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -70,6 +84,12 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Registers a new user and immediately initializes their profile in the database.
+     *
+     * This is a convenience method that chains [signUp] and [ensureProfileExists]
+     * to ensure the application state is consistent immediately after registration.
+     */
     override suspend fun signUpWithProfile(email: String, password: String, username: String): Result<String> {
         return try {
             val signUpResult = signUp(email, password)
@@ -86,6 +106,16 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Verifies if a user profile exists in the 'users' table and creates one if it's missing.
+     *
+     * This synchronization step is crucial for new users or those who signed up via
+     * mechanisms that don't automatically trigger profile creation.
+     *
+     * @param userId The unique identifier for the user.
+     * @param email The user's email address, used to generate a default username if needed.
+     * @param username An optional preferred username.
+     */
     override suspend fun ensureProfileExists(userId: String, email: String, username: String?): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -128,6 +158,11 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Authenticates a user using their email and password credentials.
+     *
+     * @return A [Result] containing the user's ID if authentication is successful.
+     */
     override suspend fun signIn(email: String, password: String): Result<String> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -147,6 +182,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Terminates the current user session and clears local authentication state.
+     */
     override suspend fun signOut(): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -160,6 +198,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Returns the unique identifier of the currently authenticated user, or null if no session exists.
+     */
     override fun getCurrentUserId(): String? {
         return try {
             client.auth.currentUserOrNull()?.id
@@ -169,6 +210,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Returns the email address of the currently authenticated user, or null if no session exists.
+     */
     override fun getCurrentUserEmail(): String? {
         return try {
             client.auth.currentUserOrNull()?.email
@@ -178,6 +222,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Checks if the user's primary email identity has been verified.
+     */
     @OptIn(ExperimentalTime::class)
     override fun isEmailVerified(): Boolean {
         return try {
@@ -189,6 +236,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Forcefully refreshes the current authentication session token.
+     */
     override suspend fun refreshSession(): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -202,6 +252,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Determines if a valid session is currently cached and can be restored.
+     */
     override fun restoreSession(): Boolean {
         return try {
             client.auth.currentSessionOrNull() != null
@@ -211,6 +264,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Sends a password reset link to the specified email address.
+     */
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -224,6 +280,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Resends the verification email for a user who has not yet confirmed their email address.
+     */
     override suspend fun resendVerificationEmail(email: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -237,6 +296,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Updates the authenticated user's password.
+     */
     override suspend fun updatePassword(password: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -252,6 +314,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Updates the authenticated user's phone number.
+     */
     override suspend fun updatePhoneNumber(phone: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -267,6 +332,15 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Generates an authorization URL for OAuth flows.
+     *
+     * This method manually constructs the URL using [URLBuilder] to ensure the correct
+     * parameters are appended for the specific provider and redirect URI.
+     *
+     * @param provider The name of the social provider (e.g., "google", "apple").
+     * @param redirectUrl The URI to redirect to after authentication.
+     */
     override suspend fun getOAuthUrl(provider: String, redirectUrl: String): Result<String> {
         return try {
             // Map string provider to SocialProvider enum
@@ -299,6 +373,11 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Finalizes an OAuth flow by exchanging a code for a session or importing tokens.
+     *
+     * This supports both standard PKCE flows (using `code`) and manual token management.
+     */
     override suspend fun handleOAuthCallback(code: String?, accessToken: String?, refreshToken: String?): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -322,6 +401,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Initiates a native OAuth sign-in flow.
+     */
     override suspend fun signInWithOAuth(provider: SocialProvider, redirectUrl: String): Result<Unit> {
         val supabaseProvider: OAuthProvider = mapSocialProviderToOAuthProvider(provider)
         return try {
@@ -336,6 +418,12 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Authenticates a user specifically using a Google ID token.
+     *
+     * After a successful sign-in, it verifies that the user's profile exists
+     * in the application database.
+     */
     override suspend fun signInWithGoogleIdToken(idToken: String): Result<String> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -363,6 +451,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Links an additional social identity to the currently authenticated account.
+     */
     override suspend fun linkIdentity(provider: SocialProvider): Result<Unit> {
         val supabaseProvider: OAuthProvider = mapSocialProviderToOAuthProvider(provider)
         return try {
@@ -377,6 +468,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Removes a social identity link from the user's account.
+     */
     override suspend fun unlinkIdentity(identityId: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -390,6 +484,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Retrieves a list of social providers currently linked to the user's account.
+     */
     override suspend fun getLinkedIdentities(): Result<List<String>> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -408,6 +505,9 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Updates the primary email address associated with the user's account.
+     */
     override suspend fun updateEmail(email: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
@@ -423,6 +523,12 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         }
     }
 
+    /**
+     * Permanently deletes the user's account and all associated data.
+     *
+     * This invokes a Supabase Edge Function to handle complex data cleanup
+     * across various tables before signing the user out.
+     */
     override suspend fun deleteAccount(): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
