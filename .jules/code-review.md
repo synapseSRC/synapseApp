@@ -31,42 +31,46 @@
   2. Resolved: Wrapped all network and database operations in `withContext(AppDispatchers.IO)` to ensure UI thread safety and non-blocking I/O.
   3. Resolved: Added local cache fallback in `getStories` to allow users to view stories while offline.
 
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/chat/SendMessageUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Critical Issues Found
+- **Key Findings:**
+  1. **ROST-Block: Architectural Drift.** The UseCase directly imports and utilizes `SignalProtocolManager` and `EncryptedMessage` from the `data` package. This violates the Domain Isolation rule in REVIEW.md, which mandates zero framework or data-layer dependencies in the domain. Encryption logic should be abstracted behind an interface in the domain layer or handled within the Repository implementation.
+  2. **Passed: UseCase Structural Integrity.** The class strictly follows the UseCase rule by exposing exactly one public `operator fun invoke()` and maintaining a stateless focus on business logic.
+  3. **Passed: Data Hardening.** The implementation correctly uses the `Result` pattern and explicit try-catch blocks to ensure that encryption or network failures do not result in unhandled exceptions.
+  4. **Nit: Logic Leakage.** JSON payload construction (`kotlinx.serialization`) is performed directly within the UseCase. Moving this to a mapper or the Data layer would further enhance domain purity.
+
 ## app/src/main/kotlin/com/synapse/social/studioasinc/feature/home/home/FeedViewModel.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Passed
-- **Key Findings:**
-  1. Adheres strictly to Unidirectional Data Flow (UDF) by exposing a single immutable `FeedUiState`. It effectively manages optimistic UI updates for reactions and bookmarks by merging a `_modifiedPosts` map with the `PagingData` stream.
-  2. Error handling consistently utilizes `Result` or `Flow<Result>` patterns to prevent crashes. However, several methods (`deletePost`, `toggleComments`) use `e.printStackTrace()`, which deviates from the project's standard of using the centralized `Logger` utility.
-  3. The `posts` Flow uses `cachedIn(viewModelScope)` twice in its chain. While functional, double-caching PagingData is generally redundant and can be optimized by calling it once after all transformations are complete.
-
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/chat/GetConversationsUseCase.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Passed
-- **Key Findings:**
-  1. Perfectly adheres to "The UseCase Rule" with a single `invoke()` operator and no state.
-  2. Maintain strict domain purity with zero platform-specific or framework-specific imports, fulfilling the ROST pillar for architectural isolation.
-  3. Correctly utilizes structured concurrency and returns a `Result` type, ensuring data hardening and preventing unhandled exceptions from leaking to the presentation layer.
-
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SearchRepositoryImpl.kt
 - **Review Strength:** ROST (Max Level)
 - **Status:** Needs Changes
 - **Key Findings:**
-  1. **[rost-block]** Repository operations do not explicitly specify a dispatcher. According to ROST pillars and project standards, network operations must be wrapped in `withContext(AppDispatchers.IO)` to ensure they don't block the calling thread, especially on platform-specific runtimes.
-  2. **[rost-warn]** The use of `runCatching` at the repository level is risky as it catches `CancellationException`. This can lead to "swallowing" coroutine cancellation signals, preventing proper job cleanup and causing subtle bugs in the UI layer.
-  3. **[suggestion]** Inconsistent use of the `sanitizeSearchQuery` utility. While `searchHashtags`, `searchNews`, and `getSuggestedAccounts` use it, `searchPosts` performs manual trimming and length-limiting. Centralizing this logic ensures consistent behavior and security (wildcard escaping) across all search vectors.
+  1. **ROST-Block: Violation of Logging Standards.** The ViewModel uses `e.printStackTrace()` in `deletePost` and `toggleComments`. According to ROST architectural standards (Memory #41), the centralized `Logger` utility must be used instead of `printStackTrace()` in production code.
+  2. **Passed: Unidirectional Data Flow (UDF).** The ViewModel exposes a single immutable `FeedUiState` object and handles events through explicit methods, adhering to the UI Layer hardening rules in REVIEW.md.
+  3. **Passed: Effective State Hardening.** Implements a sophisticated optimistic update mechanism using `_modifiedPosts` to ensure UI responsiveness while background network operations complete, with proper error rollback.
+  4. **Nit: Scope Safety.** While `viewModelScope` is used correctly, some side-effects like `PostEventBus.emit` are called within the same scope as network calls. Consider using a non-cancelling scope for critical event emissions to ensure delivery even if the ViewModel is cleared.
 
-## app/src/main/kotlin/com/synapse/social/studioasinc/feature/inbox/inbox/ChatViewModel.kt
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SupabaseCommentRepository.kt
 - **Review Strength:** ROST (Max Level)
-- **Status:** Needs Refactoring
+- **Status:** Critical Issues Found
 - **Key Findings:**
-  1. **[rost-block]** Violates the Unidirectional Data Flow (UDF) principle defined in REVIEW.md. Instead of exposing a single immutable UI State object, it exposes over 15 individual `StateFlow`s (e.g., `inputText`, `isLoading`, `isParticipantActive`). This increases the risk of inconsistent state and makes the Composable harder to test and reason about.
-  2. **[rost-warn]** Extreme constructor complexity with over 30 injected dependencies. While the use of delegation (e.g., `ChatMessagingDelegate`, `ChatAiDelegate`) is a good attempt to manage this complexity, the sheer volume of dependencies suggests the ViewModel is a "God Object" that should be further decomposed or its initialization logic moved to a factory/provider.
-  3. **[suggestion]** The `handleIncomingMessage` method contains complex merging logic between REST responses and real-time updates. This logic is critical for data integrity (especially for E2EE placeholders) and should be extracted into a pure, testable domain-level mapper or a specialized state reducer to ensure it can be unit-tested in isolation without ViewModel overhead.
+  1. **ROST-Block: Non-standard Dispatcher.** The repository uses `Dispatchers.IO` instead of the required `AppDispatchers.IO` defined in the core utility package. This violates the ROST architectural standards for centralized dispatcher management.
+  2. **ROST-Block: Dangerous Error Handling.** The use of `runCatching` in asynchronous repository logic is forbidden (Memory #47) because it swallows `CancellationException`, which breaks coroutine cancellation hierarchies. Explicit try-catch blocks or a safe wrapper should be used.
+  3. **Passed: Data Layer Hardening.** Correctly utilizes `withContext` to ensure all database and network operations are performed off the main thread.
+  4. **Nit: Dependency Injection.** While it receives `SupabaseClient`, it doesn't utilize a database abstraction (DAO), which makes unit testing harder as it requires mocking the heavy Supabase SDK.
 
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/ai/GenerateSmartRepliesUseCase.kt
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/ai/GeminiAiRepository.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Critical Issues Found
+- **Key Findings:**
+  1. **ROST-Block: Missing Thread Dispatching.** The `generateSmartReplies` method performs a network request via `httpClient.post` without wrapping the call in `withContext(AppDispatchers.IO)`. This violates the ROST standard (Memory #41) that all repository network/DB operations must specify a dispatcher.
+  2. **Warn: Hardcoded Configuration Dependency.** Accesses `SynapseConfig.GEMINI_API_KEY` directly within the repository. While centralizing keys is good, injecting the key or a dedicated `AiConfig` provider would improve testability and align with the ROST principle of inward-pointing dependencies.
+  3. **Passed: KMP Safety.** Uses `io.ktor` and `kotlinx.serialization`, which are platform-agnostic and safe for Kotlin Multiplatform usage in `commonMain`.
+  4. **Nit: Error Mapping.** The repository catches generic `Exception` and returns it directly. Mapping to a domain-specific `Failure` type would provide better decoupling from Ktor-specific exceptions.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/auth/SignUpUseCase.kt
 - **Review Strength:** ROST (Max Level)
 - **Status:** Passed
 - **Key Findings:**
-  1. Follows the single-responsibility principle by delegating AI-specific logic to the `AiRepository`.
-  2. Adheres to the UseCase naming convention and exposes exactly one public `invoke()` operator.
-  3. Correctly uses Kotlin `Result` for error handling, ensuring that AI service failures (e.g., rate limits, network errors) are handled gracefully without crashing the app.
+  1. **Passed: Perfect Domain Purity.** The UseCase has zero external dependencies outside of the domain repository interface and standard library, fulfilling the most stringent ROST requirements.
+  2. **Passed: Single Responsibility.** Implements exactly one `operator fun invoke()` and delegates the complex orchestration of sign-up and profile creation to the repository layer.
+  3. **Passed: Result Pattern.** Correctly propagates the `Result` from the repository, ensuring functional error handling is preserved.
