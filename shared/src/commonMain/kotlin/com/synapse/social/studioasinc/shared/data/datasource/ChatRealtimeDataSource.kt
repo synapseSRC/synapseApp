@@ -33,10 +33,22 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * Data source responsible for managing real-time communication with Supabase.
+ * It utilizes WebSockets to listen for Postgres CDC (Change Data Capture) events,
+ * Presence for user state tracking, and Broadcast for ephemeral messaging.
+ */
 internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
+    /**
+     * Retrieves the current authenticated user's unique identifier.
+     */
     fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
+    /**
+     * Sends an ephemeral typing status update to other participants in a specific chat.
+     * Uses Supabase Broadcast to ensure low-latency delivery without persisting to the database.
+     */
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) =
         withContext(AppDispatchers.IO) {
             try {
@@ -61,11 +73,16 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
+    /**
+     * Subscribes to new messages in a specific chat using Postgres CDC.
+     * @param chatId The unique identifier for the conversation.
+     * @return A [Flow] emitting [MessageDto] objects as they are created in the database.
+     */
     fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
         val channelId = "msgs_flow_${chatId}_${UUIDUtils.randomUUID()}"
         Napier.d("Creating realtime channel for messages: $channelId", tag = "Realtime")
 
-        // Ensure Realtime is connected before trying to subscribe
+        // Ensure the underlying WebSocket connection is active before initializing channels.
         try {
             client.realtime.connect()
         } catch (e: Exception) {
@@ -74,12 +91,13 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         val channel = client.realtime.channel(channelId)
 
-        // Register the Postgres change listener
         val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
+        // We use a Deferred to synchronize the collector start with the server-side subscription.
+        // This prevents a race condition where events might be sent before the client starts listening.
         val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
             changeFlow
@@ -114,6 +132,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             collector.cancel()
             launch {
                 try {
+                    // yield() allows the coroutine to be cancelled if necessary during cleanup.
                     yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -124,6 +143,10 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
     }
 
+    /**
+     * Monitors for any new messages across the entire 'messages' table to update the user's inbox.
+     * Note: Server-side RLS (Row Level Security) ensures the user only receives messages they are authorized to see.
+     */
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
         val channelId = "inbox_flow_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
         Napier.d("Creating realtime channel for inbox: $channelId", tag = "Realtime")
@@ -176,6 +199,10 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
     }
 
+    /**
+     * Subscribes to typing indicators from all participants in a chat using Presence.
+     * Presence provides a shared state that tracks who is currently 'online' or 'typing' in a channel.
+     */
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> = callbackFlow {
         val channelId = "typing_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
         Napier.d("Creating realtime channel for typing status: $channelId", tag = "Realtime")
@@ -245,6 +272,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
     }
 
+    /**
+     * Listens for updates to existing messages (e.g., status changes to 'read' or 'delivered').
+     */
     fun subscribeToReadReceipts(chatId: String): Flow<MessageDto> = callbackFlow {
         val channelId = "read_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
         Napier.d("Creating realtime channel for read receipts: $channelId", tag = "Realtime")
@@ -295,6 +325,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
     }
 
+    /**
+     * Tracks additions and removals of emoji reactions for a specific chat.
+     */
     fun subscribeToMessageReactions(chatId: String): Flow<MessageReactionDto> = callbackFlow {
         val channelId = "react_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
         Napier.d("Creating realtime channel for reactions: $channelId", tag = "Realtime")
