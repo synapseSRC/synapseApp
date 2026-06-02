@@ -1,4 +1,4 @@
-# Codebase Review Logs
+# Code Review Log
 
 ## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/UserRepositoryImpl.kt
 - **Status:** Approved
