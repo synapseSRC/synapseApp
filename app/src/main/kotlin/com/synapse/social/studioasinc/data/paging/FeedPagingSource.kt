@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 
 import kotlinx.serialization.json.*
 
-private val json = Json { ignoreUnknownKeys = true }
+private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
 class FeedPagingSource(
     private val client: io.github.jan.supabase.SupabaseClient,

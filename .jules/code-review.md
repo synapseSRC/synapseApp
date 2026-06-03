@@ -74,3 +74,36 @@
   1. **Passed: Perfect Domain Purity.** The UseCase has zero external dependencies outside of the domain repository interface and standard library, fulfilling the most stringent ROST requirements.
   2. **Passed: Single Responsibility.** Implements exactly one `operator fun invoke()` and delegates the complex orchestration of sign-up and profile creation to the repository layer.
   3. **Passed: Result Pattern.** Correctly propagates the `Result` from the repository, ensuring functional error handling is preserved.
+
+# Code Review Log
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/paging/FeedPagingSource.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Added `coerceInputValues = true` to handle nullable DB columns (`likesCount`, `timestamp`) mapping to non-nullable Kotlin properties with defaults.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/paging/PostPagingSource.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Added `coerceInputValues = true` to prevent serialization failures when DB returns null for fields with Kotlin defaults.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/repository/PostDtos.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Added default `0L` to `timestamp` in `PostSelectDto` to allow coercion from null.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/local/entity/PostEntity.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Added defaults for `isVerified` and `isQuote` to ensure stable mapping and serialization.
+
+## Multiple Files (AI Repositories, DI Modules, Backup Manager)
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Standardized `Json` configuration with `coerceInputValues = true` across the codebase to improve resilience against nullable database fields.
+    2. `rost-warn`: Recommended future refactor to use a centralized `Json` instance via DI.

@@ -120,6 +120,7 @@ object CoreModule {
                     ignoreUnknownKeys = true
                     prettyPrint = true
                     isLenient = true
+                    coerceInputValues = true
                 })
             }
         }

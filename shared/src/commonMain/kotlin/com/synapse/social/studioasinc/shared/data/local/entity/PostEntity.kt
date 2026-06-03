@@ -52,10 +52,10 @@ data class PostEntity(
     val username: String?,
     val displayName: String?,
     val avatarUrl: String?,
-    val isVerified: Boolean,
+    val isVerified: Boolean = false,
     val userPollVote: Int?,
     val metadata: PostMetadata?,
     val quotedPostId: String?,
-    val isQuote: Boolean,
+    val isQuote: Boolean = false,
     val rootPostId: String?
 )

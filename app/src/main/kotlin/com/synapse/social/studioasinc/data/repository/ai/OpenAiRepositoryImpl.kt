@@ -12,7 +12,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class OpenAiRepositoryImpl(private val apiKey: String) : AiRepository {
 
     private val client = OkHttpClient()
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private suspend fun chat(systemPrompt: String, userPrompt: String): Result<String> =
         withContext(Dispatchers.IO) {

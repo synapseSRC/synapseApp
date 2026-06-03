@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
 
-private val json = Json { ignoreUnknownKeys = true }
+private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
 class PostPagingSource(
     private val queryBuilder: PostgrestQueryBuilder

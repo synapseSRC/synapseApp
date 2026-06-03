@@ -22,7 +22,7 @@ data class SettingsBackup(
 class SettingsBackupManager @Inject constructor(
     private val context: Context
 ) {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     suspend fun createBackup(): SettingsBackup = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences("synapse_settings", Context.MODE_PRIVATE)

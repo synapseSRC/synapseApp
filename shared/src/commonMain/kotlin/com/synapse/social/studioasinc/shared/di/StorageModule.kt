@@ -114,6 +114,7 @@ val storageModule = module {
                     ignoreUnknownKeys = true
                     prettyPrint = true
                     isLenient = true
+                    coerceInputValues = true
                 })
             }
         }
