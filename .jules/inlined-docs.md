@@ -5,3 +5,4 @@
 4. shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/datasource/ChatRealtimeDataSource.kt
 5. shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SupabaseAuthRepository.kt
 6. shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/OfflineActionRepositoryImpl.kt
+7. shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/ChatEncryptionHelper.kt
