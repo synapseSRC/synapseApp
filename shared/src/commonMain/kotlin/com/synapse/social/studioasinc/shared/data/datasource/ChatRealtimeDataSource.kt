@@ -103,12 +103,14 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         try {
             channel.subscribe(blockUntilSubscribed = true)
             Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
+        } catch (e: CancellationException) {
+            client.realtime.removeChannel(channel)
+            throw e
         } catch (e: Exception) {
-            if (e !is CancellationException) {
-                Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
-                close(e)
-                return@callbackFlow
-            }
+            Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
+            client.realtime.removeChannel(channel)
+            close(e)
+            return@callbackFlow
         }
 
         val collector = launch(AppDispatchers.IO) {
