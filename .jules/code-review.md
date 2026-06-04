@@ -117,3 +117,50 @@
   1. **ROST-Block: Violation of Data Hardening.** The UseCase uses `@Throws(Exception::class)` and does not return a structured result. According to REVIEW.md, all network/database operations must return a custom functional `Result` or `Resource<T>` instead of throwing unhandled exceptions.
   2. Passed: Single Responsibility. Correctly focuses on a single piece of business logic with exactly one public `invoke()` operator function.
   3. Passed: Domain Isolation. Zero platform-specific imports or framework dependencies, maintaining a pure domain layer.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/feature/inbox/inbox/ChatViewModel.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Needs Changes
+- **Key Findings:**
+  1. ROST-Block: Violation of UI Layer Hardening. The ViewModel exposes over 15 individual StateFlow objects (e.g., _inputText_, _isLoading_, _participantProfile_) instead of a single, consolidated immutable UI State object. This violates the ROST standard (Memory #41) requiring a single source of truth for Unidirectional Data Flow.
+  2. Passed: Structural Complexity Management. Successfully employs a delegation pattern (MessagingDelegate, AiDelegate, etc.) to decompose a highly complex ViewModel into manageable, testable components.
+  3. Passed: Lifecycle Awareness. Correctly implements cleanup logic in _onCleared()_ and _initialize()_ to prevent memory leaks and redundant subscriptions in real-time chat scenarios.
+  4. Nit: Code Cleanliness. Uses several fully qualified class names for UseCases in the constructor instead of standard imports, which clutters the dependency injection site.
+
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SupabaseNotificationRepository.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Critical Issues Found
+- **Key Findings:**
+  1. ROST-Block: Missing Thread Dispatching. Methods like _fetchNotifications_, _markAsRead_, and _updatePreferences_ perform network I/O via the Supabase SDK without wrapping the calls in _withContext(AppDispatchers.IO)_. This violates the ROST requirement that all repository network/DB operations must specify a dispatcher.
+  2. Passed: Security Hardening. Implements robust IDOR (Insecure Direct Object Reference) checks at the repository layer, ensuring that users can only access or modify their own notification data.
+  3. Passed: Real-time Resource Management. Correctly utilizes _callbackFlow_ with _awaitClose_ and _yield()_ to ensure that Supabase channels are properly unsubscribed and coroutine resources are cleaned up.
+  4. Warn: Unused Imports. The file imports _kotlinx.coroutines.Dispatchers_ but should strictly use the centralized _AppDispatchers_ utility to ensure platform-agnostic behavior across KMP targets.
+
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/auth/SignInUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Passed: UseCase Structural Integrity. Strictly follows the ROST "The UseCase Rule" by exposing exactly one public _invoke()_ operator function.
+  2. Passed: Domain Purity. The file contains no framework-specific or platform-specific imports, maintaining perfect isolation between the domain and data layers.
+  3. Passed: Data Hardening. Correctly propagates the _Result_ type from the repository, ensuring that authentication failures are handled functionally rather than through exceptions.
+
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/feature/search/search/SearchViewModel.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Passed: Unidirectional Data Flow (UDF). Correctly utilizes a single _SearchUiState_ immutable data class and a base _updateState_ mechanism, adhering to the UI layer hardening rules.
+  2. Passed: State Hardening. Implements effective search debouncing using _delay()_ and _Job_ cancellation to prevent redundant network calls during rapid user input.
+  3. Passed: Data Mapping. Correctly transforms Data DTOs or Search models into UI-specific Domain models within the ViewModel, ensuring the UI layer remains decoupled from backend structures.
+  4. Nit: Logging. The ViewModel uses _result.onFailure_ but doesn't consistently log errors to the centralized _Logger_ utility, which is recommended for production monitoring.
+
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/FollowRepositoryImpl.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Passed: Data Layer Hardening. Consistently uses _withContext(AppDispatchers.IO)_ for all database and network operations, ensuring UI thread safety and non-blocking execution.
+  2. Passed: Robust Mapping. Implements a dedicated private _mapToUser_ function that safely extracts data from _JsonObject_ and utilizes _SupabaseClient.constructAvatarUrl_, maintaining clean separation of concerns.
+  3. Passed: Defensive Programming. Includes checks like _SupabaseClient.isConfigured()_ to handle edge cases where the client might not be initialized, returning safe empty results instead of crashing.
