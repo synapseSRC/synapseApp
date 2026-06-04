@@ -14,14 +14,26 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
+/**
+ * Helper class that centralizes End-to-End Encryption (E2EE) logic for chat messages.
+ * It manages the lifecycle of Signal Protocol sessions, message decryption with caching,
+ * and identity key initialization/synchronization with the remote server.
+ *
+ * This helper is intended to be used within the repository layer to ensure that
+ * encryption details remain isolated from the domain and UI layers.
+ */
 internal class ChatEncryptionHelper(
     private val signalProtocolManager: SignalProtocolManager?,
     private val dataSource: SupabaseChatDataSource,
     private val cachedMessageDao: CachedMessageDao?
 ) {
 
-    // In-memory cache for decrypted content to avoid re-decryption failures
-    // (especially for PreKeySignalMessages which consume the pre-key on first use)
+    /**
+     * In-memory cache for decrypted content to avoid re-decryption failures.
+     * This is critical for Signal Protocol's Double Ratchet and Pre-Key messages,
+     * where certain messages (like those consuming a one-time pre-key) can only
+     * be decrypted once by the protocol's state machine.
+     */
     val decryptedMessageCache = mutableMapOf<String, String>()
 
     /**
@@ -38,6 +50,17 @@ internal class ChatEncryptionHelper(
         }
     }
 
+    /**
+     * Attempts to decrypt a [MessageDto] if it contains encrypted content.
+     *
+     * The method follows a multi-tier decryption strategy:
+     * 1. Check in-memory cache for immediate retrieval.
+     * 2. Check local database cache for previously decrypted content (persists across restarts).
+     * 3. Perform Signal Protocol decryption if the current user's payload is present.
+     *
+     * @param currentUserId The ID of the authenticated user attempting to read the message.
+     * @return A copy of the [MessageDto] with decrypted content, or placeholder text if decryption fails.
+     */
     suspend fun MessageDto.decryptIfNecessary(currentUserId: String): MessageDto {
         if (signalProtocolManager == null) return this
         val messageId = this.id ?: return this
@@ -81,7 +104,7 @@ internal class ChatEncryptionHelper(
             if (myPayloadElement != null) {
                 val senderId = this.senderId
 
-                // RECIPIENT PATH — Signal Protocol decrypt
+                // Decrypt using the Signal Protocol manager. This will advance the ratchet.
                 val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
                 try {
                     val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
@@ -119,6 +142,14 @@ internal class ChatEncryptionHelper(
         return this
     }
 
+    /**
+     * Ensures that a Signal Protocol session exists for the specified [userId].
+     * If no session exists, it fetches the user's public key bundle from the server
+     * and establishes a new session.
+     *
+     * @param userId The ID of the user to establish a session with.
+     * @throws Exception if the user has not enabled E2EE (no public keys found).
+     */
     suspend fun ensureSession(userId: String) {
         if (signalProtocolManager != null && !signalProtocolManager.hasSession(userId)) {
             Logger.d("E2EE_SESSION: No session exists for user $userId, establishing...", tag = "E2EE")
@@ -137,6 +168,18 @@ internal class ChatEncryptionHelper(
         }
     }
 
+    /**
+     * Initializes E2EE for the current user.
+     *
+     * This method handles several scenarios:
+     * - Initial setup: Generates identity and pre-keys, and uploads the bundle to the server.
+     * - Synchronization: Re-uploads the bundle if remote keys are missing but local keys exist.
+     * - Conflict resolution: If the remote identity key doesn't match the local one (e.g., after a re-install),
+     *   it clears old local sessions and re-uploads the new local bundle to the server.
+     *
+     * @param currentUserId The ID of the authenticated user.
+     * @return A [Result] indicating success or failure of the initialization.
+     */
     suspend fun initializeE2EE(currentUserId: String?): Result<Unit> {
         return try {
             if (signalProtocolManager == null) {
