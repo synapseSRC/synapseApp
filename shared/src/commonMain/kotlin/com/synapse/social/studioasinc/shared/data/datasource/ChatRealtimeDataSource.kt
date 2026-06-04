@@ -59,6 +59,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                 if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
                     try {
                         client.realtime.connect()
+                        yield()
                         channel.subscribe(blockUntilSubscribed = true)
                     } catch (e: Exception) {
                         Napier.e("Error subscribing to typing broadcast channel", e)
@@ -77,6 +78,11 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Subscribes to new messages in a specific chat using Postgres CDC.
      * @param chatId The unique identifier for the conversation.
      * @return A [Flow] emitting [MessageDto] objects as they are created in the database.
+     *
+     * Implementation uses a synchronized subscription pattern: the collector is registered
+     * and signals readiness via [CompletableDeferred] before the WebSocket subscription
+     * is finalized. This prevents a race condition where messages sent immediately after
+     * entering a chat are missed.
      */
     fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
         val channelId = "msgs_flow_${chatId}_${UUIDUtils.randomUUID()}"
@@ -92,39 +98,39 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         // Register the postgres change listener BEFORE subscribing.
         // postgresChangeFlow only registers the filter — it does not start the WebSocket
-        // handshake. The actual subscription happens in channel.subscribe() below.
         val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
-        // Subscribe first so the channel is fully joined on the server before we start
-        // collecting. Any INSERT that arrives after subscribe() completes will be delivered.
-        try {
-            channel.subscribe(blockUntilSubscribed = true)
-            Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
-        } catch (e: CancellationException) {
-            client.realtime.removeChannel(channel)
-            throw e
-        } catch (e: Exception) {
-            Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
-            client.realtime.removeChannel(channel)
-            close(e)
-            return@callbackFlow
+        val subscriptionReady = CompletableDeferred<Unit>()
+        val collector = launch(AppDispatchers.IO) {
+            changeFlow
+                .onStart { subscriptionReady.complete(Unit) }
+                .collect { action ->
+                    try {
+                        val record = action.decodeRecord<MessageDto>()
+                        Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
+                        send(record)
+                    } catch (e: Exception) {
+                        Napier.e("Error decoding realtime message", e, tag = "Realtime")
+                    }
+                }
         }
 
-        val collector = launch(AppDispatchers.IO) {
-            changeFlow.collect { action ->
-                try {
-                    val record = action.decodeRecord<MessageDto>()
-                    Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
-                    send(record)
-                } catch (e: Exception) {
-                    Napier.e("Error decoding realtime message", e, tag = "Realtime")
+        launch(AppDispatchers.IO) {
+            try {
+                subscriptionReady.await()
+                yield()
+                channel.subscribe(blockUntilSubscribed = true)
+                Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
+                    close(e)
                 }
             }
         }
-
         awaitClose {
             Napier.d("Closing realtime channel for messages: $channelId", tag = "Realtime")
             collector.cancel()
@@ -175,6 +181,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
+                yield()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -248,6 +255,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
+                yield()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -301,6 +309,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
+                yield()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
@@ -359,6 +368,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
+                yield()
                 channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
