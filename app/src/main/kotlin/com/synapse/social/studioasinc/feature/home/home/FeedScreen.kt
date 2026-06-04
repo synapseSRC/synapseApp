@@ -177,8 +177,11 @@ fun FeedScreen(
         val isPreLoading = posts.loadState.refresh is LoadState.NotLoading && posts.itemCount == 0 && !posts.loadState.refresh.endOfPaginationReached && !posts.loadState.append.endOfPaginationReached
         val showLoading = (isInitialLoading || isPreLoading) && posts.itemCount == 0 && !isRefreshing
         val showError = posts.loadState.refresh is LoadState.Error && posts.itemCount == 0
-        val showEmpty = posts.loadState.refresh is LoadState.NotLoading && 
-                        posts.itemCount == 0 && 
+        // Only show empty state when pagination is truly exhausted (endOfPaginationReached),
+        // not during the initial load window where itemCount is 0 but data hasn't arrived yet.
+        val showEmpty = posts.loadState.refresh is LoadState.NotLoading &&
+                        posts.itemCount == 0 &&
+                        posts.loadState.refresh.endOfPaginationReached &&
                         !isRefreshing
 
         androidx.compose.runtime.CompositionLocalProvider(com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadataUseCase provides linkViewModel.getLinkMetadataUseCase) {
