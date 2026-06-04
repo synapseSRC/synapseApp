@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
@@ -30,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,7 +48,6 @@ import android.text.TextUtils
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 
@@ -217,7 +215,7 @@ fun QuotedPostCard(
     onPostClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(Sizes.CornerDefault)
+    val shape = RoundedCornerShape(MaterialTheme.shapes.medium.topStart)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -229,14 +227,14 @@ fun QuotedPostCard(
             )
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onPostClick)
-            .padding(Spacing.SmallMedium)
+            .padding(Spacing.Medium)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = post.avatarUrl,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(Sizes.AvatarSmall)
+                    .size(Spacing.Large)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
@@ -249,7 +247,7 @@ fun QuotedPostCard(
             )
             if (post.isVerified) {
                 Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-                // Add verification icon if available
+                // Add verification icon if available, or just skip for now
             }
             Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
             Text(
