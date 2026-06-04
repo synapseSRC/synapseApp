@@ -82,7 +82,6 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val channelId = "msgs_flow_${chatId}_${UUIDUtils.randomUUID()}"
         Napier.d("Creating realtime channel for messages: $channelId", tag = "Realtime")
 
-        // Ensure the underlying WebSocket connection is active before initializing channels.
         try {
             client.realtime.connect()
         } catch (e: Exception) {
@@ -91,38 +90,37 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         val channel = client.realtime.channel(channelId)
 
+        // Register the postgres change listener BEFORE subscribing.
+        // postgresChangeFlow only registers the filter — it does not start the WebSocket
+        // handshake. The actual subscription happens in channel.subscribe() below.
         val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
             table = "messages"
             filter("chat_id", FilterOperator.EQ, chatId)
         }
 
-        // We use a Deferred to synchronize the collector start with the server-side subscription.
-        // This prevents a race condition where events might be sent before the client starts listening.
-        val subscriptionReady = CompletableDeferred<Unit>()
-        val collector = launch(AppDispatchers.IO) {
-            changeFlow
-                .onStart { subscriptionReady.complete(Unit) }
-                .collect { action ->
-                    try {
-                        val record = action.decodeRecord<MessageDto>()
-                        Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
-                        send(record) // Suspending send ensures no data loss
-                    } catch (e: Exception) {
-                        Napier.e("Error decoding realtime message", e, tag = "Realtime")
-                    }
-                }
+        // Subscribe first so the channel is fully joined on the server before we start
+        // collecting. Any INSERT that arrives after subscribe() completes will be delivered.
+        try {
+            channel.subscribe(blockUntilSubscribed = true)
+            Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
+        } catch (e: CancellationException) {
+            client.realtime.removeChannel(channel)
+            throw e
+        } catch (e: Exception) {
+            Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
+            client.realtime.removeChannel(channel)
+            close(e)
+            return@callbackFlow
         }
 
-        launch(AppDispatchers.IO) {
-            try {
-                subscriptionReady.await()
-                // Wait for confirmation of subscription
-                channel.subscribe(blockUntilSubscribed = true)
-                Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
-                    close(e)
+        val collector = launch(AppDispatchers.IO) {
+            changeFlow.collect { action ->
+                try {
+                    val record = action.decodeRecord<MessageDto>()
+                    Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
+                    send(record)
+                } catch (e: Exception) {
+                    Napier.e("Error decoding realtime message", e, tag = "Realtime")
                 }
             }
         }
@@ -132,7 +130,6 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             collector.cancel()
             launch {
                 try {
-                    // yield() allows the coroutine to be cancelled if necessary during cleanup.
                     yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)

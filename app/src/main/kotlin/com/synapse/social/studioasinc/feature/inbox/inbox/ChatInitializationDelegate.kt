@@ -45,9 +45,21 @@ class ChatInitializationDelegate(
 ) {
 
     fun initialize(chatId: String, participantId: String?, currentChatId: String?) {
-        // If re-entering the same chat, only restart subscriptions — skip the heavy init.
+        // If re-entering the same chat, restart subscriptions and reload messages
+        // (cleanup() clears messages before this runs, so they must be reloaded).
         if (chatId != "new" && chatId == currentChatId) {
             subscriptionDelegate.startSubscriptions(chatId)
+            viewModelScope.launch {
+                getMessagesUseCase(chatId).onSuccess { messages ->
+                    messagingDelegate.setMessages(messages)
+                    _isLoading.value = false
+                }.onFailure { e ->
+                    _error.value = e.message
+                    _isLoading.value = false
+                }
+                markMessagesAsReadUseCase(chatId)
+                markMessagesAsDeliveredUseCase(chatId)
+            }
             return
         }
 
@@ -67,14 +79,6 @@ class ChatInitializationDelegate(
         }
 
         viewModelScope.launch {
-            initializeE2EUseCase().onSuccess {
-                _isE2EEReady.value = true
-                Napier.d("E2EE initialization successful", tag = "E2EE")
-            }.onFailure { e ->
-                _isE2EEReady.value = false
-                Napier.e("E2EE initialization failed: ${e.message}", e, tag = "E2EE")
-            }
-
             val actualChatId = if (chatId == "new" && participantId != null) {
                 getOrCreateChatUseCase(participantId).getOrElse {
                     _error.value = "Failed to create chat"
@@ -87,42 +91,59 @@ class ChatInitializationDelegate(
 
             onChatIdResolved(actualChatId)
 
-            getMessagesUseCase(actualChatId).onSuccess { messages ->
-                messagingDelegate.setMessages(messages)
-                _isLoading.value = false
-            }.onFailure { e ->
-                _error.value = e.message
-                _isLoading.value = false
+            // Start subscription immediately — do NOT wait for E2EE init, messages fetch,
+            // or any other network call. Any delay here is a window where messages are lost.
+            subscriptionDelegate.startSubscriptions(actualChatId)
+
+            // All remaining work runs in parallel so none of it blocks the subscription.
+            launch {
+                initializeE2EUseCase().onSuccess {
+                    _isE2EEReady.value = true
+                    Napier.d("E2EE initialization successful", tag = "E2EE")
+                }.onFailure { e ->
+                    _isE2EEReady.value = false
+                    Napier.e("E2EE initialization failed: ${e.message}", e, tag = "E2EE")
+                }
             }
 
-            getChatInfoUseCase(actualChatId).onSuccess { chatDto ->
-                _isGroupChat.value = chatDto?.isGroup == true
-                if (chatDto?.isGroup == true) {
-                    _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
-                    getGroupMembersUseCase(actualChatId).onSuccess { members ->
-                        _isCurrentUserAdmin.value = members.find { it.first.uid == currentUserIdProvider() }?.second == true
+            launch {
+                getMessagesUseCase(actualChatId).onSuccess { messages ->
+                    messagingDelegate.setMessages(messages)
+                    _isLoading.value = false
+                }.onFailure { e ->
+                    _error.value = e.message
+                    _isLoading.value = false
+                }
+                aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
+                markMessagesAsReadUseCase(actualChatId)
+                markMessagesAsDeliveredUseCase(actualChatId)
+            }
+
+            launch {
+                getChatInfoUseCase(actualChatId).onSuccess { chatDto ->
+                    _isGroupChat.value = chatDto?.isGroup == true
+                    if (chatDto?.isGroup == true) {
+                        _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
+                        getGroupMembersUseCase(actualChatId).onSuccess { members ->
+                            _isCurrentUserAdmin.value = members.find { it.first.uid == currentUserIdProvider() }?.second == true
+                        }
                     }
                 }
             }
 
-            getDisappearingModeUseCase(actualChatId).onSuccess { mode ->
-                _disappearingMode.value = mode
+            launch {
+                getDisappearingModeUseCase(actualChatId).onSuccess { mode ->
+                    _disappearingMode.value = mode
+                }
             }
 
-            subscriptionDelegate.startSubscriptions(actualChatId)
-
-            viewModelScope.launch {
-                if (participantId != null) {
+            if (participantId != null) {
+                launch {
                     observeUserActiveStatusUseCase(participantId).collect { isActive ->
                         _isParticipantActive.value = isActive
                     }
                 }
             }
-
-            markMessagesAsReadUseCase(actualChatId)
-            markMessagesAsDeliveredUseCase(actualChatId)
-
-            aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
         }
     }
 }
