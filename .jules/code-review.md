@@ -74,3 +74,46 @@
   1. **Passed: Perfect Domain Purity.** The UseCase has zero external dependencies outside of the domain repository interface and standard library, fulfilling the most stringent ROST requirements.
   2. **Passed: Single Responsibility.** Implements exactly one `operator fun invoke()` and delegates the complex orchestration of sign-up and profile creation to the repository layer.
   3. **Passed: Result Pattern.** Correctly propagates the `Result` from the repository, ensuring functional error handling is preserved.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/chat/GetMessagesUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Passed: UseCase Structural Integrity. The class strictly follows the UseCase rule by exposing exactly one public operator fun invoke() and maintaining a stateless focus on business logic.
+  2. Passed: Domain Isolation. The UseCase depends only on the ChatRepository interface and domain models, with zero framework or data-layer dependencies.
+  3. Passed: Data Hardening. The implementation correctly propagates the Result from the repository, ensuring functional error handling is preserved.
+  4. Nit: Explicit Commenting. Includes a helpful note regarding Signal Protocol decryption logic, preventing redundant decryption attempts that would consume keys.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SearchRepositoryImpl.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Critical Issues Found
+- **Key Findings:**
+  1. **ROST-Block: Missing Thread Dispatching.** All search methods perform network requests via Supabase SDK without wrapping the calls in `withContext(AppDispatchers.IO)`. This violates the ROST standard that all repository network/DB operations must specify a centralized dispatcher.
+  2. **ROST-Block: Dangerous Error Handling.** The use of `runCatching` in asynchronous repository logic is forbidden as it swallows `CancellationException`, which breaks coroutine cancellation hierarchies. Explicit try-catch blocks or a safe wrapper should be used.
+  3. Passed: Data Sanitization. Correctly utilizes `sanitizeSearchQuery` and manual trimming to prevent query injection and ensure consistent filtering.
+  4. Passed: Discovery Pattern. Implements the discovery pattern where absence of a query triggers a fallback to popularity-based sorting (followers/usage count).
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/datasource/ChatRealtimeDataSource.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Passed: Resource Management. Properly implements `awaitClose` in `callbackFlow`, ensuring that Supabase channels are unsubscribed and removed when the flow is cancelled. The use of `yield()` before unsubscription ensures proper coroutine cleanup sequence.
+  2. Passed: Synchronization. Effectively uses `CompletableDeferred` to synchronize the start of flow collection with the `channel.subscribe()` call, preventing race conditions where events might be missed during registration.
+  3. Passed: Concurrency. Correctly utilizes `AppDispatchers.IO` for all long-running or blocking operations, maintaining UI thread safety.
+  4. Passed: Data Hardening. Employs defensive programming with explicit try-catch blocks and `CancellationException` awareness to ensure stability during network or decoding failures.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/presence/UpdatePresenceUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Passed: UseCase Structural Integrity. Strictly adheres to the requirement of having exactly one public `invoke()` operator function.
+  2. Passed: Domain Purity. Contains no platform-specific imports or UI/data framework references, maintaining perfect isolation of business logic.
+  3. Passed: Delegation. Correctly delegates the implementation details to the `PresenceRepository` interface, following the Dependency Inversion Principle.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/story/CreateStoryUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Critical Issues Found
+- **Key Findings:**
+  1. **ROST-Block: Violation of Data Hardening.** The UseCase uses `@Throws(Exception::class)` and does not return a structured result. According to REVIEW.md, all network/database operations must return a custom functional `Result` or `Resource<T>` instead of throwing unhandled exceptions.
+  2. Passed: Single Responsibility. Correctly focuses on a single piece of business logic with exactly one public `invoke()` operator function.
+  3. Passed: Domain Isolation. Zero platform-specific imports or framework dependencies, maintaining a pure domain layer.
