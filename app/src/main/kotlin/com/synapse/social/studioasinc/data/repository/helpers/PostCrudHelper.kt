@@ -8,7 +8,6 @@ import com.synapse.social.studioasinc.data.repository.PostMapper
 import com.synapse.social.studioasinc.data.repository.toInsertDto
 import com.synapse.social.studioasinc.data.repository.toUpdateDto
 import com.synapse.social.studioasinc.data.repository.PostInsertDto
-import com.synapse.social.studioasinc.data.repository.toDomain
 import io.github.jan.supabase.SupabaseClient as JanSupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
@@ -153,28 +152,14 @@ internal class PostCrudHelper(
     suspend fun quotePost(postId: String, text: String): Result<Post> = withContext(Dispatchers.IO) {
         try {
             val userId = client.auth.currentUserOrNull()?.id ?: return@withContext Result.failure(Exception("Not authenticated"))
-
-            val quotedPostResult = getPost(postId)
-            val quotedPost = quotedPostResult.getOrNull()
-
             val post = Post(
                 id = java.util.UUID.randomUUID().toString(),
                 authorUid = userId,
                 postText = text,
                 quotedPostId = postId,
-                isQuote = true,
-                quotedPost = quotedPost
+                isQuote = true
             )
-
-            val result = createPost(post)
-            if (result.isSuccess) {
-                try {
-                    client.postgrest.rpc("increment_post_reshares", mapOf("post_id" to postId))
-                } catch (e: Exception) {
-                    android.util.Log.e(PostRepositoryUtils.TAG, "Optional reshare increment failed", e)
-                }
-            }
-            result
+            createPost(post)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -219,26 +204,11 @@ internal class PostCrudHelper(
                 }
                 model
             }
-
-            if (post != null) {
-                Result.success(post)
-            } else {
-                val fromNetwork = client.from("posts")
-                    .select(columns = Columns.raw("""
-                        *,
-                        users:users!author_uid(uid, username, display_name, avatar, verify),
-                        quoted_post:posts!quoted_post_id(*, users:users!author_uid(uid, username, display_name, avatar, verify))
-                    """.trimIndent())) {
-                        filter { eq("id", postId) }
-                    }.decodeSingleOrNull<com.synapse.social.studioasinc.data.repository.PostSelectDto>()
-
-                val domainPost = fromNetwork?.toDomain(PostRepositoryUtils.Companion::constructMediaUrl, PostRepositoryUtils.Companion::constructAvatarUrl)
-                Result.success(domainPost)
-            }
+            Result.success(post)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.failure(Exception("Error getting post: ${e.message}"))
+            Result.failure(Exception("Error getting post from database: ${e.message}"))
         }
     }
 

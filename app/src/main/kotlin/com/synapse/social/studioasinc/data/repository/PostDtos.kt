@@ -89,7 +89,6 @@ data class PostSelectDto(
     @SerialName("comments_count") val replyCount: Int = 0,
     @SerialName("views_count") val viewsCount: Int = 0,
     @SerialName("reshares_count") val resharesCount: Int = 0,
-    @SerialName("is_reshared") val isReshared: Boolean? = false,
     @SerialName("media_items") val mediaItems: List<MediaItem>? = null,
     @SerialName("has_poll") val hasPoll: Boolean? = null,
     @SerialName("poll_question") val pollQuestion: String? = null,
@@ -217,7 +216,6 @@ fun PostSelectDto.toDomain(constructMediaUrl: (String) -> String, constructAvata
         replyCount = this.replyCount,
         viewsCount = this.viewsCount,
         resharesCount = this.resharesCount,
-        isReshared = this.isReshared ?: false,
         mediaItems = this.mediaItems?.map {
             it.copy(
                 url = if (it.url.startsWith("http")) it.url else constructMediaUrl(it.url),

@@ -39,10 +39,15 @@ class FeedPagingSource(
         return try {
             Log.d("FeedPagingSource", "Loading feed timeline at position: $position, pageSize: $pageSize")
 
+            // Cache-First Strategy (for pagination):
+            // Always fetch position 0 from network to ensure the feed is fresh and real-time updates are seen.
+            // For older posts (position > 0), check the local cache first for smooth 60 FPS scrolling.
             if (position > 0) {
                 val localPostsEntity = postDao.getPostsPaged(pageSize.toLong(), position.toLong())
                 val totalCached = postDao.getPostsCount()
 
+                // Return cached data ONLY if we have enough items to fill the page,
+                // OR if we've reached the end of the cached data.
                 if (localPostsEntity.size == pageSize || (localPostsEntity.isNotEmpty() && position + localPostsEntity.size >= totalCached.toInt() && totalCached.toInt() > 0)) {
                 Log.d("FeedPagingSource", "Cache hit: Loaded ${localPostsEntity.size} feed items from local DB (offset: $position)")
                 val localPosts = localPostsEntity.map { PostMapper.toModel(it) }
@@ -56,6 +61,7 @@ class FeedPagingSource(
             }
             }
 
+            // Fallback to Network if cache has gaps, is empty, or if we are refreshing the top of the feed (position == 0)
             return syncNetworkData(position, pageSize)
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error loading feed items", e)
@@ -70,6 +76,7 @@ class FeedPagingSource(
 
             val currentUserId = client.auth.currentUserOrNull()?.id ?: ""
             val rpcResult = withContext(Dispatchers.IO) {
+                // Use the personalized feed RPC to get ranked post IDs
                 client.postgrest.rpc(
                     function = "get_ranked_post_ids",
                     parameters = buildJsonObject {
@@ -80,7 +87,14 @@ class FeedPagingSource(
                 ).decodeList<JsonObject>()
             }
 
-            val timelineResponse: List<JsonObject> = rpcResult
+            val timelineResponse: List<JsonObject> = rpcResult.map { item ->
+                // Convert RPC result to match the expected timeline structure for the rest of the method
+                buildJsonObject {
+                    put("id", item["post_id"] ?: JsonNull)
+                    put("post_id", item["post_id"] ?: JsonNull)
+                    put("item_type", "post")
+                }
+            }
 
             Log.d("FeedPagingSource", "Loaded ${timelineResponse.size} feed items")
 
@@ -88,7 +102,8 @@ class FeedPagingSource(
                 return LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)
             }
 
-            val postIds = timelineResponse.mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }.distinct()
+            val postIds = timelineResponse.mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull ?: it["id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
+            val commentIds = timelineResponse.filter { it["item_type"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { it["id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
 
             // 1. Fetch full Posts
             val postsMap = if (postIds.isNotEmpty()) {
@@ -97,8 +112,9 @@ class FeedPagingSource(
                         .select(
                             columns = Columns.raw("""
                                 *,
-                                users:users!author_uid(uid, username, display_name, avatar, verify),
-                                quoted_post:posts!quoted_post_id(*, users:users!author_uid(uid, username, display_name, avatar, verify))
+                                users!author_uid(username, display_name, avatar, verify),
+                                latest_comments:posts!in_reply_to_post_id(id, post_text, author_uid, created_at, users!author_uid(username)),
+                                quoted_post:posts!quoted_post_id(*, users!author_uid(username, display_name, avatar, verify))
                             """.trimIndent())
                         ) {
                             filter { isIn("id", postIds) }
@@ -111,26 +127,23 @@ class FeedPagingSource(
                         post.username = userData?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         post.displayName = userData?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         post.avatarUrl = userData?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
-                            SupabaseClient.constructAvatarUrl(avatarPath)
+                            SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
                         }
                         post.isVerified = userData?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
 
-                        // Quoted post handling
-                        jsonElement["quoted_post"]?.jsonObject?.let { qpJson ->
-                            val qpUserData = qpJson["users"]?.jsonObject
-                            post.quotedPost?.let { qp ->
-                                qp.username = qpUserData?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                                qp.displayName = qpUserData?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                                qp.avatarUrl = qpUserData?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
-                                    SupabaseClient.constructAvatarUrl(avatarPath)
-                                }
-                                qp.isVerified = qpUserData?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
+                        val commentsArray = jsonElement["latest_comments"]?.jsonArray
+                        if (!commentsArray.isNullOrEmpty()) {
+                            val latestComment = commentsArray.map { it.jsonObject }
+                                .maxByOrNull { it["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "" }
+
+                            if (latestComment != null) {
+                                post.latestCommentText = latestComment["post_text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                                val commentUser = latestComment["users"]?.jsonObject
+                                post.latestCommentAuthor = commentUser?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                             }
                         }
-
                         post.id to post
                     } catch (e: Exception) {
-                        Log.e("FeedPagingSource", "Error decoding post ${jsonElement["id"]}", e)
                         null
                     }
                 }.toMap()
@@ -143,7 +156,7 @@ class FeedPagingSource(
             val postsWithInteractions = populateUserInteractions(postsWithPolls)
             val enrichedPostsMap = postsWithInteractions.associateBy { it.id }
 
-            // 2. Map Comments (if any in timeline)
+            // 2. Map Comments from timeline response
             val commentsMap = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
                 val id = timelineItem["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                 val userId = timelineItem["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: ""
@@ -156,6 +169,7 @@ class FeedPagingSource(
                 val likeCount = timelineItem["likes_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
                 val commentCount = timelineItem["comments_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
                 
+                // We need to fetch the author details for comments.
                 id to FeedItem.CommentItem(
                     id = id,
                     timestamp = timestamp,
@@ -171,8 +185,8 @@ class FeedPagingSource(
             }.toMap().toMutableMap()
             
             // Fetch users for comments and reshares
-            val reshareUserIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "reshare" }.mapNotNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
             val commentUserIds = commentsMap.values.map { it.userId }
+            val reshareUserIds = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "reshare" }.mapNotNull { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }
             val allUserIds = (commentUserIds + reshareUserIds).distinct()
 
             val userMap = if (allUserIds.isNotEmpty()) {
@@ -191,7 +205,7 @@ class FeedPagingSource(
                     username = user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                     userFullName = user?.get("display_name")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: user?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "",
                     avatarUrl = user?.get("avatar")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { avatarPath ->
-                        SupabaseClient.constructAvatarUrl(avatarPath)
+                        SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarPath)
                     },
                     isVerified = user?.get("verify")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
@@ -199,12 +213,13 @@ class FeedPagingSource(
 
             // Build final unified list
             val feedItems = timelineResponse.mapNotNull { item ->
+                val id = item["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                 val type = item["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-
                 if (type == "post") {
+                    val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: id
                     enrichedPostsMap[postId]?.let { FeedItem.PostItem(it) }
                 } else if (type == "reshare") {
+                    val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                     val resharerId = item["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                     val post = enrichedPostsMap[postId] ?: return@mapNotNull null
                     val resharerUsername = userMap[resharerId]?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
@@ -212,13 +227,12 @@ class FeedPagingSource(
                     val resharedPost = post.copy(resharedByUsername = resharerUsername)
                     FeedItem.PostItem(resharedPost)
                 } else if (type == "comment") {
-                    val id = item["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                     commentsMap[id]
                 } else null
             }
 
             // Insert fetched items into cache
-            val postsToCache = enrichedPostsMap.values.map { PostMapper.toEntity(it) }
+            val postsToCache = postsWithPolls.map { PostMapper.toEntity(it) }
             if (postsToCache.isNotEmpty()) {
                 postDao.insertAll(postsToCache)
             }
@@ -230,6 +244,7 @@ class FeedPagingSource(
             )
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error syncing feed items", e)
+            // If offline/network fails, return whatever is in cache even if it's incomplete
             val fallbackCache = postDao.getPostsPaged(pageSize.toLong(), position.toLong())
             if (fallbackCache.isNotEmpty()) {
                 val fallbackPosts = fallbackCache.map { PostMapper.toModel(it) }
@@ -278,6 +293,7 @@ class FeedPagingSource(
         return try {
             val postIds = posts.map { it.id }
 
+            // Fetch bookmarks
             val favorites = client.from("favorites")
                 .select(Columns.list("post_id")) {
                     filter {
@@ -286,8 +302,9 @@ class FeedPagingSource(
                     }
                 }
                 .decodeList<JsonObject>()
-            val bookmarkedPostIds = favorites.mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }.toSet()
+            val bookmarkedPostIds = favorites.mapNotNull { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }.toSet()
 
+            // Fetch reshares
             val reshares = client.from("reshares")
                 .select(Columns.list("post_id")) {
                     filter {
@@ -296,7 +313,7 @@ class FeedPagingSource(
                     }
                 }
                 .decodeList<JsonObject>()
-            val resharedPostIds = reshares.mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }.toSet()
+            val resharedPostIds = reshares.mapNotNull { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }.toSet()
 
             posts.map { post ->
                 post.copy(
