@@ -418,11 +418,14 @@ class ChatViewModel @Inject constructor(
                 }
                 with(messagingDelegate) { current.replaceById(newMessage.id, mergedMessage) }
             } else {
-                // 2. Check if this resolves a pending optimistic message
+                // 2. Check if this resolves a pending optimistic message.
+                // Match by content first so rapid multi-send doesn't misfire across messages.
+                // Fall back to any same-sender pending temp only when content is encrypted (not yet decrypted).
                 val tempId = messagingDelegate.pendingTempIds.value.firstOrNull { id ->
-                    current.any { it.id == id && it.senderId == newMessage.senderId }
-                    // Additional check: maybe compare content hash or message type?
-                    // For now, if we sent something and a message arrives from us, we assume it might be the resolution.
+                    val tempMsg = current.find { it.id == id } ?: return@firstOrNull false
+                    tempMsg.senderId == newMessage.senderId &&
+                        (tempMsg.content == newMessage.content ||
+                            newMessage.content in encryptedPlaceholders)
                 }
 
                 if (tempId != null && newMessage.senderId == currentUserId) {
