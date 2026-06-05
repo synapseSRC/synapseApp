@@ -57,6 +57,8 @@ internal class ProfilePostsRepositoryImpl(
 
     suspend fun getProfilePosts(userId: String, limit: Int, offset: Int): Result<List<Post>> = try {
         val actualUserId = resolveUserId(userId) ?: return Result.failure(Exception("User not authenticated"))
+
+        // Fetch own posts
         val response = client.from("posts").select(
             columns = Columns.raw("*, users!author_uid($KEY_UID, $KEY_USERNAME, $KEY_AVATAR, $KEY_VERIFY)")
         ) {
@@ -65,8 +67,43 @@ internal class ProfilePostsRepositoryImpl(
             range(offset.toLong(), (offset + limit - 1).toLong())
         }.decodeList<JsonObject>()
 
-        val posts = response.mapNotNull { data -> parsePost(data) }
-        val enrichedPosts = populatePostReactions(posts)
+        val ownPosts = response.mapNotNull { data -> parsePost(data) }
+
+        // Fetch reshared post IDs for this user (paginated)
+        val reshareRows = client.from("reshares").select(
+            columns = Columns.raw("post_id, created_at")
+        ) {
+            filter { eq("user_id", actualUserId) }
+            limit(limit.toLong())
+            range(offset.toLong(), (offset + limit - 1).toLong())
+        }.decodeList<JsonObject>()
+
+        val resharedPostIds = reshareRows.mapNotNull { row ->
+            row["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.contentOrNull else null }
+        }
+
+        val resharedPosts = if (resharedPostIds.isNotEmpty()) {
+            // Fetch resharer's username once
+            val resharerUsername = client.from("users").select(
+                columns = Columns.list(KEY_USERNAME)
+            ) {
+                filter { eq(KEY_UID, actualUserId) }
+            }.decodeSingleOrNull<JsonObject>()
+                ?.get(KEY_USERNAME)?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.contentOrNull else null }
+
+            client.from("posts").select(
+                columns = Columns.raw("*, users!author_uid($KEY_UID, $KEY_USERNAME, $KEY_AVATAR, $KEY_VERIFY)")
+            ) {
+                filter { isIn(KEY_ID, resharedPostIds) }
+            }.decodeList<JsonObject>().mapNotNull { data ->
+                parsePost(data)?.copy(resharedByUsername = resharerUsername, isReshared = true)
+            }
+        } else emptyList()
+
+        // Merge own posts + reshares, sorted by timestamp descending
+        val merged = (ownPosts + resharedPosts).sortedByDescending { it.timestamp }
+
+        val enrichedPosts = populatePostReactions(merged)
         val fullyEnrichedPosts = populatePostPolls(enrichedPosts)
         Result.success(fullyEnrichedPosts)
     } catch (e: Exception) {

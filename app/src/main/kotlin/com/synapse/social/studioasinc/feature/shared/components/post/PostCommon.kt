@@ -75,6 +75,7 @@ object PostUiMapper {
             isBookmarked = post.isBookmarked,
             isReshared = post.isReshared,
             hideLikeCount = post.postHideLikeCount == "true",
+            hideViewsCount = post.postHideViewsCount == "true",
             mediaUrls = mediaUrls,
             isVideo = post.postType == "VIDEO",
             pollQuestion = post.pollQuestion,

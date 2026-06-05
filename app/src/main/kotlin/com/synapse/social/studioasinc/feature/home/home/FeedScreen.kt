@@ -229,6 +229,7 @@ fun FeedScreen(
 
                 items(
                     count = posts.itemCount,
+                    key = posts.itemKey { it.uniqueKey },
                     contentType = posts.itemContentType { it.itemType }
                 ) { index ->
                     val feedItem = posts[index]
