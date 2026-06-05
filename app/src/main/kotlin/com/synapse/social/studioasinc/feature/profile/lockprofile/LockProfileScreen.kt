@@ -1,6 +1,9 @@
 package com.synapse.social.studioasinc.feature.profile.lockprofile
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
@@ -12,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,9 +29,16 @@ fun LockProfileScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
+            val message = if (uiState.isPrivate) {
+                context.getString(R.string.profile_locked_successfully)
+            } else {
+                context.getString(R.string.profile_unlocked_successfully)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             onNavigateBack()
         }
     }
@@ -51,63 +62,70 @@ fun LockProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(24.dp)
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(48.dp))
 
-            val lockIcon: ImageVector = if (uiState.isPrivate) {
-                Icons.Filled.Lock
-            } else {
-                Icons.Outlined.Lock
-            }
-
-            Icon(
-                imageVector = lockIcon,
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = if (uiState.isPrivate) {
-                    stringResource(R.string.profile_is_locked)
+                val lockIcon: ImageVector = if (uiState.isPrivate) {
+                    Icons.Filled.Lock
                 } else {
-                    stringResource(R.string.lock_your_profile)
-                },
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
+                    Icons.Outlined.Lock
+                }
+
+                Icon(
+                    imageVector = lockIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(120.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = if (uiState.isPrivate) {
+                        stringResource(R.string.profile_is_locked)
+                    } else {
+                        stringResource(R.string.lock_your_profile)
+                    },
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.lock_profile_description),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(48.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stringResource(R.string.lock_profile_toggle_label),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Switch(
+                        checked = uiState.isPrivate,
+                        onCheckedChange = { viewModel.toggleLock(it) }
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.lock_profile_description),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.lock_profile_toggle_label),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Switch(
-                    checked = uiState.isPrivate,
-                    onCheckedChange = { viewModel.toggleLock(it) }
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
 
             Button(
                 onClick = { viewModel.save() },
@@ -130,7 +148,9 @@ fun LockProfileScreen(
                 Text(
                     text = error,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
                 )
             }
         }

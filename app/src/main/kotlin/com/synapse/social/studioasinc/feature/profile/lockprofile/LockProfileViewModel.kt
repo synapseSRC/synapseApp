@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,7 +44,7 @@ class LockProfileViewModel @Inject constructor(
             currentUserId = userId
 
             if (userId != null) {
-                getProfileUseCase(userId).collect { result ->
+                getProfileUseCase(userId).take(1).collect { result ->
                     result.onSuccess { profile ->
                         _uiState.update { it.copy(isPrivate = profile.isPrivate, isLoading = false) }
                     }.onFailure { error ->
@@ -61,7 +62,11 @@ class LockProfileViewModel @Inject constructor(
     }
 
     fun save() {
-        val userId = currentUserId ?: return
+        val userId = currentUserId
+        if (userId == null) {
+            _uiState.update { it.copy(error = "User not logged in") }
+            return
+        }
         val isLocked = _uiState.value.isPrivate
 
         viewModelScope.launch {
