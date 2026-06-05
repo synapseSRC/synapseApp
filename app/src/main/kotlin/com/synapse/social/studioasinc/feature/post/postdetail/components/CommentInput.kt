@@ -35,6 +35,7 @@ fun CommentInput(
     modifier: Modifier = Modifier,
     initialValue: String = "",
     userAvatarUrl: String? = null,
+    userDisplayName: String? = null,
     replyToParticipants: List<String> = emptyList(),
     onReplyingToClick: (() -> Unit)? = null,
     focusRequester: FocusRequester = remember { FocusRequester() }
@@ -73,6 +74,7 @@ fun CommentInput(
             com.synapse.social.studioasinc.ui.components.CircularAvatar(
                 imageUrl = userAvatarUrl,
                 contentDescription = "My Avatar",
+                displayName = userDisplayName,
                 size = Sizes.AvatarSmall
             )
 

@@ -476,6 +476,7 @@ private fun PostDetailBottomBar(
             onSend = onSendComment,
             initialValue = uiState.editingComment?.content ?: "",
             userAvatarUrl = uiState.currentUserAvatarUrl,
+            userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },
             onReplyingToClick = if (uiState.replyToParticipants.isNotEmpty()) onReplyingToClick else null,
             focusRequester = focusRequester
