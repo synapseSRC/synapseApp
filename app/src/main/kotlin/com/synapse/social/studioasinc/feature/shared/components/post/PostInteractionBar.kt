@@ -67,6 +67,7 @@ fun PostInteractionBar(
     isBookmarked: Boolean,
     isReshared: Boolean = false,
     hideLikeCount: Boolean = false,
+    hideViewsCount: Boolean = false,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -275,7 +276,7 @@ fun PostInteractionBar(
             }
 
             // Views — only shown when data is available (posts); hidden for replies which have no view count
-            if (viewsCount > 0) {
+            if (viewsCount > 0 && !hideViewsCount) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
