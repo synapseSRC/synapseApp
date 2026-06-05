@@ -14,10 +14,28 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 
+/**
+ * UseCase responsible for sending messages with End-to-End Encryption (E2EE).
+ *
+ * It orchestrates the encryption process using [SignalProtocolManager], ensuring that
+ * messages are separately encrypted for each participant in a conversation before
+ * being persisted and transmitted via the [ChatRepository].
+ */
 class SendMessageUseCase(
     private val repository: ChatRepository,
     private val signalProtocolManager: SignalProtocolManager? = null
 ) {
+    /**
+     * Executes the message sending flow.
+     *
+     * @param chatId The unique identifier of the conversation.
+     * @param content The plaintext content of the message.
+     * @param mediaUrl Optional URL to associated media (e.g., image, video).
+     * @param messageType The category of the message (defaults to "text").
+     * @param expiresAt Optional timestamp for disappearing messages.
+     * @param replyToId Optional ID of the message being replied to.
+     * @return A [Result] containing the sent [Message] on success, or an exception on failure.
+     */
     suspend operator fun invoke(
         chatId: String,
         content: String,
@@ -38,6 +56,7 @@ class SendMessageUseCase(
                 return Result.failure(Exception("Failed to fetch participants for encryption"))
             }
 
+            // Determine recipients: exclude self unless it's a "saved messages" style self-chat
             var otherParticipants = groupMembers.filter { it != currentUserId }
             if (otherParticipants.isEmpty() && groupMembers.isNotEmpty()) {
                 otherParticipants = groupMembers // chatting with self
@@ -52,10 +71,12 @@ class SendMessageUseCase(
             }.toString()
             val contentBytes = jsonPayload.encodeToByteArray()
 
+            // Encrypt the message independently for each participant to support Double Ratchet E2EE
             val payloadMap = coroutineScope {
                 otherParticipants.map { userId ->
                     async {
                         Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
+                        // Ensure a cryptographic session exists with the recipient before encryption
                         repository.ensureSession(userId)
                         val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
                         userId to Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
