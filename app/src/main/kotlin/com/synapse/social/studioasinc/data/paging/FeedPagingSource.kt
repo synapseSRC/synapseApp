@@ -89,14 +89,16 @@ class FeedPagingSource(
                 ).decodeList<JsonObject>()
             }
 
-            val timelineResponse: List<JsonObject> = rpcResult.map { item ->
-                // Convert RPC result to match the expected timeline structure for the rest of the method
-                buildJsonObject {
-                    put("id", item["post_id"] ?: JsonNull)
-                    put("post_id", item["post_id"] ?: JsonNull)
-                    put("item_type", "post")
+            val timelineResponse: List<JsonObject> = rpcResult
+                .distinctBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
+                .map { item ->
+                    // Convert RPC result to match the expected timeline structure for the rest of the method
+                    buildJsonObject {
+                        put("id", item["post_id"] ?: JsonNull)
+                        put("post_id", item["post_id"] ?: JsonNull)
+                        put("item_type", "post")
+                    }
                 }
-            }
 
             Log.d("FeedPagingSource", "Loaded ${timelineResponse.size} feed items")
 
