@@ -69,11 +69,13 @@ internal class ProfilePostsRepositoryImpl(
 
         val ownPosts = response.mapNotNull { data -> parsePost(data) }
 
-        // Fetch reshared post IDs for this user
+        // Fetch reshared post IDs for this user (paginated)
         val reshareRows = client.from("reshares").select(
             columns = Columns.raw("post_id, created_at")
         ) {
             filter { eq("user_id", actualUserId) }
+            limit(limit.toLong())
+            range(offset.toLong(), (offset + limit - 1).toLong())
         }.decodeList<JsonObject>()
 
         val resharedPostIds = reshareRows.mapNotNull { row ->
