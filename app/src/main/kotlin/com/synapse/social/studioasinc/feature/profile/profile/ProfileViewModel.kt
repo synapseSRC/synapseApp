@@ -205,25 +205,55 @@ class ProfileViewModel @Inject constructor(
             val currentUserId = _state.value.currentUserId
             if (currentUserId.isBlank() || currentUserId == userId) return@launch
 
-            _state.update { it.copy(isFollowLoading = true) }
+            _state.update { s ->
+                s.copy(
+                    isFollowLoading = true,
+                    profileState = (s.profileState as? ProfileUiState.Success)?.let { success ->
+                        success.copy(profile = success.profile.copy(followerCount = success.profile.followerCount + 1))
+                    } ?: s.profileState
+                )
+            }
             followUserUseCase(currentUserId, userId).onSuccess {
                 _state.update { it.copy(isFollowing = true, isFollowLoading = false) }
             }.onFailure {
-                _state.update { it.copy(isFollowLoading = false) }
+                // roll back optimistic increment
+                _state.update { s ->
+                    s.copy(
+                        isFollowLoading = false,
+                        profileState = (s.profileState as? ProfileUiState.Success)?.let { success ->
+                            success.copy(profile = success.profile.copy(followerCount = maxOf(0, success.profile.followerCount - 1)))
+                        } ?: s.profileState
+                    )
+                }
             }
         }
     }
 
     fun unfollowUser(userId: String) {
-         viewModelScope.launch {
+        viewModelScope.launch {
             val currentUserId = _state.value.currentUserId
             if (currentUserId.isBlank() || currentUserId == userId) return@launch
 
-            _state.update { it.copy(isFollowLoading = true) }
+            _state.update { s ->
+                s.copy(
+                    isFollowLoading = true,
+                    profileState = (s.profileState as? ProfileUiState.Success)?.let { success ->
+                        success.copy(profile = success.profile.copy(followerCount = maxOf(0, success.profile.followerCount - 1)))
+                    } ?: s.profileState
+                )
+            }
             unfollowUserUseCase(currentUserId, userId).onSuccess {
                 _state.update { it.copy(isFollowing = false, isFollowLoading = false) }
             }.onFailure {
-                _state.update { it.copy(isFollowLoading = false) }
+                // roll back optimistic decrement
+                _state.update { s ->
+                    s.copy(
+                        isFollowLoading = false,
+                        profileState = (s.profileState as? ProfileUiState.Success)?.let { success ->
+                            success.copy(profile = success.profile.copy(followerCount = success.profile.followerCount + 1))
+                        } ?: s.profileState
+                    )
+                }
             }
         }
     }
