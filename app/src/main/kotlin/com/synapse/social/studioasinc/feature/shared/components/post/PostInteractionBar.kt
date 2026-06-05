@@ -192,9 +192,15 @@ fun PostInteractionBar(
             val scale = remember { Animatable(1f) }
             val rotY = remember { Animatable(0f) }
             val rotX = remember { Animatable(0f) }
+            // Track whether this is the first composition so we don't animate on scroll re-entry
+            var previousIsLiked by remember { mutableStateOf(isLiked) }
+            val isFirstComposition = remember { androidx.compose.runtime.mutableStateOf(true) }
 
             LaunchedEffect(isLiked) {
-                if (isLiked) {
+                val justToggled = !isFirstComposition.value && isLiked != previousIsLiked
+                isFirstComposition.value = false
+                previousIsLiked = isLiked
+                if (isLiked && justToggled) {
                     scale.snapTo(1f)
                     rotY.snapTo(0f)
                     rotX.snapTo(0f)
@@ -220,7 +226,7 @@ fun PostInteractionBar(
                         rotX.animateTo(-15f, tween(150))
                         rotX.animateTo(0f, tween(150))
                     }
-                } else {
+                } else if (justToggled) {
                     scale.snapTo(1f)
                     rotY.snapTo(0f)
                     rotX.snapTo(0f)
