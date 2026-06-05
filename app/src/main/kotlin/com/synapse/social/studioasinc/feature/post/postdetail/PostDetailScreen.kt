@@ -251,6 +251,7 @@ fun PostDetailScreen(
             onUserClick = onNavigateToProfile,
             onViewReplies = { },
             onCommentClick = { commentId -> onNavigateToCommentDetail(postId, commentId) },
+            onCommentViewed = { viewModel.trackCommentView(it) },
             onPostLike = { _ -> viewModel.toggleReaction(ReactionType.LIKE) },
             onPostComment = { _ ->
                 scope.launch {
@@ -284,6 +285,7 @@ private fun PostDetailContent(
     onUserClick: (String) -> Unit,
     onViewReplies: (String) -> Unit,
     onCommentClick: (String) -> Unit,
+    onCommentViewed: (String) -> Unit,
     onPostLike: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostComment: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostShare: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
@@ -324,7 +326,7 @@ private fun PostDetailContent(
                     onUserClick = onUserClick,
                     onViewReplies = onViewReplies,
                     onCommentClick = onCommentClick,
-                    onCommentViewed = { viewModel.trackCommentView(it) },
+                    onCommentViewed = onCommentViewed,
                     modifier = Modifier.fillMaxSize(),
                     headerContent = {
                         if (uiState.rootComment != null) {
