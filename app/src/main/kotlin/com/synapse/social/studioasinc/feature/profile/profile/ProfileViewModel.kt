@@ -252,7 +252,7 @@ class ProfileViewModel @Inject constructor(
                 state.copy(
                     posts = state.posts.map {
                         if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) optimisticPost
-                        else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) com.synapse.social.studioasinc.domain.model.FeedItem.PostItem(optimisticPost)
+                        else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) it.copy(post = optimisticPost)
                         else it
                     }
                 )
@@ -271,7 +271,7 @@ class ProfileViewModel @Inject constructor(
                     state.copy(
                         posts = state.posts.map {
                             if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) post
-                            else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) com.synapse.social.studioasinc.domain.model.FeedItem.PostItem(post)
+                            else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) it.copy(post = post)
                             else it
                         }
                     )
