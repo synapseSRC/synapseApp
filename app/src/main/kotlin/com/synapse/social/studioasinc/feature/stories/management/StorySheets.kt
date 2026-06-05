@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.stories.management
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.synapse.social.studioasinc.domain.model.StoryReaction
 import com.synapse.social.studioasinc.domain.model.StoryViewWithUser
 import com.synapse.social.studioasinc.domain.model.User
 import java.time.Duration
@@ -255,6 +257,100 @@ fun StoryOptionsSheet(
                     modifier = Modifier.clickable { onReport() }
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StoryReactionsSheet(
+    reactions: List<StoryReaction>,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.ExtraLarge)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.story_reactions_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+
+            if (reactions.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Sizes.HeightExtraLarge),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.story_no_reactions),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = Spacing.Medium)
+                ) {
+                    items(reactions) { reaction ->
+                        StoryReactionItem(reaction = reaction)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StoryReactionItem(
+    reaction: StoryReaction,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.SmallMedium),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // User info could be fetched or passed here. For now show UI based on storyId/userId
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = reaction.emoji, style = MaterialTheme.typography.titleMedium)
+        }
+
+        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = reaction.userId.take(8), // Placeholder for user display name
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
