@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
@@ -290,26 +291,37 @@ fun MessageBubble(
 
     // UI logic applied carefully matching sender side for sharpness:
     val radius = cornerRadius.dp
-    val shape = if (isFromMe) {
-        when (position) {
-            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, Sizes.CornerSharp, radius)
-            GroupPosition.MIDDLE -> RoundedCornerShape(radius, Sizes.CornerSharp, Sizes.CornerSharp, radius)
-            GroupPosition.LAST -> RoundedCornerShape(radius, Sizes.CornerSharp, radius, radius)
-        }
-    } else {
-        when (position) {
-            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, Sizes.CornerSharp)
-            GroupPosition.MIDDLE -> RoundedCornerShape(Sizes.CornerSharp, radius, radius, Sizes.CornerSharp)
-            GroupPosition.LAST -> RoundedCornerShape(Sizes.CornerSharp, radius, radius, radius)
-        }
-    }
-
     val offsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val threshold = with(density) { Sizes.AvatarDefault.toPx() }
+    val shape = remember(position, isFromMe, radius) {
+        object : androidx.compose.ui.graphics.Shape {
+            override fun createOutline(
+                size: androidx.compose.ui.geometry.Size,
+                layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+                density: androidx.compose.ui.unit.Density
+            ): androidx.compose.ui.graphics.Outline {
+                val sharpCorner = lerp(Sizes.CornerSharp, radius, (offsetX.value / threshold).coerceIn(0f, 1f))
+                val delegate = if (isFromMe) {
+                    when (position) {
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(radius, radius, sharpCorner, radius)
+                        GroupPosition.MIDDLE -> RoundedCornerShape(radius, sharpCorner, sharpCorner, radius)
+                        GroupPosition.LAST -> RoundedCornerShape(radius, sharpCorner, radius, radius)
+                    }
+                } else {
+                    when (position) {
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, sharpCorner)
+                        GroupPosition.MIDDLE -> RoundedCornerShape(sharpCorner, radius, radius, sharpCorner)
+                        GroupPosition.LAST -> RoundedCornerShape(sharpCorner, radius, radius, radius)
+                    }
+                }
+                return delegate.createOutline(size, layoutDirection, density)
+            }
+        }
+    }
 
 
 
