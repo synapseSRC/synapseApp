@@ -40,17 +40,26 @@ class PostDetailRepositoryImpl @Inject constructor(
                         users!author_uid(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
                     """.trimIndent())
                 ) {
-                    filter { eq("id", postId) }
+                    filter {
+                        eq("id", postId)
+                        eq("is_deleted", false)
+                    }
                 }
                 .decodeSingleOrNull<JsonObject>()
 
             if (response == null) {
-                Log.w(TAG, "Post not found: $postId")
+                Log.w(TAG, "Post not found or deleted: $postId")
                 return@withContext Result.failure(Exception("Post not found"))
             }
 
             val post = parsePostFromJson(response)
-            val author = parseUserProfileFromJson(response["users"]?.jsonObject)
+            val usersNode = response["users"]
+            val usersObject = when {
+                usersNode is JsonObject -> usersNode
+                usersNode is JsonArray && usersNode.isNotEmpty() -> usersNode[0].jsonObject
+                else -> null
+            }
+            val author = parseUserProfileFromJson(usersObject)
                 ?: return@withContext Result.failure(Exception("Author not found"))
 
             val currentUserId = client.auth.currentUserOrNull()?.id
