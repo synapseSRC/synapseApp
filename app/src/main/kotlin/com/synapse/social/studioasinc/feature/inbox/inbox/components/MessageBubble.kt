@@ -295,21 +295,31 @@ fun MessageBubble(
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val threshold = with(density) { Sizes.AvatarDefault.toPx() }
-    val swipeProgress = (offsetX.value / threshold).coerceIn(0f, 1f)
-    val sharpCorner = lerp(Sizes.CornerSharp, radius, swipeProgress)
-    val shape = if (isFromMe) {
-        when (position) {
-            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, sharpCorner, radius)
-            GroupPosition.MIDDLE -> RoundedCornerShape(radius, sharpCorner, sharpCorner, radius)
-            GroupPosition.LAST -> RoundedCornerShape(radius, sharpCorner, radius, radius)
-        }
-    } else {
-        when (position) {
-            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, sharpCorner)
-            GroupPosition.MIDDLE -> RoundedCornerShape(sharpCorner, radius, radius, sharpCorner)
-            GroupPosition.LAST -> RoundedCornerShape(sharpCorner, radius, radius, radius)
+    val shape = remember(position, isFromMe, radius) {
+        object : androidx.compose.ui.graphics.Shape {
+            override fun createOutline(
+                size: androidx.compose.ui.geometry.Size,
+                layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+                density: androidx.compose.ui.unit.Density
+            ): androidx.compose.ui.graphics.Outline {
+                val sharpCorner = lerp(Sizes.CornerSharp, radius, (offsetX.value / threshold).coerceIn(0f, 1f))
+                val delegate = if (isFromMe) {
+                    when (position) {
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(radius, radius, sharpCorner, radius)
+                        GroupPosition.MIDDLE -> RoundedCornerShape(radius, sharpCorner, sharpCorner, radius)
+                        GroupPosition.LAST -> RoundedCornerShape(radius, sharpCorner, radius, radius)
+                    }
+                } else {
+                    when (position) {
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, sharpCorner)
+                        GroupPosition.MIDDLE -> RoundedCornerShape(sharpCorner, radius, radius, sharpCorner)
+                        GroupPosition.LAST -> RoundedCornerShape(sharpCorner, radius, radius, radius)
+                    }
+                }
+                return delegate.createOutline(size, layoutDirection, density)
+            }
         }
     }
 
