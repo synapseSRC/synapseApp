@@ -363,7 +363,6 @@ private fun FeedCommentItem(
     val onOptionsClickAction = remember(commentState.post) { { onOptionsClick(commentState.post) } }
     val onPollVote = remember(feedItem.id) { { _: String -> } }
     val onReactionSelected = remember(feedItem.id) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }
-    val onParentAuthorClick = remember(feedItem.id) { { /* Navigate to parent author */ } }
 
     PostCard(
         state = commentState,
@@ -379,7 +378,6 @@ private fun FeedCommentItem(
         onMediaClick = onMediaClickAction,
         onOptionsClick = onOptionsClickAction,
         onPollVote = onPollVote,
-        onReactionSelected = onReactionSelected,
-        onParentAuthorClick = onParentAuthorClick
+        onReactionSelected = onReactionSelected
     )
 }

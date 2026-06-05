@@ -15,6 +15,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
@@ -29,6 +33,7 @@ import com.synapse.social.studioasinc.ui.components.GenderBadge
 import com.synapse.social.studioasinc.ui.components.VerifiedBadge
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.post.postdetail.components.ReplyingToBottomSheet
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -41,10 +46,10 @@ fun PostHeader(
     taggedPeople: List<User> = emptyList(),
     feeling: FeelingActivity? = null,
     locationName: String? = null,
-    replyToUsername: String? = null,
-    onReplyToClick: (() -> Unit)? = null,
+    replyToUsernames: List<String> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+    var showReplyingToSheet by remember { mutableStateOf(false) }
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -167,32 +172,52 @@ fun PostHeader(
             )
         }
 
-        if (replyToUsername != null) {
-            Row(
-                modifier = Modifier,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val replyingToText = androidx.compose.ui.res.stringResource(
-                    com.synapse.social.studioasinc.R.string.replying_to,
-                    ""
-                ).replace("%s", "").trim()
+        if (replyToUsernames.isNotEmpty()) {
+            val visibleCount = 2
+            val visible = replyToUsernames.take(visibleCount)
+            val overflow = replyToUsernames.size - visibleCount
 
-                Text(
-                    text = "$replyingToText ",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "@$replyToUsername",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = if (onReplyToClick != null) {
-                        Modifier.clickable { onReplyToClick() }
-                    } else {
-                        Modifier
+            val annotated = buildAnnotatedString {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                    append(stringResource(R.string.replying_to, "").trimEnd())
+                    append(" ")
+                }
+                visible.forEachIndexed { i, username ->
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                        append("@$username")
                     }
-                )
+                    if (i < visible.size - 1) {
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                            append(", ")
+                        }
+                    }
+                }
+                if (overflow > 0) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                        append(" ")
+                        append(stringResource(R.string.and_n_more, overflow))
+                    }
+                }
             }
+
+            Text(
+                text = annotated,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = if (replyToUsernames.size > visibleCount) {
+                    Modifier.clickable { showReplyingToSheet = true }
+                } else {
+                    Modifier
+                }
+            )
+        }
+
+        if (showReplyingToSheet) {
+            ReplyingToBottomSheet(
+                usernames = replyToUsernames,
+                onDismiss = { showReplyingToSheet = false }
+            )
         }
     }
 }

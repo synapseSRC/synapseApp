@@ -69,7 +69,7 @@ data class PostCardState(
     // Comment-specific fields
     val isComment: Boolean = false,
     val parentCommentId: String? = null,
-    val parentAuthorUsername: String? = null,
+    val replyToUsernames: List<String> = emptyList(),
     val repliesCount: Int = 0,
     val depth: Int = 0,
     val showThreadLine: Boolean = false,
@@ -92,7 +92,6 @@ fun PostCard(
     onOptionsClick: () -> Unit,
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,
-    onParentAuthorClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
@@ -194,8 +193,7 @@ fun PostCard(
                     feeling = state.post.metadata?.feeling,
                     locationName = state.post.locationName,
                     taggedPeople = state.post.metadata?.taggedPeople ?: emptyList(),
-                    replyToUsername = state.parentAuthorUsername,
-                    onReplyToClick = onParentAuthorClick
+                    replyToUsernames = state.replyToUsernames
                 )
 
                 // Memoize conditional parameters to avoid recomputation

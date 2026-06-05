@@ -624,6 +624,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <!-- Inline Reply Accessibility -->
     <string name="cancel_reply">Cancel reply</string>
     <string name="replying_to">Replying to %s</string>
+    <string name="and_n_more">and %d more</string>
     <string name="reply_media_preview">Reply media preview</string>
 
     <!-- Create Post -->
