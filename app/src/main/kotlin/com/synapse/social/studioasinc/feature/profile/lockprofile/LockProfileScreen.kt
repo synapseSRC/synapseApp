@@ -18,9 +18,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +63,7 @@ fun LockProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp)
+                .padding(Spacing.Large)
         ) {
             Column(
                 modifier = Modifier
@@ -71,7 +72,7 @@ fun LockProfileScreen(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.Huge))
 
                 val lockIcon: ImageVector = if (uiState.isPrivate) {
                     Icons.Filled.Lock
@@ -82,11 +83,11 @@ fun LockProfileScreen(
                 Icon(
                     imageVector = lockIcon,
                     contentDescription = null,
-                    modifier = Modifier.size(120.dp),
+                    modifier = Modifier.size(Sizes.AvatarLargeProfile),
                     tint = MaterialTheme.colorScheme.primary
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.Large))
 
                 Text(
                     text = if (uiState.isPrivate) {
@@ -98,7 +99,7 @@ fun LockProfileScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.Medium))
 
                 Text(
                     text = stringResource(R.string.lock_profile_description),
@@ -107,7 +108,7 @@ fun LockProfileScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.Huge))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -125,7 +126,7 @@ fun LockProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.Medium))
 
             Button(
                 onClick = { viewModel.save() },
@@ -134,9 +135,9 @@ fun LockProfileScreen(
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(Sizes.IconLarge),
                         color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
+                        strokeWidth = Sizes.BorderDefault
                     )
                 } else {
                     Text(stringResource(R.string.save))
@@ -144,7 +145,7 @@ fun LockProfileScreen(
             }
 
             uiState.error?.let { error ->
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.Medium))
                 Text(
                     text = error,
                     color = MaterialTheme.colorScheme.error,
