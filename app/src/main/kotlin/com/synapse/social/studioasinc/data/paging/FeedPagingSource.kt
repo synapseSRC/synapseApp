@@ -166,11 +166,11 @@ class FeedPagingSource(
                 val parentCommentId = timelineItem["parent_comment_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 val parentAuthorUsername = timelineItem["parent_author_username"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 val replyToUsernames = timelineItem["reply_to_usernames"]?.jsonArray
-                    ?.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull }
+                    ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
                     ?: listOfNotNull(parentAuthorUsername)
-                val createdAt = timelineItem["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                val timestamp = timelineItem["timestamp"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.longOrNull ?: 0L
-                val likeCount = timelineItem["likes_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
+                val createdAt = timelineItem["created_at"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull
+                val timestamp = timelineItem["timestamp"]?.let { if (it is JsonPrimitive) it else null }?.longOrNull ?: 0L
+                val likeCount = timelineItem["likes_count"]?.let { if (it is JsonPrimitive) it else null }?.intOrNull ?: 0
                 val commentCount = timelineItem["comments_count"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
                 
                 // We need to fetch the author details for comments.

@@ -34,6 +34,7 @@ class CommentRemoteDataSource @Inject constructor(
             reply_to_usernames,
             users!posts_author_uid_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
         """
+        private val MENTION_REGEX = Regex("@([\\w.]+)")
     }
 
     suspend fun fetchComments(postId: String, limit: Int, offset: Int): List<CommentWithUser> = withContext(Dispatchers.IO) {
@@ -116,27 +117,31 @@ class CommentRemoteDataSource @Inject constructor(
         }
 
         // Build reply_to_usernames via a single recursive DB query + inline @mentions
-        val ancestorUsernames = try {
-            val raw = client.postgrest.rpc(
-                "get_thread_usernames",
-                buildJsonObject {
-                    put("start_post_id", parentCommentId ?: postId)
-                    put("root_post_id", postId)
-                }
-            ).data
-            // PostgREST returns scalar array as [[...]] — unwrap first element
-            val json = kotlinx.serialization.json.Json.parseToJsonElement(raw)
-            val arr = (json as? JsonArray)?.firstOrNull()?.jsonArray
-                ?: (json as? JsonArray)
-            arr?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
-        } catch (e: Exception) {
-            Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
+        val ancestorUsernames = if (parentCommentId != null) {
+            try {
+                val raw = client.postgrest.rpc(
+                    "get_thread_usernames",
+                    buildJsonObject {
+                        put("start_post_id", parentCommentId)
+                        put("root_post_id", postId)
+                    }
+                ).data
+                // PostgREST returns scalar array as [[...]] — unwrap first element
+                val json = Json.parseToJsonElement(raw)
+                val arr = (json as? JsonArray)?.firstOrNull()?.jsonArray
+                    ?: (json as? JsonArray)
+                arr?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+            } catch (e: Exception) {
+                Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
+                emptyList()
+            }
+        } else {
             emptyList()
         }
 
         val replyToUsernames = buildSet<String> {
             addAll(ancestorUsernames)
-            Regex("@([\\w.]+)").findAll(content).forEach { add(it.groupValues[1]) }
+            MENTION_REGEX.findAll(content).forEach { add(it.groupValues[1]) }
         }.toList()
 
         val insertData = buildJsonObject {
