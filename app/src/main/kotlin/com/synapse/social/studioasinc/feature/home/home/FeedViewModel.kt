@@ -85,7 +85,6 @@ class FeedViewModel @Inject constructor(
     val posts: Flow<PagingData<FeedItem>> = refreshTrigger.flatMapLatest {
         getFeedPagedUseCase()
     }
-    .cachedIn(viewModelScope)
     .combine(_modifiedPosts) { pagingData, modifications ->
         pagingData.map { feedItem ->
             val modifiedPost = modifications[feedItem.id]

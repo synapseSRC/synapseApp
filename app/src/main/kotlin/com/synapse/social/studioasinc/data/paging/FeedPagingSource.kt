@@ -15,6 +15,8 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 import com.synapse.social.studioasinc.data.repository.PostMapper
@@ -293,27 +295,33 @@ class FeedPagingSource(
         return try {
             val postIds = posts.map { it.id }
 
-            // Fetch bookmarks
-            val favorites = client.from("favorites")
-                .select(Columns.list("post_id")) {
-                    filter {
-                        isIn("post_id", postIds)
-                        eq("user_id", currentUserId)
-                    }
+            val (bookmarkedPostIds, resharedPostIds) = coroutineScope {
+                val bookmarksDeferred = async(Dispatchers.IO) {
+                    client.from("favorites")
+                        .select(Columns.list("post_id")) {
+                            filter {
+                                isIn("post_id", postIds)
+                                eq("user_id", currentUserId)
+                            }
+                        }
+                        .decodeList<JsonObject>()
+                        .mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
+                        .toSet()
                 }
-                .decodeList<JsonObject>()
-            val bookmarkedPostIds = favorites.mapNotNull { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }.toSet()
-
-            // Fetch reshares
-            val reshares = client.from("reshares")
-                .select(Columns.list("post_id")) {
-                    filter {
-                        isIn("post_id", postIds)
-                        eq("user_id", currentUserId)
-                    }
+                val resharesDeferred = async(Dispatchers.IO) {
+                    client.from("reshares")
+                        .select(Columns.list("post_id")) {
+                            filter {
+                                isIn("post_id", postIds)
+                                eq("user_id", currentUserId)
+                            }
+                        }
+                        .decodeList<JsonObject>()
+                        .mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
+                        .toSet()
                 }
-                .decodeList<JsonObject>()
-            val resharedPostIds = reshares.mapNotNull { it["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull }.toSet()
+                Pair(bookmarksDeferred.await(), resharesDeferred.await())
+            }
 
             posts.map { post ->
                 post.copy(
