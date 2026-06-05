@@ -116,10 +116,10 @@ class StoryTrayViewModel @Inject constructor(
         }
 
         val viewerId = currentUserId ?: return
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                storyWithUser.stories.forEach { story ->
-                    story.id?.let { id ->
+        viewModelScope.launch(Dispatchers.IO) {
+            storyWithUser.stories.forEach { story ->
+                story.id?.let { id ->
+                    launch {
                         storyRepository.markAsSeen(id, viewerId)
                     }
                 }

@@ -119,11 +119,17 @@ class StoryViewerViewModel @Inject constructor(
             val reactions = reactionsResult.getOrNull() ?: emptyList()
             val userReaction = reactions.find { it.userId == currentUserId }?.emoji
 
-            _uiState.update {
-                it.copy(
-                    reactionsCount = reactions.size,
-                    userReaction = userReaction
-                )
+            _uiState.update { currentState ->
+                val currentStory = currentState.stories.getOrNull(currentState.currentStoryIndex)
+                if (currentStory?.id == storyId) {
+                    currentState.copy(
+                        reactions = reactions,
+                        reactionsCount = reactions.size,
+                        userReaction = userReaction
+                    )
+                } else {
+                    currentState
+                }
             }
         }
     }
@@ -341,8 +347,10 @@ class StoryViewerViewModel @Inject constructor(
                 val message = "[Story reply] ${currentStory.mediaUrl}\n$replyText"
                 chatRepository.sendMessage(chatId, message)
                 _uiState.update { it.copy(replyText = "", isReplying = false) }
-                resume()
+            } else {
+                _uiState.update { it.copy(error = "Failed to send reply") }
             }
+            resume()
         }
     }
 

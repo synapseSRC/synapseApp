@@ -185,16 +185,20 @@ class StoryRepositoryImpl @Inject constructor(
             }
 
 
-            val seenStoryIds = client.from(TABLE_STORY_VIEWS)
-                .select(columns = Columns.raw("story_id")) {
-                    filter {
-                        eq("viewer_id", currentUserId)
-                        isIn("story_id", stories.mapNotNull { it.id })
+            val seenStoryIds = if (stories.isEmpty()) {
+                emptySet()
+            } else {
+                client.from(TABLE_STORY_VIEWS)
+                    .select(columns = Columns.raw("story_id")) {
+                        filter {
+                            eq("viewer_id", currentUserId)
+                            isIn("story_id", stories.mapNotNull { it.id })
+                        }
                     }
-                }
-                .decodeList<JsonObject>()
-                .mapNotNull { it["story_id"]?.jsonPrimitive?.content }
-                .toSet()
+                    .decodeList<JsonObject>()
+                    .mapNotNull { it["story_id"]?.jsonPrimitive?.content }
+                    .toSet()
+            }
 
             for ((userId, userStories) in storiesByUser) {
                 if (userId == currentUserId) continue

@@ -115,7 +115,7 @@ fun StoryReplyBar(
             placeholder = {
                 Text(
                     text = stringResource(R.string.story_reply_placeholder),
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                    color = Color.White.copy(alpha = 0.6f)
                 )
             },
             colors = TextFieldDefaults.colors(
@@ -124,8 +124,8 @@ fun StoryReplyBar(
                 disabledContainerColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                unfocusedTextColor = MaterialTheme.colorScheme.onPrimary
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = { onSendReply() }),
@@ -137,7 +137,7 @@ fun StoryReplyBar(
                 Icon(
                     imageVector = Icons.Default.Send,
                     contentDescription = stringResource(R.string.cd_send),
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    tint = Color.White
                 )
             }
         }
@@ -617,11 +617,13 @@ fun StoryExpiryCountdown(expiresAt: String) {
         }
     }
 
-    Text(
-        text = stringResource(R.string.story_expires_countdown, remainingTime),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-    )
+    if (remainingTime.isNotEmpty()) {
+        Text(
+            text = stringResource(R.string.story_expires_countdown, remainingTime),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+        )
+    }
 }
 
 private fun calculateRemainingTime(expiresAt: String, context: android.content.Context): String {
