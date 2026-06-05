@@ -74,6 +74,8 @@ fun UserDetailsSection(
         details.githubProfile, details.personalWebsite, details.publicEmail
     ).any { it.isNotBlank() } || details.linkedAccounts.isNotEmpty()
 
+    if (!hasDetails) return
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -143,10 +145,7 @@ fun UserDetailsSection(
                 }
             }
 
-            if (!hasDetails && isOwnProfile) {
-                Spacer(modifier = Modifier.height(Spacing.Small))
-                EmptyDetailsState(onAddClick = onCustomizeClick)
-            }
+
         }
     }
 }
@@ -452,33 +451,6 @@ private fun getPlatformIcon(platform: String): ImageVector {
         "github" -> Icons.Default.Code
         "youtube" -> Icons.Default.PlayCircle
         else -> Icons.Default.Link
-    }
-}
-
-@Composable
-private fun EmptyDetailsState(onAddClick: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.share_more_about_yourself),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(Spacing.Small))
-        TextButton(
-            onClick = onAddClick,
-            modifier = Modifier.minimumInteractiveComponentSize()
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(Sizes.IconMedium)
-            )
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-            Text(stringResource(R.string.add_details))
-        }
     }
 }
 

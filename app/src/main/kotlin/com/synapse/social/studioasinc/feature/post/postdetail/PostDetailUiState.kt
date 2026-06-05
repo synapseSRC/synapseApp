@@ -18,6 +18,7 @@ data class PostDetailUiState(
     val currentUserId: String? = null,
     val commentActionsLoading: Set<String> = emptySet(),
     val currentUserAvatarUrl: String? = null,
+    val currentUserDisplayName: String? = null,
     val refreshTrigger: Int = 0,
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
