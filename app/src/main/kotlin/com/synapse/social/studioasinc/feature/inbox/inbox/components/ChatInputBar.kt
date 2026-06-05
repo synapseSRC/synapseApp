@@ -406,7 +406,7 @@ fun ChatInputBar(
                     ),
                     cursorBrush = SolidColor(Color(0xFF4CAF50)),
                     decorationBox = { innerTextField ->
-                        Box {
+                        Box(contentAlignment = Alignment.CenterStart) {
                             if (inputText.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.chat_type_message),
