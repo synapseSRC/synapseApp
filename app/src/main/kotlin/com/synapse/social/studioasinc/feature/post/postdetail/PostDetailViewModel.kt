@@ -76,7 +76,10 @@ class PostDetailViewModel @Inject constructor(
             
             currentUserId?.let { uid ->
                 userRepository.getUserById(uid).onSuccess { user ->
-                    _uiState.update { it.copy(currentUserAvatarUrl = user?.avatar) }
+                    _uiState.update { it.copy(
+                        currentUserAvatarUrl = user?.avatar,
+                        currentUserDisplayName = user?.displayName ?: user?.username
+                    ) }
                 }
             }
         }

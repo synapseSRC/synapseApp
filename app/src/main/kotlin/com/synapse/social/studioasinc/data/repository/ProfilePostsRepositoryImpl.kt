@@ -82,6 +82,16 @@ internal class ProfilePostsRepositoryImpl(
             row["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.contentOrNull else null }
         }
 
+        // Build a map of post_id -> reshare created_at epoch millis for sort ordering
+        val reshareTimestampMap = reshareRows.associate { row ->
+            val postId = row["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.contentOrNull else null } ?: ""
+            val createdAt = row["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.contentOrNull else null }
+            val epochMs = createdAt?.let {
+                runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull()
+            }
+            postId to epochMs
+        }
+
         val resharedPosts = if (resharedPostIds.isNotEmpty()) {
             // Fetch resharer's username once
             val resharerUsername = client.from("users").select(
@@ -96,11 +106,14 @@ internal class ProfilePostsRepositoryImpl(
             ) {
                 filter { isIn(KEY_ID, resharedPostIds) }
             }.decodeList<JsonObject>().mapNotNull { data ->
-                parsePost(data)?.copy(resharedByUsername = resharerUsername, isReshared = true)
+                val post = parsePost(data) ?: return@mapNotNull null
+                // Use reshare created_at as the sort timestamp so reshares surface at reshare time
+                val sortTimestamp = reshareTimestampMap[post.id] ?: post.timestamp
+                post.copy(resharedByUsername = resharerUsername, isReshared = true, timestamp = sortTimestamp)
             }
         } else emptyList()
 
-        // Merge own posts + reshares, sorted by timestamp descending
+        // Merge own posts + reshares, sorted by reshare/post time descending
         val merged = (ownPosts + resharedPosts).sortedByDescending { it.timestamp }
 
         val enrichedPosts = populatePostReactions(merged)

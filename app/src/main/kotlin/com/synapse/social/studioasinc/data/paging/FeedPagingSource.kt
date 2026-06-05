@@ -90,14 +90,11 @@ class FeedPagingSource(
             }
 
             val timelineResponse: List<JsonObject> = rpcResult
-                .distinctBy { it["post_id"]?.jsonPrimitive?.contentOrNull }
-                .map { item ->
-                    // Convert RPC result to match the expected timeline structure for the rest of the method
-                    buildJsonObject {
-                        put("id", item["post_id"] ?: JsonNull)
-                        put("post_id", item["post_id"] ?: JsonNull)
-                        put("item_type", "post")
-                    }
+                .distinctBy {
+                    // Reshares must use their own id (not post_id) to allow the same post reshared by different users
+                    val type = it["item_type"]?.jsonPrimitive?.contentOrNull
+                    if (type == "reshare") "reshare:${it["id"]?.jsonPrimitive?.contentOrNull}"
+                    else it["post_id"]?.jsonPrimitive?.contentOrNull
                 }
 
             Log.d("FeedPagingSource", "Loaded ${timelineResponse.size} feed items")

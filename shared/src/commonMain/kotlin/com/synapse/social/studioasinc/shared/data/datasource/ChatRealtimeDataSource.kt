@@ -343,9 +343,10 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         } catch (e: Exception) {}
 
         val channel = client.realtime.channel(channelId)
+        // message_reactions has no chat_id column — subscribe to all changes and rely on RLS
+        // to scope events to the authenticated user's accessible messages.
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "message_reactions"
-            filter("chat_id", FilterOperator.EQ, chatId)
         }
 
         val subscriptionReady = CompletableDeferred<Unit>()

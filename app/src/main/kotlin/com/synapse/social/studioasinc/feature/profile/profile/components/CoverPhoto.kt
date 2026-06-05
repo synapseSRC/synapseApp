@@ -130,6 +130,7 @@ fun CoverPhotoWithProfile(
     scrollOffset: Float = 0f,
     isOwnProfile: Boolean = false,
     hasStory: Boolean = false,
+    displayName: String? = null,
     onProfileImageClick: () -> Unit = {},
     onCoverClick: () -> Unit = {},
     coverHeight: Dp = Sizes.HeightExtraLarge,
@@ -161,6 +162,7 @@ fun CoverPhotoWithProfile(
                 status = status,
                 hasStory = hasStory,
                 isOwnProfile = isOwnProfile,
+                displayName = displayName,
                 onClick = onProfileImageClick
             )
         }
@@ -176,6 +178,7 @@ fun ProfileImageWithRing(
     status: UserStatus? = null,
     hasStory: Boolean = false,
     isOwnProfile: Boolean = false,
+    displayName: String? = null,
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -259,7 +262,7 @@ fun ProfileImageWithRing(
         ) {
             com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
                 avatarUrl = avatar,
-                displayName = null,
+                displayName = displayName,
                 size = size,
                 modifier = Modifier.fillMaxSize()
             )

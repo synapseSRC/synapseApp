@@ -188,6 +188,7 @@ fun ProfileHeader(
                 status = status,
                 hasStory = hasStory,
                 isOwnProfile = isOwnProfile,
+                displayName = name ?: username,
                 onClick = onProfileImageClick,
                 modifier = Modifier.border(avatarBorderWidth, MaterialTheme.colorScheme.surface, CircleShape)
             )
