@@ -7,6 +7,7 @@ import com.synapse.social.studioasinc.domain.model.UserStatus
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
@@ -114,18 +115,27 @@ class CommentRemoteDataSource @Inject constructor(
             postId
         }
 
-        // Build reply_to_usernames: author of direct parent + any @mentions in content
-        val replyToUsernames = buildSet<String> {
-            val parentId = parentCommentId ?: postId
-            client.from("posts")
-                .select(Columns.raw("users!posts_author_uid_fkey(username)")) {
-                    filter { eq("id", parentId) }
+        // Build reply_to_usernames via a single recursive DB query + inline @mentions
+        val ancestorUsernames = try {
+            val raw = client.postgrest.rpc(
+                "get_thread_usernames",
+                buildJsonObject {
+                    put("start_post_id", parentCommentId ?: postId)
+                    put("root_post_id", postId)
                 }
-                .decodeSingleOrNull<JsonObject>()
-                ?.get("users")?.jsonObject
-                ?.get("username")?.jsonPrimitive?.contentOrNull
-                ?.let { add(it) }
+            ).data
+            // PostgREST returns scalar array as [[...]] — unwrap first element
+            val json = kotlinx.serialization.json.Json.parseToJsonElement(raw)
+            val arr = (json as? JsonArray)?.firstOrNull()?.jsonArray
+                ?: (json as? JsonArray)
+            arr?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+        } catch (e: Exception) {
+            Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
+            emptyList()
+        }
 
+        val replyToUsernames = buildSet<String> {
+            addAll(ancestorUsernames)
             Regex("@([\\w.]+)").findAll(content).forEach { add(it.groupValues[1]) }
         }.toList()
 
