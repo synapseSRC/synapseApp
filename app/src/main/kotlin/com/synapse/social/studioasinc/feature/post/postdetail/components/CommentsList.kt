@@ -44,6 +44,7 @@ fun CommentsList(
     modifier: Modifier = Modifier,
     headerContent: @Composable () -> Unit = {}
 ) {
+    val viewedCommentIds = remember { mutableSetOf<String>() }
 
     LazyColumn(
         modifier = modifier.fillMaxSize()
@@ -86,7 +87,9 @@ fun CommentsList(
             val comment = comments[index]
             if (comment != null) {
                 LaunchedEffect(comment.id) {
-                    onCommentViewed?.invoke(comment.id)
+                    if (viewedCommentIds.add(comment.id)) {
+                        onCommentViewed?.invoke(comment.id)
+                    }
                 }
                 val postCardState = PostUiMapper.toPostCardState(
                     comment = comment,

@@ -122,9 +122,17 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
+    private val pendingViewedCommentIds = mutableSetOf<String>()
+    private var flushViewsJob: kotlinx.coroutines.Job? = null
+
     fun trackCommentView(commentId: String) {
-        viewModelScope.launch {
-            postDetailRepository.incrementCommentViewCount(commentId)
+        pendingViewedCommentIds.add(commentId)
+        flushViewsJob?.cancel()
+        flushViewsJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(2_000)
+            val batch = pendingViewedCommentIds.toList()
+            pendingViewedCommentIds.clear()
+            batch.forEach { postDetailRepository.incrementCommentViewCount(it) }
         }
     }
 

@@ -177,25 +177,35 @@ fun PostHeader(
             val visible = replyToUsernames.take(visibleCount)
             val overflow = replyToUsernames.size - visibleCount
 
-            val annotated = buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                    append(stringResource(R.string.replying_to, "").trimEnd())
-                    append(" ")
-                }
+            // Build the usernames string first so we can insert it into the localized template
+            val usernamesStr = buildString {
                 visible.forEachIndexed { i, username ->
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                        append("@$username")
-                    }
-                    if (i < visible.size - 1) {
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            append(", ")
+                    append("@$username")
+                    if (i < visible.size - 1) append(", ")
+                }
+                if (overflow > 0) append(" ${stringResource(R.string.and_n_more, overflow)}")
+            }
+            val fullStr = stringResource(R.string.replying_to, usernamesStr)
+            val usernamesStart = fullStr.indexOf(usernamesStr)
+
+            val annotated = buildAnnotatedString {
+                append(fullStr)
+                if (usernamesStart >= 0) {
+                    // Color prefix (before usernames) as onSurfaceVariant
+                    addStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant), 0, usernamesStart)
+                    // Color each @username span as primary
+                    var searchFrom = usernamesStart
+                    visible.forEach { username ->
+                        val tag = "@$username"
+                        val idx = fullStr.indexOf(tag, searchFrom)
+                        if (idx >= 0) {
+                            addStyle(SpanStyle(color = MaterialTheme.colorScheme.primary), idx, idx + tag.length)
+                            searchFrom = idx + tag.length
                         }
                     }
-                }
-                if (overflow > 0) {
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                        append(" ")
-                        append(stringResource(R.string.and_n_more, overflow))
+                    // Color "and N more" as onSurfaceVariant
+                    if (overflow > 0) {
+                        addStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant), searchFrom, fullStr.length)
                     }
                 }
             }
