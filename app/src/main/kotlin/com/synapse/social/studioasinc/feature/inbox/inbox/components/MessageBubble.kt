@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -290,26 +291,27 @@ fun MessageBubble(
 
     // UI logic applied carefully matching sender side for sharpness:
     val radius = cornerRadius.dp
-    val shape = if (isFromMe) {
-        when (position) {
-            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, Sizes.CornerSharp, radius)
-            GroupPosition.MIDDLE -> RoundedCornerShape(radius, Sizes.CornerSharp, Sizes.CornerSharp, radius)
-            GroupPosition.LAST -> RoundedCornerShape(radius, Sizes.CornerSharp, radius, radius)
-        }
-    } else {
-        when (position) {
-            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, Sizes.CornerSharp)
-            GroupPosition.MIDDLE -> RoundedCornerShape(Sizes.CornerSharp, radius, radius, Sizes.CornerSharp)
-            GroupPosition.LAST -> RoundedCornerShape(Sizes.CornerSharp, radius, radius, radius)
-        }
-    }
-
     val offsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val threshold = with(density) { Sizes.AvatarDefault.toPx() }
+    val swipeProgress = (offsetX.value / threshold).coerceIn(0f, 1f)
+    val sharpCorner = lerp(Sizes.CornerSharp, radius, swipeProgress)
+    val shape = if (isFromMe) {
+        when (position) {
+            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
+            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, sharpCorner, radius)
+            GroupPosition.MIDDLE -> RoundedCornerShape(radius, sharpCorner, sharpCorner, radius)
+            GroupPosition.LAST -> RoundedCornerShape(radius, sharpCorner, radius, radius)
+        }
+    } else {
+        when (position) {
+            GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
+            GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, sharpCorner)
+            GroupPosition.MIDDLE -> RoundedCornerShape(sharpCorner, radius, radius, sharpCorner)
+            GroupPosition.LAST -> RoundedCornerShape(sharpCorner, radius, radius, radius)
+        }
+    }
 
 
 
