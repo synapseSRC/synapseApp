@@ -29,7 +29,7 @@ internal fun ProfileMoreMenuSection(
             onShareProfile = { viewModel.showShareSheet() },
             onViewAs = { viewModel.showViewAsSheet() },
             onLockProfile = {
-                profile?.let { viewModel.lockProfile(!it.isPrivate) }
+                viewModel.showLockProfileScreen()
             },
             onQrCode = { viewModel.showQrCode() },
             onSettings = onNavigateToSettings,

@@ -90,7 +90,8 @@ private fun com.synapse.social.studioasinc.data.model.UserProfile.toDomain(): Do
         personalWebsite = personalWebsite,
         publicEmail = publicEmail,
         pronouns = pronouns,
-        gender = gender?.let { runCatching { Gender.valueOf(it.uppercase()) }.getOrNull() }
+        gender = gender?.let { runCatching { Gender.valueOf(it.uppercase()) }.getOrNull() },
+        isPrivate = isPrivate
     )
 
 internal fun DomainUserProfile.toData(): com.synapse.social.studioasinc.data.model.UserProfile =
@@ -117,5 +118,6 @@ internal fun DomainUserProfile.toData(): com.synapse.social.studioasinc.data.mod
         personalWebsite = personalWebsite,
         publicEmail = publicEmail,
         pronouns = pronouns,
-        gender = gender?.name?.lowercase()
+        gender = gender?.name?.lowercase(),
+        isPrivate = isPrivate
     )
