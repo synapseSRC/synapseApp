@@ -263,17 +263,6 @@ internal fun ProfileContent(
                             )
 
                             Spacer(modifier = Modifier.height(Spacing.Medium))
-
-                            FollowingSection(
-                                users = state.followingList,
-                                selectedFilter = FollowingFilter.ALL,
-                                onFilterSelected = { },
-                                onUserClick = { user -> onNavigateToUserProfile(user.id) },
-                                onSeeAllClick = onNavigateToFollowing,
-                                modifier = Modifier.padding(horizontal = Spacing.Medium)
-                            )
-
-                            Spacer(modifier = Modifier.height(Spacing.Medium))
                         }
                     }
                 }
