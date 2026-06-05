@@ -65,6 +65,7 @@ fun ProfileScreen(
     onNavigateToChat: (String, String?, String?) -> Unit = { _, _, _ -> },
     onNavigateToStoryCreator: () -> Unit = {},
     onNavigateToQuotePost: (String) -> Unit = {},
+    onNavigateToLockProfile: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -121,6 +122,13 @@ fun ProfileScreen(
 
     LaunchedEffect(userId) {
         viewModel.loadProfile(userId)
+    }
+
+    LaunchedEffect(state.navigateToLockProfile) {
+        if (state.navigateToLockProfile) {
+            onNavigateToLockProfile()
+            viewModel.hideLockProfileScreen()
+        }
     }
 
     Scaffold(

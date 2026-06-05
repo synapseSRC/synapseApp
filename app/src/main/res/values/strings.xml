@@ -1405,6 +1405,15 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="see_as_specific_person">See as a specific person</string>
     <string name="view_as_title">View As</string>
 
+    <!-- Lock Profile Screen -->
+    <string name="lock_profile_title">Lock Profile</string>
+    <string name="lock_your_profile">Lock Your Profile</string>
+    <string name="profile_is_locked">Profile is Locked</string>
+    <string name="lock_profile_description">When your profile is locked, only your followers can see your posts, stories, and profile details. New followers need your approval.</string>
+    <string name="lock_profile_toggle_label">Lock Profile</string>
+    <string name="profile_locked_successfully">Profile locked successfully</string>
+    <string name="profile_unlocked_successfully">Profile unlocked successfully</string>
+
 
     <!-- File Picker -->
     <string name="picker_category_media">Media</string>

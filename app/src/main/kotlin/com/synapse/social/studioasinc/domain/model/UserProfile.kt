@@ -61,6 +61,7 @@ data class UserProfile(
     @SerialName("public_email") val publicEmail: String? = null,
     @SerialName("public_phone") val publicPhone: String? = null,
     @SerialName("preferred_communication") val preferredCommunication: String? = null,
+    @SerialName("is_private") val isPrivate: Boolean = false,
 
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null

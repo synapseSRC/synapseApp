@@ -45,6 +45,8 @@ import com.synapse.social.studioasinc.feature.stories.viewer.StoryViewerViewMode
 import com.synapse.social.studioasinc.feature.stories.creator.StoryCreatorActivity
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileViewModel
+import com.synapse.social.studioasinc.feature.profile.lockprofile.LockProfileScreen
+import com.synapse.social.studioasinc.feature.profile.lockprofile.LockProfileViewModel
 import com.synapse.social.studioasinc.ui.settings.SettingsNavHost
 import kotlinx.serialization.Serializable
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatScreen
@@ -256,10 +258,20 @@ fun NavGraphBuilder.profileGraph(
                     onNavigateToStoryCreator = {
                         context.startActivity(Intent(context, StoryCreatorActivity::class.java))
                     },
+                    onNavigateToLockProfile = {
+                        navController.navigate(AppDestination.LockProfile)
+                    },
                     viewModel = viewModel
                 )
             }
-    composable<AppDestination.EditProfile> {
+            composable<AppDestination.LockProfile> {
+                val viewModel: LockProfileViewModel = hiltViewModel()
+                LockProfileScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.EditProfile> {
                 val viewModel: EditProfileViewModel = hiltViewModel()
 
                 val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle

@@ -85,7 +85,8 @@ data class ProfileScreenState(
     val blockError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
-    val summaryError: String? = null
+    val summaryError: String? = null,
+    val navigateToLockProfile: Boolean = false
 )
 
 @HiltViewModel
@@ -357,6 +358,14 @@ class ProfileViewModel @Inject constructor(
 
     fun toggleMoreMenu() {
         _state.update { it.copy(showMoreMenu = !it.showMoreMenu) }
+    }
+
+    fun showLockProfileScreen() {
+        _state.update { it.copy(navigateToLockProfile = true, showMoreMenu = false) }
+    }
+
+    fun hideLockProfileScreen() {
+        _state.update { it.copy(navigateToLockProfile = false) }
     }
 
     fun switchContentFilter(filter: ProfileContentFilter) {

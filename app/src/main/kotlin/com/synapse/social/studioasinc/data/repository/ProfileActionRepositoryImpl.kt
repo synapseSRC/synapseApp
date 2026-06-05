@@ -10,7 +10,7 @@ class ProfileActionRepositoryImpl {
 
     suspend fun lockProfile(userId: String, isLocked: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            supabase.from("profiles")
+            supabase.from("users")
                 .update(mapOf("is_private" to isLocked)) {
                     filter { eq("id", userId) }
                 }
@@ -22,7 +22,7 @@ class ProfileActionRepositoryImpl {
 
     suspend fun archiveProfile(userId: String, isArchived: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            supabase.from("profiles")
+            supabase.from("users")
                 .update(mapOf("is_archived" to isArchived)) {
                     filter { eq("id", userId) }
                 }
