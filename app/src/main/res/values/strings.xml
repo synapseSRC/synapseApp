@@ -427,6 +427,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="error_edit_too_old">This message is too old to edit (>48 hours)</string>
     <string name="error_edit_empty">Message content cannot be empty</string>
     <string name="error_edit_not_found">Message not found</string>
+    <string name="error_post_not_found">This post is unavailable or has been deleted.</string>
     <string name="error_edit_no_network">Edit queued. Will be applied when online.</string>
     <string name="success_edit">Message edited successfully</string>
 

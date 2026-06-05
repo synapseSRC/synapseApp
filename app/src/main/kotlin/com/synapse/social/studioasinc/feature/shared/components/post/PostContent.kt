@@ -80,13 +80,14 @@ fun PostContent(
 
             val context = LocalContext.current
             val colorOnSurface = MaterialTheme.colorScheme.onSurface
+            val colorOnSurfaceArgb = remember(colorOnSurface) { colorOnSurface.toArgb() }
 
             Box {
                 AndroidView(
                     modifier = Modifier.fillMaxWidth(),
                     factory = { ctx ->
                         TextView(ctx).apply {
-                            setTextColor(colorOnSurface.toArgb())
+                            setTextColor(colorOnSurfaceArgb)
                             textSize = 16f
                             movementMethod = android.text.method.LinkMovementMethod.getInstance()
                         }
@@ -100,7 +101,7 @@ fun PostContent(
                             }
                             textView.tag = text
                         }
-                        textView.setTextColor(colorOnSurface.toArgb())
+                        textView.setTextColor(colorOnSurfaceArgb)
                         textView.maxLines = if (showFullText) Int.MAX_VALUE else 10
                         textView.ellipsize = if (showFullText) null else TextUtils.TruncateAt.END
 

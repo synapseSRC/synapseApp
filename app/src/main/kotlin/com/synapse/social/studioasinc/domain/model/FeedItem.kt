@@ -10,11 +10,12 @@ sealed class FeedItem {
     abstract val commentCount: Int
     abstract val isLiked: Boolean
     
-    val uniqueKey: String
+    open val uniqueKey: String
         get() = "$itemType:$id"
 
     data class PostItem(
-        val post: Post
+        val post: Post,
+        val reshareId: String? = null
     ) : FeedItem() {
         override val id = post.id
         override val timestamp = post.timestamp
@@ -24,6 +25,8 @@ sealed class FeedItem {
         override val likeCount = post.getTotalReactionsCount()
         override val commentCount = post.replyCount
         override val isLiked = post.hasUserReacted() || post.userReaction == ReactionType.LIKE
+        override val uniqueKey: String
+            get() = if (reshareId != null) "reshare:$reshareId" else "post:$id"
     }
 
     data class CommentItem(

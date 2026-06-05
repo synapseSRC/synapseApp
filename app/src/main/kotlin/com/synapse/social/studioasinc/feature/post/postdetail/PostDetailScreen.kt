@@ -310,8 +310,11 @@ private fun PostDetailContent(
             }
         } else {
             val postDetail = uiState.post
-            if (postDetail != null) {
-                CommentsList(
+            if (postDetail == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.error_post_not_found))
+                }
+            } else CommentsList(
                     comments = pagingItems,
                     commentActionsLoading = uiState.commentActionsLoading,
                     onReplyClick = onReplyClick,
@@ -419,7 +422,6 @@ private fun PostDetailContent(
                         }
                     }
                 )
-            }
         }
     }
 }
