@@ -5,6 +5,9 @@ import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -44,17 +47,9 @@ class SendMessageUseCase(
         val currentUserId = repository.getCurrentUserId()
             ?: return Result.failure(Exception("Not logged in"))
 
-        // If SignalProtocolManager is unavailable, send plaintext directly.
         if (signalProtocolManager == null) {
-            Napier.w("E2EE_ENCRYPT: SignalProtocolManager unavailable, sending plaintext", tag = "E2EE")
-            return repository.sendMessage(
-                chatId = chatId,
-                content = content,
-                mediaUrl = mediaUrl,
-                messageType = messageType,
-                expiresAt = expiresAt,
-                replyToId = replyToId
-            )
+            Napier.e("E2EE_ENCRYPT: SignalProtocolManager is null — E2EE not initialized", tag = "E2EE")
+            return Result.failure(Exception("E2EE not initialized. Cannot send message."))
         }
 
         return try {
@@ -77,27 +72,29 @@ class SendMessageUseCase(
             }.toString()
             val contentBytes = jsonPayload.encodeToByteArray()
 
-            // Encrypt for each recipient. If any recipient hasn't set up E2EE keys,
-            // fall back to sending plaintext so the message is never silently dropped.
-            val payloadMap = mutableMapOf<String, JsonElement>()
-            for (userId in otherParticipants) {
-                try {
-                    Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
-                    repository.ensureSession(userId)
-                    val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
-                    payloadMap[userId] = Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
-                } catch (e: Exception) {
-                    // Recipient has no E2EE keys — fall back to plaintext for the whole message.
-                    Napier.w("E2EE_ENCRYPT: Recipient $userId has no E2EE keys (${e.message}), falling back to plaintext", tag = "E2EE")
-                    return repository.sendMessage(
-                        chatId = chatId,
-                        content = content,
-                        mediaUrl = mediaUrl,
-                        messageType = messageType,
-                        expiresAt = expiresAt,
-                        replyToId = replyToId
-                    )
-                }
+            // Encrypt concurrently for all recipients. Capture per-recipient failures without
+            // cancelling the whole coroutineScope — null signals a failed encryption for that user.
+            val payloadMap: Map<String, JsonElement> = coroutineScope {
+                otherParticipants.map { userId ->
+                    async {
+                        try {
+                            Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
+                            repository.ensureSession(userId)
+                            val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
+                            userId to Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
+                        } catch (e: Exception) {
+                            Napier.w("E2EE_ENCRYPT: Failed to encrypt for $userId: ${e.message}", tag = "E2EE")
+                            null
+                        }
+                    }
+                }.awaitAll().filterNotNull().toMap()
+            }
+
+            // Refuse to send if any recipient's encryption failed — avoids partial-plaintext leaks.
+            if (payloadMap.size < otherParticipants.size) {
+                return Result.failure(
+                    Exception("Encryption failed for one or more recipients. Message not sent.")
+                )
             }
 
             val encryptedPayload = JsonObject(payloadMap).toString()
