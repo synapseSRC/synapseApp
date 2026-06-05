@@ -2,6 +2,18 @@
 
 All contributors and AI agents must follow these standards without exception.
 
+> **⚠️ MANDATORY — Agents MUST do this before starting ANY task:**
+>
+> 1. **Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) in full** — branching strategy (`develop` base, `feature/` prefix), commit format (Conventional Commits), and PR submission requirements.
+> 2. **Read [`REVIEW.md`](./REVIEW.md) in full** — ROST-level review pillars, deep-dive checkpoints, severity matrix (`rost-block` / `rost-warn` / `suggestion` / `nit`), and comment conventions.
+>
+> **These are not suggestions.** Agents that skip this step will produce non-compliant output that will be rejected:
+> - PRs targeting `main` directly → rejected (must target `develop`)
+> - Commits not following Conventional Commits format → rejected
+> - Code with `rost-block` violations (business logic in UI, platform imports in `commonMain`, unhandled exceptions) → rejected
+>
+> If CONTRIBUTING.md or REVIEW.md conflict with anything in this file, **CONTRIBUTING.md and REVIEW.md win**.
+
 ---
 
 ## Architecture
