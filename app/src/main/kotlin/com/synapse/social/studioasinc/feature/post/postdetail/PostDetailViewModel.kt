@@ -122,6 +122,12 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
+    fun trackCommentView(commentId: String) {
+        viewModelScope.launch {
+            postDetailRepository.incrementCommentViewCount(commentId)
+        }
+    }
+
     fun refreshComments() {
         val postId = currentPostId ?: return
         viewModelScope.launch {

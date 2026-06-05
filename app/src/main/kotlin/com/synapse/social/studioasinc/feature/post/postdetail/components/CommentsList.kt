@@ -40,6 +40,7 @@ fun CommentsList(
     onShowOptions: (CommentWithUser) -> Unit,
     onUserClick: (String) -> Unit,
     onShareClick: ((String) -> Unit)? = null,
+    onCommentViewed: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier,
     headerContent: @Composable () -> Unit = {}
 ) {
@@ -84,7 +85,9 @@ fun CommentsList(
         items(comments.itemCount) { index ->
             val comment = comments[index]
             if (comment != null) {
-                // X (Twitter) style: Flat list, zero indentation.
+                LaunchedEffect(comment.id) {
+                    onCommentViewed?.invoke(comment.id)
+                }
                 val postCardState = PostUiMapper.toPostCardState(
                     comment = comment,
                     parentAuthorUsername = null,

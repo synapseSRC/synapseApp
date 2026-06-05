@@ -324,6 +324,7 @@ private fun PostDetailContent(
                     onUserClick = onUserClick,
                     onViewReplies = onViewReplies,
                     onCommentClick = onCommentClick,
+                    onCommentViewed = { viewModel.trackCommentView(it) },
                     modifier = Modifier.fillMaxSize(),
                     headerContent = {
                         if (uiState.rootComment != null) {
