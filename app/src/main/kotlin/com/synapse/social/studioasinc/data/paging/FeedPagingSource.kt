@@ -227,7 +227,7 @@ class FeedPagingSource(
                     val resharerUsername = userMap[resharerId]?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
 
                     val resharedPost = post.copy(resharedByUsername = resharerUsername)
-                    FeedItem.PostItem(resharedPost)
+                    FeedItem.PostItem(resharedPost, reshareId = id)
                 } else if (type == "comment") {
                     commentsMap[id]
                 } else null
