@@ -8,6 +8,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
@@ -25,13 +28,12 @@ import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.ui.components.shimmer
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.domain.model.StoryPrivacy
 import com.synapse.social.studioasinc.domain.model.StoryWithUser
 import com.synapse.social.studioasinc.domain.model.User
 import com.synapse.social.studioasinc.feature.shared.theme.ProfileColors
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +89,7 @@ fun StoryTray(
                         isAddButton = false,
                         hasUnseen = false,
                         onClick = onMyStoryClick,
+                        privacy = latestStory?.privacy,
                         modifier = Modifier.clip(MaterialTheme.shapes.large)
                     )
                 } else {
@@ -125,6 +128,7 @@ private fun StoryCard(
     isAddButton: Boolean,
     hasUnseen: Boolean,
     onClick: () -> Unit,
+    privacy: StoryPrivacy? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -247,14 +251,51 @@ private fun StoryCard(
                 }
 
 
-                Text(
-                    text = if (isAddButton) stringResource(R.string.story_create) else title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Column(
                     modifier = Modifier.align(Alignment.BottomStart)
-                )
+                ) {
+                    if (!isAddButton && privacy != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                            shape = RoundedCornerShape(Spacing.Tiny),
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = when (privacy) {
+                                        StoryPrivacy.PUBLIC -> stringResource(R.string.story_privacy_public)
+                                        StoryPrivacy.FOLLOWERS -> stringResource(R.string.story_privacy_followers)
+                                        StoryPrivacy.ALL_FRIENDS -> stringResource(R.string.story_privacy_close_friends)
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Icon(
+                                    imageVector = when (privacy) {
+                                        StoryPrivacy.PUBLIC -> Icons.Default.Public
+                                        StoryPrivacy.FOLLOWERS -> Icons.Default.Groups
+                                        StoryPrivacy.ALL_FRIENDS -> Icons.Default.Lock
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = if (isAddButton) stringResource(R.string.story_create) else title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

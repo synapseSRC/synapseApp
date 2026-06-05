@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -39,7 +40,109 @@ import java.time.Duration
 import java.time.Instant
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.stories.management.StoryOptionsSheet
+import com.synapse.social.studioasinc.feature.stories.management.StoryReactionsSheet
 import com.synapse.social.studioasinc.feature.stories.management.ViewerListSheet
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+
+@Composable
+fun QuickReactionsRow(
+    userReaction: String?,
+    onEmojiClick: (String) -> Unit
+) {
+    val emojis = listOf("❤️", "😂", "😮", "😢", "😡")
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        emojis.forEach { emoji ->
+            val isSelected = userReaction == emoji
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        else Color.Transparent
+                    )
+                    .clickable { onEmojiClick(emoji) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = emoji,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StoryReplyBar(
+    replyText: String,
+    onReplyTextChange: (String) -> Unit,
+    onSendReply: () -> Unit,
+    onFocus: () -> Unit,
+    onBlur: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+            .padding(horizontal = Spacing.Medium),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextField(
+            value = replyText,
+            onValueChange = onReplyTextChange,
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) onFocus()
+                    else onBlur()
+                },
+            placeholder = {
+                Text(
+                    text = stringResource(R.string.story_reply_placeholder),
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = KeyboardActions(onSend = { onSendReply() }),
+            singleLine = true
+        )
+
+        if (replyText.isNotEmpty()) {
+            IconButton(onClick = onSendReply) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = stringResource(R.string.cd_send),
+                    tint = Color.White
+                )
+            }
+        }
+    }
+}
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -137,26 +240,73 @@ fun StoryViewerScreen(
 
                 if (uiState.isOwnStory) {
                     val viewsCount = uiState.viewers.size
-                    TextButton(
-                        onClick = {
-                            currentStory.id?.let { id ->
-                                viewModel.loadViewers(id)
-                                viewModel.showViewersSheet()
-                            }
-                        },
+                    val reactionsCount = uiState.reactionsCount
+
+                    Row(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = Spacing.Medium)
+                            .padding(bottom = Spacing.Medium),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Visibility,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary
+                        TextButton(
+                            onClick = {
+                                currentStory.id?.let { id ->
+                                    viewModel.loadViewers(id)
+                                    viewModel.showViewersSheet()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                            Text(
+                                text = stringResource(R.string.seen_by_count, viewsCount),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+
+                        if (reactionsCount > 0) {
+                            Spacer(modifier = Modifier.width(Spacing.Medium))
+                            TextButton(
+                                onClick = { viewModel.showReactionsSheet() }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.story_reactions_count, reactionsCount),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(Spacing.Medium)
+                    ) {
+                        QuickReactionsRow(
+                            userReaction = uiState.userReaction,
+                            onEmojiClick = { emoji ->
+                                if (uiState.userReaction == emoji) {
+                                    viewModel.removeReaction()
+                                } else {
+                                    viewModel.reactToStory(emoji)
+                                }
+                            }
                         )
-                        Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-                        Text(
-                            text = stringResource(R.string.seen_by_count, viewsCount),
-                            color = MaterialTheme.colorScheme.onPrimary
+
+                        Spacer(modifier = Modifier.height(Spacing.Small))
+
+                        StoryReplyBar(
+                            replyText = uiState.replyText,
+                            onReplyTextChange = { viewModel.updateReplyText(it) },
+                            onSendReply = { viewModel.sendReply() },
+                            onFocus = { viewModel.pause() },
+                            onBlur = { viewModel.resume() }
                         )
                     }
                 }
@@ -180,7 +330,9 @@ fun StoryViewerScreen(
                     StoryUserHeader(
                         user = uiState.user,
                         storyTime = currentStory.createdAt,
-                        onClose = onClose
+                        expiresAt = currentStory.expiresAt,
+                        onClose = onClose,
+                        onMore = { viewModel.showOptionsSheet() }
                     )
                 }
 
@@ -190,6 +342,53 @@ fun StoryViewerScreen(
                         isLoading = uiState.isLoadingViewers,
                         onDismiss = { viewModel.hideViewersSheet() },
                         onUserClick = { /* no-op for now */ }
+                    )
+                }
+
+                if (uiState.showReactionsSheet) {
+                    StoryReactionsSheet(
+                        reactions = uiState.reactions,
+                        onDismiss = { viewModel.hideReactionsSheet() }
+                    )
+                }
+
+                if (uiState.showOptionsSheet) {
+                    StoryOptionsSheet(
+                        isOwnStory = uiState.isOwnStory,
+                        onDismiss = { viewModel.hideOptionsSheet() },
+                        onDelete = {
+                            viewModel.hideOptionsSheet()
+                            viewModel.showDeleteConfirmation()
+                        },
+                        onReport = {
+                            viewModel.hideOptionsSheet()
+                            // Report logic
+                        },
+                        onMute = {
+                            viewModel.hideOptionsSheet()
+                            // Mute logic
+                        }
+                    )
+                }
+
+                if (uiState.showDeleteConfirmation) {
+                    AlertDialog(
+                        onDismissRequest = { viewModel.hideDeleteConfirmation() },
+                        title = { Text(stringResource(R.string.story_delete_title)) },
+                        text = { Text(stringResource(R.string.story_delete_body)) },
+                        confirmButton = {
+                            TextButton(
+                                onClick = { currentStory.id?.let { viewModel.confirmDeleteStory(it) } },
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text(stringResource(R.string.m_delete))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { viewModel.hideDeleteConfirmation() }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        }
                     )
                 }
             }
@@ -327,7 +526,9 @@ fun StoryProgressBar(
 fun StoryUserHeader(
     user: User?,
     storyTime: String?,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onMore: () -> Unit = {},
+    expiresAt: String? = null
 ) {
     Row(
         modifier = Modifier
@@ -363,11 +564,18 @@ fun StoryUserHeader(
 
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = user?.displayName ?: user?.username ?: stringResource(R.string.error_unknown_short),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = user?.displayName ?: user?.username ?: stringResource(R.string.error_unknown_short),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+
+                if (expiresAt != null) {
+                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    StoryExpiryCountdown(expiresAt = expiresAt)
+                }
+            }
 
             if (storyTime != null) {
                 Text(
@@ -379,6 +587,14 @@ fun StoryUserHeader(
         }
 
 
+        IconButton(onClick = onMore) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.cd_more_options),
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -386,6 +602,49 @@ fun StoryUserHeader(
                 tint = MaterialTheme.colorScheme.onPrimary
             )
         }
+    }
+}
+
+@Composable
+fun StoryExpiryCountdown(expiresAt: String) {
+    val context = LocalContext.current
+    var remainingTime by remember(expiresAt) { mutableStateOf(calculateRemainingTime(expiresAt, context)) }
+
+    LaunchedEffect(expiresAt) {
+        while (true) {
+            delay(60000L) // Update every minute
+            remainingTime = calculateRemainingTime(expiresAt, context)
+        }
+    }
+
+    if (remainingTime.isNotEmpty()) {
+        Text(
+            text = stringResource(R.string.story_expires_countdown, remainingTime),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+        )
+    }
+}
+
+private fun calculateRemainingTime(expiresAt: String, context: android.content.Context): String {
+    return try {
+        val expiry = Instant.parse(expiresAt)
+        val now = Instant.now()
+        val duration = Duration.between(now, expiry)
+        val minutes = duration.toMinutes()
+
+        when {
+            minutes <= 0 -> "Expired"
+            minutes < 5 -> context.getString(R.string.story_expiring_soon)
+            minutes < 60 -> context.getString(R.string.story_expires_minutes, minutes.toInt())
+            else -> {
+                val hours = duration.toHours()
+                val remMinutes = minutes % 60
+                context.getString(R.string.story_expires_hours_minutes, hours.toInt(), remMinutes.toInt())
+            }
+        }
+    } catch (e: Exception) {
+        ""
     }
 }
 

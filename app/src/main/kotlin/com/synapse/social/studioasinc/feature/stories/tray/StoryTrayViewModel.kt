@@ -114,5 +114,16 @@ class StoryTrayViewModel @Inject constructor(
             }
             state.copy(friendStories = updatedFriends)
         }
+
+        val viewerId = currentUserId ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            storyWithUser.stories.forEach { story ->
+                story.id?.let { id ->
+                    launch {
+                        storyRepository.markAsSeen(id, viewerId)
+                    }
+                }
+            }
+        }
     }
 }

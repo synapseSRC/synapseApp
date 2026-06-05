@@ -1,8 +1,10 @@
 package com.synapse.social.studioasinc.feature.stories.viewer
 
+import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+import com.synapse.social.studioasinc.domain.model.StoryReaction
 import com.synapse.social.studioasinc.data.repository.StoryRepository
 import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.Story
@@ -33,16 +35,25 @@ data class StoryViewerState(
     val isFinished: Boolean = false,
     val contentScale: ContentScale = ContentScale.Crop,
     val viewers: List<StoryViewWithUser> = emptyList(),
+    val reactions: List<StoryReaction> = emptyList(),
     val isLoadingViewers: Boolean = false,
     val showViewersSheet: Boolean = false,
-    val isOwnStory: Boolean = false
+    val showReactionsSheet: Boolean = false,
+    val isOwnStory: Boolean = false,
+    val userReaction: String? = null,
+    val reactionsCount: Int = 0,
+    val replyText: String = "",
+    val isReplying: Boolean = false,
+    val showOptionsSheet: Boolean = false,
+    val showDeleteConfirmation: Boolean = false
 )
 
 @HiltViewModel
 class StoryViewerViewModel @Inject constructor(
     private val storyRepository: StoryRepository,
     private val userRepository: UserRepositoryImpl,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoryViewerState())
@@ -93,7 +104,31 @@ class StoryViewerViewModel @Inject constructor(
                             isOwnStory = isOwnStory
                         )
                     }
+                    loadStoryData(stories[0].id)
                     // Removed automatic startProgress and markAsSeen - handled by pager visibility
+                }
+            }
+        }
+    }
+
+    private fun loadStoryData(storyId: String?) {
+        if (storyId == null) return
+        val currentUserId = authRepository.getCurrentUserId() ?: return
+        viewModelScope.launch {
+            val reactionsResult = storyRepository.getReactions(storyId)
+            val reactions = reactionsResult.getOrNull() ?: emptyList()
+            val userReaction = reactions.find { it.userId == currentUserId }?.emoji
+
+            _uiState.update { currentState ->
+                val currentStory = currentState.stories.getOrNull(currentState.currentStoryIndex)
+                if (currentStory?.id == storyId) {
+                    currentState.copy(
+                        reactions = reactions,
+                        reactionsCount = reactions.size,
+                        userReaction = userReaction
+                    )
+                } else {
+                    currentState
                 }
             }
         }
@@ -145,7 +180,9 @@ class StoryViewerViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     currentStoryIndex = nextIndex,
-                    progress = 0f
+                    progress = 0f,
+                    replyText = "",
+                    isReplying = false
                 )
             }
             val nextStory = currentState.stories[nextIndex]
@@ -153,6 +190,7 @@ class StoryViewerViewModel @Inject constructor(
                 startProgress()
             }
             markAsSeen(nextStory.id)
+            loadStoryData(nextStory.id)
         } else {
             _uiState.update { it.copy(isFinished = true) }
             stopProgress()
@@ -167,7 +205,9 @@ class StoryViewerViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     currentStoryIndex = prevIndex,
-                    progress = 0f
+                    progress = 0f,
+                    replyText = "",
+                    isReplying = false
                 )
             }
             val prevStory = currentState.stories[prevIndex]
@@ -175,6 +215,7 @@ class StoryViewerViewModel @Inject constructor(
                 startProgress()
             }
             markAsSeen(prevStory.id)
+            loadStoryData(prevStory.id)
         } else {
 
              _uiState.update { it.copy(progress = 0f) }
@@ -216,6 +257,24 @@ class StoryViewerViewModel @Inject constructor(
         _uiState.update { it.copy(showViewersSheet = false) }
     }
 
+    fun showReactionsSheet() {
+        _uiState.update { it.copy(showReactionsSheet = true) }
+    }
+
+    fun hideReactionsSheet() {
+        _uiState.update { it.copy(showReactionsSheet = false) }
+    }
+
+    fun showOptionsSheet() {
+        pause()
+        _uiState.update { it.copy(showOptionsSheet = true) }
+    }
+
+    fun hideOptionsSheet() {
+        _uiState.update { it.copy(showOptionsSheet = false) }
+        resume()
+    }
+
     fun onVideoReady(durationMs: Long) {
 
         if (_uiState.value.isPaused || _uiState.value.isFinished) return
@@ -241,6 +300,77 @@ class StoryViewerViewModel @Inject constructor(
         val currentUserId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
             storyRepository.markAsSeen(storyId, currentUserId)
+        }
+    }
+
+    fun reactToStory(emoji: String) {
+        val currentStory = _uiState.value.stories.getOrNull(_uiState.value.currentStoryIndex) ?: return
+        val storyId = currentStory.id ?: return
+        val currentUserId = authRepository.getCurrentUserId() ?: return
+
+        viewModelScope.launch {
+            val result = storyRepository.reactToStory(storyId, currentUserId, emoji)
+            if (result.isSuccess) {
+                loadStoryData(storyId)
+            }
+        }
+    }
+
+    fun removeReaction() {
+        val currentStory = _uiState.value.stories.getOrNull(_uiState.value.currentStoryIndex) ?: return
+        val storyId = currentStory.id ?: return
+        val currentUserId = authRepository.getCurrentUserId() ?: return
+
+        viewModelScope.launch {
+            val result = storyRepository.removeReaction(storyId, currentUserId)
+            if (result.isSuccess) {
+                loadStoryData(storyId)
+            }
+        }
+    }
+
+    fun updateReplyText(text: String) {
+        _uiState.update { it.copy(replyText = text, isReplying = text.isNotEmpty()) }
+    }
+
+    fun sendReply() {
+        val currentState = _uiState.value
+        val currentStory = currentState.stories.getOrNull(currentState.currentStoryIndex) ?: return
+        val storyOwnerId = currentStory.userId
+        val replyText = currentState.replyText
+        if (replyText.isBlank()) return
+
+        viewModelScope.launch {
+            val chatResult = chatRepository.getOrCreateChat(storyOwnerId)
+            val chatId = chatResult.getOrNull()
+            if (chatId != null) {
+                val message = "[Story reply] ${currentStory.mediaUrl}\n$replyText"
+                chatRepository.sendMessage(chatId, message)
+                _uiState.update { it.copy(replyText = "", isReplying = false) }
+            } else {
+                _uiState.update { it.copy(error = "Failed to send reply") }
+            }
+            resume()
+        }
+    }
+
+    fun showDeleteConfirmation() {
+        pause()
+        _uiState.update { it.copy(showDeleteConfirmation = true) }
+    }
+
+    fun hideDeleteConfirmation() {
+        _uiState.update { it.copy(showDeleteConfirmation = false) }
+        resume()
+    }
+
+    fun confirmDeleteStory(storyId: String) {
+        viewModelScope.launch {
+            val result = storyRepository.deleteStory(storyId)
+            if (result.isSuccess) {
+                _uiState.update { it.copy(showDeleteConfirmation = false) }
+                nextStory()
+            }
         }
     }
 

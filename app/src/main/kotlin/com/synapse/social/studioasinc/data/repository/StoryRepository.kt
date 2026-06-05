@@ -9,6 +9,7 @@ import com.synapse.social.studioasinc.data.model.StoryCreateRequest
 import com.synapse.social.studioasinc.domain.model.Story
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
 import com.synapse.social.studioasinc.domain.model.StoryPrivacy
+import com.synapse.social.studioasinc.domain.model.StoryReaction
 import com.synapse.social.studioasinc.domain.model.StoryView
 import com.synapse.social.studioasinc.domain.model.StoryViewWithUser
 import com.synapse.social.studioasinc.domain.model.StoryWithUser
@@ -68,6 +69,18 @@ interface StoryRepository {
 
 
     suspend fun hasSeenStory(storyId: String, viewerId: String): Result<Boolean>
+
+
+
+    suspend fun reactToStory(storyId: String, userId: String, emoji: String): Result<Unit>
+
+
+
+    suspend fun removeReaction(storyId: String, userId: String): Result<Unit>
+
+
+
+    suspend fun getReactions(storyId: String): Result<List<StoryReaction>>
 }
 
 class StoryRepositoryImpl @Inject constructor(
@@ -80,6 +93,7 @@ class StoryRepositoryImpl @Inject constructor(
     companion object {
         private const val TABLE_STORIES = "stories"
         private const val TABLE_STORY_VIEWS = "story_views"
+        private const val TABLE_STORY_REACTIONS = "story_reactions"
         private const val TABLE_USERS = "users"
     }
 
@@ -171,15 +185,34 @@ class StoryRepositoryImpl @Inject constructor(
             }
 
 
+            val seenStoryIds = if (stories.isEmpty()) {
+                emptySet()
+            } else {
+                client.from(TABLE_STORY_VIEWS)
+                    .select(columns = Columns.raw("story_id")) {
+                        filter {
+                            eq("viewer_id", currentUserId)
+                            isIn("story_id", stories.mapNotNull { it.id })
+                        }
+                    }
+                    .decodeList<JsonObject>()
+                    .mapNotNull { it["story_id"]?.jsonPrimitive?.content }
+                    .toSet()
+            }
+
             for ((userId, userStories) in storiesByUser) {
                 if (userId == currentUserId) continue
                 usersMap[userId]?.let { user ->
+                    val sortedStories = userStories.sortedByDescending { it.createdAt }
+                    val latestStoryId = sortedStories.firstOrNull()?.id
+                    val hasUnseen = latestStoryId != null && !seenStoryIds.contains(latestStoryId)
+
                     result.add(
                         StoryWithUser(
                             user = user,
-                            stories = userStories.sortedByDescending { it.createdAt },
-                            hasUnseenStories = true,
-                            latestStoryTime = userStories.maxOfOrNull { it.createdAt ?: "" }
+                            stories = sortedStories,
+                            hasUnseenStories = hasUnseen,
+                            latestStoryTime = sortedStories.maxOfOrNull { it.createdAt ?: "" }
                         )
                     )
                 }
@@ -351,6 +384,53 @@ class StoryRepositoryImpl @Inject constructor(
     } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun reactToStory(storyId: String, userId: String, emoji: String): Result<Unit> = try {
+        val reaction = buildJsonObject {
+            put("story_id", storyId)
+            put("user_id", userId)
+            put("emoji", emoji)
+        }
+
+        client.from(TABLE_STORY_REACTIONS).upsert(reaction) {
+            onConflict = "story_id,user_id"
+        }
+
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun removeReaction(storyId: String, userId: String): Result<Unit> = try {
+        client.from(TABLE_STORY_REACTIONS).delete {
+            filter {
+                eq("story_id", storyId)
+                eq("user_id", userId)
+            }
+        }
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun getReactions(storyId: String): Result<List<StoryReaction>> = try {
+        val reactions = client.from(TABLE_STORY_REACTIONS)
+            .select {
+                filter {
+                    eq("story_id", storyId)
+                }
+            }
+            .decodeList<StoryReaction>()
+        Result.success(reactions)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
         Result.failure(e)
     }
 }

@@ -1442,6 +1442,20 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="add_content">Add content</string>
     <string name="cd_attached_media">Attached media</string>
     <string name="story_cycle_scale">Change scale</string>
+    <string name="story_reply_placeholder">Reply to story…</string>
+    <string name="story_delete_title">Delete Story?</string>
+    <string name="story_delete_body">This will permanently remove your story.</string>
+    <string name="story_expires_in">Expires in %1$s</string>
+    <string name="story_expires_countdown">• %1$s</string>
+    <string name="story_expires_hours_minutes">%1$dh %2$dm</string>
+    <string name="story_expires_minutes">%1$dm</string>
+    <string name="story_expiring_soon">Expiring soon</string>
+    <string name="story_privacy_public">Public</string>
+    <string name="story_privacy_followers">Followers</string>
+    <string name="story_privacy_close_friends">Close Friends</string>
+    <string name="story_reactions_count">%1$d reactions</string>
+    <string name="story_reactions_title">Reactions</string>
+    <string name="story_no_reactions">No reactions yet</string>
 
     <string name="complete_profile_title_dialog">Complete Your Profile</string>
     <string name="complete_profile_body">Add a profile picture, bio, and more to personalize your account and connect with others.</string>
