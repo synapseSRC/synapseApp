@@ -296,7 +296,7 @@ class FeedPagingSource(
             val postIds = posts.map { it.id }
 
             val (bookmarkedPostIds, resharedPostIds) = coroutineScope {
-                val bookmarksDeferred = async(Dispatchers.IO) {
+                val bookmarksDeferred = async {
                     client.from("favorites")
                         .select(Columns.list("post_id")) {
                             filter {
@@ -308,7 +308,7 @@ class FeedPagingSource(
                         .mapNotNull { it["post_id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
                         .toSet()
                 }
-                val resharesDeferred = async(Dispatchers.IO) {
+                val resharesDeferred = async {
                     client.from("reshares")
                         .select(Columns.list("post_id")) {
                             filter {
