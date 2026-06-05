@@ -30,6 +30,7 @@ class CommentRemoteDataSource @Inject constructor(
             in_reply_to_post_id, root_post_id,
             likes_count, comments_count, views_count,
             is_deleted, is_edited, edited_at, created_at, updated_at,
+            reply_to_usernames,
             users!posts_author_uid_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
         """
     }
@@ -107,14 +108,26 @@ class CommentRemoteDataSource @Inject constructor(
         mediaUrl: String?,
         parentCommentId: String?
     ): CommentWithUser? = withContext(Dispatchers.IO) {
-        // In X-style threading: root_post_id is always the original post,
-        // in_reply_to_post_id is the direct parent (post or comment).
         val rootPostId = if (parentCommentId != null) {
-            // Fetch parent's root_post_id to propagate the thread root
             getComment(parentCommentId)?.postId ?: postId
         } else {
             postId
         }
+
+        // Build reply_to_usernames: author of direct parent + any @mentions in content
+        val replyToUsernames = buildSet<String> {
+            val parentId = parentCommentId ?: postId
+            client.from("posts")
+                .select(Columns.raw("users!posts_author_uid_fkey(username)")) {
+                    filter { eq("id", parentId) }
+                }
+                .decodeSingleOrNull<JsonObject>()
+                ?.get("users")?.jsonObject
+                ?.get("username")?.jsonPrimitive?.contentOrNull
+                ?.let { add(it) }
+
+            Regex("@([\\w.]+)").findAll(content).forEach { add(it.groupValues[1]) }
+        }.toList()
 
         val insertData = buildJsonObject {
             put("id", id)
@@ -126,6 +139,7 @@ class CommentRemoteDataSource @Inject constructor(
             put("post_type", "TEXT")
             put("created_at", java.time.Instant.now().toString())
             put("updated_at", java.time.Instant.now().toString())
+            put("reply_to_usernames", buildJsonArray { replyToUsernames.forEach { add(it) } })
         }
 
         client.from("posts")
@@ -244,6 +258,9 @@ class CommentRemoteDataSource @Inject constructor(
                 isEdited = data["is_edited"]?.jsonPrimitive?.booleanOrNull ?: false,
                 isPinned = false,
                 user = parseUserFromJson(data["users"]?.jsonObject),
+                replyToUsernames = data["reply_to_usernames"]?.jsonArray
+                    ?.mapNotNull { it.jsonPrimitive.contentOrNull }
+                    ?: emptyList(),
                 reactionSummary = emptyMap(),
                 userReaction = null
             )

@@ -37,6 +37,7 @@ sealed class FeedItem {
         val parentPostId: String?,
         val parentCommentId: String?,
         val parentAuthorUsername: String?,
+        val replyToUsernames: List<String> = emptyList(),
         override val createdAt: String?,
         override val likeCount: Int,
         override val commentCount: Int,

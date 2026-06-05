@@ -139,7 +139,7 @@ object PostUiMapper {
             // Comment-specific fields
             isComment = true,
             parentCommentId = feedComment.parentCommentId,
-            replyToUsernames = listOfNotNull(feedComment.parentAuthorUsername),
+            replyToUsernames = feedComment.replyToUsernames.ifEmpty { listOfNotNull(feedComment.parentAuthorUsername) },
             repliesCount = feedComment.commentCount,
             depth = 0, // Feed comments are always top-level
             showThreadLine = false, // No thread lines in feed
@@ -190,7 +190,7 @@ object PostUiMapper {
             repostedBy = null,
             isComment = true,
             parentCommentId = comment.parentCommentId,
-            replyToUsernames = listOfNotNull(parentAuthorUsername),
+            replyToUsernames = comment.replyToUsernames,
             repliesCount = comment.repliesCount,
             depth = clampedDepth,
             showThreadLine = showThreadLine,

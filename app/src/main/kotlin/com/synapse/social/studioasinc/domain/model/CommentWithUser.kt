@@ -39,6 +39,9 @@ data class CommentWithUser(
     val user: UserProfile? = null,
 
     @Transient
+    val replyToUsernames: List<String> = emptyList(),
+
+    @Transient
     val userReaction: ReactionType? = null,
     @Transient
     val reactionSummary: Map<ReactionType, Int> = emptyMap()
