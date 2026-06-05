@@ -1,7 +1,4 @@
 package com.synapse.social.studioasinc.shared.domain.usecase.chat
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
@@ -47,8 +44,17 @@ class SendMessageUseCase(
         val currentUserId = repository.getCurrentUserId()
             ?: return Result.failure(Exception("Not logged in"))
 
+        // If SignalProtocolManager is unavailable, send plaintext directly.
         if (signalProtocolManager == null) {
-            return Result.failure(Exception("E2EE not initialized - SignalProtocolManager is null"))
+            Napier.w("E2EE_ENCRYPT: SignalProtocolManager unavailable, sending plaintext", tag = "E2EE")
+            return repository.sendMessage(
+                chatId = chatId,
+                content = content,
+                mediaUrl = mediaUrl,
+                messageType = messageType,
+                expiresAt = expiresAt,
+                replyToId = replyToId
+            )
         }
 
         return try {
@@ -71,19 +77,28 @@ class SendMessageUseCase(
             }.toString()
             val contentBytes = jsonPayload.encodeToByteArray()
 
-            // Encrypt the message independently for each participant to support Double Ratchet E2EE
-            val payloadMap = coroutineScope {
-                otherParticipants.map { userId ->
-                    async {
-                        Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
-                        // Ensure a cryptographic session exists with the recipient before encryption
-                        repository.ensureSession(userId)
-                        val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
-                        userId to Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
-                    }
-                }.awaitAll().toMap()
+            // Encrypt for each recipient. If any recipient hasn't set up E2EE keys,
+            // fall back to sending plaintext so the message is never silently dropped.
+            val payloadMap = mutableMapOf<String, JsonElement>()
+            for (userId in otherParticipants) {
+                try {
+                    Napier.d("E2EE_ENCRYPT: Establishing session with $userId", tag = "E2EE")
+                    repository.ensureSession(userId)
+                    val encrypted = signalProtocolManager.encryptMessage(userId, contentBytes)
+                    payloadMap[userId] = Json.encodeToJsonElement(EncryptedMessage.serializer(), encrypted)
+                } catch (e: Exception) {
+                    // Recipient has no E2EE keys — fall back to plaintext for the whole message.
+                    Napier.w("E2EE_ENCRYPT: Recipient $userId has no E2EE keys (${e.message}), falling back to plaintext", tag = "E2EE")
+                    return repository.sendMessage(
+                        chatId = chatId,
+                        content = content,
+                        mediaUrl = mediaUrl,
+                        messageType = messageType,
+                        expiresAt = expiresAt,
+                        replyToId = replyToId
+                    )
+                }
             }
-
 
             val encryptedPayload = JsonObject(payloadMap).toString()
             Napier.d("E2EE_ENCRYPT: Message encrypted for ${payloadMap.size} recipients", tag = "E2EE")
@@ -99,7 +114,7 @@ class SendMessageUseCase(
             )
         } catch (e: Exception) {
             Napier.e("E2EE_ENCRYPT: Failed: ${e.message}", tag = "E2EE", throwable = e)
-            Result.failure(Exception("Encryption Error: ${e.message}"))
+            Result.failure(Exception("Encryption Error: ${e.message ?: "Unknown error"}"))
         }
     }
 }
