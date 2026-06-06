@@ -196,6 +196,7 @@ class SearchRepositoryImpl(
     /**
      * Searches for users based on username, display name, or bio.
      * If no query is provided, it falls back to suggesting accounts with the highest follower counts.
+     */
     override suspend fun getSuggestedAccounts(query: String): Result<List<SearchAccount>> = runCatching {
         val sanitizedQuery = sanitizeSearchQuery(query)
 
