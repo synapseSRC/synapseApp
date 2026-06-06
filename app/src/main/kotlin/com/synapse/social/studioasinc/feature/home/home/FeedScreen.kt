@@ -352,7 +352,7 @@ private fun FeedCommentItem(
     }
 
     val onLikeClick = remember(feedItem.id) { { viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) } }
-    val onCommentClickAction = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> onCommentClick(commentState.post) } ?: Unit } }
+    val onCommentClickAction = remember(feedItem.id, onCommentClick) { { feedItem.parentPostId?.let { onCommentClick(commentState.post) } ?: Unit } }
     val onShareClick = remember(feedItem.id) { { /* Share comment link? */ } }
     val onRepostClick = remember(commentState.post) { { viewModel.resharePost(commentState.post) } }
     val onQuoteClick = remember(commentState.post) { { viewModel.quotePost(commentState.post, "") } }

@@ -67,7 +67,7 @@ fun HomeNavGraph(
             FeedScreen(
                 onPostClick = { postId -> navController.navigate(HomeDestinations.PostDetail(postId)) },
                 onUserClick = { userId -> onNavigateToProfile(userId) },
-                onCommentClick = { post -> navController.navigate(HomeDestinations.PostDetail(post.id, post.inReplyToPostId)) },
+                onCommentClick = { post -> navController.navigate(HomeDestinations.PostDetail(postId = post.rootPostId ?: post.inReplyToPostId ?: post.id, commentId = post.id)) },
                 onQuoteClick = { postId -> onNavigateToQuotePost(postId) },
                 onMediaClick = { },
                 onEditPost = onNavigateToEditPost,
