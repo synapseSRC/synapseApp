@@ -83,9 +83,11 @@ fun PostHeader(
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            if (showHandle) {
+                            if (showHandle && timestamp.isNotBlank()) {
                                 append("@$handle · $timestamp")
-                            } else {
+                            } else if (showHandle) {
+                                append("@$handle")
+                            } else if (timestamp.isNotBlank()) {
                                 append("· $timestamp")
                             }
                         }
