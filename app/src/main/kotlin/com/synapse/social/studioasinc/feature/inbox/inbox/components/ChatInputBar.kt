@@ -314,7 +314,7 @@ fun ChatInputBar(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
                 ) {
                     val isCanceling = slideOffset < -100f
-                    val cancelColor = if (isCanceling) MaterialTheme.colorScheme.error else Color.White.copy(alpha = 0.5f)
+                    val cancelColor = if (isCanceling) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
 
                     val shakeOffset = if (isCanceling) {
                         val infiniteTransition = rememberInfiniteTransition(label = "shake")
@@ -353,7 +353,7 @@ fun ChatInputBar(
                 .fillMaxWidth(inputWidthFraction)
                 .align(Alignment.CenterHorizontally),
             shape = RoundedCornerShape(Sizes.CornerMassive),
-            color = Color(0xFF1E1E1E),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = Sizes.BorderDefault,
             shadowElevation = Spacing.ExtraSmall
         ) {
@@ -369,7 +369,7 @@ fun ChatInputBar(
                         Icon(
                             Icons.Default.Add,
                             contentDescription = "Attach file",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     if (showAttachmentMenu) {
@@ -426,16 +426,16 @@ fun ChatInputBar(
                     enabled = canSendMessage,
                     maxLines = 4,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
-                    cursorBrush = SolidColor(Color(0xFF4CAF50)),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     decorationBox = { innerTextField ->
                         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                             if (inputText.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.chat_type_message),
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.White.copy(alpha = 0.5f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
                             }
                             innerTextField()
@@ -525,7 +525,7 @@ fun ChatInputBar(
                             }
                         },
                     shape = CircleShape,
-                    color = Color(0xFF4CAF50),
+                    color = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -546,7 +546,7 @@ fun ChatInputBar(
                                 targetIcon,
                                 contentDescription = stringResource(if (inputText.isEmpty()) R.string.voice_hold_to_record else R.string.chat_action_send),
                                 modifier = Modifier.size(Sizes.IconLarge),
-                                tint = Color.White
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
@@ -560,7 +560,7 @@ fun ChatInputBar(
             Text(
                 text = stringResource(R.string.only_admins_can_message_hint),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = Spacing.ExtraSmall)
             )
         }
