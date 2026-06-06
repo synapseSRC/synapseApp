@@ -404,24 +404,32 @@ fun ChatInputBar(
                         .padding(vertical = Spacing.ExtraSmall)
                         .focusRequester(focusRequester)
                         .onFocusChanged { isFocused = it.isFocused }
-                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .graphicsLayer {
+                            compositingStrategy = if (size.height > 90.dp.toPx()) {
+                                CompositingStrategy.Offscreen
+                            } else {
+                                CompositingStrategy.Auto
+                            }
+                        }
                         .drawWithContent {
                             drawContent()
-                            val fadeSize = 16.dp.toPx()
-                            drawRect(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color.Black),
-                                    startY = 0f, endY = fadeSize
-                                ),
-                                blendMode = BlendMode.DstIn
-                            )
-                            drawRect(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(Color.Black, Color.Transparent),
-                                    startY = size.height - fadeSize, endY = size.height
-                                ),
-                                blendMode = BlendMode.DstIn
-                            )
+                            if (size.height > 90.dp.toPx()) {
+                                val fadeSize = 16.dp.toPx()
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, Color.Black),
+                                        startY = 0f, endY = fadeSize
+                                    ),
+                                    blendMode = BlendMode.DstIn
+                                )
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(Color.Black, Color.Transparent),
+                                        startY = size.height - fadeSize, endY = size.height
+                                    ),
+                                    blendMode = BlendMode.DstIn
+                                )
+                            }
                         },
                     enabled = canSendMessage,
                     maxLines = 4,
