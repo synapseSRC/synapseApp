@@ -61,6 +61,7 @@ class ProfileRepositoryImpl(
         internal const val KEY_GENDER = "gender"
         internal const val KEY_PRONOUNS = "pronouns"
         internal const val KEY_JOIN_DATE = "join_date"
+        internal const val KEY_CREATED_AT = "created_at"
         internal const val KEY_CURRENT_CITY = "current_city"
         internal const val KEY_HOMETOWN = "hometown"
         internal const val KEY_OCCUPATION = "occupation"
@@ -106,7 +107,7 @@ class ProfileRepositoryImpl(
             website = data.getNullableString(KEY_WEBSITE),
             gender = data.getNullableString(KEY_GENDER),
             pronouns = data.getNullableString(KEY_PRONOUNS),
-            joinedDate = parseDateToLong(data.getNullableString(KEY_JOIN_DATE)),
+            joinedDate = parseDateToLong(data.getNullableString(KEY_JOIN_DATE).takeIf { !it.isNullOrBlank() } ?: data.getNullableString(KEY_CREATED_AT)),
             currentCity = data.getNullableString(KEY_CURRENT_CITY),
             hometown = data.getNullableString(KEY_HOMETOWN),
             occupation = data.getNullableString(KEY_OCCUPATION),

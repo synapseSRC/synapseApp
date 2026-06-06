@@ -56,7 +56,6 @@ internal fun ProfileContent(
     onNavigateToUserProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?) -> Unit,
     onNavigateToStoryCreator: () -> Unit,
-    onCustomizeClick: () -> Unit = {},
     onOpenMediaViewer: (List<String>, Int) -> Unit,
     onShowPostOptions: (Post) -> Unit
 ) {
@@ -254,8 +253,6 @@ internal fun ProfileContent(
                                     personalWebsite = profile.personalWebsite,
                                     publicEmail = profile.publicEmail
                                 ),
-                                isOwnProfile = state.isOwnProfile,
-                                onCustomizeClick = onCustomizeClick,
                                 onWebsiteClick = { url ->
                                     IntentUtils.openUrl(context, url)
                                 },
