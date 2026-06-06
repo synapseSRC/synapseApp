@@ -1,6 +1,9 @@
 package com.synapse.social.studioasinc.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
@@ -96,6 +99,11 @@ fun HomeScreen(
             contentWindowInsets = if (isPostDetail) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
             floatingActionButton = {
                 if (!isPostDetail && isFeedScreen) {
+                    AnimatedVisibility(
+                        visible = isBottomBarVisible,
+                        enter = slideInVertically(initialOffsetY = { it }),
+                        exit = slideOutVertically(targetOffsetY = { it })
+                    ) {
                     with(sharedTransitionScope) {
                         FloatingActionButton(
                             onClick = { onNavigateToCreatePost(null) },
@@ -103,7 +111,6 @@ fun HomeScreen(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier
-                                .padding(bottom = if (isBottomBarVisible) 0.dp else Sizes.HeightMedium)
                                 .sharedBounds(
                                     rememberSharedContentState(key = "create_post_fab"),
                                     animatedVisibilityScope = animatedVisibilityScope
@@ -118,6 +125,7 @@ fun HomeScreen(
                                 )
                             )
                         }
+                    }
                     }
                 }
             },
