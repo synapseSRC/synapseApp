@@ -14,6 +14,8 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -53,6 +55,7 @@ internal class PostCrudHelper(
             client.from("posts").insert(postDto)
             postDao.insert(PostMapper.toEntity(post))
             processMentions(post.id, post.postText ?: "", post.authorUid)
+            processHashtags(post.id, post.postText ?: "")
 
             android.util.Log.d(PostRepositoryUtils.TAG, "Post created successfully: ${post.id}")
             Result.success(post)
@@ -101,6 +104,7 @@ internal class PostCrudHelper(
 
             enrichedPosts.forEach { post ->
                 processMentions(post.id, post.postText ?: "", post.authorUid)
+                processHashtags(post.id, post.postText ?: "")
             }
 
             android.util.Log.d(PostRepositoryUtils.TAG, "Batch posts created successfully")
@@ -294,6 +298,48 @@ internal class PostCrudHelper(
             throw e
         } catch (e: Exception) {
             android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process mentions: ${e.message}", e)
+        }
+    }
+
+    private suspend fun processHashtags(
+        postId: String,
+        content: String
+    ) {
+        try {
+            val hashtags = com.synapse.social.studioasinc.shared.domain.usecase.ParseHashtagsUseCase()(content)
+            if (hashtags.isEmpty()) return
+
+            android.util.Log.d(PostRepositoryUtils.TAG, "Processing hashtags: $hashtags for post $postId")
+
+            hashtags.forEach { tag ->
+                try {
+                    // 1. Upsert hashtag
+                    val hashtagResponse = client.from("hashtags").upsert(
+                        buildJsonObject { put("tag", tag) }
+                    ) {
+                        select()
+                    }.decodeSingle<JsonObject>()
+
+                    val hashtagId = hashtagResponse["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@forEach
+
+                    // 2. Link to post
+                    client.from("post_hashtags").insert(
+                        buildJsonObject {
+                            put("post_id", postId)
+                            put("hashtag_id", hashtagId)
+                        }
+                    )
+
+                    // 3. Increment usage count
+                    client.postgrest.rpc("increment_hashtag_usage", mapOf("hashtag_tag" to tag))
+                } catch (e: Exception) {
+                    android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtag '$tag': ${e.message}")
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtags: ${e.message}", e)
         }
     }
 }

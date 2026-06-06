@@ -135,7 +135,9 @@ class MarkdownRenderer private constructor(private val markwon: Markwon) {
                     }
                 } else object : ClickableSpan() {
                     override fun onClick(widget: View) {
-                        Log.d("MarkdownRenderer", "Hashtag clicked: $full")
+                        val ctx = widget.context
+                        val tag = full.substring(1)
+                        IntentUtils.openUrl(ctx, "synapse://hashtag/$tag")
                     }
                     override fun updateDrawState(ds: TextPaint) {
                         ds.color = Color.parseColor("#445E91")

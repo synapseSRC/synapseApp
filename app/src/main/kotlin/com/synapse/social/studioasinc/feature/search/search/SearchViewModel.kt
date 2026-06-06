@@ -43,6 +43,7 @@ data class SearchUiState(
     val hashtags: List<SearchHashtag> = emptyList(),
     val news: List<SearchNews> = emptyList(),
     val accounts: List<SearchAccount> = emptyList(),
+    val trendingHashtags: List<SearchHashtag> = emptyList(),
     val searchHistory: List<String> = emptyList(),
     val lastQuery: String = "",
     val cachedData: Map<SearchTab, Any> = emptyMap(),
@@ -78,7 +79,16 @@ class SearchViewModel @Inject constructor(
     private var searchJob: Job? = null
     init {
         loadHistory()
+        loadTrendingHashtags()
         refreshCurrentTab()
+    }
+
+    private fun loadTrendingHashtags() {
+        viewModelScope.launch {
+            searchHashtagsUseCase("").onSuccess { hashtags ->
+                updateState { it.copy(trendingHashtags = hashtags) }
+            }
+        }
     }
 
     private fun loadHistory() {
@@ -241,7 +251,13 @@ class SearchViewModel @Inject constructor(
                         result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.FOR_YOU, SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
-                        val result = searchPostsUseCase(query)
+                        val finalQuery = if (query.startsWith("#")) {
+                             // Hashtag search: filter by tag
+                             query
+                        } else {
+                             query
+                        }
+                        val result = searchPostsUseCase(finalQuery)
                         result.onSuccess { data ->
                             val posts = data.map { searchPost ->
                                 com.synapse.social.studioasinc.domain.model.Post(
