@@ -1,9 +1,6 @@
 package com.synapse.social.studioasinc.ui.home
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
@@ -97,38 +94,7 @@ fun HomeScreen(
         Scaffold(
             modifier = if (isPostDetail) Modifier else Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             contentWindowInsets = if (isPostDetail) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
-            floatingActionButton = {
-                if (!isPostDetail && isFeedScreen) {
-                    AnimatedVisibility(
-                        visible = isBottomBarVisible,
-                        enter = slideInVertically(initialOffsetY = { it }),
-                        exit = slideOutVertically(targetOffsetY = { it })
-                    ) {
-                    with(sharedTransitionScope) {
-                        FloatingActionButton(
-                            onClick = { onNavigateToCreatePost(null) },
-                            shape = CircleShape,
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .sharedBounds(
-                                    rememberSharedContentState(key = "create_post_fab"),
-                                    animatedVisibilityScope = animatedVisibilityScope
-                                )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(R.string.create_post),
-                                modifier = Modifier.sharedElement(
-                                    rememberSharedContentState(key = "create_post_icon"),
-                                    animatedVisibilityScope = animatedVisibilityScope
-                                )
-                            )
-                        }
-                    }
-                    }
-                }
-            },
+            floatingActionButton = {},
             topBar = {
                 if (!isPostDetail) {
                     TopAppBar(
@@ -194,6 +160,36 @@ fun HomeScreen(
             )
         }
 
+
+        if (!isPostDetail && isFeedScreen) {
+            with(sharedTransitionScope) {
+                FloatingActionButton(
+                    onClick = { onNavigateToCreatePost(null) },
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = Spacing.Medium, bottom = Sizes.HeightLarge)
+                        .graphicsLayer {
+                            translationY = navBarTranslationY * size.height
+                        }
+                        .sharedBounds(
+                            rememberSharedContentState(key = "create_post_fab"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.create_post),
+                        modifier = Modifier.sharedElement(
+                            rememberSharedContentState(key = "create_post_icon"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    )
+                }
+            }
+        }
 
         NavigationBar(
             modifier = Modifier
