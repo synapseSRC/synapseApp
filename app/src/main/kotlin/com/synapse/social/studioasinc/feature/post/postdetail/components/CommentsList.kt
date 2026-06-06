@@ -95,7 +95,7 @@ fun CommentsList(
                     comment = comment,
                     parentAuthorUsername = null,
                     depth = 0,
-                    showThreadLine = comment.repliesCount > 0,
+                    showThreadLine = false,
                     isLastReply = false
                 )
                 
