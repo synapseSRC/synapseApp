@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -24,7 +25,7 @@ fun LanguageRegionScreen(
     viewModel: LanguageRegionViewModel,
     onBackClick: () -> Unit
 ) {
-    val currentLanguage by viewModel.currentLanguage.collectAsState()
+    val currentLanguageCode by viewModel.currentLanguage.collectAsState()
     val availableLanguages by viewModel.availableLanguages.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -81,6 +82,13 @@ fun LanguageRegionScreen(
 
             item {
                 SettingsSection(title = "App Language") {
+                    val currentLanguageName = availableLanguages.find { it.code == currentLanguageCode }?.nativeName ?: "English"
+                    Text(
+                        text = "Current: $currentLanguageName",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
 
                     availableLanguages.forEachIndexed { index, languageOption ->
                         LanguageSelectionItem(
