@@ -30,8 +30,10 @@ class SyncAccessibilitySettingsUseCase constructor(
     }
 
     private suspend fun syncToRemote(update: (com.synapse.social.studioasinc.shared.domain.model.UserPreferences) -> com.synapse.social.studioasinc.shared.domain.model.UserPreferences) {
-        val userId = authRepository.getCurrentUserId() ?: return
-        userPreferencesRepository.updatePreferences(userId, update)
+        try {
+            val userId = authRepository.getCurrentUserId() ?: return
+            userPreferencesRepository.updatePreferences(userId, update)
+        } catch (_: Exception) {}
     }
 
     suspend fun syncFromRemote() {

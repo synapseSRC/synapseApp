@@ -20,7 +20,11 @@ object HashtagTextFormatter {
 
             for (match in matches) {
                 val tag = match.groupValues[1]
-                if (tag.all { it.isDigit() }) continue
+                if (tag.all { it.isDigit() }) {
+                    append(text.substring(lastIndex, match.range.last + 1))
+                    lastIndex = match.range.last + 1
+                    continue
+                }
 
                 append(text.substring(lastIndex, match.range.first))
 

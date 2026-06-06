@@ -18,13 +18,12 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.JsonPrimitive
 
 internal class PostCrudHelper(
     private val postDao: PostDao,
@@ -313,35 +312,13 @@ internal class PostCrudHelper(
 
             android.util.Log.d(PostRepositoryUtils.TAG, "Processing hashtags: $hashtags for post $postId")
 
-            kotlinx.coroutines.coroutineScope {
-                hashtags.forEach { tag ->
-                    launch {
-                        try {
-                            // 1. Upsert hashtag
-                            val hashtagResponse = client.from("hashtags").upsert(
-                                buildJsonObject { put("tag", tag) }
-                            ) {
-                                select()
-                            }.decodeSingle<JsonObject>()
-
-                            val hashtagId = hashtagResponse["id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull ?: return@launch
-
-                            // 2. Link to post
-                            client.from("post_hashtags").insert(
-                                buildJsonObject {
-                                    put("post_id", postId)
-                                    put("hashtag_id", hashtagId)
-                                }
-                            )
-
-                            // 3. Increment usage count
-                            client.postgrest.rpc("increment_hashtag_usage", buildJsonObject { put("hashtag_tag", tag) })
-                        } catch (e: Exception) {
-                            android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtag '$tag': ${e.message}")
-                        }
-                    }
+            client.postgrest.rpc(
+                "process_post_hashtags",
+                buildJsonObject {
+                    put("post_id", postId)
+                    put("tags", kotlinx.serialization.json.JsonArray(hashtags.map { JsonPrimitive(it) }))
                 }
-            }
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

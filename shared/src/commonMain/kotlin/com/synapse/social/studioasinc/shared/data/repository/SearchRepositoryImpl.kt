@@ -161,10 +161,45 @@ class SearchRepositoryImpl(
         }.decodeList()
     }
 
+    override suspend fun getPostsByHashtag(tag: String): Result<List<SearchPost>> = try {
+        // Join posts → post_hashtags → hashtags using PostgREST !inner embedding for exact tag match
+        val columns = Columns.raw(
+            "id, post_text, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, " +
+            "author:users!posts_author_uid_fkey(display_name, username, avatar), " +
+            "post_hashtags!inner(hashtags!inner(tag))"
+        )
+        val result = client.postgrest["posts"].select(columns = columns) {
+            filter { eq("post_hashtags.hashtags.tag", tag) }
+            order("created_at", Order.DESCENDING)
+            limit(50)
+        }.decodeList<PostDto>()
+
+        Result.success(result.map { dto ->
+            SearchPost(
+                id = dto.id,
+                content = dto.post_text,
+                authorId = dto.author_uid,
+                likesCount = dto.likes_count,
+                commentsCount = dto.comments_count,
+                boostCount = dto.reshares_count,
+                createdAt = dto.created_at,
+                mediaUrls = dto.media_items?.map { item -> SupabaseClient.constructMediaUrl(item.url) },
+                authorName = dto.author?.display_name,
+                authorHandle = dto.author?.username,
+                authorAvatar = dto.author?.avatar?.let { path ->
+                    SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, path)
+                }
+            )
+        })
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
     /**
      * Searches for users based on username, display name, or bio.
      * If no query is provided, it falls back to suggesting accounts with the highest follower counts.
-     */
     override suspend fun getSuggestedAccounts(query: String): Result<List<SearchAccount>> = runCatching {
         val sanitizedQuery = sanitizeSearchQuery(query)
 

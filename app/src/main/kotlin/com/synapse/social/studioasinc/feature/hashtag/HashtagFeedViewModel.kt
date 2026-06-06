@@ -8,7 +8,7 @@ import com.synapse.social.studioasinc.domain.usecase.post.BookmarkPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchPostsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase
@@ -29,7 +29,7 @@ data class HashtagFeedUiState(
 
 @HiltViewModel
 class HashtagFeedViewModel @Inject constructor(
-    private val searchPostsUseCase: SearchPostsUseCase,
+    private val getPostsByHashtagUseCase: GetPostsByHashtagUseCase,
     private val reactToPostUseCase: ReactToPostUseCase,
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val votePollUseCase: VotePollUseCase,
@@ -51,7 +51,7 @@ class HashtagFeedViewModel @Inject constructor(
     private fun loadPosts(tag: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            searchPostsUseCase("#$tag").onSuccess { searchPosts ->
+            getPostsByHashtagUseCase(tag).onSuccess { searchPosts ->
                 val posts = searchPosts.map { searchPost ->
                     Post(
                         id = searchPost.id,

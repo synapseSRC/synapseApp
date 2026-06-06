@@ -170,9 +170,20 @@ class LanguageRegionViewModel(
                 )
                 _availableLanguages.value = languages
 
-                // Observe language changes continuously
+                // Observe language changes and apply locale continuously
                 launch {
-                    settingsRepository.language.collect {
+                    settingsRepository.language.collect { savedCode ->
+                        if (savedCode.isNotEmpty()) {
+                            val locale = if (savedCode.contains("-")) {
+                                val parts = savedCode.split("-")
+                                java.util.Locale.Builder().setLanguage(parts[0]).setRegion(parts[1]).build()
+                            } else {
+                                java.util.Locale.Builder().setLanguage(savedCode).build()
+                            }
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.create(locale)
+                            )
+                        }
                         _currentLanguage.value = getCurrentLocaleCode()
                     }
                 }

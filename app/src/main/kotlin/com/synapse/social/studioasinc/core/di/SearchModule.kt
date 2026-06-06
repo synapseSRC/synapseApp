@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.data.repository.SearchRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.ISearchRepository
+import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetSuggestedAccountsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetTrendingHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchHashtagsUseCase
@@ -51,5 +52,11 @@ object SearchModule {
     @Singleton
     fun provideGetTrendingHashtagsUseCase(repository: ISearchRepository): GetTrendingHashtagsUseCase {
         return GetTrendingHashtagsUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetPostsByHashtagUseCase(repository: ISearchRepository): GetPostsByHashtagUseCase {
+        return GetPostsByHashtagUseCase(repository)
     }
 }
