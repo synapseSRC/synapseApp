@@ -62,7 +62,7 @@ fun FeedScreen(
     storyTrayViewModel: StoryTrayViewModel = hiltViewModel(),
     onPostClick: (String) -> Unit,
     onUserClick: (String) -> Unit,
-    onCommentClick: (String) -> Unit,
+    onCommentClick: (Post) -> Unit,
     onQuoteClick: (String) -> Unit,
     onMediaClick: (Int) -> Unit,
     onEditPost: (String) -> Unit,
@@ -127,7 +127,7 @@ fun FeedScreen(
     val actions = remember(viewModel, currentOnCommentClick, currentOnUserClick, currentOnMediaClick) {
         PostActionsFactory.create(
             viewModel = viewModel,
-            onComment = { post -> currentOnCommentClick(post.id) },
+            onComment = { post -> currentOnCommentClick(post) },
             onShare = viewModel::sharePost,
             onQuote = { post -> onQuoteClick(post.id) },
             onUserClick = { userId -> currentOnUserClick(userId) },
@@ -341,7 +341,7 @@ private fun FeedCommentItem(
     feedItem: FeedItem.CommentItem,
     postViewStyle: com.synapse.social.studioasinc.ui.settings.PostViewStyle,
     viewModel: FeedViewModel,
-    onCommentClick: (String) -> Unit,
+    onCommentClick: (Post) -> Unit,
     onUserClick: (String) -> Unit,
     onMediaClick: (Int) -> Unit,
     onOptionsClick: (Post) -> Unit
@@ -352,7 +352,7 @@ private fun FeedCommentItem(
     }
 
     val onLikeClick = remember(feedItem.id) { { viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) } }
-    val onCommentClickAction = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> onCommentClick(postId) } ?: Unit } }
+    val onCommentClickAction = remember(feedItem.parentPostId) { { feedItem.parentPostId?.let { postId -> onCommentClick(commentState.post) } ?: Unit } }
     val onShareClick = remember(feedItem.id) { { /* Share comment link? */ } }
     val onRepostClick = remember(commentState.post) { { viewModel.resharePost(commentState.post) } }
     val onQuoteClick = remember(commentState.post) { { viewModel.quotePost(commentState.post, "") } }

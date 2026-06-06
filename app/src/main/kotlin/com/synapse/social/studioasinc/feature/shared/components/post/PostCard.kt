@@ -254,7 +254,11 @@ fun PostCard(
                         text = state.formattedTimestamp,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
+                        modifier = Modifier.padding(
+                            start = avatarSize + Spacing.SmallMedium,
+                            top = Spacing.ExtraSmall,
+                            bottom = Spacing.ExtraSmall
+                        )
                     )
                 }
 
