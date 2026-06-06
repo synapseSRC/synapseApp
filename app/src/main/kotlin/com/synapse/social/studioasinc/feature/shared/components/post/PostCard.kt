@@ -33,10 +33,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -183,11 +186,11 @@ fun PostCard(
 
             Spacer(modifier = Modifier.width(Spacing.SmallMedium))
 
-            // Right Column: Header, Content, Interaction Bar
+            // Right Column: Header, Content
             Column(modifier = Modifier.weight(1f)) {
                 PostHeader(
                     user = state.user,
-                    timestamp = state.formattedTimestamp,
+                    timestamp = if (state.isExpanded) "" else state.formattedTimestamp,
                     onUserClick = onUserClick,
                     onOptionsClick = onOptionsClick,
                     feeling = state.post.metadata?.feeling,
@@ -196,12 +199,9 @@ fun PostCard(
                     replyToUsernames = state.replyToUsernames
                 )
 
-                // Memoize conditional parameters to avoid recomputation
-                val contentMediaUrls = state.mediaUrls
-
                 PostContent(
                     text = state.post.postText,
-                    mediaUrls = contentMediaUrls,
+                    mediaUrls = state.mediaUrls,
                     postViewStyle = postViewStyle,
                     isVideo = state.isVideo,
                     pollQuestion = state.pollQuestion,
@@ -215,16 +215,91 @@ fun PostCard(
                     modifier = Modifier
                 )
 
+                if (!state.isExpanded) {
+                    PostInteractionBar(
+                        isLiked = state.isLiked,
+                        likeCount = state.likeCount,
+                        commentCount = state.commentCount,
+                        repostCount = state.repostCount,
+                        viewsCount = state.viewsCount,
+                        isBookmarked = state.isBookmarked,
+                        isReshared = state.isReshared,
+                        hideLikeCount = state.hideLikeCount,
+                        hideViewsCount = state.hideViewsCount,
+                        onLikeClick = onLikeClick,
+                        onCommentClick = onCommentClick,
+                        onShareClick = onShareClick,
+                        onRepostClick = onRepostClick,
+                        onQuoteClick = onQuoteClick,
+                        onBookmarkClick = onBookmarkClick,
+                        onReactionLongPress = if (onReactionSelected != null) {
+                            { showReactionPicker = true }
+                        } else null
+                    )
+                }
+            }
+        }
+
+        // Expanded (focal post) layout: timestamp + View post activity + full-width action bar
+        if (state.isExpanded) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.SmallMedium)
+            ) {
+                Spacer(modifier = Modifier.height(Spacing.Small))
+                // Timestamp on its own line
+                if (state.formattedTimestamp.isNotBlank()) {
+                    Text(
+                        text = state.formattedTimestamp,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
+                    )
+                }
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    thickness = Sizes.BorderHairline
+                )
+
+                // "View post activity" row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.Small),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.BarChart,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Text(
+                        text = stringResource(R.string.view_post_activity),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    thickness = Sizes.BorderHairline
+                )
+
+                // Full-width action bar (counts hidden for focal post, icons only)
                 PostInteractionBar(
                     isLiked = state.isLiked,
                     likeCount = state.likeCount,
                     commentCount = state.commentCount,
                     repostCount = state.repostCount,
-                    viewsCount = state.viewsCount,
+                    viewsCount = 0,
                     isBookmarked = state.isBookmarked,
                     isReshared = state.isReshared,
-                    hideLikeCount = state.hideLikeCount,
-                    hideViewsCount = state.hideViewsCount,
+                    hideLikeCount = true,
+                    hideViewsCount = true,
                     onLikeClick = onLikeClick,
                     onCommentClick = onCommentClick,
                     onShareClick = onShareClick,

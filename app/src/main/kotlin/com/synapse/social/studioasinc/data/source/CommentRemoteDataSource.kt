@@ -126,14 +126,24 @@ class CommentRemoteDataSource @Inject constructor(
                         put("root_post_id", postId)
                     }
                 ).data
-                // PostgREST returns scalar array as [[...]] — unwrap first element
+                // PostgREST returns text[] as a JSON array: ["user1","user2"]
                 val json = Json.parseToJsonElement(raw)
-                val arr = (json as? JsonArray)?.firstOrNull()?.jsonArray
-                    ?: (json as? JsonArray)
-                arr?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+                (json as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
             } catch (e: Exception) {
                 Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
-                emptyList()
+                // Fallback: fetch parent post author directly
+                try {
+                    client.from("posts")
+                        .select(io.github.jan.supabase.postgrest.query.Columns.raw("author_uid, users!posts_author_uid_fkey(username)")) {
+                            filter { eq("id", parentCommentId) }
+                        }
+                        .decodeSingleOrNull<JsonObject>()
+                        ?.get("users")?.jsonObject
+                        ?.get("username")?.jsonPrimitive?.contentOrNull
+                        ?.let { listOf(it) } ?: emptyList()
+                } catch (e2: Exception) {
+                    emptyList()
+                }
             }
         } else {
             emptyList()
@@ -269,6 +279,7 @@ class CommentRemoteDataSource @Inject constructor(
                 updatedAt = data["updated_at"]?.jsonPrimitive?.contentOrNull,
                 likesCount = data["likes_count"]?.jsonPrimitive?.intOrNull ?: 0,
                 repliesCount = data["comments_count"]?.jsonPrimitive?.intOrNull ?: 0,
+                viewsCount = data["views_count"]?.jsonPrimitive?.intOrNull ?: 0,
                 isDeleted = data["is_deleted"]?.jsonPrimitive?.booleanOrNull ?: false,
                 isEdited = data["is_edited"]?.jsonPrimitive?.booleanOrNull ?: false,
                 isPinned = false,

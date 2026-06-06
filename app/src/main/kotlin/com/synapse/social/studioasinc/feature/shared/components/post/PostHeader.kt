@@ -176,14 +176,14 @@ fun PostHeader(
             val visibleCount = 2
             val visible = replyToUsernames.take(visibleCount)
             val overflow = replyToUsernames.size - visibleCount
+            val andNMore = if (overflow > 0) stringResource(R.string.and_n_more, overflow) else ""
 
-            // Build the usernames string first so we can insert it into the localized template
             val usernamesStr = buildString {
                 visible.forEachIndexed { i, username ->
                     append("@$username")
                     if (i < visible.size - 1) append(", ")
                 }
-                if (overflow > 0) append(" ${stringResource(R.string.and_n_more, overflow)}")
+                if (overflow > 0) append(" $andNMore")
             }
             val fullStr = stringResource(R.string.replying_to, usernamesStr)
             val usernamesStart = fullStr.indexOf(usernamesStr)

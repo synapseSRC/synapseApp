@@ -190,7 +190,9 @@ object PostUiMapper {
             repostedBy = null,
             isComment = true,
             parentCommentId = comment.parentCommentId,
-            replyToUsernames = comment.replyToUsernames,
+            replyToUsernames = comment.replyToUsernames.ifEmpty {
+                listOfNotNull(parentAuthorUsername)
+            },
             repliesCount = comment.repliesCount,
             depth = clampedDepth,
             showThreadLine = showThreadLine,
