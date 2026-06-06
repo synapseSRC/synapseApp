@@ -148,6 +148,15 @@ class DomainSettingsRepositoryAdapter @Inject constructor(
     override suspend fun checkForUpdates(): Result<AppUpdateInfo?> = delegate.checkForUpdates()
     override val hideProfilePicSuggestion: Flow<Boolean> = delegate.hideProfilePicSuggestion
     override suspend fun setHideProfilePicSuggestion(hide: Boolean) = delegate.setHideProfilePicSuggestion(hide)
+
+    override val increaseContrastEnabled: Flow<Boolean> = delegate.increaseContrastEnabled
+    override suspend fun setIncreaseContrastEnabled(enabled: Boolean) = delegate.setIncreaseContrastEnabled(enabled)
+    override val highContrastTextEnabled: Flow<Boolean> = delegate.highContrastTextEnabled
+    override suspend fun setHighContrastTextEnabled(enabled: Boolean) = delegate.setHighContrastTextEnabled(enabled)
+    override val reduceAnimationsEnabled: Flow<Boolean> = delegate.reduceAnimationsEnabled
+    override suspend fun setReduceAnimationsEnabled(enabled: Boolean) = delegate.setReduceAnimationsEnabled(enabled)
+    override val autoplayAnimationsEnabled: Flow<Boolean> = delegate.autoplayAnimationsEnabled
+    override suspend fun setAutoplayAnimationsEnabled(enabled: Boolean) = delegate.setAutoplayAnimationsEnabled(enabled)
 }
 
 // --- Mappers ---

@@ -85,6 +85,10 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_CHANNELS_REPORTS_AUTO_CREATE)
             preferences.remove(SettingsConstants.KEY_HIDE_PROFILE_PIC_SUGGESTION)
             preferences.remove(SettingsConstants.KEY_SELECTED_FONT_ID)
+            preferences.remove(SettingsConstants.KEY_INCREASE_CONTRAST_ENABLED)
+            preferences.remove(SettingsConstants.KEY_HIGH_CONTRAST_TEXT_ENABLED)
+            preferences.remove(SettingsConstants.KEY_REDUCE_ANIMATIONS_ENABLED)
+            preferences.remove(SettingsConstants.KEY_AUTOPLAY_ANIMATIONS_ENABLED)
         }
     }
 
@@ -142,6 +146,10 @@ class SettingsDataStore private constructor(
             preferences[SettingsConstants.KEY_ACCOUNT_REPORTS_AUTO_CREATE] = SettingsConstants.DEFAULT_ACCOUNT_REPORTS_AUTO_CREATE
             preferences[SettingsConstants.KEY_CHANNELS_REPORTS_AUTO_CREATE] = SettingsConstants.DEFAULT_CHANNELS_REPORTS_AUTO_CREATE
             preferences[SettingsConstants.KEY_HIDE_PROFILE_PIC_SUGGESTION] = false
+            preferences[SettingsConstants.KEY_INCREASE_CONTRAST_ENABLED] = SettingsConstants.DEFAULT_INCREASE_CONTRAST_ENABLED
+            preferences[SettingsConstants.KEY_HIGH_CONTRAST_TEXT_ENABLED] = SettingsConstants.DEFAULT_HIGH_CONTRAST_TEXT_ENABLED
+            preferences[SettingsConstants.KEY_REDUCE_ANIMATIONS_ENABLED] = SettingsConstants.DEFAULT_REDUCE_ANIMATIONS_ENABLED
+            preferences[SettingsConstants.KEY_AUTOPLAY_ANIMATIONS_ENABLED] = SettingsConstants.DEFAULT_AUTOPLAY_ANIMATIONS_ENABLED
         }
     }
 }
