@@ -97,7 +97,7 @@ fun PostContent(
                             if (isExpanded) {
                                 MarkdownRenderer.get(context).render(textView, text ?: "")
                             } else {
-                                textView.text = text ?: ""
+                                MarkdownRenderer.get(context).render(textView, text ?: "")
                             }
                             textView.tag = text
                         }

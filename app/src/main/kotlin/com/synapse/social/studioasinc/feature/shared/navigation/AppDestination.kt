@@ -48,4 +48,6 @@ sealed interface AppDestination {
     data class GroupInfo(val chatId: String, val groupName: String) : AppDestination
     @Serializable
     data class UserMoreOptions(val userId: String) : AppDestination
+    @Serializable
+    data class HashtagFeed(val tag: String) : AppDestination
 }

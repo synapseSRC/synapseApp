@@ -9,6 +9,9 @@ import com.synapse.social.studioasinc.shared.domain.model.SearchPost
 import com.synapse.social.studioasinc.shared.domain.model.MediaItem
 import com.synapse.social.studioasinc.shared.domain.repository.ISearchRepository
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
@@ -43,6 +46,13 @@ private data class AuthorDto(
  * This implementation focuses on remote-first data retrieval with basic sanitization
  * to prevent query injection while maintaining flexibility for partial matches.
  */
+@Serializable
+private data class TrendingHashtagDto(
+    val id: String,
+    val tag: String,
+    val trending_usage_count: Int
+)
+
 class SearchRepositoryImpl(
     private val client: io.github.jan.supabase.SupabaseClient = SupabaseClient.client
 ) : ISearchRepository {
@@ -112,13 +122,20 @@ class SearchRepositoryImpl(
     }
 
     /**
-     * Retrieves the top trending hashtags based purely on overall usage count.
+     * Retrieves the top trending hashtags based purely on usage in the last 24 hours.
      */
     override suspend fun getTrendingHashtags(): Result<List<SearchHashtag>> = runCatching {
-        client.postgrest["hashtags"].select {
-            order("usage_count", Order.DESCENDING)
-            limit(10)
-        }.decodeList<SearchHashtag>()
+        val response = client.postgrest.rpc("get_trending_hashtags", buildJsonObject {
+            put("limit_count", 10)
+        })
+
+        response.decodeList<TrendingHashtagDto>().map { dto ->
+            SearchHashtag(
+                id = dto.id,
+                tag = dto.tag,
+                count = dto.trending_usage_count
+            )
+        }
     }
 
     /**

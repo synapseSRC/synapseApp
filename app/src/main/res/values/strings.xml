@@ -1790,4 +1790,5 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="storage_used_for">Used for: %1$s</string>
     <string name="storage_requires_setup">Requires Setup</string>
     <string name="storage_connecting">Connecting…</string>
+    <string name="trending">Trending</string>
 </resources>
