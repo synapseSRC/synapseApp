@@ -215,11 +215,7 @@ fun PostHeader(
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = if (replyToUsernames.size > visibleCount) {
-                    Modifier.clickable { showReplyingToSheet = true }
-                } else {
-                    Modifier
-                }
+                modifier = Modifier.clickable { showReplyingToSheet = true }
             )
         }
 
