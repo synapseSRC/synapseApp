@@ -115,7 +115,9 @@ object PostUiMapper {
             postText = feedComment.content,
             timestamp = feedComment.timestamp,
             likesCount = feedComment.likeCount,
-            replyCount = feedComment.commentCount
+            replyCount = feedComment.commentCount,
+            inReplyToPostId = feedComment.parentCommentId ?: feedComment.parentPostId,
+            rootPostId = feedComment.parentPostId
         )
         
         return PostCardState(

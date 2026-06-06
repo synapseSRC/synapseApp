@@ -90,6 +90,11 @@ object SettingsConstants {
     val KEY_HIDE_PROFILE_PIC_SUGGESTION = booleanPreferencesKey("hide_profile_pic_suggestion")
     val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
 
+    val KEY_INCREASE_CONTRAST_ENABLED = booleanPreferencesKey("increase_contrast_enabled")
+    val KEY_HIGH_CONTRAST_TEXT_ENABLED = booleanPreferencesKey("high_contrast_text_enabled")
+    val KEY_REDUCE_ANIMATIONS_ENABLED = booleanPreferencesKey("reduce_animations_enabled")
+    val KEY_AUTOPLAY_ANIMATIONS_ENABLED = booleanPreferencesKey("autoplay_animations_enabled")
+
 
     val DEFAULT_THEME_MODE = ThemeMode.SYSTEM
     val DEFAULT_DYNAMIC_COLOR_ENABLED = true
@@ -128,6 +133,11 @@ object SettingsConstants {
     val DEFAULT_CHAT_LOCK_ENABLED = false
     val DEFAULT_ACCOUNT_REPORTS_AUTO_CREATE = false
     val DEFAULT_CHANNELS_REPORTS_AUTO_CREATE = false
+
+    val DEFAULT_INCREASE_CONTRAST_ENABLED = false
+    val DEFAULT_HIGH_CONTRAST_TEXT_ENABLED = false
+    val DEFAULT_REDUCE_ANIMATIONS_ENABLED = false
+    val DEFAULT_AUTOPLAY_ANIMATIONS_ENABLED = true
 
     val DEFAULT_AUTO_DOWNLOAD_WIFI_STRINGS = com.synapse.social.studioasinc.ui.settings.MediaType.values().map { it.name }.toSet()
     val DEFAULT_AUTO_DOWNLOAD_WIFI_TYPES = com.synapse.social.studioasinc.ui.settings.MediaType.values().toSet()

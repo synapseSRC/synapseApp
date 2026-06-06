@@ -11,4 +11,5 @@ interface ISearchRepository {
     suspend fun searchNews(query: String): Result<List<SearchNews>>
     suspend fun getSuggestedAccounts(query: String): Result<List<SearchAccount>>
     suspend fun getTrendingHashtags(): Result<List<SearchHashtag>>
+    suspend fun getPostsByHashtag(tag: String): Result<List<SearchPost>>
 }

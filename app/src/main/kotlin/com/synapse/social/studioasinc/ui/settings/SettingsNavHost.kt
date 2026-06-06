@@ -333,7 +333,9 @@ fun SettingsNavHost(
 
 
         composable(route = SettingsDestination.ROUTE_ACCESSIBILITY) {
+            val viewModel: AccessibilityViewModel = hiltViewModel()
             AccessibilityScreen(
+                viewModel = viewModel,
                 onBackClick = {
                     navController.popBackStack()
                 }

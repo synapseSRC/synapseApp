@@ -24,7 +24,7 @@ fun LanguageRegionScreen(
     viewModel: LanguageRegionViewModel,
     onBackClick: () -> Unit
 ) {
-    val currentLanguage by viewModel.currentLanguage.collectAsState()
+    val currentLanguageCode by viewModel.currentLanguage.collectAsState()
     val availableLanguages by viewModel.availableLanguages.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -81,6 +81,13 @@ fun LanguageRegionScreen(
 
             item {
                 SettingsSection(title = "App Language") {
+                    val currentLanguageName = availableLanguages.find { it.code == currentLanguageCode }?.nativeName ?: stringResource(R.string.language_english)
+                    Text(
+                        text = stringResource(R.string.language_current_format, currentLanguageName),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                    )
 
                     availableLanguages.forEachIndexed { index, languageOption ->
                         LanguageSelectionItem(

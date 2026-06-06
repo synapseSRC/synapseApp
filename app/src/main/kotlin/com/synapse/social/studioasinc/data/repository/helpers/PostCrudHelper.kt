@@ -14,13 +14,16 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.JsonPrimitive
 
 internal class PostCrudHelper(
     private val postDao: PostDao,
@@ -53,6 +56,7 @@ internal class PostCrudHelper(
             client.from("posts").insert(postDto)
             postDao.insert(PostMapper.toEntity(post))
             processMentions(post.id, post.postText ?: "", post.authorUid)
+            processHashtags(post.id, post.postText ?: "")
 
             android.util.Log.d(PostRepositoryUtils.TAG, "Post created successfully: ${post.id}")
             Result.success(post)
@@ -101,6 +105,7 @@ internal class PostCrudHelper(
 
             enrichedPosts.forEach { post ->
                 processMentions(post.id, post.postText ?: "", post.authorUid)
+                processHashtags(post.id, post.postText ?: "")
             }
 
             android.util.Log.d(PostRepositoryUtils.TAG, "Batch posts created successfully")
@@ -294,6 +299,30 @@ internal class PostCrudHelper(
             throw e
         } catch (e: Exception) {
             android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process mentions: ${e.message}", e)
+        }
+    }
+
+    private suspend fun processHashtags(
+        postId: String,
+        content: String
+    ) {
+        try {
+            val hashtags = com.synapse.social.studioasinc.shared.domain.usecase.ParseHashtagsUseCase()(content)
+            if (hashtags.isEmpty()) return
+
+            android.util.Log.d(PostRepositoryUtils.TAG, "Processing hashtags: $hashtags for post $postId")
+
+            client.postgrest.rpc(
+                "process_post_hashtags",
+                buildJsonObject {
+                    put("post_id", postId)
+                    put("tags", kotlinx.serialization.json.JsonArray(hashtags.map { JsonPrimitive(it) }))
+                }
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtags: ${e.message}", e)
         }
     }
 }

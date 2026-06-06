@@ -26,7 +26,7 @@ class LanguageRegionViewModel(
 
 
 
-    private val _currentLanguage = MutableStateFlow("English")
+    private val _currentLanguage = MutableStateFlow(getCurrentLocaleCode())
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
 
     private val _availableLanguages = MutableStateFlow<List<LanguageOption>>(emptyList())
@@ -47,6 +47,19 @@ class LanguageRegionViewModel(
 
 
 
+
+    private fun getCurrentLocaleCode(): String {
+        val locales = AppCompatDelegate.getApplicationLocales()
+        if (!locales.isEmpty) {
+            val locale = locales[0]
+            if (locale != null) {
+                val lang = locale.language
+                val country = locale.country
+                return if (country.isNotEmpty()) "$lang-$country" else lang
+            }
+        }
+        return "en"
+    }
 
     private fun loadAvailableLanguages() {
         viewModelScope.launch {
@@ -157,21 +170,10 @@ class LanguageRegionViewModel(
                 )
                 _availableLanguages.value = languages
 
-                // Observe language changes continuously
+                // Observe language changes to update UI state
                 launch {
-                    settingsRepository.language.collect { savedCode ->
-                        val selected = languages.find { it.code == savedCode }
-                        if (selected != null) {
-                            _currentLanguage.value = selected.nativeName
-                        } else {
-
-                            val systemLocale = Locale.getDefault()
-                            val systemCode = systemLocale.language
-                            val match = languages.find { it.code.startsWith(systemCode) }
-                            if (match != null) {
-                                _currentLanguage.value = match.nativeName
-                            }
-                        }
+                    settingsRepository.language.collect {
+                        _currentLanguage.value = getCurrentLocaleCode()
                     }
                 }
 
@@ -206,7 +208,7 @@ class LanguageRegionViewModel(
                     LocaleListCompat.create(locale)
                 )
 
-                _currentLanguage.value = languageOption.nativeName
+                _currentLanguage.value = languageOption.code
 
                 android.util.Log.d(
                     "LanguageRegionViewModel",
@@ -225,7 +227,7 @@ class LanguageRegionViewModel(
 
 
     fun isLanguageSelected(languageOption: LanguageOption): Boolean {
-        return _currentLanguage.value == languageOption.nativeName
+        return _currentLanguage.value == languageOption.code
     }
 
 

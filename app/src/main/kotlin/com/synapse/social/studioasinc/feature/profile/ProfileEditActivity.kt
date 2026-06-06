@@ -1,7 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -20,7 +20,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class ProfileEditActivity : ComponentActivity() {
+class ProfileEditActivity : AppCompatActivity() {
 
     private val viewModel: EditProfileViewModel by viewModels()
 

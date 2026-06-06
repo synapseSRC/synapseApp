@@ -9,6 +9,9 @@ import com.synapse.social.studioasinc.shared.domain.model.SearchPost
 import com.synapse.social.studioasinc.shared.domain.model.MediaItem
 import com.synapse.social.studioasinc.shared.domain.repository.ISearchRepository
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
@@ -43,6 +46,15 @@ private data class AuthorDto(
  * This implementation focuses on remote-first data retrieval with basic sanitization
  * to prevent query injection while maintaining flexibility for partial matches.
  */
+@Serializable
+private data class TrendingHashtagDto(
+    val id: String,
+    val tag: String,
+    val trending_usage_count: Int
+) {
+    fun toDomain() = SearchHashtag(id = id, tag = tag, count = trending_usage_count)
+}
+
 class SearchRepositoryImpl(
     private val client: io.github.jan.supabase.SupabaseClient = SupabaseClient.client
 ) : ISearchRepository {
@@ -112,13 +124,19 @@ class SearchRepositoryImpl(
     }
 
     /**
-     * Retrieves the top trending hashtags based purely on overall usage count.
+     * Retrieves the top trending hashtags based purely on usage in the last 24 hours.
      */
-    override suspend fun getTrendingHashtags(): Result<List<SearchHashtag>> = runCatching {
-        client.postgrest["hashtags"].select {
-            order("usage_count", Order.DESCENDING)
-            limit(10)
-        }.decodeList<SearchHashtag>()
+    override suspend fun getTrendingHashtags(): Result<List<SearchHashtag>> = try {
+        val response = client.postgrest.rpc("get_trending_hashtags", buildJsonObject {
+            put("limit_count", 10)
+        })
+
+        val list = response.decodeList<TrendingHashtagDto>().map { it.toDomain() }
+        Result.success(list)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
     /**
@@ -137,6 +155,43 @@ class SearchRepositoryImpl(
             order("published_at", Order.DESCENDING)
             limit(20)
         }.decodeList()
+    }
+
+    override suspend fun getPostsByHashtag(tag: String): Result<List<SearchPost>> = try {
+        val cleanTag = tag.removePrefix("#")
+        // Join posts → post_hashtags → hashtags using PostgREST !inner embedding for exact tag match
+        val columns = Columns.raw(
+            "id, post_text, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, " +
+            "author:users!posts_author_uid_fkey(display_name, username, avatar), " +
+            "post_hashtags!inner(hashtags!inner(tag))"
+        )
+        val result = client.postgrest["posts"].select(columns = columns) {
+            filter { eq("post_hashtags.hashtags.tag", cleanTag) }
+            order("created_at", Order.DESCENDING)
+            limit(50)
+        }.decodeList<PostDto>()
+
+        Result.success(result.map { dto ->
+            SearchPost(
+                id = dto.id,
+                content = dto.post_text,
+                authorId = dto.author_uid,
+                likesCount = dto.likes_count,
+                commentsCount = dto.comments_count,
+                boostCount = dto.reshares_count,
+                createdAt = dto.created_at,
+                mediaUrls = dto.media_items?.map { item -> SupabaseClient.constructMediaUrl(item.url) },
+                authorName = dto.author?.display_name,
+                authorHandle = dto.author?.username,
+                authorAvatar = dto.author?.avatar?.let { path ->
+                    SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, path)
+                }
+            )
+        })
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
     /**

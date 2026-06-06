@@ -1,56 +1,136 @@
 # Code Review Log
 
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/datasource/ChatRealtimeDataSource.kt
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/model/UserPreferences.kt
 - **Review Strength:** ROST (Max Level)
 - **Status:** Passed
 - **Key Findings:**
-  1. Refactored `subscribeToMessages` to use the recommended `CompletableDeferred` synchronization pattern with `onStart`. This ensures the collector is active before the WebSocket subscription is initiated, closing the race condition window.
-  2. Applied `yield()` before every `channel.subscribe()` call. This follows engineering standards to prevent event loop blocking during the handshake process.
-  3. Correctly restored the `awaitClose` block which ensures proper cleanup (unsubscribing and removing channels) when the Flow is cancelled.
-  4. Standardized exception handling across all real-time methods to rethrow `CancellationException`, ensuring coroutine structural concurrency is respected.
+    1. Standardized `snake_case` SerialNames match the remote schema and local keys.
+    2. Nullable Booleans allow for partial updates and safe merging from remote state.
 
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/chat/SendMessageUseCase.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Critical Issues Found
-- **Key Findings:**
-  1. rost-block: Domain Isolation violation. The UseCase imports and directly interacts with `SignalProtocolManager`, `EncryptedMessage`, and `kotlinx.serialization.json` primitives. This leaks data-layer encryption logic and JSON serialization details into the domain layer.
-  2. rost-block: Architectural Drift. The UseCase is orchestrating complex multi-recipient encryption logic that should be encapsulated within the Repository layer (e.g., `SupabaseChatRepository`). The domain layer should only concern itself with the intent to send a message.
-  3. rost-warn: Heavy reliance on `SignalProtocolManager?` being null as an error check. This should be handled via dependency injection or a more robust initialization check in the data layer.
-
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/UserRepositoryImpl.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Needs Changes
-- **Key Findings:**
-  1. rost-block: Improper use of `runCatching` in asynchronous repository methods. Standard `runCatching` swallows `CancellationException`, which can lead to broken coroutine cancellation and memory leaks. ROST standards require either rethrowing `CancellationException` or using an explicit try-catch.
-  2. rost-warn: Potential data corruption in local cache. `getUserProfile` constructs a full avatar URL using `SupabaseClient.constructAvatarUrl` and then persists this *full* URL into the local database. However, `mapDbUser` also calls `constructAvatarUrl` on data coming *out* of the database. This leads to double-prefixing of avatar URLs when reading from cache.
-  3. rost-block: Redundant and inconsistent URL construction. The repository calls `constructAvatarUrl` in both `getUserProfile` (manually) and `mapDbUser`. This logic should be centralized in the mapper to ensure consistency.
-
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SupabaseAuthRepository.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Needs Changes
-- **Key Findings:**
-  1. rost-block: Defensive Stability violation. Synchronous methods like `getCurrentUserId`, `getCurrentUserEmail`, and `isEmailVerified` use try-catch blocks that swallow exceptions and return default/null values silently. This violates ROST Defensive Stability standards which mandate logging or user feedback for failure signals.
-  2. rost-warn: Brittle identity verification. `isEmailVerified` relies on manual JSON primitive parsing of `identities`. This is fragile and highly dependent on the internal structure of the Supabase user object which may change across library versions.
-  3. suggestion: The `getOAuthUrl` method manually constructs the authorization URL using `URLBuilder`. While functional, this should ideally be handled by the Supabase Auth library directly if a more high-level API exists to avoid manual URL manipulation.
-
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/user/UpdateProfileUseCase.kt
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/local/database/settings/SettingsConstants.kt
 - **Review Strength:** ROST (Max Level)
 - **Status:** Passed
 - **Key Findings:**
-  1. This UseCase correctly follows the single `invoke` operator rule.
-  2. Zero architectural drift: No framework dependencies or UI references are present.
-  3. Data hardening: Successfully delegates error handling to the repository layer, returning a structured `Result`.
+    1. Accessibility keys and defaults are correctly defined as `booleanPreferencesKey`.
+    2. Default values follow the mission specification (Contrast/Animations: false, Autoplay: true).
 
-## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/ai/GeminiAiRepository.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Needs Changes
-- **Key Findings:**
-  1. rost-block: Thread Safety violation. The `generateSmartReplies` method executes a network request using Ktor's `httpClient.post` without switching to `AppDispatchers.IO`. In Kotlin Multiplatform, this can block the main thread depending on the engine configuration.
-  2. rost-warn: Brittle response parsing. The logic to clean replies (`replace(Regex("^[\\s\\d.*-]+\\s*"), "")`) is highly dependent on Gemini following the prompt exactly. It should be more robust or include fallback logic if the response format varies.
-  3. suggestion: The API key is retrieved directly from `SynapseConfig`. While acceptable for internal use, for better testability and security, it should be injected through the constructor or a configuration provider.
-
-## app/src/main/kotlin/com/synapse/social/studioasinc/feature/inbox/inbox/screens/ChatScreen.kt
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/local/database/settings/GeneralStore.kt
 - **Review Strength:** ROST (Max Level)
 - **Status:** Passed
 - **Key Findings:**
-  1. Resolved unresolved reference error by adding missing import for `androidx.compose.runtime.saveable.rememberSaveable`. This is a straightforward fix for a compilation failure.
+    1. Interface and implementation follow the established DataStore delegation pattern.
+    2. Uses `safePreferencesFlow()` for resilient data access.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/local/database/SettingsDataStore.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. `clearUserSettings()` and `restoreDefaults()` updated to manage the lifecycle of new accessibility settings.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/repository/SettingsRepository.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Domain repository interface correctly exposes accessibility flows and setters.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/repository/SettingsRepository.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Data layer interface mirrors domain interface.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/repository/SettingsRepositoryImpl.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Implements delegation to `SettingsDataStore` correctly.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/repository/DomainSettingsRepositoryAdapter.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Adapter correctly maps data layer implementation to domain interface.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/settings/ObserveAccessibilitySettingsUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Correctly encapsulates the observation of 4 accessibility settings.
+    2. No platform-specific imports found in commonMain.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/settings/SyncAccessibilitySettingsUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Implements bi-directional sync (local -> remote, remote -> local).
+    2. Uses `UserPreferencesRepository` for cloud synchronization.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/di/SettingsUseCaseModule.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Correct Hilt configuration providing the new UseCases.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/ui/settings/AccessibilityViewModel.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Uses `stateIn` for efficient state management and sharing.
+    2. Correctly launches coroutines in `viewModelScope` for updates.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/ui/settings/AccessibilityScreen.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Wired to live state from ViewModel.
+    2. Toggle changes trigger ViewModel updates, fulfilling the functional requirement.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/ui/settings/SettingsNavHost.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+    1. Injects `AccessibilityViewModel` using `hiltViewModel()` as required.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/domain/usecase/ParseHashtagsUseCase.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Pure regex-based extraction is clean and platform-independent.
+  2. Correctly excludes pure number hashtags as requested.
+  3. Includes unit tests for various edge cases.
+
+## shared/src/commonMain/kotlin/com/synapse/social/studioasinc/shared/data/repository/SearchRepositoryImpl.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Updated to use the new `get_trending_hashtags` RPC.
+  2. Fixed a build error by correctly using `buildJsonObject` for RPC parameters and moving the DTO outside the method.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/data/repository/helpers/PostCrudHelper.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. `processHashtags` correctly orchestrates hashtag upsert, post linking, and usage increment.
+  2. `rost-warn`: RPC calls are sequential within the loop. For high hashtag counts (rare for a single post), this might introduce latency. However, given it's background IO, it's acceptable for now.
+  3. Corrected Supabase syntax (upsert/insert) to use `buildJsonObject`.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/feature/search/search/SearchScreen.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Added horizontal trending chips as requested.
+  2. Corrected hashtag navigation logic to prefix with '#' for consistency in search.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/feature/hashtag/HashtagFeedScreen.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. New screen follows existing feed patterns.
+  2. Properly uses `hiltViewModel` and handles loading/error states.
+
+## app/src/main/kotlin/com/synapse/social/studioasinc/feature/shared/theme/styling/MarkdownRenderer.kt
+- **Review Strength:** ROST (Max Level)
+- **Status:** Passed
+- **Key Findings:**
+  1. Updated `applyMentionHashtagSpans` to handle hashtag deep links (`synapse://hashtag/$tag`).
+  2. Verified deep link registration in `AndroidManifest.xml`.

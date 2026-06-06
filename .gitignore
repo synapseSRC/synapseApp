@@ -151,3 +151,4 @@ playwright/.cache/
 # IDE
 .vscode/
 jules-delegator.skill
+supabase/.temp/

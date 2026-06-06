@@ -3,7 +3,7 @@ package com.synapse.social.studioasinc.feature.shared.components
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.lifecycleScope
@@ -16,7 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FollowListActivity : ComponentActivity() {
+class FollowListActivity : AppCompatActivity() {
 
     @Inject
     lateinit var authRepository: AuthRepository

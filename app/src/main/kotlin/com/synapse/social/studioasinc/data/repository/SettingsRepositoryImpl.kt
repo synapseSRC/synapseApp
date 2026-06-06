@@ -443,4 +443,25 @@ class SettingsRepositoryImpl private constructor(
     override suspend fun setHideProfilePicSuggestion(hide: Boolean) {
         settingsDataStore.setHideProfilePicSuggestion(hide)
     }
+
+    override val increaseContrastEnabled: Flow<Boolean> = settingsDataStore.increaseContrastEnabled
+    override val highContrastTextEnabled: Flow<Boolean> = settingsDataStore.highContrastTextEnabled
+    override val reduceAnimationsEnabled: Flow<Boolean> = settingsDataStore.reduceAnimationsEnabled
+    override val autoplayAnimationsEnabled: Flow<Boolean> = settingsDataStore.autoplayAnimationsEnabled
+
+    override suspend fun setIncreaseContrastEnabled(enabled: Boolean) {
+        settingsDataStore.setIncreaseContrastEnabled(enabled)
+    }
+
+    override suspend fun setHighContrastTextEnabled(enabled: Boolean) {
+        settingsDataStore.setHighContrastTextEnabled(enabled)
+    }
+
+    override suspend fun setReduceAnimationsEnabled(enabled: Boolean) {
+        settingsDataStore.setReduceAnimationsEnabled(enabled)
+    }
+
+    override suspend fun setAutoplayAnimationsEnabled(enabled: Boolean) {
+        settingsDataStore.setAutoplayAnimationsEnabled(enabled)
+    }
 }

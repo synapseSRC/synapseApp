@@ -876,6 +876,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <!-- Language &amp; Region Settings -->
     <string name="language_region_title">Language &amp; Region</string>
     <string name="language_current">Current Language</string>
+    <string name="language_current_format">Current: %s</string>
     <string name="language_available">Available Languages</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
@@ -1790,4 +1791,5 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="storage_used_for">Used for: %1$s</string>
     <string name="storage_requires_setup">Requires Setup</string>
     <string name="storage_connecting">Connecting…</string>
+    <string name="trending">Trending</string>
 </resources>

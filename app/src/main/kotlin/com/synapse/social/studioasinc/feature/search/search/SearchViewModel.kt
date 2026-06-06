@@ -10,6 +10,7 @@ import com.synapse.social.studioasinc.shared.domain.model.SearchAccount
 import com.synapse.social.studioasinc.shared.domain.model.SearchHashtag
 import com.synapse.social.studioasinc.shared.domain.model.SearchNews
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetSuggestedAccountsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.search.GetTrendingHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchNewsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchPostsUseCase
@@ -43,6 +44,7 @@ data class SearchUiState(
     val hashtags: List<SearchHashtag> = emptyList(),
     val news: List<SearchNews> = emptyList(),
     val accounts: List<SearchAccount> = emptyList(),
+    val trendingHashtags: List<SearchHashtag> = emptyList(),
     val searchHistory: List<String> = emptyList(),
     val lastQuery: String = "",
     val cachedData: Map<SearchTab, Any> = emptyMap(),
@@ -59,6 +61,7 @@ class SearchViewModel @Inject constructor(
     private val searchHashtagsUseCase: SearchHashtagsUseCase,
     private val searchNewsUseCase: SearchNewsUseCase,
     private val getSuggestedAccountsUseCase: GetSuggestedAccountsUseCase,
+    private val getTrendingHashtagsUseCase: GetTrendingHashtagsUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
     private val blockUserUseCase: BlockUserUseCase,
@@ -78,7 +81,16 @@ class SearchViewModel @Inject constructor(
     private var searchJob: Job? = null
     init {
         loadHistory()
+        loadTrendingHashtags()
         refreshCurrentTab()
+    }
+
+    private fun loadTrendingHashtags() {
+        viewModelScope.launch {
+            getTrendingHashtagsUseCase().onSuccess { hashtags ->
+                updateState { it.copy(trendingHashtags = hashtags) }
+            }
+        }
     }
 
     private fun loadHistory() {
@@ -241,7 +253,8 @@ class SearchViewModel @Inject constructor(
                         result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.FOR_YOU, SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
-                        val result = searchPostsUseCase(query)
+                        val finalQuery = query
+                        val result = searchPostsUseCase(finalQuery)
                         result.onSuccess { data ->
                             val posts = data.map { searchPost ->
                                 com.synapse.social.studioasinc.domain.model.Post(

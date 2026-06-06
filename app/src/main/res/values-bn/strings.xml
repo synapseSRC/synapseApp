@@ -1417,4 +1417,384 @@
         <item quantity="one">%d টি চ্যাট</item>
         <item quantity="other">%d টি চ্যাট</item>
     </plurals>
-    </resources>
+    <!-- TODO: translate -->
+    <string name="sign_in_title">Welcome Back</string>
+    <!-- TODO: translate -->
+    <string name="sign_in_subtitle">Sign in to continue</string>
+    <!-- TODO: translate -->
+    <string name="email_label">Email</string>
+    <!-- TODO: translate -->
+    <string name="action_sign_in">Sign In</string>
+    <!-- TODO: translate -->
+    <string name="dont_have_account">Don\'t have an account? </string>
+    <!-- TODO: translate -->
+    <string name="action_sign_up">Sign Up</string>
+    <!-- TODO: translate -->
+    <string name="sign_up_title">Create Account</string>
+    <!-- TODO: translate -->
+    <string name="sign_up_subtitle">Sign up to get started</string>
+    <!-- TODO: translate -->
+    <string name="username_label">Username</string>
+    <!-- TODO: translate -->
+    <string name="already_have_account">Already have an account? </string>
+    <!-- TODO: translate -->
+    <string name="reset_password_title">Set New Password</string>
+    <!-- TODO: translate -->
+    <string name="reset_password_button">Reset Password</string>
+    <!-- TODO: translate -->
+    <string name="profile_photos_title">Profile Photos</string>
+    <!-- TODO: translate -->
+    <string name="cover_photos_title">Cover Photos</string>
+    <!-- TODO: translate -->
+    <string name="no_history_yet">No history yet</string>
+    <!-- TODO: translate -->
+    <string name="previous_photos_here">Your previous photos will appear here</string>
+    <!-- TODO: translate -->
+    <string name="history_photo">History Photo</string>
+    <!-- TODO: translate -->
+    <string name="error_post_not_found">This post is unavailable or has been deleted.</string>
+    <!-- TODO: translate -->
+    <string name="view_post_activity">View post activity</string>
+    <!-- TODO: translate -->
+    <string name="and_n_more">and %d more</string>
+    <!-- TODO: translate -->
+    <string name="appearance_display">Display</string>
+    <!-- TODO: translate -->
+    <string name="appearance_media_layout_beta">Media Layout (Beta)</string>
+    <!-- TODO: translate -->
+    <string name="appearance_post_media_grid">Post Media Grid</string>
+    <!-- TODO: translate -->
+    <string name="appearance_post_media_grid_subtitle">Choose how multiple images/videos are displayed</string>
+    <!-- TODO: translate -->
+    <string name="appearance_beta">Beta</string>
+    <!-- TODO: translate -->
+    <string name="about_updates">Updates</string>
+    <!-- TODO: translate -->
+    <string name="action_undo_reshare">Undo Repost</string>
+    <!-- TODO: translate -->
+    <string name="dialog_share_profile_pic_title">Share to Feed</string>
+    <!-- TODO: translate -->
+    <string name="dialog_share_profile_pic_message">Share your profile picture in feed?</string>
+    <!-- TODO: translate -->
+    <string name="voice_search">Voice Search</string>
+    <!-- TODO: translate -->
+    <string name="clear">Clear</string>
+    <!-- TODO: translate -->
+    <string name="no_content_found">No content found</string>
+    <!-- TODO: translate -->
+    <string name="no_accounts_found">No accounts found</string>
+    <!-- TODO: translate -->
+    <string name="no_hashtags_found">No hashtags found</string>
+    <!-- TODO: translate -->
+    <string name="no_news_found">No news found</string>
+    <!-- TODO: translate -->
+    <string name="link_copied">Link copied</string>
+    <!-- TODO: translate -->
+    <string name="network_usage_mobile_data">Mobile Data</string>
+    <!-- TODO: translate -->
+    <string name="network_usage_wifi">Wi-Fi</string>
+    <!-- TODO: translate -->
+    <string name="network_usage_this_app">This App</string>
+    <!-- TODO: translate -->
+    <string name="network_usage_since_device_boot">Stats are since device boot or last app reset</string>
+    <!-- TODO: translate -->
+    <string name="network_usage_statistics_reset">Statistics reset</string>
+    <!-- TODO: translate -->
+    <string name="network_usage_last_reset_format">Since last reset: %1$s</string>
+    <!-- TODO: translate -->
+    <string name="voice_cancel_hint">Slide to cancel \u2039</string>
+    <!-- TODO: translate -->
+    <string name="voice_hold_to_record">Hold to record</string>
+    <!-- TODO: translate -->
+    <string name="voice_download">Download voice message</string>
+    <!-- TODO: translate -->
+    <string name="voice_mic_permission_required">Microphone permission required</string>
+    <!-- TODO: translate -->
+    <string name="chat_action_send">Send</string>
+    <!-- TODO: translate -->
+    <string name="chat_reply_you">YOU</string>
+    <!-- TODO: translate -->
+    <string name="chat_reply_them">THEM</string>
+    <!-- TODO: translate -->
+    <string name="chat_cd_reader_avatar">Read by</string>
+    <!-- TODO: translate -->
+    <string name="view_profile">View Profile</string>
+    <!-- TODO: translate -->
+    <string name="messages_are_end_to_end_encrypted">Messages are end-to-end encrypted</string>
+    <!-- TODO: translate -->
+    <string name="lock_profile_title">Lock Profile</string>
+    <!-- TODO: translate -->
+    <string name="lock_your_profile">Lock Your Profile</string>
+    <!-- TODO: translate -->
+    <string name="profile_is_locked">Profile is Locked</string>
+    <!-- TODO: translate -->
+    <string name="lock_profile_description">When your profile is locked, only your followers can see your posts, stories, and profile details. New followers need your approval.</string>
+    <!-- TODO: translate -->
+    <string name="lock_profile_toggle_label">Lock Profile</string>
+    <!-- TODO: translate -->
+    <string name="profile_locked_successfully">Profile locked successfully</string>
+    <!-- TODO: translate -->
+    <string name="profile_unlocked_successfully">Profile unlocked successfully</string>
+    <!-- TODO: translate -->
+    <string name="story_cycle_scale">Change scale</string>
+    <!-- TODO: translate -->
+    <string name="story_reply_placeholder">Reply to story…</string>
+    <!-- TODO: translate -->
+    <string name="story_delete_title">Delete Story?</string>
+    <!-- TODO: translate -->
+    <string name="story_delete_body">This will permanently remove your story.</string>
+    <!-- TODO: translate -->
+    <string name="story_expires_in">Expires in %1$s</string>
+    <!-- TODO: translate -->
+    <string name="story_expires_countdown">• %1$s</string>
+    <!-- TODO: translate -->
+    <string name="story_expires_hours_minutes">%1$dh %2$dm</string>
+    <!-- TODO: translate -->
+    <string name="story_expires_minutes">%1$dm</string>
+    <!-- TODO: translate -->
+    <string name="story_expiring_soon">Expiring soon</string>
+    <!-- TODO: translate -->
+    <string name="story_privacy_public">Public</string>
+    <!-- TODO: translate -->
+    <string name="story_privacy_followers">Followers</string>
+    <!-- TODO: translate -->
+    <string name="story_privacy_close_friends">Close Friends</string>
+    <!-- TODO: translate -->
+    <string name="story_reactions_count">%1$d reactions</string>
+    <!-- TODO: translate -->
+    <string name="story_reactions_title">Reactions</string>
+    <!-- TODO: translate -->
+    <string name="story_no_reactions">No reactions yet</string>
+    <!-- TODO: translate -->
+    <string name="quoting">Quoting</string>
+    <!-- TODO: translate -->
+    <string name="current_profile_photo">Current profile photo</string>
+    <!-- TODO: translate -->
+    <string name="default_avatar">Default avatar</string>
+    <!-- TODO: translate -->
+    <string name="uploading">Uploading...</string>
+    <!-- TODO: translate -->
+    <string name="current_profile_photo_label">Current Profile Photo</string>
+    <!-- TODO: translate -->
+    <string name="choose_option_below">Choose an option below to update</string>
+    <!-- TODO: translate -->
+    <string name="profile_photo_removed">Profile photo removed</string>
+    <!-- TODO: translate -->
+    <string name="profile_photo_section">Profile Photo</string>
+    <!-- TODO: translate -->
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <!-- TODO: translate -->
+    <string name="choose_from_gallery_subtitle">Select a photo from your device</string>
+    <!-- TODO: translate -->
+    <string name="no_photo_picker">No photo picker available</string>
+    <!-- TODO: translate -->
+    <string name="take_photo">Take Photo</string>
+    <!-- TODO: translate -->
+    <string name="take_photo_subtitle">Capture a new photo with camera</string>
+    <!-- TODO: translate -->
+    <string name="no_camera_available">No camera available</string>
+    <!-- TODO: translate -->
+    <string name="remove_profile_photo_subtitle">Use default avatar</string>
+    <!-- TODO: translate -->
+    <string name="avatar_creation_section">Avatar Creation</string>
+    <!-- TODO: translate -->
+    <string name="create_avatar">Create Avatar</string>
+    <!-- TODO: translate -->
+    <string name="create_avatar_subtitle">Design a custom avatar</string>
+    <!-- TODO: translate -->
+    <string name="avatar_creator_soon">Avatar creator coming soon</string>
+    <!-- TODO: translate -->
+    <string name="edit_avatar">Edit Avatar</string>
+    <!-- TODO: translate -->
+    <string name="edit_avatar_subtitle">Modify existing avatar</string>
+    <!-- TODO: translate -->
+    <string name="avatar_editor_soon">Avatar editor coming soon</string>
+    <!-- TODO: translate -->
+    <string name="brand_partnerships_coming_soon">Brand Partnerships feature coming soon</string>
+    <!-- TODO: translate -->
+    <string name="no_favourites_yet">No Favourites Yet</string>
+    <!-- TODO: translate -->
+    <string name="add_contacts_favourites">Add contacts to your favourites for quick access</string>
+    <!-- TODO: translate -->
+    <string name="manage_favourites">Manage Favourites</string>
+    <!-- TODO: translate -->
+    <string name="add_to_favourites">Add to Favourites</string>
+    <!-- TODO: translate -->
+    <string name="select_contacts_favourites">Select contacts to add to favourites</string>
+    <!-- TODO: translate -->
+    <string name="reorder_favourites">Reorder Favourites</string>
+    <!-- TODO: translate -->
+    <string name="change_order_favourites">Change the order of favourite contacts</string>
+    <!-- TODO: translate -->
+    <string name="remove_from_favourites">Remove from Favourites</string>
+    <!-- TODO: translate -->
+    <string name="remove_contacts_favourites">Remove contacts from favourites list</string>
+    <!-- TODO: translate -->
+    <string name="display_options">Display Options</string>
+    <!-- TODO: translate -->
+    <string name="show_favourites_chat_list">Show Favourites in Chat List</string>
+    <!-- TODO: translate -->
+    <string name="display_favourite_contacts_top">Display favourite contacts at the top</string>
+    <!-- TODO: translate -->
+    <string name="show_favourite_badge">Show Favourite Badge</string>
+    <!-- TODO: translate -->
+    <string name="display_star_icon">Display a star icon on favourite contacts</string>
+    <!-- TODO: translate -->
+    <string name="disappearing_messages_title">Disappearing messages</string>
+    <!-- TODO: translate -->
+    <string name="disappearing_mode_off">Off</string>
+    <!-- TODO: translate -->
+    <string name="disappearing_mode_24_hours">24 hours</string>
+    <!-- TODO: translate -->
+    <string name="disappearing_mode_7_days">7 days</string>
+    <!-- TODO: translate -->
+    <string name="search_not_yet_supported">Search not yet supported</string>
+    <!-- TODO: translate -->
+    <string name="share_not_yet_supported">Share not yet supported</string>
+    <!-- TODO: translate -->
+    <string name="muted">Muted</string>
+    <!-- TODO: translate -->
+    <string name="calling_not_yet_supported">Calling not yet supported</string>
+    <!-- TODO: translate -->
+    <string name="video_calls_not_yet_supported">Video calls not yet supported</string>
+    <!-- TODO: translate -->
+    <string name="or_continue_with">Or continue with</string>
+    <!-- TODO: translate -->
+    <string name="password_strength">Password Strength:</string>
+    <!-- TODO: translate -->
+    <string name="editing_comment">Editing comment</string>
+    <!-- TODO: translate -->
+    <string name="gender">Gender</string>
+    <!-- TODO: translate -->
+    <string name="gender_male">Male</string>
+    <!-- TODO: translate -->
+    <string name="gender_female">Female</string>
+    <!-- TODO: translate -->
+    <string name="gender_other">Other</string>
+    <!-- TODO: translate -->
+    <string name="edited">Edited</string>
+    <!-- TODO: translate -->
+    <string name="error_icon_warning">⚠️</string>
+    <!-- TODO: translate -->
+    <string name="password_strength_weak">Weak</string>
+    <!-- TODO: translate -->
+    <string name="password_strength_fair">Fair</string>
+    <!-- TODO: translate -->
+    <string name="password_strength_strong">Strong</string>
+    <!-- TODO: translate -->
+    <string name="replying_to_user">Replying to %1$s</string>
+    <!-- TODO: translate -->
+    <string name="select_members">Select Members (%1$d)</string>
+    <!-- TODO: translate -->
+    <string name="members_count">Members (%1$d)</string>
+    <!-- TODO: translate -->
+    <string name="version_prefix">Version </string>
+    <!-- TODO: translate -->
+    <string name="add_profile_picture_title">Add a Profile Picture</string>
+    <!-- TODO: translate -->
+    <string name="add_profile_picture_message">A profile picture helps your friends recognize you. Would you like to upload one now?</string>
+    <!-- TODO: translate -->
+    <string name="dont_show_again">Don\'t show again</string>
+    <!-- TODO: translate -->
+    <string name="upload">Upload</string>
+    <!-- TODO: translate -->
+    <string name="later">Later</string>
+    <!-- TODO: translate -->
+    <string name="error_title">Error</string>
+    <!-- TODO: translate -->
+    <string name="share_to_other_apps">Share to Other Apps</string>
+    <!-- TODO: translate -->
+    <string name="reel">Reel</string>
+    <!-- TODO: translate -->
+    <string name="no_reels_yet">No reels yet</string>
+    <!-- TODO: translate -->
+    <string name="create_first_reel">Create your first reel</string>
+    <!-- TODO: translate -->
+    <string name="no_photos_yet">No photos yet</string>
+    <!-- TODO: translate -->
+    <string name="share_first_photo">Share your first photo</string>
+    <!-- TODO: translate -->
+    <string name="search_user">Search User</string>
+    <!-- TODO: translate -->
+    <string name="activity_log_empty_message">Your activity history will appear here. This feature is coming soon.</string>
+    <!-- TODO: translate -->
+    <string name="upload_failed">Upload Failed</string>
+    <!-- TODO: translate -->
+    <string name="uploading_reel">Uploading Reel...</string>
+    <!-- TODO: translate -->
+    <string name="no_views_yet">No views yet</string>
+    <!-- TODO: translate -->
+    <string name="view_as_banner_message">This is how your profile appears to others</string>
+    <!-- TODO: translate -->
+    <string name="no_reels_found">No reels found.</string>
+    <!-- TODO: translate -->
+    <string name="share_reel">Share Reel</string>
+    <!-- TODO: translate -->
+    <string name="seen_by_count">Seen by %1$d</string>
+    <!-- TODO: translate -->
+    <string name="default_avatar_letter">A</string>
+    <!-- TODO: translate -->
+    <string name="settings_font_title">Font</string>
+    <!-- TODO: translate -->
+    <string name="settings_font_add">Add Font</string>
+    <!-- TODO: translate -->
+    <string name="settings_font_preview">The quick brown fox jumps over the lazy dog</string>
+    <!-- TODO: translate -->
+    <string name="settings_font_selected">Selected</string>
+    <!-- TODO: translate -->
+    <string name="action_back">Back</string>
+    <!-- TODO: translate -->
+    <string name="storage_upload_preferences">Upload Preferences</string>
+    <!-- TODO: translate -->
+    <string name="storage_high_quality_uploads">High Quality Uploads</string>
+    <!-- TODO: translate -->
+    <string name="storage_high_quality_uploads_desc">Upload original quality (uses more data)</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_selection">Provider Selection</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_photos">Photos</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_videos">Videos</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_other_files">Other Files</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_default">Default</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_imgbb">ImgBB</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_cloudinary">Cloudinary</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_supabase">Supabase</string>
+    <!-- TODO: translate -->
+    <string name="storage_provider_cloudflare_r2">Cloudflare R2</string>
+    <!-- TODO: translate -->
+    <string name="storage_ready_to_use">Ready to use</string>
+    <!-- TODO: translate -->
+    <string name="storage_configuration_required">Configuration required</string>
+    <!-- TODO: translate -->
+    <string name="storage_supabase_storage">Supabase Storage</string>
+    <!-- TODO: translate -->
+    <string name="storage_files_audio">Files &amp; Audio</string>
+    <!-- TODO: translate -->
+    <string name="collapse_options">Collapse options</string>
+    <!-- TODO: translate -->
+    <string name="expand_options">Expand options</string>
+    <!-- TODO: translate -->
+    <string name="remove_credentials">Remove %1$s credentials</string>
+    <!-- TODO: translate -->
+    <string name="collapse_configuration">Collapse %1$s configuration</string>
+    <!-- TODO: translate -->
+    <string name="expand_configuration">Expand %1$s configuration</string>
+    <!-- TODO: translate -->
+    <string name="storage_tab_assign">Assign</string>
+    <!-- TODO: translate -->
+    <string name="storage_tab_setup">Setup</string>
+    <!-- TODO: translate -->
+    <string name="storage_action_save_connect">Save &amp; Connect</string>
+    <!-- TODO: translate -->
+    <string name="storage_used_for">Used for: %1$s</string>
+    <!-- TODO: translate -->
+    <string name="storage_requires_setup">Requires Setup</string>
+    <!-- TODO: translate -->
+    <string name="storage_connecting">Connecting…</string>
+</resources>

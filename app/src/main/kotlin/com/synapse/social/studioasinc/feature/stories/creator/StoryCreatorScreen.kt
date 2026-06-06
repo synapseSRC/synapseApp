@@ -5,7 +5,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
@@ -73,7 +73,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 const val EXTRA_SHARED_POST_ID = "shared_post_id"
 
 @AndroidEntryPoint
-class StoryCreatorActivity : ComponentActivity() {
+class StoryCreatorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val sharedPostId = intent.getStringExtra(EXTRA_SHARED_POST_ID)

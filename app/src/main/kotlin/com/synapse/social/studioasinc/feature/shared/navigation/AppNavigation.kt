@@ -71,6 +71,7 @@ fun AppNavigation(
             postGraph(navController, this@SharedTransitionLayout)
             profileGraph(navController, this@SharedTransitionLayout)
             storyGraph(navController, this@SharedTransitionLayout)
+            hashtagGraph(navController, this@SharedTransitionLayout)
         }
     }
 }
@@ -413,6 +414,30 @@ fun NavGraphBuilder.postGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+fun NavGraphBuilder.hashtagGraph(
+    navController: NavHostController,
+    sharedTransitionScope: SharedTransitionScope
+) {
+    composable<AppDestination.HashtagFeed>(
+        deepLinks = listOf(navDeepLink<AppDestination.HashtagFeed>(basePath = "synapse://hashtag"))
+    ) { backStackEntry ->
+        val args = backStackEntry.toRoute<AppDestination.HashtagFeed>()
+        val viewModel: com.synapse.social.studioasinc.feature.hashtag.HashtagFeedViewModel = hiltViewModel()
+        com.synapse.social.studioasinc.feature.hashtag.HashtagFeedScreen(
+            tag = args.tag,
+            viewModel = viewModel,
+            onBack = { navController.popBackStack() },
+            onNavigateToPost = { postId, commentId ->
+                navController.navigate(AppDestination.PostDetail(postId, commentId))
+            },
+            onNavigateToProfile = { userId ->
+                navController.navigate(AppDestination.Profile(userId))
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
