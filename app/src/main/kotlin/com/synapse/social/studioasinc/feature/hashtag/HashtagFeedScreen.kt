@@ -55,7 +55,7 @@ fun HashtagFeedScreen(
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(uiState.posts, key = { it.id }) { post ->
-                        val actions = remember(viewModel) {
+                        val actions = remember(viewModel, onNavigateToPost, onNavigateToProfile) {
                             PostActions(
                                 onLike = { p -> viewModel.reactToPost(p, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
                                 onComment = { p -> onNavigateToPost(p.id) },

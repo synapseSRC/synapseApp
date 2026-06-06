@@ -84,6 +84,8 @@ class HashtagFeedViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
                     }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message) }
                 }
             }
         }
@@ -100,6 +102,8 @@ class HashtagFeedViewModel @Inject constructor(
                             if (it.id == post.id) it.copy(isBookmarked = !isBookmarked) else it
                         })
                     }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message) }
                 }
             }
         }
@@ -112,6 +116,8 @@ class HashtagFeedViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
                     }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message) }
                 }
             }
         }
@@ -122,6 +128,8 @@ class HashtagFeedViewModel @Inject constructor(
             deletePostUseCase(post.id).collect { result ->
                 result.onSuccess {
                     _uiState.update { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message) }
                 }
             }
         }

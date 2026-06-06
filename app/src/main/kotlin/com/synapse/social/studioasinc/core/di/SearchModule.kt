@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.core.di
 import com.synapse.social.studioasinc.shared.data.repository.SearchRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.ISearchRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetSuggestedAccountsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.search.GetTrendingHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchNewsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchPostsUseCase
@@ -44,5 +45,11 @@ object SearchModule {
     @Singleton
     fun provideGetSuggestedAccountsUseCase(repository: ISearchRepository): GetSuggestedAccountsUseCase {
         return GetSuggestedAccountsUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetTrendingHashtagsUseCase(repository: ISearchRepository): GetTrendingHashtagsUseCase {
+        return GetTrendingHashtagsUseCase(repository)
     }
 }

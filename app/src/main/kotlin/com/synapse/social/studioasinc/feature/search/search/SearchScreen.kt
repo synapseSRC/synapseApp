@@ -204,7 +204,7 @@ fun SearchScreen(
                                 contentPadding = PaddingValues(horizontal = Spacing.Medium),
                                 horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
                             ) {
-                                items(uiState.trendingHashtags) { hashtag ->
+                                items(uiState.trendingHashtags, key = { it.id }) { hashtag ->
                                     FilterChip(
                                         selected = false,
                                         onClick = { viewModel.onSearch("#${hashtag.tag}") },

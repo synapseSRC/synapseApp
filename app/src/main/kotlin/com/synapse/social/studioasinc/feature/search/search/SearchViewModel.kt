@@ -10,6 +10,7 @@ import com.synapse.social.studioasinc.shared.domain.model.SearchAccount
 import com.synapse.social.studioasinc.shared.domain.model.SearchHashtag
 import com.synapse.social.studioasinc.shared.domain.model.SearchNews
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetSuggestedAccountsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.search.GetTrendingHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchHashtagsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchNewsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchPostsUseCase
@@ -60,6 +61,7 @@ class SearchViewModel @Inject constructor(
     private val searchHashtagsUseCase: SearchHashtagsUseCase,
     private val searchNewsUseCase: SearchNewsUseCase,
     private val getSuggestedAccountsUseCase: GetSuggestedAccountsUseCase,
+    private val getTrendingHashtagsUseCase: GetTrendingHashtagsUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
     private val blockUserUseCase: BlockUserUseCase,
@@ -85,7 +87,7 @@ class SearchViewModel @Inject constructor(
 
     private fun loadTrendingHashtags() {
         viewModelScope.launch {
-            searchHashtagsUseCase("").onSuccess { hashtags ->
+            getTrendingHashtagsUseCase().onSuccess { hashtags ->
                 updateState { it.copy(trendingHashtags = hashtags) }
             }
         }

@@ -47,25 +47,25 @@ class AccessibilityViewModel @Inject constructor(
 
     fun updateIncreaseContrast(enabled: Boolean) {
         viewModelScope.launch {
-            syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled)
+            try { syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled) } catch (_: Exception) {}
         }
     }
 
     fun updateHighContrastText(enabled: Boolean) {
         viewModelScope.launch {
-            syncAccessibilitySettingsUseCase.updateHighContrastText(enabled)
+            try { syncAccessibilitySettingsUseCase.updateHighContrastText(enabled) } catch (_: Exception) {}
         }
     }
 
     fun updateReduceAnimations(enabled: Boolean) {
         viewModelScope.launch {
-            syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled)
+            try { syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled) } catch (_: Exception) {}
         }
     }
 
     fun updateAutoplayAnimations(enabled: Boolean) {
         viewModelScope.launch {
-            syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled)
+            try { syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled) } catch (_: Exception) {}
         }
     }
 }

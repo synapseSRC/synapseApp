@@ -335,7 +335,7 @@ internal class PostCrudHelper(
                             )
 
                             // 3. Increment usage count
-                            client.postgrest.rpc("increment_hashtag_usage", mapOf("hashtag_tag" to tag))
+                            client.postgrest.rpc("increment_hashtag_usage", buildJsonObject { put("hashtag_tag", tag) })
                         } catch (e: Exception) {
                             android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtag '$tag': ${e.message}")
                         }
