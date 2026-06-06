@@ -172,15 +172,22 @@ fun ChatScreen(
         viewModel.initialize(chatId, participantId)
     }
 
-    // Re-fetch messages and restart real-time subscriptions when screen resumes
+    // Re-fetch messages and restart real-time subscriptions when screen resumes.
+    // rememberSaveable survives navigation back-stack save/restore so isFirstResume
+    // stays false when returning to the screen, avoiding a skip on re-entry.
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var isFirstResume by rememberSaveable { mutableStateOf(true) }
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             when (event) {
                 androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
                     viewModel.onVisibilityChanged(true)
-                    viewModel.restartSubscriptions()
-                    viewModel.refreshMessages()
+                    if (isFirstResume) {
+                        isFirstResume = false
+                    } else {
+                        viewModel.restartSubscriptions()
+                        viewModel.refreshMessages()
+                    }
                 }
                 androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
                     viewModel.onVisibilityChanged(false)
