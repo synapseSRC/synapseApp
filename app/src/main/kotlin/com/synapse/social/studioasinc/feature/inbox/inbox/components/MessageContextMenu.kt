@@ -2,21 +2,12 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
-
-
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.filled.Forward
-import androidx.compose.material.icons.automirrored.filled.Reply
-import androidx.compose.material.icons.filled.AddTask
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MarkChatUnread
-import androidx.compose.material.icons.filled.MoveToInbox
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,10 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-
 import androidx.compose.material3.MaterialTheme
-
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -42,7 +30,6 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
@@ -63,16 +50,9 @@ fun MessageContextMenu(
     onDeleteMessageForMe: (String) -> Unit,
     onDeleteMessageForEveryone: (String) -> Unit,
     onSummarizeMessage: (String) -> Unit,
-    onReplyInThread: () -> Unit = {},
-    onQuoteInReply: () -> Unit = {},
     onForwardMessage: () -> Unit = {},
     onMarkAsUnread: () -> Unit = {},
-    onStarMessage: () -> Unit = {},
-    onPinToBoard: () -> Unit = {},
-    onAddToTasks: () -> Unit = {},
-    onForwardToInbox: () -> Unit = {},
-    onCopyMessageLink: () -> Unit = {},
-    onSendFeedback: () -> Unit = {}
+    onPinToBoard: () -> Unit = {}
 ) {
     if (selectedMessage == null) return
 
@@ -112,8 +92,6 @@ fun MessageContextMenu(
 
             HorizontalDivider()
 
-            // Options
-
             val isFromMe = selectedMessage.senderId == currentUserId
 
             @Composable
@@ -146,7 +124,6 @@ fun MessageContextMenu(
                 }
             }
 
-            // Group 1
             if (isFromMe) {
                 ActionRow(
                     icon = Icons.Default.Edit,
@@ -158,22 +135,6 @@ fun MessageContextMenu(
                 )
             }
             ActionRow(
-                icon = Icons.Default.Forum,
-                text = "Reply in thread",
-                onClick = {
-                    onReplyInThread()
-                    onDismissRequest()
-                }
-            )
-            ActionRow(
-                icon = Icons.AutoMirrored.Filled.Reply,
-                text = "Quote in reply",
-                onClick = {
-                    onQuoteInReply()
-                    onDismissRequest()
-                }
-            )
-            ActionRow(
                 icon = Icons.AutoMirrored.Filled.Forward,
                 text = "Forward message",
                 onClick = {
@@ -184,20 +145,11 @@ fun MessageContextMenu(
 
             HorizontalDivider()
 
-            // Group 2
             ActionRow(
                 icon = Icons.Default.MarkChatUnread,
                 text = "Mark as unread",
                 onClick = {
                     onMarkAsUnread()
-                    onDismissRequest()
-                }
-            )
-            ActionRow(
-                icon = Icons.Default.StarBorder,
-                text = "Star",
-                onClick = {
-                    onStarMessage()
                     onDismissRequest()
                 }
             )
@@ -210,22 +162,6 @@ fun MessageContextMenu(
                 }
             )
             ActionRow(
-                icon = Icons.Default.AddTask,
-                text = "Add to Tasks",
-                onClick = {
-                    onAddToTasks()
-                    onDismissRequest()
-                }
-            )
-            ActionRow(
-                icon = Icons.Default.MoveToInbox,
-                text = "Forward to inbox",
-                onClick = {
-                    onForwardToInbox()
-                    onDismissRequest()
-                }
-            )
-            ActionRow(
                 icon = Icons.Default.ContentCopy,
                 text = "Copy text",
                 onClick = {
@@ -233,26 +169,9 @@ fun MessageContextMenu(
                     onDismissRequest()
                 }
             )
-            ActionRow(
-                icon = Icons.Default.Link,
-                text = "Copy message link",
-                onClick = {
-                    onCopyMessageLink()
-                    onDismissRequest()
-                }
-            )
 
             HorizontalDivider()
 
-            // Group 3
-            ActionRow(
-                icon = Icons.Default.HelpOutline,
-                text = "Send feedback on this message",
-                onClick = {
-                    onSendFeedback()
-                    onDismissRequest()
-                }
-            )
             ActionRow(
                 icon = Icons.Default.Delete,
                 text = "Delete",
