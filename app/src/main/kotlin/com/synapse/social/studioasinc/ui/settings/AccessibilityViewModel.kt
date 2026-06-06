@@ -47,25 +47,33 @@ class AccessibilityViewModel @Inject constructor(
 
     fun updateIncreaseContrast(enabled: Boolean) {
         viewModelScope.launch {
-            try { syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled) } catch (_: Exception) {}
+            try { syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled) } catch (e: Exception) {
+                android.util.Log.e("AccessibilityViewModel", "updateIncreaseContrast failed", e)
+            }
         }
     }
 
     fun updateHighContrastText(enabled: Boolean) {
         viewModelScope.launch {
-            try { syncAccessibilitySettingsUseCase.updateHighContrastText(enabled) } catch (_: Exception) {}
+            try { syncAccessibilitySettingsUseCase.updateHighContrastText(enabled) } catch (e: Exception) {
+                android.util.Log.e("AccessibilityViewModel", "updateHighContrastText failed", e)
+            }
         }
     }
 
     fun updateReduceAnimations(enabled: Boolean) {
         viewModelScope.launch {
-            try { syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled) } catch (_: Exception) {}
+            try { syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled) } catch (e: Exception) {
+                android.util.Log.e("AccessibilityViewModel", "updateReduceAnimations failed", e)
+            }
         }
     }
 
     fun updateAutoplayAnimations(enabled: Boolean) {
         viewModelScope.launch {
-            try { syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled) } catch (_: Exception) {}
+            try { syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled) } catch (e: Exception) {
+                android.util.Log.e("AccessibilityViewModel", "updateAutoplayAnimations failed", e)
+            }
         }
     }
 }

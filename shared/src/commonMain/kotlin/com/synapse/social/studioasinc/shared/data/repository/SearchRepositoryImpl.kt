@@ -51,7 +51,9 @@ private data class TrendingHashtagDto(
     val id: String,
     val tag: String,
     val trending_usage_count: Int
-)
+) {
+    fun toDomain() = SearchHashtag(id = id, tag = tag, count = trending_usage_count)
+}
 
 class SearchRepositoryImpl(
     private val client: io.github.jan.supabase.SupabaseClient = SupabaseClient.client
@@ -129,13 +131,7 @@ class SearchRepositoryImpl(
             put("limit_count", 10)
         })
 
-        val list = response.decodeList<TrendingHashtagDto>().map { dto ->
-            SearchHashtag(
-                id = dto.id,
-                tag = dto.tag,
-                count = dto.trending_usage_count
-            )
-        }
+        val list = response.decodeList<TrendingHashtagDto>().map { it.toDomain() }
         Result.success(list)
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e

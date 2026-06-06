@@ -22,7 +22,7 @@ fun HashtagFeedScreen(
     tag: String,
     viewModel: HashtagFeedViewModel,
     onBack: () -> Unit,
-    onNavigateToPost: (String) -> Unit,
+    onNavigateToPost: (postId: String, commentId: String?) -> Unit,
     onNavigateToProfile: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -58,7 +58,7 @@ fun HashtagFeedScreen(
                         val actions = remember(viewModel, onNavigateToPost, onNavigateToProfile) {
                             PostActions(
                                 onLike = { p -> viewModel.reactToPost(p, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
-                                onComment = { p -> onNavigateToPost(p.id) },
+                                onComment = { p -> onNavigateToPost(p.rootPostId ?: p.inReplyToPostId ?: p.id, p.id) },
                                 onShare = { },
                                 onRepost = { },
                                 onQuote = { },
@@ -66,7 +66,7 @@ fun HashtagFeedScreen(
                                 onOptionClick = { },
                                 onPollVote = viewModel::votePoll,
                                 onUserClick = { userId -> onNavigateToProfile(userId) },
-                                onMediaClick = { _ -> onNavigateToPost(post.id) },
+                                onMediaClick = { _ -> onNavigateToPost(post.id, null) },
                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                             )
                         }

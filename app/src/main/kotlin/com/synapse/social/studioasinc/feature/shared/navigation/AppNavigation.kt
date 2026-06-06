@@ -430,8 +430,8 @@ fun NavGraphBuilder.hashtagGraph(
             tag = args.tag,
             viewModel = viewModel,
             onBack = { navController.popBackStack() },
-            onNavigateToPost = { postId ->
-                navController.navigate(AppDestination.PostDetail(postId))
+            onNavigateToPost = { postId, commentId ->
+                navController.navigate(AppDestination.PostDetail(postId, commentId))
             },
             onNavigateToProfile = { userId ->
                 navController.navigate(AppDestination.Profile(userId))

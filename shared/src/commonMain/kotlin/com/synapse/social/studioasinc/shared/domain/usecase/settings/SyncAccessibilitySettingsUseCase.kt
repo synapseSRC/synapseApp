@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.shared.domain.usecase.settings
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository
 import com.synapse.social.studioasinc.shared.domain.repository.UserPreferencesRepository
+import com.synapse.social.studioasinc.shared.domain.model.UserPreferences
 
 class SyncAccessibilitySettingsUseCase constructor(
     private val settingsRepository: SettingsRepository,
@@ -29,7 +30,7 @@ class SyncAccessibilitySettingsUseCase constructor(
         syncToRemote { it.copy(autoplayAnimationsEnabled = enabled) }
     }
 
-    private suspend fun syncToRemote(update: (com.synapse.social.studioasinc.shared.domain.model.UserPreferences) -> com.synapse.social.studioasinc.shared.domain.model.UserPreferences) {
+    private suspend fun syncToRemote(update: (UserPreferences) -> UserPreferences) {
         try {
             val userId = authRepository.getCurrentUserId() ?: return
             userPreferencesRepository.updatePreferences(userId, update)
