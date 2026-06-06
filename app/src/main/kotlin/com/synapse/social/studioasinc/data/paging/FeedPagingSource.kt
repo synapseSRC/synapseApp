@@ -143,6 +143,12 @@ class FeedPagingSource(
                                 post.latestCommentAuthor = commentUser?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                             }
                         }
+                        // Read reply_to_usernames stored on the post row (full list, not just parent)
+                        val storedReplyUsernames = jsonElement["reply_to_usernames"]?.jsonArray
+                            ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+                        if (!storedReplyUsernames.isNullOrEmpty()) {
+                            post.replyToUsernames = storedReplyUsernames
+                        }
                         post.id to post
                     } catch (e: Exception) {
                         null
@@ -150,9 +156,10 @@ class FeedPagingSource(
                 }.toMap()
             } else emptyMap()
 
-            // Link replyToUsernames for reply posts using the already-fetched postsMap
-            // For parents not in this page, batch-fetch their usernames
+            // For reply posts that don't already have reply_to_usernames stored, fall back
+            // to looking up the single parent author username
             val missingParentIds = postsMap.values
+                .filter { it.replyToUsernames.isEmpty() && it.inReplyToPostId != null }
                 .mapNotNull { it.inReplyToPostId }
                 .filter { it !in postsMap }
                 .distinct()
@@ -174,6 +181,7 @@ class FeedPagingSource(
             } else emptyMap()
 
             postsMap.values.forEach { post ->
+                if (post.replyToUsernames.isNotEmpty()) return@forEach
                 val parentId = post.inReplyToPostId ?: return@forEach
                 val username = postsMap[parentId]?.username ?: parentUsernameMap[parentId] ?: return@forEach
                 post.replyToUsernames = listOf(username)
