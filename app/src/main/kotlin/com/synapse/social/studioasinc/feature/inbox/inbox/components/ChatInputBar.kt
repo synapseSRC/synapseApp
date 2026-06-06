@@ -401,7 +401,6 @@ fun ChatInputBar(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = Spacing.Small)
-                        .padding(vertical = Spacing.ExtraSmall)
                         .focusRequester(focusRequester)
                         .onFocusChanged { isFocused = it.isFocused }
                         .graphicsLayer {
@@ -438,7 +437,7 @@ fun ChatInputBar(
                     ),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     decorationBox = { innerTextField ->
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
                             if (inputText.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.chat_type_message),
