@@ -150,6 +150,35 @@ class FeedPagingSource(
                 }.toMap()
             } else emptyMap()
 
+            // Link replyToUsernames for reply posts using the already-fetched postsMap
+            // For parents not in this page, batch-fetch their usernames
+            val missingParentIds = postsMap.values
+                .mapNotNull { it.inReplyToPostId }
+                .filter { it !in postsMap }
+                .distinct()
+
+            val parentUsernameMap: Map<String, String> = if (missingParentIds.isNotEmpty()) {
+                try {
+                    withContext(Dispatchers.IO) {
+                        client.from("posts")
+                            .select(Columns.list("id", "author_uid", "users:author_uid(username)")) {
+                                filter { isIn("id", missingParentIds) }
+                            }
+                            .decodeList<JsonObject>()
+                    }.mapNotNull { obj ->
+                        val id = obj["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                        val username = obj["users"]?.jsonObject?.get("username")?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                        id to username
+                    }.toMap()
+                } catch (_: Exception) { emptyMap() }
+            } else emptyMap()
+
+            postsMap.values.forEach { post ->
+                val parentId = post.inReplyToPostId ?: return@forEach
+                val username = postsMap[parentId]?.username ?: parentUsernameMap[parentId] ?: return@forEach
+                post.replyToUsernames = listOf(username)
+            }
+
             // Map and enrich posts
             val postsList = postsMap.values.toList()
             val postsWithReactions = reactionRepository.populatePostReactions(postsList)
