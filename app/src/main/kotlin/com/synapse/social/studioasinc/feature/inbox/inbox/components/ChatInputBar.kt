@@ -395,6 +395,7 @@ fun ChatInputBar(
                     }
                 }
 
+                var textLineCount by remember { mutableIntStateOf(1) }
                 BasicTextField(
                     value = inputText,
                     onValueChange = onInputTextChange,
@@ -407,26 +408,25 @@ fun ChatInputBar(
                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                         .drawWithContent {
                             drawContent()
-                            val fadeSize = 16.dp.toPx()
-                            // Top fade
-                            drawRect(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color.Black),
-                                    startY = 0f,
-                                    endY = fadeSize
-                                ),
-                                blendMode = BlendMode.DstIn
-                            )
-                            // Bottom fade
-                            drawRect(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(Color.Black, Color.Transparent),
-                                    startY = size.height - fadeSize,
-                                    endY = size.height
-                                ),
-                                blendMode = BlendMode.DstIn
-                            )
+                            if (textLineCount > 1) {
+                                val fadeSize = 16.dp.toPx()
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, Color.Black),
+                                        startY = 0f, endY = fadeSize
+                                    ),
+                                    blendMode = BlendMode.DstIn
+                                )
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(Color.Black, Color.Transparent),
+                                        startY = size.height - fadeSize, endY = size.height
+                                    ),
+                                    blendMode = BlendMode.DstIn
+                                )
+                            }
                         },
+                    onTextLayout = { textLineCount = it.lineCount },
                     enabled = canSendMessage,
                     maxLines = 4,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
