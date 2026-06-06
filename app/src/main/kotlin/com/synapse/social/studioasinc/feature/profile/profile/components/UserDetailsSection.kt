@@ -59,8 +59,6 @@ data class LinkedAccount(
 @Composable
 fun UserDetailsSection(
     details: UserDetails,
-    isOwnProfile: Boolean,
-    onCustomizeClick: () -> Unit,
     onWebsiteClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -122,26 +120,6 @@ fun UserDetailsSection(
                         onWebsiteClick = onWebsiteClick
                     )
 
-                    if (isOwnProfile) {
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
-                        Button(
-                            onClick = onCustomizeClick,
-                            modifier = Modifier.fillMaxWidth().height(Spacing.Huge),
-                            shape = MaterialTheme.shapes.medium,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = null,
-                                modifier = Modifier.size(Sizes.IconMedium)
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.Small))
-                            Text(stringResource(R.string.action_edit_details))
-                        }
-                    }
                 }
             }
 
@@ -466,8 +444,6 @@ private fun UserDetailsSectionPreview() {
                 education = "Stanford University",
                 website = "https://example.com"
             ),
-            isOwnProfile = true,
-            onCustomizeClick = {},
             onWebsiteClick = {}
         )
     }

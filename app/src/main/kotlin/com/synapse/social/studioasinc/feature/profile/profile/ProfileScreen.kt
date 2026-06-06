@@ -179,7 +179,6 @@ fun ProfileScreen(
                         onNavigateToUserProfile = onNavigateToUserProfile,
                         onNavigateToChat = onNavigateToChat,
                         onNavigateToStoryCreator = onNavigateToStoryCreator,
-                        onCustomizeClick = { },
                         onOpenMediaViewer = { urls, index ->
                             selectedMediaUrls = urls
                             initialMediaPage = index
