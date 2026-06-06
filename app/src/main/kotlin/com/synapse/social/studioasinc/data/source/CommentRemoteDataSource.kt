@@ -150,17 +150,27 @@ class CommentRemoteDataSource @Inject constructor(
                 val json = Json.parseToJsonElement(raw)
                 (json as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
                 null
             }
 
-            val parentInfo = try { fetchParentInfo(parentCommentId) } catch (_: Exception) { ParentInfo(null, emptyList()) }
+            val parentInfo = try { fetchParentInfo(parentCommentId) } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                ParentInfo(null, emptyList())
+            }
 
             ancestorUsernames = rpcResult ?: listOfNotNull(parentInfo.authorUsername)
             parentInheritedUsernames = parentInfo.replyToUsernames
         } else {
-            ancestorUsernames = emptyList()
-            parentInheritedUsernames = emptyList()
+            // Top-level reply to the root post: fetch the post's author and its reply_to_usernames
+            // so that mentions in the parent post (e.g. "@ashik hello") propagate to the reply.
+            val parentInfo = try { fetchParentInfo(postId) } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                ParentInfo(null, emptyList())
+            }
+            ancestorUsernames = listOfNotNull(parentInfo.authorUsername)
+            parentInheritedUsernames = parentInfo.replyToUsernames
         }
 
         val replyToUsernames = buildSet<String> {
