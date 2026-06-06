@@ -15,6 +15,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
@@ -29,6 +33,7 @@ import com.synapse.social.studioasinc.ui.components.GenderBadge
 import com.synapse.social.studioasinc.ui.components.VerifiedBadge
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.post.postdetail.components.ReplyingToBottomSheet
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -41,10 +46,10 @@ fun PostHeader(
     taggedPeople: List<User> = emptyList(),
     feeling: FeelingActivity? = null,
     locationName: String? = null,
-    replyToUsername: String? = null,
-    onReplyToClick: (() -> Unit)? = null,
+    replyToUsernames: List<String> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+    var showReplyingToSheet by remember { mutableStateOf(false) }
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -78,9 +83,11 @@ fun PostHeader(
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                            if (showHandle) {
+                            if (showHandle && timestamp.isNotBlank()) {
                                 append("@$handle · $timestamp")
-                            } else {
+                            } else if (showHandle) {
+                                append("@$handle")
+                            } else if (timestamp.isNotBlank()) {
                                 append("· $timestamp")
                             }
                         }
@@ -167,32 +174,58 @@ fun PostHeader(
             )
         }
 
-        if (replyToUsername != null) {
-            Row(
-                modifier = Modifier,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val replyingToText = androidx.compose.ui.res.stringResource(
-                    com.synapse.social.studioasinc.R.string.replying_to,
-                    ""
-                ).replace("%s", "").trim()
+        if (replyToUsernames.isNotEmpty()) {
+            val visibleCount = 2
+            val visible = replyToUsernames.take(visibleCount)
+            val overflow = replyToUsernames.size - visibleCount
+            val andNMore = if (overflow > 0) stringResource(R.string.and_n_more, overflow) else ""
 
-                Text(
-                    text = "$replyingToText ",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "@$replyToUsername",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = if (onReplyToClick != null) {
-                        Modifier.clickable { onReplyToClick() }
-                    } else {
-                        Modifier
-                    }
-                )
+            val usernamesStr = buildString {
+                visible.forEachIndexed { i, username ->
+                    append("@$username")
+                    if (i < visible.size - 1) append(", ")
+                }
+                if (overflow > 0) append(" $andNMore")
             }
+            val fullStr = stringResource(R.string.replying_to, usernamesStr)
+            val usernamesStart = fullStr.indexOf(usernamesStr)
+
+            val annotated = buildAnnotatedString {
+                append(fullStr)
+                if (usernamesStart >= 0) {
+                    // Color prefix (before usernames) as onSurfaceVariant
+                    addStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant), 0, usernamesStart)
+                    // Color each @username span as primary
+                    var searchFrom = usernamesStart
+                    visible.forEach { username ->
+                        val tag = "@$username"
+                        val idx = fullStr.indexOf(tag, searchFrom)
+                        if (idx >= 0) {
+                            addStyle(SpanStyle(color = MaterialTheme.colorScheme.primary), idx, idx + tag.length)
+                            searchFrom = idx + tag.length
+                        }
+                    }
+                    // Color "and N more" as onSurfaceVariant
+                    if (overflow > 0) {
+                        addStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant), searchFrom, fullStr.length)
+                    }
+                }
+            }
+
+            Text(
+                text = annotated,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable { showReplyingToSheet = true }
+            )
+        }
+
+        if (showReplyingToSheet) {
+            ReplyingToBottomSheet(
+                usernames = replyToUsernames,
+                onDismiss = { showReplyingToSheet = false }
+            )
         }
     }
 }

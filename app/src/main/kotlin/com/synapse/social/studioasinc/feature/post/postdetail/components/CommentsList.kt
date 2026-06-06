@@ -40,9 +40,11 @@ fun CommentsList(
     onShowOptions: (CommentWithUser) -> Unit,
     onUserClick: (String) -> Unit,
     onShareClick: ((String) -> Unit)? = null,
+    onCommentViewed: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier,
     headerContent: @Composable () -> Unit = {}
 ) {
+    val viewedCommentIds = remember { mutableSetOf<String>() }
 
     LazyColumn(
         modifier = modifier.fillMaxSize()
@@ -84,12 +86,16 @@ fun CommentsList(
         items(comments.itemCount) { index ->
             val comment = comments[index]
             if (comment != null) {
-                // X (Twitter) style: Flat list, zero indentation.
+                LaunchedEffect(comment.id) {
+                    if (viewedCommentIds.add(comment.id)) {
+                        onCommentViewed?.invoke(comment.id)
+                    }
+                }
                 val postCardState = PostUiMapper.toPostCardState(
                     comment = comment,
                     parentAuthorUsername = null,
                     depth = 0,
-                    showThreadLine = comment.repliesCount > 0,
+                    showThreadLine = false,
                     isLastReply = false
                 )
                 

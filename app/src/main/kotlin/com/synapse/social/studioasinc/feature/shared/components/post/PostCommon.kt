@@ -83,7 +83,8 @@ object PostUiMapper {
             userPollVote = post.userPollVote,
             formattedTimestamp = com.synapse.social.studioasinc.core.util.TimeUtils.getTimeAgo(post.publishDate ?: post.createdAt ?: ""),
             isExpanded = isExpanded,
-            repostedBy = post.resharedByUsername ?: if (post.isReshared) "You" else null
+            repostedBy = post.resharedByUsername ?: if (post.isReshared) "You" else null,
+            replyToUsernames = post.replyToUsernames.ifEmpty { listOfNotNull(post.inReplyToPost?.username?.takeIf { it.isNotBlank() }) }
         )
     }
 
@@ -139,7 +140,7 @@ object PostUiMapper {
             // Comment-specific fields
             isComment = true,
             parentCommentId = feedComment.parentCommentId,
-            parentAuthorUsername = feedComment.parentAuthorUsername,
+            replyToUsernames = feedComment.replyToUsernames.ifEmpty { listOfNotNull(feedComment.parentAuthorUsername) },
             repliesCount = feedComment.commentCount,
             depth = 0, // Feed comments are always top-level
             showThreadLine = false, // No thread lines in feed
@@ -147,16 +148,6 @@ object PostUiMapper {
         )
     }
 
-    /**
-     * Maps a CommentWithUser to PostCardState for rendering comments using PostCard.
-     * 
-     * @param comment The comment with user information to map
-     * @param parentAuthorUsername Username of the parent comment author (for reply context)
-     * @param depth Nesting depth of the comment (0 for top-level, clamped to MAX_COMMENT_DEPTH)
-     * @param showThreadLine Whether to show the thread line indicator
-     * @param isLastReply Whether this is the last reply in a thread
-     * @return PostCardState configured for comment rendering
-     */
     fun toPostCardState(
         comment: CommentWithUser,
         parentAuthorUsername: String? = null,
@@ -164,10 +155,7 @@ object PostUiMapper {
         showThreadLine: Boolean = false,
         isLastReply: Boolean = false
     ): PostCardState {
-        // Clamp depth to prevent performance degradation with deeply nested comments
         val clampedDepth = depth.coerceIn(0, MAX_COMMENT_DEPTH)
-        
-        // Create User object from CommentWithUser using helper methods
         val user = User(
             uid = comment.userId,
             username = comment.getUsername(),
@@ -175,17 +163,14 @@ object PostUiMapper {
             avatar = comment.getAvatarUrl(),
             verify = comment.user?.isVerified ?: false
         )
-        
-        // Create minimal Post object with comment content and metrics
         val post = Post(
             id = comment.id,
             authorUid = comment.userId,
             postText = comment.content,
-            timestamp = System.currentTimeMillis(), // Will be overridden by formattedTimestamp
+            timestamp = System.currentTimeMillis(),
             likesCount = comment.likesCount,
             replyCount = comment.repliesCount
         )
-        
         return PostCardState(
             post = post,
             user = user,
@@ -204,10 +189,11 @@ object PostUiMapper {
             formattedTimestamp = com.synapse.social.studioasinc.core.util.TimeUtils.getTimeAgo(comment.createdAt),
             isExpanded = false,
             repostedBy = null,
-            // Comment-specific fields
             isComment = true,
             parentCommentId = comment.parentCommentId,
-            parentAuthorUsername = parentAuthorUsername,
+            replyToUsernames = comment.replyToUsernames.ifEmpty {
+                listOfNotNull(parentAuthorUsername)
+            },
             repliesCount = comment.repliesCount,
             depth = clampedDepth,
             showThreadLine = showThreadLine,

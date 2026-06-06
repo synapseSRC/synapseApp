@@ -91,7 +91,7 @@ class FeedViewModel @Inject constructor(
             val modifiedPost = modifications[feedItem.id]
             if (modifiedPost != null) {
                 when (feedItem) {
-                    is FeedItem.PostItem -> FeedItem.PostItem(modifiedPost)
+                    is FeedItem.PostItem -> feedItem.copy(post = modifiedPost)
                     is FeedItem.CommentItem -> feedItem.copy(
                         likeCount = modifiedPost.likesCount,
                         isLiked = modifiedPost.userReaction == ReactionType.LIKE || modifiedPost.hasUserReacted()

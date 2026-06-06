@@ -194,6 +194,11 @@ internal class ProfilePostsRepositoryImpl(
             post.isVerified = userData.getBoolean(KEY_VERIFY)
         }
 
+        data["reply_to_usernames"]?.jsonArray
+            ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { post.replyToUsernames = it }
+
         data[KEY_MEDIA_ITEMS]?.takeIf { it !is JsonNull }?.jsonArray?.let { mediaData ->
             post.mediaItems = mediaData.mapNotNull { item ->
                 val mediaMap = item.jsonObject

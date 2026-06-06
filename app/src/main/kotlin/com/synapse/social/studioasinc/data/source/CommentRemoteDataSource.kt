@@ -7,6 +7,7 @@ import com.synapse.social.studioasinc.domain.model.UserStatus
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
@@ -30,8 +31,10 @@ class CommentRemoteDataSource @Inject constructor(
             in_reply_to_post_id, root_post_id,
             likes_count, comments_count, views_count,
             is_deleted, is_edited, edited_at, created_at, updated_at,
+            reply_to_usernames,
             users!posts_author_uid_fkey(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
         """
+        private val MENTION_REGEX = Regex("@([\\w.]+)")
     }
 
     suspend fun fetchComments(postId: String, limit: Int, offset: Int): List<CommentWithUser> = withContext(Dispatchers.IO) {
@@ -107,14 +110,49 @@ class CommentRemoteDataSource @Inject constructor(
         mediaUrl: String?,
         parentCommentId: String?
     ): CommentWithUser? = withContext(Dispatchers.IO) {
-        // In X-style threading: root_post_id is always the original post,
-        // in_reply_to_post_id is the direct parent (post or comment).
         val rootPostId = if (parentCommentId != null) {
-            // Fetch parent's root_post_id to propagate the thread root
             getComment(parentCommentId)?.postId ?: postId
         } else {
             postId
         }
+
+        // Build reply_to_usernames via a single recursive DB query + inline @mentions
+        val ancestorUsernames = if (parentCommentId != null) {
+            try {
+                val raw = client.postgrest.rpc(
+                    "get_thread_usernames",
+                    buildJsonObject {
+                        put("start_post_id", parentCommentId)
+                        put("root_post_id", postId)
+                    }
+                ).data
+                // PostgREST returns text[] as a JSON array: ["user1","user2"]
+                val json = Json.parseToJsonElement(raw)
+                (json as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+            } catch (e: Exception) {
+                Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
+                // Fallback: fetch parent post author directly
+                try {
+                    client.from("posts")
+                        .select(io.github.jan.supabase.postgrest.query.Columns.raw("author_uid, users!posts_author_uid_fkey(username)")) {
+                            filter { eq("id", parentCommentId) }
+                        }
+                        .decodeSingleOrNull<JsonObject>()
+                        ?.get("users")?.jsonObject
+                        ?.get("username")?.jsonPrimitive?.contentOrNull
+                        ?.let { listOf(it) } ?: emptyList()
+                } catch (e2: Exception) {
+                    emptyList()
+                }
+            }
+        } else {
+            emptyList()
+        }
+
+        val replyToUsernames = buildSet<String> {
+            addAll(ancestorUsernames)
+            MENTION_REGEX.findAll(content).forEach { add(it.groupValues[1]) }
+        }.toList()
 
         val insertData = buildJsonObject {
             put("id", id)
@@ -126,6 +164,7 @@ class CommentRemoteDataSource @Inject constructor(
             put("post_type", "TEXT")
             put("created_at", java.time.Instant.now().toString())
             put("updated_at", java.time.Instant.now().toString())
+            put("reply_to_usernames", buildJsonArray { replyToUsernames.forEach { add(it) } })
         }
 
         client.from("posts")
@@ -240,10 +279,14 @@ class CommentRemoteDataSource @Inject constructor(
                 updatedAt = data["updated_at"]?.jsonPrimitive?.contentOrNull,
                 likesCount = data["likes_count"]?.jsonPrimitive?.intOrNull ?: 0,
                 repliesCount = data["comments_count"]?.jsonPrimitive?.intOrNull ?: 0,
+                viewsCount = data["views_count"]?.jsonPrimitive?.intOrNull ?: 0,
                 isDeleted = data["is_deleted"]?.jsonPrimitive?.booleanOrNull ?: false,
                 isEdited = data["is_edited"]?.jsonPrimitive?.booleanOrNull ?: false,
                 isPinned = false,
                 user = parseUserFromJson(data["users"]?.jsonObject),
+                replyToUsernames = data["reply_to_usernames"]?.jsonArray
+                    ?.mapNotNull { it.jsonPrimitive.contentOrNull }
+                    ?: emptyList(),
                 reactionSummary = emptyMap(),
                 userReaction = null
             )

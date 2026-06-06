@@ -503,6 +503,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="like_post">Like post</string>
     <string name="like_post_with_count">Like post, %1$d likes</string>
     <string name="like_post_liked">Unlike post, %1$d likes</string>
+    <string name="view_post_activity">View post activity</string>
     <string name="comment_on_post">Comment on post</string>
     <string name="comment_on_post_with_count">Comment on post, %1$d comments</string>
     <string name="share_post">Share post</string>
@@ -624,6 +625,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <!-- Inline Reply Accessibility -->
     <string name="cancel_reply">Cancel reply</string>
     <string name="replying_to">Replying to %s</string>
+    <string name="and_n_more">and %d more</string>
     <string name="reply_media_preview">Reply media preview</string>
 
     <!-- Create Post -->
