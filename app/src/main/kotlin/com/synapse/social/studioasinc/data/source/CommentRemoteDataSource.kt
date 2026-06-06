@@ -124,15 +124,19 @@ class CommentRemoteDataSource @Inject constructor(
         suspend fun fetchParentInfo(parentId: String): ParentInfo {
             val obj = client.from("posts")
                 .select(io.github.jan.supabase.postgrest.query.Columns.raw(
-                    "reply_to_usernames, users!posts_author_uid_fkey(username)"
+                    "post_text, reply_to_usernames, users!posts_author_uid_fkey(username)"
                 )) {
                     filter { eq("id", parentId) }
                 }
                 .decodeSingleOrNull<JsonObject>()
             val authorUsername = obj?.get("users")?.jsonObject
                 ?.get("username")?.jsonPrimitive?.contentOrNull
-            val inherited = obj?.get("reply_to_usernames")?.jsonArray
+            val storedUsernames = obj?.get("reply_to_usernames")?.jsonArray
                 ?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+            val textMentions = obj?.get("post_text")?.jsonPrimitive?.contentOrNull
+                ?.let { MENTION_REGEX.findAll(it).map { m -> m.groupValues[1] }.toList() }
+                ?: emptyList()
+            val inherited = (storedUsernames + textMentions).distinct()
             return ParentInfo(authorUsername, inherited)
         }
 
