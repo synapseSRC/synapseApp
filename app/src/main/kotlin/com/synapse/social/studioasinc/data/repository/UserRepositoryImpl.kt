@@ -72,8 +72,8 @@ class UserRepositoryImpl @Inject constructor(
             // First try to get from cache
             var user = userDao.getUserById(userId)?.let { UserMapper.toModel(it) }
             
-            // If not in cache or cache is stale, fetch from Supabase
-            if (user == null) {
+            // If not in cache or cache is missing avatar, fetch from Supabase
+            if (user == null || user?.avatar == null) {
                 val userProfile = client.from(SharedSupabaseClient.TABLE_USERS)
                     .select() {
                         filter {

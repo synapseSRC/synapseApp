@@ -83,7 +83,8 @@ object PostUiMapper {
             userPollVote = post.userPollVote,
             formattedTimestamp = com.synapse.social.studioasinc.core.util.TimeUtils.getTimeAgo(post.publishDate ?: post.createdAt ?: ""),
             isExpanded = isExpanded,
-            repostedBy = post.resharedByUsername ?: if (post.isReshared) "You" else null
+            repostedBy = post.resharedByUsername ?: if (post.isReshared) "You" else null,
+            replyToUsernames = post.replyToUsernames.ifEmpty { listOfNotNull(post.inReplyToPost?.username?.takeIf { it.isNotBlank() }) }
         )
     }
 
