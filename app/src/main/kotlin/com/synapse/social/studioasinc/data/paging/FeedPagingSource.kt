@@ -92,9 +92,9 @@ class FeedPagingSource(
             val timelineResponse: List<JsonObject> = rpcResult
                 .distinctBy {
                     // Reshares must use their own id (not post_id) to allow the same post reshared by different users
-                    val type = it["item_type"]?.jsonPrimitive?.contentOrNull
-                    if (type == "reshare") "reshare:${it["id"]?.jsonPrimitive?.contentOrNull}"
-                    else it["post_id"]?.jsonPrimitive?.contentOrNull
+                    val type = (it["item_type"] as? JsonPrimitive)?.contentOrNull
+                    if (type == "reshare") "reshare:${(it["id"] as? JsonPrimitive)?.contentOrNull}"
+                    else (it["post_id"] as? JsonPrimitive)?.contentOrNull
                 }
 
             Log.d("FeedPagingSource", "Loaded ${timelineResponse.size} feed items")
@@ -173,8 +173,8 @@ class FeedPagingSource(
                             }
                             .decodeList<JsonObject>()
                     }.mapNotNull { obj ->
-                        val id = obj["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-                        val username = obj["users"]?.jsonObject?.get("username")?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                        val id = (obj["id"] as? JsonPrimitive)?.contentOrNull ?: return@mapNotNull null
+                        val username = obj["users"]?.jsonObject?.get("username")?.let { if (it is JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                         id to username
                     }.toMap()
                 } catch (_: Exception) { emptyMap() }

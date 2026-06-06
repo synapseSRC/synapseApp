@@ -92,32 +92,42 @@ class PostDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            postDetailRepository.getPostWithDetails(postId).fold(
-                onSuccess = { post ->
-                    _uiState.update { it.copy(post = post) }
+            runCatching {
+                postDetailRepository.getPostWithDetails(postId)
+            }.onSuccess { result ->
+                result.fold(
+                    onSuccess = { post ->
+                        _uiState.update { it.copy(post = post) }
 
-                    if (rootCommentId != null) {
-                        commentRepository.getComment(rootCommentId).onSuccess { comment ->
-                            _uiState.update { it.copy(rootComment = comment) }
-                            
-                            commentRepository.getCommentAncestors(rootCommentId).onSuccess { ancestors ->
-                                _uiState.update { it.copy(ancestorComments = ancestors) }
-                            }
-                        }.onFailure { e ->
-                            _uiState.update { it.copy(error = e.message ?: "Failed to load comment") }
+                        if (rootCommentId != null) {
+                            runCatching { commentRepository.getComment(rootCommentId) }
+                                .getOrNull()
+                                ?.onSuccess { comment ->
+                                    _uiState.update { it.copy(rootComment = comment) }
+                                    runCatching { commentRepository.getCommentAncestors(rootCommentId) }
+                                        .getOrNull()
+                                        ?.onSuccess { ancestors ->
+                                            _uiState.update { it.copy(ancestorComments = ancestors) }
+                                        }
+                                }
+                                ?.onFailure { e ->
+                                    _uiState.update { it.copy(error = e.message ?: "Failed to load comment") }
+                                }
+                        } else {
+                            _uiState.update { it.copy(rootComment = null, ancestorComments = emptyList()) }
                         }
-                    } else {
-                        _uiState.update { it.copy(rootComment = null, ancestorComments = emptyList()) }
+                        _uiState.update { it.copy(isLoading = false) }
+                    },
+                    onFailure = { error ->
+                        _uiState.update { it.copy(isLoading = false, error = error.message ?: "Failed to load post") }
                     }
-                    _uiState.update { it.copy(isLoading = false) }
-                },
-                onFailure = { error ->
-                    _uiState.update { it.copy(isLoading = false, error = error.message ?: "Failed to load post") }
-                }
-            )
-            postDetailRepository.incrementViewCount(postId)
+                )
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Failed to load post") }
+            }
+            runCatching { postDetailRepository.incrementViewCount(postId) }
             if (rootCommentId != null) {
-                postDetailRepository.incrementCommentViewCount(rootCommentId)
+                runCatching { postDetailRepository.incrementCommentViewCount(rootCommentId) }
             }
         }
     }
