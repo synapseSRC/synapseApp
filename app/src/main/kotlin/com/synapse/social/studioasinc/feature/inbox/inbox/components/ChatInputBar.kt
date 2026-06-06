@@ -361,7 +361,7 @@ fun ChatInputBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(Spacing.ExtraSmall),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Bottom
             ) {
                 // Emoji / Attachment button
                 Box {
@@ -400,6 +400,7 @@ fun ChatInputBar(
                     onValueChange = onInputTextChange,
                     modifier = Modifier
                         .weight(1f)
+                        .defaultMinSize(minHeight = Sizes.InputButtonCompact)
                         .padding(horizontal = Spacing.Small)
                         .padding(vertical = Spacing.ExtraSmall)
                         .focusRequester(focusRequester)
