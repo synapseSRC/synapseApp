@@ -189,6 +189,8 @@ data class Post(
     val isReshared: Boolean = false,
     @Transient
     val resharedByUsername: String? = null,
+    @Transient
+    var replyToUsernames: List<String> = emptyList(),
 
     @SerialName("metadata")
     val metadata: PostMetadata? = null
