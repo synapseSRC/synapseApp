@@ -251,12 +251,7 @@ class SearchViewModel @Inject constructor(
                         result.onFailure { err -> updateState { it.copy(error = err.message, isLoading = false) } }
                     }
                     SearchTab.FOR_YOU, SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
-                        val finalQuery = if (query.startsWith("#")) {
-                             // Hashtag search: filter by tag
-                             query
-                        } else {
-                             query
-                        }
+                        val finalQuery = query
                         val result = searchPostsUseCase(finalQuery)
                         result.onSuccess { data ->
                             val posts = data.map { searchPost ->

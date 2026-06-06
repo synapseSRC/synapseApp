@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.ui.components.mentions
+package com.synapse.social.studioasinc.feature.shared.components.mentions
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString

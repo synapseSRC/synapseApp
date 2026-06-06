@@ -124,18 +124,23 @@ class SearchRepositoryImpl(
     /**
      * Retrieves the top trending hashtags based purely on usage in the last 24 hours.
      */
-    override suspend fun getTrendingHashtags(): Result<List<SearchHashtag>> = runCatching {
+    override suspend fun getTrendingHashtags(): Result<List<SearchHashtag>> = try {
         val response = client.postgrest.rpc("get_trending_hashtags", buildJsonObject {
             put("limit_count", 10)
         })
 
-        response.decodeList<TrendingHashtagDto>().map { dto ->
+        val list = response.decodeList<TrendingHashtagDto>().map { dto ->
             SearchHashtag(
                 id = dto.id,
                 tag = dto.tag,
                 count = dto.trending_usage_count
             )
         }
+        Result.success(list)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
     /**

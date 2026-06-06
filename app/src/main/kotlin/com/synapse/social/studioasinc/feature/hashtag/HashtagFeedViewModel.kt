@@ -92,7 +92,16 @@ class HashtagFeedViewModel @Inject constructor(
     fun bookmarkPost(post: Post) {
         viewModelScope.launch {
             val userId = authRepository.getCurrentUserId() ?: return@launch
-            bookmarkPostUseCase(post.id, userId, post.isBookmarked == true).collect { }
+            val isBookmarked = post.isBookmarked == true
+            bookmarkPostUseCase(post.id, userId, isBookmarked).collect { result ->
+                result.onSuccess {
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) it.copy(isBookmarked = !isBookmarked) else it
+                        })
+                    }
+                }
+            }
         }
     }
 

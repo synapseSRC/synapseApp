@@ -18,6 +18,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -311,29 +313,33 @@ internal class PostCrudHelper(
 
             android.util.Log.d(PostRepositoryUtils.TAG, "Processing hashtags: $hashtags for post $postId")
 
-            hashtags.forEach { tag ->
-                try {
-                    // 1. Upsert hashtag
-                    val hashtagResponse = client.from("hashtags").upsert(
-                        buildJsonObject { put("tag", tag) }
-                    ) {
-                        select()
-                    }.decodeSingle<JsonObject>()
+            kotlinx.coroutines.coroutineScope {
+                hashtags.forEach { tag ->
+                    launch {
+                        try {
+                            // 1. Upsert hashtag
+                            val hashtagResponse = client.from("hashtags").upsert(
+                                buildJsonObject { put("tag", tag) }
+                            ) {
+                                select()
+                            }.decodeSingle<JsonObject>()
 
-                    val hashtagId = hashtagResponse["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@forEach
+                            val hashtagId = hashtagResponse["id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull ?: return@launch
 
-                    // 2. Link to post
-                    client.from("post_hashtags").insert(
-                        buildJsonObject {
-                            put("post_id", postId)
-                            put("hashtag_id", hashtagId)
+                            // 2. Link to post
+                            client.from("post_hashtags").insert(
+                                buildJsonObject {
+                                    put("post_id", postId)
+                                    put("hashtag_id", hashtagId)
+                                }
+                            )
+
+                            // 3. Increment usage count
+                            client.postgrest.rpc("increment_hashtag_usage", mapOf("hashtag_tag" to tag))
+                        } catch (e: Exception) {
+                            android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtag '$tag': ${e.message}")
                         }
-                    )
-
-                    // 3. Increment usage count
-                    client.postgrest.rpc("increment_hashtag_usage", mapOf("hashtag_tag" to tag))
-                } catch (e: Exception) {
-                    android.util.Log.e(PostRepositoryUtils.TAG, "Failed to process hashtag '$tag': ${e.message}")
+                    }
                 }
             }
         } catch (e: CancellationException) {

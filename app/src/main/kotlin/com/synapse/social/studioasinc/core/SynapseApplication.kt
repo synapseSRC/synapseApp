@@ -74,7 +74,7 @@ class SynapseApplication : Application(), ImageLoaderFactory {
             Napier.base(DebugAntilog())
         }
 
-        // Opt-in to autoStoreLocales for Android 12 and below
+        // Set default night mode to follow system
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
             androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         )

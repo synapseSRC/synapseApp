@@ -94,11 +94,7 @@ fun PostContent(
                     },
                     update = { textView ->
                         if (textView.tag != text) {
-                            if (isExpanded) {
-                                MarkdownRenderer.get(context).render(textView, text ?: "")
-                            } else {
-                                MarkdownRenderer.get(context).render(textView, text ?: "")
-                            }
+                            MarkdownRenderer.get(context).render(textView, text ?: "")
                             textView.tag = text
                         }
                         textView.setTextColor(colorOnSurfaceArgb)
