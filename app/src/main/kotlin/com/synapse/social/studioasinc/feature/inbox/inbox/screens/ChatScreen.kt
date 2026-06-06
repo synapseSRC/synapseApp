@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.TextLayoutResult
 
 import androidx.compose.runtime.mutableStateOf
