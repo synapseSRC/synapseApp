@@ -39,6 +39,10 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
@@ -399,7 +403,30 @@ fun ChatInputBar(
                         .padding(horizontal = Spacing.Small)
                         .padding(vertical = Spacing.Small)
                         .focusRequester(focusRequester)
-                        .onFocusChanged { isFocused = it.isFocused },
+                        .onFocusChanged { isFocused = it.isFocused }
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            val fadeSize = 16.dp.toPx()
+                            // Top fade
+                            drawRect(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, Color.Black),
+                                    startY = 0f,
+                                    endY = fadeSize
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                            // Bottom fade
+                            drawRect(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(Color.Black, Color.Transparent),
+                                    startY = size.height - fadeSize,
+                                    endY = size.height
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                        },
                     enabled = canSendMessage,
                     maxLines = 4,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
