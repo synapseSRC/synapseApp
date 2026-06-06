@@ -116,9 +116,30 @@ class CommentRemoteDataSource @Inject constructor(
             postId
         }
 
-        // Build reply_to_usernames via a single recursive DB query + inline @mentions
-        val ancestorUsernames = if (parentCommentId != null) {
-            try {
+        // Build reply_to_usernames via a single recursive DB query + inline @mentions.
+        // Also fetch the parent post's own reply_to_usernames in one query so that
+        // mentions already in the parent (e.g. "@ashik whats up?") propagate to the reply.
+        data class ParentInfo(val authorUsername: String?, val replyToUsernames: List<String>)
+
+        suspend fun fetchParentInfo(parentId: String): ParentInfo {
+            val obj = client.from("posts")
+                .select(io.github.jan.supabase.postgrest.query.Columns.raw(
+                    "reply_to_usernames, users!posts_author_uid_fkey(username)"
+                )) {
+                    filter { eq("id", parentId) }
+                }
+                .decodeSingleOrNull<JsonObject>()
+            val authorUsername = obj?.get("users")?.jsonObject
+                ?.get("username")?.jsonPrimitive?.contentOrNull
+            val inherited = obj?.get("reply_to_usernames")?.jsonArray
+                ?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+            return ParentInfo(authorUsername, inherited)
+        }
+
+        val ancestorUsernames: List<String>
+        val parentInheritedUsernames: List<String>
+        if (parentCommentId != null) {
+            val rpcResult = try {
                 val raw = client.postgrest.rpc(
                     "get_thread_usernames",
                     buildJsonObject {
@@ -126,31 +147,25 @@ class CommentRemoteDataSource @Inject constructor(
                         put("root_post_id", postId)
                     }
                 ).data
-                // PostgREST returns text[] as a JSON array: ["user1","user2"]
                 val json = Json.parseToJsonElement(raw)
-                (json as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+                (json as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull }
             } catch (e: Exception) {
                 Log.w(TAG, "get_thread_usernames RPC failed: ${e.message}")
-                // Fallback: fetch parent post author directly
-                try {
-                    client.from("posts")
-                        .select(io.github.jan.supabase.postgrest.query.Columns.raw("author_uid, users!posts_author_uid_fkey(username)")) {
-                            filter { eq("id", parentCommentId) }
-                        }
-                        .decodeSingleOrNull<JsonObject>()
-                        ?.get("users")?.jsonObject
-                        ?.get("username")?.jsonPrimitive?.contentOrNull
-                        ?.let { listOf(it) } ?: emptyList()
-                } catch (e2: Exception) {
-                    emptyList()
-                }
+                null
             }
+
+            val parentInfo = try { fetchParentInfo(parentCommentId) } catch (_: Exception) { ParentInfo(null, emptyList()) }
+
+            ancestorUsernames = rpcResult ?: listOfNotNull(parentInfo.authorUsername)
+            parentInheritedUsernames = parentInfo.replyToUsernames
         } else {
-            emptyList()
+            ancestorUsernames = emptyList()
+            parentInheritedUsernames = emptyList()
         }
 
         val replyToUsernames = buildSet<String> {
             addAll(ancestorUsernames)
+            addAll(parentInheritedUsernames)
             MENTION_REGEX.findAll(content).forEach { add(it.groupValues[1]) }
         }.toList()
 
