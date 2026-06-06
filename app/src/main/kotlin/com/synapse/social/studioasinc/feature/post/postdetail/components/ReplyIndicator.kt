@@ -31,7 +31,7 @@ fun ReplyIndicator(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(id = R.string.replying_to_user, replyTo.user?.username ?: "User"),
+                text = stringResource(id = R.string.replying_to_user, "@${replyTo.user?.username ?: "User"}"),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
