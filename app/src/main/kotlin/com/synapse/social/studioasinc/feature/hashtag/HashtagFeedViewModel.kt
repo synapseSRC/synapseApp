@@ -49,6 +49,10 @@ class HashtagFeedViewModel @Inject constructor(
     }
 
     private fun loadPosts(tag: String) {
+        if (tag.isBlank()) {
+            _uiState.update { it.copy(posts = emptyList(), isLoading = false) }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             getPostsByHashtagUseCase(tag).onSuccess { searchPosts ->

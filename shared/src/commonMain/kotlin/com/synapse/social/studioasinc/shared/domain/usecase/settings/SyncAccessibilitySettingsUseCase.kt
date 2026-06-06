@@ -34,7 +34,9 @@ class SyncAccessibilitySettingsUseCase constructor(
         try {
             val userId = authRepository.getCurrentUserId() ?: return
             userPreferencesRepository.updatePreferences(userId, update)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            println("Failed to sync accessibility settings to remote: ${e.message}")
+        }
     }
 
     suspend fun syncFromRemote() {

@@ -158,6 +158,7 @@ class SearchRepositoryImpl(
     }
 
     override suspend fun getPostsByHashtag(tag: String): Result<List<SearchPost>> = try {
+        val cleanTag = tag.removePrefix("#")
         // Join posts → post_hashtags → hashtags using PostgREST !inner embedding for exact tag match
         val columns = Columns.raw(
             "id, post_text, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, " +
@@ -165,7 +166,7 @@ class SearchRepositoryImpl(
             "post_hashtags!inner(hashtags!inner(tag))"
         )
         val result = client.postgrest["posts"].select(columns = columns) {
-            filter { eq("post_hashtags.hashtags.tag", tag) }
+            filter { eq("post_hashtags.hashtags.tag", cleanTag) }
             order("created_at", Order.DESCENDING)
             limit(50)
         }.decodeList<PostDto>()
