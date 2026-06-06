@@ -14,5 +14,9 @@ data class UserPreferences(
     @SerialName("chat_wallpaper_value") val chatWallpaperValue: String? = null,
     @SerialName("chat_wallpaper_blur") val chatWallpaperBlur: Float? = null,
     @SerialName("chat_list_layout") val chatListLayout: String? = null,
-    @SerialName("chat_swipe_gesture") val chatSwipeGesture: String? = null
+    @SerialName("chat_swipe_gesture") val chatSwipeGesture: String? = null,
+    @SerialName("increase_contrast_enabled") val increaseContrastEnabled: Boolean? = null,
+    @SerialName("high_contrast_text_enabled") val highContrastTextEnabled: Boolean? = null,
+    @SerialName("reduce_animations_enabled") val reduceAnimationsEnabled: Boolean? = null,
+    @SerialName("autoplay_animations_enabled") val autoplayAnimationsEnabled: Boolean? = null
 )

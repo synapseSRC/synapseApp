@@ -276,4 +276,13 @@ interface SettingsRepository {
 
     val hideProfilePicSuggestion: Flow<Boolean>
     suspend fun setHideProfilePicSuggestion(hide: Boolean)
+
+    val increaseContrastEnabled: Flow<Boolean>
+    suspend fun setIncreaseContrastEnabled(enabled: Boolean)
+    val highContrastTextEnabled: Flow<Boolean>
+    suspend fun setHighContrastTextEnabled(enabled: Boolean)
+    val reduceAnimationsEnabled: Flow<Boolean>
+    suspend fun setReduceAnimationsEnabled(enabled: Boolean)
+    val autoplayAnimationsEnabled: Flow<Boolean>
+    suspend fun setAutoplayAnimationsEnabled(enabled: Boolean)
 }

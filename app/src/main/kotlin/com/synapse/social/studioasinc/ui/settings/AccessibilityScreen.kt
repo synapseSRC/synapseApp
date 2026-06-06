@@ -18,9 +18,15 @@ import com.synapse.social.studioasinc.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccessibilityScreen(
+    viewModel: AccessibilityViewModel,
     onBackClick: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    val increaseContrast by viewModel.increaseContrastEnabled.collectAsState()
+    val highContrastText by viewModel.highContrastTextEnabled.collectAsState()
+    val reduceAnimations by viewModel.reduceAnimationsEnabled.collectAsState()
+    val autoplayAnimations by viewModel.autoplayAnimationsEnabled.collectAsState()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -53,16 +59,16 @@ fun AccessibilityScreen(
                         title = "Increase Contrast",
                         subtitle = "Darken key colors for better visibility",
                         imageVector = Icons.Filled.Contrast,
-                        checked = false,
-                        onCheckedChange = { }
+                        checked = increaseContrast,
+                        onCheckedChange = { viewModel.updateIncreaseContrast(it) }
                     )
                     SettingsDivider()
                     SettingsToggleItem(
                         title = "High Contrast Text",
                         subtitle = "Use high contrast colors for text",
                         imageVector = Icons.Filled.TextFormat,
-                        checked = false,
-                        onCheckedChange = { }
+                        checked = highContrastText,
+                        onCheckedChange = { viewModel.updateHighContrastText(it) }
                     )
                 }
             }
@@ -74,16 +80,16 @@ fun AccessibilityScreen(
                         title = "Reduce Animations",
                         subtitle = "Minimize motion and transitions",
                         imageVector = Icons.Filled.Animation,
-                        checked = false,
-                        onCheckedChange = { }
+                        checked = reduceAnimations,
+                        onCheckedChange = { viewModel.updateReduceAnimations(it) }
                     )
                     SettingsDivider()
                     SettingsToggleItem(
                         title = "Auto-play Animations",
                         subtitle = "Toggle auto-play for stickers and GIFs",
                         imageVector = Icons.Filled.PlayCircle,
-                        checked = true,
-                        onCheckedChange = { }
+                        checked = autoplayAnimations,
+                        onCheckedChange = { viewModel.updateAutoplayAnimations(it) }
                     )
                 }
             }
