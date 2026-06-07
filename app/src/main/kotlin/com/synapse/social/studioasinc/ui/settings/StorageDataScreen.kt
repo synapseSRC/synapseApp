@@ -90,7 +90,7 @@ private fun StorageDataContent(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.settings_back_button)
                         )
                     }
                 },
@@ -160,8 +160,8 @@ private fun StorageDataContent(
 }
 
 private fun getAutoDownloadSummary(selectedTypes: Set<MediaType>): String {
-    if (selectedTypes.isEmpty()) return "No media"
-    if (selectedTypes.size == MediaType.values().size) return "All media"
+    if (selectedTypes.isEmpty()) return stringResource(R.string.settings_no_media)
+    if (selectedTypes.size == MediaType.values().size) return stringResource(R.string.settings_all_media)
     return selectedTypes.joinToString(", ") { it.displayName() }
 }
 
@@ -193,7 +193,7 @@ private fun StorageDataScreenDialogs(
 
     if (showMobileDialog) {
         AutoDownloadDialog(
-            title = "When using mobile data",
+            title = stringResource(R.string.settings_when_using_mobile_data_title),
             selectedTypes = autoDownloadRules.mobileData,
             onConfirm = {
                 onSetAutoDownloadRule("mobile", it)
@@ -205,7 +205,7 @@ private fun StorageDataScreenDialogs(
 
     if (showWifiDialog) {
         AutoDownloadDialog(
-            title = "When connected on Wi-Fi",
+            title = stringResource(R.string.settings_when_connected_on_wifi_title),
             selectedTypes = autoDownloadRules.wifi,
             onConfirm = {
                 onSetAutoDownloadRule("wifi", it)
@@ -217,7 +217,7 @@ private fun StorageDataScreenDialogs(
 
     if (showRoamingDialog) {
         AutoDownloadDialog(
-            title = "When roaming",
+            title = stringResource(R.string.settings_when_roaming_title),
             selectedTypes = autoDownloadRules.roaming,
             onConfirm = {
                 onSetAutoDownloadRule("roaming", it)
@@ -233,17 +233,17 @@ private fun StorageManagementSection(
     onNavigateToStorageManage: () -> Unit,
     onNavigateToNetworkUsage: () -> Unit
 ) {
-    SettingsSection(title = "Storage Management") {
+    SettingsSection(title = stringResource(R.string.settings_storage_management_section)) {
         SettingsNavigationItem(
-            title = "Manage storage",
-            subtitle = "Free up space",
+            title = stringResource(R.string.settings_storage_manage_title),
+            subtitle = stringResource(R.string.settings_storage_manage_subtitle),
             imageVector = Icons.Filled.Archive,
             onClick = onNavigateToStorageManage
         )
         SettingsDivider()
         SettingsNavigationItem(
-            title = "Network usage",
-            subtitle = "View data usage",
+            title = stringResource(R.string.settings_network_usage_title),
+            subtitle = stringResource(R.string.settings_network_usage_subtitle),
             imageVector = Icons.Filled.NetworkCheck,
             onClick = onNavigateToNetworkUsage
         )
@@ -255,10 +255,10 @@ private fun CallSettingsSection(
     useLessDataCalls: Boolean,
     onUseLessDataCallsChanged: (Boolean) -> Unit
 ) {
-    SettingsSection(title = "Call Settings") {
+    SettingsSection(title = stringResource(R.string.settings_call_settings_section)) {
         SettingsToggleItem(
-            title = "Use less data for calls",
-            subtitle = "Lower call quality to use less data",
+            title = stringResource(R.string.settings_use_less_data_calls_title),
+            subtitle = stringResource(R.string.settings_use_less_data_calls_subtitle),
             imageVector = Icons.Filled.Call,
             checked = useLessDataCalls,
             onCheckedChange = onUseLessDataCallsChanged
@@ -268,10 +268,10 @@ private fun CallSettingsSection(
 
 @Composable
 private fun NetworkSection(onNavigateToProxy: () -> Unit) {
-    SettingsSection(title = "Network") {
+    SettingsSection(title = stringResource(R.string.settings_network_section)) {
         SettingsNavigationItem(
-            title = "Proxy",
-            subtitle = "Configure proxy settings",
+            title = stringResource(R.string.settings_proxy_title),
+            subtitle = stringResource(R.string.settings_proxy_subtitle),
             imageVector = Icons.Filled.NetworkCheck,
             onClick = onNavigateToProxy
         )
@@ -285,23 +285,23 @@ private fun MediaAutoDownloadSection(
     onOpenWifiDialog: () -> Unit,
     onOpenRoamingDialog: () -> Unit
 ) {
-    SettingsSection(title = "Media auto-download") {
+    SettingsSection(title = stringResource(R.string.settings_media_auto_download_section)) {
         SettingsNavigationItem(
-            title = "When using mobile data",
+            title = stringResource(R.string.settings_when_using_mobile_data_title),
             subtitle = getAutoDownloadSummary(autoDownloadRules.mobileData),
             imageVector = Icons.Filled.Phone,
             onClick = onOpenMobileDialog
         )
         SettingsDivider()
         SettingsNavigationItem(
-            title = "When connected on Wi-Fi",
+            title = stringResource(R.string.settings_when_connected_on_wifi_title),
             subtitle = getAutoDownloadSummary(autoDownloadRules.wifi),
             imageVector = Icons.Filled.Wifi,
             onClick = onOpenWifiDialog
         )
         SettingsDivider()
         SettingsNavigationItem(
-            title = "When roaming",
+            title = stringResource(R.string.settings_when_roaming_title),
             subtitle = getAutoDownloadSummary(autoDownloadRules.roaming),
             imageVector = Icons.Filled.SignalCellularAlt,
             onClick = onOpenRoamingDialog
@@ -314,9 +314,9 @@ private fun MediaUploadQualitySection(
     mediaUploadQuality: MediaUploadQuality,
     onOpenMediaQualitySheet: () -> Unit
 ) {
-    SettingsSection(title = "Media upload quality") {
+    SettingsSection(title = stringResource(R.string.settings_media_upload_quality_section)) {
         SettingsNavigationItem(
-            title = "Photo upload quality",
+            title = stringResource(R.string.settings_photo_upload_quality_title),
             subtitle = mediaUploadQuality.displayName(),
             imageVector = Icons.Filled.Image,
             onClick = onOpenMediaQualitySheet

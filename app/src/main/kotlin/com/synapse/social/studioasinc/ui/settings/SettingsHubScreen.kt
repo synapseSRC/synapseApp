@@ -50,7 +50,7 @@ fun SettingsHubScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.settings_back_description)
+                            contentDescription = stringResource(R.string.settings_settings_hub_back)
                         )
                     }
                 },
@@ -157,7 +157,7 @@ fun SettingsSearchBar(
             Spacer(modifier = Modifier.width(12.dp))
             Box(modifier = Modifier.weight(1f)) {
                 if (query.isEmpty()) {
-                    Text("Search Settings...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.settings_search_settings_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 androidx.compose.foundation.text.BasicTextField(
                     value = query,
@@ -169,7 +169,7 @@ fun SettingsSearchBar(
             }
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.settings_search_clear_content_description))
                 }
             }
         }

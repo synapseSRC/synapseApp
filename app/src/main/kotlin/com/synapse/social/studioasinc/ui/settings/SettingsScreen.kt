@@ -136,8 +136,8 @@ fun SettingsScreen(
                     SettingsGroup {
                         SettingRow(
                             icon = Icons.Filled.VpnKey,
-                            title = "Reset Encryption Keys",
-                            subtitle = if (isResettingE2EE) "Resetting..." else "Fix issues with encrypted messages",
+                            title = stringResource(R.string.settings_reset_encryption_keys_title),
+                            subtitle = if (isResettingE2EE) stringResource(R.string.settings_resetting) else stringResource(R.string.settings_reset_encryption_keys_subtitle),
                             showChevron = !isResettingE2EE,
                             onClick = { if (!isResettingE2EE) viewModel.resetE2EE() },
                             position = SettingsItemPosition.Single

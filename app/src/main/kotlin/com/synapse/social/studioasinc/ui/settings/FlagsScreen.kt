@@ -37,12 +37,12 @@ fun FlagsScreen(
         containerColor = SettingsColors.screenBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Flags") },
+                title = { Text(stringResource(R.string.settings_flags_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.settings_back_button)
                         )
                     }
                 },
@@ -65,12 +65,12 @@ fun FlagsScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    SettingsHeaderItem(title = "Experimental Features")
+                    SettingsHeaderItem(title = stringResource(R.string.settings_experimental_features_title))
 
                     SettingsCard {
                         SettingsToggleItem(
-                            title = "Message Suggestions",
-                            subtitle = "Enable smart replies in chat",
+                            title = stringResource(R.string.settings_message_suggestions_title),
+                            subtitle = stringResource(R.string.settings_message_suggestions_subtitle),
                             imageVector = Icons.Filled.Build,
                             checked = messageSuggestionEnabled,
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
@@ -78,8 +78,8 @@ fun FlagsScreen(
                         )
                         SettingsDivider()
                         SettingsToggleItem(
-                            title = "Disable Chat Avatars",
-                            subtitle = "Hide sender avatars in chat",
+                            title = stringResource(R.string.settings_disable_chat_avatars_title),
+                            subtitle = stringResource(R.string.settings_disable_chat_avatars_subtitle),
                             imageVector = Icons.Filled.Person,
                             checked = chatAvatarDisabled,
                             onCheckedChange = { viewModel.setChatAvatarDisabled(it) },
@@ -91,7 +91,7 @@ fun FlagsScreen(
 
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SettingsHeaderItem(title = "Performance")
+                    SettingsHeaderItem(title = stringResource(R.string.settings_performance_section))
 
                     SettingsCard {
                         Surface(
@@ -111,12 +111,12 @@ fun FlagsScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Message Pagination Limit",
+                                        text = stringResource(R.string.settings_message_pagination_limit_title),
                                         style = SettingsTypography.itemTitle,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "Messages loaded per page (default 50)",
+                                        text = stringResource(R.string.settings_message_pagination_limit_subtitle),
                                         style = SettingsTypography.itemSubtitle,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
