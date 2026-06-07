@@ -1980,4 +1980,50 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_do_not_disturb_title">Do Not Disturb</string>
     <string name="settings_active">Active</string>
     <string name="settings_inactive">Inactive</string>
+    <!-- Inbox & Context Menu -->
+    <string name="inbox_context_menu_edit">Edit</string>
+    <string name="inbox_context_menu_forward">Forward message</string>
+    <string name="inbox_context_menu_mark_unread">Mark as unread</string>
+    <string name="inbox_context_menu_pin">Pin to board</string>
+    <string name="inbox_context_menu_copy">Copy text</string>
+    <string name="inbox_context_menu_delete">Delete</string>
+    <string name="inbox_quick_peak">Quick Peak</string>
+
+    <!-- Post & Feed -->
+    <string name="post_replying_to">Replying to</string>
+    <string name="post_sample_content">This is a sample post text with some content</string>
+
+    <!-- Notifications -->
+    <string name="notification_view_details">View details</string>
+
+    <!-- Settings -->
+    <string name="settings_account_short">Account</string>
+    <string name="settings_security_short">Security</string>
+    <string name="settings_select_color">Select Color</string>
+    <string name="settings_blur_intensity">Blur Intensity: %1$d%%</string>
+    <string name="settings_help_imgbb">Get your free API key from api.imgbb.com</string>
+    <string name="settings_help_cloudinary">Use an Upload Preset for unsigned uploads, or API Key + Secret for signed uploads. Find these in your Cloudinary dashboard.</string>
+    <string name="settings_help_supabase">Create a bucket in Supabase Storage and ensure policies allow read/write operations</string>
+    <string name="settings_help_cloudflare">Create an R2 bucket in your Cloudflare dashboard and generate API tokens</string>
+    <string name="settings_licenses_intro">This application uses the following open source software:</string>
+    <string name="settings_license_detail">%1$s • %2$s</string>
+    <string name="settings_scheduled_posts_not_implemented">Scheduled posts feature not implemented</string>
+    <string name="settings_chat_not_implemented">Chat feature not implemented</string>
+    <string name="post_username_format">@%1$s</string>
+    <string name="post_more_media_format">+%1$d more</string>
+    <string name="common_at_username">@%1$s</string>
+    <string name="common_hashtag_format">#%1$s</string>
+    <string name="common_bullet_separator">  ·  </string>
+    <string name="common_followers_count">%1$s followers</string>
+    <string name="common_people_talking_count">%1$s people talking</string>
+    <string name="chat_reply_count">%1$d replies</string>
+    <string name="post_reposted_by">%1$s reposted</string>
+    <string name="media_pager_count">%1$d / %2$d</string>
+    <string name="media_more_count">+%1$d</string>
+    <string name="playback_speed_format">%1$gx</string>
+    <string name="common_unknown">unknown</string>
+    <string name="common_currency_format">$%1</string>
+    <string name="common_numbered_list_item">%1$d. %2$s</string>
+    <string name="common_api_key_usage">%1$s • %2$d/%3$s used</string>
+    <string name="common_infinity">∞</string>
 </resources>

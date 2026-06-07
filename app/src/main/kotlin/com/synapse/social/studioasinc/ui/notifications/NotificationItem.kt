@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.ui.notifications
+import com.synapse.social.studioasinc.R
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -62,7 +63,7 @@ fun NotificationItem(
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Text(
-                    text = "View details",
+                    text = stringResource(R.string.notification_view_details),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold

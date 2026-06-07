@@ -100,7 +100,7 @@ struct ChatDetailView: View {
                     Text(participantName)
                         .font(.headline)
                     if viewModel.isParticipantTyping {
-                        Text("Typing...")
+                        Text("chat_typing_indicator")
                             .font(.caption)
                             .foregroundColor(.blue)
                     }
@@ -115,17 +115,17 @@ struct ChatDetailView: View {
                 }
             }
         }
-        .confirmationDialog("Disappearing messages", isPresented: $showingDisappearingModeSheet, titleVisibility: .visible) {
-            Button("Off") {
+        .confirmationDialog("chat_disappearing_messages_title", isPresented: $showingDisappearingModeSheet, titleVisibility: .visible) {
+            Button("chat_disappearing_off") {
                 viewModel.setDisappearingMode(mode: .off)
             }
-            Button("24 hours") {
+            Button("chat_disappearing_24h") {
                 viewModel.setDisappearingMode(mode: .twentyFourHours)
             }
-            Button("7 days") {
+            Button("chat_disappearing_7d") {
                 viewModel.setDisappearingMode(mode: .sevenDays)
             }
-            Button("Cancel", role: .cancel) {}
+            Button("chat_cancel", role: .cancel) {}
         }
         .onAppear {
             viewModel.setup(chatId: chatId)

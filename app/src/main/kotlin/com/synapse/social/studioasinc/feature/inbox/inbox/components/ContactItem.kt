@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import com.synapse.social.studioasinc.R
+import androidx.compose.ui.res.stringResource
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -84,7 +86,7 @@ fun ContactItem(
             )
 
             Text(
-                text = "@${contact.username ?: "unknown"}",
+                text = stringResource(R.string.common_at_username, contact.username ?: stringResource(R.string.common_unknown)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

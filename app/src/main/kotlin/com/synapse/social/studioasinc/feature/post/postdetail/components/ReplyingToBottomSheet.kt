@@ -31,7 +31,7 @@ fun ReplyingToBottomSheet(
                 .padding(bottom = Spacing.Large)
         ) {
             Text(
-                text = "Replying to",
+                text = stringResource(R.string.post_replying_to),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
@@ -42,7 +42,7 @@ fun ReplyingToBottomSheet(
             ) {
                 items(usernames) { username ->
                     Text(
-                        text = "@$username",
+                        text = stringResource(R.string.common_at_username, username),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier
                             .fillMaxWidth()

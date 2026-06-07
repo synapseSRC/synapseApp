@@ -156,7 +156,7 @@ fun ChatInputBar(
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = if (replyingToMessage == null) RoundedCornerShape(topStart = Sizes.CornerExtraLarge, topEnd = Sizes.CornerExtraLarge) else RoundedCornerShape(0.dp),
+                shape = if (replyingToMessage == null) RoundedCornerShape(topStart = Sizes.CornerExtraLarge, topEnd = Sizes.CornerExtraLarge) else RoundedCornerShape(Spacing.None),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -288,13 +288,13 @@ fun ChatInputBar(
                     val normalizedAmp = (recordingAmplitude / maxAmp).coerceIn(0.1f, 1f)
 
                     Row(
-                        modifier = Modifier.height(24.dp),
+                        modifier = Modifier.height(Sizes.IconLarge),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
                     ) {
                         for (i in 0 until 5) {
                             val seed = remember { Random.nextFloat() * 0.5f + 0.5f }
-                            val targetHeight = (24.dp * normalizedAmp * seed).coerceIn(4.dp, 24.dp)
+                            val targetHeight = (Sizes.IconLarge * normalizedAmp * seed).coerceIn(Spacing.ExtraSmall, Sizes.IconLarge)
                             val animatedHeight by animateDpAsState(
                                 targetValue = targetHeight,
                                 animationSpec = tween(100),
@@ -302,7 +302,7 @@ fun ChatInputBar(
                             )
                             Box(
                                 modifier = Modifier
-                                    .width(4.dp)
+                                    .width(Spacing.ExtraSmall)
                                     .height(animatedHeight)
                                     .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(Sizes.CornerSmall))
                             )
@@ -406,7 +406,7 @@ fun ChatInputBar(
                         .focusRequester(focusRequester)
                         .onFocusChanged { isFocused = it.isFocused }
                         .graphicsLayer {
-                            compositingStrategy = if (size.height > 90.dp.toPx()) {
+                            compositingStrategy = if (size.height > Sizes.HeartSize.toPx()) {
                                 CompositingStrategy.Offscreen
                             } else {
                                 CompositingStrategy.Auto
@@ -414,8 +414,8 @@ fun ChatInputBar(
                         }
                         .drawWithContent {
                             drawContent()
-                            if (size.height > 90.dp.toPx()) {
-                                val fadeSize = 16.dp.toPx()
+                            if (size.height > Sizes.HeartSize.toPx()) {
+                                val fadeSize = Spacing.Medium.toPx()
                                 drawRect(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(Color.Transparent, Color.Black),

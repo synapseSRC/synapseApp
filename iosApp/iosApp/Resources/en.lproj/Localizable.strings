@@ -1,0 +1,46 @@
+/* Auth - Login */
+"auth_login_welcome_back" = "Welcome Back";
+"auth_login_email_placeholder" = "Email";
+"auth_login_password_placeholder" = "Password";
+"auth_login_forgot_password" = "Forgot Password?";
+"auth_login_button" = "Log In";
+"auth_login_face_id" = "Log in with Face ID";
+"auth_login_social_divider" = "Or log in with";
+"auth_login_no_account" = "Don't have an account?";
+"auth_login_signup_link" = "Sign Up";
+
+/* Auth - Forgot Password */
+"auth_forgot_password_title" = "Reset Password";
+"auth_forgot_password_description" = "Enter your email address to receive a password reset link.";
+"auth_forgot_password_button" = "Send Reset Link";
+"auth_forgot_password_alert_title" = "Link Sent";
+"auth_forgot_password_alert_message" = "Check your email for the password reset link.";
+"auth_forgot_password_nav_title" = "Forgot Password";
+
+/* Auth - Signup */
+"auth_signup_title" = "Create Account";
+"auth_signup_button" = "Sign Up";
+"auth_signup_already_account" = "Already have an account?";
+"auth_signup_login_link" = "Log In";
+"auth_signup_alert_title" = "Verify Email";
+"auth_signup_alert_message" = "We've sent a verification link to your email.";
+"auth_signup_nav_title" = "Sign Up";
+
+/* Chat */
+"chat_typing_indicator" = "Typing...";
+"chat_list_loading" = "Loading Chats...";
+"chat_list_no_chats" = "No conversations yet.";
+"chat_list_search_prompt" = "Search chats";
+"chat_list_nav_title" = "Chats";
+"chat_list_delete" = "Delete";
+"chat_list_archive" = "Archive";
+"chat_list_retry" = "Retry";
+"chat_list_error_prefix" = "Error: ";
+"chat_disappearing_messages_title" = "Disappearing messages";
+"chat_disappearing_off" = "Off";
+"chat_disappearing_24h" = "24 hours";
+"chat_disappearing_7d" = "7 days";
+"chat_cancel" = "Cancel";
+"chat_ok" = "OK";
+"auth_signup_username_placeholder" = "Username";
+"auth_signup_confirm_password_placeholder" = "Confirm Password";

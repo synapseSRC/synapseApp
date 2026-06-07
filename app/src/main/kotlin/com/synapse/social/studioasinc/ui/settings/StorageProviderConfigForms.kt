@@ -62,7 +62,7 @@ internal fun ImgBBConfigContent(
             onValueChange = { localApiKey = it },
             label = "API Key"
         )
-        HelpText(text = "Get your free API key from api.imgbb.com")
+        HelpText(text = stringResource(R.string.settings_help_imgbb))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -122,7 +122,7 @@ internal fun CloudinaryConfigContent(
             onValueChange = { localApiSecret = it },
             label = "API Secret (signed, optional)"
         )
-        HelpText(text = "Use an Upload Preset for unsigned uploads, or API Key + Secret for signed uploads. Find these in your Cloudinary dashboard.")
+        HelpText(text = stringResource(R.string.settings_help_cloudinary))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -192,7 +192,7 @@ internal fun SupabaseConfigContent(
             shape = SettingsShapes.inputShape,
             singleLine = true
         )
-        HelpText(text = "Create a bucket in Supabase Storage and ensure policies allow read/write operations")
+        HelpText(text = stringResource(R.string.settings_help_supabase))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -268,7 +268,7 @@ internal fun R2ConfigContent(
             shape = SettingsShapes.inputShape,
             singleLine = true
         )
-        HelpText(text = "Create an R2 bucket in your Cloudflare dashboard and generate API tokens")
+        HelpText(text = stringResource(R.string.settings_help_cloudflare))
 
         SaveConnectButton(
             isLoading = isSaving,

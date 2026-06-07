@@ -16,19 +16,19 @@ struct ConversationsListView: View {
         NavigationView {
             Group {
                 if viewModel.isLoading && viewModel.conversations.isEmpty {
-                    ProgressView("Loading Chats...")
+                    ProgressView("chat_list_loading")
                 } else if let error = viewModel.errorMessage, viewModel.conversations.isEmpty {
                     VStack {
-                        Text("Error: \(error)")
+                        Text("\(NSLocalizedString("chat_list_error_prefix", comment: ""))\(error)")
                             .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                             .padding()
-                        Button("Retry") {
+                        Button("chat_list_retry") {
                             viewModel.fetchConversations()
                         }
                     }
                 } else if viewModel.conversations.isEmpty {
-                    Text("No conversations yet.")
+                    Text("chat_list_no_chats")
                         .foregroundColor(.gray)
                         .accessibilityIdentifier("EmptyConversationsText")
                 } else {
@@ -40,23 +40,23 @@ struct ConversationsListView: View {
                             Button(role: .destructive) {
                                 viewModel.deleteConversation(chatId: conversation.id)
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label("chat_list_delete", systemImage: "trash")
                             }
                         }
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
                                 viewModel.archiveConversation(chatId: conversation.id)
                             } label: {
-                                Label("Archive", systemImage: "archivebox")
+                                Label("chat_list_archive", systemImage: "archivebox")
                             }
                             .tint(.green)
                         }
                     }
                     .listStyle(PlainListStyle())
-                    .searchable(text: $searchText, prompt: "Search chats")
+                    .searchable(text: $searchText, prompt: "chat_list_search_prompt")
                 }
             }
-            .navigationTitle("Chats")
+            .navigationTitle("chat_list_nav_title")
             .onAppear {
                 viewModel.fetchConversations()
             }

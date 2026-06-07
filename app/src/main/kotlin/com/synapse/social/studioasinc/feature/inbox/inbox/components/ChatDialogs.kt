@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons

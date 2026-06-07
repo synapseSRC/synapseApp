@@ -215,7 +215,7 @@ fun VoiceMessagePlayer(
                         .padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
                 ) {
                     Text(
-                        text = "${playbackSpeed}x",
+                        text = stringResource(R.string.playback_speed_format, playbackSpeed),
                         style = MaterialTheme.typography.labelSmall,
                         color = tintColor,
                         fontWeight = FontWeight.Bold,

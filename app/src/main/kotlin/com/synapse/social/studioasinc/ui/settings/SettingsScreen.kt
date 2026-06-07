@@ -89,7 +89,7 @@ fun SettingsScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
                     Text(
-                        text = "Account",
+                        text = stringResource(R.string.settings_account_short),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
@@ -127,7 +127,7 @@ fun SettingsScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
                     Text(
-                        text = "Security",
+                        text = stringResource(R.string.settings_security_short),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,

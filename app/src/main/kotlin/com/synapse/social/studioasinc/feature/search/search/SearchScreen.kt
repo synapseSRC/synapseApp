@@ -584,7 +584,7 @@ fun SearchLoadingShimmer() {
                 Column {
                     ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthLarge).height(Spacing.Medium))
                     Spacer(modifier = Modifier.height(Spacing.Small))
-                    ShimmerBox(modifier = Modifier.width(80.dp).height(Spacing.SmallMedium))
+                    ShimmerBox(modifier = Modifier.width(Sizes.WidthLarge).height(Spacing.SmallMedium))
                 }
             }
             HorizontalDivider(
