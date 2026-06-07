@@ -71,7 +71,7 @@ fun LicensesScreen(
         ) {
             item {
                 Text(
-                    text = "This application uses the following open source software:",
+                    text = stringResource(R.string.settings_licenses_intro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = Spacing.Small)
@@ -120,7 +120,7 @@ fun LicenseItem(license: License) {
                     )
                     Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                     Text(
-                        text = "${license.developer} • ${license.licenseType}",
+                        text = stringResource(R.string.settings_license_detail, license.developer, license.licenseType),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

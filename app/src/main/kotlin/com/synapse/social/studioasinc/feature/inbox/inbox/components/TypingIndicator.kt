@@ -59,7 +59,7 @@ fun TypingIndicator(
             .clip(RoundedCornerShape(
                 topStart = Sizes.CornerMassive,
                 topEnd = Sizes.CornerMassive,
-                bottomStart = 4.dp,
+                bottomStart = Spacing.ExtraSmall,
                 bottomEnd = Sizes.CornerMassive
             ))
             .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -71,12 +71,12 @@ fun TypingIndicator(
             dots.forEachIndexed { index, animatable ->
                 Box(
                     modifier = Modifier
-                        .offset(y = (-4 * animatable.value).dp)
-                        .size(6.dp)
+                        .offset(y = (-Spacing.ExtraSmall.value * animatable.value).dp)
+                        .size(Spacing.ExtraSmallMedium)
                         .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
                 )
                 if (index < dots.size - 1) {
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
                 }
             }
         }

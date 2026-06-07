@@ -23,14 +23,14 @@ import androidx.compose.ui.unit.dp
 object InboxColors {
 
     val OnlineGreen = StatusOnline
-    val OnlineGreenLight = Color(0xFF81C784)
+    val OnlineGreenLight = com.synapse.social.studioasinc.feature.shared.theme.OnlineGreenLight
     val OfflineGray = StatusOffline
 
     val UnreadAccent = LightPrimary
     val UnreadAccentLight = DarkPrimary
 
-    val PinnedBackground = Color(0xFFFFF8E1)
-    val PinnedBackgroundDark = Color(0xFF3E2723)
+    val PinnedBackground = com.synapse.social.studioasinc.feature.shared.theme.PinnedBackground
+    val PinnedBackgroundDark = com.synapse.social.studioasinc.feature.shared.theme.PinnedBackgroundDark
     val PinnedIcon = AccentYellow
 
     val SwipeArchive = AccentBlue
@@ -38,9 +38,9 @@ object InboxColors {
     val SwipeMute = AccentOrange
     val SwipePin = AccentYellow
 
-    val StoryGradientStart = Color(0xFFE040FB)
-    val StoryGradientMiddle = Color(0xFFFF5722)
-    val StoryGradientEnd = Color(0xFFFFEB3B)
+    val StoryGradientStart = com.synapse.social.studioasinc.feature.shared.theme.StoryGradientStart
+    val StoryGradientMiddle = com.synapse.social.studioasinc.feature.shared.theme.StoryGradientMiddle
+    val StoryGradientEnd = com.synapse.social.studioasinc.feature.shared.theme.StoryGradientEnd
 
     val TypingDot = LightPrimary
     val TypingDotLight = DarkPrimary

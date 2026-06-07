@@ -6,7 +6,7 @@ struct SignupView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Create Account")
+            Text("auth_signup_title")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .padding(.bottom, 20)
@@ -18,22 +18,22 @@ struct SignupView: View {
                     .multilineTextAlignment(.center)
             }
 
-            TextField("Email", text: $viewModel.email)
+            TextField("auth_login_email_placeholder", text: $viewModel.email)
                 .keyboardType(.emailAddress)
                 .autocapitalization(.none)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
-            TextField("Username", text: $viewModel.username)
+            TextField("auth_signup_username_placeholder", text: $viewModel.username)
                 .autocapitalization(.none)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
-            SecureField("Password", text: $viewModel.password)
+            SecureField("auth_login_password_placeholder", text: $viewModel.password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
-            SecureField("Confirm Password", text: $viewModel.confirmPassword)
+            SecureField("auth_signup_confirm_password_placeholder", text: $viewModel.confirmPassword)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
@@ -44,7 +44,7 @@ struct SignupView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("Sign Up")
+                    Text("auth_signup_button")
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -59,24 +59,24 @@ struct SignupView: View {
             Spacer()
 
             HStack {
-                Text("Already have an account?")
+                Text("auth_signup_already_account")
                     .font(.caption)
                 Button(action: {
                     presentationMode.wrappedValue.dismiss()
                 }) {
-                    Text("Log In")
+                    Text("auth_signup_login_link")
                         .font(.caption)
                         .fontWeight(.bold)
                 }
             }
             .padding(.bottom)
         }
-        .navigationBarTitle("Sign Up", displayMode: .inline)
+        .navigationBarTitle("auth_signup_nav_title", displayMode: .inline)
         .alert(isPresented: $viewModel.isEmailSent) {
             Alert(
-                title: Text("Verify Email"),
-                message: Text("We've sent a verification link to your email."),
-                dismissButton: .default(Text("OK")) {
+                title: Text("auth_signup_alert_title"),
+                message: Text("auth_signup_alert_message"),
+                dismissButton: .default(Text("chat_ok")) {
                     presentationMode.wrappedValue.dismiss()
                 }
             )

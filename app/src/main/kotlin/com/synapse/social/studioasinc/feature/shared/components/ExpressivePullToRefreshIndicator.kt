@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.ui.components
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -25,7 +27,7 @@ fun ExpressivePullToRefreshIndicator(
 ) {
     Box(
         modifier = modifier
-            .size(40.dp)
+            .size(Sizes.HeightMedium)
             .graphicsLayer {
                 val progress = state.distanceFraction
                 scaleX = min(1f, progress)
@@ -37,7 +39,7 @@ fun ExpressivePullToRefreshIndicator(
         if (isRefreshing || state.distanceFraction > 0f) {
             ExpressiveLoadingIndicator(
                 color = color,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(Sizes.IconLarge)
             )
         }
     }

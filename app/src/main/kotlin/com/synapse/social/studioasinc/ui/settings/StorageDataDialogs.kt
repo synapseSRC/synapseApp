@@ -21,7 +21,7 @@ fun MediaQualityBottomSheet(
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
         Column(modifier = Modifier.padding(bottom = Spacing.ExtraLarge)) {
             Text(
-                text = "Photo upload quality",
+                text = stringResource(R.string.settings_photo_upload_quality_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(SettingsSpacing.itemHorizontalPadding)
             )

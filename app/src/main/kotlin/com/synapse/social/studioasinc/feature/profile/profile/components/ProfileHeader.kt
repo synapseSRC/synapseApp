@@ -124,7 +124,7 @@ fun ProfileHeader(
                     }
 
                     Text(
-                        text = "@$username",
+                        text = stringResource(R.string.common_at_username, username),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -466,7 +466,7 @@ private fun InlineStatsText(
         }
 
         Text(
-            text = "  ·  ",
+            text = stringResource(R.string.common_bullet_separator),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -493,7 +493,7 @@ private fun InlineStatsText(
         }
 
         Text(
-            text = "  ·  ",
+            text = stringResource(R.string.common_bullet_separator),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant

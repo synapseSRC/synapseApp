@@ -183,7 +183,7 @@ internal fun SolidColorSelector(
     )
 
     Text(
-        text = "Select Color",
+        text = stringResource(R.string.settings_select_color),
         modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
         style = MaterialTheme.typography.labelLarge
     )
@@ -299,7 +299,7 @@ internal fun BlurSlider(
     onBlurIntensityChanged: (Float) -> Unit
 ) {
     Text(
-        text = "Blur Intensity: ${(blurIntensity * 100).toInt()}%",
+        text = stringResource(R.string.settings_blur_intensity, (blurIntensity * 100).toInt()),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)

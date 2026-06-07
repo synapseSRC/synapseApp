@@ -11,7 +11,7 @@ struct LoginView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                Text("Welcome Back")
+                Text("auth_login_welcome_back")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.bottom, 20)
@@ -23,13 +23,13 @@ struct LoginView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                TextField("Email", text: $viewModel.email)
+                TextField("auth_login_email_placeholder", text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
-                SecureField("Password", text: $viewModel.password)
+                SecureField("auth_login_password_placeholder", text: $viewModel.password)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
@@ -38,7 +38,7 @@ struct LoginView: View {
                     Button(action: {
                         showForgotPassword = true
                     }) {
-                        Text("Forgot Password?")
+                        Text("auth_login_forgot_password")
                             .font(.caption)
                             .foregroundColor(.blue)
                     }
@@ -52,7 +52,7 @@ struct LoginView: View {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
-                        Text("Log In")
+                        Text("auth_login_button")
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -70,7 +70,7 @@ struct LoginView: View {
                 }) {
                     HStack {
                         Image(systemName: "faceid")
-                        Text("Log in with Face ID")
+                        Text("auth_login_face_id")
                     }
                     .padding()
                     .foregroundColor(.blue)
@@ -78,7 +78,7 @@ struct LoginView: View {
 
                 Spacer()
 
-                Text("Or log in with")
+                Text("auth_login_social_divider")
                     .font(.caption)
                     .foregroundColor(.gray)
 
@@ -91,12 +91,12 @@ struct LoginView: View {
                 .padding(.bottom, 30)
 
                 HStack {
-                    Text("Don't have an account?")
+                    Text("auth_login_no_account")
                         .font(.caption)
                     Button(action: {
                         showSignup = true
                     }) {
-                        Text("Sign Up")
+                        Text("auth_login_signup_link")
                             .font(.caption)
                             .fontWeight(.bold)
                     }

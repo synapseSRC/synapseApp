@@ -279,7 +279,7 @@ private fun ConversationItem(
                     )
                     Spacer(modifier = Modifier.width(Spacing.Small))
                     Text(
-                        text = "Quick Peak",
+                        text = stringResource(R.string.inbox_quick_peak),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold

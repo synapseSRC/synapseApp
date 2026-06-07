@@ -89,7 +89,7 @@ fun RepliesIndicatorRow(count: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "$count replies",
+            text = stringResource(R.string.chat_reply_count, count),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -117,7 +117,7 @@ fun SenderHeaderRow(
                 contentDescription = "Sender Avatar",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(Sizes.AvatarSmall)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
@@ -173,8 +173,8 @@ fun DateDividerChip(label: String) {
 private fun WavyDivider(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         val path = Path()
-        val waveLength = 24.dp.toPx()
-        val amplitude = 2.dp.toPx()
+        val waveLength = Sizes.IconLarge.toPx()
+        val amplitude = Spacing.Tiny.toPx()
 
         // Use a true sine wave approach using cubic beziers for smoothness
         path.moveTo(0f, size.height / 2f)
@@ -192,7 +192,7 @@ private fun WavyDivider(modifier: Modifier, color: Color) {
             path = path,
             color = color,
             style = Stroke(
-                width = 1.5.dp.toPx(),
+                width = Sizes.BorderDefault.toPx(),
                 cap = StrokeCap.Round
             )
         )
@@ -207,14 +207,14 @@ fun UnreadDividerRow(count: Int) {
             .padding(vertical = Spacing.Small),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary)
+        WavyDivider(modifier = Modifier.weight(1f).height(Spacing.ExtraSmallMedium), color = MaterialTheme.colorScheme.primary)
         Text(
             text = stringResource(if (count == 1) R.string.chat_divider_unread_one else R.string.chat_divider_unread_other, count),
             modifier = Modifier.padding(horizontal = Spacing.Medium),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        WavyDivider(modifier = Modifier.weight(1f).height(6.dp), color = MaterialTheme.colorScheme.primary)
+        WavyDivider(modifier = Modifier.weight(1f).height(Spacing.ExtraSmallMedium), color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -261,7 +261,7 @@ fun MessageBubble(
 ) {
     val horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
 
-    val bubbleMaxWidth = (LocalConfiguration.current.screenWidthDp * 0.8f).dp
+    val bubbleMaxWidth = Sizes.BubbleMaxWidth
 
     val isDark = isSystemInDarkTheme()
 
@@ -290,7 +290,7 @@ fun MessageBubble(
     }
 
     // UI logic applied carefully matching sender side for sharpness:
-    val radius = cornerRadius.dp
+    val radius = Sizes.CornerDefault
     val offsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -436,7 +436,7 @@ fun MessageBubble(
             tonalElevation = Sizes.BorderThin,
             modifier = Modifier
                 .widthIn(max = bubbleMaxWidth)
-                .padding(bottom = if (reactions.isNotEmpty()) 12.dp else 0.dp)
+                .padding(bottom = if (reactions.isNotEmpty()) Spacing.SmallMedium else Spacing.None)
         ) {
             Column(modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Small)) {
 
@@ -450,7 +450,7 @@ fun MessageBubble(
                         shape = RoundedCornerShape(Sizes.CornerMedium),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 1.dp)
+                            .padding(bottom = Sizes.BorderThin)
                             .clickable { replyToMessage.id?.let { onQuoteClick(it) } }
                     ) {
                         val isOwnReply = replyToMessage.senderId == message.senderId
@@ -471,7 +471,7 @@ fun MessageBubble(
                                     placeholder = rememberVectorPainter(Icons.Filled.Person),
                                     error = rememberVectorPainter(Icons.Filled.Person),
                                     modifier = Modifier
-                                        .size(16.dp)
+                                        .size(Sizes.IconSemiMedium)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
                                 )
@@ -622,7 +622,7 @@ fun MessageBubble(
             @OptIn(ExperimentalLayoutApi::class)
             FlowRow(
                 modifier = Modifier
-                    .offset(y = 12.dp)
+                    .offset(y = Spacing.SmallMedium)
                     .padding(horizontal = Spacing.Small),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny),
                 verticalArrangement = Arrangement.spacedBy(Spacing.Tiny)
@@ -635,20 +635,20 @@ fun MessageBubble(
                             MaterialTheme.colorScheme.primaryContainer
                         else
                             MaterialTheme.colorScheme.surfaceVariant,
-                        tonalElevation = 2.dp,
+                        tonalElevation = Spacing.Tiny,
                         modifier = Modifier.clickable { onReactionSelected(type) }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = Spacing.ExtraSmallMedium, vertical = Spacing.Tiny),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
                         ) {
-                            Text(text = emoji, fontSize = 12.sp)
+                            Text(text = emoji, fontSize = MaterialTheme.typography.labelSmall.fontSize)
                             if (count > 1) {
                                 Text(
                                     text = count.toString(),
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontSize = 10.sp
+                                    fontSize = MaterialTheme.typography.labelSmall.fontSize
                                 )
                             }
                         }
@@ -656,7 +656,7 @@ fun MessageBubble(
                 }
                 IconButton(
                     onClick = onShowReactionPicker,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(Sizes.IconLarge)
                 ) {
                     Icon(
                         imageVector = Icons.Default.AddReaction,
@@ -668,7 +668,7 @@ fun MessageBubble(
         }
         } // Box
 
-        if (reactions.isNotEmpty()) Spacer(modifier = Modifier.height(12.dp))
+        if (reactions.isNotEmpty()) Spacer(modifier = Modifier.height(Spacing.SmallMedium))
 
         if (isFromMe && (position == GroupPosition.LAST || position == GroupPosition.SINGLE)
             && message.deliveryStatus == DeliveryStatus.READ) {
