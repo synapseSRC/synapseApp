@@ -159,6 +159,7 @@ private fun StorageDataContent(
     }
 }
 
+@Composable
 private fun getAutoDownloadSummary(selectedTypes: Set<MediaType>): String {
     if (selectedTypes.isEmpty()) return stringResource(R.string.settings_no_media)
     if (selectedTypes.size == MediaType.values().size) return stringResource(R.string.settings_all_media)

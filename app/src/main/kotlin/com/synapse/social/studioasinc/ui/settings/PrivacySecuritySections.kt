@@ -62,7 +62,7 @@ internal fun ProfilePrivacySection(
         )
         SettingsDivider()
         SettingsSelectionItem(
-            title = stringResource(R.string.settings_about_title),
+            title = stringResource(R.string.settings_about_privacy_title),
             subtitle = stringResource(R.string.settings_about_subtitle),
             icon = Icons.Filled.Info,
             options = ProfileVisibility.values().map { it.displayName() },

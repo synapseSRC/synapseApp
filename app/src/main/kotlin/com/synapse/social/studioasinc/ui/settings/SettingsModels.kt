@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.ui.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.synapse.social.studioasinc.core.util.UiText
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatWallpaper
 
@@ -215,8 +216,8 @@ data class NotificationPreferences(
 
 data class SettingsCategory(
     val id: String,
-    val title: String,
-    val subtitle: String,
+    val title: UiText,
+    val subtitle: UiText,
     val icon: ImageVector,
     val destination: SettingsDestination,
     val keywords: List<String> = emptyList()
@@ -224,7 +225,7 @@ data class SettingsCategory(
 
 data class SettingsGroup(
     val id: String,
-    val title: String? = null,
+    val title: UiText? = null,
     val categories: List<SettingsCategory>
 )
 

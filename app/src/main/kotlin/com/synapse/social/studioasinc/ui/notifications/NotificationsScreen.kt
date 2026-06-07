@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.ui.notifications
 
 import androidx.compose.foundation.background
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.core.util.UiText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyColumn

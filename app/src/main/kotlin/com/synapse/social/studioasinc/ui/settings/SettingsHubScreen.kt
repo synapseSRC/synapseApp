@@ -269,7 +269,7 @@ fun SettingsFlattenedContent(
             Column {
                 if (group.title != null) {
                     SettingsHeaderItem(
-                        title = group.title
+                        title = group.title.asString()
                     )
                 }
 
@@ -283,8 +283,8 @@ fun SettingsFlattenedContent(
                         }
 
                         SettingsNavigationItem(
-                            title = category.title,
-                            subtitle = category.subtitle,
+                            title = category.title.asString(),
+                            subtitle = category.subtitle.asString(),
                             imageVector = category.icon,
                             onClick = { onNavigate(category.destination) },
                             position = position

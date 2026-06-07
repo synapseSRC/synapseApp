@@ -25,19 +25,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.animations.PeekingBox
 import com.synapse.social.studioasinc.ui.components.CircularAvatar
+import com.synapse.social.studioasinc.core.util.UiText
 
-sealed interface UiText {
-    data class DynamicString(val value: String) : UiText
-    class StringResource(@StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText
-
-    @Composable
-    fun asString(): String {
-        return when (this) {
-            is DynamicString -> value
-            is StringResource -> stringResource(resId, *args.toTypedArray())
-        }
-    }
-}
 
 @Immutable
 data class UiNotification(
