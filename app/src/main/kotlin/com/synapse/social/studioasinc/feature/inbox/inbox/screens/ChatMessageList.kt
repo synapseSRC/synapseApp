@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
+import com.synapse.social.studioasinc.feature.inbox.inbox.components.TypingIndicator
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues

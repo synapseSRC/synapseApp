@@ -57,9 +57,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
@@ -173,7 +171,7 @@ fun DateDividerChip(label: String) {
 private fun WavyDivider(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         val path = Path()
-        val waveLength = Sizes.IconLarge.toPx()
+        val waveLength = Spacing.Large.toPx()
         val amplitude = Spacing.Tiny.toPx()
 
         // Use a true sine wave approach using cubic beziers for smoothness
@@ -227,7 +225,7 @@ fun isWithinTimeThreshold(timeStr1: String?, timeStr2: String?): Boolean {
     return try {
         val t1 = Instant.parse(timeStr1).epochSecond
         val t2 = Instant.parse(timeStr2).epochSecond
-        abs(t1 - t2) <= 5 * 60 // 5 minutes
+        abs(t1 - t2) <= 300 // 5 minutes
     } catch (e: Exception) {
         false
     }
@@ -487,7 +485,7 @@ fun MessageBubble(
                             Text(
                                 text = replyToMessage.content ?: "",
                                 style = TextStyle(
-                                    fontSize = MaterialTheme.typography.bodySmall.fontSize * fontScale,
+                                    fontSize = FontSizes.Small * fontScale,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 maxLines = 4,
@@ -643,12 +641,12 @@ fun MessageBubble(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
                         ) {
-                            Text(text = emoji, fontSize = MaterialTheme.typography.labelSmall.fontSize)
+                            Text(text = emoji, fontSize = FontSizes.Small)
                             if (count > 1) {
                                 Text(
                                     text = count.toString(),
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontSize = MaterialTheme.typography.labelSmall.fontSize
+                                    fontSize = FontSizes.Small
                                 )
                             }
                         }

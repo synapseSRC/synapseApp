@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.ui.createpost
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import android.net.Uri
 import android.widget.Toast
@@ -136,9 +137,9 @@ fun CreatePostScreen(
                             stiffness = 380f
                         )
                     },
-                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(28.dp))
+                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(Sizes.IconExtraLarge))
                 ),
-            sheetPeekHeight = 72.dp,
+            sheetPeekHeight = Sizes.HeightAvatarLarge,
             sheetDragHandle = {
                 StickyBottomActionArea(
                     onMediaClick = { launchMediaPicker() },

@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import androidx.compose.ui.unit.dp
 
 import android.content.Context
 import androidx.compose.animation.*
@@ -47,12 +48,12 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
 import com.synapse.social.studioasinc.feature.shared.components.picker.SynapseFilePicker
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
@@ -141,7 +142,7 @@ fun ChatInputBar(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    IconButton(onClick = onCancelReply, modifier = Modifier.size(Sizes.IconLarge),) {
+                    IconButton(onClick = onCancelReply, modifier = Modifier.size(Sizes.IconLarge)) {
                         Icon(Icons.Default.Close, contentDescription = "Cancel reply", modifier = Modifier.size(Sizes.IconSemiMedium))
                     }
                 }
@@ -174,7 +175,7 @@ fun ChatInputBar(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    IconButton(onClick = onCancelEditing, modifier = Modifier.size(Sizes.IconLarge),) {
+                    IconButton(onClick = onCancelEditing, modifier = Modifier.size(Sizes.IconLarge)) {
                         Icon(Icons.Default.Close, contentDescription = "Cancel edit", modifier = Modifier.size(Sizes.IconSemiMedium))
                     }
                 }
@@ -238,7 +239,7 @@ fun ChatInputBar(
                     .pointerInput(Unit) {
                         detectHorizontalDragGestures(
                             onDragEnd = {
-                                if (slideOffset < -150f) {
+                                if (slideOffset < -150.0f) {
                                     isSwipeToCancel = true
                                     onRecordingCancelled()
                                 }
@@ -313,7 +314,7 @@ fun ChatInputBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
                 ) {
-                    val isCanceling = slideOffset < -100f
+                    val isCanceling = slideOffset < -100.0f
                     val cancelColor = if (isCanceling) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
 
                     val shakeOffset = if (isCanceling) {
