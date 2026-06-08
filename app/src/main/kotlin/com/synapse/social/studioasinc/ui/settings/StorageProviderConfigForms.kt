@@ -60,7 +60,7 @@ internal fun ImgBBConfigContent(
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
-            label = "API Key"
+            label = stringResource(R.string.label_api_key_simple)
         )
         HelpText(text = stringResource(R.string.settings_help_imgbb))
 
@@ -110,17 +110,17 @@ internal fun CloudinaryConfigContent(
         StorageSecureTextField(
             value = localUploadPreset,
             onValueChange = { localUploadPreset = it },
-            label = "Upload Preset (unsigned)"
+            label = stringResource(R.string.label_upload_preset)
         )
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
-            label = "API Key (signed, optional)"
+            label = stringResource(R.string.label_api_key_optional)
         )
         StorageSecureTextField(
             value = localApiSecret,
             onValueChange = { localApiSecret = it },
-            label = "API Secret (signed, optional)"
+            label = stringResource(R.string.label_api_secret_optional)
         )
         HelpText(text = stringResource(R.string.settings_help_cloudinary))
 
@@ -172,7 +172,7 @@ internal fun SupabaseConfigContent(
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
-            label = "Service Role / API Key"
+            label = stringResource(R.string.label_supabase_api_key)
         )
         OutlinedTextField(
             value = localBucketName,
@@ -243,12 +243,12 @@ internal fun R2ConfigContent(
         StorageSecureTextField(
             value = localAccessKeyId,
             onValueChange = { localAccessKeyId = it },
-            label = "Access Key ID"
+            label = stringResource(R.string.label_access_key_id)
         )
         StorageSecureTextField(
             value = localSecretAccessKey,
             onValueChange = { localSecretAccessKey = it },
-            label = "Secret Access Key"
+            label = stringResource(R.string.label_secret_access_key)
         )
         OutlinedTextField(
             value = localBucketName,

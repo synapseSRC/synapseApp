@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.shared.theme
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 
 
@@ -127,4 +128,14 @@ object Sizes {
     val MaxGridHeight = 2000.dp
     val AvatarBorder = 4.dp
     val ProfileImageOffset = (-48).dp
+
+    val HeightAvatarLarge = 72.dp
+    val IconSmallMedium = 22.dp
+    val IconSemiMediumLarge = 18.dp
+    val BorderThinAlt = 1.5.dp
+}
+
+object FontSizes {
+    val ExtraSmall = 10.sp
+    val Small = 12.sp
 }

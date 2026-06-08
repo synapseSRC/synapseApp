@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.shared.domain.model.User
@@ -68,7 +67,7 @@ fun ContactItem(
             if (contact.status == UserStatus.ONLINE) {
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
+                        .size(Sizes.IconSmall)
                         .clip(CircleShape)
                         .background(StatusOnline)
                         .align(Alignment.BottomEnd)

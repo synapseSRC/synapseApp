@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
@@ -62,7 +61,7 @@ internal fun ThemePicker(
                         .clip(CircleShape)
                         .background(color)
                         .border(
-                            width = if (theme == selectedTheme) Sizes.BorderSelected else 0.dp,
+                            width = if (theme == selectedTheme) Sizes.BorderSelected else Spacing.None,
                             color = if (theme == selectedTheme) MaterialTheme.colorScheme.onSurface else Color.Transparent,
                             shape = CircleShape
                         ),
@@ -144,7 +143,7 @@ internal fun WallpaperTypeSelector(
                         .clip(RoundedCornerShape(Sizes.CornerMedium))
                         .background(bgColor)
                         .border(
-                            width = if (isSelected) Sizes.BorderSelected else 0.dp,
+                            width = if (isSelected) Sizes.BorderSelected else Spacing.None,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                             shape = RoundedCornerShape(Sizes.CornerMedium)
                         ),
@@ -204,7 +203,7 @@ internal fun SolidColorSelector(
                     .background(Color(android.graphics.Color.parseColor(colorHex)))
                     .clickable { onColorSelected(colorHex) }
                     .border(
-                        width = if (isSelected) Sizes.BorderSelected else 0.dp,
+                        width = if (isSelected) Sizes.BorderSelected else Spacing.None,
                         color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                         shape = CircleShape
                     ),
@@ -266,7 +265,7 @@ internal fun PatternSelector(
                     .clip(RoundedCornerShape(Sizes.CornerMedium))
                     .clickable { onWallpaperValueSelected(item) }
                     .border(
-                        width = if (isSelected) Sizes.BorderSelected else 0.dp,
+                        width = if (isSelected) Sizes.BorderSelected else Spacing.None,
                         color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                         shape = RoundedCornerShape(Sizes.CornerMedium)
                     )
@@ -309,7 +308,7 @@ internal fun BlurSlider(
         value = localBlur,
         onValueChange = { localBlur = it },
         onValueChangeFinished = { onBlurIntensityChanged(localBlur) },
-        valueRange = 0f..1f,
+        valueRange = 0f..1.0f,
         modifier = Modifier.padding(horizontal = Spacing.Medium)
     )
 }

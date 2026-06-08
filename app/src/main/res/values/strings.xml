@@ -2026,4 +2026,17 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="common_numbered_list_item">%1$d. %2$s</string>
     <string name="common_api_key_usage">%1$s • %2$d/%3$s used</string>
     <string name="common_infinity">∞</string>
+    <string name="select_color">Select Color</string>
+    <string name="blur_intensity_label">Blur Intensity: %1$d%%</string>
+    <string name="licenses_intro">This application uses the following open source software:</string>
+    <string name="scheduled_posts_not_implemented">Scheduled posts feature not implemented</string>
+    <string name="chat_feature_not_implemented">Chat feature not implemented</string>
+    <string name="photo_upload_quality">Photo upload quality</string>
+    <string name="label_api_key_simple">API Key</string>
+    <string name="label_upload_preset">Upload Preset (unsigned)</string>
+    <string name="label_api_key_optional">API Key (signed, optional)</string>
+    <string name="label_api_secret_optional">API Secret (signed, optional)</string>
+    <string name="label_supabase_api_key">Service Role / API Key</string>
+    <string name="label_access_key_id">Access Key ID</string>
+    <string name="label_secret_access_key">Secret Access Key</string>
 </resources>

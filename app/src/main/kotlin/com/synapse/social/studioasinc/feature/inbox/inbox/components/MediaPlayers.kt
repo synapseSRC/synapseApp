@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.media3.common.PlaybackParameters
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceDownloadCache
 import kotlinx.coroutines.launch
@@ -129,7 +128,7 @@ fun VoiceMessagePlayer(
                 CircularProgressIndicator(
                     modifier = Modifier.size(Sizes.IconSemiMedium),
                     color = tintColor,
-                    strokeWidth = 2.dp
+                    strokeWidth = Sizes.BorderDefault
                 )
             } else if (localPath == null) {
                 Icon(

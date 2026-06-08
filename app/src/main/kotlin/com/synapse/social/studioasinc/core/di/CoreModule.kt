@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.synapse.social.studioasinc.core.config.AppConstants
 import com.synapse.social.studioasinc.data.local.AndroidDeviceInfoProvider
 import com.synapse.social.studioasinc.data.local.AndroidPlatformInfoProvider
 import com.synapse.social.studioasinc.data.local.AppSettingsManager
@@ -104,7 +105,7 @@ object CoreModule {
     @Provides
     @Singleton
     fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
-        return context.getSharedPreferences("synapse_prefs", Context.MODE_PRIVATE)
+        return context.getSharedPreferences(AppConstants.PREFS_NAME, Context.MODE_PRIVATE)
     }
     @Provides
     @Singleton

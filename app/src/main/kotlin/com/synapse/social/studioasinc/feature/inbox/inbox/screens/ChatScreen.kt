@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
+import com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatInputBar
 
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.components.picker.SynapseFilePicker

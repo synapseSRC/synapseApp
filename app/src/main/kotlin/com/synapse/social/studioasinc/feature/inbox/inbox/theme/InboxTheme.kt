@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.ui.inbox.theme
+package com.synapse.social.studioasinc.feature.inbox.inbox.theme
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,20 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
-import com.synapse.social.studioasinc.feature.shared.theme.AccentOrange
-import com.synapse.social.studioasinc.feature.shared.theme.AccentYellow
-import com.synapse.social.studioasinc.feature.shared.theme.DarkPrimary
-import com.synapse.social.studioasinc.feature.shared.theme.LightError
-import com.synapse.social.studioasinc.feature.shared.theme.LightPrimary
-import com.synapse.social.studioasinc.feature.shared.theme.StatusOffline
-import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
+import com.synapse.social.studioasinc.feature.shared.theme.*
 import androidx.compose.ui.unit.dp
 
-
-
 object InboxColors {
-
     val OnlineGreen = StatusOnline
     val OnlineGreenLight = com.synapse.social.studioasinc.feature.shared.theme.OnlineGreenLight
     val OfflineGray = StatusOffline
@@ -45,8 +35,6 @@ object InboxColors {
     val TypingDot = LightPrimary
     val TypingDotLight = DarkPrimary
 
-
-
     val storyRingGradient: Brush
         get() = Brush.sweepGradient(
             colors = listOf(
@@ -58,45 +46,35 @@ object InboxColors {
         )
 }
 
-
-
 object InboxShapes {
     val ChatBadge = CircleShape
     val AvatarShape = CircleShape
-    val SearchBar = RoundedCornerShape(28.dp)
-    val ChatItemCard = RoundedCornerShape(16.dp)
-    val SwipeActionShape = RoundedCornerShape(12.dp)
+    val SearchBar = RoundedCornerShape(Sizes.IconExtraLarge)
+    val ChatItemCard = RoundedCornerShape(Spacing.Medium)
+    val SwipeActionShape = RoundedCornerShape(Spacing.SmallMedium)
     val TabIndicator = RoundedCornerShape(50)
-    val FABShape = RoundedCornerShape(16.dp)
-    val GroupedListTopShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
-    val GroupedListMiddleShape = RoundedCornerShape(0.dp)
-    val GroupedListBottomShape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
-    val GroupedListSingleShape = RoundedCornerShape(16.dp)
+    val FABShape = RoundedCornerShape(Spacing.Medium)
+    val GroupedListTopShape = RoundedCornerShape(topStart = Spacing.Medium, topEnd = Spacing.Medium, bottomStart = Spacing.None, bottomEnd = Spacing.None)
+    val GroupedListMiddleShape = RoundedCornerShape(Spacing.None)
+    val GroupedListBottomShape = RoundedCornerShape(topStart = Spacing.None, topEnd = Spacing.None, bottomStart = Spacing.Medium, bottomEnd = Spacing.Medium)
+    val GroupedListSingleShape = RoundedCornerShape(Spacing.Medium)
 }
 
-
-
 object InboxAnimations {
-
     const val EntranceStaggerDelayMs = 40
-
-
     const val ShortDurationMs = 150
     const val MediumDurationMs = 300
     const val LongDurationMs = 500
-
 
     val BadgePopSpec: AnimationSpec<Float> = spring(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessMedium
     )
 
-
     val ItemEntranceSpec: AnimationSpec<Float> = tween(
         durationMillis = MediumDurationMs,
         easing = FastOutSlowInEasing
     )
-
 
     val PulseSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = tween(
@@ -105,7 +83,6 @@ object InboxAnimations {
         ),
         repeatMode = RepeatMode.Reverse
     )
-
 
     val TypingBounceSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = keyframes {
@@ -118,15 +95,12 @@ object InboxAnimations {
         repeatMode = RepeatMode.Restart
     )
 
-
     const val SwipeThresholdFraction = 0.3f
-
 
     val FABExpandSpec: AnimationSpec<Float> = spring(
         dampingRatio = Spring.DampingRatioLowBouncy,
         stiffness = Spring.StiffnessLow
     )
-
 
     val SearchExpandSpec: AnimationSpec<Float> = tween(
         durationMillis = MediumDurationMs,
@@ -134,26 +108,22 @@ object InboxAnimations {
     )
 }
 
-
-
 object InboxDimens {
-    val AvatarSize = 56.dp
-    val AvatarSizeSmall = 40.dp
-    val OnlineIndicatorSize = 14.dp
-    val OnlineIndicatorBorder = 2.dp
-    val UnreadBadgeSize = 22.dp
-    val UnreadBadgeSizeSmall = 18.dp
-    val StoryRingWidth = 3.dp
-    val ChatItemPadding = 16.dp
-    val ChatItemVerticalSpacing = 8.dp
-    val GroupedItemGap = 2.dp
-    val SectionHeaderHeight = 36.dp
-    val SwipeActionIconSize = 28.dp
-    val FABSize = 56.dp
-    val SearchBarHeight = 56.dp
+    val AvatarSize = Sizes.AvatarLarge
+    val AvatarSizeSmall = Sizes.AvatarMedium
+    val OnlineIndicatorSize = Sizes.IconSemiSmall
+    val OnlineIndicatorBorder = Sizes.BorderDefault
+    val UnreadBadgeSize = Sizes.IconSmallMedium
+    val UnreadBadgeSizeSmall = Sizes.IconMedium
+    val StoryRingWidth = Sizes.BorderSelected
+    val ChatItemPadding = Spacing.Medium
+    val ChatItemVerticalSpacing = Spacing.Small
+    val GroupedItemGap = Sizes.BorderDefault
+    val SectionHeaderHeight = Sizes.AvatarSmall
+    val SwipeActionIconSize = Sizes.IconExtraLarge
+    val FABSize = Sizes.AvatarLarge
+    val SearchBarHeight = Sizes.AvatarLarge
 }
-
-
 
 object InboxTheme {
     val colors: InboxColors

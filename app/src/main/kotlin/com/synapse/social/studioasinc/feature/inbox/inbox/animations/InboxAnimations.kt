@@ -10,7 +10,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
-import com.synapse.social.studioasinc.ui.inbox.theme.InboxAnimations as AnimSpecs
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxAnimations as AnimSpecs
 
 
 
