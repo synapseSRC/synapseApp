@@ -8,15 +8,15 @@ struct ContentView: View {
                     Image(systemName: "globe")
                         .imageScale(.large)
                         .foregroundColor(.accentColor)
-                    Text("Welcome to Synapse")
-                    Text("Powered by Kotlin Multiplatform")
+                    Text(String(localized: "home_welcome_title"))
+                    Text(String(localized: "home_welcome_subtitle"))
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
-                .navigationTitle("Home")
+                .navigationTitle(String(localized: "nav_home"))
             }
             .tabItem {
-                Label("Home", systemImage: "house")
+                Label(String(localized: "nav_home"), systemImage: "house")
             }
 
             ConversationsListView()

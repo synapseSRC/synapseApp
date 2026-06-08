@@ -78,6 +78,7 @@ object Sizes {
     val Height120 = 120.dp
     val HeightPreview = 300.dp
     val HeightStoryTray = 180.dp
+    val HeightStoryTrayExpanded = 220.dp
     val HeightMediaSingle = 600.dp
     val HeightMediaGrid2 = 400.dp
     val HeightMediaGrid3Top = 350.dp
@@ -104,6 +105,7 @@ object Sizes {
     val AvatarHugeOffset = 60.dp
     val AvatarHugeHalfOffset = 55.dp
     val CommentIndent = 68.dp
+    val CommentMaxIndent = 64.dp
 
     val SendButton = 44.dp
     val SendButtonCompact = 36.dp
@@ -113,6 +115,7 @@ object Sizes {
     val StatusDot = 10.dp
 
     val AvatarSemiLarge = 64.dp
+    val AvatarXLarge = 88.dp
     val AvatarProfile = 96.dp
     val AvatarLargeProfile = 120.dp
     val HeightCard = 140.dp
@@ -133,6 +136,9 @@ object Sizes {
     val IconSmallMedium = 22.dp
     val IconSemiMediumLarge = 18.dp
     val BorderThinAlt = 1.5.dp
+
+    val ElevationLow = 2.dp
+    val PaddingTopClose = 28.dp
 }
 
 object FontSizes {

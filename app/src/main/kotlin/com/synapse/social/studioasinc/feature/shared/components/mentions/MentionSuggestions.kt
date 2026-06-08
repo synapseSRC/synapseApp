@@ -30,10 +30,10 @@ fun MentionSuggestions(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 200.dp),
+            .heightIn(max = Sizes.HeightExtraLarge),
         shape = MaterialTheme.shapes.medium,
-        tonalElevation = 4.dp,
-        shadowElevation = 8.dp
+        tonalElevation = Spacing.ExtraSmall,
+        shadowElevation = Spacing.Small
     ) {
         LazyColumn(
             contentPadding = PaddingValues(vertical = Spacing.ExtraSmall)

@@ -16,50 +16,50 @@ import androidx.compose.ui.unit.sp
 
 object ProfileDimensions {
 
-    val spacing0 = 0.dp
-    val spacing2 = 2.dp
-    val spacing4 = 4.dp
-    val spacing8 = 8.dp
-    val spacing12 = 12.dp
-    val spacing16 = 16.dp
-    val spacing20 = 20.dp
-    val spacing24 = 24.dp
-    val spacing32 = 32.dp
-    val spacing48 = 48.dp
+    val spacing0 = Spacing.None
+    val spacing2 = Spacing.Tiny
+    val spacing4 = Spacing.ExtraSmall
+    val spacing8 = Spacing.Small
+    val spacing12 = Spacing.SmallMedium
+    val spacing16 = Spacing.Medium
+    val spacing20 = Spacing.MediumLarge
+    val spacing24 = Spacing.Large
+    val spacing32 = Spacing.ExtraLarge
+    val spacing48 = Spacing.Huge
 
 
-    val profileImageSmall = 40.dp
-    val profileImageMedium = 56.dp
-    val profileImageLarge = 88.dp
-    val profileImageXLarge = 110.dp
-    val profileImageSize = 96.dp
+    val profileImageSmall = Sizes.AvatarMedium
+    val profileImageMedium = Sizes.AvatarLarge
+    val profileImageLarge = Sizes.AvatarXLarge
+    val profileImageXLarge = Sizes.AvatarHuge
+    val profileImageSize = Sizes.AvatarProfile
 
 
-    val coverPhotoHeight = 180.dp
-    val coverPhotoHeightExpanded = 220.dp
+    val coverPhotoHeight = Sizes.HeightStoryTray
+    val coverPhotoHeightExpanded = Sizes.HeightStoryTrayExpanded
 
 
-    val storyRingWidth = 3.dp
-    val storyRingPadding = 3.dp
+    val storyRingWidth = Sizes.BorderSelected
+    val storyRingPadding = Sizes.BorderSelected
 
 
-    val iconSizeSmall = 16.dp
-    val iconSizeMedium = 20.dp
-    val iconSize = 24.dp
-    val iconSizeLarge = 32.dp
+    val iconSizeSmall = Sizes.IconSemiMedium
+    val iconSizeMedium = Sizes.IconDefault
+    val iconSize = Sizes.IconLarge
+    val iconSizeLarge = Sizes.IconHuge
 
 
-    val chipHeight = 32.dp
-    val buttonHeight = 44.dp
-    val buttonCornerRadius = 12.dp
+    val chipHeight = Sizes.HeightChip
+    val buttonHeight = Sizes.HeightMedium
+    val buttonCornerRadius = Sizes.CornerDefault
 
 
-    val photoGridSpacing = 2.dp
-    val photoGridCornerRadius = 4.dp
+    val photoGridSpacing = Spacing.Tiny
+    val photoGridCornerRadius = Sizes.CornerSmall
 
 
-    val cardCornerRadius = 16.dp
-    val cardElevation = 2.dp
+    val cardCornerRadius = Sizes.CornerLarge
+    val cardElevation = Sizes.ElevationLow
 
 
     val parallaxFactor = 0.5f
@@ -82,9 +82,9 @@ object ProfileAnimations {
 
 object ProfileColors {
 
-    val storyRingStart = Color(0xFFE040FB)
-    val storyRingMiddle = Color(0xFF7C4DFF)
-    val storyRingEnd = Color(0xFF00BCD4)
+    val storyRingStart = StoryGradientStart
+    val storyRingMiddle = StoryRingMiddle
+    val storyRingEnd = StoryRingEnd
 
 
     val coverOverlayStart = Color.Transparent
@@ -92,11 +92,11 @@ object ProfileColors {
     val coverOverlayEnd = Color.Black.copy(alpha = 0.4f)
 
 
-    val verifiedBadge = Color(0xFF1976D2)
+    val verifiedBadge = SynapseBlue
 
 
-    val shimmerBase = Color(0xFFE0E0E0)
-    val shimmerHighlight = Color(0xFFF5F5F5)
+    val shimmerBase = ShimmerBase
+    val shimmerHighlight = ShimmerHighlight
 }
 
 

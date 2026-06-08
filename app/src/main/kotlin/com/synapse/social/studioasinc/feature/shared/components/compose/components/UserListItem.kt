@@ -85,7 +85,7 @@ fun UserListItem(
                             imageVector = Icons.Default.Verified,
                             contentDescription = "Verified",
                             modifier = Modifier
-                                .size(16.dp)
+                                .size(Sizes.IconSemiMedium)
                                 .padding(start = Spacing.ExtraSmall),
                             tint = MaterialTheme.colorScheme.primary
                         )

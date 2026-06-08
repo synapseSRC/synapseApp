@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -138,7 +139,7 @@ fun CommentItem(
     expanded: Boolean = false,
     onExpandToggle: () -> Unit = {}
 ) {
-    val paddingStart = (level * 16).dp.coerceAtMost(64.dp)
+    val paddingStart = (level * 16).dp.coerceAtMost(Sizes.CommentMaxIndent)
 
     Box(
         modifier = Modifier
@@ -196,7 +197,7 @@ fun CommentItem(
                         ) {
                             Text(
                                 text = comment.replies.size.toString(),
-                                modifier = Modifier.padding(horizontal = 2.dp)
+                                modifier = Modifier.padding(horizontal = Spacing.Tiny)
                             )
                         }
                     }

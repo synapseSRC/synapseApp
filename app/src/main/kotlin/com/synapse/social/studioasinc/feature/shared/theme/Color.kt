@@ -132,3 +132,8 @@ val PinnedBackgroundDark = Color(0xFF3E2723)
 val StoryGradientStart = Color(0xFFE040FB)
 val StoryGradientMiddle = Color(0xFFFF5722)
 val StoryGradientEnd = Color(0xFFFFEB3B)
+
+val StoryRingMiddle = Color(0xFF7C4DFF)
+val StoryRingEnd = Color(0xFF00BCD4)
+val ShimmerBase = Color(0xFFE0E0E0)
+val ShimmerHighlight = Color(0xFFF5F5F5)
