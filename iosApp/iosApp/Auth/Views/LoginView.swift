@@ -59,7 +59,7 @@ struct LoginView: View {
                     }
                 }
                 .padding()
-                .background(Color.blue)
+                .background(AppTheme.primaryColor)
                 .cornerRadius(10)
                 .padding(.horizontal)
                 .disabled(viewModel.isLoading)

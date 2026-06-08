@@ -52,7 +52,7 @@ struct ChatDetailView: View {
                     .font(.caption)
                     .foregroundColor(.white)
                     .padding(8)
-                    .background(Color.red.opacity(0.8))
+                    .background(AppTheme.errorColor.opacity(0.8))
                     .cornerRadius(8)
                     .padding(.bottom, 4)
             }

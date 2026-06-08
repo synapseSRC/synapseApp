@@ -29,7 +29,7 @@ struct ErrorBoundaryView: View {
                     .fontWeight(.bold)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color.blue)
+                    .background(AppTheme.primaryColor)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }

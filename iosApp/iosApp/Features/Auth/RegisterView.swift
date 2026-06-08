@@ -51,7 +51,7 @@ struct RegisterView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(AppTheme.primaryColor)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
@@ -65,7 +65,7 @@ struct RegisterView: View {
                 LoadingView(message: "Creating account...")
             }
         }
-        .navigationTitle("Register")
+        .navigationTitle(String(localized: "action_register"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

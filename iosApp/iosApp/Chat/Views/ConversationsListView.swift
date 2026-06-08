@@ -75,7 +75,7 @@ struct ConversationRow: View {
         HStack(spacing: 12) {
             // Avatar Placeholder
             Circle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(Color(.systemGray4))
                 .frame(width: 50, height: 50)
                 .overlay(
                     Text(String(conversation.participantName.prefix(1)).uppercased())
@@ -84,7 +84,7 @@ struct ConversationRow: View {
                 )
                 .overlay(
                     Circle()
-                        .fill(conversation.isOnline ? Color.green : Color.clear)
+                        .fill(conversation.isOnline ? AppTheme.onlineColor : Color.clear)
                         .frame(width: 12, height: 12)
                         .offset(x: 17, y: 17)
                 )
@@ -110,7 +110,7 @@ struct ConversationRow: View {
                     Spacer()
                     if conversation.unreadCount > 0 {
                         Circle()
-                            .fill(Color.blue)
+                            .fill(AppTheme.primaryColor)
                             .frame(width: 20, height: 20)
                             .overlay(
                                 Text("\(conversation.unreadCount)")

@@ -269,7 +269,7 @@ private fun MediaProviderCard(
                     style = SettingsTypography.itemTitle,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                 AssistChip(
                     onClick = { showSheet = true },
                     label = { Text(selectedDisplayName) },

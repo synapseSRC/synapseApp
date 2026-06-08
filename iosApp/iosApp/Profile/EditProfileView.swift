@@ -41,8 +41,8 @@ struct EditProfileView: View {
                         }
 
                         PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
-                            Text("Change Profile Photo")
-                                .foregroundColor(.blue)
+                            Text(String(localized: "profile_change_photo"))
+                                .foregroundColor(AppTheme.primaryColor)
                         }
 
                         if let error = viewModel.uploadError {
@@ -55,8 +55,8 @@ struct EditProfileView: View {
                 }
             }
 
-            Section(header: Text("Public Information")) {
-                TextField("Display Name", text: $displayName)
+            Section(header: Text(String(localized: "profile_section_public_info"))) {
+                TextField(String(localized: "profile_display_name_placeholder"), text: $displayName)
 
                 // Bio with character limit
                 VStack(alignment: .leading) {
@@ -83,7 +83,7 @@ struct EditProfileView: View {
                 }
             }
         }
-        .navigationTitle("Edit Profile")
+        .navigationTitle(String(localized: "profile_edit_nav_title"))
         .onAppear {
             displayName = viewModel.user?.displayName ?? ""
             bio = viewModel.user?.bio ?? ""
