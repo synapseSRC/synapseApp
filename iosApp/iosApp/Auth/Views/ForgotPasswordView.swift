@@ -6,12 +6,12 @@ struct ForgotPasswordView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("auth_forgot_password_title")
+            Text(String(localized: "auth_forgot_password_title"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .padding(.bottom, 10)
 
-            Text("auth_forgot_password_description")
+            Text(String(localized: "auth_forgot_password_description"))
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
@@ -24,7 +24,7 @@ struct ForgotPasswordView: View {
                     .multilineTextAlignment(.center)
             }
 
-            TextField("auth_login_email_placeholder", text: $viewModel.email)
+            TextField(String(localized: "auth_login_email_placeholder"), text: $viewModel.email)
                 .keyboardType(.emailAddress)
                 .autocapitalization(.none)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -37,7 +37,7 @@ struct ForgotPasswordView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("auth_forgot_password_button")
+                    Text(String(localized: "auth_forgot_password_button"))
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -52,12 +52,12 @@ struct ForgotPasswordView: View {
             Spacer()
         }
         .padding(.top, 40)
-        .navigationBarTitle("auth_forgot_password_nav_title", displayMode: .inline)
+        .navigationBarTitle(String(localized: "auth_forgot_password_nav_title"), displayMode: .inline)
         .alert(isPresented: $viewModel.isEmailSent) {
             Alert(
-                title: Text("auth_forgot_password_alert_title"),
-                message: Text("auth_forgot_password_alert_message"),
-                dismissButton: .default(Text("chat_ok")) {
+                title: Text(String(localized: "auth_forgot_password_alert_title")),
+                message: Text(String(localized: "auth_forgot_password_alert_message")),
+                dismissButton: .default(Text(String(localized: "chat_ok"))) {
                     presentationMode.wrappedValue.dismiss()
                 }
             )

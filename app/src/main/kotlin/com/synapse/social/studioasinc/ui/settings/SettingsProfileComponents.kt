@@ -39,7 +39,7 @@ fun ProfileHeaderCard(
         modifier = modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = 2.dp
+        tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier

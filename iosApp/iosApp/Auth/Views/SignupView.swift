@@ -6,7 +6,7 @@ struct SignupView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("auth_signup_title")
+            Text(String(localized: "auth_signup_title"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .padding(.bottom, 20)
@@ -18,22 +18,22 @@ struct SignupView: View {
                     .multilineTextAlignment(.center)
             }
 
-            TextField("auth_login_email_placeholder", text: $viewModel.email)
+            TextField(String(localized: "auth_login_email_placeholder"), text: $viewModel.email)
                 .keyboardType(.emailAddress)
                 .autocapitalization(.none)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
-            TextField("auth_signup_username_placeholder", text: $viewModel.username)
+            TextField(String(localized: "auth_signup_username_placeholder"), text: $viewModel.username)
                 .autocapitalization(.none)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
-            SecureField("auth_login_password_placeholder", text: $viewModel.password)
+            SecureField(String(localized: "auth_login_password_placeholder"), text: $viewModel.password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
-            SecureField("auth_signup_confirm_password_placeholder", text: $viewModel.confirmPassword)
+            SecureField(String(localized: "auth_signup_confirm_password_placeholder"), text: $viewModel.confirmPassword)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
@@ -44,7 +44,7 @@ struct SignupView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("auth_signup_button")
+                    Text(String(localized: "auth_signup_button"))
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -59,24 +59,24 @@ struct SignupView: View {
             Spacer()
 
             HStack {
-                Text("auth_signup_already_account")
+                Text(String(localized: "auth_signup_already_account"))
                     .font(.caption)
                 Button(action: {
                     presentationMode.wrappedValue.dismiss()
                 }) {
-                    Text("auth_signup_login_link")
+                    Text(String(localized: "auth_signup_login_link"))
                         .font(.caption)
                         .fontWeight(.bold)
                 }
             }
             .padding(.bottom)
         }
-        .navigationBarTitle("auth_signup_nav_title", displayMode: .inline)
+        .navigationBarTitle(String(localized: "auth_signup_nav_title"), displayMode: .inline)
         .alert(isPresented: $viewModel.isEmailSent) {
             Alert(
-                title: Text("auth_signup_alert_title"),
-                message: Text("auth_signup_alert_message"),
-                dismissButton: .default(Text("chat_ok")) {
+                title: Text(String(localized: "auth_signup_alert_title")),
+                message: Text(String(localized: "auth_signup_alert_message")),
+                dismissButton: .default(Text(String(localized: "chat_ok"))) {
                     presentationMode.wrappedValue.dismiss()
                 }
             )

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlinx.coroutines.delay
 
 @Composable
@@ -305,7 +306,7 @@ internal fun SaveConnectButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(Sizes.AvatarLarge),
         enabled = !isLoading,
         shape = SettingsShapes.itemShape
     ) {
@@ -320,9 +321,9 @@ internal fun SaveConnectButton(
                 "loading" -> {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(Sizes.IconDefault),
                             color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                            strokeWidth = Sizes.BorderDefault
                         )
                         Spacer(modifier = Modifier.width(Spacing.Medium))
                         Text(stringResource(R.string.storage_connecting))
@@ -333,7 +334,7 @@ internal fun SaveConnectButton(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Sizes.IconDefault)
                         )
                         Spacer(modifier = Modifier.width(Spacing.Medium))
                         Text(stringResource(R.string.upload_complete))

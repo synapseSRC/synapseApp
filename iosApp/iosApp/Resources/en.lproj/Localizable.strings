@@ -1,9 +1,11 @@
 /* Auth - Login */
 "auth_login_welcome_back" = "Welcome Back";
+"auth_login_subtitle" = "Enter your credentials to continue";
 "auth_login_email_placeholder" = "Email";
 "auth_login_password_placeholder" = "Password";
 "auth_login_forgot_password" = "Forgot Password?";
 "auth_login_button" = "Log In";
+"auth_login_loading" = "Logging in...";
 "auth_login_face_id" = "Log in with Face ID";
 "auth_login_social_divider" = "Or log in with";
 "auth_login_no_account" = "Don't have an account?";

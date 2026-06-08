@@ -182,7 +182,7 @@ private fun EmptyPasskeysState(modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Default.Key,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(Sizes.AvatarSemiLarge),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
         )
         Spacer(modifier = Modifier.height(Spacing.Medium))

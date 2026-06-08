@@ -258,11 +258,11 @@ private fun StoryCard(
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                             shape = RoundedCornerShape(Spacing.Tiny),
-                            modifier = Modifier.padding(bottom = 2.dp)
+                            modifier = Modifier.padding(bottom = Spacing.Tiny)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
                             ) {
                                 Text(
                                     text = when (privacy) {
@@ -273,7 +273,7 @@ private fun StoryCard(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(2.dp))
+                                Spacer(modifier = Modifier.width(Spacing.Tiny))
                                 Icon(
                                     imageVector = when (privacy) {
                                         StoryPrivacy.PUBLIC -> Icons.Default.Public
@@ -281,7 +281,7 @@ private fun StoryCard(
                                         StoryPrivacy.ALL_FRIENDS -> Icons.Default.Lock
                                     },
                                     contentDescription = null,
-                                    modifier = Modifier.size(12.dp),
+                                    modifier = Modifier.size(Spacing.SmallMedium),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }

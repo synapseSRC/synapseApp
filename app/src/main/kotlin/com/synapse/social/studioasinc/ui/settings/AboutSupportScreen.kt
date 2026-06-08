@@ -210,7 +210,7 @@ private fun AppInfoHeaderCard(
         modifier = Modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = 2.dp
+        tonalElevation = Sizes.ElevationLow
     ) {
         Column(
             modifier = Modifier

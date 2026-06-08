@@ -108,7 +108,7 @@ private fun StorageDataContent(
                 .padding(padding)
                 .padding(horizontal = SettingsSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
+            contentPadding = PaddingValues(top = Spacing.Small, bottom = Spacing.ExtraLarge)
         ) {
 
             item {
@@ -153,7 +153,7 @@ private fun StorageDataContent(
 
 
             item {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.Large))
             }
         }
     }
