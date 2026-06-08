@@ -139,9 +139,12 @@ object Sizes {
 
     val ElevationLow = 2.dp
     val PaddingTopClose = 28.dp
+    val CornerFull = 32.dp
+    val TouchTarget = 44.dp
 }
 
 object FontSizes {
     val ExtraSmall = 10.sp
     val Small = 12.sp
+    val FontSizeDisplay = 36.sp
 }

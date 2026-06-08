@@ -121,15 +121,15 @@ object SettingsColors {
 object SettingsShapes {
 
 
-    val cardShape: Shape = RoundedCornerShape(32.dp)
+    val cardShape: Shape = RoundedCornerShape(Sizes.CornerFull)
 
 
 
-    val sectionShape: Shape = RoundedCornerShape(24.dp)
+    val sectionShape: Shape = RoundedCornerShape(Sizes.CornerExtraLarge)
 
 
 
-    val itemShape: Shape = RoundedCornerShape(20.dp)
+    val itemShape: Shape = RoundedCornerShape(Spacing.MediumLarge)
 
 
 
@@ -173,7 +173,7 @@ object SettingsSpacing {
 
 
 
-    val avatarSize: Dp = 64.dp
+    val avatarSize: Dp = Sizes.AvatarSemiLarge
 
 
 

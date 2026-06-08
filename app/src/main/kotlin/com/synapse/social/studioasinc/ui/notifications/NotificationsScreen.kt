@@ -28,6 +28,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.synapse.social.studioasinc.ui.components.ExpressivePullToRefreshIndicator
 import com.synapse.social.studioasinc.ui.home.FeedLoading
 import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun NotificationHeader(date: String) {
@@ -35,7 +36,7 @@ fun NotificationHeader(date: String) {
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
     ) {
         Text(
             text = date,

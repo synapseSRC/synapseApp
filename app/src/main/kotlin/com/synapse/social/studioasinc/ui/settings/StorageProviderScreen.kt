@@ -68,6 +68,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 import kotlinx.coroutines.launch
@@ -246,7 +247,7 @@ private fun MediaProviderCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                modifier = Modifier.size(56.dp),
+                modifier = Modifier.size(Sizes.AvatarLarge),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
             ) {
@@ -436,7 +437,7 @@ private fun ProviderDashboardTile(
                             shape = SettingsShapes.chipShape,
                             color = if (configured) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                                     else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
                         ) {
                             Text(
                                 text = if (configured) stringResource(R.string.storage_ready_to_use)
@@ -444,7 +445,7 @@ private fun ProviderDashboardTile(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (configured) MaterialTheme.colorScheme.onPrimaryContainer
                                         else MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Tiny)
                             )
                         }
                     }
@@ -460,7 +461,7 @@ private fun ProviderDashboardTile(
                 Surface(
                     shape = SettingsShapes.itemShape,
                     color = if (isConfigured) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(Sizes.AvatarDefault)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(

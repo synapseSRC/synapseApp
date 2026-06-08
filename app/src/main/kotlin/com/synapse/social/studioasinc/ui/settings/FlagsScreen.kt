@@ -18,6 +18,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +61,7 @@ fun FlagsScreen(
                 .padding(paddingValues)
                 .padding(horizontal = SettingsSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(vertical = 8.dp)
+            contentPadding = PaddingValues(vertical = Spacing.Small)
         ) {
             item {
                 Column(
@@ -124,7 +126,7 @@ fun FlagsScreen(
                                 OutlinedTextField(
                                     value = paginationLimitInput,
                                     onValueChange = { paginationLimitInput = it.filter { c -> c.isDigit() } },
-                                    modifier = Modifier.width(80.dp),
+                                    modifier = Modifier.width(Sizes.WidthLarge),
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(
                                         keyboardType = KeyboardType.Number,

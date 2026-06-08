@@ -25,7 +25,7 @@ struct AuthView: View {
                 Button(action: {
                     navigator.navigate(to: .login)
                 }) {
-                    Text("Log In")
+                    Text(String(localized: "auth_login_button"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)

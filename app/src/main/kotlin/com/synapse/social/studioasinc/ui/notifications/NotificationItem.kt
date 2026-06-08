@@ -114,7 +114,7 @@ fun NotificationItem(
 
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
+                        .size(Spacing.Small)
                         .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape)
                 )
             }
