@@ -13,11 +13,11 @@ struct AuthView: View {
                     .foregroundColor(.blue)
                     .padding(.bottom, 20)
 
-                Text("Synapse")
+                Text(String(localized: "app_name"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("Connect with the world")
+                Text(String(localized: "auth_tagline"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.bottom, 40)
@@ -39,7 +39,7 @@ struct AuthView: View {
                 Button(action: {
                     navigator.navigate(to: .register)
                 }) {
-                    Text("Create Account")
+                    Text(String(localized: "action_create_account"))
                         .font(.headline)
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity)

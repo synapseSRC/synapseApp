@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.viewmodel.FollowButtonViewModel
 
 @Composable
@@ -40,7 +41,7 @@ fun FollowButtonCompose(
                 modifier = modifier
             ) {
                 CircularProgressIndicator(
-                    strokeWidth = 2.dp
+                    strokeWidth = Sizes.BorderDefault
                 )
             }
         }

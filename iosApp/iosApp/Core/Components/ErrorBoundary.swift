@@ -25,7 +25,7 @@ struct ErrorBoundaryView: View {
                 .padding(.horizontal, 32)
 
             Button(action: retryAction) {
-                Text("Try Again")
+                Text(String(localized: "action_try_again"))
                     .fontWeight(.bold)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
@@ -43,8 +43,8 @@ struct ErrorBoundaryView: View {
 struct ErrorBoundaryView_Previews: PreviewProvider {
     static var previews: some View {
         ErrorBoundaryView(
-            title: "Connection Error",
-            message: "Failed to connect to the server. Please check your internet connection and try again.",
+            title: String(localized: "error_connection_title"),
+            message: String(localized: "error_connection_message"),
             retryAction: {}
         )
     }

@@ -32,7 +32,7 @@ fun UploadProgressOverlay(
             modifier = Modifier
                 .padding(Spacing.Medium)
                 .fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(8.dp),
+            elevation = CardDefaults.cardElevation(Spacing.Small),
             colors = CardDefaults.cardColors(
                 containerColor = if (error != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
             )

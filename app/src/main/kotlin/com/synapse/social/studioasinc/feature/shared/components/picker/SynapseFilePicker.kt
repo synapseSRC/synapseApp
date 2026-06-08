@@ -211,7 +211,7 @@ fun SynapseFilePicker(
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceContainer,
-                    shadowElevation = 4.dp
+                    shadowElevation = Spacing.ExtraSmall
                 ) {
                     Row(
                         modifier = Modifier

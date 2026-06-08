@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 fun Modifier.shimmer(): Modifier = composed {
     val transition = rememberInfiniteTransition(label = "shimmer")
@@ -45,7 +46,7 @@ fun Modifier.shimmer(): Modifier = composed {
 @Composable
 fun ShimmerBox(
     modifier: Modifier = Modifier,
-    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(8.dp)
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(Sizes.CornerMedium)
 ) {
     Box(
         modifier = modifier

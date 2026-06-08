@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.compose.components.UserListItem
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.viewmodel.FollowListViewModel
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -77,7 +78,7 @@ fun FollowListScreen(
             PrimaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.fillMaxWidth(),
-                edgePadding = 8.dp
+                edgePadding = Spacing.Small
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -133,8 +134,8 @@ fun FollowListScreen(
 
                         else -> {
                             LazyColumn(
-                                contentPadding = PaddingValues(vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                contentPadding = PaddingValues(vertical = Spacing.Small),
+                                verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
                             ) {
                                 items(users) { user ->
                                     UserListItem(

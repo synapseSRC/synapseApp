@@ -48,7 +48,7 @@ fun UserSearchDialog(
                 .padding(Spacing.Medium),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 4.dp
+            tonalElevation = Spacing.ExtraSmall
         ) {
             Column(
                 modifier = Modifier
