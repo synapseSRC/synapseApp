@@ -46,7 +46,7 @@ struct CreatePostScreen: View {
                                 if index > 0 {
                                     HStack {
                                         Rectangle()
-                                            .fill(Color.gray.opacity(0.3))
+                                            .fill(Color(.systemGray4))
                                             .frame(width: 2, height: 20)
                                             .padding(.leading, 24)
                                         Spacer()
@@ -71,7 +71,7 @@ struct CreatePostScreen: View {
                                             .padding()
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                                                    .stroke(Color(.systemGray3), lineWidth: 1)
                                             )
                                             .padding(.horizontal)
                                             .accessibilityLabel("Post content text editor")
@@ -102,7 +102,7 @@ struct CreatePostScreen: View {
                                             .padding()
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                                                    .stroke(Color(.systemGray3), lineWidth: 1)
                                             )
                                             .padding(.horizontal)
                                             .accessibilityLabel("Thread content text editor")
@@ -117,9 +117,9 @@ struct CreatePostScreen: View {
                         }) {
                             HStack {
                                 Image(systemName: "plus.circle.fill")
-                                Text("Add another post")
+                                Text(String(localized: "create_add_another_post"))
                             }
-                            .foregroundColor(.blue)
+                            .foregroundColor(AppTheme.primaryColor)
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,8 +132,8 @@ struct CreatePostScreen: View {
                         if showLocationPicker {
                             HStack {
                                 Image(systemName: "mappin.and.ellipse")
-                                    .foregroundColor(.blue)
-                                TextField("Search location...", text: Binding(
+                                    .foregroundColor(AppTheme.primaryColor)
+                                TextField(String(localized: "create_search_location_placeholder"), text: Binding(
                                     get: { viewModel.location ?? "" },
                                     set: { viewModel.location = $0.isEmpty ? nil : $0 }
                                 ))
@@ -148,7 +148,7 @@ struct CreatePostScreen: View {
                                 }
                             }
                             .padding()
-                            .background(Color.blue.opacity(0.05))
+                            .background(AppTheme.primaryColor.opacity(0.05))
                             .cornerRadius(8)
                             .padding(.horizontal)
                         }
@@ -214,12 +214,12 @@ struct CreatePostScreen: View {
                     audienceType: $viewModel.audienceType
                 )
             }
-            .navigationTitle("New Post")
+            .navigationTitle(String(localized: "create_new_post_nav_title"))
             .navigationBarItems(
-                leading: Button("Cancel") {
+                leading: Button(String(localized: "chat_cancel")) {
                     presentationMode.wrappedValue.dismiss()
                 },
-                trailing: Button("Post") {
+                trailing: Button(String(localized: "action_create_post")) {
                     viewModel.submitPost()
                 }
                 .disabled(viewModel.isLoading || (viewModel.text.isEmpty && viewModel.mediaURLs.isEmpty) || viewModel.characterCount > 280)
@@ -237,9 +237,9 @@ struct CreatePostScreen: View {
             }
             .alert(isPresented: $viewModel.isPostCreated) {
                 Alert(
-                    title: Text("Success"),
-                    message: Text("Post created successfully!"),
-                    dismissButton: .default(Text("OK")) {
+                    title: Text(String(localized: "alert_success_title")),
+                    message: Text(String(localized: "alert_post_created_message")),
+                    dismissButton: .default(Text(String(localized: "action_ok"))) {
                         if let onSuccess = onPostSuccess {
                             onSuccess()
                         } else {
@@ -327,7 +327,7 @@ struct MediaPreviewView: View {
                         .resizable()
                         .scaledToFill()
                 } else {
-                    Color.gray
+                    Color(.systemGray)
                 }
             }
         }
@@ -392,7 +392,7 @@ struct CameraCaptureScreen: View {
                         Circle()
                             .fill(Color.white)
                             .frame(width: 70, height: 70)
-                            .overlay(Circle().stroke(Color.gray, lineWidth: 2))
+                            .overlay(Circle().stroke(Color(.systemGray), lineWidth: 2))
                     }
                     .accessibilityLabel("Take photo")
                     .padding()
@@ -401,7 +401,7 @@ struct CameraCaptureScreen: View {
                         isRecording.toggle()
                     }) {
                         Circle()
-                            .fill(isRecording ? Color.red : Color.white)
+                            .fill(isRecording ? AppTheme.errorColor : Color.white)
                             .frame(width: 70, height: 70)
                             .overlay(
                                 Circle().stroke(Color.white, lineWidth: 4)

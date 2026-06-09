@@ -74,3 +74,48 @@
 "field_password" = "Password";
 "field_confirm_password" = "Confirm Password";
 "action_register" = "Register";
+
+/* Create */
+"create_post_title" = "Create New Post";
+"nav_create" = "Create";
+"action_create_post" = "Create Post";
+"create_add_another_post" = "Add another post";
+"create_search_location_placeholder" = "Search location...";
+"create_new_post_nav_title" = "New Post";
+
+/* Notifications */
+"label_error" = "Error";
+"notifications_empty_title" = "No Notifications";
+"notifications_empty_subtitle" = "You're all caught up! New notifications will appear here.";
+"nav_notifications" = "Notifications";
+
+/* Search */
+"search_title" = "Search & Explore";
+"nav_search" = "Search";
+
+/* Settings */
+"settings_section_account" = "Account";
+"settings_account_preferences" = "Account Preferences";
+"settings_privacy" = "Privacy";
+"settings_section_app_preferences" = "App Preferences";
+"settings_appearance" = "Appearance";
+"action_log_out" = "Log Out";
+"nav_settings" = "Settings";
+
+/* Profile */
+"profile_change_photo" = "Change Profile Photo";
+"profile_section_public_info" = "Public Information";
+"profile_display_name_placeholder" = "Display Name";
+"profile_edit_nav_title" = "Edit Profile";
+"profile_tab_followers" = "Followers";
+"profile_tab_following" = "Following";
+
+/* Media Creation */
+"alert_success_title" = "Success";
+"alert_post_created_message" = "Post created successfully!";
+"action_ok" = "OK";
+"mention_no_matching_users" = "No matching users";
+"poll_title" = "Poll";
+"poll_option_placeholder" = "Option %d";
+"poll_add_option" = "Add Option";
+"poll_duration_label" = "Poll Duration";

@@ -6,21 +6,23 @@ struct FollowersFollowingView: View {
     var body: some View {
         VStack {
             Picker("Tabs", selection: $selectedTab) {
-                Text("Followers").tag(0)
-                Text("Following").tag(1)
+                Text(String(localized: "profile_tab_followers")).tag(0)
+                Text(String(localized: "profile_tab_following")).tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding()
 
             List {
-                if selectedTab == 0 {
-                    Text("Follower 1")
-                    Text("Follower 2")
-                } else {
-                    Text("Following 1")
+                // TODO: Replace stub data with actual followers/following list
+                Group {
+                    if selectedTab == 0 {
+                        // Empty state for Followers
+                    } else {
+                        // Empty state for Following
+                    }
                 }
             }
         }
-        .navigationTitle(selectedTab == 0 ? "Followers" : "Following")
+        .navigationTitle(selectedTab == 0 ? String(localized: "profile_tab_followers") : String(localized: "profile_tab_following"))
     }
 }

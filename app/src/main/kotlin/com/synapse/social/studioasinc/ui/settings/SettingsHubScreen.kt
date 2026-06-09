@@ -197,15 +197,15 @@ fun SettingsHeroCardsSection(
                                    else MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(Spacing.Medium)) {
                     Icon(
                         imageVector = if (card.id == "storage_cleanup") Icons.Filled.Storage else Icons.Filled.Shield,
                         contentDescription = null,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(Sizes.IconHuge)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.SmallMedium))
                     Text(card.title, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                     Text(card.description, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -244,7 +244,7 @@ fun SettingsCommandPaletteResults(
                     colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(Spacing.Medium),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {

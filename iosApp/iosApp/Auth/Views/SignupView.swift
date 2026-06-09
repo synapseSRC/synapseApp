@@ -51,7 +51,7 @@ struct SignupView: View {
                 }
             }
             .padding()
-            .background(Color.blue)
+            .background(AppTheme.primaryColor)
             .cornerRadius(10)
             .padding(.horizontal)
             .disabled(viewModel.isLoading)

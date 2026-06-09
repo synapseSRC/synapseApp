@@ -30,7 +30,7 @@ struct AuthView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(AppTheme.primaryColor)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
@@ -44,7 +44,7 @@ struct AuthView: View {
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue.opacity(0.1))
+                        .background(AppTheme.primaryColor.opacity(0.1))
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
