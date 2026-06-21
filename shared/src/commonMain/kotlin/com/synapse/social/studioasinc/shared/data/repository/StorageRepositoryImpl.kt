@@ -28,11 +28,11 @@ class StorageRepositoryImpl(
 
     companion object {
         private const val KEY_IMGBB = "imgbb_key"
-        private const val KEY_CLOUDINARY_API_KEY = "cloudinary_api_key"
-        private const val KEY_CLOUDINARY_API_SECRET = "cloudinary_api_secret"
+        private const val KEY_CLOUDINARY_API_KEY: 'REDACTED_BY_JULES'
+        private const val KEY_CLOUDINARY_API_SECRET: 'REDACTED_BY_JULES'
         private const val KEY_SUPABASE = "supabase_key"
         private const val KEY_R2_ACCESS_KEY_ID = "r2_access_key_id"
-        private const val KEY_R2_SECRET_ACCESS_KEY = "r2_secret_access_key"
+        private const val KEY_R2_SECRET_ACCESS_KEY: 'REDACTED_BY_JULES'
         private const val KEY_COMPRESS_IMAGES = "compress_images"
     }
 
