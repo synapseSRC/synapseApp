@@ -28,8 +28,8 @@ class SupabaseAuthenticationService(
     private val secureStorage: SecureStorage? = null
 ) : IAuthenticationService {
 
-    private val KEY_ACCESS_TOKEN = "auth_access_token"
-    private val KEY_REFRESH_TOKEN = "auth_refresh_token"
+    private val KEY_ACCESS_TOKEN: 'REDACTED_BY_JULES'
+    private val KEY_REFRESH_TOKEN: 'REDACTED_BY_JULES'
     private val KEY_USER_ID = "auth_user_id"
     private val KEY_USER_EMAIL = "auth_user_email"
     private val KEY_EXPIRES_IN = "auth_expires_in"
