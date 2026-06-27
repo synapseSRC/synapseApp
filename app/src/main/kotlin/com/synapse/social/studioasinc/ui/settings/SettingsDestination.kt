@@ -115,7 +115,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_FAVOURITES = "settings_favourites"
         const val ROUTE_ACCESSIBILITY = "settings_accessibility"
         const val ROUTE_SEARCH = "settings_search"
-        const val ROUTE_API_KEY = "settings_api_key"
+        const val ROUTE_API_KEY: 'REDACTED_BY_JULES'
         const val ROUTE_REQUEST_ACCOUNT_INFO = "settings_request_account_info"
         const val ROUTE_MANAGE_STORAGE = "settings_storage_manage"
         const val ROUTE_NETWORK_USAGE = "settings_network_usage"
