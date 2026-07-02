@@ -28,7 +28,7 @@ class AuthViewModel: ObservableObject {
     // Helper to store the user's password securely for Biometrics later,
     // though typically you store the auth token. Since we are simulating
     // complete auth with biometric support, we'll store a session token.
-    private let biometricTokenKey = "biometric_auth_token"
+    private let biometricTokenKey = 'REDACTED_BY_JULES'
 
     init(analyticsService: AnalyticsService) {
         self.analyticsService = analyticsService
