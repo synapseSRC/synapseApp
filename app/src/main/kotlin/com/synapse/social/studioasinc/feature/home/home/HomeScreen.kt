@@ -183,7 +183,7 @@ fun HomeScreen(
                         imageVector = Icons.Default.Add,
                         contentDescription = stringResource(R.string.create_post),
                         modifier = Modifier.sharedElement(
-                            rememberSharedContentState(key = "create_post_icon"),
+                            rememberSharedContentState(key = 'REDACTED_BY_JULES'),
                             animatedVisibilityScope = animatedVisibilityScope
                         )
                     )
