@@ -2039,4 +2039,8 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="label_supabase_api_key">Service Role / API Key</string>
     <string name="label_access_key_id">Access Key ID</string>
     <string name="label_secret_access_key">Secret Access Key</string>
+    <string name="crash_title">App Crashed</string>
+    <string name="search_contacts_placeholder">Search contacts</string>
+    <string name="verified_badge_content_description">Verified</string>
+    <string name="toast_copied_to_clipboard">Copied to clipboard</string>
 </resources>

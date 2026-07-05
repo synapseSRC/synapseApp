@@ -14,16 +14,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.SearchHashtag
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -52,14 +51,14 @@ fun HashtagCard(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "#${hashtag.tag}",
+                text = stringResource(R.string.common_hashtag_format, hashtag.tag),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
             Text(
-                text = "${formatCount(hashtag.count)} people talking",
+                text = stringResource(R.string.common_people_talking_count, formatCount(hashtag.count)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -70,7 +69,7 @@ fun HashtagCard(
                 points = hashtag.sparklinePoints,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .width(80.dp)
+                    .width(Sizes.WidthLarge)
                     .height(Sizes.HeightMedium)
             )
         }

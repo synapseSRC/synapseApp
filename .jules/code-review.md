@@ -1,31 +1,24 @@
-# Code Review Log
+# Code Review - Eliminate Hardcoding
 
-## app/src/main/res/values/strings.xml
-- **Review Strength:** ROST (Max Level)
-- **Status:** Passed
-- **Key Findings:**
-  1. All new string resources follow the established naming convention (e.g., `inbox_context_menu_*`).
-  2. Positional arguments use the correct `%$s` or `%$d` format to prevent build errors.
-  3. XML is well-formed after multiple append operations.
+## Summary
+This PR eliminates hardcoded strings, dimensions (.dp), and content descriptions across several feature modules (Search, Profile, Inbox, Crash) by replacing them with string resources and design system tokens (Spacing, Sizes).
 
-## app/src/main/kotlin/com/synapse/social/studioasinc/feature/inbox/inbox/components/MessageContextMenu.kt
-- **Review Strength:** ROST (Max Level)
-- **Status:** Passed
-- **Key Findings:**
-  1. Hardcoded strings replaced with `stringResource(R.string.*)`.
-  2. Hardcoded dimensions (dp) replaced with `Sizes.*` and `Spacing.*` tokens.
-  3. Font sizes (sp) replaced with `MaterialTheme.typography.*` values.
+## Changes
+- **Resources**: Added missing strings for CrashActivity, Contacts search, and Verified badge.
+- **Search**:
+    - `HashtagCard.kt`: Replaced `80.dp` with `Sizes.WidthLarge`, used `common_hashtag_format` and `common_people_talking_count`.
+    - `AccountCard.kt`: Replaced followers count, handle format, and verified badge content description with resources.
+    - `SearchScreen.kt`: Replaced hardcoded hashtag labels with resources.
+- **Crash**:
+    - `CrashActivity.kt`: Externalized all UI strings and replaced `300.dp` height with `Sizes.HeightPreview`.
+- **Hashtag**:
+    - `HashtagFeedScreen.kt`: Externalized title hashtag format.
+- **Inbox**:
+    - `ContactsTabScreen.kt`: Externalized search placeholder and content description.
+- **Profile**:
+    - `CoverPhoto.kt`: Replaced `0.dp` with `Spacing.None`.
+    - `ProfileSkeleton.kt`: Replaced `0.dp` with `Spacing.None`.
 
-## iosApp/iosApp/Resources/en.lproj/Localizable.strings
-- **Review Strength:** ROST (Max Level)
-- **Status:** Passed
-- **Key Findings:**
-  1. Created missing localization file and populated it with all keys identified in the UI code.
-  2. Followed namespaced key naming (e.g., `auth_login_*`).
-
-## iosApp/iosApp/Auth/Views/LoginView.swift
-- **Review Strength:** ROST (Max Level)
-- **Status:** Passed
-- **Key Findings:**
-  1. Raw string literals replaced with `LocalizedStringKey` compatible references.
-  2. Verified that SwiftUI handles these automatically when passing to `Text`, `TextField`, etc.
+## Verification Results
+- **Compilation**: `./gradlew :app:compileDebugKotlin` passed.
+- **Tests**: `./gradlew :app:testDebugUnitTest` passed (no new failures).

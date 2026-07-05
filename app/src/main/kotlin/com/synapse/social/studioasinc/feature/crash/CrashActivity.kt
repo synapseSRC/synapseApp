@@ -14,7 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 class CrashActivity : AppCompatActivity() {
 
@@ -41,25 +43,25 @@ private fun CrashDialog(crashLog: String, onDismiss: () -> Unit) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("App Crashed") },
+        title = { Text(stringResource(R.string.crash_title)) },
         text = {
             Text(
                 text = crashLog,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
-                    .heightIn(max = 300.dp)
+                    .heightIn(max = Sizes.HeightPreview)
                     .verticalScroll(rememberScrollState())
             )
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("OK") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ok)) }
         },
         dismissButton = {
             TextButton(onClick = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("Crash Log", crashLog))
-                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-            }) { Text("Copy") }
+                Toast.makeText(context, context.getString(R.string.toast_copied_to_clipboard), Toast.LENGTH_SHORT).show()
+            }) { Text(stringResource(R.string.action_copy)) }
         }
     )
 }
