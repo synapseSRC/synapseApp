@@ -208,7 +208,7 @@ fun SearchScreen(
                                     FilterChip(
                                         selected = false,
                                         onClick = { viewModel.onSearch("#${hashtag.tag}") },
-                                        label = { Text("#${hashtag.tag}") },
+                                        label = { Text(stringResource(R.string.common_hashtag_format, hashtag.tag)) },
                                         shape = RoundedCornerShape(Spacing.Medium),
                                         colors = FilterChipDefaults.filterChipColors(
                                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),

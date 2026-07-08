@@ -34,7 +34,7 @@ fun HashtagFeedScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("#$tag") },
+                title = { Text(stringResource(R.string.common_hashtag_format, tag)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))

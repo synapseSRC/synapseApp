@@ -52,8 +52,8 @@ fun ContactsTabScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
-                placeholder = { Text("Search contacts") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                placeholder = { Text(stringResource(R.string.search_contacts_placeholder)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.settings_search_settings_placeholder)) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium
             )

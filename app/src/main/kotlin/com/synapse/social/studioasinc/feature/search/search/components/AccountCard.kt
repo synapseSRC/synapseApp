@@ -8,27 +8,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material3.*
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.SearchAccount
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -69,7 +59,7 @@ fun AccountCard(
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = account.displayName ?: account.handle ?: "Unknown",
+                    text = account.displayName ?: account.handle ?: stringResource(R.string.common_unknown),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -80,14 +70,14 @@ fun AccountCard(
                     Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
                     Icon(
                         imageVector = Icons.Outlined.Verified,
-                        contentDescription = "Verified",
+                        contentDescription = stringResource(R.string.verified_badge_content_description),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(Sizes.IconSemiMedium)
                     )
                 }
             }
             Text(
-                text = "@${account.handle ?: ""}",
+                text = stringResource(R.string.common_at_username, account.handle ?: ""),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -105,7 +95,7 @@ fun AccountCard(
             }
             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
             Text(
-                text = "${formatCount(account.followersCount)} followers",
+                text = stringResource(R.string.common_followers_count, formatCount(account.followersCount)),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
