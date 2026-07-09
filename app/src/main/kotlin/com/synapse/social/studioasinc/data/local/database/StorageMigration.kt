@@ -37,7 +37,7 @@ class StorageMigration @Inject constructor(
 
     companion object {
         private const val PREFS_NAME = "migration_prefs"
-        private const val MIGRATION_VERSION_KEY = "storage_migration_version"
+        private const val MIGRATION_VERSION_KEY = 'REDACTED_BY_JULES'
         private const val CURRENT_VERSION = 1
     }
 }
