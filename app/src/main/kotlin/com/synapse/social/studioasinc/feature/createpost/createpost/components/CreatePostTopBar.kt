@@ -79,7 +79,7 @@ fun CreatePostTopBar(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.cd_close),
                         modifier = Modifier.sharedElement(
-                            rememberSharedContentState(key = "create_post_icon"),
+                            rememberSharedContentState(key = 'REDACTED_BY_JULES'),
                             animatedVisibilityScope = animatedVisibilityScope
                         )
                     )

@@ -110,7 +110,7 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     }
 
 
-    private val signedPreKeyIdsKey = "signed_prekey_ids"
+    private val signedPreKeyIdsKey = 'REDACTED_BY_JULES'
 
     override fun loadSignedPreKey(signedPreKeyId: Int): SignedPreKeyRecord {
         val encoded = prefs.getString("signed_prekey_$signedPreKeyId", null) ?: throw IOException("No such signed prekey")

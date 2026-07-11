@@ -91,7 +91,7 @@ internal fun ChatMessageList(
         reverseLayout = true
     ) {
         if (typingStatus != null && typingStatus.isTyping) {
-            item(key = "typing_indicator") {
+            item(key = 'REDACTED_BY_JULES') {
                 TypingIndicator(modifier = Modifier.padding(bottom = Spacing.Small))
             }
         }
@@ -159,7 +159,7 @@ internal fun ChatMessageList(
         }
 
         if (!isGroupChat) {
-            item(key = "chat_intro_header") {
+            item(key = 'REDACTED_BY_JULES') {
                 com.synapse.social.studioasinc.feature.inbox.inbox.components.ChatIntroHeader(
                     participantProfile = participantProfile,
                     initialParticipantName = initialParticipantName,
