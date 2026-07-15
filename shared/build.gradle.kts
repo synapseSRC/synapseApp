@@ -186,6 +186,24 @@ android {
         buildConfigField("String", "SUPABASE_SYNAPSE_S3_ACCESS_KEY", "\"${System.getenv("SUPABASE_SYNAPSE_S3_ACCESS_KEY") ?: project.findProperty("SUPABASE_SYNAPSE_S3_ACCESS_KEY") ?: ""}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${System.getenv("GEMINI_API_KEY") ?: project.findProperty("GEMINI_API_KEY") ?: ""}\"")
 
+        buildConfigField("String", "OPENAI_API_ENDPOINT", "\"${System.getenv("OPENAI_API_ENDPOINT") ?: project.findProperty("OPENAI_API_ENDPOINT") ?: "https://api.openai.com/v1/chat/completions"}\"")
+        buildConfigField("String", "ANTHROPIC_API_ENDPOINT", "\"${System.getenv("ANTHROPIC_API_ENDPOINT") ?: project.findProperty("ANTHROPIC_API_ENDPOINT") ?: "https://api.anthropic.com/v1/messages"}\"")
+        buildConfigField("String", "OPENROUTER_API_ENDPOINT", "\"${System.getenv("OPENROUTER_API_ENDPOINT") ?: project.findProperty("OPENROUTER_API_ENDPOINT") ?: "https://openrouter.ai/api/v1/chat/completions"}\"")
+        buildConfigField("String", "GEMINI_API_ENDPOINT", "\"${System.getenv("GEMINI_API_ENDPOINT") ?: project.findProperty("GEMINI_API_ENDPOINT") ?: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"}\"")
+        buildConfigField("String", "IMGBB_API_ENDPOINT", "\"${System.getenv("IMGBB_API_ENDPOINT") ?: project.findProperty("IMGBB_API_ENDPOINT") ?: "https://api.imgbb.com/1/upload"}\"")
+        buildConfigField("String", "CLOUDINARY_API_BASE_URL", "\"${System.getenv("CLOUDINARY_API_BASE_URL") ?: project.findProperty("CLOUDINARY_API_BASE_URL") ?: "https://api.cloudinary.com/v1_1/"}\"")
+        buildConfigField("String", "APP_WEBSITE_URL", "\"${System.getenv("APP_WEBSITE_URL") ?: project.findProperty("APP_WEBSITE_URL") ?: "https://synapsesocial.vercel.app"}\"")
+        buildConfigField("String", "GITHUB_BUG_REPORT_URL", "\"${System.getenv("GITHUB_BUG_REPORT_URL") ?: project.findProperty("GITHUB_BUG_REPORT_URL") ?: "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md"}\"")
+        buildConfigField("String", "DEFAULT_QUIET_HOURS_START", "\"${System.getenv("DEFAULT_QUIET_HOURS_START") ?: project.findProperty("DEFAULT_QUIET_HOURS_START") ?: "22:00"}\"")
+        buildConfigField("String", "DEFAULT_QUIET_HOURS_END", "\"${System.getenv("DEFAULT_QUIET_HOURS_END") ?: project.findProperty("DEFAULT_QUIET_HOURS_END") ?: "08:00"}\"")
+        buildConfigField("String", "SUPABASE_REDIRECT_URL", "\"${System.getenv("SUPABASE_REDIRECT_URL") ?: project.findProperty("SUPABASE_REDIRECT_URL") ?: "https://synapseofficial.vercel.app/"}\"")
+        buildConfigField("String", "X_BASE_URL", "\"${System.getenv("X_BASE_URL") ?: project.findProperty("X_BASE_URL") ?: "https://x.com/"}\"")
+        buildConfigField("String", "INSTAGRAM_BASE_URL", "\"${System.getenv("INSTAGRAM_BASE_URL") ?: project.findProperty("INSTAGRAM_BASE_URL") ?: "https://instagram.com/"}\"")
+        buildConfigField("String", "FACEBOOK_BASE_URL", "\"${System.getenv("FACEBOOK_BASE_URL") ?: project.findProperty("FACEBOOK_BASE_URL") ?: "https://facebook.com/"}\"")
+        buildConfigField("String", "LINKEDIN_BASE_URL", "\"${System.getenv("LINKEDIN_BASE_URL") ?: project.findProperty("LINKEDIN_BASE_URL") ?: "https://linkedin.com/in/"}\"")
+        buildConfigField("String", "GITHUB_BASE_URL", "\"${System.getenv("GITHUB_BASE_URL") ?: project.findProperty("GITHUB_BASE_URL") ?: "https://github.com/"}\"")
+        buildConfigField("String", "YOUTUBE_BASE_URL", "\"${System.getenv("YOUTUBE_BASE_URL") ?: project.findProperty("YOUTUBE_BASE_URL") ?: "https://youtube.com/@"}\"")
+
         consumerProguardFiles("proguard-rules.pro")
     }
     buildFeatures {

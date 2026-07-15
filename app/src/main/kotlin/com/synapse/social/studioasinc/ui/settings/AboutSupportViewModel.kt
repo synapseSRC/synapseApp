@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -134,9 +135,9 @@ class AboutSupportViewModel(
     }
 
     companion object {
-        private const val URL_TERMS_OF_SERVICE = "https://synapsesocial.vercel.app/reference/terms/"
-        private const val URL_PRIVACY_POLICY = "https://synapsesocial.vercel.app/reference/privacy/"
-        private const val URL_HELP_CENTER = "https://synapsesocial.vercel.app/"
+        private val URL_TERMS_OF_SERVICE = "${SynapseConfig.APP_WEBSITE_URL}/reference/terms/"
+        private val URL_PRIVACY_POLICY = "${SynapseConfig.APP_WEBSITE_URL}/reference/privacy/"
+        private val URL_HELP_CENTER = SynapseConfig.APP_WEBSITE_URL
     }
 
 }
