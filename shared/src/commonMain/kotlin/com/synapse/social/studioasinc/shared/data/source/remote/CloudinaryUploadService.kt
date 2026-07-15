@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.shared.data.source.remote
 
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.shared.data.PlatformUtils
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.UploadError
@@ -66,8 +67,9 @@ class CloudinaryUploadService(private val client: HttpClient) : UploadService {
         val bytes = fileChannel.toByteArray()
 
         return try {
+            val baseEndpoint = SynapseConfig.CLOUDINARY_API_BASE_URL
             val response: JsonObject = client.submitFormWithBinaryData(
-                url = "https://api.cloudinary.com/v1_1/$cloudName/$resourceType/upload",
+                url = "$baseEndpoint$cloudName/$resourceType/upload",
                 formData = formData {
                     append("file", bytes, Headers.build {
                         append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")

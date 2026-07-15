@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.data.repository.ai
 
 import com.synapse.social.studioasinc.domain.repository.ai.AiRepository
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -27,7 +28,7 @@ class AnthropicRepositoryImpl(private val apiKey: String) : AiRepository {
                 }.toString()
 
                 val request = Request.Builder()
-                    .url("https://api.anthropic.com/v1/messages")
+                    .url(SynapseConfig.ANTHROPIC_API_ENDPOINT)
                     .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
                     .post(body.toRequestBody("application/json".toMediaType()))
