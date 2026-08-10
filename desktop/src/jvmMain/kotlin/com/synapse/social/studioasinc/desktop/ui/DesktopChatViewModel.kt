@@ -5,25 +5,61 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
+import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
+enum class ConversationFilter {
+    ALL, UNREAD, FAVOURITES
+}
+
 class DesktopChatViewModel(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
-    private val sendMessageUseCase: SendMessageUseCase
+    private val sendMessageUseCase: SendMessageUseCase,
+    private val authRepository: AuthRepository
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _conversations = MutableStateFlow<List<Conversation>>(emptyList())
     val conversations: StateFlow<List<Conversation>> = _conversations.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _activeFilter = MutableStateFlow(ConversationFilter.ALL)
+    val activeFilter: StateFlow<ConversationFilter> = _activeFilter.asStateFlow()
+
+    val currentUserId: String? = authRepository.getCurrentUserId()
+
+    val filteredConversations: StateFlow<List<Conversation>> = combine(
+        _conversations,
+        _searchQuery,
+        _activeFilter
+    ) { convs, query, filter ->
+        var list = convs
+        list = when (filter) {
+            ConversationFilter.ALL -> list
+            ConversationFilter.UNREAD -> list.filter { it.unreadCount > 0 }
+            ConversationFilter.FAVOURITES -> list // TODO: Implement favourites filter
+        }
+        if (query.isNotBlank()) {
+            list = list.filter {
+                it.participantName.contains(query, ignoreCase = true) ||
+                it.lastMessage.contains(query, ignoreCase = true)
+            }
+        }
+        list
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
@@ -56,6 +92,14 @@ class DesktopChatViewModel(
             }
             _isLoadingConversations.value = false
         }
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setFilter(filter: ConversationFilter) {
+        _activeFilter.value = filter
     }
 
     fun selectConversation(conversation: Conversation) {
