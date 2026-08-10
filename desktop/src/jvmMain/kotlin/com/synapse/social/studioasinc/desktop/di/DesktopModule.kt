@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.desktop.di
 
 import com.synapse.social.studioasinc.desktop.ui.DesktopAuthViewModel
 import com.synapse.social.studioasinc.desktop.ui.DesktopChatViewModel
-import com.synapse.social.studioasinc.shared.data.auth.SupabaseAuthenticationService
+import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import com.synapse.social.studioasinc.shared.data.repository.SupabaseAuthRepository
 import com.synapse.social.studioasinc.shared.data.repository.SupabaseChatRepository
@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.auth.SignInUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.auth.GetCurrentUserIdUseCase
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import org.koin.dsl.module
 
@@ -19,7 +20,11 @@ val desktopModule = module {
     // Auth
     single<AuthRepository> { SupabaseAuthRepository(SupabaseClient.client) }
     single { SignInUseCase(get()) }
+    single { GetCurrentUserIdUseCase(get()) }
     factory { DesktopAuthViewModel(get()) }
+
+    // Media upload (no-op stub — desktop does not support media uploads)
+    single<MediaUploadRepository> { DesktopMediaUploadRepository() }
 
     // Chat
     single { SupabaseChatDataSource(SupabaseClient.client) }
@@ -29,7 +34,7 @@ val desktopModule = module {
             dataSource = get(),
             client = SupabaseClient.client,
             signalProtocolManager = null,
-            mediaUploadRepository = get(),
+            mediaUploadRepository = get<MediaUploadRepository>(),
             presenceRepository = getOrNull(),
             offlineActionRepository = getOrNull(),
             cachedMessageDao = getOrNull(),
@@ -41,5 +46,5 @@ val desktopModule = module {
     single { GetMessagesUseCase(get()) }
     single { SendMessageUseCase(get(), null) }
 
-    factory { DesktopChatViewModel(get(), get(), get()) }
+    factory { DesktopChatViewModel(get(), get(), get(), get()) }
 }

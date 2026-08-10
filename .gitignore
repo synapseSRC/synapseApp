@@ -103,6 +103,8 @@ thumbs.db
 kotlin-js-store/
 # Web build outputs
 webApp/dist/
+# Desktop build outputs (MSI, installers, packaged artifacts)
+/dist/
 # Shared module build outputs
 shared/build/
 # Documentation site dependencies

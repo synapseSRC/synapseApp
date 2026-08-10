@@ -32,7 +32,7 @@ fun ProfileHeaderShimmer(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(coverHeight),
-            shape = RoundedCornerShape(0.dp)
+            shape = RoundedCornerShape(Spacing.None)
         )
 
         Box(

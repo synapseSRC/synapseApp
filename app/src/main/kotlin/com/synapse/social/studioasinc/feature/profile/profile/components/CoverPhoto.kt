@@ -248,7 +248,7 @@ fun ProfileImageWithRing(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (hasStory) ringWidth else 0.dp)
+                .padding(if (hasStory) ringWidth else Spacing.None)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surface)
         )

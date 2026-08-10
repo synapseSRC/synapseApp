@@ -40,7 +40,7 @@ fun LanguageRegionScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.settings_back_button),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -80,7 +80,7 @@ fun LanguageRegionScreen(
         ) {
 
             item {
-                SettingsSection(title = "App Language") {
+                SettingsSection(title = stringResource(R.string.settings_app_language_title)) {
                     val currentLanguageName = availableLanguages.find { it.code == currentLanguageCode }?.nativeName ?: stringResource(R.string.language_english)
                     Text(
                         text = stringResource(R.string.language_current_format, currentLanguageName),
@@ -111,10 +111,10 @@ fun LanguageRegionScreen(
 
 
             item {
-                SettingsSection(title = "Region") {
+                SettingsSection(title = stringResource(R.string.settings_region_title)) {
                     SettingsNavigationItem(
-                        title = "Region Preferences",
-                        subtitle = "Date, time, and number formats",
+                        title = stringResource(R.string.settings_region_preferences_title),
+                        subtitle = stringResource(R.string.settings_region_preferences_subtitle),
                         imageVector = Icons.Filled.Language,
                         onClick = { viewModel.navigateToRegionPreferences() },
                         enabled = !isLoading

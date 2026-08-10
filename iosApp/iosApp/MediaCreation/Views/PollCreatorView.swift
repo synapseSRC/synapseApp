@@ -10,7 +10,7 @@ struct PollCreatorView: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("Poll")
+                Text(String(localized: "poll_title"))
                     .font(.headline)
                 Spacer()
             }
@@ -18,7 +18,7 @@ struct PollCreatorView: View {
             VStack(spacing: 12) {
                 ForEach(0..<options.count, id: \.self) { index in
                     HStack {
-                        TextField("Option \(index + 1)", text: $options[index])
+                        TextField(String(format: String(localized: "poll_option_placeholder"), index + 1), text: $options[index])
                             .textFieldStyle(RoundedBorderTextFieldStyle())
 
                         if options.count > 2 {
@@ -28,7 +28,7 @@ struct PollCreatorView: View {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundColor(.gray)
                             }
-                            .accessibilityLabel("Remove option \(index + 1)")
+                            .accessibilityLabel(String(format: String(localized: "poll_option_placeholder"), index + 1))
                         }
                     }
                 }
@@ -40,9 +40,9 @@ struct PollCreatorView: View {
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
-                        Text("Add Option")
+                        Text(String(localized: "poll_add_option"))
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(AppTheme.primaryColor)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -50,7 +50,7 @@ struct PollCreatorView: View {
             Divider()
 
             HStack {
-                Text("Poll Duration")
+                Text(String(localized: "poll_duration_label"))
                     .foregroundColor(.gray)
                 Spacer()
 

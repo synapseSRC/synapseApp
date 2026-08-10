@@ -5,25 +5,75 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.auth.GetCurrentUserIdUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
 class DesktopChatViewModel(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
-    private val sendMessageUseCase: SendMessageUseCase
+    private val sendMessageUseCase: SendMessageUseCase,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+    fun getCurrentUserId(): String? = getCurrentUserIdUseCase()
+
     private val _conversations = MutableStateFlow<List<Conversation>>(emptyList())
     val conversations: StateFlow<List<Conversation>> = _conversations.asStateFlow()
+
+    private val _activeFilter = MutableStateFlow(ConversationFilter.ALL)
+    val activeFilter: StateFlow<ConversationFilter> = _activeFilter.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setFilter(filter: ConversationFilter) {
+        _activeFilter.value = filter
+    }
+
+    val filteredConversations: StateFlow<List<Conversation>> = combine(
+        _conversations,
+        _searchQuery,
+        _activeFilter
+    ) { conversations, query, filter ->
+        val afterFilter = when (filter) {
+            ConversationFilter.ALL -> conversations
+            ConversationFilter.UNREAD -> conversations.filter { it.unreadCount > 0 }
+            ConversationFilter.FAVOURITES -> {
+                // TODO: implement FAVOURITES filter once stored on domain model
+                conversations
+            }
+        }
+        if (query.isBlank()) {
+            afterFilter
+        } else {
+            afterFilter.filter {
+                it.participantName.contains(query, ignoreCase = true) ||
+                        it.lastMessage.contains(query, ignoreCase = true)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
@@ -48,13 +98,25 @@ class DesktopChatViewModel(
         viewModelScope.launch {
             _isLoadingConversations.value = true
             _error.value = null
-            getConversationsUseCase().onSuccess { result ->
-                _conversations.value = result
-            }.onFailure { error ->
-                Napier.e("Failed to load conversations", error)
-                _error.value = "Failed to load conversations: ${error.message}"
+            try {
+                withTimeout(20_000L) {
+                    getConversationsUseCase().onSuccess { result ->
+                        _conversations.value = result
+                    }.onFailure { error ->
+                        Napier.e("Failed to load conversations", error)
+                        _error.value = "Failed to load conversations: ${error.message}"
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Napier.e("getConversations timed out after 20s")
+                _error.value = "Request timed out. Check your connection."
+            } catch (t: Throwable) {
+                // Catches Error subclasses (e.g. NoClassDefFoundError from missing libs)
+                Napier.e("Unexpected error loading conversations: ${t::class.simpleName}: ${t.message}")
+                _error.value = "Error: ${t::class.simpleName}: ${t.message}"
+            } finally {
+                _isLoadingConversations.value = false
             }
-            _isLoadingConversations.value = false
         }
     }
 
@@ -67,14 +129,25 @@ class DesktopChatViewModel(
         viewModelScope.launch {
             _isLoadingMessages.value = true
             _error.value = null
-            getMessagesUseCase(chatId = chatId).onSuccess { result ->
-                _messages.value = result
-            }.onFailure { error ->
-                Napier.e("Failed to load messages", error)
-                _messages.value = emptyList()
-                _error.value = "Failed to load messages: ${error.message}"
+            try {
+                withTimeout(20_000L) {
+                    getMessagesUseCase(chatId = chatId).onSuccess { result ->
+                        _messages.value = result
+                    }.onFailure { error ->
+                        Napier.e("Failed to load messages", error)
+                        _messages.value = emptyList()
+                        _error.value = "Failed to load messages: ${error.message}"
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Napier.e("getMessages timed out after 20s")
+                _error.value = "Request timed out loading messages."
+            } catch (t: Throwable) {
+                Napier.e("Unexpected error loading messages: ${t::class.simpleName}: ${t.message}")
+                _error.value = "Error: ${t::class.simpleName}: ${t.message}"
+            } finally {
+                _isLoadingMessages.value = false
             }
-            _isLoadingMessages.value = false
         }
     }
 
@@ -99,3 +172,5 @@ class DesktopChatViewModel(
         _error.value = null
     }
 }
+
+enum class ConversationFilter { ALL, UNREAD, FAVOURITES }

@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.ui.settings.SettingsDataProvider
 import com.synapse.social.studioasinc.ui.settings.SettingsColors
@@ -32,8 +34,9 @@ fun SettingsSearchScreen(
     onBackClick: () -> Unit,
     onNavigateToSetting: (String) -> Unit
 ) {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
-    val searchItems = remember { getSearchableSettings() }
+    val searchItems = remember(context) { getSearchableSettings(context) }
 
     val filteredItems = remember(searchQuery) {
         if (searchQuery.isBlank()) {
@@ -135,14 +138,14 @@ private fun SettingsSearchResultItem(
     }
 }
 
-private fun getSearchableSettings(): List<SettingsSearchItem> {
+private fun getSearchableSettings(context: Context): List<SettingsSearchItem> {
     val groups = SettingsDataProvider.getSettingsGroups()
     return groups.flatMap { group ->
         group.categories.map { category ->
             SettingsSearchItem(
-                title = category.title,
-                subtitle = category.subtitle,
-                category = group.title ?: "General",
+                title = category.title.asString(context),
+                subtitle = category.subtitle.asString(context),
+                category = group.title?.asString(context) ?: "General",
                 route = category.destination.route,
                 keywords = category.keywords
             )

@@ -68,7 +68,7 @@ fun QuickReactionsRow(
             val isSelected = userReaction == emoji
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(Sizes.AvatarDefault)
                     .clip(CircleShape)
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
@@ -97,8 +97,8 @@ fun StoryReplyBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .height(Sizes.AvatarLarge)
+            .clip(RoundedCornerShape(Sizes.CornerMassive))
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
             .padding(horizontal = Spacing.Medium),
         verticalAlignment = Alignment.CenterVertically
@@ -514,7 +514,7 @@ fun StoryProgressBar(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(2.dp)),
+                    .clip(RoundedCornerShape(Spacing.Tiny)),
                 color = MaterialTheme.colorScheme.onPrimary,
                 trackColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f),
             )

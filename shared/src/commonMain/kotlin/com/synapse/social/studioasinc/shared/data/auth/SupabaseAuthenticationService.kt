@@ -304,6 +304,9 @@ class SupabaseAuthenticationService(
             if (!isValidRedirectUrl(redirectUrl)) {
                 return Result.failure(IllegalArgumentException("Invalid redirect URL: $redirectUrl"))
             }
+            if (!SupabaseClient.isConfigured()) {
+                return Result.failure(IllegalStateException("Supabase credentials not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in gradle.properties to your actual Supabase project credentials."))
+            }
             val oauthUrl = URLBuilder(client.supabaseUrl).apply {
                 appendPathSegments("auth", "v1", "authorize")
                 parameters.append("provider", provider)

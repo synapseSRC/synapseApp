@@ -23,10 +23,11 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.core.util.IntentUtils
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 
 private object AboutSupportConstants {
-    const val URL_GITHUB_BUG_REPORT = "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md"
-    const val URL_APP_WEBSITE = "https://synapsesocial.vercel.app"
+    val URL_GITHUB_BUG_REPORT = SynapseConfig.GITHUB_BUG_REPORT_URL
+    val URL_APP_WEBSITE = SynapseConfig.APP_WEBSITE_URL
 }
 
 
@@ -77,7 +78,7 @@ fun AboutSupportScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.settings_back_button),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -210,7 +211,7 @@ private fun AppInfoHeaderCard(
         modifier = Modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = 2.dp
+        tonalElevation = Sizes.ElevationLow
     ) {
         Column(
             modifier = Modifier

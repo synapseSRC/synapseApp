@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import com.synapse.social.studioasinc.R
+import androidx.compose.ui.res.stringResource
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -25,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.shared.domain.model.User
@@ -66,7 +67,7 @@ fun ContactItem(
             if (contact.status == UserStatus.ONLINE) {
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
+                        .size(Sizes.IconSmall)
                         .clip(CircleShape)
                         .background(StatusOnline)
                         .align(Alignment.BottomEnd)
@@ -84,7 +85,7 @@ fun ContactItem(
             )
 
             Text(
-                text = "@${contact.username ?: "unknown"}",
+                text = stringResource(R.string.common_at_username, contact.username ?: stringResource(R.string.common_unknown)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

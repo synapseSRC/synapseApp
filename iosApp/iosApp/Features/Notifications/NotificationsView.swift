@@ -15,7 +15,7 @@ struct NotificationsView: View {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
                             .foregroundColor(.red)
-                        Text("Error")
+                        Text(String(localized: "label_error"))
                             .font(.headline)
                         Text(errorMessage)
                             .foregroundColor(.secondary)
@@ -33,9 +33,9 @@ struct NotificationsView: View {
                         Image(systemName: "bell.slash")
                             .font(.largeTitle)
                             .foregroundColor(.secondary)
-                        Text("No Notifications")
+                        Text(String(localized: "notifications_empty_title"))
                             .font(.headline)
-                        Text("You're all caught up! New notifications will appear here.")
+                        Text(String(localized: "notifications_empty_subtitle"))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -61,7 +61,7 @@ struct NotificationsView: View {
                     }
                 }
             }
-            .navigationTitle("Notifications")
+            .navigationTitle(String(localized: "nav_notifications"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if !viewModel.notifications.isEmpty {

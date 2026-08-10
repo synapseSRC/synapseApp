@@ -13,6 +13,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.synapse.social.studioasinc.core.config.AppConstants
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -26,7 +27,6 @@ class ThumbnailGenerator(private val context: Context) {
         private const val THUMBNAIL_SIZE = 200
         private const val THUMBNAIL_QUALITY = 85
         private const val VIDEO_FRAME_TIME_US = 1000000L
-        private const val CACHE_DIR_NAME = "thumbnails"
         private const val MAX_CACHE_SIZE = 100 * 1024 * 1024L
     }
 
@@ -35,7 +35,7 @@ class ThumbnailGenerator(private val context: Context) {
 
 
     private val cacheDir: File by lazy {
-        File(context.cacheDir, CACHE_DIR_NAME).apply {
+        File(context.cacheDir, AppConstants.THUMBNAILS_DIR).apply {
             if (!exists()) {
                 mkdirs()
             }

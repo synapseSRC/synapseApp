@@ -62,7 +62,6 @@ internal class ChatEncryptionHelper(
      * @return A copy of the [MessageDto] with decrypted content, or placeholder text if decryption fails.
      */
     suspend fun MessageDto.decryptIfNecessary(currentUserId: String): MessageDto {
-        if (signalProtocolManager == null) return this
         val messageId = this.id ?: return this
 
         // 1) Check in-memory cache first (fastest)
@@ -89,7 +88,6 @@ internal class ChatEncryptionHelper(
         }
 
         try {
-            Logger.d("E2EE_DECRYPT: Attempting to decrypt message $messageId", tag = "E2EE")
             val jsonElement = Json.parseToJsonElement(this.content).jsonObject
 
             // Check if this looks like an encrypted payload map (values have "type" and "body")
@@ -99,46 +97,33 @@ internal class ChatEncryptionHelper(
                 it.containsKey("body")
             } == true
 
-            val myPayloadElement = jsonElement[currentUserId]
-
-            if (myPayloadElement != null) {
-                val senderId = this.senderId
-
-                // Decrypt using the Signal Protocol manager. This will advance the ratchet.
-                val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
-                try {
-                    val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
-                    val decryptedContent = decryptedBytes.decodeToString()
-                    Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
-                    decryptedMessageCache[messageId] = decryptedContent
-                    val (content, mediaUrl) = extractContent(decryptedContent)
-                    try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
-                    return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl)
-                } catch (decryptError: Exception) {
-                    Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
-
-                    // Return placeholder instead of leaking raw encrypted JSON on failure
-                    val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
-                    return this.copy(content = fallbackContent)
+            if (looksLikeEncryptedPayload) {
+                if (signalProtocolManager != null) {
+                    val myPayloadElement = jsonElement[currentUserId]
+                    if (myPayloadElement != null) {
+                        val senderId = this.senderId
+                        val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
+                        try {
+                            val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
+                            val decryptedContent = decryptedBytes.decodeToString()
+                            Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
+                            decryptedMessageCache[messageId] = decryptedContent
+                            val (content, mediaUrl) = extractContent(decryptedContent)
+                            try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
+                            return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl)
+                        } catch (decryptError: Exception) {
+                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
+                        }
+                    }
                 }
-            } else if (looksLikeEncryptedPayload) {
-                Logger.w("E2EE_DECRYPT: No payload found for current user in message $messageId. Available keys: ${jsonElement.keys}", tag = "E2EE")
-
                 // Return placeholder instead of leaking raw encrypted JSON map
                 val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
                 return this.copy(content = fallbackContent)
-            } else {
-                Logger.d("E2EE_DECRYPT: Message is a valid JSON but doesn't look like an encrypted payload map. Returning as is.", tag = "E2EE")
             }
-        } catch (e: Exception) {
-            // It's not a JSON object, so it's likely plaintext.
-            // Or it's a critical failure parsing it.
-            Logger.e("E2EE_DECRYPT: Failed to parse or decrypt message $messageId (might be plaintext or malformed): ${e.message}", tag = "E2EE", throwable = e)
-
-            // Note: If parsing failed because it's a simple string like "Hello", we just return it as is.
-            // But if it's a malformed JSON string representing encryption, it will be leaked.
-            // However, most of the time an encryption dictionary will parse successfully as JSON.
+        } catch (_: Exception) {
+            // Not a JSON object — plaintext message
         }
+
         return this
     }
 

@@ -7,11 +7,11 @@ struct LoginView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 20) {
-                Text("Welcome Back")
+                Text(String(localized: "auth_login_welcome_back"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("Enter your credentials to continue")
+                Text(String(localized: "auth_login_subtitle"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
@@ -22,13 +22,13 @@ struct LoginView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                TextField("Email", text: $viewModel.email)
+                TextField(String(localized: "auth_login_email_placeholder"), text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
-                SecureField("Password", text: $viewModel.password)
+                SecureField(String(localized: "auth_login_password_placeholder"), text: $viewModel.password)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
@@ -37,12 +37,12 @@ struct LoginView: View {
                 Button(action: {
                     viewModel.login(navigator: navigator)
                 }) {
-                    Text("Log In")
+                    Text(String(localized: "auth_login_button"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(AppTheme.primaryColor)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
@@ -53,10 +53,10 @@ struct LoginView: View {
             .padding()
 
             if viewModel.isLoading {
-                LoadingView(message: "Logging in...")
+                LoadingView(message: String(localized: "auth_login_loading"))
             }
         }
-        .navigationTitle("Log In")
+        .navigationTitle(String(localized: "auth_login_button"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -26,7 +26,7 @@ struct MentionSuggestionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if users.isEmpty {
-                Text("No matching users")
+                Text(String(localized: "mention_no_matching_users"))
                     .foregroundColor(.gray)
                     .padding()
             } else {
@@ -53,7 +53,7 @@ struct MentionSuggestionView: View {
 
                                             if user.isVerified {
                                                 Image(systemName: "checkmark.seal.fill")
-                                                    .foregroundColor(.blue)
+                                                    .foregroundColor(AppTheme.primaryColor)
                                                     .font(.caption)
                                             }
                                         }

@@ -28,6 +28,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import kotlinx.coroutines.delay
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 
 data class UserDetails(
     val location: String? = null,
@@ -288,7 +289,7 @@ private fun ExpandedDetailsContent(
                     onClick = if (isLink) {
                         {
                             val url = when (capturedLabel) {
-                                labelGithub -> "https://github.com/$capturedValue"
+                                labelGithub -> "${SynapseConfig.GITHUB_BASE_URL}$capturedValue"
                                 labelEmail -> "mailto:$capturedValue"
                                 else -> capturedValue
                             }
@@ -410,12 +411,12 @@ private fun LinkedAccountChip(account: LinkedAccount) {
 
 private fun getPlatformUrl(platform: String, username: String): String {
     return when (platform.lowercase()) {
-        "twitter", "x" -> "https://x.com/$username"
-        "instagram" -> "https://instagram.com/$username"
-        "facebook" -> "https://facebook.com/$username"
-        "linkedin" -> "https://linkedin.com/in/$username"
-        "github" -> "https://github.com/$username"
-        "youtube" -> "https://youtube.com/@$username"
+        "twitter", "x" -> "${SynapseConfig.X_BASE_URL}$username"
+        "instagram" -> "${SynapseConfig.INSTAGRAM_BASE_URL}$username"
+        "facebook" -> "${SynapseConfig.FACEBOOK_BASE_URL}$username"
+        "linkedin" -> "${SynapseConfig.LINKEDIN_BASE_URL}$username"
+        "github" -> "${SynapseConfig.GITHUB_BASE_URL}$username"
+        "youtube" -> "${SynapseConfig.YOUTUBE_BASE_URL}$username"
         else -> ""
     }
 }

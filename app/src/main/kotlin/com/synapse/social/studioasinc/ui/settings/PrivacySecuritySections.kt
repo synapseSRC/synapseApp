@@ -10,10 +10,10 @@ import com.synapse.social.studioasinc.R
 
 @Composable
 internal fun PrivacyCheckupSection(isLoading: Boolean) {
-    SettingsSection(title = "Privacy Checkup") {
+    SettingsSection(title = stringResource(R.string.settings_privacy_checkup_section)) {
         SettingsNavigationItem(
-            title = "Privacy Checkup",
-            subtitle = "Review your privacy settings",
+            title = stringResource(R.string.settings_privacy_checkup_section),
+            subtitle = stringResource(R.string.settings_privacy_settings_subtitle),
             imageVector = Icons.Filled.Security,
             onClick = { },
             enabled = !isLoading
@@ -30,10 +30,10 @@ internal fun ProfilePrivacySection(
     onProfileVisibilityChanged: (ProfileVisibility) -> Unit,
     onContentVisibilityChanged: (ContentVisibility) -> Unit
 ) {
-    SettingsSection(title = "Profile Privacy") {
+    SettingsSection(title = stringResource(R.string.settings_profile_privacy_section)) {
         SettingsSelectionItem(
-            title = "Last Seen",
-            subtitle = "Control who can see when you were last online",
+            title = stringResource(R.string.settings_last_seen_title),
+            subtitle = stringResource(R.string.settings_last_seen_subtitle),
             icon = Icons.Filled.Visibility,
             options = ProfileVisibility.values().map { it.displayName() },
             selectedOption = privacySettings.profileVisibility.displayName(),
@@ -47,8 +47,8 @@ internal fun ProfilePrivacySection(
         )
         SettingsDivider()
         SettingsSelectionItem(
-            title = "Profile Photo",
-            subtitle = "Control who can see your profile photo",
+            title = stringResource(R.string.settings_profile_photo_title),
+            subtitle = stringResource(R.string.settings_profile_photo_subtitle),
             icon = Icons.Filled.Person,
             options = ProfileVisibility.values().map { it.displayName() },
             selectedOption = privacySettings.profileVisibility.displayName(),
@@ -62,8 +62,8 @@ internal fun ProfilePrivacySection(
         )
         SettingsDivider()
         SettingsSelectionItem(
-            title = "About",
-            subtitle = "Control who can see your about info",
+            title = stringResource(R.string.settings_about_privacy_title),
+            subtitle = stringResource(R.string.settings_about_subtitle),
             icon = Icons.Filled.Info,
             options = ProfileVisibility.values().map { it.displayName() },
             selectedOption = privacySettings.profileVisibility.displayName(),
@@ -77,8 +77,8 @@ internal fun ProfilePrivacySection(
         )
         SettingsDivider()
         SettingsSelectionItem(
-            title = "Status",
-            subtitle = "Control who can see your status updates",
+            title = stringResource(R.string.settings_status_title),
+            subtitle = stringResource(R.string.settings_status_subtitle),
             icon = Icons.Filled.Circle,
             options = ContentVisibility.values().map { it.displayName() },
             selectedOption = privacySettings.contentVisibility.displayName(),
@@ -101,10 +101,10 @@ internal fun MessagePrivacySection(
     onReadReceiptsChanged: (Boolean) -> Unit,
     isLoading: Boolean
 ) {
-    SettingsSection(title = "Message Privacy") {
+    SettingsSection(title = stringResource(R.string.settings_message_privacy_section)) {
         SettingsToggleItem(
-            title = "Read Receipts",
-            subtitle = "Show when you've read messages",
+            title = stringResource(R.string.settings_read_receipts_title),
+            subtitle = stringResource(R.string.settings_read_receipts_subtitle),
             imageVector = Icons.Filled.DoneAll,
             checked = readReceiptsEnabled,
             onCheckedChange = onReadReceiptsChanged,
@@ -112,8 +112,8 @@ internal fun MessagePrivacySection(
         )
         SettingsDivider()
         SettingsNavigationItem(
-            title = "Disappearing Messages",
-            subtitle = "Set default timer for new chats",
+            title = stringResource(R.string.settings_disappearing_messages_title),
+            subtitle = stringResource(R.string.settings_disappearing_messages_subtitle),
             imageVector = Icons.Filled.Timer,
             onClick = { },
             enabled = !isLoading
@@ -129,10 +129,10 @@ internal fun GroupPrivacySection(
     isLoading: Boolean,
     onGroupPrivacyChanged: (GroupPrivacy) -> Unit
 ) {
-    SettingsSection(title = "Group Privacy") {
+    SettingsSection(title = stringResource(R.string.settings_group_privacy_section)) {
         SettingsSelectionItem(
-            title = "Groups",
-            subtitle = "Control who can add you to groups",
+            title = stringResource(R.string.settings_groups_title),
+            subtitle = stringResource(R.string.settings_groups_subtitle),
             icon = Icons.Filled.Group,
             options = GroupPrivacy.values().map { it.displayName() },
             selectedOption = privacySettings.groupPrivacy.displayName(),
@@ -157,10 +157,10 @@ internal fun SecuritySection(
     onChatLockChanged: (Boolean) -> Unit,
     isLoading: Boolean
 ) {
-    SettingsSection(title = "Security") {
+    SettingsSection(title = stringResource(R.string.settings_security_section)) {
         SettingsToggleItem(
-            title = "App Lock",
-            subtitle = "Require authentication to open app",
+            title = stringResource(R.string.settings_app_lock_title),
+            subtitle = stringResource(R.string.settings_app_lock_subtitle),
             imageVector = Icons.Filled.Lock,
             checked = appLockEnabled,
             onCheckedChange = onAppLockChanged,
@@ -168,8 +168,8 @@ internal fun SecuritySection(
         )
         SettingsDivider()
         SettingsToggleItem(
-            title = "Chat Lock",
-            subtitle = "Lock individual chats with authentication",
+            title = stringResource(R.string.settings_chat_lock_title),
+            subtitle = stringResource(R.string.settings_chat_lock_subtitle),
             imageVector = Icons.Filled.Lock,
             checked = chatLockEnabled,
             onCheckedChange = onChatLockChanged,
@@ -185,10 +185,10 @@ internal fun ActiveSessionsSection(
     onNavigateToActiveSessions: () -> Unit,
     isLoading: Boolean
 ) {
-    SettingsSection(title = "Active Sessions") {
+    SettingsSection(title = stringResource(R.string.settings_active_sessions_title)) {
         SettingsNavigationItem(
-            title = "Active Sessions",
-            subtitle = "Manage your active sessions",
+            title = stringResource(R.string.settings_active_sessions_title),
+            subtitle = stringResource(R.string.settings_active_sessions_subtitle),
             imageVector = Icons.Filled.Key,
             onClick = onNavigateToActiveSessions,
             enabled = !isLoading

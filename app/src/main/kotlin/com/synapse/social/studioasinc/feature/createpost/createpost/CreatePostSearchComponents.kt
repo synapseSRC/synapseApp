@@ -344,7 +344,7 @@ fun FeelingSelectScreen(
                                              Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                              contentDescription = null,
                                              tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                             modifier = Modifier.size(16.dp)
+                                             modifier = Modifier.size(Spacing.Medium)
                                          )
                                      }
 

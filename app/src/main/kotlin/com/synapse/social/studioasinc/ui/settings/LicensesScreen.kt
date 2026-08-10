@@ -24,9 +24,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.data.model.License
-import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.*
 
 
 
@@ -71,7 +70,7 @@ fun LicensesScreen(
         ) {
             item {
                 Text(
-                    text = "This application uses the following open source software:",
+                    text = stringResource(R.string.settings_licenses_intro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = Spacing.Small)
@@ -120,7 +119,7 @@ fun LicenseItem(license: License) {
                     )
                     Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                     Text(
-                        text = "${license.developer} • ${license.licenseType}",
+                        text = stringResource(R.string.settings_license_detail, license.developer, license.licenseType),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -147,10 +146,10 @@ fun LicenseItem(license: License) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 300.dp),
+                            .heightIn(max = Sizes.HeightPreview),
                         color = MaterialTheme.colorScheme.surface,
                         shape = MaterialTheme.shapes.small,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        border = androidx.compose.foundation.BorderStroke(Sizes.BorderThin, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Box(modifier = Modifier.padding(Spacing.SmallMedium)) {
                             Text(
@@ -172,7 +171,7 @@ fun LicenseItem(license: License) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(Sizes.IconSemiMedium)
                         )
                         Spacer(modifier = Modifier.width(Spacing.Small))
                         Text(stringResource(R.string.action_view_full_license))

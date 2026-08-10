@@ -60,7 +60,7 @@ fun ChatSettingsScreen(
                 title = { Text(stringResource(R.string.settings_chat_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.settings_back_button))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -91,9 +91,9 @@ fun ChatSettingsScreen(
             }
 
             item {
-                SettingsBlock(title = "Message Text Size") {
+                SettingsBlock(title = stringResource(R.string.settings_chat_font_size_title)) {
                     Text(
-                        text = "Size: ${(16 * chatFontScale).toInt()}sp",
+                        text = stringResource(R.string.settings_chat_font_size_value, (16 * chatFontScale).toInt()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
@@ -109,7 +109,7 @@ fun ChatSettingsScreen(
             }
 
             item {
-                SettingsBlock(title = "Color Theme") {
+                SettingsBlock(title = stringResource(R.string.settings_chat_color_theme_title)) {
                     ThemePicker(
                         selectedTheme = chatThemePreset,
                         onThemeSelected = { viewModel.updateChatThemePreset(it) }
@@ -118,9 +118,9 @@ fun ChatSettingsScreen(
             }
 
             item {
-                SettingsBlock(title = "Message Corners") {
+                SettingsBlock(title = stringResource(R.string.settings_chat_message_corners_title)) {
                     Text(
-                        text = "Radius: ${chatMessageCornerRadius}dp",
+                        text = stringResource(R.string.settings_chat_message_corners_radius_value, chatMessageCornerRadius),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
@@ -137,7 +137,7 @@ fun ChatSettingsScreen(
 
 
             item {
-                SettingsBlock(title = "Chat Background") {
+                SettingsBlock(title = stringResource(R.string.settings_chat_background_title)) {
                     WallpaperPicker(
                         selectedWallpaper = chatWallpaperType,
                         onWallpaperSelected = { viewModel.updateChatWallpaperType(it) },
@@ -151,7 +151,7 @@ fun ChatSettingsScreen(
 
 
             item {
-                SettingsBlock(title = "Chat List View") {
+                SettingsBlock(title = stringResource(R.string.settings_chat_list_view_title)) {
                     ChatListViewPicker(
                         selectedLayout = chatListLayout,
                         onLayoutSelected = { viewModel.updateChatListLayout(it) }
@@ -160,7 +160,7 @@ fun ChatSettingsScreen(
             }
 
             item {
-                SettingsBlock(title = "Swipe Gestures") {
+                SettingsBlock(title = stringResource(R.string.settings_chat_swipe_gestures_title)) {
                     SwipeGesturePicker(
                         selectedGesture = chatSwipeGesture,
                         onGestureSelected = { viewModel.updateChatSwipeGesture(it) }

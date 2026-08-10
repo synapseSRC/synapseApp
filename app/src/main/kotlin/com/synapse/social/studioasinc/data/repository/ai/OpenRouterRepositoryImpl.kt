@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.data.repository.ai
 
 import com.synapse.social.studioasinc.domain.repository.ai.AiRepository
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -26,7 +27,7 @@ class OpenRouterRepositoryImpl(private val apiKey: String) : AiRepository {
                 }.toString()
 
                 val request = Request.Builder()
-                    .url("https://openrouter.ai/api/v1/chat/completions")
+                    .url(SynapseConfig.OPENROUTER_API_ENDPOINT)
                     .header("Authorization", "Bearer $apiKey")
                     .post(body.toRequestBody("application/json".toMediaType()))
                     .build()

@@ -15,6 +15,8 @@ extension Color {
 
 struct AppTheme {
     static let primaryColor = Color(hex: shared.SynapseTheme.RoyalBlue)
+    static let onlineColor = Color.green
+    static let errorColor = Color.red
 
     struct AmbientBackground: View {
         @StateObject private var atmosphere = UiAtmosphereState.shared

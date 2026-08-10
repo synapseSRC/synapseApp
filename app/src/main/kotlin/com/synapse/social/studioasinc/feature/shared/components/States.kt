@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.ui.components
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.layout.Box
 import com.synapse.social.studioasinc.R
@@ -45,7 +47,7 @@ fun ErrorState(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.Medium))
             Button(onClick = onRetry) {
                 Text(stringResource(R.string.action_retry))
             }

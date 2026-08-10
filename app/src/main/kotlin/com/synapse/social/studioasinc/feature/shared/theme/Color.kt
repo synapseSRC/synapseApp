@@ -123,3 +123,17 @@ val ChatPresetColor7 = Color(0xFFE0E0E0)
 val StoryColorOrange = Color(0xFFFF9800)
 val StoryColorGreen = Color(0xFF4CAF50)
 val StoryColorPurple = Color(0xFF9C27B0)
+
+
+// Inbox Specific Colors
+val OnlineGreenLight = Color(0xFF81C784)
+val PinnedBackground = Color(0xFFFFF8E1)
+val PinnedBackgroundDark = Color(0xFF3E2723)
+val StoryGradientStart = Color(0xFFE040FB)
+val StoryGradientMiddle = Color(0xFFFF5722)
+val StoryGradientEnd = Color(0xFFFFEB3B)
+
+val StoryRingMiddle = Color(0xFF7C4DFF)
+val StoryRingEnd = Color(0xFF00BCD4)
+val ShimmerBase = Color(0xFFE0E0E0)
+val ShimmerHighlight = Color(0xFFF5F5F5)

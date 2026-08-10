@@ -10,11 +10,8 @@ import androidx.compose.ui.window.rememberWindowState
 import com.synapse.social.studioasinc.desktop.theme.SynapseTheme
 import com.synapse.social.studioasinc.desktop.ui.DesktopMainScreen
 import com.synapse.social.studioasinc.desktop.ui.LoginScreen
-import com.synapse.social.studioasinc.shared.di.storageModule
-import com.synapse.social.studioasinc.shared.di.presenceModule
 import com.synapse.social.studioasinc.desktop.di.desktopModule
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
-import com.synapse.social.studioasinc.shared.di.commentModule
 import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import org.koin.core.context.startKoin
@@ -25,7 +22,7 @@ fun main() = application {
     val koin = remember {
         try {
             startKoin {
-                modules(storageModule, presenceModule, desktopModule)
+                modules(desktopModule)
             }.koin
         } catch (e: Exception) {
             Napier.e("Failed to initialize Koin", e)

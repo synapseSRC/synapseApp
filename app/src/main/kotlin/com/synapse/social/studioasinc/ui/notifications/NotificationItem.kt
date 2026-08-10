@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.ui.notifications
+import com.synapse.social.studioasinc.R
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -25,19 +26,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.animations.PeekingBox
 import com.synapse.social.studioasinc.ui.components.CircularAvatar
+import com.synapse.social.studioasinc.core.util.UiText
 
-sealed interface UiText {
-    data class DynamicString(val value: String) : UiText
-    class StringResource(@StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText
-
-    @Composable
-    fun asString(): String {
-        return when (this) {
-            is DynamicString -> value
-            is StringResource -> stringResource(resId, *args.toTypedArray())
-        }
-    }
-}
 
 @Immutable
 data class UiNotification(
@@ -73,7 +63,7 @@ fun NotificationItem(
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Text(
-                    text = "View details",
+                    text = stringResource(R.string.notification_view_details),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -124,7 +114,7 @@ fun NotificationItem(
 
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
+                        .size(Spacing.Small)
                         .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape)
                 )
             }

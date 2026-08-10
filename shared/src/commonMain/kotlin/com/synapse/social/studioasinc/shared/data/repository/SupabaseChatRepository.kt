@@ -123,21 +123,21 @@ class SupabaseChatRepository(
                 cachedConversationDao?.upsertAll(conversations)
                 Result.success(conversations)
             }
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
             if (cached.isNotEmpty()) Result.success(cached)
             else {
-                Logger.e("Error getting conversations", throwable = e)
-                Result.failure(e)
+                Logger.e("Error getting conversations", throwable = t)
+                Result.failure(t)
             }
         }
     }
 
-    override suspend fun getMessages(chatId: String, limit: Int, before: String?, beforeId: String?): Result<List<Message>> = withContext(AppDispatchers.IO) {
+    override suspend fun getMessages(chatId: String, limit: Int, before: String?, beforeId: String?, forceNetwork: Boolean): Result<List<Message>> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
 
-            if (before == null) {
+            if (before == null && !forceNetwork) {
                 val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
                 if (cached.isNotEmpty()) {
                     syncMessagesInBackground(chatId, limit, currentUserId, cached)
@@ -153,12 +153,12 @@ class SupabaseChatRepository(
                 cachedMessageDao?.trimToLimit(chatId, limit)
             }
             Result.success(decrypted)
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
             if (cached.isNotEmpty()) Result.success(cached)
             else {
-                Logger.e("Error getting messages", throwable = e)
-                Result.failure(e)
+                Logger.e("Error getting messages", throwable = t)
+                Result.failure(t)
             }
         }
     }
@@ -302,6 +302,11 @@ class SupabaseChatRepository(
             val currentUserId = getCurrentUserId()
             if (currentUserId != null) {
                 cachedMessageDao?.markRead(chatId, currentUserId)
+            }
+            conversationMutex.withLock {
+                cachedConversationDao?.getAll()?.find { it.chatId == chatId }?.let { existing ->
+                    cachedConversationDao?.upsertAll(listOf(existing.copy(unreadCount = 0)))
+                }
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -454,7 +459,11 @@ class SupabaseChatRepository(
                 cachedMessageDao?.upsert(domainMessage)
                 conversationMutex.withLock {
                     cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
-                        cachedConversationDao?.upsertAll(listOf(existing.copy(lastMessage = domainMessage.content, lastMessageTime = domainMessage.createdAt)))
+                        cachedConversationDao?.upsertAll(listOf(existing.copy(
+                            lastMessage = domainMessage.content,
+                            lastMessageTime = domainMessage.createdAt,
+                            unreadCount = 0
+                        )))
                     }
                 }
             }

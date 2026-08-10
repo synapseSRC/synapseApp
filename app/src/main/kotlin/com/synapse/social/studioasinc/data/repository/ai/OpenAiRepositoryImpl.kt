@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.data.repository.ai
 
 import com.synapse.social.studioasinc.domain.repository.ai.AiRepository
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -32,7 +33,7 @@ class OpenAiRepositoryImpl(private val apiKey: String) : AiRepository {
                 }.toString()
 
                 val request = Request.Builder()
-                    .url("https://api.openai.com/v1/chat/completions")
+                    .url(SynapseConfig.OPENAI_API_ENDPOINT)
                     .header("Authorization", "Bearer $apiKey")
                     .post(body.toRequestBody("application/json".toMediaType()))
                     .build()

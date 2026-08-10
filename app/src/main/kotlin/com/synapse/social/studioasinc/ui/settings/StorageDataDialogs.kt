@@ -8,7 +8,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,7 +20,7 @@ fun MediaQualityBottomSheet(
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
         Column(modifier = Modifier.padding(bottom = Spacing.ExtraLarge)) {
             Text(
-                text = "Photo upload quality",
+                text = stringResource(R.string.settings_photo_upload_quality_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(SettingsSpacing.itemHorizontalPadding)
             )

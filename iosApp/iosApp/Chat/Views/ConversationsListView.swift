@@ -16,19 +16,19 @@ struct ConversationsListView: View {
         NavigationView {
             Group {
                 if viewModel.isLoading && viewModel.conversations.isEmpty {
-                    ProgressView("Loading Chats...")
+                    ProgressView(String(localized: "chat_list_loading"))
                 } else if let error = viewModel.errorMessage, viewModel.conversations.isEmpty {
                     VStack {
-                        Text("Error: \(error)")
+                        Text("\(String(localized: "chat_list_error_prefix"))\(error)")
                             .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                             .padding()
-                        Button("Retry") {
+                        Button(String(localized: "chat_list_retry")) {
                             viewModel.fetchConversations()
                         }
                     }
                 } else if viewModel.conversations.isEmpty {
-                    Text("No conversations yet.")
+                    Text(String(localized: "chat_list_no_chats"))
                         .foregroundColor(.gray)
                         .accessibilityIdentifier("EmptyConversationsText")
                 } else {
@@ -40,23 +40,23 @@ struct ConversationsListView: View {
                             Button(role: .destructive) {
                                 viewModel.deleteConversation(chatId: conversation.id)
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label(String(localized: "chat_list_delete"), systemImage: "trash")
                             }
                         }
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
                                 viewModel.archiveConversation(chatId: conversation.id)
                             } label: {
-                                Label("Archive", systemImage: "archivebox")
+                                Label(String(localized: "chat_list_archive"), systemImage: "archivebox")
                             }
                             .tint(.green)
                         }
                     }
                     .listStyle(PlainListStyle())
-                    .searchable(text: $searchText, prompt: "Search chats")
+                    .searchable(text: $searchText, prompt: Text(String(localized: "chat_list_search_prompt")))
                 }
             }
-            .navigationTitle("Chats")
+            .navigationTitle(String(localized: "chat_list_nav_title"))
             .onAppear {
                 viewModel.fetchConversations()
             }
@@ -75,7 +75,7 @@ struct ConversationRow: View {
         HStack(spacing: 12) {
             // Avatar Placeholder
             Circle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(Color(.systemGray4))
                 .frame(width: 50, height: 50)
                 .overlay(
                     Text(String(conversation.participantName.prefix(1)).uppercased())
@@ -84,7 +84,7 @@ struct ConversationRow: View {
                 )
                 .overlay(
                     Circle()
-                        .fill(conversation.isOnline ? Color.green : Color.clear)
+                        .fill(conversation.isOnline ? AppTheme.onlineColor : Color.clear)
                         .frame(width: 12, height: 12)
                         .offset(x: 17, y: 17)
                 )
@@ -110,7 +110,7 @@ struct ConversationRow: View {
                     Spacer()
                     if conversation.unreadCount > 0 {
                         Circle()
-                            .fill(Color.blue)
+                            .fill(AppTheme.primaryColor)
                             .frame(width: 20, height: 20)
                             .overlay(
                                 Text("\(conversation.unreadCount)")

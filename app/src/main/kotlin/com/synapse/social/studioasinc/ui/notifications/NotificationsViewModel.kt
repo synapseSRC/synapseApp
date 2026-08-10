@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.TimeUtils
+import com.synapse.social.studioasinc.core.util.UiText
 import com.synapse.social.studioasinc.shared.domain.model.Notification
 import com.synapse.social.studioasinc.shared.domain.model.NotificationMessageType
 import com.synapse.social.studioasinc.shared.domain.usecase.notification.GetNotificationsUseCase

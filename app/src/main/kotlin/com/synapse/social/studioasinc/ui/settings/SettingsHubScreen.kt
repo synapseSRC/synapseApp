@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.settings.HeroCard
 import com.synapse.social.studioasinc.shared.domain.model.settings.SettingsNode
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +52,7 @@ fun SettingsHubScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.settings_back_description)
+                            contentDescription = stringResource(R.string.settings_settings_hub_back)
                         )
                     }
                 },
@@ -85,7 +87,7 @@ fun SettingsHubScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = SettingsSpacing.screenPadding),
                             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-                            contentPadding = PaddingValues(vertical = 8.dp)
+                            contentPadding = PaddingValues(vertical = Spacing.Small)
                         ) {
                             item {
                                 userProfile?.let { profile ->
@@ -108,7 +110,7 @@ fun SettingsHubScreen(
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
                     }
                 }
 
@@ -143,21 +145,21 @@ fun SettingsSearchBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = Spacing.Small),
         shape = CircleShape,
         color = SettingsColors.cardBackground,
-        tonalElevation = 2.dp
+        tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
             Box(modifier = Modifier.weight(1f)) {
                 if (query.isEmpty()) {
-                    Text("Search Settings...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.settings_search_settings_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 androidx.compose.foundation.text.BasicTextField(
                     value = query,
@@ -168,8 +170,8 @@ fun SettingsSearchBar(
                 )
             }
             if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(Sizes.IconLarge)) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.settings_search_clear_content_description))
                 }
             }
         }
@@ -182,8 +184,8 @@ fun SettingsHeroCardsSection(
     onCardClick: (HeroCard) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(vertical = Spacing.Small),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
     ) {
         items(heroCards) { card ->
             Card(
@@ -195,15 +197,15 @@ fun SettingsHeroCardsSection(
                                    else MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(Spacing.Medium)) {
                     Icon(
                         imageVector = if (card.id == "storage_cleanup") Icons.Filled.Storage else Icons.Filled.Shield,
                         contentDescription = null,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(Sizes.IconHuge)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.SmallMedium))
                     Text(card.title, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                     Text(card.description, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -224,8 +226,8 @@ fun SettingsCommandPaletteResults(
         color = MaterialTheme.colorScheme.background
     ) {
         LazyColumn(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(Spacing.Medium),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
         ) {
             items(results) { node ->
                 val action = node.action
@@ -242,7 +244,7 @@ fun SettingsCommandPaletteResults(
                     colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(Spacing.Medium),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -269,7 +271,7 @@ fun SettingsFlattenedContent(
             Column {
                 if (group.title != null) {
                     SettingsHeaderItem(
-                        title = group.title
+                        title = group.title.asString()
                     )
                 }
 
@@ -283,8 +285,8 @@ fun SettingsFlattenedContent(
                         }
 
                         SettingsNavigationItem(
-                            title = category.title,
-                            subtitle = category.subtitle,
+                            title = category.title.asString(),
+                            subtitle = category.subtitle.asString(),
                             imageVector = category.icon,
                             onClick = { onNavigate(category.destination) },
                             position = position
