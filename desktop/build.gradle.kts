@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "1.6.11"
+    id("org.jetbrains.compose") version "1.11.1"
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -23,7 +23,6 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
                 implementation(compose.desktop.currentOs)
-                implementation("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.9.4.2")
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
@@ -35,9 +34,6 @@ kotlin {
 configurations.all {
     resolutionStrategy {
         eachDependency {
-            if (requested.group == "org.jetbrains.skiko") {
-                useVersion("0.9.4.2")
-            }
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime")) {
                 useVersion("0.6.1")
             }
@@ -49,9 +45,10 @@ compose.desktop {
     application {
         mainClass = "MainKt"
         nativeDistributions {
-            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
+            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe)
             packageName = "Synapse Desktop"
             packageVersion = "1.0.0"
+            jvmArgs("--enable-native-access=ALL-UNNAMED")
             modules(
                 "java.sql",          // Required by SQLDelight JdbcSqliteDriver
                 "java.naming",       // Required by some Ktor/OkHttp internals
