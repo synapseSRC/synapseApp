@@ -41,5 +41,5 @@ val desktopModule = module {
     single { GetMessagesUseCase(get()) }
     single { SendMessageUseCase(get(), null) }
 
-    factory { DesktopChatViewModel(get(), get(), get()) }
+    factory { DesktopChatViewModel(get(), get(), get(), get()) }
 }
