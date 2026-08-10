@@ -133,11 +133,11 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getMessages(chatId: String, limit: Int, before: String?, beforeId: String?): Result<List<Message>> = withContext(AppDispatchers.IO) {
+    override suspend fun getMessages(chatId: String, limit: Int, before: String?, beforeId: String?, forceNetwork: Boolean): Result<List<Message>> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
 
-            if (before == null) {
+            if (before == null && !forceNetwork) {
                 val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
                 if (cached.isNotEmpty()) {
                     syncMessagesInBackground(chatId, limit, currentUserId, cached)

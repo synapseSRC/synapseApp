@@ -6,10 +6,10 @@ import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 class GetMessagesUseCase(
     private val repository: ChatRepository
 ) {
-    suspend operator fun invoke(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Message>> {
+    suspend operator fun invoke(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null, forceNetwork: Boolean = false): Result<List<Message>> {
         // Decryption is already handled at the repository layer (SupabaseChatRepository.decryptIfNecessary).
         // Do NOT decrypt again here — Signal Protocol's Double Ratchet consumes the key on first use,
         // so a second decryption attempt would fail and leave messages showing "Message is encrypted".
-        return repository.getMessages(chatId, limit, before, beforeId)
+        return repository.getMessages(chatId, limit, before, beforeId, forceNetwork)
     }
 }
