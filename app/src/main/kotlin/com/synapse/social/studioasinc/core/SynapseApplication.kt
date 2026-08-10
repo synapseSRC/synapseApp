@@ -218,6 +218,10 @@ class SynapseApplication : Application(), ImageLoaderFactory {
         // Observe Supabase Auth changes to sync with OneSignal and manage Realtime connection
         applicationScope.launch(Dispatchers.IO) {
             try {
+                if (!SupabaseClient.isConfigured()) {
+                    Napier.w("Supabase not configured, skipping realtime/auth session observer", tag = "SynapseApplication")
+                    return@launch
+                }
                 // Wait for Supabase to be initialized via service
                 SupabaseAuthenticationService.getInstance(this@SynapseApplication)
                 

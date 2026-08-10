@@ -28,14 +28,17 @@ object SupabaseClient {
     @OptIn(SupabaseInternal::class)
     val client by lazy {
         try {
-            if (!isConfigured()) {
-                Napier.e("Supabase credentials not configured!", tag = TAG)
-                throw ConfigurationException("Supabase not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY.")
+            val configured = isConfigured()
+            if (!configured) {
+                Napier.w("Supabase credentials not configured. Using placeholder configuration.", tag = TAG)
             }
 
+            val supabaseUrl = if (configured) SynapseConfig.SUPABASE_URL else "https://placeholder.supabase.co"
+            val supabaseKey = if (configured) SynapseConfig.SUPABASE_ANON_KEY else "placeholder-anon-key"
+
             createSupabaseClient(
-                supabaseUrl = SynapseConfig.SUPABASE_URL,
-                supabaseKey = SynapseConfig.SUPABASE_ANON_KEY
+                supabaseUrl = supabaseUrl,
+                supabaseKey = supabaseKey
             ) {
                 defaultSerializer = KotlinXSerializer(Json {
                     ignoreUnknownKeys = true
