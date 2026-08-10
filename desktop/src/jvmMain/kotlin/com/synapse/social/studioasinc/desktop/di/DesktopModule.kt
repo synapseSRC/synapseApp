@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.auth.SignInUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.auth.GetCurrentUserIdUseCase
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import org.koin.dsl.module
 
@@ -19,6 +20,7 @@ val desktopModule = module {
     // Auth
     single<AuthRepository> { SupabaseAuthRepository(SupabaseClient.client) }
     single { SignInUseCase(get()) }
+    single { GetCurrentUserIdUseCase(get()) }
     factory { DesktopAuthViewModel(get()) }
 
     // Media upload (no-op stub — desktop does not support media uploads)
@@ -44,5 +46,5 @@ val desktopModule = module {
     single { GetMessagesUseCase(get()) }
     single { SendMessageUseCase(get(), null) }
 
-    factory { DesktopChatViewModel(get(), get(), get()) }
+    factory { DesktopChatViewModel(get(), get(), get(), get()) }
 }

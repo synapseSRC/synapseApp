@@ -25,6 +25,7 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.9.4.2")
                 implementation(compose.material3)
+                implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
             }
         }
