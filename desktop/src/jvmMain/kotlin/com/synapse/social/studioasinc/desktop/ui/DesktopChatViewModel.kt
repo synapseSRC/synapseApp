@@ -12,6 +12,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
@@ -30,6 +33,47 @@ class DesktopChatViewModel(
 
     private val _conversations = MutableStateFlow<List<Conversation>>(emptyList())
     val conversations: StateFlow<List<Conversation>> = _conversations.asStateFlow()
+
+    private val _activeFilter = MutableStateFlow(ConversationFilter.ALL)
+    val activeFilter: StateFlow<ConversationFilter> = _activeFilter.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setFilter(filter: ConversationFilter) {
+        _activeFilter.value = filter
+    }
+
+    val filteredConversations: StateFlow<List<Conversation>> = combine(
+        _conversations,
+        _searchQuery,
+        _activeFilter
+    ) { conversations, query, filter ->
+        val afterFilter = when (filter) {
+            ConversationFilter.ALL -> conversations
+            ConversationFilter.UNREAD -> conversations.filter { it.unreadCount > 0 }
+            ConversationFilter.FAVOURITES -> {
+                // TODO: implement FAVOURITES filter once stored on domain model
+                conversations
+            }
+        }
+        if (query.isBlank()) {
+            afterFilter
+        } else {
+            afterFilter.filter {
+                it.participantName.contains(query, ignoreCase = true) ||
+                        it.lastMessage.contains(query, ignoreCase = true)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
@@ -128,3 +172,5 @@ class DesktopChatViewModel(
         _error.value = null
     }
 }
+
+enum class ConversationFilter { ALL, UNREAD, FAVOURITES }

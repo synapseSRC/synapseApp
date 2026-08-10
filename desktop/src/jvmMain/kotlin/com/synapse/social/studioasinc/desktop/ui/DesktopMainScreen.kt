@@ -37,11 +37,40 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
 import kotlin.math.absoluteValue
 
+// New imports for features
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
+import kotlinx.datetime.LocalDate
+import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DesktopMainScreen(
     viewModel: DesktopChatViewModel = koinInject()
 ) {
-    val conversations by viewModel.conversations.collectAsState()
+    val conversations by viewModel.filteredConversations.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val selectedConversation by viewModel.selectedConversation.collectAsState()
     val isLoadingConversations by viewModel.isLoadingConversations.collectAsState()
@@ -49,6 +78,7 @@ fun DesktopMainScreen(
     val error by viewModel.error.collectAsState()
     val currentUserId = remember { viewModel.getCurrentUserId() }
     val snackbarHostState = remember { SnackbarHostState() }
+    val activeFilter by viewModel.activeFilter.collectAsState()
 
     LaunchedEffect(error) {
         error?.let {
@@ -70,12 +100,71 @@ fun DesktopMainScreen(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        text = "Chats",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Chats",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text("New chat") } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(onClick = { /* TODO: implement New chat */ }) {
+                                Icon(Icons.Default.Create, contentDescription = "New chat")
+                            }
+                        }
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text("Menu") } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(onClick = { /* TODO: implement Menu */ }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                            }
+                        }
+                    }
+
+                    var localQuery by remember { mutableStateOf("") }
+                    OutlinedTextField(
+                        value = localQuery,
+                        onValueChange = { localQuery = it; viewModel.onSearchQueryChanged(it) },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        placeholder = { Text("Search or start a new chat") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        trailingIcon = { if (localQuery.isNotEmpty()) IconButton(onClick = { localQuery = ""; viewModel.onSearchQueryChanged("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } },
+                        shape = RoundedCornerShape(24.dp),
+                        singleLine = true
                     )
+
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = activeFilter == ConversationFilter.ALL,
+                            onClick = { viewModel.setFilter(ConversationFilter.ALL) },
+                            label = { Text("All") }
+                        )
+                        FilterChip(
+                            selected = activeFilter == ConversationFilter.UNREAD,
+                            onClick = { viewModel.setFilter(ConversationFilter.UNREAD) },
+                            label = { Text("Unread") }
+                        )
+                        FilterChip(
+                            selected = activeFilter == ConversationFilter.FAVOURITES,
+                            onClick = { viewModel.setFilter(ConversationFilter.FAVOURITES) },
+                            label = { Text("Favourites") }
+                        )
+                    }
+
                     HorizontalDivider()
 
                     if (isLoadingConversations) {
@@ -260,19 +349,39 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            val displayText = remember(conversation) {
+                if (conversation.isGroup && conversation.lastMessage.isNotEmpty()) {
+                    "You: ${conversation.lastMessage}"
+                } else {
+                    conversation.lastMessage
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = conversation.lastMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f).padding(end = 8.dp)
-                )
+                Row(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!conversation.isGroup && conversation.lastMessage.isNotEmpty() && conversation.unreadCount == 0) {
+                        Icon(
+                            imageVector = Icons.Default.DoneAll,
+                            contentDescription = "Read",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                    Text(
+                        text = displayText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
                 if (conversation.unreadCount > 0) {
                     Surface(
                         color = MaterialTheme.colorScheme.error,
@@ -293,6 +402,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailView(
     conversation: Conversation,
@@ -304,11 +414,13 @@ fun ChatDetailView(
 ) {
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val chatEntries = remember(messages) { buildChatEntries(messages) }
 
     // Scroll to the newest message (last item) whenever the message list changes
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.lastIndex)
+    LaunchedEffect(chatEntries.size) {
+        if (chatEntries.isNotEmpty()) {
+            listState.animateScrollToItem(chatEntries.lastIndex)
         }
     }
 
@@ -340,6 +452,49 @@ fun ChatDetailView(
                         color = if (conversation.isOnline) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Video call") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { /* TODO: implement Video call */ }) {
+                            Icon(Icons.Default.Videocam, contentDescription = "Video call")
+                        }
+                    }
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Voice call") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { /* TODO: implement Voice call */ }) {
+                            Icon(Icons.Default.Call, contentDescription = "Voice call")
+                        }
+                    }
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("Search in chat") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { /* TODO: implement Search in chat */ }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search in chat")
+                        }
+                    }
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = { PlainTooltip { Text("More options") } },
+                        state = rememberTooltipState()
+                    ) {
+                        IconButton(onClick = { /* TODO: implement More options */ }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        }
+                    }
+                }
             }
         }
 
@@ -365,13 +520,33 @@ fun ChatDetailView(
                     description = "This is the beginning of your chat history with ${conversation.participantName}."
                 )
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = listState
-                ) {
-                    items(messages) { message ->
-                        MessageItem(message, currentUserId)
-                        Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState
+                    ) {
+                        items(chatEntries) { entry ->
+                            when (entry) {
+                                is ChatListEntry.DateHeader -> {
+                                    DateSeparator(entry.label)
+                                }
+                                is ChatListEntry.MessageEntry -> {
+                                    MessageItem(entry.message, currentUserId)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    val isAtBottom by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 || !listState.canScrollForward } }
+                    if (!isAtBottom) {
+                        FloatingActionButton(
+                            onClick = { scope.launch { listState.animateScrollToItem(chatEntries.lastIndex) } },
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(40.dp),
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to latest")
+                        }
                     }
                 }
             }
@@ -386,6 +561,25 @@ fun ChatDetailView(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Attach file") } },
+                    state = rememberTooltipState()
+                ) {
+                    IconButton(onClick = { /* TODO: implement Attach file */ }) {
+                        Icon(Icons.Default.AddCircleOutline, contentDescription = "Attach file")
+                    }
+                }
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Emoji") } },
+                    state = rememberTooltipState()
+                ) {
+                    IconButton(onClick = { /* TODO: implement Emoji */ }) {
+                        Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
+                    }
+                }
+                Spacer(modifier = Modifier.width(4.dp))
                 OutlinedTextField(
                     value = messageText,
                     onValueChange = { messageText = it },
@@ -412,11 +606,17 @@ fun ChatDetailView(
                         if (messageText.isNotBlank()) {
                             onSendMessage(messageText)
                             messageText = ""
+                        } else {
+                            /* TODO: implement Mic click */
                         }
                     },
-                    enabled = messageText.isNotBlank()
+                    enabled = true
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
+                    if (messageText.isBlank()) {
+                        Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }
@@ -462,17 +662,75 @@ fun MessageItem(message: Message, currentUserId: String?) {
             horizontalAlignment = if (isMe) Alignment.End else Alignment.Start,
             modifier = Modifier.widthIn(max = 480.dp)
         ) {
-            Surface(
-                color = bubbleColor,
-                shape = bubbleShape,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            ) {
-                Text(
-                    text = message.content,
-                    color = textColor,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                )
+            if (message.isDeleted) {
+                Surface(
+                    color = bubbleColor,
+                    shape = bubbleShape,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Text(
+                        text = if (isMe) "🚫 You deleted this message" else "🚫 This message was deleted",
+                        color = textColor.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+                }
+            } else {
+                when (message.messageType) {
+                    MessageType.CALL -> {
+                        Surface(
+                            color = bubbleColor,
+                            shape = bubbleShape,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Voice call",
+                                    tint = textColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Voice call - ${message.content}",
+                                    color = textColor,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                    MessageType.TEXT -> {
+                        Surface(
+                            color = bubbleColor,
+                            shape = bubbleShape,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Text(
+                                text = message.content,
+                                color = textColor,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                            )
+                        }
+                    }
+                    else -> {
+                        Surface(
+                            color = bubbleColor,
+                            shape = bubbleShape,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Text(
+                                text = "📎 [${message.messageType.name.lowercase()} attachment]",
+                                color = textColor,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                            )
+                        }
+                    }
+                }
             }
             val formattedTime = remember(message.createdAt) {
                 try {
@@ -483,12 +741,62 @@ fun MessageItem(message: Message, currentUserId: String?) {
                     TimestampFormatter.formatRelative(message.createdAt)
                 }
             }
-            Text(
-                text = formattedTime,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-            )
+            ) {
+                Text(
+                    text = formattedTime,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+                if (isMe) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    when (message.deliveryStatus) {
+                        com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENT -> {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Sent",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                        com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.DELIVERED -> {
+                            Box(modifier = Modifier.size(width = 18.dp, height = 14.dp)) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Delivered",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Delivered",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(14.dp).align(Alignment.CenterEnd)
+                                )
+                            }
+                        }
+                        com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.READ -> {
+                            Box(modifier = Modifier.size(width = 18.dp, height = 14.dp)) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Read",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Read",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(14.dp).align(Alignment.CenterEnd)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -526,5 +834,55 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+sealed class ChatListEntry {
+    data class DateHeader(val label: String) : ChatListEntry()
+    data class MessageEntry(val message: Message) : ChatListEntry()
+}
+
+fun formatMessageDate(isoString: String): String {
+    return try {
+        val instant = Instant.parse(isoString)
+        val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val msgDate = local.date
+        when {
+            msgDate == today -> "Today"
+            msgDate == today.minus(1, DateTimeUnit.DAY) -> "Yesterday"
+            else -> "${msgDate.dayOfMonth} ${msgDate.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${msgDate.year}"
+        }
+    } catch (e: Exception) { "" }
+}
+
+fun buildChatEntries(messages: List<Message>): List<ChatListEntry> {
+    val entries = mutableListOf<ChatListEntry>()
+    var lastDateLabel = ""
+    for (message in messages) {
+        val dateLabel = formatMessageDate(message.createdAt)
+        if (dateLabel.isNotEmpty() && dateLabel != lastDateLabel) {
+            entries.add(ChatListEntry.DateHeader(dateLabel))
+            lastDateLabel = dateLabel
+        }
+        entries.add(ChatListEntry.MessageEntry(message))
+    }
+    return entries
+}
+
+@Composable
+fun DateSeparator(label: String) {
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            )
+        }
     }
 }
