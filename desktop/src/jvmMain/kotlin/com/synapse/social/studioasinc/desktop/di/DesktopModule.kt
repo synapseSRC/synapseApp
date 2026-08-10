@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.desktop.di
 
 import com.synapse.social.studioasinc.desktop.ui.DesktopAuthViewModel
 import com.synapse.social.studioasinc.desktop.ui.DesktopChatViewModel
-import com.synapse.social.studioasinc.shared.data.auth.SupabaseAuthenticationService
+import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import com.synapse.social.studioasinc.shared.data.repository.SupabaseAuthRepository
 import com.synapse.social.studioasinc.shared.data.repository.SupabaseChatRepository
@@ -21,6 +21,9 @@ val desktopModule = module {
     single { SignInUseCase(get()) }
     factory { DesktopAuthViewModel(get()) }
 
+    // Media upload (no-op stub — desktop does not support media uploads)
+    single<MediaUploadRepository> { DesktopMediaUploadRepository() }
+
     // Chat
     single { SupabaseChatDataSource(SupabaseClient.client) }
 
@@ -29,7 +32,7 @@ val desktopModule = module {
             dataSource = get(),
             client = SupabaseClient.client,
             signalProtocolManager = null,
-            mediaUploadRepository = get(),
+            mediaUploadRepository = get<MediaUploadRepository>(),
             presenceRepository = getOrNull(),
             offlineActionRepository = getOrNull(),
             cachedMessageDao = getOrNull(),

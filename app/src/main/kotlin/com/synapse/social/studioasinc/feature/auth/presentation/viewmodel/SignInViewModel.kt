@@ -108,6 +108,10 @@ class SignInViewModel @Inject constructor(
                         _navigationEvent.emit(AuthNavigationEvent.OpenUrl(url))
                     },
                     onFailure = { e ->
+                        _uiState.value = AuthInputHelper.handleGoogleSignInError(
+                            _uiState.value,
+                            e.message ?: "Failed to initiate OAuth flow for $provider"
+                        )
                     }
                 )
             }

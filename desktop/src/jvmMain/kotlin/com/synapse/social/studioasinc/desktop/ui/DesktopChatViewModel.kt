@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
@@ -48,13 +50,25 @@ class DesktopChatViewModel(
         viewModelScope.launch {
             _isLoadingConversations.value = true
             _error.value = null
-            getConversationsUseCase().onSuccess { result ->
-                _conversations.value = result
-            }.onFailure { error ->
-                Napier.e("Failed to load conversations", error)
-                _error.value = "Failed to load conversations: ${error.message}"
+            try {
+                withTimeout(20_000L) {
+                    getConversationsUseCase().onSuccess { result ->
+                        _conversations.value = result
+                    }.onFailure { error ->
+                        Napier.e("Failed to load conversations", error)
+                        _error.value = "Failed to load conversations: ${error.message}"
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Napier.e("getConversations timed out after 20s")
+                _error.value = "Request timed out. Check your connection."
+            } catch (t: Throwable) {
+                // Catches Error subclasses (e.g. NoClassDefFoundError from missing libs)
+                Napier.e("Unexpected error loading conversations: ${t::class.simpleName}: ${t.message}")
+                _error.value = "Error: ${t::class.simpleName}: ${t.message}"
+            } finally {
+                _isLoadingConversations.value = false
             }
-            _isLoadingConversations.value = false
         }
     }
 
@@ -67,14 +81,25 @@ class DesktopChatViewModel(
         viewModelScope.launch {
             _isLoadingMessages.value = true
             _error.value = null
-            getMessagesUseCase(chatId = chatId).onSuccess { result ->
-                _messages.value = result
-            }.onFailure { error ->
-                Napier.e("Failed to load messages", error)
-                _messages.value = emptyList()
-                _error.value = "Failed to load messages: ${error.message}"
+            try {
+                withTimeout(20_000L) {
+                    getMessagesUseCase(chatId = chatId).onSuccess { result ->
+                        _messages.value = result
+                    }.onFailure { error ->
+                        Napier.e("Failed to load messages", error)
+                        _messages.value = emptyList()
+                        _error.value = "Failed to load messages: ${error.message}"
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                Napier.e("getMessages timed out after 20s")
+                _error.value = "Request timed out loading messages."
+            } catch (t: Throwable) {
+                Napier.e("Unexpected error loading messages: ${t::class.simpleName}: ${t.message}")
+                _error.value = "Error: ${t::class.simpleName}: ${t.message}"
+            } finally {
+                _isLoadingMessages.value = false
             }
-            _isLoadingMessages.value = false
         }
     }
 

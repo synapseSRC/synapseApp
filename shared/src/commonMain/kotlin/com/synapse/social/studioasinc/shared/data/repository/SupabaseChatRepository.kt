@@ -123,12 +123,12 @@ class SupabaseChatRepository(
                 cachedConversationDao?.upsertAll(conversations)
                 Result.success(conversations)
             }
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
             if (cached.isNotEmpty()) Result.success(cached)
             else {
-                Logger.e("Error getting conversations", throwable = e)
-                Result.failure(e)
+                Logger.e("Error getting conversations", throwable = t)
+                Result.failure(t)
             }
         }
     }
@@ -153,12 +153,12 @@ class SupabaseChatRepository(
                 cachedMessageDao?.trimToLimit(chatId, limit)
             }
             Result.success(decrypted)
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
             if (cached.isNotEmpty()) Result.success(cached)
             else {
-                Logger.e("Error getting messages", throwable = e)
-                Result.failure(e)
+                Logger.e("Error getting messages", throwable = t)
+                Result.failure(t)
             }
         }
     }

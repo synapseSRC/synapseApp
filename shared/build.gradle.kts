@@ -10,6 +10,16 @@ plugins {
 
 version = project.findProperty("projectVersion") as String
 
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime")) {
+                useVersion("0.6.1")
+            }
+        }
+    }
+}
+
 kotlin {
     applyDefaultHierarchyTemplate()
 
@@ -88,7 +98,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
                 // DateTime
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 
                 // Logging
                 implementation("io.github.aakira:napier:2.7.1")
@@ -109,8 +119,12 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-okhttp:3.4.2")
+                // CIO engine is the recommended engine for Compose Desktop — pure Kotlin,
+                // no native libs, no jlink stripping issues unlike ktor-client-okhttp
+                implementation("io.ktor:ktor-client-cio:3.4.2")
                 implementation("app.cash.sqldelight:sqlite-driver:2.3.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1")
             }
         }
         val wasmJsMain by getting {

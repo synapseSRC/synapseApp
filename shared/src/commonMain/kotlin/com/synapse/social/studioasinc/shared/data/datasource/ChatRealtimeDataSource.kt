@@ -151,7 +151,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Note: Server-side RLS (Row Level Security) ensures the user only receives messages they are authorized to see.
      */
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
-        val channelId = "inbox_flow_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
+        val channelId = "inbox_flow_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
         Napier.d("Creating realtime channel for inbox: $channelId", tag = "Realtime")
 
         try {
@@ -208,7 +208,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Presence provides a shared state that tracks who is currently 'online' or 'typing' in a channel.
      */
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> = callbackFlow {
-        val channelId = "typing_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
+        val channelId = "typing_flow_${chatId}_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
         Napier.d("Creating realtime channel for typing status: $channelId", tag = "Realtime")
 
         try {
@@ -281,7 +281,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Listens for updates to existing messages (e.g., status changes to 'read' or 'delivered').
      */
     fun subscribeToReadReceipts(chatId: String): Flow<MessageDto> = callbackFlow {
-        val channelId = "read_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
+        val channelId = "read_flow_${chatId}_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
         Napier.d("Creating realtime channel for read receipts: $channelId", tag = "Realtime")
 
         try {
@@ -335,7 +335,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Tracks additions and removals of emoji reactions for a specific chat.
      */
     fun subscribeToMessageReactions(chatId: String): Flow<MessageReactionDto> = callbackFlow {
-        val channelId = "react_flow_${chatId}_${UUIDUtils.randomUUID()}_${Clock.System.now().toEpochMilliseconds()}"
+        val channelId = "react_flow_${chatId}_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
         Napier.d("Creating realtime channel for reactions: $channelId", tag = "Realtime")
 
         try {

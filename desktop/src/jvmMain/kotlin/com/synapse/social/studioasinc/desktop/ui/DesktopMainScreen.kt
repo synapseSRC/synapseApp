@@ -42,7 +42,8 @@ fun DesktopMainScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0) // Avoid Android-only WindowInsets.systemBars on Desktop
     ) { paddingValues ->
         Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             // Master View (Left Sidebar)
@@ -64,6 +65,14 @@ fun DesktopMainScreen(
                     if (isLoadingConversations) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
+                        }
+                    } else if (error != null) {
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = error ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     } else if (conversations.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -96,6 +105,7 @@ fun DesktopMainScreen(
                         conversation = conversation,
                         messages = messages,
                         isLoading = isLoadingMessages,
+                        error = error,
                         onSendMessage = { text -> viewModel.sendMessage(text) }
                     )
                 } else {
@@ -147,6 +157,7 @@ fun ChatDetailView(
     conversation: Conversation,
     messages: List<Message>,
     isLoading: Boolean,
+    error: String? = null,
     onSendMessage: (String) -> Unit
 ) {
     var messageText by remember { mutableStateOf("") }
@@ -185,6 +196,10 @@ fun ChatDetailView(
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
+                }
+            } else if (error != null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = error, color = MaterialTheme.colorScheme.error)
                 }
             } else if (messages.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

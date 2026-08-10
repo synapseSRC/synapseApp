@@ -21,7 +21,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
     suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(AppDispatchers.IO) {
-        val currentUserId = getCurrentUserId() ?: return@withContext emptyList()
+        val currentUserId = getCurrentUserId() ?: throw IllegalStateException("Not logged in: currentUserId is null")
 
         try {
             // 1. Get all my participations
@@ -75,7 +75,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
             }
         } catch (e: Exception) {
             Napier.e("Error loading conversations", e)
-            emptyList()
+            throw e
         }
     }
 
@@ -87,14 +87,14 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
                     eq("is_deleted", false)
                     or {
                         filter("expires_at", FilterOperator.IS, "null")
-                        gt("expires_at", kotlinx.datetime.Clock.System.now().toString())
+                        gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
                     }
                 }
                 order("created_at", Order.DESCENDING)
                 limit(1)
             }.decodeList<MessageDto>().firstOrNull()
-        } catch (e: Exception) {
-            Napier.e("Error loading last message for $chatId", e)
+        } catch (t: Throwable) {
+            Napier.e("Error loading last message for $chatId", t)
             null
         }
     }
@@ -108,14 +108,14 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
                     eq("is_deleted", false)
                     or {
                         filter("expires_at", FilterOperator.IS, "null")
-                        gt("expires_at", kotlinx.datetime.Clock.System.now().toString())
+                        gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
                     }
                     gt("created_at", lastReadAt)
                 }
             }.decodeList<MessageDto>()
             messages.size
-        } catch (e: Exception) {
-            Napier.e("Error counting unread messages", e)
+        } catch (t: Throwable) {
+            Napier.e("Error counting unread messages", t)
             0
         }
     }
