@@ -303,6 +303,11 @@ class SupabaseChatRepository(
             if (currentUserId != null) {
                 cachedMessageDao?.markRead(chatId, currentUserId)
             }
+            conversationMutex.withLock {
+                cachedConversationDao?.getAll()?.find { it.chatId == chatId }?.let { existing ->
+                    cachedConversationDao?.upsertAll(listOf(existing.copy(unreadCount = 0)))
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Logger.e("Error marking messages as read", throwable = e)
@@ -454,7 +459,11 @@ class SupabaseChatRepository(
                 cachedMessageDao?.upsert(domainMessage)
                 conversationMutex.withLock {
                     cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
-                        cachedConversationDao?.upsertAll(listOf(existing.copy(lastMessage = domainMessage.content, lastMessageTime = domainMessage.createdAt)))
+                        cachedConversationDao?.upsertAll(listOf(existing.copy(
+                            lastMessage = domainMessage.content,
+                            lastMessageTime = domainMessage.createdAt,
+                            unreadCount = 0
+                        )))
                     }
                 }
             }

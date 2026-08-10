@@ -347,27 +347,29 @@ fun ChatScreen(
     var showDisappearingModeDialog by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom when new messages arrive
-    var previousMessagesSize by remember { mutableStateOf(0) }
-    val newestMessageId = remember(messages) { messages.lastOrNull()?.id }
+    var lastScrolledMessageId by remember { mutableStateOf<String?>(null) }
+    val newestMessage = remember(messages) { messages.lastOrNull() }
+    val newestMessageId = newestMessage?.id
+
     LaunchedEffect(newestMessageId) {
-        if (messages.isNotEmpty()) {
+        if (newestMessageId != null) {
             if (!listReady) {
                 // Initial load: Snap to bottom instantly, then reveal the list
                 listState.scrollToItem(0)
                 listReady = true
-            } else if (messages.size > previousMessagesSize) {
-                // New message arrived (ID changed AND size increased): Animate scroll
-                // only if it's from the current user or if the user is already near the bottom.
-                val latestMessage = messages.lastOrNull()
-                val isFromMe = latestMessage?.senderId == currentUserId
-                val isNearBottom = listState.firstVisibleItemIndex <= 1
+                lastScrolledMessageId = newestMessageId
+            } else if (newestMessageId != lastScrolledMessageId) {
+                // New message arrived (or ID updated): Animate scroll
+                // if it's from the current user or if the user is near the bottom.
+                val isFromMe = newestMessage.senderId == currentUserId
+                val isNearBottom = listState.firstVisibleItemIndex <= 3
 
                 if (isFromMe || isNearBottom) {
                     listState.animateScrollToItem(0)
                 }
+                lastScrolledMessageId = newestMessageId
             }
         }
-        previousMessagesSize = messages.size
     }
 
     Scaffold(
