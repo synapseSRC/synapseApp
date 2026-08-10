@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -302,6 +303,14 @@ fun ChatDetailView(
     onSendMessage: (String) -> Unit
 ) {
     var messageText by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
+
+    // Scroll to the newest message (last item) whenever the message list changes
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.lastIndex)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Chat Header
@@ -358,7 +367,7 @@ fun ChatDetailView(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    reverseLayout = true
+                    state = listState
                 ) {
                     items(messages) { message ->
                         MessageItem(message, currentUserId)
