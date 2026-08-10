@@ -25,7 +25,7 @@ import kotlinx.serialization.json.JsonObject
 import io.github.aakira.napier.Napier
 import com.synapse.social.studioasinc.shared.core.util.getCurrentIsoTime
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,27 +71,48 @@ class SupabaseNotificationRepository(
         }
 
         return callbackFlow {
-            val channel = supabase.realtime.channel("notifications-$userId-${com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()}") {}
-            val flow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+            // 1. Ensure the WebSocket transport is connected.
+            try {
+                supabase.realtime.connect()
+            } catch (e: Exception) {
+                Napier.e("Failed to connect to Realtime WebSocket for notifications", e)
+            }
+
+            val channel = supabase.realtime.channel(
+                "notifications-$userId-${com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()}"
+            ) {}
+
+            // 2. Register the change filter BEFORE subscribing.
+            //    postgresChangeFlow only attaches a filter — it does NOT open the socket.
+            val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
                 table = "notifications"
                 filter("recipient_id", FilterOperator.EQ, userId)
             }
 
+            // 3. Start the collector and signal readiness via CompletableDeferred.
+            val subscriptionReady = kotlinx.coroutines.CompletableDeferred<Unit>()
             val collector = launch(AppDispatchers.IO) {
-                flow.map { it.decodeRecord<NotificationDto>() }.collect {
-                    trySend(it.toDomain())
-                }
+                changeFlow
+                    .onStart { subscriptionReady.complete(Unit) }
+                    .collect { action ->
+                        try {
+                            send(action.decodeRecord<NotificationDto>().toDomain())
+                        } catch (e: Exception) {
+                            Napier.e("Error decoding realtime notification", e)
+                        }
+                    }
             }
 
+            // 4. Wait for the collector to be ready, then subscribe with blocking confirmation.
             launch(AppDispatchers.IO) {
-                kotlinx.coroutines.yield()
                 try {
-                    if (channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED || channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED) {
-                        channel.subscribe()
-                    }
+                    subscriptionReady.await()
+                    kotlinx.coroutines.yield()
+                    channel.subscribe(blockUntilSubscribed = true)
+                    Napier.d("Successfully subscribed to notifications channel for userId=$userId")
                 } catch (e: Exception) {
                     if (e !is CancellationException) {
-                        Napier.e("Failed to subscribe to realtime channel", e)
+                        Napier.e("Failed to subscribe to realtime notifications channel", e)
                         close(e)
                     }
                 }
@@ -102,8 +123,9 @@ class SupabaseNotificationRepository(
                 externalScope.launch {
                     try {
                         channel.unsubscribe()
+                        supabase.realtime.removeChannel(channel)
                     } catch (e: Exception) {
-                        Napier.w("Failed to unsubscribe from realtime channel", e)
+                        Napier.w("Failed to unsubscribe from realtime notifications channel", e)
                     }
                 }
             }
