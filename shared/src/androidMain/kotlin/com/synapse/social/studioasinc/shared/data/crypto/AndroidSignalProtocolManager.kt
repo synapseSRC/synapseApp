@@ -142,7 +142,16 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
         val decodedBody = Base64.decode(message.body, Base64.DEFAULT)
 
         val decrypted = if (message.type == CiphertextMessage.PREKEY_TYPE) {
-            sessionCipher.decrypt(PreKeySignalMessage(decodedBody))
+            try {
+                sessionCipher.decrypt(PreKeySignalMessage(decodedBody))
+            } catch (e: Exception) {
+                if (store.containsSession(address)) {
+                    Logger.w("E2EE_DECRYPT: PreKey decrypt failed, trying standard SignalMessage decrypt", tag = "E2EE", throwable = e)
+                    sessionCipher.decrypt(SignalMessage(decodedBody))
+                } else {
+                    throw e
+                }
+            }
         } else {
             sessionCipher.decrypt(SignalMessage(decodedBody))
         }
