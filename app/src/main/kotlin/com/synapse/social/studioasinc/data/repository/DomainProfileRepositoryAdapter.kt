@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.data.repository
 
 import com.synapse.social.studioasinc.domain.model.CommentWithUser
+import com.synapse.social.studioasinc.shared.core.util.EducationSanitizer
 import com.synapse.social.studioasinc.domain.model.Gender
 import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.Post
@@ -82,7 +83,7 @@ private fun com.synapse.social.studioasinc.data.model.UserProfile.toDomain(): Do
         hometown = hometown,
         occupation = occupation,
         workplace = workplace,
-        education = education?.let { listOf(it) } ?: emptyList(),
+        education = education?.let { EducationSanitizer.sanitizeEducationItem(it) } ?: emptyList(),
         birthday = birthday,
         relationshipStatus = relationshipStatus,
         discordTag = discordTag,
@@ -110,7 +111,7 @@ internal fun DomainUserProfile.toData(): com.synapse.social.studioasinc.data.mod
         hometown = hometown,
         occupation = occupation,
         workplace = workplace,
-        education = education.firstOrNull(),
+        education = EducationSanitizer.sanitizeEducationList(education).firstOrNull(),
         birthday = birthday,
         relationshipStatus = relationshipStatus,
         discordTag = discordTag,

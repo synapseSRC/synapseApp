@@ -8,6 +8,7 @@ import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
 import com.synapse.social.studioasinc.domain.model.PollOption
 import com.synapse.social.studioasinc.feature.profile.profile.utils.NetworkOptimizer
+import com.synapse.social.studioasinc.shared.core.util.EducationSanitizer
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.auth.auth
