@@ -139,7 +139,8 @@ class SupabaseChatRepository(
 
             if (before == null) {
                 val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
-                if (cached.isNotEmpty()) {
+                val hasPlaceholders = cached.any { encryptionHelper.isPlaceholder(it.content) }
+                if (cached.isNotEmpty() && !hasPlaceholders) {
                     syncMessagesInBackground(chatId, limit, currentUserId, cached)
                     return@withContext Result.success(cached)
                 }
@@ -149,7 +150,10 @@ class SupabaseChatRepository(
             val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
 
             if (before == null) {
-                cachedMessageDao?.upsertAll(decrypted)
+                val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                if (decryptableForCache.isNotEmpty()) {
+                    cachedMessageDao?.upsertAll(decryptableForCache)
+                }
                 cachedMessageDao?.trimToLimit(chatId, limit)
             }
             Result.success(decrypted)
@@ -170,11 +174,14 @@ class SupabaseChatRepository(
                 val decrypted = fresh.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
 
                 val mergedMessages = decrypted.map { freshMsg ->
-                    if (freshMsg.content.startsWith("{")) {
-                        cached.find { it.id == freshMsg.id && !it.content.startsWith("{") } ?: freshMsg
+                    if (freshMsg.content.startsWith("{") || encryptionHelper.isPlaceholder(freshMsg.content)) {
+                        cached.find { it.id == freshMsg.id && !encryptionHelper.isPlaceholder(it.content) && !it.content.startsWith("{") } ?: freshMsg
                     } else freshMsg
                 }
-                cachedMessageDao?.upsertAll(mergedMessages)
+                val validToCache = mergedMessages.filter { !encryptionHelper.isPlaceholder(it.content) }
+                if (validToCache.isNotEmpty()) {
+                    cachedMessageDao?.upsertAll(validToCache)
+                }
                 cachedMessageDao?.trimToLimit(chatId, limit)
             } catch (e: Exception) {
                 Logger.e("Failed to sync fresh messages", throwable = e)
@@ -451,7 +458,9 @@ class SupabaseChatRepository(
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
             externalScope.launch {
-                cachedMessageDao?.upsert(domainMessage)
+                if (!encryptionHelper.isPlaceholder(domainMessage.content)) {
+                    cachedMessageDao?.upsert(domainMessage)
+                }
                 conversationMutex.withLock {
                     cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
                         cachedConversationDao?.upsertAll(listOf(existing.copy(lastMessage = domainMessage.content, lastMessageTime = domainMessage.createdAt)))
@@ -467,7 +476,9 @@ class SupabaseChatRepository(
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
             externalScope.launch {
-                cachedMessageDao?.upsert(domainMessage)
+                if (!encryptionHelper.isPlaceholder(domainMessage.content)) {
+                    cachedMessageDao?.upsert(domainMessage)
+                }
                 val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
                 val chatInfo = if (existing == null) dataSource.getChatInfo(domainMessage.chatId) else null
 
