@@ -21,6 +21,7 @@ import java.io.File
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import com.synapse.social.studioasinc.data.repository.EditProfileRepositoryImpl
+import com.synapse.social.studioasinc.shared.core.util.EducationSanitizer
 
 import com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository
 import com.synapse.social.studioasinc.shared.domain.service.MediaCompressor
@@ -75,7 +76,7 @@ class EditProfileViewModel @Inject constructor(
                                 hometown = profile.hometown ?: "",
                                 occupation = profile.occupation ?: "",
                                 workplace = profile.workplace ?: "",
-                                education = profile.educationDisplay ?: "",
+                                education = EducationSanitizer.sanitizeEducationString(profile.educationDisplay) ?: "",
                                 pronouns = profile.pronouns ?: "",
                                 birthday = profile.birthday ?: "",
                                 relationshipStatus = profile.relationshipStatus ?: "",
@@ -597,7 +598,8 @@ class EditProfileViewModel @Inject constructor(
         }
 
         // Education - convert to list only if not empty
-        val educationList = state.education.split(",").map { it.trim() }.filter { it.isNotBlank() }
+        val rawEducationList = state.education.split(",").map { it.trim() }.filter { it.isNotBlank() }
+        val educationList = EducationSanitizer.sanitizeEducationList(rawEducationList)
         if (educationList.isNotEmpty()) {
             updateData["education"] = educationList
         } else {
