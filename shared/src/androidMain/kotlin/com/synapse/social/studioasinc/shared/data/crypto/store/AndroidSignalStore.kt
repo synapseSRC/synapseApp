@@ -74,7 +74,10 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
          val existing = prefs.getString(key, null)
          if (existing == null) return true
          val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP), 0)
-         return existingKey == identityKey
+         if (existingKey != identityKey) {
+             prefs.edit().putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to save identity key")
+         }
+         return true
     }
 
     override fun getIdentity(address: SignalProtocolAddress): IdentityKey? {

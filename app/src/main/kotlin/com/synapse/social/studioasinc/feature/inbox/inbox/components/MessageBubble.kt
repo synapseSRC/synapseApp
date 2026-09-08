@@ -382,14 +382,10 @@ fun MessageBubble(
             // Avatar beside the bubble for received messages (bottom-aligned)
             if (!isFromMe && showAvatar) {
                 if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
-                    AsyncImage(
-                        model = senderAvatarUrl,
-                        contentDescription = "Sender Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(Sizes.AvatarSmall)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+                        avatarUrl = senderAvatarUrl,
+                        displayName = senderName,
+                        size = Sizes.AvatarSmall
                     )
                 } else {
                     Spacer(modifier = Modifier.size(Sizes.AvatarSmall))

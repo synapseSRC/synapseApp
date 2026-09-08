@@ -151,7 +151,7 @@ internal fun ChatMessageList(
                         cornerRadius = chatMessageCornerRadius,
                         themePreset = chatThemePreset,
                         showAvatar = !chatAvatarDisabled,
-                        senderName = participantProfile?.displayName ?: participantProfile?.name,
+                        senderName = participantProfile?.displayName ?: participantProfile?.name ?: initialParticipantName,
                         senderAvatarUrl = participantAvatarUrl
                     )
                 }

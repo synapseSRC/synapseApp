@@ -36,6 +36,15 @@ internal class ChatEncryptionHelper(
      */
     val decryptedMessageCache = mutableMapOf<String, String>()
 
+    private val placeholders = setOf(
+        "Message is encrypted",
+        "🔒 Encrypted message",
+        "🔒 You sent an encrypted message",
+        "🔒 You sent an encrypted message (Copy)"
+    )
+
+    fun isPlaceholder(content: String): Boolean = content in placeholders
+
     /**
      * Extracts content and mediaUrl from a decrypted JSON payload like {"content":"...","mediaUrl":"..."}.
      */
@@ -76,12 +85,6 @@ internal class ChatEncryptionHelper(
         val dbCached = try {
             cachedMessageDao?.getMessages(chatId ?: "", 200)?.find { it.id == messageId }
         } catch (_: Exception) { null }
-        val placeholders = setOf(
-            "Message is encrypted",
-            "🔒 Encrypted message",
-            "🔒 You sent an encrypted message",
-            "🔒 You sent an encrypted message (Copy)"
-        )
         if (dbCached != null && dbCached.content !in placeholders && dbCached.content.isNotBlank()) {
             Logger.d("E2EE_DECRYPT: Found message $messageId in local DB cache", tag = "E2EE")
             decryptedMessageCache[messageId] = dbCached.content
@@ -258,8 +261,8 @@ internal class ChatEncryptionHelper(
                     val bundle = PreKeyBundle(
                         registrationId = identity.registrationId,
                         deviceId = 1,
-                        preKeyId = preKeys.firstOrNull()?.keyId,
-                        preKeyPublic = preKeys.firstOrNull()?.publicKey,
+                        preKeyId = null,
+                        preKeyPublic = null,
                         signedPreKeyId = identity.signedPreKeyId,
                         signedPreKeyPublic = identity.signedPreKey,
                         signedPreKeySignature = identity.signedPreKeySignature,
@@ -298,8 +301,8 @@ internal class ChatEncryptionHelper(
         return PreKeyBundle(
             registrationId = regId,
             deviceId = 1,
-            preKeyId = preKeys.firstOrNull()?.keyId,
-            preKeyPublic = preKeys.firstOrNull()?.publicKey,
+            preKeyId = null,
+            preKeyPublic = null,
             signedPreKeyId = identity.signedPreKeyId,
             signedPreKeyPublic = identity.signedPreKey,
             signedPreKeySignature = identity.signedPreKeySignature,
