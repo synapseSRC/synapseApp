@@ -549,6 +549,16 @@ fun ChatDetailView(
                         }
                     }
                 }
+
+                if (!isAtBottom) {
+                    FloatingActionButton(
+                        onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(40.dp),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to latest")
+                    }
+                }
             }
         }
 

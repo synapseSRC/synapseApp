@@ -7,6 +7,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import com.synapse.social.studioasinc.shared.domain.model.MediaType
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.core.network.SupabaseErrorHandler
+import com.synapse.social.studioasinc.shared.core.util.EducationSanitizer
 
 import com.synapse.social.studioasinc.domain.model.UserProfile
 import com.synapse.social.studioasinc.domain.model.UserStatus
@@ -72,13 +73,14 @@ class EditProfileRepositoryImpl @Inject constructor(
                     occupation = result["occupation"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     workplace = result["workplace"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     education = result["education"]?.let { element ->
-                        when (element) {
+                        val rawList = when (element) {
                             is kotlinx.serialization.json.JsonArray -> element.mapNotNull { item ->
                                 (item as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
                             }
                             is kotlinx.serialization.json.JsonPrimitive -> element.contentOrNull?.let { listOf(it) } ?: emptyList()
                             else -> emptyList()
                         }
+                        EducationSanitizer.sanitizeEducationList(rawList)
                     } ?: emptyList(),
                     workHistory = result["work_history"]?.let { element ->
                         when (element) {

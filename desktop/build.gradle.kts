@@ -11,6 +11,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(project(":shared"))
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
                 implementation("io.insert-koin:koin-core:4.1.1")
                 implementation("io.insert-koin:koin-compose:4.1.1")
                 implementation("io.github.jan-tennert.supabase:postgrest-kt:3.4.1")
@@ -26,6 +27,7 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
+                implementation(compose.materialIconsExtended)
             }
         }
     }

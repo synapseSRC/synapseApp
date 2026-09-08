@@ -21,6 +21,10 @@ import kotlinx.coroutines.TimeoutCancellationException
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 
+enum class ConversationFilter {
+    ALL, UNREAD, FAVOURITES
+}
+
 class DesktopChatViewModel(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
@@ -118,6 +122,14 @@ class DesktopChatViewModel(
                 _isLoadingConversations.value = false
             }
         }
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setFilter(filter: ConversationFilter) {
+        _activeFilter.value = filter
     }
 
     fun selectConversation(conversation: Conversation) {
