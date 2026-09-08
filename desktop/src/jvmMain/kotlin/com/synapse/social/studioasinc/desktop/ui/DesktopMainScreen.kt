@@ -87,6 +87,9 @@ fun DesktopMainScreen(
         }
     }
 
+    val horizontalPaddingSmall = 12.dp
+    val verticalPaddingSmall = 8.dp
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0) // Avoid Android-only WindowInsets.systemBars on Desktop
@@ -103,7 +106,7 @@ fun DesktopMainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 16.dp, vertical = verticalPaddingSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -136,7 +139,7 @@ fun DesktopMainScreen(
                     OutlinedTextField(
                         value = localQuery,
                         onValueChange = { localQuery = it; viewModel.onSearchQueryChanged(it) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = horizontalPaddingSmall, vertical = verticalPaddingSmall),
                         placeholder = { Text("Search or start a new chat") },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                         trailingIcon = { if (localQuery.isNotEmpty()) IconButton(onClick = { localQuery = ""; viewModel.onSearchQueryChanged("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } },
@@ -145,7 +148,7 @@ fun DesktopMainScreen(
                     )
 
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = horizontalPaddingSmall, vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
@@ -187,7 +190,7 @@ fun DesktopMainScreen(
                         )
                     } else {
                         LazyColumn(
-                            contentPadding = PaddingValues(vertical = 8.dp)
+                            contentPadding = PaddingValues(vertical = verticalPaddingSmall)
                         ) {
                             items(conversations) { conversation ->
                                 ChatListItem(
@@ -538,7 +541,7 @@ fun ChatDetailView(
                         }
                     }
 
-                    val isAtBottom by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 || !listState.canScrollForward } }
+                    val isAtBottom by remember { derivedStateOf { !listState.canScrollForward } }
                     if (!isAtBottom) {
                         FloatingActionButton(
                             onClick = { scope.launch { listState.animateScrollToItem(chatEntries.lastIndex) } },
@@ -547,16 +550,6 @@ fun ChatDetailView(
                         ) {
                             Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to latest")
                         }
-                    }
-                }
-
-                if (!isAtBottom) {
-                    FloatingActionButton(
-                        onClick = { scope.launch { listState.animateScrollToItem(0) } },
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(40.dp),
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to latest")
                     }
                 }
             }

@@ -139,7 +139,7 @@ fun PhotoHistoryScreen(
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(120.dp)
+                            .size(Sizes.Height120)
                             .scale(scale)
                             .background(
                                 MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -173,7 +173,7 @@ fun PhotoHistoryScreen(
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 120.dp),
+                    columns = GridCells.Adaptive(minSize = Sizes.Height120),
                     contentPadding = PaddingValues(SettingsSpacing.screenPadding),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
                     verticalArrangement = Arrangement.spacedBy(Spacing.Small),
@@ -218,7 +218,7 @@ fun PhotoHistoryItem(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = Spacing.None)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
