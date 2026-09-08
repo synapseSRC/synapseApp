@@ -124,14 +124,6 @@ class DesktopChatViewModel(
         }
     }
 
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun setFilter(filter: ConversationFilter) {
-        _activeFilter.value = filter
-    }
-
     fun selectConversation(conversation: Conversation) {
         _selectedConversation.value = conversation
         loadMessages(conversation.chatId)
@@ -184,5 +176,3 @@ class DesktopChatViewModel(
         _error.value = null
     }
 }
-
-enum class ConversationFilter { ALL, UNREAD, FAVOURITES }
