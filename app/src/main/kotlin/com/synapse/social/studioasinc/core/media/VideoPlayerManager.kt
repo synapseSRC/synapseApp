@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.LinkedList
 import javax.inject.Inject
+import com.synapse.social.studioasinc.core.config.AppConstants
 import javax.inject.Singleton
 
 @Singleton
@@ -36,7 +37,6 @@ class VideoPlayerManager @Inject constructor(
         private const val CACHE_SIZE_BYTES: Long = 200 * 1024 * 1024
         private const val MAX_PLAYER_POOL_SIZE = 3
         private const val PRELOAD_SIZE_BYTES: Long = 5 * 1024 * 1024
-        private const val MEDIA_CACHE_DIR = "media_cache"
     }
 
     private val cacheEvictor = LeastRecentlyUsedCacheEvictor(CACHE_SIZE_BYTES)
@@ -44,7 +44,7 @@ class VideoPlayerManager @Inject constructor(
 
 
     private val simpleCache: SimpleCache by lazy {
-        SimpleCache(File(context.cacheDir, MEDIA_CACHE_DIR), cacheEvictor, databaseProvider)
+        SimpleCache(File(context.cacheDir, AppConstants.MEDIA_CACHE_DIR), cacheEvictor, databaseProvider)
     }
 
     private val cacheDataSourceFactory: CacheDataSource.Factory by lazy {

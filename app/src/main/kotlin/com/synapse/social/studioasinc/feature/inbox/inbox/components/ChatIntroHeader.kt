@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,7 +13,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -39,8 +39,8 @@ fun ChatIntroHeader(
         com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
             avatarUrl = avatarUrl,
             displayName = rawName,
-            size = 96.dp,
-            shape = RoundedCornerShape(20.dp)
+            size = Sizes.AvatarProfile,
+            shape = RoundedCornerShape(Sizes.CornerExtraLarge)
         )
 
         Spacer(modifier = Modifier.height(Spacing.Medium))
@@ -86,7 +86,7 @@ fun ChatIntroHeader(
             Icon(
                 imageVector = Icons.Default.Lock,
                 contentDescription = null,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(Sizes.IconSemiSmall),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(Spacing.ExtraSmall))

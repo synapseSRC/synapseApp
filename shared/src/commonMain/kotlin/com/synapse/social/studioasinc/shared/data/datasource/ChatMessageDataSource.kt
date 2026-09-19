@@ -31,7 +31,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
                         eq("is_deleted", false)
                         or {
                             filter("expires_at", FilterOperator.IS, "null")
-                            gt("expires_at", kotlinx.datetime.Clock.System.now().toString())
+                            gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
                         }
                         if (before != null && beforeId != null) {
                             lte("created_at", before)
@@ -154,7 +154,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     suspend fun markMessagesAsRead(chatId: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext
-            val now = kotlinx.datetime.Clock.System.now().toString()
+            val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
 
             client.postgrest.from("chat_participants").update({
                 set("last_read_at", now)

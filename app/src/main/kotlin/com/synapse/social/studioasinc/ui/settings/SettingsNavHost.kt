@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.ui.settings
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -9,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -393,7 +394,7 @@ private fun ChatPlaceholderScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Chat feature not implemented",
+                text = stringResource(R.string.settings_chat_not_implemented),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -42,7 +42,7 @@ private fun AvatarPreviewCard(
         modifier = Modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = 2.dp
+        tonalElevation = Sizes.ElevationLow
     ) {
         Column(
             modifier = Modifier
@@ -51,13 +51,13 @@ private fun AvatarPreviewCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
-                modifier = Modifier.size(120.dp),
+                modifier = Modifier.size(Sizes.Height120),
                 contentAlignment = Alignment.Center
             ) {
                 if (isUploading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(Sizes.IconGiant),
-                        strokeWidth = 4.dp,
+                        strokeWidth = Spacing.ExtraSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else {

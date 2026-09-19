@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.ui.components
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +68,7 @@ fun PostContent(
 
             if (mediaItems.size > 1) {
                 Text(
-                    text = "+${mediaItems.size - 1} more",
+                    text = stringResource(R.string.post_more_media_format, mediaItems.size - 1),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(Spacing.SmallMedium),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -81,7 +83,7 @@ fun PostContent(
 private fun PostContentPreview() {
     MaterialTheme {
         PostContent(
-            text = "This is a sample post text with some content",
+            text = stringResource(R.string.post_sample_content),
             mediaItems = null,
             onMediaClick = {}
         )

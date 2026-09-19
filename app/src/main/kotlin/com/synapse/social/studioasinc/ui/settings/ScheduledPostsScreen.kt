@@ -45,7 +45,7 @@ fun ScheduledPostsScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Scheduled posts feature not implemented",
+                text = stringResource(R.string.settings_scheduled_posts_not_implemented),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

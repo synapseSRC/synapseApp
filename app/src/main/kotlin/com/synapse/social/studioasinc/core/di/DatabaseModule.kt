@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
 import android.content.Context
+import com.synapse.social.studioasinc.core.config.AppConstants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -79,7 +80,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideStorageDatabase(@ApplicationContext context: Context, securityCipher: SecurityCipher): StorageDatabase {
-        val driver = AndroidSqliteDriver(StorageDatabase.Schema, context, "storage.db")
+        val driver = AndroidSqliteDriver(StorageDatabase.Schema, context, AppConstants.DATABASE_NAME)
         return StorageDatabase(
             driver = driver,
             PostAdapter = Post.Adapter(

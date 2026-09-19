@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
@@ -24,7 +25,7 @@ fun VerifiedBadge(
         imageVector = Icons.Filled.Verified,
         contentDescription = "Verified",
         modifier = modifier
-            .size(16.dp)
+            .size(Sizes.IconSemiMedium)
             .padding(start = Spacing.ExtraSmall),
         tint = MaterialTheme.colorScheme.primary
     )
@@ -46,7 +47,7 @@ fun GenderBadge(
             imageVector = icon,
             contentDescription = gender,
             modifier = modifier
-                .size(16.dp)
+                .size(Sizes.IconSemiMedium)
                 .padding(start = Spacing.ExtraSmall),
             tint = MaterialTheme.colorScheme.secondary
         )

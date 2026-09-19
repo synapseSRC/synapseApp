@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.profile.profile.components
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.Image
 import com.synapse.social.studioasinc.R
@@ -48,7 +49,7 @@ fun QRCodeDialog(
                     Image(
                         bitmap = it.asImageBitmap(),
                         contentDescription = "QR Code for $username",
-                        modifier = Modifier.size(250.dp)
+                        modifier = Modifier.size(Sizes.QRCodeSize)
                     )
                 }
                 Spacer(modifier = Modifier.height(Spacing.Medium))

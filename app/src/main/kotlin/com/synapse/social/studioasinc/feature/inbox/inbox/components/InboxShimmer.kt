@@ -10,11 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.components.ShimmerBox
 import com.synapse.social.studioasinc.ui.components.ShimmerCircle
-import com.synapse.social.studioasinc.ui.inbox.theme.InboxTheme
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxTheme
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @Composable
@@ -69,7 +68,7 @@ private fun ConversationItemShimmer(
             ) {
                 ShimmerBox(
                     modifier = Modifier
-                        .width(120.dp)
+                        .width(Sizes.Height120)
                         .height(Spacing.Medium),
                     shape = RoundedCornerShape(Sizes.CornerSmall)
                 )
@@ -87,7 +86,7 @@ private fun ConversationItemShimmer(
             ShimmerBox(
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
-                    .height(14.dp),
+                    .height(Sizes.HeightTiny),
                 shape = RoundedCornerShape(Sizes.CornerSmall)
             )
         }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileEvent
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileUiState
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
 import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
@@ -29,8 +30,8 @@ fun EditProfileContent(
         contentPadding = PaddingValues(
             start = SettingsSpacing.screenPadding,
             end = SettingsSpacing.screenPadding,
-            top = paddingValues.calculateTopPadding() + 8.dp,
-            bottom = paddingValues.calculateBottomPadding() + 24.dp
+            top = paddingValues.calculateTopPadding() + Spacing.Small,
+            bottom = paddingValues.calculateBottomPadding() + Spacing.Large
         ),
         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
     ) {

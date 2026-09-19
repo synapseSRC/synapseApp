@@ -48,9 +48,10 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyState
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxShimmer
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
-import com.synapse.social.studioasinc.ui.inbox.theme.InboxTheme
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxTheme
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.EmptyStateType
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatListLayout
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture
@@ -275,11 +276,11 @@ private fun ConversationItem(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(Sizes.IconSemiMedium)
                     )
                     Spacer(modifier = Modifier.width(Spacing.Small))
                     Text(
-                        text = "Quick Peak",
+                        text = stringResource(R.string.inbox_quick_peak),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold

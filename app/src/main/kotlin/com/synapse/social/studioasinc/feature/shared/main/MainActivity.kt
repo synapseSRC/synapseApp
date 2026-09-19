@@ -303,7 +303,7 @@ fun MainScreen(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "App Logo",
                 modifier = Modifier
-                    .size(85.dp)
+                    .size(Sizes.LogoSize)
                     .clickable(
                         onClick = onFinish,
                         onClickLabel = "Long press to exit"

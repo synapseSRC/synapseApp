@@ -37,7 +37,7 @@ fun AccessibilityScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.settings_back_button)
                         )
                     }
                 },
@@ -54,18 +54,18 @@ fun AccessibilityScreen(
         ) {
 
             item {
-                SettingsSection(title = "Increase Contrast") {
+                SettingsSection(title = stringResource(R.string.settings_increase_contrast_section)) {
                     SettingsToggleItem(
-                        title = "Increase Contrast",
-                        subtitle = "Darken key colors for better visibility",
+                        title = stringResource(R.string.settings_increase_contrast_title),
+                        subtitle = stringResource(R.string.settings_increase_contrast_subtitle),
                         imageVector = Icons.Filled.Contrast,
                         checked = increaseContrast,
                         onCheckedChange = { viewModel.updateIncreaseContrast(it) }
                     )
                     SettingsDivider()
                     SettingsToggleItem(
-                        title = "High Contrast Text",
-                        subtitle = "Use high contrast colors for text",
+                        title = stringResource(R.string.settings_high_contrast_text_title),
+                        subtitle = stringResource(R.string.settings_high_contrast_text_subtitle),
                         imageVector = Icons.Filled.TextFormat,
                         checked = highContrastText,
                         onCheckedChange = { viewModel.updateHighContrastText(it) }
@@ -75,18 +75,18 @@ fun AccessibilityScreen(
 
 
             item {
-                SettingsSection(title = "Animation Toggles") {
+                SettingsSection(title = stringResource(R.string.settings_animation_toggles_title)) {
                     SettingsToggleItem(
-                        title = "Reduce Animations",
-                        subtitle = "Minimize motion and transitions",
+                        title = stringResource(R.string.settings_reduce_animations_title),
+                        subtitle = stringResource(R.string.settings_reduce_animations_subtitle),
                         imageVector = Icons.Filled.Animation,
                         checked = reduceAnimations,
                         onCheckedChange = { viewModel.updateReduceAnimations(it) }
                     )
                     SettingsDivider()
                     SettingsToggleItem(
-                        title = "Auto-play Animations",
-                        subtitle = "Toggle auto-play for stickers and GIFs",
+                        title = stringResource(R.string.settings_autoplay_animations_title),
+                        subtitle = stringResource(R.string.settings_autoplay_animations_subtitle),
                         imageVector = Icons.Filled.PlayCircle,
                         checked = autoplayAnimations,
                         onCheckedChange = { viewModel.updateAutoplayAnimations(it) }

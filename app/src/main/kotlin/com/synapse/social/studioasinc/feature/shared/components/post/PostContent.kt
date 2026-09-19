@@ -248,7 +248,7 @@ fun QuotedPostCard(
             }
             Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
             Text(
-                text = "@${post.username}",
+                text = stringResource(R.string.post_username_format, post.username ?: ""),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

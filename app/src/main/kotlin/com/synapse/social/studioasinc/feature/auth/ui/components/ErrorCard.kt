@@ -55,7 +55,7 @@ fun ErrorCard(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = Spacing.ExtraSmall),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)

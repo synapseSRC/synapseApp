@@ -354,7 +354,10 @@ class ChatViewModel @Inject constructor(
         val chatId = currentChatId ?: return
         _hasMoreMessages.value = true
         viewModelScope.launch {
-            getMessagesUseCase(chatId).onSuccess { messages ->
+            // Always force a network fetch here — this is called on screen re-entry (ON_RESUME)
+            // and must never return stale cache. Without this, missed messages only appear
+            // after a second exit/re-enter cycle (cache-first stale return then background sync).
+            getMessagesUseCase(chatId, forceNetwork = true).onSuccess { messages ->
                 messagingDelegate.setMessages(messages)
             }
         }

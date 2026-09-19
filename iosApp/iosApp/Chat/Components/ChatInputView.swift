@@ -21,7 +21,7 @@ struct ChatInputView: View {
                         .foregroundColor(.blue)
                 }
                 .disabled(isSending)
-                .accessibilityLabel("Attach media")
+                .accessibilityLabel(String(localized: "accessibility_attach_media"))
                 .onChange(of: selectedItem) { newItem in
                     Task {
                         if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -33,7 +33,7 @@ struct ChatInputView: View {
                 }
 
                 // Text Input
-                TextField("Message", text: $inputText, axis: .vertical)
+                TextField(String(localized: "chat_message_placeholder"), text: $inputText, axis: .vertical)
                     .lineLimit(1...5)
                     .padding(8)
                     .background(Color(UIColor.secondarySystemBackground))
@@ -62,7 +62,7 @@ struct ChatInputView: View {
                             .foregroundColor(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
                     }
                     .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .accessibilityLabel("Send message")
+                    .accessibilityLabel(String(localized: "accessibility_send_message"))
                 }
             }
             .padding(12)

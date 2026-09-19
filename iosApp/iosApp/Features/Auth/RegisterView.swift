@@ -7,11 +7,11 @@ struct RegisterView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 20) {
-                Text("Create Account")
+                Text(String(localized: "action_create_account"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("Join Synapse and connect with others")
+                Text(String(localized: "register_subtitle"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
@@ -22,22 +22,22 @@ struct RegisterView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                TextField("Email", text: $viewModel.email)
+                TextField(String(localized: "field_email"), text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
-                TextField("Username", text: $viewModel.username)
+                TextField(String(localized: "field_username"), text: $viewModel.username)
                     .autocapitalization(.none)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
-                SecureField("Password", text: $viewModel.password)
+                SecureField(String(localized: "field_password"), text: $viewModel.password)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
-                SecureField("Confirm Password", text: $viewModel.confirmPassword)
+                SecureField(String(localized: "field_confirm_password"), text: $viewModel.confirmPassword)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
@@ -46,12 +46,12 @@ struct RegisterView: View {
                 Button(action: {
                     viewModel.register(navigator: navigator)
                 }) {
-                    Text("Register")
+                    Text(String(localized: "action_register"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(AppTheme.primaryColor)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
@@ -65,7 +65,7 @@ struct RegisterView: View {
                 LoadingView(message: "Creating account...")
             }
         }
-        .navigationTitle("Register")
+        .navigationTitle(String(localized: "action_register"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

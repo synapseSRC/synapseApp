@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,7 +118,7 @@ private fun EmptyFoldersPlaceholder(modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Default.FolderOpen,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(Sizes.AvatarSemiLarge),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         )
         Spacer(Modifier.height(Spacing.Medium))

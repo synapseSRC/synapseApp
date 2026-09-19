@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.shared.data.source.remote
 
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.UploadError
 import io.ktor.client.HttpClient
@@ -43,8 +44,9 @@ class ImgBBUploadService(private val client: HttpClient) : UploadService {
             val channel = fileProvider(0)
             val bytes = channel.toByteArray()
             
+            val baseEndpoint = SynapseConfig.IMGBB_API_ENDPOINT
             val response = client.submitFormWithBinaryData(
-                url = "https://api.imgbb.com/1/upload?key=$apiKey",
+                url = "$baseEndpoint?key=$apiKey",
                 formData = formData {
                     append("image", bytes, Headers.build {
                         append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")

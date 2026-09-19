@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ContactsViewModel
@@ -31,7 +30,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.components.ContactItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyState
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.EmptyStateType
 import com.synapse.social.studioasinc.shared.domain.model.User
-import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -53,8 +52,8 @@ fun ContactsTabScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
-                placeholder = { Text("Search contacts") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                placeholder = { Text(stringResource(R.string.search_contacts_placeholder)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.settings_search_settings_placeholder)) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium
             )
@@ -76,7 +75,7 @@ fun ContactsTabScreen(
 
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 80.dp) // extra space for FAB
+                    contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + Sizes.HeightLarge) // extra space for FAB
                 ) {
                     groupedContacts.forEach { (initial, contactsForInitial) ->
                         stickyHeader {
@@ -113,7 +112,7 @@ fun ContactsTabScreen(
             onClick = onNavigateToSearch,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = contentPadding.calculateBottomPadding() + 16.dp, end = 16.dp)
+                .padding(bottom = contentPadding.calculateBottomPadding() + Spacing.Medium, end = Spacing.Medium)
         ) {
             Icon(Icons.Default.GroupAdd, contentDescription = stringResource(R.string.find_friends))
         }

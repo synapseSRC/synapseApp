@@ -105,13 +105,13 @@ fun InboxEmptyState(
 
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(Sizes.EmptyStateIcon)
                 .scale(iconScale),
             contentAlignment = Alignment.Center
         ) {
 
             Surface(
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(Sizes.EmptyStateIconSmall),
                 shape = androidx.compose.foundation.shape.CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             ) {}

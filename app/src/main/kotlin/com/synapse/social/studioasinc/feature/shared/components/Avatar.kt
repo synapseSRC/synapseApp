@@ -15,13 +15,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 @Composable
 fun CircularAvatar(
     imageUrl: String?,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    size: Dp = 48.dp,
+    size: Dp = Sizes.AvatarDefault,
     displayName: String? = null,
     onClick: (() -> Unit)? = null
 ) {

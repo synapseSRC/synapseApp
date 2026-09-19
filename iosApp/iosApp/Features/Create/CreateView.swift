@@ -11,18 +11,18 @@ struct CreateView: View {
                 Button(action: {
                     isShowingCreatePost = true
                 }) {
-                    Text("Create New Post")
+                    Text(String(localized: "create_post_title"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.blue)
+                        .background(AppTheme.primaryColor)
                         .cornerRadius(10)
                         .padding(.horizontal)
                 }
                 Spacer()
             }
-            .navigationTitle("Create")
+            .navigationTitle(String(localized: "nav_create"))
             .navigationBarTitleDisplayMode(.inline)
             .fullScreenCover(isPresented: $isShowingCreatePost) {
                 CreatePostScreen(onPostSuccess: {

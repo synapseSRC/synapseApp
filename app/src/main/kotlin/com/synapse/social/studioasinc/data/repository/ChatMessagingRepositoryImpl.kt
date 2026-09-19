@@ -14,7 +14,9 @@ import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.decodeRecord
+import io.github.jan.supabase.realtime.realtime
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -23,7 +25,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -237,30 +239,55 @@ class ChatMessagingRepositoryImpl @Inject constructor(
 
     /**
      * Subscribe to real-time new messages for a specific chat.
-     * Uses callbackFlow + if (channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED || channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED) {
-     * Uses callbackFlow +     channel.subscribe()
-     * Uses callbackFlow + }
+     *
+     * Implementation mirrors the zero-message-loss pattern in ChatRealtimeDataSource:
+     * 1. Ensure the WebSocket is connected before creating the channel.
+     * 2. Register the [postgresChangeFlow] collector BEFORE subscribing — the flow
+     *    only registers a filter at this point and does not open the socket.
+     * 3. Use [CompletableDeferred] so the subscribe coroutine waits until the collector
+     *    has started (i.e. the flow's onStart has fired), closing the race window.
+     * 4. Call [subscribe] with blockUntilSubscribed=true so messages sent during the
+     *    handshake are buffered by the server and delivered upon confirmation.
      */
     fun subscribeToMessages(chatId: String): Flow<ChatMessage> {
         return callbackFlow {
+            // 1. Ensure the WebSocket transport is connected.
+            try {
+                client.realtime.connect()
+            } catch (e: Exception) {
+                Napier.e("Failed to connect to Realtime WebSocket", e, tag = TAG)
+            }
+
             val channel = client.channel("chat-messages-$chatId-${java.util.UUID.randomUUID()}") {}
-            val flow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+
+            // 2. Register the change filter BEFORE subscribing.
+            //    postgresChangeFlow only attaches a filter — it does NOT open the socket.
+            val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
                 table = "messages"
                 filter("chat_id", FilterOperator.EQ, chatId)
             }
 
+            // 3. Start the collector and signal readiness via CompletableDeferred.
+            val subscriptionReady = kotlinx.coroutines.CompletableDeferred<Unit>()
             val collector = launch(Dispatchers.IO) {
-                flow.map { it.decodeRecord<ChatMessage>() }.collect { message ->
-                    trySend(message)
-                }
+                changeFlow
+                    .onStart { subscriptionReady.complete(Unit) }
+                    .collect { action ->
+                        try {
+                            send(action.decodeRecord<ChatMessage>())
+                        } catch (e: Exception) {
+                            Napier.e("Error decoding realtime chat message", e, tag = TAG)
+                        }
+                    }
             }
 
+            // 4. Wait for the collector to be ready, then subscribe with blocking confirmation.
             launch(Dispatchers.IO) {
-                kotlinx.coroutines.yield()
                 try {
-                    if (channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED || channel.status.value == io.github.jan.supabase.realtime.RealtimeChannel.Status.UNSUBSCRIBED) {
-                        channel.subscribe()
-                    }
+                    subscriptionReady.await()
+                    kotlinx.coroutines.yield()
+                    channel.subscribe(blockUntilSubscribed = true)
+                    Napier.d("Successfully subscribed to chat channel for chatId=$chatId", tag = TAG)
                 } catch (e: Exception) {
                     if (e !is CancellationException) {
                         Napier.e("Failed to subscribe to chat realtime channel", e, tag = TAG)
@@ -270,10 +297,13 @@ class ChatMessagingRepositoryImpl @Inject constructor(
             }
 
             awaitClose {
+                Napier.d("Closing realtime channel for chatId=$chatId", tag = TAG)
                 collector.cancel()
                 launch {
                     try {
+                        kotlinx.coroutines.yield()
                         channel.unsubscribe()
+                        client.realtime.removeChannel(channel)
                     } catch (e: Exception) {
                         Napier.w("Failed to unsubscribe from chat channel", e, tag = TAG)
                     }

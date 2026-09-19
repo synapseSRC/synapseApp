@@ -10,7 +10,7 @@ struct HomeView: View {
                 if viewModel.uiState.isLoading && viewModel.uiState.posts.isEmpty {
                     LoadingView(message: "Loading feed...")
                 } else if let errorMessage = viewModel.uiState.errorMessage, viewModel.uiState.posts.isEmpty {
-                    ErrorBoundaryView(title: "Error", message: errorMessage) {
+                    ErrorBoundaryView(title: String(localized: "label_error"), message: errorMessage) {
                         viewModel.fetchHomeData()
                     }
                 } else {
@@ -45,7 +45,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationTitle("Synapse")
+            .navigationTitle(String(localized: "app_name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

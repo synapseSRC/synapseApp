@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.sp
 import com.synapse.social.studioasinc.domain.model.StoryPrivacy
+import com.synapse.social.studioasinc.feature.shared.theme.FontSizes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StoryColorOrange
@@ -188,7 +189,7 @@ internal fun StoryEditor(
                     items(stickerEmojis) { emoji ->
                         Text(
                             text = emoji,
-                            fontSize = 36.sp,
+                            fontSize = FontSizes.FontSizeDisplay,
                             modifier = Modifier.clickable {
                                 viewModel.addSticker(emoji)
                                 showStickerPicker = false

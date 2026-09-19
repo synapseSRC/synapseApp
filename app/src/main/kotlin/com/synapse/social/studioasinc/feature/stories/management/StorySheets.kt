@@ -148,17 +148,17 @@ private fun ViewerListItem(
                 model = viewer.avatar,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(Sizes.TouchTarget)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(Sizes.TouchTarget)
                     .clip(CircleShape)
                     .then(
-                        Modifier.padding(0.dp)
+                        Modifier.padding(Spacing.None)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -335,7 +335,7 @@ fun StoryReactionItem(
         // User info could be fetched or passed here. For now show UI based on storyId/userId
         Box(
             modifier = Modifier
-                .size(44.dp)
+                .size(Sizes.TouchTarget)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center

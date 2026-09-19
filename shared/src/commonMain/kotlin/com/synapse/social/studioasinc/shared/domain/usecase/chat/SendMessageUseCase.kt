@@ -48,8 +48,16 @@ class SendMessageUseCase(
             ?: return Result.failure(Exception("Not logged in"))
 
         if (signalProtocolManager == null) {
-            Napier.e("E2EE_ENCRYPT: SignalProtocolManager is null — E2EE not initialized", tag = "E2EE")
-            return Result.failure(Exception("E2EE not initialized. Cannot send message."))
+            Napier.w("E2EE_ENCRYPT: SignalProtocolManager is null — sending plain text message", tag = "E2EE")
+            return repository.sendMessage(
+                chatId = chatId,
+                content = content,
+                mediaUrl = mediaUrl,
+                messageType = messageType,
+                expiresAt = expiresAt,
+                replyToId = replyToId,
+                senderPlaintext = content
+            )
         }
 
         return try {

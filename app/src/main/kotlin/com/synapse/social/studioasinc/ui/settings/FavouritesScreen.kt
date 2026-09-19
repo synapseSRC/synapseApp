@@ -14,6 +14,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 
 @Composable
@@ -22,7 +23,7 @@ private fun EmptyFavouritesCard() {
         modifier = Modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = 2.dp
+        tonalElevation = Sizes.ElevationLow
     ) {
         Column(
             modifier = Modifier
@@ -33,7 +34,7 @@ private fun EmptyFavouritesCard() {
             Icon(
                 imageVector = Icons.Filled.Favorite,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(Sizes.AvatarSemiLarge),
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
             

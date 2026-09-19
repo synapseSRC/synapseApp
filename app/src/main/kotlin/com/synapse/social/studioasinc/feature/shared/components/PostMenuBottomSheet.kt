@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.components.post.PostOption
 import com.synapse.social.studioasinc.feature.shared.components.post.OptionItem
 
@@ -33,7 +34,7 @@ fun PostMenuBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = Spacing.Medium)
         ) {
             val options = mutableListOf<PostOption>()
             if (isOwnPost) {

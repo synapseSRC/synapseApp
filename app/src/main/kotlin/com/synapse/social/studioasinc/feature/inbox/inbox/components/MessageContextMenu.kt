@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
@@ -84,7 +85,7 @@ fun MessageContextMenu(
                     ) {
                         Text(
                             text = reaction.emoji,
-                            fontSize = 26.sp
+                            fontSize = MaterialTheme.typography.headlineMedium.fontSize
                         )
                     }
                 }
@@ -104,7 +105,7 @@ fun MessageContextMenu(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(Sizes.HeightDefault)
                         .clickable(onClick = onClick)
                         .padding(horizontal = Spacing.Medium),
                     verticalAlignment = Alignment.CenterVertically
@@ -113,7 +114,7 @@ fun MessageContextMenu(
                         imageVector = icon,
                         contentDescription = text,
                         tint = tint,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(Sizes.IconLarge)
                     )
                     Spacer(modifier = Modifier.width(Spacing.Medium))
                     Text(
@@ -127,7 +128,7 @@ fun MessageContextMenu(
             if (isFromMe) {
                 ActionRow(
                     icon = Icons.Default.Edit,
-                    text = "Edit",
+                    text = stringResource(R.string.inbox_context_menu_edit),
                     onClick = {
                         onStartEditing(selectedMessage)
                         onDismissRequest()
@@ -136,7 +137,7 @@ fun MessageContextMenu(
             }
             ActionRow(
                 icon = Icons.AutoMirrored.Filled.Forward,
-                text = "Forward message",
+                text = stringResource(R.string.inbox_context_menu_forward),
                 onClick = {
                     onForwardMessage()
                     onDismissRequest()
@@ -147,7 +148,7 @@ fun MessageContextMenu(
 
             ActionRow(
                 icon = Icons.Default.MarkChatUnread,
-                text = "Mark as unread",
+                text = stringResource(R.string.inbox_context_menu_mark_unread),
                 onClick = {
                     onMarkAsUnread()
                     onDismissRequest()
@@ -155,7 +156,7 @@ fun MessageContextMenu(
             )
             ActionRow(
                 icon = Icons.Default.PushPin,
-                text = "Pin to board",
+                text = stringResource(R.string.inbox_context_menu_pin),
                 onClick = {
                     onPinToBoard()
                     onDismissRequest()
@@ -163,7 +164,7 @@ fun MessageContextMenu(
             )
             ActionRow(
                 icon = Icons.Default.ContentCopy,
-                text = "Copy text",
+                text = stringResource(R.string.inbox_context_menu_copy),
                 onClick = {
                     clipboard.setText(AnnotatedString(selectedMessage.content))
                     onDismissRequest()
@@ -174,7 +175,7 @@ fun MessageContextMenu(
 
             ActionRow(
                 icon = Icons.Default.Delete,
-                text = "Delete",
+                text = stringResource(R.string.inbox_context_menu_delete),
                 tint = MaterialTheme.colorScheme.error,
                 onClick = {
                     selectedMessage.id?.let { onDeleteMessageForMe(it) }

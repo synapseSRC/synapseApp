@@ -50,12 +50,19 @@ class ChatInitializationDelegate(
         if (chatId != "new" && chatId == currentChatId) {
             subscriptionDelegate.startSubscriptions(chatId)
             viewModelScope.launch {
+                // Fast path: show cached messages immediately
                 getMessagesUseCase(chatId).onSuccess { messages ->
                     messagingDelegate.setMessages(messages)
                     _isLoading.value = false
                 }.onFailure { e ->
                     _error.value = e.message
                     _isLoading.value = false
+                }
+                // Network refresh: always fetch fresh to catch any messages missed while away
+                getMessagesUseCase(chatId, forceNetwork = true).onSuccess { fresh ->
+                    messagingDelegate.setMessages(fresh)
+                }.onFailure { e ->
+                    Napier.w("Network refresh failed on re-entry for chatId=$chatId: ${e.message}", tag = "ChatInit")
                 }
                 markMessagesAsReadUseCase(chatId)
                 markMessagesAsDeliveredUseCase(chatId)
@@ -107,12 +114,19 @@ class ChatInitializationDelegate(
             }
 
             launch {
+                // Fast path: cache-first for instant display
                 getMessagesUseCase(actualChatId).onSuccess { messages ->
                     messagingDelegate.setMessages(messages)
                     _isLoading.value = false
                 }.onFailure { e ->
                     _error.value = e.message
                     _isLoading.value = false
+                }
+                // Network refresh: always fetch fresh to catch any messages missed while away
+                getMessagesUseCase(actualChatId, forceNetwork = true).onSuccess { fresh ->
+                    messagingDelegate.setMessages(fresh)
+                }.onFailure { e ->
+                    Napier.w("Network refresh failed on init for chatId=$actualChatId: ${e.message}", tag = "ChatInit")
                 }
                 aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
                 markMessagesAsReadUseCase(actualChatId)

@@ -46,7 +46,7 @@ fun ChangeEmailDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = {
             Text(
-                text = "Change Email",
+                text = stringResource(R.string.change_email_dialog_title),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -55,7 +55,7 @@ fun ChangeEmailDialog(
                 verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
             ) {
                 Text(
-                    text = "Enter your new email address and current password to verify the change.",
+                    text = stringResource(R.string.change_email_dialog_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -107,8 +107,8 @@ fun ChangeEmailDialog(
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (passwordVisible) "Hide password"
-                                                   else "Show password"
+                                contentDescription = if (passwordVisible) stringResource(R.string.settings_hide_password)
+                                                   else stringResource(R.string.settings_show_password)
                             )
                         }
                     },
@@ -176,7 +176,7 @@ fun ChangePasswordDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = {
             Text(
-                text = "Change Password",
+                text = stringResource(R.string.change_password_dialog_title),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -185,7 +185,7 @@ fun ChangePasswordDialog(
                 verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
             ) {
                 Text(
-                    text = "Enter your current password and choose a new password. Your new password must be at least 8 characters long.",
+                    text = stringResource(R.string.change_password_dialog_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -212,8 +212,8 @@ fun ChangePasswordDialog(
                         IconButton(onClick = { currentPasswordVisible = !currentPasswordVisible }) {
                             Icon(
                                 imageVector = if (currentPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (currentPasswordVisible) "Hide password"
-                                                   else "Show password"
+                                contentDescription = if (currentPasswordVisible) stringResource(R.string.settings_hide_password)
+                                                   else stringResource(R.string.settings_show_password)
                             )
                         }
                     }
@@ -241,8 +241,8 @@ fun ChangePasswordDialog(
                         IconButton(onClick = { newPasswordVisible = !newPasswordVisible }) {
                             Icon(
                                 imageVector = if (newPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (newPasswordVisible) "Hide password"
-                                                   else "Show password"
+                                contentDescription = if (newPasswordVisible) stringResource(R.string.settings_hide_password)
+                                                   else stringResource(R.string.settings_show_password)
                             )
                         }
                     },
@@ -281,8 +281,8 @@ fun ChangePasswordDialog(
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
                                 imageVector = if (confirmPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (confirmPasswordVisible) "Hide password"
-                                                   else "Show password"
+                                contentDescription = if (confirmPasswordVisible) stringResource(R.string.settings_hide_password)
+                                                   else stringResource(R.string.settings_show_password)
                             )
                         }
                     },
@@ -369,11 +369,11 @@ private fun PasswordStrengthIndicator(strength: Int) {
 
         Text(
             text = when (strength) {
-                0 -> "Enter a password"
-                1 -> "Weak password"
-                2 -> "Fair password"
-                3 -> "Good password"
-                4 -> "Strong password"
+                0 -> stringResource(R.string.password_strength_enter)
+                1 -> stringResource(R.string.change_password_strength_weak)
+                2 -> stringResource(R.string.password_strength_fair)
+                3 -> stringResource(R.string.password_strength_good)
+                4 -> stringResource(R.string.change_password_strength_strong)
                 else -> ""
             },
             style = MaterialTheme.typography.bodySmall,
@@ -412,7 +412,7 @@ fun DeleteAccountDialog(
         },
         title = {
             Text(
-                text = "Delete Account",
+                text = stringResource(R.string.delete_account_dialog_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.error
             )
@@ -422,13 +422,13 @@ fun DeleteAccountDialog(
                 verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
             ) {
                 Text(
-                    text = "This action cannot be undone. All your data, including posts, messages, and profile information will be permanently deleted.",
+                    text = stringResource(R.string.delete_account_dialog_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
-                    text = "To confirm, please type:",
+                    text = stringResource(R.string.delete_account_confirmation_label),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )

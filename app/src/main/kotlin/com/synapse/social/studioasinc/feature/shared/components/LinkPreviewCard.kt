@@ -74,7 +74,7 @@ fun LinkPreviewCard(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .height(100.dp)
+                .height(Sizes.Height100)
                 .clip(RoundedCornerShape(Sizes.CornerMedium))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
@@ -107,7 +107,7 @@ fun LinkPreviewCard(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(140.dp)
+                                .height(Sizes.HeightCard)
                         )
                     }
                     Column(modifier = Modifier.padding(Spacing.SmallMedium)) {
@@ -157,7 +157,7 @@ fun LinkPreviewCard(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Remove Link Preview",
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(Spacing.Medium)
                         )
                     }
                 }

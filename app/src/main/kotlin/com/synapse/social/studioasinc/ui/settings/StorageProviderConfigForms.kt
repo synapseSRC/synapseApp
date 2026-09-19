@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlinx.coroutines.delay
 
 @Composable
@@ -60,9 +61,9 @@ internal fun ImgBBConfigContent(
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
-            label = "API Key"
+            label = stringResource(R.string.label_api_key_simple)
         )
-        HelpText(text = "Get your free API key from api.imgbb.com")
+        HelpText(text = stringResource(R.string.settings_help_imgbb))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -110,19 +111,19 @@ internal fun CloudinaryConfigContent(
         StorageSecureTextField(
             value = localUploadPreset,
             onValueChange = { localUploadPreset = it },
-            label = "Upload Preset (unsigned)"
+            label = stringResource(R.string.label_upload_preset)
         )
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
-            label = "API Key (signed, optional)"
+            label = stringResource(R.string.label_api_key_optional)
         )
         StorageSecureTextField(
             value = localApiSecret,
             onValueChange = { localApiSecret = it },
-            label = "API Secret (signed, optional)"
+            label = stringResource(R.string.label_api_secret_optional)
         )
-        HelpText(text = "Use an Upload Preset for unsigned uploads, or API Key + Secret for signed uploads. Find these in your Cloudinary dashboard.")
+        HelpText(text = stringResource(R.string.settings_help_cloudinary))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -172,7 +173,7 @@ internal fun SupabaseConfigContent(
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
-            label = "Service Role / API Key"
+            label = stringResource(R.string.label_supabase_api_key)
         )
         OutlinedTextField(
             value = localBucketName,
@@ -192,7 +193,7 @@ internal fun SupabaseConfigContent(
             shape = SettingsShapes.inputShape,
             singleLine = true
         )
-        HelpText(text = "Create a bucket in Supabase Storage and ensure policies allow read/write operations")
+        HelpText(text = stringResource(R.string.settings_help_supabase))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -243,12 +244,12 @@ internal fun R2ConfigContent(
         StorageSecureTextField(
             value = localAccessKeyId,
             onValueChange = { localAccessKeyId = it },
-            label = "Access Key ID"
+            label = stringResource(R.string.label_access_key_id)
         )
         StorageSecureTextField(
             value = localSecretAccessKey,
             onValueChange = { localSecretAccessKey = it },
-            label = "Secret Access Key"
+            label = stringResource(R.string.label_secret_access_key)
         )
         OutlinedTextField(
             value = localBucketName,
@@ -268,7 +269,7 @@ internal fun R2ConfigContent(
             shape = SettingsShapes.inputShape,
             singleLine = true
         )
-        HelpText(text = "Create an R2 bucket in your Cloudflare dashboard and generate API tokens")
+        HelpText(text = stringResource(R.string.settings_help_cloudflare))
 
         SaveConnectButton(
             isLoading = isSaving,
@@ -305,7 +306,7 @@ internal fun SaveConnectButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(Sizes.AvatarLarge),
         enabled = !isLoading,
         shape = SettingsShapes.itemShape
     ) {
@@ -320,9 +321,9 @@ internal fun SaveConnectButton(
                 "loading" -> {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(Sizes.IconDefault),
                             color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                            strokeWidth = Sizes.BorderDefault
                         )
                         Spacer(modifier = Modifier.width(Spacing.Medium))
                         Text(stringResource(R.string.storage_connecting))
@@ -333,7 +334,7 @@ internal fun SaveConnectButton(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Sizes.IconDefault)
                         )
                         Spacer(modifier = Modifier.width(Spacing.Medium))
                         Text(stringResource(R.string.upload_complete))

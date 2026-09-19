@@ -5,15 +5,15 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            Section(header: Text("Account")) {
-                Text("Account Preferences")
-                Text("Security")
-                Text("Privacy")
+            Section(header: Text(String(localized: "settings_section_account"))) {
+                Text(String(localized: "settings_account_preferences"))
+                Text(String(localized: "settings_security"))
+                Text(String(localized: "settings_privacy"))
             }
 
-            Section(header: Text("App Preferences")) {
-                Text("Notifications")
-                Text("Appearance")
+            Section(header: Text(String(localized: "settings_section_app_preferences"))) {
+                Text(String(localized: "nav_notifications"))
+                Text(String(localized: "settings_appearance"))
             }
 
             Section {
@@ -22,13 +22,13 @@ struct SettingsView: View {
                     navigator.isUserLoggedIn = false
                     navigator.reset()
                 }) {
-                    Text("Log Out")
+                    Text(String(localized: "action_log_out"))
                         .foregroundColor(.red)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle(String(localized: "nav_settings"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

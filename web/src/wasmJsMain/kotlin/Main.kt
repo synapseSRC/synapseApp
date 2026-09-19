@@ -5,12 +5,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.CanvasBasedWindow
+import androidx.compose.ui.window.ComposeViewport
 import com.synapse.social.studioasinc.shared.di.commentModule
 import com.synapse.social.studioasinc.shared.di.storageModule
 import com.synapse.social.studioasinc.web.di.webModule
 import com.synapse.social.studioasinc.web.ui.WebAuthScreen
 import com.synapse.social.studioasinc.web.ui.WebFeedScreen
+import kotlinx.browser.document
 import org.koin.core.context.startKoin
 
 enum class WebScreen {
@@ -23,7 +24,7 @@ fun main() {
         modules(storageModule, commentModule, webModule)
     }
 
-    CanvasBasedWindow(canvasElementId = "ComposeTarget") {
+    ComposeViewport(document.body!!) {
         MaterialTheme {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 var currentScreen by remember { mutableStateOf(WebScreen.Landing) }

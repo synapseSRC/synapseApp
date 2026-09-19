@@ -43,7 +43,7 @@ fun PasskeysScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.settings_back_button)
                         )
                     }
                 },
@@ -97,7 +97,7 @@ fun PasskeysScreen(
                 verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
             ) {
                 item {
-                    SettingsHeaderItem(title = "Your Passkeys")
+                    SettingsHeaderItem(title = stringResource(R.string.settings_your_passkeys_title))
                 }
 
                 item {
@@ -153,7 +153,7 @@ private fun PasskeyItemRow(
                 )
                 val addedDate = DateUtils.getRelativeTimeSpanString(passkey.dateAdded)
                 Text(
-                    text = "Added $addedDate",
+                    text = stringResource(R.string.settings_passkey_added_date, addedDate),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -182,18 +182,18 @@ private fun EmptyPasskeysState(modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Default.Key,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(Sizes.AvatarSemiLarge),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
         )
         Spacer(modifier = Modifier.height(Spacing.Medium))
         Text(
-            text = "No Passkeys",
+            text = stringResource(R.string.settings_no_passkeys_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(Spacing.Small))
         Text(
-            text = "Passkeys allow you to sign in securely without a password using your device's biometrics.",
+            text = stringResource(R.string.settings_passkeys_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

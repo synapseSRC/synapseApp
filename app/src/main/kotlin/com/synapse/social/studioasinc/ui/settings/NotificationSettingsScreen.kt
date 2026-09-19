@@ -17,16 +17,16 @@ import androidx.compose.ui.window.Dialog
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 private val SocialNotificationTypes = listOf(
-    NotificationCategory.LIKES to "Likes",
-    NotificationCategory.COMMENTS to "Comments",
-    NotificationCategory.REPLIES to "Replies",
-    NotificationCategory.FOLLOWS to "New Followers",
-    NotificationCategory.MENTIONS to "Mentions"
+    NotificationCategory.LIKES to R.string.settings_notification_likes_title,
+    NotificationCategory.COMMENTS to R.string.settings_notification_comments_title,
+    NotificationCategory.REPLIES to R.string.settings_notification_replies_title,
+    NotificationCategory.FOLLOWS to R.string.settings_notification_follows_title,
+    NotificationCategory.MENTIONS to R.string.settings_notification_mentions_title
 )
 
 private val ContentNotificationTypes = listOf(
-    NotificationCategory.NEW_POSTS to "New Posts from Followed Users",
-    NotificationCategory.SHARES to "Shares of Your Posts"
+    NotificationCategory.NEW_POSTS to R.string.settings_notification_new_posts_title,
+    NotificationCategory.SHARES to R.string.settings_notification_shares_title
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +55,7 @@ fun NotificationSettingsScreen(
 
     if (showStartTimePicker) {
         QuietHoursTimePickerDialog(
-            title = "Start Quiet Hours",
+            title = stringResource(R.string.settings_quiet_hours_start_title),
             initialTime = notificationPreferences.quietHoursStart,
             onDismiss = { showStartTimePicker = false },
             onConfirm = { time ->
@@ -63,20 +63,20 @@ fun NotificationSettingsScreen(
                 showStartTimePicker = false
                 showEndTimePicker = true
             },
-            confirmText = "Next"
+            confirmText = stringResource(R.string.settings_next_button)
         )
     }
 
     if (showEndTimePicker) {
         QuietHoursTimePickerDialog(
-            title = "End Quiet Hours",
+            title = stringResource(R.string.settings_quiet_hours_end_title),
             initialTime = notificationPreferences.quietHoursEnd,
             onDismiss = { showEndTimePicker = false },
             onConfirm = { time ->
                 viewModel.setQuietHours(notificationPreferences.quietHoursStart, time)
                 showEndTimePicker = false
             },
-            confirmText = "Done"
+            confirmText = stringResource(R.string.settings_done_button)
         )
     }
 }
@@ -106,7 +106,7 @@ fun NotificationSettingsContent(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.settings_back_button)
                         )
                     }
                 },
@@ -185,11 +185,11 @@ private fun GlobalSettingsSection(
     notificationPreferences: NotificationPreferences,
     onToggle: (Boolean) -> Unit
 ) {
-    SettingsSection(title = "Global Settings") {
+    SettingsSection(title = stringResource(R.string.settings_global_settings_title)) {
         SettingsToggleItem(
             imageVector = Icons.Default.Notifications,
-            title = "Enable Notifications",
-            subtitle = if (notificationPreferences.globalEnabled) "On" else "Off",
+            title = stringResource(R.string.settings_enable_notifications_title),
+            subtitle = if (notificationPreferences.globalEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
             checked = notificationPreferences.globalEnabled,
             onCheckedChange = onToggle
         )
@@ -201,7 +201,7 @@ private fun SocialInteractionsSection(
     notificationPreferences: NotificationPreferences,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit
 ) {
-    SettingsSection(title = "Social Interactions") {
+    SettingsSection(title = stringResource(R.string.settings_social_interactions_title)) {
         SocialNotificationTypes.forEachIndexed { index, (category, label) ->
             val isEnabled = notificationPreferences.isEnabled(category)
             SettingsToggleItem(
@@ -210,8 +210,8 @@ private fun SocialInteractionsSection(
                     NotificationCategory.FOLLOWS -> Icons.Default.Group
                     else -> Icons.Default.Notifications
                 },
-                title = label,
-                subtitle = if (isEnabled) "Enabled" else "Disabled",
+                title = stringResource(label),
+                subtitle = if (isEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
                 checked = isEnabled,
                 onCheckedChange = { onToggleCategory(category, it) },
                 enabled = notificationPreferences.globalEnabled
@@ -228,13 +228,13 @@ private fun ContentUpdatesSection(
     notificationPreferences: NotificationPreferences,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit
 ) {
-    SettingsSection(title = "Content Updates") {
+    SettingsSection(title = stringResource(R.string.settings_content_updates_title)) {
         ContentNotificationTypes.forEachIndexed { index, (category, label) ->
             val isEnabled = notificationPreferences.isEnabled(category)
             SettingsToggleItem(
                 imageVector = Icons.Default.ContentCopy,
-                title = label,
-                subtitle = if (isEnabled) "Enabled" else "Disabled",
+                title = stringResource(label),
+                subtitle = if (isEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
                 checked = isEnabled,
                 onCheckedChange = { onToggleCategory(category, it) },
                 enabled = notificationPreferences.globalEnabled
@@ -251,11 +251,11 @@ private fun SystemSecuritySection(
     notificationPreferences: NotificationPreferences,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit
 ) {
-    SettingsSection(title = "System & Security") {
+    SettingsSection(title = stringResource(R.string.settings_system_security_section)) {
         SettingsToggleItem(
             imageVector = Icons.Default.Info,
-            title = "Security Alerts",
-            subtitle = "Always enabled",
+            title = stringResource(R.string.settings_security_alerts_title),
+            subtitle = stringResource(R.string.settings_security_alerts_subtitle),
             checked = true,
             onCheckedChange = { },
             enabled = false
@@ -263,8 +263,8 @@ private fun SystemSecuritySection(
         SettingsDivider()
         SettingsToggleItem(
             imageVector = Icons.Default.Settings,
-            title = "App Updates",
-            subtitle = if (notificationPreferences.updatesEnabled) "Enabled" else "Disabled",
+            title = stringResource(R.string.settings_app_updates_title),
+            subtitle = if (notificationPreferences.updatesEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
             checked = notificationPreferences.updatesEnabled,
             onCheckedChange = { onToggleCategory(NotificationCategory.SYSTEM_UPDATES, it) },
             enabled = notificationPreferences.globalEnabled
@@ -279,7 +279,7 @@ private fun AdvancedSettingsSection(
     onToggleDoNotDisturb: (Boolean) -> Unit,
     onShowStartTimePicker: () -> Unit
 ) {
-    SettingsSection(title = "Advanced Settings") {
+    SettingsSection(title = stringResource(R.string.settings_advanced_settings_title)) {
         QuietHoursItem(
             notificationPreferences = notificationPreferences,
             onToggleQuietHours = onToggleQuietHours,
@@ -288,8 +288,8 @@ private fun AdvancedSettingsSection(
         SettingsDivider()
         SettingsToggleItem(
             imageVector = Icons.Default.DoNotDisturb,
-            title = "Do Not Disturb",
-            subtitle = if (notificationPreferences.doNotDisturb) "Active" else "Inactive",
+            title = stringResource(R.string.settings_do_not_disturb_title),
+            subtitle = if (notificationPreferences.doNotDisturb) stringResource(R.string.settings_active) else stringResource(R.string.settings_inactive),
             checked = notificationPreferences.doNotDisturb,
             onCheckedChange = onToggleDoNotDisturb,
             enabled = notificationPreferences.globalEnabled
@@ -330,7 +330,7 @@ private fun QuietHoursItem(
             Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Quiet Hours",
+                    text = stringResource(R.string.settings_quiet_hours_title),
                     style = SettingsTypography.itemTitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurface
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -338,7 +338,7 @@ private fun QuietHoursItem(
                 Text(
                     text = if (notificationPreferences.quietHoursEnabled)
                         "${notificationPreferences.quietHoursStart} - ${notificationPreferences.quietHoursEnd}"
-                    else "Disabled",
+                    else stringResource(R.string.settings_disabled),
                     style = SettingsTypography.itemSubtitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)

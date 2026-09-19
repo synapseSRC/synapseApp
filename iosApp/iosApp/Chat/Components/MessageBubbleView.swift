@@ -20,7 +20,7 @@ struct MessageBubbleView: View {
                             .scaledToFit()
                     } placeholder: {
                         Rectangle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(Color(.systemGray4))
                             .frame(height: 150)
                             .overlay(ProgressView())
                     }
@@ -32,7 +32,7 @@ struct MessageBubbleView: View {
                     Text(message.content)
                         .padding(12)
                         .foregroundColor(isFromMe ? .white : .primary)
-                        .background(isFromMe ? Color.blue : Color(UIColor.secondarySystemBackground))
+                        .background(isFromMe ? AppTheme.primaryColor : Color(.secondarySystemBackground))
                         .cornerRadius(16)
                 }
 
@@ -53,7 +53,7 @@ struct MessageBubbleView: View {
                                     }
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(message.userReaction == type ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                    .background(message.userReaction == type ? AppTheme.primaryColor.opacity(0.2) : Color(.systemGray6))
                                     .clipShape(Capsule())
                                 }
                                 .buttonStyle(PlainButtonStyle())

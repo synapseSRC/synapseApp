@@ -343,6 +343,10 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
      */
     override suspend fun getOAuthUrl(provider: String, redirectUrl: String): Result<String> {
         return try {
+            if (!SupabaseClient.isConfigured()) {
+                return Result.failure(IllegalStateException("Supabase credentials not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in gradle.properties to your actual Supabase project credentials."))
+            }
+
             // Map string provider to SocialProvider enum
             val socialProvider = when (provider.lowercase()) {
                 "google" -> SocialProvider.GOOGLE
