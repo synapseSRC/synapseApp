@@ -38,103 +38,17 @@ object AuthErrorMapper {
             )
         }
 
-        // 3. Supabase RestException
-        val restException = findRestException(exception)
-        if (restException != null) {
-            val restMsg = (restException.message ?: restException.toString()).lowercase()
-
-            if (restMsg.contains("email not confirmed") || restMsg.contains("email_not_confirmed") || restMsg.contains("email not verified")) {
-                return AuthError.EmailNotVerified(
-                    message = "Please verify your email address before signing in.",
-                    cause = restException
-                )
-            }
-
-            if (restMsg.contains("user already registered") || restMsg.contains("email already exists") ||
-                (restMsg.contains("duplicate") && restMsg.contains("email")) || restMsg.contains("user_email_key")
-            ) {
-                return AuthError.UserCollision(
-                    message = "This email is already registered",
-                    cause = restException
-                )
-            }
-
-            if (restMsg.contains("invalid login credentials") || restMsg.contains("invalid email or password") ||
-                restMsg.contains("invalid_credentials") || restMsg.contains("invalid grant") || restMsg.contains("user not found") ||
-                restMsg.contains("invalid request")
-            ) {
-                return AuthError.InvalidCredentials(
-                    message = "Invalid email or password.",
-                    cause = restException
-                )
-            }
-
-            return AuthError.Unknown(
-                message = "An unexpected error occurred. Please try again later.",
-                cause = restException
-            )
-        }
-
-        // 4. DNS / Host Resolution Failure
-        if (rootClassName.contains("UnknownHostException", ignoreCase = true) ||
-            rootClassName.contains("UnresolvedAddressException", ignoreCase = true) ||
-            excClassName.contains("UnknownHostException", ignoreCase = true) ||
-            excClassName.contains("UnresolvedAddressException", ignoreCase = true) ||
-            allMessages.contains("unknownhostexception") ||
-            allMessages.contains("unresolvedaddressexception") ||
-            allMessages.contains("unable to resolve host") ||
-            allMessages.contains("no address associated with hostname") ||
-            allMessages.contains("name or service not known")
-        ) {
-            return AuthError.DnsResolutionError(
-                message = "Unable to reach the authentication server. Please check your connection and try again.",
+        // 3. Email Not Verified
+        if (allMessages.contains("email not confirmed") || allMessages.contains("email_not_confirmed") || allMessages.contains("email not verified")) {
+            return AuthError.EmailNotVerified(
+                message = "Please verify your email address before signing in.",
                 cause = rootCause
             )
         }
 
-        // 5. Timeout
-        if (rootClassName.contains("Timeout", ignoreCase = true) ||
-            excClassName.contains("Timeout", ignoreCase = true) ||
-            allMessages.contains("sockettimeoutexception") ||
-            allMessages.contains("connecttimeoutexception") ||
-            allMessages.contains("httprequesttimeoutexception") ||
-            allMessages.contains("timeoutcancellationexception") ||
-            allMessages.contains("timed out") ||
-            allMessages.contains("timeout")
-        ) {
-            return AuthError.Timeout(
-                message = "The authentication server took too long to respond. Please try again.",
-                cause = rootCause
-            )
-        }
-
-        // 6. Connection Failure
-        if (rootClassName.contains("ConnectException", ignoreCase = true) ||
-            rootClassName.contains("SocketException", ignoreCase = true) ||
-            rootClassName.contains("SSLException", ignoreCase = true) ||
-            rootClassName.contains("IOException", ignoreCase = true) ||
-            excClassName.contains("ConnectException", ignoreCase = true) ||
-            excClassName.contains("SocketException", ignoreCase = true) ||
-            excClassName.contains("SSLException", ignoreCase = true) ||
-            excClassName.contains("IOException", ignoreCase = true) ||
-            allMessages.contains("failed to connect") ||
-            allMessages.contains("connection refused") ||
-            allMessages.contains("connection reset") ||
-            allMessages.contains("connection closed") ||
-            allMessages.contains("cleartext communication not permitted") ||
-            allMessages.contains("socket closed") ||
-            allMessages.contains("broken pipe")
-        ) {
-            return AuthError.ConnectionError(
-                message = "Unable to reach the authentication server. Please check your connection and try again.",
-                cause = rootCause
-            )
-        }
-
-        // 7. Specific Message Matches
-        if (allMessages.contains("user already registered") ||
-            allMessages.contains("email already exists") ||
-            (allMessages.contains("duplicate") && allMessages.contains("email")) ||
+        // 4. User Collision / Account Already Exists
+        if (allMessages.contains("user already registered") || allMessages.contains("email already exists") ||
+            (allMessages.contains("duplicate") && allMessages.contains("email")) || allMessages.contains("user_email_key") ||
             allMessages.contains("already in use")
         ) {
             return AuthError.UserCollision(
@@ -143,6 +57,18 @@ object AuthErrorMapper {
             )
         }
 
+        // 5. Invalid Credentials / Wrong Password
+        if (allMessages.contains("invalid login credentials") || allMessages.contains("invalid email or password") ||
+            allMessages.contains("invalid_credentials") || allMessages.contains("invalid grant") || allMessages.contains("user not found") ||
+            allMessages.contains("invalid request")
+        ) {
+            return AuthError.InvalidCredentials(
+                message = "Invalid email or password.",
+                cause = rootCause
+            )
+        }
+
+        // 6. Weak Password
         if (allMessages.contains("password") && (
                 allMessages.contains("weak") ||
                 allMessages.contains("too short") ||
@@ -156,32 +82,77 @@ object AuthErrorMapper {
             )
         }
 
-        if (allMessages.contains("invalid login credentials") ||
-            allMessages.contains("invalid email or password")
+        // 7. Validation Failed
+        if (allMessages.contains("invalid email") || allMessages.contains("email format")) {
+            return AuthError.ValidationFailed(
+                message = "Please enter a valid email address",
+                cause = rootCause
+            )
+        }
+
+        // 8. Supabase RestException specifics
+        val restException = findRestException(exception)
+        if (restException != null) {
+            val restMsg = (restException.message ?: restException.toString()).lowercase()
+            if (restMsg.contains("invalid")) {
+                return AuthError.InvalidCredentials(
+                    message = "Invalid email or password.",
+                    cause = restException
+                )
+            }
+            return AuthError.Unknown(
+                message = "An unexpected error occurred. Please try again later.",
+                cause = restException
+            )
+        }
+
+        // 9. DNS / Host Resolution Failure
+        if (rootClassName == "UnknownHostException" || rootClassName == "UnresolvedAddressException" ||
+            excClassName == "UnknownHostException" || excClassName == "UnresolvedAddressException" ||
+            allMessages.contains("unknownhostexception") ||
+            allMessages.contains("unresolvedaddressexception") ||
+            allMessages.contains("unable to resolve host") ||
+            allMessages.contains("no address associated with hostname") ||
+            allMessages.contains("name or service not known")
         ) {
-            return AuthError.InvalidCredentials(
-                message = "Invalid email or password.",
-                cause = rootCause
-            )
-        }
-
-        if (allMessages.contains("email not confirmed") || allMessages.contains("email not verified")) {
-            return AuthError.EmailNotVerified(
-                message = "Please verify your email address before signing in.",
-                cause = rootCause
-            )
-        }
-
-        if (allMessages.contains("network") || allMessages.contains("connection") || allMessages.contains("unreachable")) {
-            return AuthError.NetworkError(
+            return AuthError.DnsResolutionError(
                 message = "Unable to reach the authentication server. Please check your connection and try again.",
                 cause = rootCause
             )
         }
 
-        if (allMessages.contains("invalid email") || allMessages.contains("email format")) {
-            return AuthError.ValidationFailed(
-                message = "Please enter a valid email address",
+        // 10. Timeout
+        if (rootClassName == "SocketTimeoutException" || rootClassName == "ConnectTimeoutException" ||
+            rootClassName == "HttpRequestTimeoutException" || rootClassName == "TimeoutCancellationException" ||
+            excClassName == "SocketTimeoutException" || excClassName == "ConnectTimeoutException" ||
+            excClassName == "HttpRequestTimeoutException" || excClassName == "TimeoutCancellationException" ||
+            allMessages.contains("sockettimeoutexception") ||
+            allMessages.contains("connecttimeoutexception") ||
+            allMessages.contains("httprequesttimeoutexception") ||
+            allMessages.contains("timeoutcancellationexception") ||
+            allMessages.contains("timed out")
+        ) {
+            return AuthError.Timeout(
+                message = "The authentication server took too long to respond. Please try again.",
+                cause = rootCause
+            )
+        }
+
+        // 11. Connection Failure
+        if (rootClassName == "ConnectException" || rootClassName == "SocketException" ||
+            rootClassName == "SSLHandshakeException" || rootClassName == "SSLException" ||
+            excClassName == "ConnectException" || excClassName == "SocketException" ||
+            excClassName == "SSLHandshakeException" || excClassName == "SSLException" ||
+            allMessages.contains("failed to connect") ||
+            allMessages.contains("connection refused") ||
+            allMessages.contains("connection reset") ||
+            allMessages.contains("connection closed") ||
+            allMessages.contains("cleartext communication not permitted") ||
+            allMessages.contains("socket closed") ||
+            allMessages.contains("broken pipe")
+        ) {
+            return AuthError.ConnectionError(
+                message = "Unable to reach the authentication server. Please check your connection and try again.",
                 cause = rootCause
             )
         }

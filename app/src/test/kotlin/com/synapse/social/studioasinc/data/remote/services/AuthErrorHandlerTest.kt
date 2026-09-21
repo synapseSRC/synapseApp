@@ -21,7 +21,7 @@ class AuthErrorHandlerTest {
         assertEquals("The authentication server took too long to respond. Please try again.", AuthErrorHandler.getErrorMessage(timeoutError))
         assertTrue(AuthErrorHandler.isRecoverableError(timeoutError))
 
-        val invalidCreds = AuthErrorHandler.handleAuthError(RuntimeException("Invalid login credentials"))
+        val invalidCreds = AuthErrorHandler.handleAuthError(RuntimeException("io.github.jan.supabase.exceptions.HttpRequestException: Invalid login credentials"))
         assertEquals(AuthError.INVALID_CREDENTIALS, invalidCreds)
         assertEquals("Invalid email or password.", AuthErrorHandler.getErrorMessage(invalidCreds))
         assertFalse(AuthErrorHandler.isRecoverableError(invalidCreds))

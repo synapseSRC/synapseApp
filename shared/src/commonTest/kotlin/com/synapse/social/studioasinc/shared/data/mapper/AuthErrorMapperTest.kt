@@ -50,6 +50,16 @@ class AuthErrorMapperTest {
     }
 
     @Test
+    fun testHttpRequestExceptionWithInvalidCredentialsNotMisclassifiedAsNetworkError() {
+        val exception = RuntimeException("io.github.jan.supabase.exceptions.HttpRequestException: Invalid login credentials")
+        val authError = AuthErrorMapper.mapException(exception)
+
+        assertIs<AuthError.InvalidCredentials>(authError)
+        assertEquals("Invalid email or password.", authError.message)
+        assertSame(exception, authError.cause)
+    }
+
+    @Test
     fun testEmailNotConfirmedMessageMapsToEmailNotVerified() {
         val exception = RuntimeException("Email not confirmed")
         val authError = AuthErrorMapper.mapException(exception)

@@ -30,33 +30,7 @@ class AuthErrorHandler {
                 return AuthError.SUPABASE_NOT_CONFIGURED
             }
 
-            // 2. RestException
-            val restException = findRestException(error)
-            if (restException != null) {
-                val restMsg = (restException.message ?: restException.toString()).lowercase()
-
-                if (restMsg.contains("500") || restMsg.contains("502") || restMsg.contains("503") || restMsg.contains("504") ||
-                    restMsg.contains("server error") || restMsg.contains("internal server error") ||
-                    restMsg.contains("service unavailable") || restMsg.contains("bad gateway") || restMsg.contains("gateway timeout")
-                ) {
-                    return AuthError.SERVER_ERROR
-                }
-
-                if (restMsg.contains("email not confirmed") || restMsg.contains("email_not_confirmed") || restMsg.contains("email not verified")) {
-                    return AuthError.EMAIL_NOT_VERIFIED
-                }
-
-                if (restMsg.contains("invalid login credentials") || restMsg.contains("invalid email or password") ||
-                    restMsg.contains("invalid_credentials") || restMsg.contains("invalid grant") || restMsg.contains("user not found") ||
-                    restMsg.contains("invalid request")
-                ) {
-                    return AuthError.INVALID_CREDENTIALS
-                }
-
-                return AuthError.UNKNOWN_ERROR
-            }
-
-            // 3. HTTP 5xx / Server Errors by message
+            // 2. HTTP 5xx / Server Errors
             if (allMessages.contains("500") || allMessages.contains("502") || allMessages.contains("503") || allMessages.contains("504") ||
                 allMessages.contains("server error") || allMessages.contains("internal server error") ||
                 allMessages.contains("service unavailable") || allMessages.contains("bad gateway") || allMessages.contains("gateway timeout")
@@ -64,12 +38,12 @@ class AuthErrorHandler {
                 return AuthError.SERVER_ERROR
             }
 
-            // 4. Email not verified by message
+            // 3. Email Not Verified
             if (allMessages.contains("email not confirmed") || allMessages.contains("email_not_confirmed") || allMessages.contains("email not verified")) {
                 return AuthError.EMAIL_NOT_VERIFIED
             }
 
-            // 5. Invalid credentials by message
+            // 4. Invalid Credentials / Wrong Password
             if (allMessages.contains("invalid login credentials") || allMessages.contains("invalid email or password") ||
                 allMessages.contains("invalid_credentials") || allMessages.contains("invalid grant") || allMessages.contains("user not found") ||
                 allMessages.contains("invalid request")
@@ -77,11 +51,19 @@ class AuthErrorHandler {
                 return AuthError.INVALID_CREDENTIALS
             }
 
+            // 5. RestException
+            val restException = findRestException(error)
+            if (restException != null) {
+                val restMsg = (restException.message ?: restException.toString()).lowercase()
+                if (restMsg.contains("invalid")) {
+                    return AuthError.INVALID_CREDENTIALS
+                }
+                return AuthError.UNKNOWN_ERROR
+            }
+
             // 6. DNS / Host Resolution
-            if (rootClassName.contains("UnknownHostException", ignoreCase = true) ||
-                rootClassName.contains("UnresolvedAddressException", ignoreCase = true) ||
-                excClassName.contains("UnknownHostException", ignoreCase = true) ||
-                excClassName.contains("UnresolvedAddressException", ignoreCase = true) ||
+            if (rootClassName == "UnknownHostException" || rootClassName == "UnresolvedAddressException" ||
+                excClassName == "UnknownHostException" || excClassName == "UnresolvedAddressException" ||
                 allMessages.contains("unknownhostexception") ||
                 allMessages.contains("unresolvedaddressexception") ||
                 allMessages.contains("unable to resolve host") ||
@@ -92,31 +74,30 @@ class AuthErrorHandler {
             }
 
             // 7. Timeout
-            if (rootClassName.contains("Timeout", ignoreCase = true) ||
-                excClassName.contains("Timeout", ignoreCase = true) ||
+            if (rootClassName == "SocketTimeoutException" || rootClassName == "ConnectTimeoutException" ||
+                rootClassName == "HttpRequestTimeoutException" || rootClassName == "TimeoutCancellationException" ||
+                excClassName == "SocketTimeoutException" || excClassName == "ConnectTimeoutException" ||
+                excClassName == "HttpRequestTimeoutException" || excClassName == "TimeoutCancellationException" ||
                 allMessages.contains("sockettimeoutexception") ||
                 allMessages.contains("connecttimeoutexception") ||
                 allMessages.contains("httprequesttimeoutexception") ||
-                allMessages.contains("timeout")
+                allMessages.contains("timeoutcancellationexception") ||
+                allMessages.contains("timed out")
             ) {
                 return AuthError.TIMEOUT_ERROR
             }
 
-            // 8. Connection Failure / Network
-            if (rootClassName.contains("ConnectException", ignoreCase = true) ||
-                rootClassName.contains("SocketException", ignoreCase = true) ||
-                rootClassName.contains("SSLException", ignoreCase = true) ||
-                rootClassName.contains("IOException", ignoreCase = true) ||
-                excClassName.contains("ConnectException", ignoreCase = true) ||
-                excClassName.contains("SocketException", ignoreCase = true) ||
-                excClassName.contains("SSLException", ignoreCase = true) ||
-                excClassName.contains("IOException", ignoreCase = true) ||
+            // 8. Connection Failure
+            if (rootClassName == "ConnectException" || rootClassName == "SocketException" ||
+                rootClassName == "SSLHandshakeException" || rootClassName == "SSLException" ||
+                excClassName == "ConnectException" || excClassName == "SocketException" ||
+                excClassName == "SSLHandshakeException" || excClassName == "SSLException" ||
                 allMessages.contains("failed to connect") ||
                 allMessages.contains("connection refused") ||
                 allMessages.contains("connection reset") ||
                 allMessages.contains("cleartext communication not permitted") ||
-                allMessages.contains("network") ||
-                allMessages.contains("connection")
+                allMessages.contains("socket closed") ||
+                allMessages.contains("broken pipe")
             ) {
                 return AuthError.NETWORK_ERROR
             }
