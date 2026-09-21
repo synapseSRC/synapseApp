@@ -20,13 +20,14 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
         bucketName: String?,
         onProgress: (Float) -> Unit
     ): String {
-        val targetBucket = bucketName ?: config.supabaseBucket
-        val bucketToUse = if (targetBucket.isBlank()) "public" else targetBucket
+        val targetBucket = bucketName.orEmpty()
+            .ifBlank { config.supabaseBucket }
+            .ifBlank { com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_POST_MEDIA }
 
-        Napier.d("Uploading to Supabase bucket: $bucketToUse, file: $fileName", tag = "SupabaseUpload")
+        Napier.d("Uploading to Supabase bucket: $targetBucket, file: $fileName", tag = "SupabaseUpload")
 
         try {
-            val bucket = supabase.storage.from(bucketToUse)
+            val bucket = supabase.storage.from(targetBucket)
             val path = "${TimeProvider.nowMillis()}_$fileName"
 
             coroutineScope {
@@ -42,8 +43,8 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
             Napier.d("Supabase upload successful: $publicUrl", tag = "SupabaseUpload")
             return publicUrl
         } catch (e: Exception) {
-            Napier.e("Supabase upload failed to bucket: $bucketToUse", e, tag = "SupabaseUpload")
-            throw UploadError.SupabaseError("Supabase upload failed: ${e.message}")
+            Napier.e("Supabase upload failed to bucket: $targetBucket", e, tag = "SupabaseUpload")
+            throw UploadError.SupabaseError("Supabase upload failed: ${e.message ?: e.toString()}")
         }
     }
 }
