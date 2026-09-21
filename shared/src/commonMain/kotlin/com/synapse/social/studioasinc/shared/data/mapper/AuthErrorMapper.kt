@@ -23,7 +23,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.ConfigurationError(
                 message = "Authentication service is unavailable due to a configuration problem.",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -34,7 +34,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.ServerError(
                 message = "The authentication service is temporarily unavailable. Please try again later.",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -46,7 +46,7 @@ object AuthErrorMapper {
             if (restMsg.contains("email not confirmed") || restMsg.contains("email_not_confirmed") || restMsg.contains("email not verified")) {
                 return AuthError.EmailNotVerified(
                     message = "Please verify your email address before signing in.",
-                    cause = exception
+                    cause = restException
                 )
             }
 
@@ -55,7 +55,7 @@ object AuthErrorMapper {
             ) {
                 return AuthError.UserCollision(
                     message = "This email is already registered",
-                    cause = exception
+                    cause = restException
                 )
             }
 
@@ -65,13 +65,13 @@ object AuthErrorMapper {
             ) {
                 return AuthError.InvalidCredentials(
                     message = "Invalid email or password.",
-                    cause = exception
+                    cause = restException
                 )
             }
 
-            return AuthError.InvalidCredentials(
-                message = "Invalid email or password.",
-                cause = exception
+            return AuthError.Unknown(
+                message = "An unexpected error occurred. Please try again later.",
+                cause = restException
             )
         }
 
@@ -88,7 +88,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.DnsResolutionError(
                 message = "Unable to reach the authentication server. Please check your connection and try again.",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -104,7 +104,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.Timeout(
                 message = "The authentication server took too long to respond. Please try again.",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -127,7 +127,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.ConnectionError(
                 message = "Unable to reach the authentication server. Please check your connection and try again.",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -139,7 +139,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.UserCollision(
                 message = "This email is already registered",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -152,7 +152,7 @@ object AuthErrorMapper {
         ) {
             return AuthError.WeakPassword(
                 message = "Password must be at least 8 characters",
-                cause = exception
+                cause = rootCause
             )
         }
 
@@ -161,42 +161,42 @@ object AuthErrorMapper {
         ) {
             return AuthError.InvalidCredentials(
                 message = "Invalid email or password.",
-                cause = exception
+                cause = rootCause
             )
         }
 
         if (allMessages.contains("email not confirmed") || allMessages.contains("email not verified")) {
             return AuthError.EmailNotVerified(
                 message = "Please verify your email address before signing in.",
-                cause = exception
+                cause = rootCause
             )
         }
 
         if (allMessages.contains("network") || allMessages.contains("connection") || allMessages.contains("unreachable")) {
             return AuthError.NetworkError(
                 message = "Unable to reach the authentication server. Please check your connection and try again.",
-                cause = exception
+                cause = rootCause
             )
         }
 
         if (allMessages.contains("invalid email") || allMessages.contains("email format")) {
             return AuthError.ValidationFailed(
                 message = "Please enter a valid email address",
-                cause = exception
+                cause = rootCause
             )
         }
 
         // Fallback Unknown Error
         return AuthError.Unknown(
             message = "An unexpected error occurred. Please try again later.",
-            cause = exception
+            cause = rootCause
         )
     }
 
     private fun unwrapRootCause(throwable: Throwable): Throwable {
         var cause: Throwable = throwable
-        val visited = mutableSetOf<Throwable>()
-        while (cause.cause != null && cause.cause != cause && visited.add(cause)) {
+        val visited = mutableSetOf<Int>()
+        while (cause.cause != null && cause.cause != cause && visited.add(System.identityHashCode(cause))) {
             cause = cause.cause!!
         }
         return cause
@@ -204,8 +204,8 @@ object AuthErrorMapper {
 
     private fun findRestException(throwable: Throwable): RestException? {
         var curr: Throwable? = throwable
-        val visited = mutableSetOf<Throwable>()
-        while (curr != null && visited.add(curr)) {
+        val visited = mutableSetOf<Int>()
+        while (curr != null && visited.add(System.identityHashCode(curr))) {
             if (curr is RestException) return curr
             curr = curr.cause
         }
@@ -215,8 +215,8 @@ object AuthErrorMapper {
     private fun collectMessages(throwable: Throwable): String {
         val sb = StringBuilder()
         var curr: Throwable? = throwable
-        val visited = mutableSetOf<Throwable>()
-        while (curr != null && visited.add(curr)) {
+        val visited = mutableSetOf<Int>()
+        while (curr != null && visited.add(System.identityHashCode(curr))) {
             curr.message?.let { sb.append(it).append(" ") }
             curr = curr.cause
         }

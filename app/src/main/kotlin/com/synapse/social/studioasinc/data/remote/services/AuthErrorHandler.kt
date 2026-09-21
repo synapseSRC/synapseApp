@@ -48,12 +48,12 @@ class AuthErrorHandler {
 
                 if (restMsg.contains("invalid login credentials") || restMsg.contains("invalid email or password") ||
                     restMsg.contains("invalid_credentials") || restMsg.contains("invalid grant") || restMsg.contains("user not found") ||
-                    restMsg.contains("invalid request") || restMsg.contains("invalid")
+                    restMsg.contains("invalid request")
                 ) {
                     return AuthError.INVALID_CREDENTIALS
                 }
 
-                return AuthError.INVALID_CREDENTIALS
+                return AuthError.UNKNOWN_ERROR
             }
 
             // 3. HTTP 5xx / Server Errors by message
@@ -243,8 +243,8 @@ class AuthErrorHandler {
 
         private fun unwrapRootCause(throwable: Throwable): Throwable {
             var cause: Throwable = throwable
-            val visited = mutableSetOf<Throwable>()
-            while (cause.cause != null && cause.cause != cause && visited.add(cause)) {
+            val visited = mutableSetOf<Int>()
+            while (cause.cause != null && cause.cause != cause && visited.add(System.identityHashCode(cause))) {
                 cause = cause.cause!!
             }
             return cause
@@ -252,8 +252,8 @@ class AuthErrorHandler {
 
         private fun findRestException(throwable: Throwable): RestException? {
             var curr: Throwable? = throwable
-            val visited = mutableSetOf<Throwable>()
-            while (curr != null && visited.add(curr)) {
+            val visited = mutableSetOf<Int>()
+            while (curr != null && visited.add(System.identityHashCode(curr))) {
                 if (curr is RestException) return curr
                 curr = curr.cause
             }
@@ -263,8 +263,8 @@ class AuthErrorHandler {
         private fun collectMessages(throwable: Throwable): String {
             val sb = StringBuilder()
             var curr: Throwable? = throwable
-            val visited = mutableSetOf<Throwable>()
-            while (curr != null && visited.add(curr)) {
+            val visited = mutableSetOf<Int>()
+            while (curr != null && visited.add(System.identityHashCode(curr))) {
                 curr.message?.let { sb.append(it).append(" ") }
                 curr = curr.cause
             }

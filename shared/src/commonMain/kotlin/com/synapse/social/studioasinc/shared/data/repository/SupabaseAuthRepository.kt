@@ -561,7 +561,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     private fun logSafeError(message: String, e: Throwable) {
         val sanitizedMessage = e.message?.let { sanitizeLogMessage(it) } ?: "No message"
-        Napier.e("$message: ${e::class.simpleName} - $sanitizedMessage", throwable = e, tag = TAG)
+        Napier.e("$message: ${e::class.simpleName} - $sanitizedMessage", tag = TAG)
     }
 
     private fun sanitizeLogMessage(msg: String): String {

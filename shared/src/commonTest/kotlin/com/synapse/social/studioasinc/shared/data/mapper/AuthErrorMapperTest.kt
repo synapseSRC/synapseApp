@@ -87,6 +87,6 @@ class AuthErrorMapperTest {
 
         assertIs<AuthError.DnsResolutionError>(authError)
         assertEquals("Unable to reach the authentication server. Please check your connection and try again.", authError.message)
-        assertSame(outerException, authError.cause)
+        assertSame(innerDnsCause, authError.cause)
     }
 }
