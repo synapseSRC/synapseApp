@@ -7,20 +7,19 @@ data class User(
     val createdAt: String? = null
 )
 
-
-
 data class AuthResult(
     val user: User?,
     val needsEmailVerification: Boolean = false,
     val message: String? = null
 )
 
-
-
 enum class AuthError {
     EMAIL_NOT_VERIFIED,
     INVALID_CREDENTIALS,
     NETWORK_ERROR,
+    DNS_ERROR,
+    TIMEOUT_ERROR,
+    SERVER_ERROR,
     SUPABASE_NOT_CONFIGURED,
     UNKNOWN_ERROR
 }

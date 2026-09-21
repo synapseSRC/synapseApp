@@ -1,12 +1,11 @@
 package com.synapse.social.studioasinc.shared.data.repository
-import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.model.UserProfileInsert
-import com.synapse.social.studioasinc.shared.data.model.UserSettingsInsert
-import com.synapse.social.studioasinc.shared.data.model.UserPresenceInsert
 import com.synapse.social.studioasinc.shared.data.mapper.AuthErrorMapper
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+import com.synapse.social.studioasinc.shared.domain.model.AuthError
 import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -28,11 +27,9 @@ import com.synapse.social.studioasinc.shared.domain.model.auth.SocialProvider
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Count
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.functions.functions
 import kotlin.time.ExperimentalTime
@@ -67,6 +64,13 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
      */
     override suspend fun signUp(email: String, password: String): Result<String> {
         return try {
+            if (!SupabaseClient.isConfigured()) {
+                val configError = AuthError.ConfigurationError(
+                    message = "Authentication service is unavailable due to a configuration problem."
+                )
+                logSafeError("Sign up failed - configuration problem", configError)
+                return Result.failure(configError)
+            }
             withContext(AppDispatchers.IO) {
                 val user = client.auth.signUpWith(Email) {
                     this.email = email
@@ -132,18 +136,13 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                     Napier.d("Profile does not exist for $userId, creating new profile...", tag = TAG)
                     val actualUsername = username ?: email.substringBefore("@")
 
-                    // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
                     val profileInsert = UserProfileInsert(
-                        uid = userId, // Ensure ID is passed if model requires it
+                        uid = userId,
                         username = actualUsername
                     )
                     Napier.d("Inserting user profile for $userId into users table...", tag = TAG)
                     client.from("users").insert(profileInsert)
                     Napier.d("Successfully inserted user profile for $userId.", tag = TAG)
-
-                    // Note: user_settings and user_presence are automatically created by database trigger
-                    // when the user signs up via Supabase Auth (see handle_new_auth_user trigger)
-                    // No need to manually insert them here
 
                     Napier.d("User profile created: $userId", tag = TAG)
                 } else {
@@ -165,6 +164,13 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
      */
     override suspend fun signIn(email: String, password: String): Result<String> {
         return try {
+            if (!SupabaseClient.isConfigured()) {
+                val configError = AuthError.ConfigurationError(
+                    message = "Authentication service is unavailable due to a configuration problem."
+                )
+                logSafeError("Sign in failed - configuration problem", configError)
+                return Result.failure(configError)
+            }
             withContext(AppDispatchers.IO) {
                 client.auth.signInWith(Email) {
                     this.email = email
@@ -334,20 +340,17 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     /**
      * Generates an authorization URL for OAuth flows.
-     *
-     * This method manually constructs the URL using [URLBuilder] to ensure the correct
-     * parameters are appended for the specific provider and redirect URI.
-     *
-     * @param provider The name of the social provider (e.g., "google", "apple").
-     * @param redirectUrl The URI to redirect to after authentication.
      */
     override suspend fun getOAuthUrl(provider: String, redirectUrl: String): Result<String> {
         return try {
             if (!SupabaseClient.isConfigured()) {
-                return Result.failure(IllegalStateException("Supabase credentials not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in gradle.properties to your actual Supabase project credentials."))
+                val configError = AuthError.ConfigurationError(
+                    message = "Authentication service is unavailable due to a configuration problem."
+                )
+                logSafeError("OAuth URL generation failed - configuration problem", configError)
+                return Result.failure(configError)
             }
 
-            // Map string provider to SocialProvider enum
             val socialProvider = when (provider.lowercase()) {
                 "google" -> SocialProvider.GOOGLE
                 "apple" -> SocialProvider.APPLE
@@ -359,16 +362,15 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                 "slack" -> SocialProvider.SLACK
                 else -> throw IllegalArgumentException("Unsupported OAuth provider: $provider")
             }
-            
+
             val oauthProvider = mapSocialProviderToOAuthProvider(socialProvider)
-            
-            // Use Supabase's built-in OAuth URL generation with proper redirect
+
             val oauthUrl = URLBuilder(client.supabaseUrl).apply {
                 appendPathSegments("auth", "v1", "authorize")
                 parameters.append("provider", oauthProvider.name.lowercase())
                 parameters.append("redirect_to", redirectUrl)
             }.buildString()
-            
+
             Napier.d("Generated OAuth URL for ${oauthProvider.name}: $oauthUrl", tag = TAG)
             Result.success(oauthUrl)
         } catch (e: Exception) {
@@ -379,8 +381,6 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     /**
      * Finalizes an OAuth flow by exchanging a code for a session or importing tokens.
-     *
-     * This supports both standard PKCE flows (using `code`) and manual token management.
      */
     override suspend fun handleOAuthCallback(code: String?, accessToken: String?, refreshToken: String?): Result<Unit> {
         return try {
@@ -424,28 +424,23 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     /**
      * Authenticates a user specifically using a Google ID token.
-     *
-     * After a successful sign-in, it verifies that the user's profile exists
-     * in the application database.
      */
     override suspend fun signInWithGoogleIdToken(idToken: String): Result<String> {
         return try {
             withContext(AppDispatchers.IO) {
-                // Use the ID token to sign in with Google
                 client.auth.signInWith(IDToken) {
                     this.idToken = idToken
                     this.provider = Google
                 }
-                
-                // Retrieve the user from the established session
+
                 val user = client.auth.currentUserOrNull()
                 val userId = user?.id
                     ?: throw Exception("User ID not found after Google sign-in")
                 val email = user?.email
                     ?: throw Exception("Email not found after Google sign-in")
-                
+
                 ensureProfileExists(userId, email, null)
-                
+
                 Napier.d("Google ID token sign-in successful: $userId", tag = TAG)
                 Result.success(userId)
             }
@@ -504,8 +499,8 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                 Result.success(providers)
             }
         } catch (e: Exception) {
-             logSafeError("Failed to get linked identities", e)
-             Result.failure(e)
+            logSafeError("Failed to get linked identities", e)
+            Result.failure(e)
         }
     }
 
@@ -529,9 +524,6 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
 
     /**
      * Permanently deletes the user's account and all associated data.
-     *
-     * This invokes a Supabase Edge Function to handle complex data cleanup
-     * across various tables before signing the user out.
      */
     override suspend fun deleteAccount(): Result<Unit> {
         return try {
@@ -568,6 +560,16 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
 
     private fun logSafeError(message: String, e: Throwable) {
-        Napier.e("$message: ${e::class.simpleName} - ${e.message}", tag = TAG)
+        val sanitizedMessage = e.message?.let { sanitizeLogMessage(it) } ?: "No message"
+        Napier.e("$message: ${e::class.simpleName} - $sanitizedMessage", throwable = e, tag = TAG)
+    }
+
+    private fun sanitizeLogMessage(msg: String): String {
+        return msg
+            .replace(Regex("password=[^&\\s]+", RegexOption.IGNORE_CASE), "password=***")
+            .replace(Regex("access_token=[^&\\s]+", RegexOption.IGNORE_CASE), "access_token=***")
+            .replace(Regex("refresh_token=[^&\\s]+", RegexOption.IGNORE_CASE), "refresh_token=***")
+            .replace(Regex("id_token=[^&\\s]+", RegexOption.IGNORE_CASE), "id_token=***")
+            .replace(Regex("Bearer\\s+[A-Za-z0-9\\-\\._~\\+\\/]+=*", RegexOption.IGNORE_CASE), "Bearer ***")
     }
 }
