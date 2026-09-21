@@ -22,7 +22,8 @@ import kotlinx.coroutines.CancellationException
 
 class PostDetailRepositoryImpl @Inject constructor(
     private val client: SupabaseClient,
-    private val reactionRepository: ReactionRepositoryImpl
+    private val reactionRepository: ReactionRepositoryImpl,
+    private val postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao
 ) {
 
     companion object {
@@ -81,10 +82,20 @@ class PostDetailRepositoryImpl @Inject constructor(
                 val pollData = getPollData(postId, currentUserId)
                 pollResults = pollData.first
                 userPollVote = pollData.second
+                post.userPollVote = userPollVote
             }
 
+            val finalPost = if (pollResults != null) {
+                val updatedOptions = pollResults.map { result ->
+                    PollOption(text = result.text, votes = result.voteCount)
+                }
+                post.copy(pollOptions = updatedOptions).apply {
+                    this.userPollVote = userPollVote
+                }
+            } else post
+
             val postDetail = PostDetail(
-                post = post,
+                post = finalPost,
                 author = author,
                 reactionSummary = reactionSummary,
                 userReaction = userReaction,
@@ -93,6 +104,10 @@ class PostDetailRepositoryImpl @Inject constructor(
                 pollResults = pollResults,
                 userPollVote = userPollVote
             )
+
+            runCatching {
+                postDao.insert(PostMapper.toEntity(finalPost))
+            }
 
             Log.d(TAG, "Successfully fetched post details for: $postId")
             Result.success(postDetail)

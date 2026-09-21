@@ -360,6 +360,8 @@ class PostDetailViewModel @Inject constructor(
             pollRepository.submitVote(postId, optionIndex).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
                      _uiState.update { it.copy(post = updatedPost) }
+                     postActionsRepository.updateLocalPost(updatedPost.post)
+                     PostEventBus.emit(PostEvent.Updated(updatedPost.post))
                  }
             }
         }
@@ -371,6 +373,8 @@ class PostDetailViewModel @Inject constructor(
             pollRepository.revokeVote(postId).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
                      _uiState.update { it.copy(post = updatedPost) }
+                     postActionsRepository.updateLocalPost(updatedPost.post)
+                     PostEventBus.emit(PostEvent.Updated(updatedPost.post))
                  }
             }
         }

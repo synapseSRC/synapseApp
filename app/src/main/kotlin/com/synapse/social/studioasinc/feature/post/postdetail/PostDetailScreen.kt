@@ -393,7 +393,8 @@ private fun PostDetailContent(
                                     replyCount = postDetail.post.replyCount,
                                     username = postDetail.author.username,
                                     avatarUrl = postDetail.author.avatar,
-                                    isVerified = postDetail.author.verify
+                                    isVerified = postDetail.author.verify,
+                                    userPollVote = postDetail.userPollVote
                                 )
                             }
 

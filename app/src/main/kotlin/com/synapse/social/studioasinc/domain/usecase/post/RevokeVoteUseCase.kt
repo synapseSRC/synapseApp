@@ -7,8 +7,11 @@ import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import kotlin.math.max
 
+import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
+
 class RevokeVoteUseCase @Inject constructor(
-    private val pollRepository: PollRepository
+    private val pollRepository: PollRepository,
+    private val postActionsRepository: PostActionsRepository
 ) {
     operator fun invoke(post: Post): Flow<Result<Post>> = flow {
         val currentVoteIndex = post.userPollVote
@@ -19,7 +22,7 @@ class RevokeVoteUseCase @Inject constructor(
         val currentOptions = post.pollOptions ?: throw IllegalArgumentException("No poll options")
 
         val updatedOptions = currentOptions.mapIndexed { index, option ->
-            if (index == currentVoteIndex) option.copy(votes = max(0, option.votes - 1)) else option
+            if (index == currentVoteIndex) option.copy(votes = maxOf(0, option.votes - 1)) else option
         }
 
         val updatedPost = post.copy(
@@ -31,6 +34,7 @@ class RevokeVoteUseCase @Inject constructor(
 
         try {
             pollRepository.revokeVote(post.id)
+            postActionsRepository.updateLocalPost(updatedPost)
         } catch (e: Exception) {
             emit(Result.failure(e))
         }

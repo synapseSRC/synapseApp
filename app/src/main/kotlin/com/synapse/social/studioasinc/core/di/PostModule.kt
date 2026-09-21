@@ -143,9 +143,10 @@ object PostModule {
     @Singleton
     fun providePostDetailRepository(
         client: SupabaseClientType,
-        reactionRepository: ReactionRepositoryImpl
+        reactionRepository: ReactionRepositoryImpl,
+        postDao: PostDao
     ): PostDetailRepositoryImpl {
-        return PostDetailRepositoryImpl(client, reactionRepository as ReactionRepositoryImpl)
+        return PostDetailRepositoryImpl(client, reactionRepository as ReactionRepositoryImpl, postDao)
     }
     @Provides
     @Singleton
