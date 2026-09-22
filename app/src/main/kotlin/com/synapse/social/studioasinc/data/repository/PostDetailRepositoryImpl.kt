@@ -79,7 +79,8 @@ class PostDetailRepositoryImpl @Inject constructor(
             var pollResults: List<PollOptionResult>? = null
             var userPollVote: Int? = null
             if (post.hasPoll == true) {
-                val pollData = getPollData(postId, currentUserId)
+                val options = post.pollOptions?.map { it.text } ?: emptyList()
+                val pollData = getPollData(postId, options, currentUserId)
                 pollResults = pollData.first
                 userPollVote = pollData.second
                 post.userPollVote = userPollVote
@@ -320,20 +321,11 @@ class PostDetailRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun getPollData(postId: String, userId: String?): Pair<List<PollOptionResult>?, Int?> {
+    private suspend fun getPollData(postId: String, options: List<String>, userId: String?): Pair<List<PollOptionResult>?, Int?> {
+        if (options.isEmpty()) {
+            return Pair(null, null)
+        }
         return try {
-            val post = client.from("posts")
-                .select { filter { eq("id", postId) } }
-                .decodeSingleOrNull<JsonObject>()
-
-            val options = post?.get("poll_options")?.jsonArray?.mapNotNull {
-                it.jsonObject["text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-            } ?: emptyList()
-
-            if (options.isEmpty()) {
-                return Pair(null, null)
-            }
-
             val votes = client.from("poll_votes")
                 .select { filter { eq("post_id", postId) } }
                 .decodeList<JsonObject>()

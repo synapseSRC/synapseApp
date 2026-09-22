@@ -23,9 +23,9 @@ class PollRepositoryImpl @Inject constructor(
     @Serializable
     private data class PollVote(
         val id: String? = null,
-        @SerialName("post_id") val postId: String,
-        @SerialName("user_id") val userId: String,
-        @SerialName("option_index") val optionIndex: Int,
+        @SerialName("post_id") val postId: String = "",
+        @SerialName("user_id") val userId: String = "",
+        @SerialName("option_index") val optionIndex: Int = 0,
         @SerialName("created_at") val createdAt: String? = null
     )
 
