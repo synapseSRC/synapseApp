@@ -12,6 +12,7 @@ data class EditProfileUiState(
     val avatarUrl: String? = null,
     val coverUrl: String? = null,
     val pendingAvatarUri: Uri? = null,
+    val pendingCoverUri: Uri? = null,
     val avatarUploadState: UploadState = UploadState.Idle,
     val coverUploadState: UploadState = UploadState.Idle,
     val username: String = "",
@@ -63,6 +64,7 @@ sealed class EditProfileEvent {
     data class AvatarSelected(val uri: Uri) : EditProfileEvent()
     data class AvatarCropped(val uri: Uri) : EditProfileEvent()
     data class CoverSelected(val uri: Uri) : EditProfileEvent()
+    data class CoverCropped(val uri: Uri) : EditProfileEvent()
     object RetryAvatarUpload : EditProfileEvent()
     object RetryCoverUpload : EditProfileEvent()
     object SaveClicked : EditProfileEvent()
