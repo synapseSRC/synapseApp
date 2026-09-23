@@ -11,7 +11,7 @@ data class NotificationDto(
     @SerialName("recipient_id") val recipientId: String,
     @SerialName("sender_id") val senderId: String? = null,
     @SerialName("type") val type: String,
-    @SerialName("title") val title: JsonObject,
+    @SerialName("title") val title: JsonObject? = null,
     @SerialName("body") val body: JsonObject? = null,
     @SerialName("data") val data: JsonObject? = null,
     @SerialName("priority") val priority: Int = 2,

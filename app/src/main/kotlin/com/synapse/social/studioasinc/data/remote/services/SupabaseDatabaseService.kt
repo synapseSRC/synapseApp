@@ -9,6 +9,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.add
 
 
 
@@ -32,21 +36,38 @@ class SupabaseDatabaseService : IDatabaseService {
 
 
 
+    private fun Any?.toJsonElement(): JsonElement = when (this) {
+        null -> JsonNull
+        is JsonElement -> this
+        is String -> JsonPrimitive(this)
+        is Number -> JsonPrimitive(this)
+        is Boolean -> JsonPrimitive(this)
+        is Map<*, *> -> {
+            buildJsonObject {
+                for ((k, v) in this@toJsonElement) {
+                    put(k.toString(), v.toJsonElement())
+                }
+            }
+        }
+        is Iterable<*> -> {
+            buildJsonArray {
+                for (item in this@toJsonElement) {
+                    add(item.toJsonElement())
+                }
+            }
+        }
+        else -> JsonPrimitive(this.toString())
+    }
+
     suspend fun insert(table: String, data: Map<String, Any?>): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 android.util.Log.d(TAG, "Inserting data into table '$table'")
 
-                val insertData = kotlinx.serialization.json.buildJsonObject {
+                val insertData = buildJsonObject {
                     data.forEach { (key, value) ->
                         val convertedValue = convertTimestampIfNeeded(key, value)
-                        when (convertedValue) {
-                            is String -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            is Number -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            is Boolean -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            null -> put(key, kotlinx.serialization.json.JsonNull)
-                            else -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue.toString()))
-                        }
+                        put(key, convertedValue.toJsonElement())
                     }
                 }
 
@@ -121,16 +142,10 @@ class SupabaseDatabaseService : IDatabaseService {
                 android.util.Log.d(TAG, "Updating data in table '$table' where $filter=$value")
 
 
-                val updateData = kotlinx.serialization.json.buildJsonObject {
+                val updateData = buildJsonObject {
                     data.forEach { (key, value) ->
                         val convertedValue = convertTimestampIfNeeded(key, value)
-                        when (convertedValue) {
-                            is String -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            is Number -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            is Boolean -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            null -> put(key, kotlinx.serialization.json.JsonNull)
-                            else -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue.toString()))
-                        }
+                        put(key, convertedValue.toJsonElement())
                     }
                 }
 
@@ -286,16 +301,10 @@ class SupabaseDatabaseService : IDatabaseService {
     override suspend fun upsert(table: String, data: Map<String, Any?>): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                val upsertData = kotlinx.serialization.json.buildJsonObject {
+                val upsertData = buildJsonObject {
                     data.forEach { (key, value) ->
                         val convertedValue = convertTimestampIfNeeded(key, value)
-                        when (convertedValue) {
-                            is String -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            is Number -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            is Boolean -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue))
-                            null -> put(key, kotlinx.serialization.json.JsonNull)
-                            else -> put(key, kotlinx.serialization.json.JsonPrimitive(convertedValue.toString()))
-                        }
+                        put(key, convertedValue.toJsonElement())
                     }
                 }
                 client.from(table).upsert(upsertData)

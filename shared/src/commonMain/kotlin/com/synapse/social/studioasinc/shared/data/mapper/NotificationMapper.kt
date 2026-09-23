@@ -12,7 +12,14 @@ import kotlinx.serialization.json.contentOrNull
 
 fun NotificationDto.toDomain(): Notification {
     val messageBody = body?.get("en")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+        ?: title?.get("en")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
     val messageType = if (messageBody != null) NotificationMessageType.CUSTOM else NotificationMessageType.FALLBACK
+
+    val rawTargetId = data?.get("target_id")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+        ?: data?.get("postId")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+        ?: data?.get("commentId")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+        ?: data?.get("chat_id")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+        ?: data?.get("followerId")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
 
     return Notification(
         id = id,
@@ -24,7 +31,7 @@ fun NotificationDto.toDomain(): Notification {
         messageType = messageType,
         timestamp = createdAt,
         isRead = isRead,
-        targetId = data?.get("target_id")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+        targetId = rawTargetId
     )
 }
 
