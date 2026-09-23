@@ -54,12 +54,6 @@ class PhotoHistoryViewModel @Inject constructor(
             }
 
 
-            val profileResult = repository.getUserProfile(userId)
-
-
-
-
-
             val historyFlow = when (type) {
                 PhotoType.PROFILE -> repository.getProfileHistory(userId)
                 PhotoType.COVER -> repository.getCoverHistory(userId)
@@ -69,8 +63,6 @@ class PhotoHistoryViewModel @Inject constructor(
                 result.fold(
                     onSuccess = { items ->
                         _uiState.update { it.copy(items = items) }
-
-
                         fetchCurrentProfile(userId, type)
                     },
                     onFailure = { error ->
@@ -103,12 +95,10 @@ class PhotoHistoryViewModel @Inject constructor(
             val userId = repository.getCurrentUserId() ?: return@launch
             val type = _uiState.value.photoType
 
-
-
             val isCurrent = item.imageUrl == _uiState.value.currentPhotoUrl
-            val newUrl = if (isCurrent) "null" else item.imageUrl
+            val newUrl = if (isCurrent) null else item.imageUrl
 
-            val updateData = mutableMapOf<String, String>()
+            val updateData = mutableMapOf<String, Any?>()
             when (type) {
                 PhotoType.PROFILE -> updateData["avatar"] = newUrl
                 PhotoType.COVER -> updateData["profile_cover_image"] = newUrl
@@ -118,16 +108,7 @@ class PhotoHistoryViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-
-
-
-
-
-
-
-
-                     val displayedUrl = if (newUrl == "null") null else newUrl
-                     _uiState.update { it.copy(currentPhotoUrl = displayedUrl) }
+                     _uiState.update { it.copy(currentPhotoUrl = newUrl) }
                 },
                 onFailure = { error ->
                     _uiState.update { it.copy(error = "Failed to update profile: ${error.message}") }
@@ -141,25 +122,23 @@ class PhotoHistoryViewModel @Inject constructor(
             val type = _uiState.value.photoType
             val userId = repository.getCurrentUserId() ?: return@launch
 
-
             if (item.imageUrl == _uiState.value.currentPhotoUrl) {
-                 val updateData = mutableMapOf<String, String>()
+                 val updateData = mutableMapOf<String, Any?>()
                  when (type) {
-                    PhotoType.PROFILE -> updateData["avatar"] = "null"
-                    PhotoType.COVER -> updateData["profile_cover_image"] = "null"
+                    PhotoType.PROFILE -> updateData["avatar"] = null
+                    PhotoType.COVER -> updateData["profile_cover_image"] = null
                  }
                  repository.updateProfile(userId, updateData)
                  _uiState.update { it.copy(currentPhotoUrl = null) }
             }
 
             val result = when (type) {
-                PhotoType.PROFILE -> repository.deleteProfileHistoryItem(item.key)
-                PhotoType.COVER -> repository.deleteCoverHistoryItem(item.key)
+                PhotoType.PROFILE -> repository.deleteProfileHistoryItem(item.id)
+                PhotoType.COVER -> repository.deleteCoverHistoryItem(item.id)
             }
 
             result.fold(
                 onSuccess = {
-
                     loadHistory(type)
                 },
                 onFailure = { error ->

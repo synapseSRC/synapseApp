@@ -316,10 +316,9 @@ class EditProfileViewModel @Inject constructor(
                         }
 
                         viewModelScope.launch {
-                            try {
-                                repository.addToProfileHistory(userId, url)
-                            } catch (e: Exception) {
-                                android.util.Log.w("EditProfile", "Failed to add to profile history", e)
+                            val historyResult = repository.addToProfileHistory(userId, url)
+                            historyResult.onFailure { e ->
+                                android.util.Log.e("EditProfile", "Failed to add to profile history", e)
                             }
                         }
                     },
@@ -432,10 +431,9 @@ class EditProfileViewModel @Inject constructor(
                         }
 
                         viewModelScope.launch {
-                            try {
-                                repository.addToCoverHistory(userId, url)
-                            } catch (e: Exception) {
-                                android.util.Log.w("EditProfile", "Failed to add to cover history", e)
+                            val historyResult = repository.addToCoverHistory(userId, url)
+                            historyResult.onFailure { e ->
+                                android.util.Log.e("EditProfile", "Failed to add to cover history", e)
                             }
                         }
                     },
@@ -500,10 +498,9 @@ class EditProfileViewModel @Inject constructor(
                                 )
                             }
                             finalState = _uiState.value
-                            try {
-                                repository.addToProfileHistory(userId, url)
-                            } catch (e: Exception) {
-                                android.util.Log.w("EditProfile", "Failed to add to profile history", e)
+                            val historyResult = repository.addToProfileHistory(userId, url)
+                            historyResult.onFailure { e ->
+                                android.util.Log.e("EditProfile", "Failed to add to profile history", e)
                             }
                         },
                         onFailure = { error ->
