@@ -1644,6 +1644,18 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="action_processing_request">Processing Request…</string>
     <string name="action_request_reports">Request Selected Reports</string>
     <string name="action_download_report">Download Ready Report</string>
+    <!-- Scheduled Posts -->
+    <string name="schedule">Schedule</string>
+    <string name="title_schedule_post">Schedule Post</string>
+    <string name="title_edit_scheduled_post">Edit Scheduled Post</string>
+    <string name="button_scheduling">Scheduling...</string>
+    <string name="scheduled_time_label">Scheduled for %1$s</string>
+    <string name="schedule_post_action">Schedule Post</string>
+    <string name="reschedule_post_action">Reschedule</string>
+    <string name="cancel_scheduled_post">Cancel Scheduled Post</string>
+    <string name="scheduled_posts_empty">No scheduled posts</string>
+    <string name="scheduled_posts_empty_desc">You haven\'t scheduled any posts yet. Schedule a post from the post composer.</string>
+    <string name="scheduled_time_past_error">Scheduled time must be in the future</string>
     <string name="settings_scheduled_posts_title">Scheduled Posts</string>
     <string name="settings_title">Settings</string>
     <string name="action_log_out">Log Out</string>

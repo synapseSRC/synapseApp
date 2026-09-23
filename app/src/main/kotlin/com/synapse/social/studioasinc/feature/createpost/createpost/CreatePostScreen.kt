@@ -70,6 +70,7 @@ fun CreatePostScreen(
     var showLocationScreen by remember { mutableStateOf(false) }
     var showFeelingScreen by remember { mutableStateOf(false) }
     var showYoutubeDialog by remember { mutableStateOf(false) }
+    var showSchedulePicker by remember { mutableStateOf(false) }
 
 
     var tagSearchQuery by remember { mutableStateOf("") }
@@ -154,6 +155,8 @@ fun CreatePostScreen(
                         }
                     },
                     onYoutubeClick = { showYoutubeDialog = true },
+                    onScheduleClick = { showSchedulePicker = true },
+                    isScheduled = uiState.scheduledAt != null,
                     modifier = Modifier.imePadding()
                 )
             },
@@ -171,7 +174,8 @@ fun CreatePostScreen(
                     onLocationClick = { showLocationScreen = true },
                     onYoutubeClick = { showYoutubeDialog = true },
                     onTagClick = { showTagScreen = true },
-                    onFeelingClick = { showFeelingScreen = true }
+                    onFeelingClick = { showFeelingScreen = true },
+                    onScheduleClick = { showSchedulePicker = true }
                 )
             },
             topBar = {
@@ -179,6 +183,7 @@ fun CreatePostScreen(
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
                     isEditMode = uiState.isEditMode,
+                    isScheduled = uiState.scheduledAt != null,
                     isLoading = uiState.isLoading,
                     postText = uiState.postText,
                     mediaItemsCount = uiState.mediaItems.size,
@@ -296,6 +301,12 @@ fun CreatePostScreen(
             viewModel.setYoutubeUrl(it)
             showYoutubeDialog = false
         },
-        searchUiState = searchUiState
+        searchUiState = searchUiState,
+        showSchedulePicker = showSchedulePicker,
+        onSchedulePickerDismiss = { showSchedulePicker = false },
+        onScheduleSet = {
+            viewModel.setScheduledAt(it)
+            showSchedulePicker = false
+        }
     )
 }

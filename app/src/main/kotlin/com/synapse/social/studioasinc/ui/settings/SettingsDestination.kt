@@ -98,6 +98,8 @@ sealed class SettingsDestination(val route: String) {
 
     object Font : SettingsDestination(ROUTE_FONT)
 
+    object ScheduledPosts : SettingsDestination(ROUTE_SCHEDULED_POSTS)
+
     companion object {
 
         const val ROUTE_HUB = "settings_hub"
@@ -127,6 +129,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_CHAT_FOLDERS = "settings_chat_folders"
         const val ROUTE_FLAGS = "settings_flags"
         const val ROUTE_FONT = "settings_font"
+        const val ROUTE_SCHEDULED_POSTS = "settings_scheduled_posts"
 
 
 
@@ -156,7 +159,8 @@ sealed class SettingsDestination(val route: String) {
             ChatSettings,
             ChatFolders,
             Flags,
-            Font
+            Font,
+            ScheduledPosts
         )
 
 
@@ -188,6 +192,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_CHAT_FOLDERS -> ChatFolders
             ROUTE_FLAGS -> Flags
             ROUTE_FONT -> Font
+            ROUTE_SCHEDULED_POSTS -> ScheduledPosts
             else -> null
         }
     }
