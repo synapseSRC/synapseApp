@@ -27,24 +27,28 @@ class VoiceRecorder(private val context: Context) {
     fun start(outputFile: File) {
         this.outputFile = outputFile
 
-        recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val rec = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(context)
         } else {
             @Suppress("DEPRECATION")
             MediaRecorder()
-        }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOutputFile(outputFile.absolutePath)
+        }
 
-            try {
-                prepare()
-                start()
-                startAmplitudeUpdates()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        try {
+            rec.setAudioSource(MediaRecorder.AudioSource.MIC)
+            rec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            rec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            rec.setOutputFile(outputFile.absolutePath)
+            rec.prepare()
+            rec.start()
+            recorder = rec
+            startAmplitudeUpdates()
+        } catch (e: Exception) {
+            rec.release()
+            recorder = null
+            outputFile.delete()
+            this.outputFile = null
+            throw e
         }
     }
 

@@ -34,10 +34,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Delete
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.drawWithContent
@@ -87,10 +93,13 @@ fun ChatInputBar(
     val coroutineScope = rememberCoroutineScope()
     var isSwipeToCancel by remember { mutableStateOf(false) }
     var slideOffset by remember { mutableFloatStateOf(0f) }
+    var isArmedForCancel by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val haptic = LocalHapticFeedback.current
+    val cancelThresholdPx = with(LocalDensity.current) { 100.dp.toPx() }
 
     val micScale by animateFloatAsState(
-        targetValue = if (isRecording) 1.2f else 1f,
+        targetValue = if (isRecording) (if (isArmedForCancel) 1.35f else 1.2f) else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "micScale"
     )
@@ -235,23 +244,7 @@ fun ChatInputBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset { IntOffset(slideOffset.toInt(), 0) }
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragEnd = {
-                                if (slideOffset < -150.0f) {
-                                    isSwipeToCancel = true
-                                    onRecordingCancelled()
-                                }
-                                slideOffset = 0f
-                            },
-                            onDragCancel = {
-                                slideOffset = 0f
-                            }
-                        ) { change, dragAmount ->
-                            slideOffset += dragAmount
-                        }
-                    }
+                    .offset { IntOffset(animatedSlideOffset.toInt(), 0) }
                     .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -270,7 +263,7 @@ fun ChatInputBar(
                     Box(
                         modifier = Modifier
                             .size(Sizes.IconSmall)
-                            .background(MaterialTheme.colorScheme.error.copy(alpha = alpha), CircleShape)
+                            .background(if (isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.error.copy(alpha = alpha), CircleShape)
                     )
                     Spacer(modifier = Modifier.width(Spacing.Small))
                     val totalSeconds = recordingDurationMs / 1000
@@ -279,7 +272,7 @@ fun ChatInputBar(
                     Text(
                         text = String.format("%02d:%02d", m, s),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.width(Spacing.Medium))
@@ -305,7 +298,10 @@ fun ChatInputBar(
                                 modifier = Modifier
                                     .width(Spacing.ExtraSmall)
                                     .height(animatedHeight)
-                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(Sizes.CornerSmall))
+                                    .background(
+                                        if (isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(Sizes.CornerSmall)
+                                    )
                             )
                         }
                     }
@@ -314,10 +310,9 @@ fun ChatInputBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
                 ) {
-                    val isCanceling = slideOffset < -100.0f
-                    val cancelColor = if (isCanceling) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    val cancelColor = if (isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
 
-                    val shakeOffset = if (isCanceling) {
+                    val shakeOffset = if (isArmedForCancel) {
                         val infiniteTransition = rememberInfiniteTransition(label = "shake")
                         infiniteTransition.animateFloat(
                             initialValue = -5f,
@@ -499,56 +494,80 @@ fun ChatInputBar(
                             scaleY = micScale
                         }
                         .pointerInput(inputText, canSendMessage) {
-                            detectTapGestures(
-                                onPress = {
-                                    if (inputText.isEmpty() && canSendMessage) {
-                                        isSwipeToCancel = false
-                                        onMicHeld()
-                                        try {
-                                            tryAwaitRelease()
-                                            if (!isSwipeToCancel) {
+                            if (inputText.isNotEmpty() || !canSendMessage) {
+                                detectTapGestures(
+                                    onTap = {
+                                        if (inputText.isNotEmpty()) {
+                                            onSendMessage()
+                                            dismissedPreviewUrl = null
+                                            focusRequester.requestFocus()
+                                        }
+                                    }
+                                )
+                            } else {
+                                awaitEachGesture {
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    isSwipeToCancel = false
+                                    isArmedForCancel = false
+                                    slideOffset = 0f
+                                    onMicHeld()
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                                    var cumulativeDrag = 0f
+                                    var cancelTriggered = false
+
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val change = event.changes.firstOrNull { it.id == down.id }
+                                        if (change == null || !change.pressed) {
+                                            if (cancelTriggered || isArmedForCancel) {
+                                                isSwipeToCancel = true
+                                                onRecordingCancelled()
+                                            } else {
                                                 onMicReleased()
                                             }
-                                        } catch (e: Exception) {
-                                            onRecordingCancelled()
+                                            slideOffset = 0f
+                                            isArmedForCancel = false
+                                            break
                                         }
-                                    } else {
-                                        // Normal send logic
-                                        tryAwaitRelease()
+
+                                        val dragDelta = change.positionChange().x
+                                        cumulativeDrag += dragDelta
+                                        slideOffset = cumulativeDrag.coerceAtMost(0f)
+
+                                        val currentDistance = abs(slideOffset)
+                                        if (currentDistance >= cancelThresholdPx) {
+                                            if (!cancelTriggered) {
+                                                cancelTriggered = true
+                                                isArmedForCancel = true
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            }
+                                        } else {
+                                            if (cancelTriggered) {
+                                                cancelTriggered = false
+                                                isArmedForCancel = false
+                                            }
+                                        }
                                     }
-                                },
-                                onTap = {
-                                    if (inputText.isNotEmpty()) {
-                                        onSendMessage()
-                                        dismissedPreviewUrl = null
-                                        focusRequester.requestFocus()
-                                    }
-                                }
-                            )
-                        }
-                        .pointerInput(inputText) {
-                            detectHorizontalDragGestures { change, dragAmount ->
-                                if (isRecording && dragAmount < -20f) {
-                                    isSwipeToCancel = true
-                                    onRecordingCancelled()
                                 }
                             }
                         },
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    color = if (isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    contentColor = if (isArmedForCancel) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         val icon = when {
                             editingMessage != null -> Icons.Default.Check
-                            inputText.isEmpty() && canSendMessage -> Icons.Default.Mic
-                            else -> Icons.Default.ArrowUpward
+                            inputText.isNotEmpty() || !canSendMessage -> Icons.Default.ArrowUpward
+                            isArmedForCancel -> Icons.Default.Delete
+                            else -> Icons.Default.Mic
                         }
                         AnimatedContent(
                             targetState = icon,
                             transitionSpec = {
-                                fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.8f, animationSpec = tween(300)) togetherWith
-                                fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f, animationSpec = tween(300))
+                                fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.8f, animationSpec = tween(200)) togetherWith
+                                fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.8f, animationSpec = tween(200))
                             },
                             label = "iconAnimation"
                         ) { targetIcon ->
@@ -556,7 +575,7 @@ fun ChatInputBar(
                                 targetIcon,
                                 contentDescription = stringResource(if (inputText.isEmpty()) R.string.voice_hold_to_record else R.string.chat_action_send),
                                 modifier = Modifier.size(Sizes.IconLarge),
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = if (isArmedForCancel) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }

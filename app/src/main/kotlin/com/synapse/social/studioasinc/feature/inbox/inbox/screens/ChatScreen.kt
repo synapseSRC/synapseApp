@@ -537,8 +537,13 @@ fun ChatScreen(
                         val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
                         if (hasPermission) {
                             val tempFile = File(context.cacheDir, "temp_voice_${System.currentTimeMillis()}.m4a")
-                            voiceRecorder.start(tempFile)
-                            isRecording = true
+                            try {
+                                voiceRecorder.start(tempFile)
+                                isRecording = true
+                            } catch (e: Exception) {
+                                isRecording = false
+                                android.widget.Toast.makeText(context, context.getString(R.string.voice_record_start_failed), android.widget.Toast.LENGTH_SHORT).show()
+                            }
                         } else {
                             recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
