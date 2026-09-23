@@ -70,9 +70,15 @@ fun EditProfileScreen(
     val context = LocalContext.current
 
 
-    val cropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+    val avatarCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { viewModel.onEvent(EditProfileEvent.AvatarCropped(it)) }
+        }
+    }
+
+    val coverCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            result.uriContent?.let { viewModel.onEvent(EditProfileEvent.CoverCropped(it)) }
         }
     }
 
@@ -81,7 +87,7 @@ fun EditProfileScreen(
     ) { uri ->
         if (uri != null) {
             viewModel.onEvent(EditProfileEvent.AvatarSelected(uri))
-            cropLauncher.launch(
+            avatarCropLauncher.launch(
                 CropImageContractOptions(
                     uri = uri,
                     cropImageOptions = CropImageOptions(
@@ -99,6 +105,16 @@ fun EditProfileScreen(
     ) { uri ->
         if (uri != null) {
             viewModel.onEvent(EditProfileEvent.CoverSelected(uri))
+            coverCropLauncher.launch(
+                CropImageContractOptions(
+                    uri = uri,
+                    cropImageOptions = CropImageOptions(
+                        aspectRatioX = 16,
+                        aspectRatioY = 9,
+                        fixAspectRatio = true
+                    )
+                )
+            )
         }
     }
 

@@ -124,6 +124,9 @@ class EditProfileViewModel @Inject constructor(
             is EditProfileEvent.CoverSelected -> {
                 handleCoverSelection(event.uri)
             }
+            is EditProfileEvent.CoverCropped -> {
+                handleCoverCropped(event.uri)
+            }
             EditProfileEvent.RetryAvatarUpload -> {
                 retryAvatarUpload()
             }
@@ -341,12 +344,16 @@ class EditProfileViewModel @Inject constructor(
 
     private fun handleCoverSelection(uri: Uri) {
         lastCoverUri = uri
-        _uiState.update { it.copy(coverUploadState = UploadState.Uploading()) }
+    }
+
+    private fun handleCoverCropped(uri: Uri) {
+        lastCoverUri = uri
+        _uiState.update { it.copy(pendingCoverUri = uri, coverUploadState = UploadState.Uploading()) }
 
         viewModelScope.launch {
             try {
                 val context = getApplication<Application>()
-                android.util.Log.d("EditProfile", "Processing cover URI: $uri")
+                android.util.Log.d("EditProfile", "Processing cropped cover URI: $uri")
 
 
                 var realFilePath = UriUtils.getPathFromUri(context, uri)
@@ -463,7 +470,7 @@ class EditProfileViewModel @Inject constructor(
 
     private fun retryCoverUpload() {
         lastCoverUri?.let { uri ->
-            handleCoverSelection(uri)
+            handleCoverCropped(uri)
         }
     }
 
