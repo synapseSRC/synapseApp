@@ -217,13 +217,23 @@ fun SettingsNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToScheduledPosts = {
-                    android.widget.Toast.makeText(currentContext, "Scheduled Posts coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                    navController.navigate(SettingsDestination.ROUTE_SCHEDULED_POSTS)
                 },
                 onNavigateToContentCalendar = {
                     android.widget.Toast.makeText(currentContext, "Content Calendar coming soon", android.widget.Toast.LENGTH_SHORT).show()
                 },
                 onNavigateToBrandPartnerships = {
                     android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_SCHEDULED_POSTS) {
+            val viewModel: ScheduledPostsViewModel = hiltViewModel()
+            ScheduledPostsScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }

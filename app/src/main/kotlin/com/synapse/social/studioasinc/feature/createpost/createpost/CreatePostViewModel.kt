@@ -23,6 +23,10 @@ import com.synapse.social.studioasinc.domain.usecase.post.SubmitPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.search.SearchUsersForPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.search.SearchLocationsUseCase
 import com.synapse.social.studioasinc.domain.usecase.search.SearchFeelingsUseCase
+import com.synapse.social.studioasinc.domain.repository.ScheduledPostRepository
+import com.synapse.social.studioasinc.domain.model.ScheduledPost
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,6 +81,8 @@ data class CreatePostUiState(
     val taggedPeople: List<User> = emptyList(),
     val feeling: FeelingActivity? = null,
     val textBackgroundColor: Long? = null,
+    val scheduledAt: String? = null,
+    val editingScheduledPostId: String? = null,
     
     // Search related state
     val userSearchResults: List<User> = emptyList(),
@@ -109,7 +115,8 @@ class CreatePostViewModel @Inject constructor(
     private val searchUsersForPostUseCase: SearchUsersForPostUseCase,
     private val searchLocationsUseCase: SearchLocationsUseCase,
     private val searchFeelingsUseCase: SearchFeelingsUseCase,
-    private val submitPostUseCase: SubmitPostUseCase
+    private val submitPostUseCase: SubmitPostUseCase,
+    private val scheduledPostRepository: ScheduledPostRepository
 ) : AndroidViewModel(application) {
 
     private val authService = SupabaseAuthenticationService()
@@ -399,6 +406,57 @@ class CreatePostViewModel @Inject constructor(
         _uiState.update { it.copy(settings = settings) }
     }
 
+    fun setScheduledAt(scheduledAt: String?) {
+        _uiState.update { it.copy(scheduledAt = scheduledAt) }
+    }
+
+    fun loadScheduledPostForEdit(scheduledPost: ScheduledPost) {
+        val req = scheduledPost.postRequest
+        _uiState.update { state ->
+            state.copy(
+                checkDraft = false,
+                isEditMode = true,
+                editingScheduledPostId = scheduledPost.id,
+                scheduledAt = scheduledPost.scheduledAt,
+                postText = req.postText,
+                mediaItems = req.mediaItems,
+                privacy = req.privacy,
+                youtubeUrl = req.youtubeUrl,
+                settings = PostSettings(
+                    hideViewsCount = req.hideViewsCount,
+                    hideLikeCount = req.hideLikeCount,
+                    hideCommentsCount = req.hideCommentsCount,
+                    disableComments = req.disableComments
+                ),
+                pollData = if (req.pollQuestion != null) PollData(req.pollQuestion, req.pollOptions ?: emptyList(), req.pollDurationHours) else null,
+                location = req.location
+            )
+        }
+    }
+
+    fun loadScheduledPostForEditById(scheduledPostId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, isEditMode = true, checkDraft = false) }
+            val userId = authService.getCurrentUserId()
+            if (userId == null) {
+                _uiState.update { it.copy(isLoading = false) }
+                UiEventManager.emit(UiEvent.Error("Not authenticated"))
+                return@launch
+            }
+            scheduledPostRepository.getScheduledPosts(userId).onSuccess { posts ->
+                posts.find { it.id == scheduledPostId }?.let { scheduledPost ->
+                    loadScheduledPostForEdit(scheduledPost)
+                } ?: run {
+                    _uiState.update { it.copy(isLoading = false) }
+                    UiEventManager.emit(UiEvent.Error("Scheduled post not found"))
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false) }
+                UiEventManager.emit(UiEvent.Error("Failed to load scheduled post: ${e.message}"))
+            }
+        }
+    }
+
     private var userSearchJob: kotlinx.coroutines.Job? = null
     private var locationSearchJob: kotlinx.coroutines.Job? = null
 
@@ -491,6 +549,47 @@ class CreatePostViewModel @Inject constructor(
                 editPostId = editPostId,
                 replyToPostId = state.replyToPostId
             )
+
+            if (state.scheduledAt != null) {
+                val targetInstant = try {
+                    Instant.parse(state.scheduledAt)
+                } catch (e: Exception) {
+                    null
+                }
+                if (targetInstant == null || targetInstant <= Clock.System.now()) {
+                    _uiState.update { it.copy(isLoading = false) }
+                    UiEventManager.emit(UiEvent.Error("Scheduled time must be in the future"))
+                    return@launch
+                }
+
+                val scheduledResult = if (state.editingScheduledPostId != null) {
+                    scheduledPostRepository.updateScheduledPost(
+                        id = state.editingScheduledPostId,
+                        scheduledAt = state.scheduledAt,
+                        request = request
+                    )
+                } else {
+                    scheduledPostRepository.createScheduledPost(
+                        userId = currentUser.id,
+                        scheduledAt = state.scheduledAt,
+                        request = request
+                    )
+                }
+
+                scheduledResult.onSuccess {
+                    clearDraft()
+                    _uiState.update { s ->
+                        s.copy(
+                            isLoading = false,
+                            isPostCreated = true
+                        )
+                    }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(isLoading = false) }
+                    UiEventManager.emit(UiEvent.Error("Failed to schedule post: ${e.message}"))
+                }
+                return@launch
+            }
 
             if (state.isEditMode) {
                 val result = submitPostUseCase(

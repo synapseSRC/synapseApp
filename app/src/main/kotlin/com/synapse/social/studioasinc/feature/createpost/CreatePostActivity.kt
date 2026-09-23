@@ -38,6 +38,10 @@ class CreatePostActivity : AppCompatActivity() {
              viewModel.loadPostForEdit(it)
         }
 
+        intent.getStringExtra("scheduled_post_id")?.let {
+            viewModel.loadScheduledPostForEditById(it)
+        }
+
         intent.getStringExtra("reply_to_post_id")?.let {
             viewModel.setReplyToPostId(it)
         }

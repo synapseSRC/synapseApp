@@ -56,6 +56,7 @@ fun CreatePostTopBar(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     isEditMode: Boolean,
+    isScheduled: Boolean = false,
     isLoading: Boolean,
     postText: String,
     mediaItemsCount: Int,
@@ -66,8 +67,14 @@ fun CreatePostTopBar(
     TopAppBar(
         modifier = Modifier,
         title = {
+            val titleText = when {
+                isScheduled && isEditMode -> stringResource(R.string.title_edit_scheduled_post)
+                isScheduled -> stringResource(R.string.title_schedule_post)
+                isEditMode -> stringResource(R.string.title_edit_post)
+                else -> stringResource(R.string.title_create_post)
+            }
             Text(
-                text = if (isEditMode) stringResource(R.string.title_edit_post) else stringResource(R.string.title_create_post),
+                text = titleText,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Medium
             )
@@ -92,7 +99,12 @@ fun CreatePostTopBar(
                 mediaItemsCount > 0 ||
                 hasPoll
             )
-            val buttonText = if (isLoading) stringResource(R.string.button_posting) else stringResource(R.string.post)
+            val buttonText = when {
+                isLoading && isScheduled -> stringResource(R.string.button_scheduling)
+                isLoading -> stringResource(R.string.button_posting)
+                isScheduled -> stringResource(R.string.schedule)
+                else -> stringResource(R.string.post)
+            }
             ExpressiveButton(
                 onClick = onSubmitPost,
                 enabled = isEnabled,

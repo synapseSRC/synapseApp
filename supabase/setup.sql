@@ -751,6 +751,18 @@ CREATE TABLE IF NOT EXISTS public.family_connections (
     UNIQUE(user_id, connected_id)
 );
 
+CREATE TABLE IF NOT EXISTS public.scheduled_posts (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id             TEXT NOT NULL REFERENCES public.users(uid) ON DELETE CASCADE,
+    post_data           JSONB NOT NULL,
+    scheduled_at        TIMESTAMPTZ NOT NULL,
+    status              TEXT NOT NULL DEFAULT 'scheduled',
+    error_message       TEXT,
+    published_post_id   TEXT REFERENCES public.posts(id) ON DELETE SET NULL,
+    created_at          TIMESTAMPTZ DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
 -- INDEXES
 -- ============================================================
@@ -774,6 +786,8 @@ CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON public.reactions(post_id);
 CREATE INDEX IF NOT EXISTS idx_user_presence_current_chat_id ON public.user_presence(current_chat_id);
 CREATE INDEX IF NOT EXISTS idx_chat_participants_user_id ON public.chat_participants(user_id);
 CREATE INDEX IF NOT EXISTS idx_chat_participants_chat_id ON public.chat_participants(chat_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_posts_user_id ON public.scheduled_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_posts_status_time ON public.scheduled_posts(status, scheduled_at);
 
 -- ============================================================
 -- RLS — Enable on all tables
@@ -843,6 +857,7 @@ ALTER TABLE public.notification_analytics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.news_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.changelogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.family_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scheduled_posts ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- HELPER FUNCTIONS
@@ -1044,6 +1059,9 @@ CREATE POLICY "Users see own notification analytics" ON public.notification_anal
 CREATE POLICY "News articles are public" ON public.news_articles FOR SELECT USING (true);
 CREATE POLICY "Changelogs are public" ON public.changelogs FOR SELECT USING (true);
 CREATE POLICY "Family connections readable by owner" ON public.family_connections FOR ALL USING (public.get_current_user_uid() = user_id);
+CREATE POLICY "Users can manage their own scheduled posts" ON public.scheduled_posts FOR ALL
+    USING (public.get_current_user_uid() = user_id)
+    WITH CHECK (public.get_current_user_uid() = user_id);
 
 -- ============================================================
 -- GRANTS
@@ -1101,6 +1119,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.media_interactions TO authenticat
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.media_likes TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.close_friends TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.family_connections TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.scheduled_posts TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.message_edit_history TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.notification_analytics TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.story_highlights TO authenticated;
@@ -1293,6 +1312,107 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = 'public' AS $$
     ORDER BY rank_score DESC, created_at DESC
     LIMIT limit_val OFFSET offset_val;
 $$;
+
+CREATE OR REPLACE FUNCTION public.publish_due_scheduled_posts()
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    rec RECORD;
+    new_post_id TEXT;
+    published_count INT := 0;
+BEGIN
+    FOR rec IN
+        SELECT * FROM public.scheduled_posts
+        WHERE status IN ('scheduled', 'failed')
+          AND scheduled_at <= NOW()
+        FOR UPDATE SKIP LOCKED
+    LOOP
+        UPDATE public.scheduled_posts
+        SET status = 'publishing', updated_at = NOW()
+        WHERE id = rec.id;
+
+        BEGIN
+            new_post_id := gen_random_uuid()::TEXT;
+
+            INSERT INTO public.posts (
+                id,
+                author_uid,
+                post_text,
+                post_image,
+                post_type,
+                post_visibility,
+                post_hide_views_count,
+                post_hide_like_count,
+                post_hide_comments_count,
+                post_disable_comments,
+                publish_date,
+                timestamp,
+                media_items,
+                has_poll,
+                poll_question,
+                poll_options,
+                poll_end_time,
+                has_location,
+                location_name,
+                location_address,
+                location_latitude,
+                location_longitude,
+                youtube_url,
+                metadata,
+                in_reply_to_post_id
+            ) VALUES (
+                new_post_id,
+                rec.user_id,
+                rec.post_data->>'post_text',
+                rec.post_data->>'post_image',
+                COALESCE(rec.post_data->>'post_type', 'TEXT'),
+                COALESCE(rec.post_data->>'post_visibility', 'public'),
+                rec.post_data->>'post_hide_views_count',
+                rec.post_data->>'post_hide_like_count',
+                rec.post_data->>'post_hide_comments_count',
+                rec.post_data->>'post_disable_comments',
+                NOW()::TEXT,
+                EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+                COALESCE(rec.post_data->'media_items', '[]'::jsonb),
+                (rec.post_data->>'has_poll')::boolean,
+                rec.post_data->>'poll_question',
+                COALESCE(rec.post_data->'poll_options', '[]'::jsonb),
+                rec.post_data->>'poll_end_time',
+                (rec.post_data->>'has_location')::boolean,
+                rec.post_data->>'location_name',
+                rec.post_data->>'location_address',
+                (rec.post_data->>'location_latitude')::double precision,
+                (rec.post_data->>'location_longitude')::double precision,
+                rec.post_data->>'youtube_url',
+                rec.post_data->'metadata',
+                rec.post_data->>'in_reply_to_post_id'
+            );
+
+            UPDATE public.scheduled_posts
+            SET status = 'published',
+                published_post_id = new_post_id,
+                error_message = NULL,
+                updated_at = NOW()
+            WHERE id = rec.id;
+
+            published_count := published_count + 1;
+        EXCEPTION WHEN OTHERS THEN
+            UPDATE public.scheduled_posts
+            SET status = 'failed',
+                error_message = SQLERRM,
+                updated_at = NOW()
+            WHERE id = rec.id;
+        END;
+    END LOOP;
+
+    RETURN published_count;
+END;
+$$;
+
+SELECT cron.schedule('publish_scheduled_posts_job', '* * * * *', 'SELECT public.publish_due_scheduled_posts()');
 
 -- ============================================================
 -- STORAGE BUCKETS

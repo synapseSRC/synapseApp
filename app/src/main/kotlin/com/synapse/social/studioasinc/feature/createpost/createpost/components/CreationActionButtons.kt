@@ -126,7 +126,8 @@ fun AddToPostSheet(
     onLocationClick: () -> Unit,
     onYoutubeClick: () -> Unit,
     onTagClick: () -> Unit,
-    onFeelingClick: () -> Unit
+    onFeelingClick: () -> Unit,
+    onScheduleClick: () -> Unit = {}
 ) {
         Column(
             modifier = Modifier
@@ -146,7 +147,8 @@ fun AddToPostSheet(
                 Triple("Feeling/Activity", Icons.Filled.Mood, MaterialTheme.colorScheme.tertiary) to onFeelingClick,
                 Triple("Check In", Icons.Filled.Place, MaterialTheme.colorScheme.error) to onLocationClick,
                 Triple("Poll", Icons.Default.Poll, MaterialTheme.colorScheme.tertiary) to onPollClick,
-                Triple("YouTube", Icons.Default.VideoLibrary, MaterialTheme.colorScheme.secondary) to onYoutubeClick
+                Triple("YouTube", Icons.Default.VideoLibrary, MaterialTheme.colorScheme.secondary) to onYoutubeClick,
+                Triple("Schedule Post", Icons.Default.Schedule, MaterialTheme.colorScheme.primary) to onScheduleClick
             )
 
             LazyVerticalGrid(
@@ -204,6 +206,8 @@ fun StickyBottomActionArea(
     onLocationClick: () -> Unit,
     onPollClick: () -> Unit,
     onYoutubeClick: () -> Unit,
+    onScheduleClick: () -> Unit = {},
+    isScheduled: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -237,6 +241,13 @@ fun StickyBottomActionArea(
             }
             IconButton(onClick = onYoutubeClick) {
                 Icon(Icons.Default.VideoLibrary, contentDescription = "YouTube", tint = MaterialTheme.colorScheme.secondary)
+            }
+            IconButton(onClick = onScheduleClick) {
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = "Schedule",
+                    tint = if (isScheduled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

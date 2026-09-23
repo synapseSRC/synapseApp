@@ -244,5 +244,10 @@ object PostModule {
     ): GetLinkMetadataUseCase {
         return GetLinkMetadataUseCase(repository)
     }
+    @Provides
+    @Singleton
+    fun provideScheduledPostRepository(client: SupabaseClientType): com.synapse.social.studioasinc.domain.repository.ScheduledPostRepository {
+        return ScheduledPostRepositoryImpl(client)
+    }
 
 }
