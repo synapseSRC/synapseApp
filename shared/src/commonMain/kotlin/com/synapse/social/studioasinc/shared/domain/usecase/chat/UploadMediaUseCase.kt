@@ -64,7 +64,7 @@ class UploadMediaUseCase(
                 filePath = filePath,
                 provider = providerToUse,
                 config = config,
-                bucketName = "chat_attachments",
+                bucketName = "chat-attachments",
                 onProgress = { progressFloat ->
                     onProgress?.invoke((progressFloat * 100).toInt())
                 }

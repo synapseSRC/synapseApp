@@ -590,25 +590,16 @@ class ChatViewModel @Inject constructor(
         settingsDelegate.setDisappearingMode(mode)
     }
     fun uploadVoiceMessage(audioFile: File) {
-        viewModelScope.launch {
-            try {
-                val result = voiceUploadService.upload(audioFile, com.synapse.social.studioasinc.shared.domain.model.StorageConfig())
-                result.onSuccess { url ->
-                    sendMediaMessage(
-                        mediaUrl = url,
-                        fileName = "voice_message.m4a",
-                        contentType = "audio/mp4",
-                        messageType = "audio"
-                    )
-                    audioFile.delete()
-                }.onFailure {
-                    _error.value = "Failed to upload voice message"
-                    audioFile.delete()
-                }
-            } catch (e: Exception) {
-                _error.value = "Upload error: ${e.message}"
-                audioFile.delete()
-            }
+        try {
+            uploadAndSendMedia(
+                filePath = audioFile.absolutePath,
+                fileName = audioFile.name,
+                contentType = "audio/mp4",
+                messageType = "audio",
+                caption = null
+            )
+        } catch (e: Exception) {
+            _error.value = "Upload error: ${e.message}"
         }
     }
 

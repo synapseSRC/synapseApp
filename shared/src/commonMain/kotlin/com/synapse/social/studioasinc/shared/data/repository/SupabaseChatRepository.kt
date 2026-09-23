@@ -442,7 +442,7 @@ class SupabaseChatRepository(
             filePath = filePath,
             provider = provider ?: StorageProvider.SUPABASE,
             config = config ?: StorageConfig(),
-            bucketName = "chat_attachments",
+            bucketName = "chat-attachments",
             onProgress = { floatProgress -> onProgress?.invoke((floatProgress * 100).toInt()) }
         ).onFailure { Logger.e("Error uploading media", throwable = it) }
     }
