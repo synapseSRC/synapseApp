@@ -1,12 +1,14 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 
 import android.content.Context
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.auth.auth
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -18,6 +20,13 @@ class VoiceDownloadCache @Inject constructor(
     private val httpClient: HttpClient,
     @ApplicationContext private val context: Context
 ) {
+
+    private fun isSupabaseUrl(url: String): Boolean {
+        val configuredUrl = try { SynapseConfig.SUPABASE_URL } catch (e: Exception) { "" }
+        return url.contains("supabase.co") ||
+               url.contains("/storage/v1/") ||
+               (configuredUrl.isNotBlank() && url.contains(configuredUrl))
+    }
 
     suspend fun getLocalPath(url: String): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -36,14 +45,14 @@ class VoiceDownloadCache @Inject constructor(
                 } catch (e: Exception) {
                     null
                 }
-                val anonKey = try { com.synapse.social.studioasinc.shared.core.config.SynapseConfig.SUPABASE_ANON_KEY } catch (e: Exception) { "" }
+                val anonKey = try { SynapseConfig.SUPABASE_ANON_KEY } catch (e: Exception) { "" }
 
                 val response = httpClient.get(url) {
                     if (!sessionToken.isNullOrBlank()) {
-                        io.ktor.client.request.header("Authorization", "Bearer $sessionToken")
+                        header("Authorization", "Bearer $sessionToken")
                     }
                     if (anonKey.isNotBlank()) {
-                        io.ktor.client.request.header("apikey", anonKey)
+                        header("apikey", anonKey)
                     }
                 }
                 response.body()
