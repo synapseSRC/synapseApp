@@ -16,21 +16,17 @@ import com.synapse.social.studioasinc.presentation.editprofile.photohistory.Hist
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import com.synapse.social.studioasinc.core.util.toJsonObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.longOrNull
-import java.util.UUID
-import kotlin.coroutines.resume
 
 class EditProfileRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -198,38 +194,32 @@ class EditProfileRepositoryImpl @Inject constructor(
         )
     }
 
-    suspend fun addToProfileHistory(userId: String, imageUrl: String) {
-        withContext(Dispatchers.IO) {
+    suspend fun addToProfileHistory(userId: String, imageUrl: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
             try {
-                val historyKey = UUID.randomUUID().toString()
                 val historyData = mapOf(
-                    "key" to historyKey,
                     "user_id" to userId,
-                    "image_url" to imageUrl.trim(),
-                    "upload_date" to System.currentTimeMillis().toString(),
-                    "type" to "url"
+                    "avatar" to imageUrl.trim()
                 )
-                client.from("profile_history").insert(historyData)
+                client.from("profile_history").insert(historyData.toJsonObject())
+                Result.success(Unit)
             } catch (e: Exception) {
-                android.util.Log.e("EditProfileRepository", "Failed to add to profile history", e)
+                SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to add to profile history for user: $userId")
             }
         }
     }
 
-    suspend fun addToCoverHistory(userId: String, imageUrl: String) {
-         withContext(Dispatchers.IO) {
+    suspend fun addToCoverHistory(userId: String, imageUrl: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
             try {
-                val historyKey = UUID.randomUUID().toString()
                 val historyData = mapOf(
-                    "key" to historyKey,
                     "user_id" to userId,
-                    "image_url" to imageUrl.trim(),
-                    "upload_date" to System.currentTimeMillis().toString(),
-                    "type" to "url"
+                    "cover_image_url" to imageUrl.trim()
                 )
-                client.from("cover_image_history").insert(historyData)
+                client.from("cover_image_history").insert(historyData.toJsonObject())
+                Result.success(Unit)
             } catch (e: Exception) {
-                android.util.Log.e("EditProfileRepository", "Failed to add to cover history", e)
+                SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to add to cover history for user: $userId")
             }
         }
     }
@@ -239,12 +229,13 @@ class EditProfileRepositoryImpl @Inject constructor(
             val result = client.from("profile_history")
                 .select(columns = Columns.raw("*")) {
                     filter { eq("user_id", userId) }
+                    order("created_at", Order.DESCENDING)
                 }
                 .decodeList<JsonObject>()
 
             val items = result.mapNotNull {
-                parseHistoryItem(it)
-            }.sortedByDescending { it.uploadDate }
+                parseProfileHistoryItem(it)
+            }
 
             emit(Result.success(items))
         } catch (e: Exception) {
@@ -257,12 +248,13 @@ class EditProfileRepositoryImpl @Inject constructor(
             val result = client.from("cover_image_history")
                 .select(columns = Columns.raw("*")) {
                     filter { eq("user_id", userId) }
+                    order("created_at", Order.DESCENDING)
                 }
                 .decodeList<JsonObject>()
 
             val items = result.mapNotNull {
-                parseHistoryItem(it)
-            }.sortedByDescending { it.uploadDate }
+                parseCoverHistoryItem(it)
+            }
 
             emit(Result.success(items))
         } catch (e: Exception) {
@@ -270,40 +262,47 @@ class EditProfileRepositoryImpl @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun deleteProfileHistoryItem(key: String): Result<Unit> {
+    suspend fun deleteProfileHistoryItem(id: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 client.from("profile_history").delete {
-                    filter { eq("key", key) }
+                    filter { eq("id", id) }
                 }
                 Result.success(Unit)
             } catch (e: Exception) {
-                SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to delete profile history item: $key")
+                SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to delete profile history item: $id")
             }
         }
     }
 
-    suspend fun deleteCoverHistoryItem(key: String): Result<Unit> {
+    suspend fun deleteCoverHistoryItem(id: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 client.from("cover_image_history").delete {
-                    filter { eq("key", key) }
+                    filter { eq("id", id) }
                 }
                 Result.success(Unit)
             } catch (e: Exception) {
-                SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to delete cover history item: $key")
+                SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to delete cover history item: $id")
             }
         }
     }
 
-    private fun parseHistoryItem(json: JsonObject): HistoryItem? {
-        val key = json["key"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+    internal fun parseProfileHistoryItem(json: JsonObject): HistoryItem? {
+        val id = json["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
         val userId = json["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
-        val imageUrl = json["image_url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
-        val uploadDateStr = json["upload_date"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-        val uploadDate = uploadDateStr?.toLongOrNull() ?: 0L
-        val type = json["type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: "url"
+        val avatar = json["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val createdAt = json["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
 
-        return HistoryItem(key, userId, imageUrl, uploadDate, type)
+        return HistoryItem(id = id, userId = userId, imageUrl = avatar, createdAt = createdAt)
+    }
+
+    internal fun parseCoverHistoryItem(json: JsonObject): HistoryItem? {
+        val id = json["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val userId = json["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val coverImageUrl = json["cover_image_url"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return null
+        val createdAt = json["created_at"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+
+        return HistoryItem(id = id, userId = userId, imageUrl = coverImageUrl, createdAt = createdAt)
     }
 }

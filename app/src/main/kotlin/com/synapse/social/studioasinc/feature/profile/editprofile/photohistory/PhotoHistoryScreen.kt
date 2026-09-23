@@ -181,7 +181,7 @@ fun PhotoHistoryScreen(
                 ) {
                     itemsIndexed(
                         items = uiState.items,
-                        key = { index, it -> "${it.key}_${index}" }
+                        key = { index, item -> "${item.id}_${index}" }
                     ) { index, item ->
                         val isSelected = item.imageUrl == uiState.currentPhotoUrl
 
