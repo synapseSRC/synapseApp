@@ -45,20 +45,18 @@ fun SignInScreen(
     onOAuthClick: (String) -> Unit,
     onDismissError: () -> Unit
 ) {
-    AuthScreenLayout(
-        header = { SignInHeader() },
-        form = {
-            SignInForm(
-                state = state,
-                onEmailChanged = onEmailChanged,
-                onPasswordChanged = onPasswordChanged,
-                onSignInClick = onSignInClick,
-                onForgotPasswordClick = onForgotPasswordClick,
-                onToggleModeClick = onToggleModeClick,
-                onOAuthClick = onOAuthClick,
-                onDismissError = onDismissError
-            )
-        }
+    SignInSignUpScreenContent(
+        isSignUpMode = false,
+        state = state,
+        onEmailChanged = onEmailChanged,
+        onPasswordChanged = onPasswordChanged,
+        onUsernameChanged = {},
+        onSignInClick = onSignInClick,
+        onSignUpClick = {},
+        onForgotPasswordClick = onForgotPasswordClick,
+        onToggleModeClick = onToggleModeClick,
+        onOAuthClick = onOAuthClick,
+        onDismissError = onDismissError
     )
 }
 

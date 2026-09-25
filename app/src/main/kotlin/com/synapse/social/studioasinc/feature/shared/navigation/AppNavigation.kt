@@ -88,9 +88,9 @@ fun NavGraphBuilder.authGraph(
     composable<AppDestination.Auth> {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
-        val viewModel: com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.SignInViewModel = hiltViewModel()
+        val viewModel: com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.AuthViewModel = hiltViewModel()
         AuthScreen(
-            signInViewModel = viewModel,
+            authViewModel = viewModel,
             onInitiateGoogleSignIn = {
                 val clientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
                 if (clientId.isBlank() || clientId.contains("your-google-web-client-id-here")) {
