@@ -767,6 +767,7 @@ CREATE TABLE IF NOT EXISTS public.scheduled_posts (
 -- INDEXES
 -- ============================================================
 
+CREATE INDEX IF NOT EXISTS idx_users_is_private ON public.users(is_private) WHERE is_private = true;
 CREATE INDEX IF NOT EXISTS idx_posts_author_uid ON public.posts(author_uid);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON public.posts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_root_post_id ON public.posts(root_post_id);
@@ -885,7 +886,14 @@ $$;
 -- ============================================================
 
 -- users
-CREATE POLICY "Users are publicly readable" ON public.users FOR SELECT USING (true);
+CREATE POLICY "Users are readable based on privacy" ON public.users FOR SELECT USING (
+    is_private IS NOT TRUE
+    OR public.get_current_user_uid() = uid
+    OR EXISTS (
+        SELECT 1 FROM public.follows
+        WHERE follower_id = public.get_current_user_uid() AND following_id = users.uid
+    )
+);
 CREATE POLICY "Users can insert own profile" ON public.users FOR INSERT WITH CHECK (auth.uid()::TEXT = uid OR auth.uid()::TEXT = id::TEXT);
 CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (public.get_current_user_uid() = uid);
 
@@ -921,7 +929,20 @@ CREATE POLICY "Profile likes readable" ON public.profile_likes FOR SELECT USING 
 CREATE POLICY "Users manage own profile likes" ON public.profile_likes FOR ALL USING (public.get_current_user_uid() = user_id);
 
 -- posts
-CREATE POLICY "Posts are publicly readable" ON public.posts FOR SELECT USING (true);
+CREATE POLICY "Posts readable based on author profile privacy" ON public.posts FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.users u
+        WHERE u.uid = posts.author_uid
+          AND (
+            u.is_private IS NOT TRUE
+            OR u.uid = public.get_current_user_uid()
+            OR EXISTS (
+                SELECT 1 FROM public.follows f
+                WHERE f.follower_id = public.get_current_user_uid() AND f.following_id = u.uid
+            )
+          )
+    )
+);
 CREATE POLICY "Users can insert own posts" ON public.posts FOR INSERT WITH CHECK (auth.uid()::text = author_uid);
 CREATE POLICY "Users can update own posts" ON public.posts FOR UPDATE USING (public.get_current_user_uid() = author_uid);
 CREATE POLICY "Users can delete own posts" ON public.posts FOR DELETE USING (public.get_current_user_uid() = author_uid);
@@ -958,7 +979,20 @@ CREATE POLICY "Users can create post reports" ON public.post_reports FOR INSERT 
 CREATE POLICY "Users can create user reports" ON public.user_reports FOR INSERT WITH CHECK (public.get_current_user_uid() = reporter_id);
 
 -- media
-CREATE POLICY "Media files readable" ON public.media_files FOR SELECT USING (true);
+CREATE POLICY "Media files readable based on owner profile privacy" ON public.media_files FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.users u
+        WHERE u.uid = media_files.user_id
+          AND (
+            u.is_private IS NOT TRUE
+            OR u.uid = public.get_current_user_uid()
+            OR EXISTS (
+                SELECT 1 FROM public.follows f
+                WHERE f.follower_id = public.get_current_user_uid() AND f.following_id = u.uid
+            )
+          )
+    )
+);
 CREATE POLICY "Users manage own media" ON public.media_files FOR ALL USING (public.get_current_user_uid() = user_id);
 CREATE POLICY "Media interactions readable" ON public.media_interactions FOR SELECT USING (true);
 CREATE POLICY "Users manage own media interactions" ON public.media_interactions FOR ALL USING (public.get_current_user_uid() = user_id);
@@ -966,7 +1000,20 @@ CREATE POLICY "Media likes readable" ON public.media_likes FOR SELECT USING (tru
 CREATE POLICY "Users manage own media likes" ON public.media_likes FOR ALL USING (public.get_current_user_uid() = user_id);
 
 -- stories
-CREATE POLICY "Stories readable" ON public.stories FOR SELECT USING (true);
+CREATE POLICY "Stories readable based on author profile privacy" ON public.stories FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.users u
+        WHERE u.uid = stories.user_id
+          AND (
+            u.is_private IS NOT TRUE
+            OR u.uid = public.get_current_user_uid()
+            OR EXISTS (
+                SELECT 1 FROM public.follows f
+                WHERE f.follower_id = public.get_current_user_uid() AND f.following_id = u.uid
+            )
+          )
+    )
+);
 CREATE POLICY "Users manage own stories" ON public.stories FOR ALL USING (public.get_current_user_uid() = user_id);
 CREATE POLICY "Story views readable" ON public.story_views FOR SELECT USING (true);
 CREATE POLICY "Users can insert story views" ON public.story_views FOR INSERT WITH CHECK (public.get_current_user_uid() = viewer_id);
@@ -974,7 +1021,20 @@ CREATE POLICY "Story reactions readable" ON public.story_reactions FOR SELECT US
 CREATE POLICY "Users manage own story reactions" ON public.story_reactions FOR ALL USING (public.get_current_user_uid() = user_id);
 CREATE POLICY "Story replies readable" ON public.story_replies FOR SELECT USING (true);
 CREATE POLICY "Users manage own story replies" ON public.story_replies FOR ALL USING (public.get_current_user_uid() = user_id);
-CREATE POLICY "Story highlights readable" ON public.story_highlights FOR SELECT USING (true);
+CREATE POLICY "Story highlights readable based on author profile privacy" ON public.story_highlights FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.users u
+        WHERE u.uid = story_highlights.user_id
+          AND (
+            u.is_private IS NOT TRUE
+            OR u.uid = public.get_current_user_uid()
+            OR EXISTS (
+                SELECT 1 FROM public.follows f
+                WHERE f.follower_id = public.get_current_user_uid() AND f.following_id = u.uid
+            )
+          )
+    )
+);
 CREATE POLICY "Users manage own highlights" ON public.story_highlights FOR ALL USING (public.get_current_user_uid() = user_id);
 CREATE POLICY "Story highlight items readable" ON public.story_highlight_items FOR SELECT USING (true);
 CREATE POLICY "Close friends readable" ON public.close_friends FOR SELECT USING (public.get_current_user_uid() = user_id);
@@ -995,7 +1055,20 @@ CREATE POLICY "Tag requests readable by involved" ON public.tag_requests FOR SEL
 );
 
 -- reels
-CREATE POLICY "Reels are public" ON public.reels FOR SELECT USING (true);
+CREATE POLICY "Reels readable based on creator profile privacy" ON public.reels FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.users u
+        WHERE u.uid = reels.creator_id
+          AND (
+            u.is_private IS NOT TRUE
+            OR u.uid = public.get_current_user_uid()
+            OR EXISTS (
+                SELECT 1 FROM public.follows f
+                WHERE f.follower_id = public.get_current_user_uid() AND f.following_id = u.uid
+            )
+          )
+    )
+);
 CREATE POLICY "Users manage own reels" ON public.reels FOR ALL USING (public.get_current_user_uid() = creator_id);
 CREATE POLICY "Reel interactions readable" ON public.reel_interactions FOR SELECT USING (true);
 CREATE POLICY "Users manage own reel interactions" ON public.reel_interactions FOR ALL USING (public.get_current_user_uid() = user_id);
