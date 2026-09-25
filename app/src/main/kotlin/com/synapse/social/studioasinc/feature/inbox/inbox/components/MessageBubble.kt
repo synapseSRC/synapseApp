@@ -422,15 +422,15 @@ fun MessageBubble(
             )
         }
 
-        Box {
+        Column(
+            horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
+        ) {
         Surface(
             color = containerColor,
             contentColor = contentColor,
             shape = shape,
             tonalElevation = Sizes.BorderThin,
-            modifier = Modifier
-                .widthIn(max = bubbleMaxWidth)
-                .padding(bottom = if (reactions.isNotEmpty()) Spacing.SmallMedium else Spacing.None)
+            modifier = Modifier.widthIn(max = bubbleMaxWidth)
         ) {
             Column(modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Small)) {
 
@@ -612,57 +612,62 @@ fun MessageBubble(
                 } // close Box
             }
         }
-        if (reactions.isNotEmpty()) {
-            @OptIn(ExperimentalLayoutApi::class)
-            FlowRow(
-                modifier = Modifier
-                    .offset(y = Spacing.SmallMedium)
-                    .padding(horizontal = Spacing.Small),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Tiny)
-            ) {
-                reactions.forEach { (emoji, count) ->
-                    val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
-                    Surface(
-                        shape = CircleShape,
-                        color = if (message.userReaction == type)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant,
-                        tonalElevation = Spacing.Tiny,
-                        modifier = Modifier.clickable { onReactionSelected(type) }
+
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(
+            modifier = Modifier
+                .padding(top = Spacing.Tiny)
+                .padding(horizontal = Spacing.ExtraSmall),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny, if (isFromMe) Alignment.End else Alignment.Start),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Tiny)
+        ) {
+            reactions.forEach { (emoji, count) ->
+                val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
+                Surface(
+                    shape = CircleShape,
+                    color = if (message.userReaction == type)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = Spacing.Tiny,
+                    modifier = Modifier.clickable { onReactionSelected(type) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = Spacing.ExtraSmallMedium, vertical = Spacing.Tiny),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = Spacing.ExtraSmallMedium, vertical = Spacing.Tiny),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
-                        ) {
-                            Text(text = emoji, fontSize = FontSizes.Small)
-                            if (count > 1) {
-                                Text(
-                                    text = count.toString(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontSize = FontSizes.Small
-                                )
-                            }
+                        Text(text = emoji, fontSize = FontSizes.Small)
+                        if (count > 1) {
+                            Text(
+                                text = count.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = FontSizes.Small
+                            )
                         }
                     }
                 }
-                IconButton(
-                    onClick = onShowReactionPicker,
-                    modifier = Modifier.size(Sizes.IconLarge)
+            }
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.clickable { onShowReactionPicker() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = Spacing.ExtraSmallMedium, vertical = Spacing.Tiny),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
                 ) {
                     Icon(
                         imageVector = Icons.Default.AddReaction,
                         contentDescription = "Add Reaction",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(Sizes.IconSmall)
                     )
                 }
             }
         }
-        } // Box
-
-        if (reactions.isNotEmpty()) Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+        } // Column
 
         if (isFromMe && (position == GroupPosition.LAST || position == GroupPosition.SINGLE)
             && message.deliveryStatus == DeliveryStatus.READ) {

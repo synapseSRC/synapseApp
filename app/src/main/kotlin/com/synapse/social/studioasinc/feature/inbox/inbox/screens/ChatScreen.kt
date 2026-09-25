@@ -245,6 +245,7 @@ fun ChatScreen(
         }
 
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
+    var selectedMessageForReactionPicker by remember { mutableStateOf<Message?>(null) }
 
     @Suppress("DEPRECATION")
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -467,7 +468,7 @@ fun ChatScreen(
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },
                         onLongClick = { selectedMessageForMenu = it },
                         onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
-                        onShowReactionPicker = { selectedMessageForMenu = it },
+                        onShowReactionPicker = { selectedMessageForReactionPicker = it },
                         onNavigateToProfile = onNavigateToProfile
                     )
 
@@ -482,6 +483,21 @@ fun ChatScreen(
                             onDeleteMessageForMe = viewModel::deleteMessageForMe,
                             onDeleteMessageForEveryone = viewModel::deleteMessage,
                             onSummarizeMessage = viewModel::summarizeMessage
+                        )
+                    }
+
+                    if (selectedMessageForReactionPicker != null) {
+                        ReactionPicker(
+                            onReactionSelected = { appReaction ->
+                                val sharedReaction = SharedReactionType.values()
+                                    .find { it.name.equals(appReaction.name, ignoreCase = true) }
+                                    ?: SharedReactionType.LIKE
+                                selectedMessageForReactionPicker?.id?.let { id ->
+                                    viewModel.toggleMessageReaction(id, sharedReaction)
+                                }
+                                selectedMessageForReactionPicker = null
+                            },
+                            onDismiss = { selectedMessageForReactionPicker = null }
                         )
                     }
                 }

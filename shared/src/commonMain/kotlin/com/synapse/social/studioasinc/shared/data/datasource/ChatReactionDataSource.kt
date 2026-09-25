@@ -19,15 +19,47 @@ internal class ChatReactionDataSource(private val client: SupabaseClient) {
         try {
             val userId = getCurrentUserId() ?: return@withContext Result.failure(Exception("Not authenticated"))
 
-            client.postgrest.rpc(
-                "toggle_message_reaction",
-                kotlinx.serialization.json.buildJsonObject {
-                    put("p_message_id", kotlinx.serialization.json.JsonPrimitive(messageId))
-                    put("p_user_id", kotlinx.serialization.json.JsonPrimitive(userId))
-                    put("p_reaction_type", kotlinx.serialization.json.JsonPrimitive(emoji))
-                    put("p_chat_id", chatId?.let { kotlinx.serialization.json.JsonPrimitive(it) } ?: kotlinx.serialization.json.JsonNull)
+            val existingList = client.from("message_reactions").select {
+                filter {
+                    eq("message_id", messageId)
+                    eq("user_id", userId)
                 }
-            )
+            }.decodeList<MessageReactionDto>()
+
+            val existing = existingList.firstOrNull()
+
+            if (existing != null) {
+                if (existing.reactionEmoji == emoji) {
+                    client.from("message_reactions").delete {
+                        filter {
+                            eq("message_id", messageId)
+                            eq("user_id", userId)
+                        }
+                    }
+                } else {
+                    client.from("message_reactions").update(
+                        kotlinx.serialization.json.buildJsonObject {
+                            put("reaction_type", kotlinx.serialization.json.JsonPrimitive(emoji))
+                        }
+                    ) {
+                        filter {
+                            eq("message_id", messageId)
+                            eq("user_id", userId)
+                        }
+                    }
+                }
+            } else {
+                client.from("message_reactions").insert(
+                    kotlinx.serialization.json.buildJsonObject {
+                        put("message_id", kotlinx.serialization.json.JsonPrimitive(messageId))
+                        put("user_id", kotlinx.serialization.json.JsonPrimitive(userId))
+                        put("reaction_type", kotlinx.serialization.json.JsonPrimitive(emoji))
+                        if (chatId != null) {
+                            put("chat_id", kotlinx.serialization.json.JsonPrimitive(chatId))
+                        }
+                    }
+                )
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
