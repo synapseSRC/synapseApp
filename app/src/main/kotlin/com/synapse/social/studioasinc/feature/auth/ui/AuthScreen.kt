@@ -21,12 +21,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.EmailVerificationViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.ForgotPasswordViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.ResetPasswordViewModel
-import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.SignInViewModel
-import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.SignUpViewModel
+import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.AuthViewModel
 
 @Composable
 fun AuthScreen(
-    signInViewModel: SignInViewModel,
+    authViewModel: AuthViewModel,
     onInitiateGoogleSignIn: () -> Unit,
     onNavigateToMain: () -> Unit
 ) {
@@ -38,11 +37,15 @@ fun AuthScreen(
         when (event) {
             is AuthNavigationEvent.NavigateToMain -> onNavigateToMain()
             is AuthNavigationEvent.NavigateToSignIn -> {
-                navController.navigate("signIn") {
-                    popUpTo("signIn") { inclusive = true }
+                navController.navigate("authMain") {
+                    popUpTo("authMain") { inclusive = true }
                 }
             }
-            is AuthNavigationEvent.NavigateToSignUp -> navController.navigate("signUp")
+            is AuthNavigationEvent.NavigateToSignUp -> {
+                navController.navigate("authMain") {
+                    popUpTo("authMain") { inclusive = true }
+                }
+            }
             is AuthNavigationEvent.NavigateToEmailVerification -> {
                 val encodedEmail = android.net.Uri.encode(event.email)
                 navController.navigate("emailVerification/$encodedEmail")
@@ -61,10 +64,10 @@ fun AuthScreen(
         }
     }
 
-    // Collect Activity-scoped SignInViewModel events at the top level
-    // so deep link callbacks (NavigateToMain) are not missed when SignInScreen is not composed.
-    LaunchedEffect(signInViewModel) {
-        signInViewModel.navigationEvent.collect { handleNavigationEvent(it) }
+    // Collect Activity-scoped AuthViewModel events at the top level
+    // so deep link callbacks (NavigateToMain) are not missed when screens transition.
+    LaunchedEffect(authViewModel) {
+        authViewModel.navigationEvent.collect { handleNavigationEvent(it) }
     }
 
     LoadingOverlay(
@@ -72,7 +75,7 @@ fun AuthScreen(
     ) {
         NavHost(
             navController = navController,
-            startDestination = "signIn",
+            startDestination = "authMain",
             enterTransition = {
                 if (reducedMotion) androidx.compose.animation.EnterTransition.None
                 else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(300))
@@ -90,39 +93,12 @@ fun AuthScreen(
                 else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(300))
             }
         ) {
-            composable("signIn") {
-                val state by signInViewModel.uiState.collectAsState()
+            composable("authMain") {
+                val state by authViewModel.uiState.collectAsState()
 
-                SignInScreen(
-                    state = state as? AuthUiState.SignIn ?: AuthUiState.SignIn(),
-                    onEmailChanged = signInViewModel::onEmailChanged,
-                    onPasswordChanged = signInViewModel::onPasswordChanged,
-                    onSignInClick = signInViewModel::onSignInClick,
-                    onForgotPasswordClick = signInViewModel::onForgotPasswordClick,
-                    onToggleModeClick = signInViewModel::onToggleModeClick,
-                    onOAuthClick = signInViewModel::onOAuthClick,
-                    onDismissError = signInViewModel::onDismissError
-                )
-            }
-
-            composable("signUp") {
-                val viewModel = hiltViewModel<SignUpViewModel>()
-                val state by viewModel.uiState.collectAsState()
-
-                LaunchedEffect(Unit) {
-                    viewModel.navigationEvent.collect { handleNavigationEvent(it) }
-                }
-
-                SignUpScreen(
-                    state = state as? AuthUiState.SignUp ?: AuthUiState.SignUp(),
-                    onEmailChanged = viewModel::onEmailChanged,
-                    onPasswordChanged = viewModel::onPasswordChanged,
-                    onUsernameChanged = viewModel::onUsernameChanged,
-                    onSignUpClick = viewModel::onSignUpClick,
-                    onToggleModeClick = viewModel::onToggleModeClick,
-                    onOAuthClick = viewModel::onOAuthClick,
-                    onDismissSuccessDialog = viewModel::onDismissSuccessDialog,
-                    onDismissError = viewModel::onDismissError
+                UnifiedAuthContent(
+                    state = state,
+                    authViewModel = authViewModel
                 )
             }
 
@@ -182,4 +158,32 @@ fun AuthScreen(
             }
         }
     }
+}
+
+@Composable
+private fun UnifiedAuthContent(
+    state: AuthUiState,
+    authViewModel: AuthViewModel
+) {
+    val isSignUpMode = state is AuthUiState.SignUp
+
+    if (state is AuthUiState.SignUp && state.showSuccessDialog) {
+        com.synapse.social.studioasinc.feature.auth.ui.components.UserCreatedDialog(
+            onDismiss = authViewModel::onDismissSuccessDialog
+        )
+    }
+
+    SignInSignUpScreenContent(
+        isSignUpMode = isSignUpMode,
+        state = state,
+        onEmailChanged = authViewModel::onEmailChanged,
+        onPasswordChanged = authViewModel::onPasswordChanged,
+        onUsernameChanged = authViewModel::onUsernameChanged,
+        onSignInClick = authViewModel::onSignInClick,
+        onSignUpClick = authViewModel::onSignUpClick,
+        onForgotPasswordClick = authViewModel::onForgotPasswordClick,
+        onToggleModeClick = authViewModel::onToggleModeClick,
+        onOAuthClick = authViewModel::onOAuthClick,
+        onDismissError = authViewModel::onDismissGeneralError
+    )
 }

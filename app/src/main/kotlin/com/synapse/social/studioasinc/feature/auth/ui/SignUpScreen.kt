@@ -50,20 +50,18 @@ fun SignUpScreen(
         UserCreatedDialog(onDismiss = onDismissSuccessDialog)
     }
 
-    AuthScreenLayout(
-        header = { SignUpHeader() },
-        form = {
-            SignUpForm(
-                state = state,
-                onEmailChanged = onEmailChanged,
-                onPasswordChanged = onPasswordChanged,
-                onUsernameChanged = onUsernameChanged,
-                onSignUpClick = onSignUpClick,
-                onToggleModeClick = onToggleModeClick,
-                onOAuthClick = onOAuthClick,
-                onDismissError = onDismissError
-            )
-        }
+    SignInSignUpScreenContent(
+        isSignUpMode = true,
+        state = state,
+        onEmailChanged = onEmailChanged,
+        onPasswordChanged = onPasswordChanged,
+        onUsernameChanged = onUsernameChanged,
+        onSignInClick = {},
+        onSignUpClick = onSignUpClick,
+        onForgotPasswordClick = {},
+        onToggleModeClick = onToggleModeClick,
+        onOAuthClick = onOAuthClick,
+        onDismissError = onDismissError
     )
 }
 

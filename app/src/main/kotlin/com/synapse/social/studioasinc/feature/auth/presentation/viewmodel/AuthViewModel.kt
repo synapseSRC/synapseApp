@@ -329,17 +329,23 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onToggleModeClick() {
-        viewModelScope.launch {
-            when (_uiState.value) {
-                is AuthUiState.SignIn -> {
-                    _uiState.value = AuthUiState.SignUp()
-                    _navigationEvent.emit(AuthNavigationEvent.NavigateToSignUp)
-                }
-                is AuthUiState.SignUp -> {
-                    _uiState.value = AuthUiState.SignIn()
-                    _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
-                }
-                else -> {}
+        when (val current = _uiState.value) {
+            is AuthUiState.SignIn -> {
+                _uiState.value = AuthUiState.SignUp(
+                    email = current.email,
+                    password = current.password,
+                    isEmailValid = current.isEmailValid
+                )
+            }
+            is AuthUiState.SignUp -> {
+                _uiState.value = AuthUiState.SignIn(
+                    email = current.email,
+                    password = current.password,
+                    isEmailValid = current.isEmailValid
+                )
+            }
+            else -> {
+                _uiState.value = AuthUiState.SignIn()
             }
         }
     }
@@ -380,6 +386,7 @@ class AuthViewModel @Inject constructor(
             _uiState.value = AuthUiState.EmailVerification(email = state.email)
             startResendCooldown()
             checkEmailVerification(state.email)
+            _navigationEvent.emit(AuthNavigationEvent.NavigateToEmailVerification(state.email))
         }
     }
 
