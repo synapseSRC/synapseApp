@@ -384,9 +384,9 @@ class AuthViewModel @Inject constructor(
         val state = _uiState.value as? AuthUiState.SignUp ?: return
         viewModelScope.launch {
             _uiState.value = AuthUiState.EmailVerification(email = state.email)
+            _navigationEvent.emit(AuthNavigationEvent.NavigateToEmailVerification(state.email))
             startResendCooldown()
             checkEmailVerification(state.email)
-            _navigationEvent.emit(AuthNavigationEvent.NavigateToEmailVerification(state.email))
         }
     }
 
