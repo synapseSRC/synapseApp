@@ -44,7 +44,7 @@ class SupabaseNotificationRepository(
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId) {
             Napier.e("IDOR attempt: User $currentUserId tried to fetch notifications for $userId")
-            return emptyList()
+            throw IllegalStateException("User $currentUserId is not authorized to fetch notifications for $userId")
         }
         return try {
             supabase.postgrest.from("notifications")
@@ -59,7 +59,7 @@ class SupabaseNotificationRepository(
                 .map { it.toDomain() }
         } catch (e: Exception) {
             Napier.e("Failed to fetch notifications for $userId", e)
-            emptyList()
+            throw e
         }
     }
 

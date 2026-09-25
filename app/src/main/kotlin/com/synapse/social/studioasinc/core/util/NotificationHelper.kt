@@ -40,7 +40,8 @@ object NotificationHelper {
         }
 
         scope.launch {
-            persistNotification(recipientUid, senderUid, message, notificationType, data)
+            // Backend triggers in Supabase authoritatively create in-app notifications in public.notifications.
+            // Client-side DB persistence is bypassed to avoid creating duplicate notification rows.
 
             try {
                 val userResult = dbService.getSingle("users", "uid", recipientUid)
@@ -217,10 +218,14 @@ object NotificationHelper {
                 ?: data?.get("followerId")
                 ?: data?.get("chat_id")
 
+            val titleText = NotificationConfig.getTitleForNotificationType(SynapseApplication.instance, notificationType)
+
             val notificationData = mutableMapOf<String, Any?>(
                 "recipient_id" to recipientUid,
                 "sender_id" to senderUid,
                 "type" to notificationType,
+                "title" to mapOf("en" to titleText),
+                "body" to mapOf("en" to message),
                 "data" to (data?.toMutableMap() ?: mutableMapOf()).apply {
                     put("message", message)
                     if (targetId != null) put("target_id", targetId)
@@ -228,8 +233,6 @@ object NotificationHelper {
                 "is_read" to false,
                 "created_at" to java.time.Instant.now().toString()
             )
-
-            notificationData["body"] = mapOf("en" to message)
 
             val result = dbService.insert("notifications", notificationData)
 
