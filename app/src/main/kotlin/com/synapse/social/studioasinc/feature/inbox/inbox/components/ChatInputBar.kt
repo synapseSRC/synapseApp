@@ -57,7 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
@@ -276,7 +276,7 @@ fun ChatInputBar(
                             modifier = Modifier.height(24.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.action_clear_all),
+                                text = stringResource(R.string.clear_all),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -330,7 +330,7 @@ fun ChatInputBar(
                                             imageVector = when {
                                                 isAudio -> Icons.Default.AudioFile
                                                 isContact -> Icons.Default.Person
-                                                else -> Icons.AutoMirrored.Filled.InsertDriveFile
+                                                else -> Icons.Default.InsertDriveFile
                                             },
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.primary,

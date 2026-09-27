@@ -132,6 +132,10 @@ class ChatMediaDelegate(
         }
     }
 
+    fun removePendingUpload(tempId: String) {
+        pendingUploads.remove(tempId)
+    }
+
     fun retryUpload(tempId: String) {
         val info = pendingUploads[tempId] ?: return
         val chatId = chatIdProvider() ?: return

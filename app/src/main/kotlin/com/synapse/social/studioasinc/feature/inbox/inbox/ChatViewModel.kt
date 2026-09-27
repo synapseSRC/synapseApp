@@ -626,6 +626,7 @@ class ChatViewModel @Inject constructor(
     }
 
     fun cancelOrRemoveFailedUpload(messageId: String) {
+        mediaDelegate.removePendingUpload(messageId)
         messagingDelegate.pendingTempIds.update { it - messageId }
         _uploadProgressMap.update { it - messageId }
         _uploadErrorMap.update { it - messageId }

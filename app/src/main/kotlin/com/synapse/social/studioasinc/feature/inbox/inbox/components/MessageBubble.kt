@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -602,8 +603,35 @@ fun MessageBubble(
                             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         }
                         MessageType.AUDIO -> {
-                            message.mediaUrl?.let {
-                                VoiceMessagePlayer(mediaUrl = it, tintColor = contentColor, isFromMe = isFromMe)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    message.mediaUrl?.let {
+                                        VoiceMessagePlayer(mediaUrl = it, tintColor = contentColor, isFromMe = isFromMe)
+                                    }
+                                }
+                                if (isUploading || isFailed) {
+                                    Spacer(modifier = Modifier.width(Spacing.Small))
+                                    if (isFailed) {
+                                        Row {
+                                            IconButton(onClick = onRetryUpload, modifier = Modifier.size(24.dp)) {
+                                                Icon(Icons.Default.Refresh, contentDescription = "Retry upload", tint = MaterialTheme.colorScheme.error)
+                                            }
+                                            IconButton(onClick = onCancelUpload, modifier = Modifier.size(24.dp)) {
+                                                Icon(Icons.Default.Close, contentDescription = "Cancel upload", tint = MaterialTheme.colorScheme.error)
+                                            }
+                                        }
+                                    } else {
+                                        CircularProgressIndicator(
+                                            progress = { (uploadProgress ?: 0) / 100f },
+                                            modifier = Modifier.size(18.dp),
+                                            color = contentColor,
+                                            strokeWidth = 2.dp
+                                        )
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         }
