@@ -84,6 +84,7 @@ fun SynapseFilePicker(
     }
 
     LaunchedEffect(Unit) {
+        viewModel.clearSelection()
         val granted = mediaPermissions.all {
             context.checkSelfPermission(it) == android.content.pm.PackageManager.PERMISSION_GRANTED
         } || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
@@ -197,8 +198,8 @@ fun SynapseFilePicker(
                 AnimatedVisibility(visible = uiState.selectedUris.isNotEmpty() && maxSelection > 1) {
                     Button(
                         onClick = {
-                            val allItems = uiState.mediaItems + uiState.fileItems + uiState.contactItems
-                            val selectedFiles = allItems.filter { it.uri in uiState.selectedUris }
+                            val allItemsMap = (uiState.mediaItems + uiState.fileItems + uiState.contactItems).associateBy { it.uri }
+                            val selectedFiles = uiState.selectedUris.mapNotNull { allItemsMap[it] }
                             onFilesSelected(selectedFiles)
                             onDismissRequest()
                         },

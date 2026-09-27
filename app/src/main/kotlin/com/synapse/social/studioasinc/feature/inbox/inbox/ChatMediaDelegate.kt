@@ -21,11 +21,21 @@ class ChatMediaDelegate(
     private val currentUserIdProvider: () -> String?,
     private val chatIdProvider: () -> String?,
     private val onOptimisticMessageAdded: (Message, String) -> Unit,
-    private val onOptimisticMessageUpdated: (String, String) -> Unit,
+    private val onOptimisticMessageUpdated: (String, String, Int?) -> Unit,
     private val onOptimisticMessageSuccess: (String, Message) -> Unit,
     private val onOptimisticMessageFailed: (String, String?) -> Unit,
     private val onError: (String?) -> Unit
 ) {
+    data class PendingUploadInfo(
+        val tempId: String,
+        val filePath: String,
+        val fileName: String,
+        val contentType: String,
+        val messageType: String,
+        val caption: String?
+    )
+
+    private val pendingUploads = mutableMapOf<String, PendingUploadInfo>()
 
     fun sendMediaMessage(
         mediaUrl: String,
@@ -109,33 +119,73 @@ class ChatMediaDelegate(
             )
             onOptimisticMessageAdded(newMessage, tempId)
 
-            uploadMediaUseCase(
-                chatId = chatId,
+            pendingUploads[tempId] = PendingUploadInfo(
+                tempId = tempId,
                 filePath = filePath,
                 fileName = fileName,
                 contentType = contentType,
-                onProgress = { progress ->
-                    uploadProgressManager.updateProgress(chatId, fileName, progress)
-                    onOptimisticMessageUpdated(tempId, "Uploading... $progress%")
-                }
-            ).onSuccess { mediaUrl ->
-                val finalContent = if (!caption.isNullOrBlank()) caption else if (messageType == "image" || messageType == "video") "Media message" else fileName
-                sendMessageUseCase(
-                    chatId = chatId,
-                    content = finalContent,
-                    mediaUrl = mediaUrl,
-                    messageType = messageType
-                ).onSuccess { actualMessage ->
-                    onOptimisticMessageSuccess(tempId, actualMessage)
-                    uploadProgressManager.dismissProgress(chatId, fileName)
-                }.onFailure { e ->
-                    uploadProgressManager.finishProgress(chatId, fileName, false, "Upload Failed")
-                    onOptimisticMessageFailed(tempId, "Failed to send: ${e.message}")
-                }
+                messageType = messageType,
+                caption = caption
+            )
+
+            executeUpload(tempId, chatId, filePath, fileName, contentType, messageType, caption)
+        }
+    }
+
+    fun retryUpload(tempId: String) {
+        val info = pendingUploads[tempId] ?: return
+        val chatId = chatIdProvider() ?: return
+
+        viewModelScope.launch {
+            onOptimisticMessageUpdated(tempId, "Uploading... 0%", 0)
+            executeUpload(
+                tempId = info.tempId,
+                chatId = chatId,
+                filePath = info.filePath,
+                fileName = info.fileName,
+                contentType = info.contentType,
+                messageType = info.messageType,
+                caption = info.caption
+            )
+        }
+    }
+
+    private suspend fun executeUpload(
+        tempId: String,
+        chatId: String,
+        filePath: String,
+        fileName: String,
+        contentType: String,
+        messageType: String,
+        caption: String?
+    ) {
+        uploadMediaUseCase(
+            chatId = chatId,
+            filePath = filePath,
+            fileName = fileName,
+            contentType = contentType,
+            onProgress = { progress ->
+                uploadProgressManager.updateProgress(chatId, fileName, progress)
+                onOptimisticMessageUpdated(tempId, "Uploading... $progress%", progress)
+            }
+        ).onSuccess { mediaUrl ->
+            val finalContent = if (!caption.isNullOrBlank()) caption else if (messageType == "image" || messageType == "video") "Media message" else fileName
+            sendMessageUseCase(
+                chatId = chatId,
+                content = finalContent,
+                mediaUrl = mediaUrl,
+                messageType = messageType
+            ).onSuccess { actualMessage ->
+                pendingUploads.remove(tempId)
+                onOptimisticMessageSuccess(tempId, actualMessage)
+                uploadProgressManager.dismissProgress(chatId, fileName)
             }.onFailure { e ->
                 uploadProgressManager.finishProgress(chatId, fileName, false, "Upload Failed")
-                onOptimisticMessageFailed(tempId, "Upload failed: ${e.message}")
+                onOptimisticMessageFailed(tempId, "Failed to send: ${e.message}")
             }
+        }.onFailure { e ->
+            uploadProgressManager.finishProgress(chatId, fileName, false, "Upload Failed")
+            onOptimisticMessageFailed(tempId, "Upload failed: ${e.message}")
         }
     }
 }

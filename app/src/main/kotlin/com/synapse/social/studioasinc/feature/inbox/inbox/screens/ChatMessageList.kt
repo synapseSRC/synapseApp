@@ -50,12 +50,16 @@ internal fun ChatMessageList(
     listState: LazyListState,
     isLoadingMore: Boolean,
     typingStatus: TypingStatus?,
+    uploadProgressMap: Map<String, Int> = emptyMap(),
+    uploadErrorMap: Map<String, String> = emptyMap(),
     onLoadMore: () -> Unit,
     onToggleSelection: (String) -> Unit,
     onSwipeToReply: (Message) -> Unit,
     onLongClick: (Message) -> Unit,
     onReactionSelected: (String, SharedReactionType) -> Unit,
     onShowReactionPicker: (Message) -> Unit,
+    onRetryUpload: (String) -> Unit = {},
+    onCancelUpload: (String) -> Unit = {},
     onNavigateToProfile: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -121,6 +125,9 @@ internal fun ChatMessageList(
                     }
                     val isSelected = message.id in selectedMessageIds
                     val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.Small else Spacing.Tiny
+                    val uploadProgress = message.id?.let { uploadProgressMap[it] }
+                    val uploadError = message.id?.let { uploadErrorMap[it] }
+
                     MessageBubble(
                         modifier = Modifier.padding(bottom = bottomGap),
                         message = message,
@@ -128,6 +135,10 @@ internal fun ChatMessageList(
                         position = position,
                         isSelected = isSelected,
                         reactions = message.reactions.map { it.key.emoji to it.value },
+                        uploadProgress = uploadProgress,
+                        uploadError = uploadError,
+                        onRetryUpload = { message.id?.let(onRetryUpload) },
+                        onCancelUpload = { message.id?.let(onCancelUpload) },
                         onToggleSelection = { if (selectedMessageIds.isNotEmpty()) message.id?.let { onToggleSelection(it) } },
                         onSwipeToReply = { onSwipeToReply(message) },
                         replyToMessage = message.replyToId?.let { messagesMap[it] },

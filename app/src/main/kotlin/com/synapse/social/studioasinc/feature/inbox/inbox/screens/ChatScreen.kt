@@ -227,6 +227,9 @@ fun ChatScreen(
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
 
+    val uploadProgressMap by viewModel.uploadProgressMap.collectAsState()
+    val uploadErrorMap by viewModel.uploadErrorMap.collectAsState()
+
     val currentUserId = viewModel.currentUserId ?: ""
 
     val chatWallpaperType by viewModel.chatWallpaperType.collectAsState()
@@ -463,12 +466,16 @@ fun ChatScreen(
                         listState = listState,
                         isLoadingMore = isLoadingMore,
                         typingStatus = typingStatus,
+                        uploadProgressMap = uploadProgressMap,
+                        uploadErrorMap = uploadErrorMap,
                         onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },
                         onLongClick = { selectedMessageForMenu = it },
                         onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
                         onShowReactionPicker = { selectedMessageForReactionPicker = it },
+                        onRetryUpload = viewModel::retryUpload,
+                        onCancelUpload = viewModel::cancelOrRemoveFailedUpload,
                         onNavigateToProfile = onNavigateToProfile
                     )
 

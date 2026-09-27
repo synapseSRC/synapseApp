@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.AddReaction
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
@@ -238,6 +240,10 @@ fun MessageBubble(
     isFromMe: Boolean,
     position: GroupPosition = GroupPosition.SINGLE,
     isSelected: Boolean = false,
+    uploadProgress: Int? = null,
+    uploadError: String? = null,
+    onRetryUpload: () -> Unit = {},
+    onCancelUpload: () -> Unit = {},
     onToggleSelection: () -> Unit = {},
     onSwipeToReply: () -> Unit = {},
     replyToMessage: Message? = null,
@@ -494,26 +500,104 @@ fun MessageBubble(
                 val uriHandler = LocalUriHandler.current
                 val context = LocalContext.current
 
+                val isUploading = uploadProgress != null || message.content.startsWith("Uploading...")
+                val isFailed = uploadError != null
+
                 Box(modifier = Modifier.padding(horizontal = Spacing.Small)) {
+                Column {
                 when (message.messageType) {
                     MessageType.IMAGE -> {
-                            AsyncImage(
-                                model = message.mediaUrl,
-                                contentDescription = "Image message",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = Sizes.HeightExtraLarge)
-                                    .clip(RoundedCornerShape(Sizes.CornerMedium))
-                                    .clickable {
-                                        message.mediaUrl?.let { uriHandler.openUri(it) }
+                            Box(contentAlignment = Alignment.Center) {
+                                AsyncImage(
+                                    model = message.mediaUrl,
+                                    contentDescription = "Image message",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = Sizes.HeightExtraLarge)
+                                        .clip(RoundedCornerShape(Sizes.CornerMedium))
+                                        .clickable {
+                                            if (!isUploading && !isFailed) {
+                                                message.mediaUrl?.let { uriHandler.openUri(it) }
+                                            }
+                                        }
+                                )
+                                if (isUploading || isFailed) {
+                                    Box(
+                                        modifier = Modifier
+                                            .matchParentSize()
+                                            .background(Color.Black.copy(alpha = 0.5f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isFailed) {
+                                            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                                                IconButton(onClick = onRetryUpload) {
+                                                    Icon(Icons.Default.Refresh, contentDescription = "Retry upload", tint = Color.White)
+                                                }
+                                                IconButton(onClick = onCancelUpload) {
+                                                    Icon(Icons.Default.Close, contentDescription = "Cancel upload", tint = Color.White)
+                                                }
+                                            }
+                                        } else {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                CircularProgressIndicator(
+                                                    progress = { (uploadProgress ?: 0) / 100f },
+                                                    color = Color.White,
+                                                    trackColor = Color.White.copy(alpha = 0.3f),
+                                                    modifier = Modifier.size(36.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                                Text(
+                                                    text = "${uploadProgress ?: 0}%",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
                                     }
-                            )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         }
                         MessageType.VIDEO -> {
-                            message.mediaUrl?.let {
-                                VideoPlayerBox(mediaUrl = it)
+                            Box(contentAlignment = Alignment.Center) {
+                                message.mediaUrl?.let {
+                                    VideoPlayerBox(mediaUrl = it)
+                                }
+                                if (isUploading || isFailed) {
+                                    Box(
+                                        modifier = Modifier
+                                            .matchParentSize()
+                                            .background(Color.Black.copy(alpha = 0.5f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isFailed) {
+                                            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                                                IconButton(onClick = onRetryUpload) {
+                                                    Icon(Icons.Default.Refresh, contentDescription = "Retry upload", tint = Color.White)
+                                                }
+                                                IconButton(onClick = onCancelUpload) {
+                                                    Icon(Icons.Default.Close, contentDescription = "Cancel upload", tint = Color.White)
+                                                }
+                                            }
+                                        } else {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                CircularProgressIndicator(
+                                                    progress = { (uploadProgress ?: 0) / 100f },
+                                                    color = Color.White,
+                                                    trackColor = Color.White.copy(alpha = 0.3f),
+                                                    modifier = Modifier.size(36.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                                Text(
+                                                    text = "${uploadProgress ?: 0}%",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         }
@@ -527,7 +611,9 @@ fun MessageBubble(
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(vertical = Spacing.ExtraSmall).clickable {
-                                    message.mediaUrl?.let { uriHandler.openUri(it) }
+                                    if (!isUploading && !isFailed) {
+                                        message.mediaUrl?.let { uriHandler.openUri(it) }
+                                    }
                                 }
                             ) {
                                 Icon(
@@ -541,8 +627,29 @@ fun MessageBubble(
                                     color = contentColor,
                                     fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
                                     maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
                                 )
+                                if (isUploading || isFailed) {
+                                    Spacer(modifier = Modifier.width(Spacing.Small))
+                                    if (isFailed) {
+                                        Row {
+                                            IconButton(onClick = onRetryUpload, modifier = Modifier.size(24.dp)) {
+                                                Icon(Icons.Default.Refresh, contentDescription = "Retry upload", tint = MaterialTheme.colorScheme.error)
+                                            }
+                                            IconButton(onClick = onCancelUpload, modifier = Modifier.size(24.dp)) {
+                                                Icon(Icons.Default.Close, contentDescription = "Cancel upload", tint = MaterialTheme.colorScheme.error)
+                                            }
+                                        }
+                                    } else {
+                                        CircularProgressIndicator(
+                                            progress = { (uploadProgress ?: 0) / 100f },
+                                            modifier = Modifier.size(18.dp),
+                                            color = contentColor,
+                                            strokeWidth = 2.dp
+                                        )
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
                         }
@@ -608,7 +715,7 @@ fun MessageBubble(
                             )
                         }
                     }
-                }
+                } // Column
                 } // close Box
             }
         }
