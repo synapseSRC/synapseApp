@@ -41,7 +41,7 @@ object SettingsColors {
     val sectionTitle: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.onSurfaceVariant
+        get() = MaterialTheme.colorScheme.primary
 
 
 
@@ -113,7 +113,13 @@ object SettingsColors {
     val itemIcon: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.onSurfaceVariant
+        get() = MaterialTheme.colorScheme.primary
+
+    val iconContainerBackground: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f)
+                else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
 }
 
 
@@ -121,15 +127,17 @@ object SettingsColors {
 object SettingsShapes {
 
 
-    val cardShape: Shape = RoundedCornerShape(Sizes.CornerFull)
+    val cardShape: Shape = RoundedCornerShape(24.dp)
 
 
 
-    val sectionShape: Shape = RoundedCornerShape(Sizes.CornerExtraLarge)
+    val sectionShape: Shape = RoundedCornerShape(24.dp)
 
 
 
-    val itemShape: Shape = RoundedCornerShape(Spacing.MediumLarge)
+    val itemShape: Shape = RoundedCornerShape(24.dp)
+
+    val iconBadgeShape: Shape = RoundedCornerShape(14.dp)
 
 
 
@@ -258,8 +266,8 @@ enum class SettingsItemPosition {
     fun getShape(): Shape = when (this) {
         Single -> SettingsShapes.itemShape
         Top -> RoundedCornerShape(
-            topStart = Sizes.CornerLarge,
-            topEnd = Sizes.CornerLarge,
+            topStart = 24.dp,
+            topEnd = 24.dp,
             bottomStart = 0.dp,
             bottomEnd = 0.dp
         )
@@ -267,8 +275,8 @@ enum class SettingsItemPosition {
         Bottom -> RoundedCornerShape(
             topStart = 0.dp,
             topEnd = 0.dp,
-            bottomStart = Sizes.CornerLarge,
-            bottomEnd = Sizes.CornerLarge
+            bottomStart = 24.dp,
+            bottomEnd = 24.dp
         )
     }
 }

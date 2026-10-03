@@ -27,6 +27,28 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
+fun SettingsIconBadge(
+    imageVector: ImageVector,
+    contentDescription: String? = null,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(SettingsShapes.iconBadgeShape)
+            .background(SettingsColors.iconContainerBackground),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(22.dp),
+            tint = SettingsColors.itemIcon
+        )
+    }
+}
+
+@Composable
 fun SettingsToggleItem(
     title: String,
     subtitle: String? = null,
@@ -41,12 +63,7 @@ fun SettingsToggleItem(
         subtitle = subtitle,
         iconContent = imageVector?.let {
             {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
+                SettingsIconBadge(imageVector = it)
             }
         },
         checked = checked,
@@ -140,6 +157,7 @@ fun SettingsClickableItem(
     title: String,
     subtitle: String? = null,
     imageVector: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
     onClick: () -> Unit,
     enabled: Boolean = true,
     position: SettingsItemPosition = SettingsItemPosition.Single
@@ -149,14 +167,10 @@ fun SettingsClickableItem(
         subtitle = subtitle,
         iconContent = imageVector?.let {
             {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
+                SettingsIconBadge(imageVector = it)
             }
         },
+        trailingIcon = trailingIcon,
         onClick = onClick,
         enabled = enabled,
         position = position
@@ -168,6 +182,7 @@ private fun SettingsClickableItemContent(
     title: String,
     subtitle: String?,
     iconContent: (@Composable () -> Unit)?,
+    trailingIcon: ImageVector?,
     onClick: () -> Unit,
     enabled: Boolean,
     position: SettingsItemPosition
@@ -214,9 +229,20 @@ private fun SettingsClickableItemContent(
                     )
                 }
             }
+
+            if (trailingIcon != null) {
+                Spacer(modifier = Modifier.width(Spacing.Medium))
+                Icon(
+                    imageVector = trailingIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(SettingsSpacing.iconSize),
+                    tint = SettingsColors.chevronIcon
+                )
+            }
         }
     }
 }
+
 
 
 
@@ -234,12 +260,7 @@ fun SettingsNavigationItem(
         subtitle = subtitle,
         iconContent = imageVector?.let {
             {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
+                SettingsIconBadge(imageVector = it)
             }
         },
         onClick = onClick,
@@ -358,12 +379,7 @@ fun SettingsSelectionItem(
             ) {
 
                 if (icon != null) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(SettingsSpacing.iconSize),
-                        tint = SettingsColors.itemIcon
-                    )
+                    SettingsIconBadge(imageVector = icon)
                     Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
                 }
 
