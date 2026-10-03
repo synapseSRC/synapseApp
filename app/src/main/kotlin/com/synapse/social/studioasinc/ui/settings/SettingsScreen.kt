@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
@@ -95,7 +96,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(start = Spacing.SmallMedium, bottom = Spacing.ExtraSmall)
                     )
-                    SettingsGroup {
+                    SettingsCard {
                         SettingRow(
                             icon = Icons.Filled.Person,
                             title = stringResource(R.string.settings_account),
@@ -133,7 +134,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(start = Spacing.SmallMedium, bottom = Spacing.ExtraSmall)
                     )
-                    SettingsGroup {
+                    SettingsCard {
                         SettingRow(
                             icon = Icons.Filled.VpnKey,
                             title = stringResource(R.string.settings_reset_encryption_keys_title),
@@ -231,16 +232,13 @@ private fun SettingRow(
                     model = imageUrl,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(Sizes.IconLarge)
+                        .size(44.dp)
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(Sizes.IconLarge),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                SettingsIconBadge(
+                    imageVector = icon
                 )
             }
             Column(
