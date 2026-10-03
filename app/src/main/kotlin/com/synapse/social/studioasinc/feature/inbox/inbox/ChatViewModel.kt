@@ -140,6 +140,12 @@ class ChatViewModel @Inject constructor(
     private val _isScreenVisible = MutableStateFlow(false)
     val isScreenVisible: StateFlow<Boolean> = _isScreenVisible.asStateFlow()
 
+    private val _uploadProgressMap = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val uploadProgressMap: StateFlow<Map<String, Int>> = _uploadProgressMap.asStateFlow()
+
+    private val _uploadErrorMap = MutableStateFlow<Map<String, String>>(emptyMap())
+    val uploadErrorMap: StateFlow<Map<String, String>> = _uploadErrorMap.asStateFlow()
+
     private var currentChatId: String? = null
 
     val currentUserId: String?
@@ -199,7 +205,11 @@ class ChatViewModel @Inject constructor(
                 (current + msg).distinctBy { it.id }.sortedBy { it.createdAt }
             }
         },
-        onOptimisticMessageUpdated = { tempId, content ->
+        onOptimisticMessageUpdated = { tempId, content, progress ->
+            if (progress != null) {
+                _uploadProgressMap.update { it + (tempId to progress) }
+            }
+            _uploadErrorMap.update { it - tempId }
             messagingDelegate._messages.update { current ->
                 with(messagingDelegate) {
                     current.updateById(tempId) { it.copy(content = content) }
@@ -208,6 +218,8 @@ class ChatViewModel @Inject constructor(
         },
         onOptimisticMessageSuccess = { tempId, actualMessage ->
             messagingDelegate.pendingTempIds.update { it - tempId }
+            _uploadProgressMap.update { it - tempId }
+            _uploadErrorMap.update { it - tempId }
             messagingDelegate._messages.update { current ->
                 val hasTempMessage = current.any { it.id == tempId }
                 val hasActualMessage = current.any { it.id == actualMessage.id }
@@ -227,9 +239,7 @@ class ChatViewModel @Inject constructor(
             }
         },
         onOptimisticMessageFailed = { tempId, errorMessage ->
-            messagingDelegate.pendingTempIds.update { it - tempId }
-            _error.value = errorMessage
-            messagingDelegate._messages.update { current -> current.filter { it.id != tempId } }
+            _uploadErrorMap.update { it + (tempId to (errorMessage ?: "Upload failed")) }
         },
         onError = { _error.value = it }
     )
@@ -609,6 +619,18 @@ class ChatViewModel @Inject constructor(
 
     fun uploadAndSendMedia(filePath: String, fileName: String, contentType: String, messageType: String, caption: String? = null) {
         mediaDelegate.uploadAndSendMedia(filePath, fileName, contentType, messageType, caption)
+    }
+
+    fun retryUpload(messageId: String) {
+        mediaDelegate.retryUpload(messageId)
+    }
+
+    fun cancelOrRemoveFailedUpload(messageId: String) {
+        mediaDelegate.removePendingUpload(messageId)
+        messagingDelegate.pendingTempIds.update { it - messageId }
+        _uploadProgressMap.update { it - messageId }
+        _uploadErrorMap.update { it - messageId }
+        messagingDelegate._messages.update { current -> current.filter { it.id != messageId } }
     }
 
     fun getFormattedTimestamp(timestamp: String?): String = TimestampFormatter.formatRelative(timestamp)

@@ -55,8 +55,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
+import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.components.picker.SynapseFilePicker
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import androidx.compose.ui.unit.dp
@@ -97,6 +107,8 @@ fun ChatInputBar(
     val focusRequester = remember { FocusRequester() }
     val haptic = LocalHapticFeedback.current
     val cancelThresholdPx = with(LocalDensity.current) { 100.dp.toPx() }
+
+    var pendingAttachments by remember { mutableStateOf<List<PickedFile>>(emptyList()) }
 
     val micScale by animateFloatAsState(
         targetValue = if (isRecording) (if (isArmedForCancel) 1.35f else 1.2f) else 1f,
@@ -232,6 +244,134 @@ fun ChatInputBar(
                 onRemove = { dismissedPreviewUrl = firstUrl },
                 modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.ExtraSmallMedium).fillMaxWidth()
             )
+        }
+
+        // Pending Attachment Queue Tray
+        AnimatedVisibility(
+            visible = pendingAttachments.isNotEmpty(),
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(Sizes.CornerLarge),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.ExtraSmall)
+            ) {
+                Column(modifier = Modifier.padding(Spacing.Small)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.picker_send_button, pendingAttachments.size),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        TextButton(
+                            onClick = { pendingAttachments = emptyList() },
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.height(24.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.clear_all),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+                        contentPadding = PaddingValues(horizontal = Spacing.ExtraSmall)
+                    ) {
+                        itemsIndexed(pendingAttachments, key = { index, item -> "${item.uri}_$index" }) { index, item ->
+                            val isMedia = item.mimeType.startsWith("image/") || item.mimeType.startsWith("video/")
+                            val isVideo = item.mimeType.startsWith("video/")
+                            val isAudio = item.mimeType.startsWith("audio/")
+                            val isContact = item.mimeType == "text/vcard"
+
+                            Box(
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .clip(RoundedCornerShape(Sizes.CornerMedium))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            ) {
+                                if (isMedia) {
+                                    AsyncImage(
+                                        model = item.uri,
+                                        contentDescription = item.fileName,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    if (isVideo) {
+                                        Icon(
+                                            Icons.Default.PlayCircle,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier
+                                                .align(Alignment.Center)
+                                                .size(20.dp)
+                                        )
+                                    }
+                                } else {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(Spacing.ExtraSmall),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = when {
+                                                isAudio -> Icons.Default.AudioFile
+                                                isContact -> Icons.Default.Person
+                                                else -> Icons.Default.InsertDriveFile
+                                            },
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = item.fileName,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    onClick = {
+                                        pendingAttachments = pendingAttachments.filterIndexed { i, _ -> i != index }
+                                    },
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
+                                    contentColor = Color.White,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(4.dp)
+                                        .size(18.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove attachment",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Recording Indicator Row
@@ -372,21 +512,9 @@ fun ChatInputBar(
                         SynapseFilePicker(
                             onDismissRequest = { showAttachmentMenu = false },
                             onFilesSelected = { files ->
-                                files.forEach { pickedFile ->
-                                    val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
-                                    if (filePath != null) {
-                                        val type = if (pickedFile.mimeType.startsWith("video/")) "video" else if (pickedFile.mimeType.startsWith("image/")) "image" else if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
-                                        onUploadAndSendMedia(
-                                            filePath,
-                                            pickedFile.fileName,
-                                            pickedFile.mimeType,
-                                            type,
-                                            null
-                                        )
-                                    }
-                                }
+                                pendingAttachments = (pendingAttachments + files).take(10)
                             },
-                            maxSelection = 1
+                            maxSelection = 10
                         )
                     }
                 }
@@ -493,11 +621,37 @@ fun ChatInputBar(
                             scaleX = micScale
                             scaleY = micScale
                         }
-                        .pointerInput(inputText, canSendMessage) {
-                            if (inputText.isNotEmpty() || !canSendMessage) {
+                        .pointerInput(inputText, pendingAttachments, canSendMessage) {
+                            if (inputText.isNotEmpty() || pendingAttachments.isNotEmpty() || !canSendMessage) {
                                 detectTapGestures(
                                     onTap = {
-                                        if (inputText.isNotEmpty()) {
+                                        if (pendingAttachments.isNotEmpty()) {
+                                            val queue = pendingAttachments
+                                            val currentText = inputText
+                                            pendingAttachments = emptyList()
+                                            onInputTextChange("")
+                                            dismissedPreviewUrl = null
+
+                                            queue.forEachIndexed { index, pickedFile ->
+                                                val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
+                                                if (filePath != null) {
+                                                    val type = when {
+                                                        pickedFile.mimeType.startsWith("video/") -> "video"
+                                                        pickedFile.mimeType.startsWith("image/") -> "image"
+                                                        pickedFile.mimeType.startsWith("audio/") -> "audio"
+                                                        else -> "file"
+                                                    }
+                                                    val caption = if (index == 0 && currentText.isNotBlank()) currentText else null
+                                                    onUploadAndSendMedia(
+                                                        filePath,
+                                                        pickedFile.fileName,
+                                                        pickedFile.mimeType,
+                                                        type,
+                                                        caption
+                                                    )
+                                                }
+                                            }
+                                        } else if (inputText.isNotEmpty()) {
                                             onSendMessage()
                                             dismissedPreviewUrl = null
                                             focusRequester.requestFocus()
@@ -559,7 +713,7 @@ fun ChatInputBar(
                     Box(contentAlignment = Alignment.Center) {
                         val icon = when {
                             editingMessage != null -> Icons.Default.Check
-                            inputText.isNotEmpty() || !canSendMessage -> Icons.Default.ArrowUpward
+                            inputText.isNotEmpty() || pendingAttachments.isNotEmpty() || !canSendMessage -> Icons.Default.ArrowUpward
                             isArmedForCancel -> Icons.Default.Delete
                             else -> Icons.Default.Mic
                         }
