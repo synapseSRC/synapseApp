@@ -41,12 +41,7 @@ fun SettingsToggleItem(
         subtitle = subtitle,
         iconContent = imageVector?.let {
             {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
+                SettingsIconContainer(imageVector = it)
             }
         },
         checked = checked,
@@ -149,12 +144,7 @@ fun SettingsClickableItem(
         subtitle = subtitle,
         iconContent = imageVector?.let {
             {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
+                SettingsIconContainer(imageVector = it)
             }
         },
         onClick = onClick,
@@ -234,12 +224,7 @@ fun SettingsNavigationItem(
         subtitle = subtitle,
         iconContent = imageVector?.let {
             {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
+                SettingsIconContainer(imageVector = it)
             }
         },
         onClick = onClick,
@@ -358,12 +343,7 @@ fun SettingsSelectionItem(
             ) {
 
                 if (icon != null) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(SettingsSpacing.iconSize),
-                        tint = SettingsColors.itemIcon
-                    )
+                    SettingsIconContainer(imageVector = icon)
                     Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
                 }
 
@@ -547,6 +527,27 @@ fun SettingsButtonItem(
 }
 
 
+
+@Composable
+fun SettingsIconContainer(
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(42.dp)
+            .clip(SettingsShapes.iconContainerShape)
+            .background(SettingsColors.categoryBackground),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = SettingsColors.categoryIconTint
+        )
+    }
+}
 
 @Composable
 fun SettingsHeaderItem(

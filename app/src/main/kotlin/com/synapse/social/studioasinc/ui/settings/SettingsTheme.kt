@@ -26,14 +26,14 @@ object SettingsColors {
     val categoryIconTint: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.primary
+        get() = if (isSystemInDarkTheme()) Color(0xFFA2E0A4) else Color(0xFF2D6A35)
 
 
 
     val categoryBackground: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.primaryContainer
+        get() = if (isSystemInDarkTheme()) Color(0xFF222E22) else Color(0xFFE2F3E2)
 
 
 
@@ -41,7 +41,7 @@ object SettingsColors {
     val sectionTitle: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.onSurfaceVariant
+        get() = if (isSystemInDarkTheme()) Color(0xFFA2E0A4) else Color(0xFF2D6A35)
 
 
 
@@ -121,7 +121,7 @@ object SettingsColors {
 object SettingsShapes {
 
 
-    val cardShape: Shape = RoundedCornerShape(Sizes.CornerFull)
+    val cardShape: Shape = RoundedCornerShape(Sizes.CornerExtraLarge)
 
 
 
@@ -129,7 +129,7 @@ object SettingsShapes {
 
 
 
-    val itemShape: Shape = RoundedCornerShape(Spacing.MediumLarge)
+    val itemShape: Shape = RoundedCornerShape(Sizes.CornerExtraLarge)
 
 
 
@@ -138,6 +138,10 @@ object SettingsShapes {
 
 
     val chipShape: Shape = RoundedCornerShape(Sizes.CornerMedium)
+
+
+
+    val iconContainerShape: Shape = RoundedCornerShape(Sizes.CornerDefault)
 }
 
 
@@ -258,8 +262,8 @@ enum class SettingsItemPosition {
     fun getShape(): Shape = when (this) {
         Single -> SettingsShapes.itemShape
         Top -> RoundedCornerShape(
-            topStart = Sizes.CornerLarge,
-            topEnd = Sizes.CornerLarge,
+            topStart = Sizes.CornerExtraLarge,
+            topEnd = Sizes.CornerExtraLarge,
             bottomStart = 0.dp,
             bottomEnd = 0.dp
         )
@@ -267,8 +271,8 @@ enum class SettingsItemPosition {
         Bottom -> RoundedCornerShape(
             topStart = 0.dp,
             topEnd = 0.dp,
-            bottomStart = Sizes.CornerLarge,
-            bottomEnd = Sizes.CornerLarge
+            bottomStart = Sizes.CornerExtraLarge,
+            bottomEnd = Sizes.CornerExtraLarge
         )
     }
 }
