@@ -325,7 +325,7 @@ private fun LeadDeveloperCard(
 
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "Mo Agamy",
+                        text = "Ashik Ahmed",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )

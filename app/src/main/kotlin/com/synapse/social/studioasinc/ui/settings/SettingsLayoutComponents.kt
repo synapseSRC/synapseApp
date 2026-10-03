@@ -13,17 +13,11 @@ fun SettingsCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Surface(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.sectionShape,
-        color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemGap)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            content()
-        }
+        content()
     }
 }
 
@@ -58,17 +52,11 @@ fun SettingsGroup(
     modifier: Modifier = Modifier,
     items: @Composable ColumnScope.() -> Unit
 ) {
-    Surface(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.sectionShape,
-        color = SettingsColors.cardBackground,
-        tonalElevation = 0.dp
+        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemGap)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items()
-        }
+        items()
     }
 }
 
@@ -76,8 +64,5 @@ fun SettingsGroup(
 
 @Composable
 fun SettingsDivider() {
-    HorizontalDivider(
-        color = SettingsColors.divider,
-        thickness = Sizes.BorderThin
-    )
+    Spacer(modifier = Modifier.height(0.dp))
 }

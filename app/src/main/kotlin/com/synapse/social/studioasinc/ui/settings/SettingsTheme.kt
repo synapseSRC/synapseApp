@@ -161,7 +161,9 @@ object SettingsSpacing {
 
 
 
-    val itemSpacing: Dp = 0.dp
+    val itemSpacing: Dp = 3.dp
+
+    val itemGap: Dp = 3.dp
 
 
 
@@ -263,20 +265,5 @@ enum class SettingsItemPosition {
 
 
 
-    fun getShape(): Shape = when (this) {
-        Single -> SettingsShapes.itemShape
-        Top -> RoundedCornerShape(
-            topStart = 24.dp,
-            topEnd = 24.dp,
-            bottomStart = 0.dp,
-            bottomEnd = 0.dp
-        )
-        Middle -> RoundedCornerShape(0.dp)
-        Bottom -> RoundedCornerShape(
-            topStart = 0.dp,
-            topEnd = 0.dp,
-            bottomStart = 24.dp,
-            bottomEnd = 24.dp
-        )
-    }
+    fun getShape(): Shape = SettingsShapes.itemShape
 }
