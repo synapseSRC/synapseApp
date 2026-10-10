@@ -1,0 +1,156 @@
+# ---------------------------------------------------
+# General and Operating System Exclusions
+# ---------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+Network Trash Folder
+Temporary Items
+.Spotlight-V100
+.Trashes
+thumbs.db
+desktop.ini
+.gradle
+/build
+.idea/
+.kotlin/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/modules/
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/render.experimental
+.idea/codeStyles/
+.idea/runConfigurations/
+.idea/inspectionProfiles/
+.idea/dictionaries/
+
+# ---------------------------------------------------
+# Android Studio / Gradle
+# ---------------------------------------------------
+# Gradle generated files
+**/build/
+# Local configuration files
+local.properties
+.cxx/
+.externalNativeBuild/
+# Lint files
+lint-results.xml
+lint-results-*.html
+# Captures & Profiling
+/captures
+/profiler
+# Test coverage
+jacoco*.exec
+*.ec
+# Android Package Files (.apk, .aab) and Build cache
+*.apk
+*.aab
+*.ap_
+*.aar
+
+# ---------------------------------------------------
+# Project-Specific (Sensitive/Generated) Exclusions
+# ---------------------------------------------------
+# Keystore and Signing Information (CRITICAL for security)
+# I see 'app/release_key.jks' in your file listing, this MUST be excluded.
+*.jks
+*.keystore
+# Firebase Configuration (CRITICAL for security)
+# google-services.json (Removed from exclusion as requested)
+# Generated Room Database Schemas (often kept for migration, but excluded by default)
+# Remove the following lines if you explicitly track schemas for Room migrations:
+/app/schemas/
+# User Data & Debugging
+crashlytics-build.properties
+debug.keystore
+
+# ---------------------------------------------------
+# Environment and Secrets
+# ---------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+*.env.*
+.venv/
+venv/
+ENV/
+env/
+
+# ---------------------------------------------------
+# External Tooling & Logs
+# ---------------------------------------------------
+# Log files
+*.log
+# Dependency directories
+node_modules/
+bower_components/
+# Text files in root
+/*.txt
+# macOS specific
+xcuserdata/
+# Windows specific
+thumbs.db
+
+# ---------------------------------------------------
+# Kotlin Multiplatform & JS Build Artifacts
+# ---------------------------------------------------
+# Kotlin/JS store and build cache
+kotlin-js-store/
+# Web build outputs
+webApp/dist/
+# Desktop build outputs (MSI, installers, packaged artifacts)
+/dist/
+# Shared module build outputs
+shared/build/
+# Documentation site dependencies
+docsWeb/node_modules/
+
+# ---------------------------------------------------
+# Dependency Caching (if manually placed in libs/)
+# The inclusion of AARs like 'app/libs/android-image-cropper-2.8.0.aar'
+# suggests you may manually manage some AARs. If so, remove the line below.
+# However, the best practice is to manage all dependencies via build.gradle.
+# I will only exclude the *generated* AAR/APK files here for standard practice.
+# If those in app/libs/ are custom-built external dependencies, consider removing them.
+
+# Build scripts
+build-and-push.sh
+# Shell scripts in root only
+/*.sh
+/tmp/
+
+.gemini/
+gha-creds-*.json
+*.py
+*.patch
+
+# Root directory file exclusions
+/*.md
+!README.md
+!AGENTS.md
+!CONTRIBUTING.md
+!REVIEW.md
+/*.py
+/*.sh
+
+# Cleanup
+__pycache__/
+*.pyc
+*.tmp
+*.bak
+*.orig
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+
+# IDE
+.vscode/
+jules-delegator.skill
+supabase/.temp/

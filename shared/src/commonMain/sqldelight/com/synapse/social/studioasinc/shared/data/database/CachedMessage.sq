@@ -1,0 +1,60 @@
+CREATE TABLE CachedMessage (
+    id TEXT NOT NULL PRIMARY KEY,
+    chat_id TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'text',
+    media_url TEXT,
+    delivery_status TEXT NOT NULL DEFAULT 'SENT',
+    content_status TEXT NOT NULL DEFAULT 'ACTIVE',
+    read_by TEXT,
+    created_at TEXT NOT NULL,
+    sent_at TEXT,
+    delivered_at TEXT,
+    read_at TEXT,
+    edited_at TEXT,
+    deleted_at TEXT,
+    expires_at TEXT,
+    reply_to_id TEXT,
+    failure_reason TEXT,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    is_edited INTEGER NOT NULL DEFAULT 0,
+    cached_at INTEGER NOT NULL,
+    metadata TEXT
+);
+
+upsertMessage:
+INSERT OR REPLACE INTO CachedMessage VALUES ?;
+
+selectByChatId:
+SELECT * FROM CachedMessage
+WHERE chat_id = :chatId
+ORDER BY created_at ASC
+LIMIT :limit;
+
+deleteOldestBeyondLimit:
+DELETE FROM CachedMessage
+WHERE chat_id = :chatId AND id NOT IN (
+    SELECT id FROM CachedMessage
+    WHERE chat_id = :chatId
+    ORDER BY created_at DESC
+    LIMIT :limit
+);
+
+deleteById:
+DELETE FROM CachedMessage WHERE id = :id;
+
+updateContent:
+UPDATE CachedMessage SET content = :content, is_edited = 1, content_status = 'EDITED', edited_at = :editedAt WHERE id = :id;
+
+markDeleted:
+UPDATE CachedMessage SET is_deleted = 1, content_status = 'DELETED', deleted_at = :deletedAt WHERE id = :id;
+
+updateReadBy:
+UPDATE CachedMessage SET read_by = :read_by, delivery_status = 'READ', read_at = :readAt WHERE id = :id;
+
+updateDeliveryStatus:
+UPDATE CachedMessage SET delivery_status = :deliveryStatus, delivered_at = :deliveredAt WHERE id = :id;
+
+deleteAll:
+DELETE FROM CachedMessage;

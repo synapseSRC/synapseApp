@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Basic colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Status colors -->
+    <color name="warning_color">#7D5300</color>
+    <color name="error_color">#BA1A1A</color>
+    <color name="success_color">#1B6D33</color>
+
+    <!-- Primary colors - Synapse Blue -->
+    <color name="primary_color">#1976D2</color>
+    <color name="primary_dark">#00497D</color>
+    <color name="accent_color">#1976D2</color>
+
+    <!-- Background colors -->
+    <color name="background_light">#F8F9FF</color>
+    <color name="background_dark">#111318</color>
+    <color name="surface_light">#F8F9FF</color>
+    <color name="surface_dark">#111318</color>
+
+    <!-- Text colors -->
+    <color name="text_primary_light">#191C20</color>
+    <color name="text_primary_dark">#E1E2E8</color>
+    <color name="text_secondary_light">#44474E</color>
+    <color name="text_secondary_dark">#C4C6D0</color>
+
+    <!-- Gray colors -->
+    <color name="gray_light">#E0E2EC</color>
+
+    <!-- Waveform colors -->
+    <color name="waveform_color">#1976D2</color>
+    <color name="waveform_progress_color">#00497D</color>
+    <color name="waveform_background">#E0E2EC</color>
+
+    <!-- Theme Compatibility Aliases -->
+    <color name="primary">@color/primary_color</color>
+    <color name="accent">@color/accent_color</color>
+    <color name="background">@color/background_light</color>
+    <color name="surface">@color/surface_light</color>
+    <color name="text_primary">@color/text_primary_light</color>
+    <color name="text_secondary">@color/text_secondary_light</color>
+</resources>

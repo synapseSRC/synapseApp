@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_privacy_screen_description">Your basic profile preview remains visible. Only approved followers can view posts and stories in Synapse. Media links hosted elsewhere may remain accessible by URL.</string>
+    <string name="request_to_follow">Request to follow</string>
+    <string name="follow_requested">Requested</string>
+    <string name="private_profile_title">This account is private</string>
+    <string name="private_profile_description">Follow this account to see its posts, photos, reels, replies, and stories.</string>
+    <string name="private_profile_status_error">Could not verify follow access. Refresh and try again.</string>
+    <string name="follow_requests_title">Follow requests</string>
+    <string name="follow_requests_refresh">Refresh</string>
+    <string name="follow_requests_empty">No pending follow requests.</string>
+    <string name="follow_request_requested_label">Requested to follow @%1$s</string>
+    <string name="follow_request_accept">Accept</string>
+    <string name="follow_request_reject">Reject</string>
+</resources>

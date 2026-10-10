@@ -1,0 +1,39 @@
+<resources>
+<!-- Reply previews -->
+    <string name="chat_reply_sender_you">You</string>
+    <string name="chat_reply_sender_unknown">Unknown sender</string>
+    <string name="chat_reply_unavailable_title">Original message</string>
+    <string name="chat_reply_message_unavailable">This message is no longer available</string>
+    <string name="chat_reply_message_deleted">Message deleted</string>
+    <string name="chat_reply_cancel">Cancel reply</string>
+    <string name="chat_reply_preview_accessibility">Quoted message from %1$s: %2$s</string>
+    <string name="chat_reply_duration">%1$d:%2$02d</string>
+    <string name="chat_reply_size_bytes">%1$d B</string>
+    <string name="chat_reply_size_kilobytes">%1$.1f KB</string>
+    <string name="chat_reply_size_megabytes">%1$.1f MB</string>
+    <string name="chat_reply_type_text">Message</string>
+    <string name="chat_reply_type_photo">Photo</string>
+    <string name="chat_reply_type_video">Video</string>
+    <string name="chat_reply_type_voice">Voice message</string>
+    <string name="chat_reply_type_audio">Audio message</string>
+    <string name="chat_reply_type_media">Media</string>
+    <string name="chat_reply_type_file">File</string>
+    <string name="chat_reply_type_poll">Poll</string>
+    <string name="chat_reply_type_contact">Contact</string>
+    <string name="chat_reply_type_location">Location</string>
+    <string name="chat_reply_type_live_location">Live location</string>
+    <string name="chat_reply_type_gif">GIF</string>
+    <string name="chat_reply_type_sticker">Sticker</string>
+    <string name="chat_reply_type_link">Link</string>
+    <string name="chat_reply_type_music">Music</string>
+    <string name="chat_reply_type_post">Post</string>
+    <string name="chat_reply_type_story">Story</string>
+    <string name="chat_reply_type_event">Event</string>
+    <string name="chat_reply_type_product">Product</string>
+    <string name="chat_reply_type_payment">Payment</string>
+    <string name="chat_reply_type_map">Map</string>
+    <string name="chat_reply_type_code">Code snippet</string>
+    <string name="chat_reply_type_call">Call</string>
+    <string name="chat_reply_type_system">System message</string>
+    <string name="chat_reply_type_view_once">View-once media</string>
+</resources>

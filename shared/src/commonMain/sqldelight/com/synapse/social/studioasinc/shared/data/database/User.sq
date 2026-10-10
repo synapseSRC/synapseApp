@@ -1,0 +1,33 @@
+import kotlin.Boolean;
+import kotlin.Int;
+import com.synapse.social.studioasinc.shared.data.model.EncryptedString;
+
+CREATE TABLE User (
+    id TEXT NOT NULL PRIMARY KEY,
+    username TEXT NOT NULL,
+    email TEXT AS EncryptedString,
+    fullName TEXT,
+    avatarUrl TEXT,
+    bio TEXT,
+    website TEXT,
+    location TEXT,
+    isVerified INTEGER AS Boolean NOT NULL DEFAULT 0,
+    followersCount INTEGER AS Int NOT NULL DEFAULT 0,
+    followingCount INTEGER AS Int NOT NULL DEFAULT 0,
+    postsCount INTEGER AS Int NOT NULL DEFAULT 0
+);
+
+insertUser:
+INSERT OR REPLACE INTO User(
+    id, username, email, fullName, avatarUrl, bio, website, location,
+    isVerified, followersCount, followingCount, postsCount
+) VALUES ?;
+
+selectById:
+SELECT * FROM User WHERE id = ?;
+
+selectAll:
+SELECT * FROM User;
+
+deleteAll:
+DELETE FROM User;

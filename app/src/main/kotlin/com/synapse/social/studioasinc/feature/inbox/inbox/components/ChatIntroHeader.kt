@@ -1,0 +1,113 @@
+package com.synapse.social.studioasinc.feature.inbox.inbox.components
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import coil.compose.AsyncImage
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.User
+
+@Composable
+fun ChatIntroHeader(
+    participantProfile: User?,
+    initialParticipantName: String?,
+    avatarUrl: String?,
+    onViewProfile: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.ExtraLarge, horizontal = Spacing.Medium),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val rawName = participantProfile?.displayName ?: participantProfile?.name
+            ?: participantProfile?.username?.replace("_", " ")?.split(" ")?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+            ?: initialParticipantName ?: ""
+
+        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+            avatarUrl = avatarUrl,
+            displayName = rawName,
+            size = Sizes.AvatarProfile,
+            shape = RoundedCornerShape(Sizes.CornerExtraLarge)
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.Medium))
+
+        Text(
+            text = rawName,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+
+        val subtitle = if (!participantProfile?.bio.isNullOrBlank()) {
+            participantProfile?.bio ?: ""
+        } else {
+            val username = participantProfile?.username ?: initialParticipantName?.replace(" ", "")?.lowercase() ?: ""
+            val followers = participantProfile?.followersCount ?: 0
+            if (username.isNotEmpty()) {
+                "@$username · $followers followers"
+            } else {
+                "$followers followers"
+            }
+        }
+
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.MediumLarge))
+
+        OutlinedButton(onClick = onViewProfile) {
+            Text(text = stringResource(id = R.string.view_profile))
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.Large))
+
+        Surface(
+            shape = RoundedCornerShape(Sizes.CornerFull),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shadowElevation = Spacing.None,
+            tonalElevation = Sizes.BorderThin,
+            modifier = Modifier.padding(horizontal = Spacing.Medium)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(Sizes.IconSemiSmall),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(Spacing.Small))
+                Text(
+                    text = stringResource(id = R.string.messages_are_end_to_end_encrypted),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+// Trigger CI
+// Trigger CI 2

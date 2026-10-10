@@ -1,0 +1,27 @@
+-- Migration 4: Remove is_encrypted and encrypted_content from CachedMessage.
+-- content now stores the E2EE encrypted payload directly.
+CREATE TABLE CachedMessage_new (
+    id TEXT NOT NULL PRIMARY KEY,
+    chat_id TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'text',
+    media_url TEXT,
+    delivery_status TEXT NOT NULL DEFAULT 'sent',
+    read_by TEXT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT,
+    reply_to_id TEXT,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    is_edited INTEGER NOT NULL DEFAULT 0,
+    cached_at INTEGER NOT NULL
+);
+
+INSERT INTO CachedMessage_new
+    SELECT id, chat_id, sender_id, content, message_type, media_url, delivery_status, read_by,
+           created_at, expires_at, reply_to_id, is_deleted, is_edited, cached_at
+    FROM CachedMessage;
+
+DROP TABLE CachedMessage;
+
+ALTER TABLE CachedMessage_new RENAME TO CachedMessage;

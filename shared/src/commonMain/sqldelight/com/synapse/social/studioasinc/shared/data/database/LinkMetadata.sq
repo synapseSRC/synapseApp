@@ -1,0 +1,14 @@
+CREATE TABLE LinkMetadataEntity (
+    url TEXT NOT NULL PRIMARY KEY,
+    title TEXT,
+    description TEXT,
+    imageUrl TEXT,
+    domain TEXT
+);
+
+getLinkMetadata:
+SELECT * FROM LinkMetadataEntity WHERE url = :url;
+
+insertLinkMetadata:
+INSERT OR REPLACE INTO LinkMetadataEntity (url, title, description, imageUrl, domain)
+VALUES (?, ?, ?, ?, ?);

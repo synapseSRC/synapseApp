@@ -1,0 +1,7 @@
+ALTER TABLE CachedMessage ADD COLUMN content_status TEXT NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE CachedMessage ADD COLUMN sent_at TEXT;
+ALTER TABLE CachedMessage ADD COLUMN delivered_at TEXT;
+ALTER TABLE CachedMessage ADD COLUMN read_at TEXT;
+ALTER TABLE CachedMessage ADD COLUMN edited_at TEXT;
+ALTER TABLE CachedMessage ADD COLUMN deleted_at TEXT;
+ALTER TABLE CachedMessage ADD COLUMN failure_reason TEXT;

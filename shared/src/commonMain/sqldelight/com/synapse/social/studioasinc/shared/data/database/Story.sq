@@ -1,0 +1,39 @@
+CREATE TABLE StoryEntity (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    mediaUrl TEXT,
+    mediaType TEXT,
+    content TEXT,
+    duration INTEGER,
+    durationHours INTEGER,
+    privacy TEXT,
+    viewCount INTEGER,
+    isActive INTEGER AS kotlin.Boolean,
+    thumbnailUrl TEXT,
+    mediaWidth INTEGER,
+    mediaHeight INTEGER,
+    mediaDurationSeconds INTEGER,
+    fileSizeBytes INTEGER,
+    reactionsCount INTEGER,
+    repliesCount INTEGER,
+    isReported INTEGER AS kotlin.Boolean,
+    moderationStatus TEXT,
+    createdAt TEXT,
+    expiresAt TEXT
+);
+
+insertStory:
+INSERT OR REPLACE INTO StoryEntity(
+    id, userId, mediaUrl, mediaType, content, duration, durationHours, privacy, viewCount,
+    isActive, thumbnailUrl, mediaWidth, mediaHeight, mediaDurationSeconds, fileSizeBytes,
+    reactionsCount, repliesCount, isReported, moderationStatus, createdAt, expiresAt
+) VALUES ?;
+
+selectAll:
+SELECT * FROM StoryEntity ORDER BY createdAt DESC;
+
+deleteById:
+DELETE FROM StoryEntity WHERE id = ?;
+
+deleteAll:
+DELETE FROM StoryEntity;

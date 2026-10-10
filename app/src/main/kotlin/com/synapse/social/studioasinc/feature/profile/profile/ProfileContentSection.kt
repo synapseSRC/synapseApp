@@ -1,0 +1,548 @@
+package com.synapse.social.studioasinc.feature.profile.profile
+
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.core.util.IntentUtils
+import com.synapse.social.studioasinc.domain.model.Post
+import com.synapse.social.studioasinc.feature.post.PostDetailActivity
+import com.synapse.social.studioasinc.feature.profile.profile.components.*
+import com.synapse.social.studioasinc.feature.shared.components.post.PostActions
+import com.synapse.social.studioasinc.feature.shared.components.post.PostActionsFactory
+import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
+import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
+import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.ui.components.EmptyState
+import kotlinx.coroutines.delay
+import com.synapse.social.studioasinc.shared.domain.model.MediaType
+import com.synapse.social.studioasinc.shared.domain.model.MediaItem as DomainMediaItem
+
+private const val TRANSITION_DURATION_MS = 300
+
+@Composable
+internal fun ProfileContent(
+    state: ProfileScreenState,
+    profile: com.synapse.social.studioasinc.data.model.UserProfile?,
+    isLoading: Boolean,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    scrollProgressProvider: () -> Float,
+    viewModel: ProfileViewModel,
+    onNavigateToEditProfile: () -> Unit,
+    onNavigateToFollowers: () -> Unit,
+    onNavigateToFollowing: () -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
+    onNavigateToUserProfile: (String) -> Unit,
+    onNavigateToChat: (String, String?, String?) -> Unit,
+    onNavigateToStoryCreator: () -> Unit,
+    onOpenMediaViewer: (List<String>, Int) -> Unit,
+    onShowPostOptions: (Post) -> Unit
+) {
+
+    var contentVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(100)
+        contentVisible = true
+    }
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (contentVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "contentAlpha"
+    )
+
+    val context = LocalContext.current
+    val lockedForViewer = profile?.let { isPrivateProfileLockedForViewer(it.isPrivate, state.isOwnProfile, state.isFollowing) } == true
+
+    var bioExpanded by remember { mutableStateOf(false) }
+
+    val currentOnNavigateToUserProfile by rememberUpdatedState(onNavigateToUserProfile)
+    val currentOnNavigateToQuotePost by rememberUpdatedState(onNavigateToQuotePost)
+    val currentOnOpenMediaViewer by rememberUpdatedState(onOpenMediaViewer)
+    val currentOnShowPostOptions by rememberUpdatedState(onShowPostOptions)
+
+    val actions = remember(context, viewModel) {
+        PostActionsFactory.create(
+            viewModel = viewModel,
+            onComment = { post ->
+                val intent = Intent(context, PostDetailActivity::class.java).apply {
+                    putExtra(PostDetailActivity.EXTRA_POST_ID, post.id)
+                    putExtra(PostDetailActivity.EXTRA_AUTHOR_UID, post.authorUid)
+                }
+                context.startActivity(intent)
+            },
+            onShare = { post ->
+                PostShareUtils.sharePost(context, post.id)
+            },
+            onQuote = { post ->
+                currentOnNavigateToQuotePost(post.id)
+            },
+            onUserClick = { userId -> currentOnNavigateToUserProfile(userId) },
+            onOptionClick = { post -> currentOnShowPostOptions(post) },
+            onMediaClick = { index -> }
+        )
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { alpha = contentAlpha }
+    ) {
+
+        if (state.viewAsMode != null) {
+            item {
+                ViewAsBanner(
+                    viewMode = state.viewAsMode,
+                    specificUserName = state.viewAsUserName,
+                    onExitViewAs = { viewModel.exitViewAs() }
+                )
+            }
+        }
+
+        item {
+            AnimatedContent(
+                targetState = isLoading && profile == null,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) togetherWith
+                            fadeOut(animationSpec = tween(TRANSITION_DURATION_MS))
+                },
+                label = "profile_header_transition"
+            ) { isHeaderLoading ->
+                if (isHeaderLoading) {
+                    Column {
+                        ProfileHeaderShimmer()
+                        ProfileBioShimmer(displayName = state.viewAsUserName)
+                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        ProfileStatsShimmer()
+                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        ProfileActionsShimmer()
+                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                    }
+                } else {
+                    if (profile != null) {
+                        ProfileHeader(
+                            avatar = profile.avatar,
+                            status = profile.status,
+                            coverImageUrl = profile.coverImageUrl,
+                            name = profile.name,
+                            username = profile.username,
+                            nickname = profile.nickname,
+                            bio = profile.bio,
+                            isVerified = profile.isVerified,
+                            hasStory = state.hasStory,
+                            postsCount = profile.postCount,
+                            followersCount = profile.followerCount,
+                            followingCount = profile.followingCount,
+                            isOwnProfile = state.isOwnProfile && state.viewAsMode == null,
+                            isFollowing = state.isFollowing,
+                            isFollowRequested = state.isFollowRequested,
+                            isPrivate = profile.isPrivate,
+                            isFollowLoading = state.isFollowLoading,
+                            scrollOffsetProvider = scrollProgressProvider,
+                            bioExpanded = bioExpanded,
+                            onToggleBio = { bioExpanded = !bioExpanded },
+                            onProfileImageClick = {
+                                if (state.isOwnProfile) {
+                                    onNavigateToEditProfile()
+                                } else if (!profile.avatar.isNullOrBlank()) {
+                                    onOpenMediaViewer(listOf(profile.avatar), 0)
+                                }
+                            },
+                            onCoverPhotoClick = {
+                                if (state.isOwnProfile) {
+                                    onNavigateToEditProfile()
+                                } else if (!profile.coverImageUrl.isNullOrBlank()) {
+                                    onOpenMediaViewer(listOf(profile.coverImageUrl), 0)
+                                }
+                            },
+                            onEditProfileClick = onNavigateToEditProfile,
+                            onFollowClick = {
+                                if (state.isFollowing || state.isFollowRequested) {
+                                    viewModel.unfollowUser(profile.id)
+                                } else {
+                                    viewModel.followUser(profile.id)
+                                }
+                            },
+                            onMessageClick = {
+                                onNavigateToChat(
+                                    profile.id,
+                                    profile.name ?: profile.username,
+                                    profile.avatar
+                                )
+                            },
+                            onAddStoryClick = onNavigateToStoryCreator,
+                            onMoreClick = { viewModel.toggleMoreMenu() },
+                            onStatsClick = { stat ->
+                                when (stat) {
+                                    "followers" -> onNavigateToFollowers()
+                                    "following" -> onNavigateToFollowing()
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        if (lockedForViewer) {
+            item {
+                PrivateProfileLockedNotice(
+                    isRequested = state.isFollowRequested,
+                    isLoading = state.isFollowLoading,
+                    statusError = state.followStatusError != null,
+                    onRequest = {
+                        if (state.isFollowRequested) viewModel.unfollowUser(profile?.id.orEmpty())
+                        else viewModel.followUser(profile?.id.orEmpty())
+                    }
+                )
+            }
+        } else {
+        item {
+            AnimatedContent(
+                targetState = isLoading && profile == null,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) togetherWith
+                            fadeOut(animationSpec = tween(TRANSITION_DURATION_MS))
+                },
+                label = "profile_details_transition"
+            ) { isDetailsLoading ->
+                if (isDetailsLoading) {
+                    Column {
+                        ProfileDetailsShimmer()
+                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        FollowingSectionShimmer()
+                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                    }
+                } else {
+                    if (profile != null) {
+                        Column {
+                            Spacer(modifier = Modifier.height(Spacing.Medium))
+                            UserDetailsSection(
+                                details = UserDetails(
+                                    location = profile.location,
+                                    joinedDate = formatJoinedDate(profile.joinedDate),
+                                    relationshipStatus = profile.relationshipStatus,
+                                    birthday = profile.birthday,
+                                    work = profile.work,
+                                    education = profile.education,
+                                    website = profile.website,
+                                    gender = profile.gender,
+                                    pronouns = profile.pronouns,
+                                    linkedAccounts = profile.linkedAccounts.map {
+                                        LinkedAccount(
+                                            platform = it.platform,
+                                            username = it.username
+                                        )
+                                    },
+                                    currentCity = profile.currentCity,
+                                    hometown = profile.hometown,
+                                    occupation = profile.occupation,
+                                    workplace = profile.workplace,
+                                    discordTag = profile.discordTag,
+                                    githubProfile = profile.githubProfile,
+                                    personalWebsite = profile.personalWebsite,
+                                    publicEmail = profile.publicEmail
+                                ),
+                                onWebsiteClick = { url ->
+                                    IntentUtils.openUrl(context, url)
+                                },
+                                modifier = Modifier.padding(horizontal = Spacing.Medium)
+                            )
+
+                            Spacer(modifier = Modifier.height(Spacing.Medium))
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(Spacing.Small))
+            ContentFilterBar(
+                selectedFilter = state.contentFilter,
+                onFilterSelected = { filter -> viewModel.switchContentFilter(filter) },
+                modifier = Modifier.fillMaxWidth(),
+                showLabels = true
+            )
+        }
+
+        item {
+            com.synapse.social.studioasinc.feature.profile.profile.animations.crossfadeContent(targetState = state.contentFilter) { filter ->
+                when (filter) {
+                    ProfileContentFilter.PHOTOS -> {
+                        val photos = remember(state.photos) {
+                            state.photos.filterIsInstance<DomainMediaItem>().map {
+                                com.synapse.social.studioasinc.feature.profile.profile.components.MediaItem(
+                                    id = it.id,
+                                    url = it.url,
+                                    isVideo = it.type == MediaType.VIDEO,
+                                    isMultiple = false,
+                                    thumbnailUrl = it.thumbnailUrl
+                                )
+                            }
+                        }
+                        val isSectionLoading = state.photos.isEmpty() && isLoading
+                        val isEmpty = state.photos.isEmpty() && !state.isLoadingMore && !state.isRefreshing && !isLoading
+
+                        AnimatedContent(
+                            targetState = Pair(isSectionLoading, isEmpty),
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) togetherWith
+                                        fadeOut(animationSpec = tween(TRANSITION_DURATION_MS))
+                            },
+                            label = "photos_shimmer_to_content"
+                        ) { (loading, empty) ->
+                            when {
+                                loading -> PhotoGrid(items = emptyList(), onItemClick = {}, isLoading = true)
+                                empty -> EmptyState(
+                                    icon = Icons.Default.PhotoLibrary,
+                                    title = stringResource(R.string.empty_profile_photos_title),
+                                    message = stringResource(R.string.empty_profile_photos_msg)
+                                )
+                                else -> {
+                                    PhotoGrid(
+                                        items = photos,
+                                        onItemClick = { mediaItem ->
+                                            val allUrls = photos.map { it.url }
+                                            val index = photos.indexOf(mediaItem)
+                                            onOpenMediaViewer(allUrls, if (index >= 0) index else 0)
+                                        },
+                                        isLoading = state.isLoadingMore
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    ProfileContentFilter.POSTS -> {
+                        val prof = (state.profileState as? ProfileUiState.Success)?.profile
+                        if (prof != null || isLoading) {
+                            Column {
+                                if (state.posts.isEmpty() && !state.isLoadingMore && !state.isRefreshing && !isLoading) {
+                                    EmptyState(
+                                        icon = Icons.AutoMirrored.Filled.Article,
+                                        title = if (state.isOwnProfile) stringResource(R.string.empty_own_posts_title) else stringResource(R.string.empty_user_posts_title),
+                                        message = if (state.isOwnProfile) stringResource(R.string.empty_own_posts_msg) else stringResource(R.string.empty_user_posts_msg)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    ProfileContentFilter.REELS -> {
+                        val reels = remember(state.reels) {
+                            state.reels.filterIsInstance<DomainMediaItem>().map {
+                                com.synapse.social.studioasinc.feature.profile.profile.components.MediaItem(
+                                    id = it.id,
+                                    url = it.url,
+                                    isVideo = it.type == MediaType.VIDEO,
+                                    isMultiple = false,
+                                    thumbnailUrl = it.thumbnailUrl
+                                )
+                            }
+                        }
+                        val isSectionLoading = state.reels.isEmpty() && isLoading
+                        val isEmpty = state.reels.isEmpty() && !state.isLoadingMore && !state.isRefreshing && !isLoading
+
+                        AnimatedContent(
+                            targetState = Pair(isSectionLoading, isEmpty),
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)) togetherWith
+                                        fadeOut(animationSpec = tween(TRANSITION_DURATION_MS))
+                            },
+                            label = "reels_shimmer_to_content"
+                        ) { (loading, empty) ->
+                            when {
+                                loading -> ReelsGrid(items = emptyList(), onItemClick = {}, isLoading = true)
+                                empty -> EmptyState(
+                                    icon = Icons.Default.VideoLibrary,
+                                    title = stringResource(R.string.empty_profile_reels_title),
+                                    message = stringResource(R.string.empty_profile_reels_msg)
+                                )
+                                else -> {
+                                    ReelsGrid(
+                                        items = reels,
+                                        onItemClick = {
+                                            Toast.makeText(context, context.getString(R.string.toast_reels_viewer_soon), Toast.LENGTH_SHORT).show()
+                                        },
+                                        isLoading = state.isLoadingMore
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    ProfileContentFilter.REPLIES -> {
+                        if (state.replies.isEmpty() && !state.isLoadingMore && !state.isRefreshing) {
+                            EmptyState(
+                                icon = Icons.AutoMirrored.Filled.Article,
+                                title = stringResource(com.synapse.social.studioasinc.R.string.no_replies),
+                                message = stringResource(com.synapse.social.studioasinc.R.string.no_replies_msg)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (state.contentFilter == ProfileContentFilter.POSTS) {
+            item {
+                AnimatedVisibility(
+                    visible = state.posts.isEmpty() && isLoading,
+                    enter = fadeIn(animationSpec = tween(TRANSITION_DURATION_MS)),
+                    exit = fadeOut(animationSpec = tween(TRANSITION_DURATION_MS))
+                ) {
+                    ProfilePostsShimmer()
+                }
+            }
+        }
+
+        if (state.contentFilter == ProfileContentFilter.POSTS && state.posts.isNotEmpty()) {
+            val posts = state.posts.filterIsInstance<com.synapse.social.studioasinc.domain.model.Post>()
+            itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
+                val currentProfile = (state.profileState as? ProfileUiState.Success)?.profile
+
+                val postActions = remember(actions, post.id) {
+                    actions.copy(
+                        onMediaClick = { idx ->
+                            val urls = post.mediaItems?.mapNotNull { it.url } ?: listOfNotNull(post.postImage)
+                            if (urls.isNotEmpty()) {
+                                currentOnOpenMediaViewer(urls, idx)
+                            }
+                        },
+                        onOptionClick = { p ->
+                            currentOnShowPostOptions(p)
+                        }
+                    )
+                }
+
+                SharedPostItem(
+                    post = post,
+                    currentProfile = currentProfile,
+                    actions = postActions
+                )
+            }
+        }
+
+        if (state.contentFilter == ProfileContentFilter.REPLIES && state.replies.isNotEmpty()) {
+            val replies = state.replies.filterIsInstance<com.synapse.social.studioasinc.domain.model.CommentWithUser>()
+            itemsIndexed(replies, key = { _, comment -> comment.id }) { index, comment ->
+                val postCardState = remember(comment) {
+                    com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper.toPostCardState(
+                        comment = comment,
+                        parentAuthorUsername = null, // Will be updated when parent author info is available in CommentWithUser
+                        depth = 0,
+                        showThreadLine = false,
+                        isLastReply = false
+                    )
+                }
+
+                PostCard(
+                    state = postCardState,
+                    onLikeClick = { viewModel.reactToPost(postCardState.post, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
+                    onCommentClick = { /* Navigate to detail */ },
+                    onShareClick = { PostShareUtils.shareComment(context, comment.content) },
+                    onRepostClick = { },
+                    onBookmarkClick = { },
+                    onUserClick = { comment.userId.let { onNavigateToUserProfile(it) } },
+                    onPostClick = {
+                        PostDetailActivity.start(context, comment.postId, comment.userId)
+                    },
+                    onMediaClick = { idx ->
+                        val urls = listOfNotNull(comment.mediaUrl)
+                        if (urls.isNotEmpty()) {
+                            onOpenMediaViewer(urls, idx)
+                        }
+                    },
+                    onOptionsClick = { /* Show options */ },
+                    onPollVote = { /* No polls in comments */ },
+                    onReactionSelected = { reaction -> /* Handle reaction */ },
+                    onQuoteClick = { },
+                    modifier = Modifier.padding(bottom = Spacing.Small)
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+        }
+        }
+    }
+}
+
+@Composable
+private fun PrivateProfileLockedNotice(
+    isRequested: Boolean,
+    isLoading: Boolean,
+    statusError: Boolean,
+    onRequest: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth().padding(Spacing.Large)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(Spacing.Large),
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Text(stringResource(R.string.private_profile_title), style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(Spacing.Small))
+            Text(
+                stringResource(R.string.private_profile_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (statusError) {
+                Spacer(modifier = Modifier.height(Spacing.Small))
+                Text(stringResource(R.string.private_profile_status_error), color = MaterialTheme.colorScheme.error)
+            }
+            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Button(onClick = onRequest, enabled = !isLoading) {
+                if (isLoading) CircularProgressIndicator()
+                else Text(stringResource(if (isRequested) R.string.follow_requested else R.string.request_to_follow))
+            }
+        }
+    }
+}
+
+
+internal fun formatJoinedDate(timestamp: Long): String {
+    if (timestamp == 0L) return ""
+
+    val date = java.util.Date(timestamp)
+    val format = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+    return format.format(date)
+}
+
+@Composable
+private fun ProfilePostsShimmer() {
+    Column {
+        repeat(3) {
+            PostCardSkeleton(modifier = Modifier.padding(bottom = Spacing.Small))
+        }
+    }
+}

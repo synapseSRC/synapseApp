@@ -1,0 +1,25 @@
+import kotlin.Int;
+
+CREATE TABLE PendingAction (
+    id TEXT NOT NULL PRIMARY KEY,
+    actionType TEXT NOT NULL,
+    targetId TEXT NOT NULL,
+    payload TEXT,
+    createdAt INTEGER NOT NULL,
+    retryCount INTEGER AS Int NOT NULL DEFAULT 0,
+    lastAttemptAt INTEGER
+);
+
+insertAction:
+INSERT OR REPLACE INTO PendingAction(
+    id, actionType, targetId, payload, createdAt, retryCount, lastAttemptAt
+) VALUES ?;
+
+deleteAction:
+DELETE FROM PendingAction WHERE id = ?;
+
+selectAllActions:
+SELECT * FROM PendingAction ORDER BY createdAt ASC;
+
+updateAction:
+UPDATE PendingAction SET retryCount = ?, lastAttemptAt = ? WHERE id = ?;

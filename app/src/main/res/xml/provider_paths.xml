@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Restrict external files to DCIM subdirectory for photos/videos -->
+    <external-files-path
+        name="external_files"
+        path="DCIM/" />
+    <!-- Restrict cache to temp subdirectory -->
+    <cache-path
+        name="cache_files"
+        path="temp/" />
+</paths>
