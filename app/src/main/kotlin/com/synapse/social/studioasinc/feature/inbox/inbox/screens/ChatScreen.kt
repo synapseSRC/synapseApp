@@ -151,7 +151,7 @@ import java.io.File
     val density = LocalDensity.current
 
     val cancelThresholdPx = with(density) { 100.dp.toPx() }
-    val lockThresholdPx = with(density) { 90.dp.toPx() }
+    val lockThresholdPx = with(density) { 120.dp.toPx() }
     val directionSlopPx = with(density) { 12.dp.toPx() }
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }

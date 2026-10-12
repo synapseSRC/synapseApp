@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
@@ -16,10 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
@@ -112,7 +115,7 @@ fun VoiceInputHost(
             val isNormal = voiceState is VoiceState.Normal
             if (isNormal && showSendButton) {
                 Surface(
-                    modifier = Modifier.size(Sizes.InputButtonCompact),
+                    modifier = Modifier.size(Sizes.SendButton),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -146,329 +149,114 @@ fun VoiceInputHost(
 }
 
 @Composable
+@Composable
 private fun VoiceInputBarContent(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         when (voiceState) {
             is VoiceState.VoiceReady, is VoiceState.Pressing -> {
-                IconButton(
-                    onClick = { onVoiceAction(VoiceAction.CloseVoiceMode) },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.action_cancel),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+                IconButton(onClick = { onVoiceAction(VoiceAction.CloseVoiceMode) }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Close, stringResource(R.string.action_cancel), tint = MaterialTheme.colorScheme.onSurface)
                 }
-
-                Text(
-                    text = stringResource(R.string.voice_hold_to_record),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = Spacing.Medium)
-                )
+                Text(stringResource(R.string.voice_hold_to_record), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Medium))
             }
-
             is VoiceState.Recording -> {
-                val pulseInfinite = rememberInfiniteTransition(label = "recordingPulse")
-                val pulseAlpha by pulseInfinite.animateFloat(
-                    initialValue = 1f,
-                    targetValue = 0.3f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(600, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "pulseAlpha"
-                )
-                val cancelProgress = voiceState.cancelProgress.coerceIn(0f, 1f)
-                val cancelColor = lerp(MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.error, cancelProgress)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
-                ) {
-                    IconButton(
-                        onClick = { onVoiceAction(VoiceAction.CancelRecording) },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.action_cancel),
-                            tint = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                        )
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                        VoiceWaveformBars(voiceState.amplitudeHistory, Modifier.weight(1f).height(24.dp))
+                        OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
                     }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
-                            Box(
-                                modifier = Modifier.size(10.dp).graphicsLayer { alpha = pulseAlpha }
-                                    .background(MaterialTheme.colorScheme.error, CircleShape)
-                            )
-                            LiveWaveformView(
-                                amplitudeHistory = voiceState.amplitudeHistory,
-                                modifier = Modifier.weight(1f).height(24.dp),
-                                activeColor = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                            )
-                            OdometerTimerText(
-                                durationMs = voiceState.durationMs,
-                                color = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = null,
-                                tint = cancelColor,
-                                modifier = Modifier.size(12.dp).graphicsLayer { rotationZ = 180f }
-                            )
-                            Text(
-                                text = stringResource(R.string.voice_cancel_hint),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = cancelColor
-                            )
-                            LinearProgressIndicator(
-                                progress = { cancelProgress },
-                                modifier = Modifier.weight(1f).height(2.dp),
-                                color = MaterialTheme.colorScheme.error,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        }
-                    }
+                    ShimmerHintText(stringResource(R.string.voice_cancel_hint), Modifier.align(Alignment.Start))
                 }
             }
-
             is VoiceState.Locked -> {
-                // Pulsing recording dot indicator when active
-                val pulseInfinite = rememberInfiniteTransition(label = "recordingPulseLocked")
-                val pulseAlpha by pulseInfinite.animateFloat(
-                    initialValue = 1f,
-                    targetValue = 0.3f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(600, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "pulseAlphaLocked"
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Clearly Destructive Delete Action
-                    IconButton(
-                        onClick = { onVoiceAction(VoiceAction.CancelRecording) },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(MaterialTheme.colorScheme.errorContainer, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.action_delete),
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    IconButton(onClick = { onVoiceAction(VoiceAction.CancelRecording) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.errorContainer, CircleShape)) {
+                        Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.onErrorContainer)
                     }
-
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = Spacing.Small),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
-                    ) {
-                        // Mic capture status indicator (Red pulse if recording, static gray if paused)
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .graphicsLayer { alpha = if (voiceState.isPaused) 0.5f else pulseAlpha }
-                                .background(
-                                    color = if (voiceState.isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
-                                    shape = CircleShape
-                                )
-                        )
-
-                        LiveWaveformView(
-                            amplitudeHistory = voiceState.amplitudeHistory,
-                            isPaused = voiceState.isPaused,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(28.dp),
-                            activeColor = MaterialTheme.colorScheme.primary
-                        )
-
-                        OdometerTimerText(
-                            durationMs = voiceState.durationMs,
-                            color = if (voiceState.isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                        )
+                    Row(modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                        VoiceWaveformBars(voiceState.amplitudeHistory, Modifier.weight(1f).height(28.dp), voiceState.isPaused)
+                        OdometerTimerText(voiceState.durationMs, color = if (voiceState.isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
                     }
-
-                    // Visually Secondary / Tonal Pause / Resume Action
-                    IconButton(
-                        onClick = { onVoiceAction(VoiceAction.TogglePause) },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = if (voiceState.isPaused) Icons.Default.Mic else Icons.Default.Pause,
-                            contentDescription = stringResource(if (voiceState.isPaused) R.string.cd_play_audio else R.string.cd_pause_audio),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePause) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape)) {
+                        Icon(imageVector = if (voiceState.isPaused) Icons.Default.Mic else Icons.Default.Pause,
+                            contentDescription = stringResource(if (voiceState.isPaused) R.string.cd_play_audio else R.string.cd_pause_audio), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
-
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-
-                    // Dominant Primary Send Action
-                    Surface(
-                        modifier = Modifier.size(44.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shadowElevation = 2.dp
-                    ) {
-                        IconButton(
-                            onClick = { onVoiceAction(VoiceAction.FinishRecording) },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = stringResource(R.string.chat_action_send),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(22.dp)
-                            )
+                    Spacer(Modifier.width(Spacing.ExtraSmall))
+                    Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary, shadowElevation = 2.dp) {
+                        IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize()) {
+                            Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.chat_action_send), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))
                         }
                     }
                 }
             }
-
             is VoiceState.VoiceDraft -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(
-                        onClick = { onVoiceAction(VoiceAction.DiscardDraft) },
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.action_delete),
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    IconButton(onClick = { onVoiceAction(VoiceAction.DiscardDraft) }, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
                     }
-
-                    IconButton(
-                        onClick = { onVoiceAction(VoiceAction.TogglePlayDraft) },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = if (voiceState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = stringResource(if (voiceState.isPlaying) R.string.cd_pause_audio else R.string.cd_play_audio),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePlayDraft) }, modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape)) {
+                        Icon(imageVector = if (voiceState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = stringResource(if (voiceState.isPlaying) R.string.cd_pause_audio else R.string.cd_play_audio), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
-
-                    val progress = if (voiceState.durationMs > 0) {
-                        voiceState.playbackPositionMs.toFloat() / voiceState.durationMs
-                    } else 0f
-
-                    LiveWaveformView(
-                        amplitudeHistory = voiceState.amplitudeHistory,
-                        progressFraction = progress,
-                        isDraftPlayback = true,
-                        onSeek = { seekFrac ->
-                            val posMs = (seekFrac * voiceState.durationMs).toLong()
-                            onVoiceAction(VoiceAction.SeekDraft(posMs))
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(28.dp)
-                            .padding(horizontal = Spacing.Small)
-                    )
-
-                    OdometerTimerText(durationMs = voiceState.durationMs)
-
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-
-                    IconButton(
-                        onClick = { onVoiceAction(VoiceAction.SendDraft) },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = stringResource(R.string.chat_action_send),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
-            }
-
-            is VoiceState.Sending -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.Medium),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.Medium))
-                    Text(
-                        text = stringResource(R.string.voice_sending),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            is VoiceState.Failed -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = voiceState.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = Spacing.Small)
-                    )
-                    TextButton(onClick = {
-                        if (voiceState.draftFile != null) {
-                            onVoiceAction(VoiceAction.SendDraft)
-                        } else {
-                            onVoiceAction(VoiceAction.OpenVoiceMode)
+                    val progress = if (voiceState.durationMs > 0) voiceState.playbackPositionMs.toFloat() / voiceState.durationMs else 0f
+                    LiveWaveformView(amplitudeHistory = voiceState.amplitudeHistory, progressFraction = progress, isDraftPlayback = true,
+                        onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) }, modifier = Modifier.weight(1f).height(32.dp), activeColor = MaterialTheme.colorScheme.primary)
+                    OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
+                    Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                        IconButton(onClick = { onVoiceAction(VoiceAction.SendDraft) }, modifier = Modifier.fillMaxSize()) {
+                            Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.chat_action_send), modifier = Modifier.size(Sizes.IconLarge))
                         }
-                    }) {
-                        Text(stringResource(R.string.retry))
                     }
                 }
             }
-
-            else -> {}
+            is VoiceState.Sending -> {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Medium), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(Spacing.Medium))
+                    Text(stringResource(R.string.voice_sending), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            is VoiceState.Failed -> {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(voiceState.error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small))
+                    TextButton(onClick = { if (voiceState.draftFile != null) onVoiceAction(VoiceAction.SendDraft) else onVoiceAction(VoiceAction.OpenVoiceMode) }) { Text(stringResource(R.string.retry)) }
+                }
+            }
+            else -> Unit
         }
     }
+}
+
+@Composable
+private fun VoiceWaveformBars(amplitudeHistory: List<Float>, modifier: Modifier = Modifier, isPaused: Boolean = false) {
+    val recentSamples = remember(amplitudeHistory) { amplitudeHistory.takeLast(7) }
+    val barColor = MaterialTheme.colorScheme.primary
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+        repeat(7) { index ->
+            val sample = if (isPaused) 0.12f else recentSamples.getOrNull(index) ?: 0.08f
+            val targetHeight = (4f + sample.coerceIn(0f, 1f) * 18f).dp
+            val barHeight by animateDpAsState(targetValue = targetHeight, animationSpec = spring(dampingRatio = 0.8f, stiffness = 800f), label = "voiceWaveBar$index")
+            Box(Modifier.width(3.dp).height(barHeight).clip(CircleShape).background(barColor))
+        }
+    }
+}
+
+@Composable
+private fun ShimmerHintText(text: String, modifier: Modifier = Modifier) {
+    val density = LocalDensity.current
+    val sweepWidth = with(density) { 112.dp.toPx() }
+    val transition = rememberInfiniteTransition(label = "cancelHintShimmer")
+    val sweepOffset by transition.animateFloat(initialValue = -sweepWidth, targetValue = sweepWidth,
+        animationSpec = infiniteRepeatable(animation = spring(dampingRatio = 0.8f, stiffness = 380f), repeatMode = RepeatMode.Reverse), label = "cancelHintSweep")
+    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val shimmerBrush = Brush.linearGradient(listOf(hintColor.copy(alpha = 0.25f), hintColor, hintColor.copy(alpha = 0.25f)),
+        start = Offset(sweepOffset, 0f), end = Offset(sweepOffset + sweepWidth, 0f))
+    Text(text, modifier = modifier, style = MaterialTheme.typography.labelSmall.copy(brush = shimmerBrush))
 }
 
 @Composable
@@ -500,7 +288,7 @@ fun CanonicalMicButton(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-68).dp)
+                    .offset(y = (-88).dp)
                     .graphicsLayer {
                         alpha = 0.25f + 0.75f * lockProgress.coerceIn(0f, 1f)
                         scaleX = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
@@ -524,11 +312,14 @@ fun CanonicalMicButton(
                     )
                 }
 
+                val arrowMotion = rememberInfiniteTransition(label = "lockSwipeCue")
+                val arrowOffset by arrowMotion.animateDp(initialValue = 4.dp, targetValue = 0.dp,
+                    animationSpec = infiniteRepeatable(animation = spring(dampingRatio = 0.8f, stiffness = 380f), repeatMode = RepeatMode.Reverse), label = "lockArrowOffset")
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.voice_lock_hint),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp).offset(y = arrowOffset)
                 )
             }
         }
@@ -576,7 +367,7 @@ fun CanonicalMicButton(
                 imageVector = Icons.Default.Mic,
                 contentDescription = stringResource(R.string.voice_hold_to_record),
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(Sizes.IconLarge)
             )
         }
     }

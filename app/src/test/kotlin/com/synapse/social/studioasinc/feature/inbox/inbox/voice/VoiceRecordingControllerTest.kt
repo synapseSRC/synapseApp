@@ -66,11 +66,11 @@ class VoiceRecordingControllerTest {
             gestureConfig = VoiceGestureConfig(
                 holdThresholdMs = 180L,
                 cancelThresholdDp = 100f,
-                lockThresholdDp = 90f,
+                lockThresholdDp = 120f,
                 directionSlopDp = 12f
             ),
             cancelThresholdPx = 100f,
-            lockThresholdPx = 90f,
+            lockThresholdPx = 120f,
             directionSlopPx = 12f
         )
     }
@@ -148,38 +148,65 @@ class VoiceRecordingControllerTest {
     }
 
     @Test
-    fun `mid-gesture direction change - dragging up partway then left arms cancel and cancels on release`() {
+    fun `upward intent stays latched until the mic returns to neutral before cancel`() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
 
-        // Drag up partway (-40f)
         controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -40f))
         var state = controller.state.value as VoiceState.Recording
-        assertEquals(0.44f, state.lockProgress, 0.05f)
+        assertEquals(0.33f, state.lockProgress, 0.05f)
 
-        // Move finger back down and left (-120f)
-        controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 40f))
+        // Perpendicular movement does not change a latched upward gesture.
+        controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 20f))
         state = controller.state.value as VoiceState.Recording
-        assertTrue(state.isArmedForCancel)
+        assertEquals(0f, state.cancelProgress, 0f)
+        assertTrue(state.lockProgress > 0f)
 
-        // Release finger
+        // Return the active axis to neutral, then a fresh left gesture can cancel.
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = 20f))
+        state = controller.state.value as VoiceState.Recording
+        assertEquals(0f, state.lockProgress, 0f)
+        assertEquals(0f, state.slideOffsetPx, 0f)
+        controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 0f))
+        assertTrue((controller.state.value as VoiceState.Recording).isArmedForCancel)
         controller.handleAction(VoiceAction.ReleaseRecording)
         assertEquals(VoiceState.Normal, controller.state.value)
         verify(mockRecorder).cancel()
     }
 
     @Test
-    fun `mid-gesture direction change - dragging left partway then up locks recording`() {
+    fun `cancel intent stays latched until the mic returns to neutral before lock`() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
 
-        // Drag left partway (-50f)
         controller.handleAction(VoiceAction.Dragged(deltaX = -50f, deltaY = 0f))
         var state = controller.state.value as VoiceState.Recording
         assertEquals(0.5f, state.cancelProgress, 0.05f)
 
-        // Drag up beyond lock threshold (-100f)
-        controller.handleAction(VoiceAction.Dragged(deltaX = 50f, deltaY = -100f))
+        // A large upward drag cannot switch while the mic is still displaced left.
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
+        state = controller.state.value as VoiceState.Recording
+        assertEquals(0f, state.lockProgress, 0f)
+        assertEquals(0.5f, state.cancelProgress, 0.05f)
+
+        // Return the active horizontal axis to neutral, then lock with a fresh upward drag.
+        controller.handleAction(VoiceAction.Dragged(deltaX = 50f, deltaY = 0f))
+        state = controller.state.value as VoiceState.Recording
+        assertEquals(0f, state.cancelProgress, 0f)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
+        assertTrue(controller.state.value is VoiceState.Locked)
+    }
+
+
+    @Test
+    fun `upward drag below the new threshold does not lock prematurely`() {
+        controller.handleAction(VoiceAction.OpenVoiceMode)
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -100f))
+        val state = controller.state.value as VoiceState.Recording
+        assertEquals(0.83f, state.lockProgress, 0.03f)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -21f))
         assertTrue(controller.state.value is VoiceState.Locked)
     }
 
@@ -189,7 +216,7 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
 
-        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -100f))
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
 
         assertTrue(controller.state.value is VoiceState.Locked)
     }
@@ -199,7 +226,7 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.OpenVoiceMode)
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
-        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -100f))
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
 
         assertTrue(controller.state.value is VoiceState.Locked)
 
@@ -213,7 +240,7 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.OpenVoiceMode)
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
-        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -100f))
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
 
         `when`(mockRecorder.pause()).thenThrow(RuntimeException("Pause failed"))
 
@@ -364,7 +391,7 @@ class VoiceRecordingControllerTest {
         testTimeProvider.advanceTimeBy(3000)
 
         // Lock & Pause
-        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -100f))
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
         assertTrue(controller.state.value is VoiceState.Locked)
 
         controller.handleAction(VoiceAction.TogglePause)

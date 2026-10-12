@@ -37,6 +37,7 @@ class VoiceRecordingController(
     private var cumulativeX = 0f
     private var cumulativeY = 0f
     private var gestureDirection = GestureDirection.Undecided
+    private val gestureNeutralTolerancePx = 1f
     private var lastRawAmplitude = 0f
     private var smoothedAmplitude = 0.1f
     private var recordingStartTime = 0L
@@ -173,19 +174,39 @@ class VoiceRecordingController(
         cumulativeX += deltaX
         cumulativeY += deltaY
 
-        val leftDistance = (-cumulativeX).coerceAtLeast(0f)
-        val upDistance = (-cumulativeY).coerceAtLeast(0f)
+        var leftDistance = (-cumulativeX).coerceAtLeast(0f)
+        var upDistance = (-cumulativeY).coerceAtLeast(0f)
 
-        // Direction is chosen only after slop, and only when one axis leads by the slop
-        // distance. This rejects diagonal jitter while allowing a pre-commit reversal.
-        val candidate = when {
-            leftDistance - upDistance >= directionSlopPx && leftDistance > directionSlopPx -> GestureDirection.Cancel
-            upDistance - leftDistance >= directionSlopPx && upDistance > directionSlopPx -> GestureDirection.Lock
-            else -> GestureDirection.Undecided
+        // Once a gesture picks an axis, keep it latched until the active drag axis returns
+        // to the mic's neutral position. Perpendicular movement cannot switch cancel/lock.
+        val wasLatched = gestureDirection != GestureDirection.Undecided
+        when (gestureDirection) {
+            GestureDirection.Cancel -> if (leftDistance <= gestureNeutralTolerancePx) {
+                cumulativeX = 0f
+                cumulativeY = 0f
+                leftDistance = 0f
+                upDistance = 0f
+                gestureDirection = GestureDirection.Undecided
+            }
+            GestureDirection.Lock -> if (upDistance <= gestureNeutralTolerancePx) {
+                cumulativeX = 0f
+                cumulativeY = 0f
+                leftDistance = 0f
+                upDistance = 0f
+                gestureDirection = GestureDirection.Undecided
+            }
+            GestureDirection.Undecided -> Unit
         }
-        if (candidate != GestureDirection.Undecided) gestureDirection = candidate
-        else if (leftDistance <= directionSlopPx && upDistance <= directionSlopPx) {
-            gestureDirection = GestureDirection.Undecided
+
+        // A fresh direction is selected only after one axis clearly leads by slop.
+        // If the previous axis just returned to neutral, wait for the next pointer delta.
+        if (!wasLatched && gestureDirection == GestureDirection.Undecided) {
+            val candidate = when {
+                leftDistance - upDistance >= directionSlopPx && leftDistance > directionSlopPx -> GestureDirection.Cancel
+                upDistance - leftDistance >= directionSlopPx && upDistance > directionSlopPx -> GestureDirection.Lock
+                else -> GestureDirection.Undecided
+            }
+            if (candidate != GestureDirection.Undecided) gestureDirection = candidate
         }
 
         val cancelOffset = if (gestureDirection == GestureDirection.Cancel) -leftDistance else 0f
