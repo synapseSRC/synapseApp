@@ -36,6 +36,7 @@ class VoiceRecordingController(
 
     private var cumulativeX = 0f
     private var cumulativeY = 0f
+    private var gestureDirection = GestureDirection.Undecided
     private var lastRawAmplitude = 0f
     private var smoothedAmplitude = 0.1f
     private var recordingStartTime = 0L
@@ -71,7 +72,15 @@ class VoiceRecordingController(
                 handleRelease()
             }
             VoiceAction.CancelRecording -> {
-                cancelRecording()
+                when (_state.value) {
+                    is VoiceState.Pressing -> {
+                        holdJob?.cancel()
+                        holdJob = null
+                        _state.value = VoiceState.Normal
+                    }
+                    is VoiceState.Recording, is VoiceState.Locked -> cancelRecording()
+                    else -> Unit
+                }
             }
             VoiceAction.TogglePause -> {
                 togglePause()
@@ -145,6 +154,7 @@ class VoiceRecordingController(
             pausedAccumulatedDurationMs = 0L
             cumulativeX = 0f
             cumulativeY = 0f
+            gestureDirection = GestureDirection.Undecided
             smoothedAmplitude = 0.1f
 
             _state.value = VoiceState.Recording()
@@ -163,24 +173,36 @@ class VoiceRecordingController(
         cumulativeX += deltaX
         cumulativeY += deltaY
 
-        val cancelOffset = cumulativeX.coerceAtMost(0f)
-        val absCancelOffset = abs(cancelOffset)
-        val cancelProgress = (absCancelOffset / cancelThresholdPx).coerceIn(0f, 1f)
-        val isArmed = absCancelOffset >= cancelThresholdPx
+        val leftDistance = (-cumulativeX).coerceAtLeast(0f)
+        val upDistance = (-cumulativeY).coerceAtLeast(0f)
 
-        val lockOffset = cumulativeY.coerceAtMost(0f)
-        val absLockOffset = abs(lockOffset)
-        val lockProgress = (absLockOffset / lockThresholdPx).coerceIn(0f, 1f)
+        // Direction is chosen only after slop, and only when one axis leads by the slop
+        // distance. This rejects diagonal jitter while allowing a pre-commit reversal.
+        val candidate = when {
+            leftDistance - upDistance >= directionSlopPx && leftDistance > directionSlopPx -> GestureDirection.Cancel
+            upDistance - leftDistance >= directionSlopPx && upDistance > directionSlopPx -> GestureDirection.Lock
+            else -> GestureDirection.Undecided
+        }
+        if (candidate != GestureDirection.Undecided) gestureDirection = candidate
+        else if (leftDistance <= directionSlopPx && upDistance <= directionSlopPx) {
+            gestureDirection = GestureDirection.Undecided
+        }
 
-        // Lock if vertical drag threshold met
-        if (absLockOffset >= lockThresholdPx && cumulativeY < 0f) {
+        val cancelOffset = if (gestureDirection == GestureDirection.Cancel) -leftDistance else 0f
+        val lockOffset = if (gestureDirection == GestureDirection.Lock) -upDistance else 0f
+        val cancelProgress = (leftDistance / cancelThresholdPx).coerceIn(0f, 1f)
+            .takeIf { gestureDirection == GestureDirection.Cancel } ?: 0f
+        val lockProgress = (upDistance / lockThresholdPx).coerceIn(0f, 1f)
+            .takeIf { gestureDirection == GestureDirection.Lock } ?: 0f
+        val isArmed = gestureDirection == GestureDirection.Cancel && leftDistance >= cancelThresholdPx
+
+        // Vertical commitment occurs once; the controller changes to Locked and ignores later release.
+        if (gestureDirection == GestureDirection.Lock && upDistance >= lockThresholdPx) {
             lockRecording()
             return
         }
 
-        if (isArmed != currentState.isArmedForCancel) {
-            onHapticPerform()
-        }
+        if (isArmed != currentState.isArmedForCancel) onHapticPerform()
 
         _state.value = currentState.copy(
             slideOffsetPx = cancelOffset,
@@ -212,6 +234,8 @@ class VoiceRecordingController(
     }
 
     private fun cancelRecording() {
+        if (_state.value !is VoiceState.Recording && _state.value !is VoiceState.Locked) return
+
         holdJob?.cancel()
         holdJob = null
         stopTimerAndAmplitudeTracking()
@@ -496,6 +520,8 @@ class VoiceRecordingController(
         playerProgressJob = null
     }
 
+    private enum class GestureDirection { Undecided, Cancel, Lock }
+
     fun cleanup() {
         pendingPermissionIntent = false
         holdJob?.cancel()
@@ -507,7 +533,7 @@ class VoiceRecordingController(
             s.audioFile.delete()
         } else if (s is VoiceState.Failed && s.draftFile != null) {
             s.draftFile.delete()
-        } else if (s is VoiceState.Recording || s is VoiceState.Locked || s is VoiceState.Pressing) {
+        } else if (s is VoiceState.Recording || s is VoiceState.Locked) {
             try { voiceRecorder.cancel() } catch (_: Exception) {}
         }
         _state.value = VoiceState.Normal

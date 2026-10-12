@@ -427,4 +427,40 @@ class VoiceRecordingControllerTest {
         capturedCallback?.invoke(true, null)
         assertEquals(failedState, controller.state.value)
     }
+
+
+    @Test
+    fun cancelActionIsIdempotentAndDoesNotCancelRecorderTwice() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+        controller.handleAction(VoiceAction.CancelRecording)
+        controller.handleAction(VoiceAction.CancelRecording)
+        controller.handleAction(VoiceAction.ReleaseRecording)
+        assertEquals(VoiceState.Normal, controller.state.value)
+        verify(mockRecorder, times(1)).cancel()
+    }
+
+    @Test
+    fun cleanupCancelsActiveRecordingAndPreventsPendingHoldTransition() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+        assertTrue(controller.state.value is VoiceState.Recording)
+        controller.cleanup()
+        testScope.advanceUntilIdle()
+        assertEquals(VoiceState.Normal, controller.state.value)
+        verify(mockRecorder, times(1)).cancel()
+    }
+
+
+
+    @Test
+    fun cancelDuringPressingStopsHoldWithoutStartingRecorder() {
+        controller.handleAction(VoiceAction.StartRecording)
+        controller.handleAction(VoiceAction.CancelRecording)
+        testScope.advanceTimeBy(250)
+        assertEquals(VoiceState.Normal, controller.state.value)
+        verify(mockRecorder, never()).start(anyObject(), anyObject())
+        verify(mockRecorder, never()).cancel()
+    }
+return 
 }

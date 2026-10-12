@@ -15,22 +15,36 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveWaveformView
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import kotlin.math.roundToInt
+
+private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
+
+private fun VoiceState.visualStage(): VoiceVisualStage = when (this) {
+    is VoiceState.Normal -> VoiceVisualStage.Normal
+    is VoiceState.VoiceReady -> VoiceVisualStage.VoiceReady
+    is VoiceState.Pressing -> VoiceVisualStage.Pressing
+    is VoiceState.Recording -> VoiceVisualStage.Recording
+    is VoiceState.Locked -> VoiceVisualStage.Locked
+    is VoiceState.VoiceDraft -> VoiceVisualStage.VoiceDraft
+    is VoiceState.Sending -> VoiceVisualStage.Sending
+    is VoiceState.Failed -> VoiceVisualStage.Failed
+}
+
+private fun VoiceState.contentStage(): VoiceVisualStage = when (this) {
+    is VoiceState.Pressing -> VoiceVisualStage.Normal
+    else -> visualStage()
+}
 
 @Composable
 fun VoiceInputHost(
@@ -72,24 +86,22 @@ fun VoiceInputHost(
                 contentAlignment = Alignment.CenterStart
             ) {
                 AnimatedContent(
-                    targetState = voiceState is VoiceState.Normal,
+                    targetState = voiceState,
+                    contentKey = { it.contentStage() },
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(180, easing = LinearEasing)) togetherWith
-                                fadeOut(animationSpec = tween(120, easing = LinearEasing))
+                        (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                            slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
+                            (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
                     },
                     contentAlignment = Alignment.CenterStart,
-                    label = "inputBarMorph"
-                ) { isNormal ->
-                    if (isNormal) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            normalContent()
-                        }
+                    label = "voiceStageMorph"
+                ) { animatedState ->
+                    if (animatedState.contentStage() == VoiceVisualStage.Normal) {
+                        Box(modifier = Modifier.fillMaxWidth()) { normalContent() }
                     } else {
                         Box(modifier = Modifier.fillMaxWidth()) {
-                            VoiceInputBarContent(
-                                voiceState = voiceState,
-                                onVoiceAction = onVoiceAction
-                            )
+                            VoiceInputBarContent(voiceState = animatedState, onVoiceAction = onVoiceAction)
                         }
                     }
                 }
@@ -167,12 +179,6 @@ private fun VoiceInputBarContent(
             }
 
             is VoiceState.Recording -> {
-                val animatedSlideOffset by animateFloatAsState(
-                    targetValue = voiceState.slideOffsetPx,
-                    label = "slideOffsetAnim"
-                )
-
-                // Pulsing red recording dot indicator
                 val pulseInfinite = rememberInfiniteTransition(label = "recordingPulse")
                 val pulseAlpha by pulseInfinite.animateFloat(
                     initialValue = 1f,
@@ -183,11 +189,11 @@ private fun VoiceInputBarContent(
                     ),
                     label = "pulseAlpha"
                 )
+                val cancelProgress = voiceState.cancelProgress.coerceIn(0f, 1f)
+                val cancelColor = lerp(MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.error, cancelProgress)
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset { IntOffset(animatedSlideOffset.roundToInt(), 0) },
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
                 ) {
@@ -202,29 +208,42 @@ private fun VoiceInputBarContent(
                         )
                     }
 
-                    // Active mic capture indicator dot
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .graphicsLayer { alpha = pulseAlpha }
-                            .background(
-                                color = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.error,
-                                shape = CircleShape
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                            Box(
+                                modifier = Modifier.size(10.dp).graphicsLayer { alpha = pulseAlpha }
+                                    .background(MaterialTheme.colorScheme.error, CircleShape)
                             )
-                    )
-
-                    LiveWaveformView(
-                        amplitudeHistory = voiceState.amplitudeHistory,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(28.dp),
-                        activeColor = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                    )
-
-                    OdometerTimerText(
-                        durationMs = voiceState.durationMs,
-                        color = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                    )
+                            LiveWaveformView(
+                                amplitudeHistory = voiceState.amplitudeHistory,
+                                modifier = Modifier.weight(1f).height(24.dp),
+                                activeColor = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                            )
+                            OdometerTimerText(
+                                durationMs = voiceState.durationMs,
+                                color = if (voiceState.isArmedForCancel) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = null,
+                                tint = cancelColor,
+                                modifier = Modifier.size(12.dp).graphicsLayer { rotationZ = 180f }
+                            )
+                            Text(
+                                text = stringResource(R.string.voice_cancel_hint),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = cancelColor
+                            )
+                            LinearProgressIndicator(
+                                progress = { cancelProgress },
+                                modifier = Modifier.weight(1f).height(2.dp),
+                                color = MaterialTheme.colorScheme.error,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 
@@ -460,11 +479,12 @@ fun CanonicalMicButton(
 ) {
     val isPressing = voiceState is VoiceState.Pressing
     val isRecording = voiceState is VoiceState.Recording
-    val dragOffsetY = if (voiceState is VoiceState.Recording) voiceState.dragOffsetYPx else 0f
+    val dragOffsetX = (voiceState as? VoiceState.Recording)?.slideOffsetPx ?: 0f
+    val dragOffsetY = (voiceState as? VoiceState.Recording)?.dragOffsetYPx ?: 0f
 
     val scale by animateFloatAsState(
         targetValue = if (isPressing || isRecording) 1.25f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
         label = "canonicalMicScale"
     )
 
@@ -482,7 +502,9 @@ fun CanonicalMicButton(
                     .align(Alignment.TopCenter)
                     .offset(y = (-68).dp)
                     .graphicsLayer {
-                        alpha = lockProgress.coerceIn(0.2f, 1f)
+                        alpha = 0.25f + 0.75f * lockProgress.coerceIn(0f, 1f)
+                        scaleX = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
+                        scaleY = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
                     }
             ) {
                 Box(
@@ -517,23 +539,31 @@ fun CanonicalMicButton(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
+                    translationX = dragOffsetX
                     translationY = dragOffsetY
                 }
                 .pointerInput(Unit) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
+                        down.consume()
                         onVoiceAction(VoiceAction.StartRecording)
 
                         while (true) {
                             val event = awaitPointerEvent()
                             val change = event.changes.firstOrNull { it.id == down.id }
-                            if (change == null || !change.pressed) {
+                            if (change == null) {
+                                onVoiceAction(VoiceAction.ReleaseRecording)
+                                break
+                            }
+                            if (!change.pressed) {
+                                change.consume()
                                 onVoiceAction(VoiceAction.ReleaseRecording)
                                 break
                             }
 
                             val posChange = change.positionChange()
                             if (posChange.x != 0f || posChange.y != 0f) {
+                                change.consume()
                                 onVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
                             }
                         }
