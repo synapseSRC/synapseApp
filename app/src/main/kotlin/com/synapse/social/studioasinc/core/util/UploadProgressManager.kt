@@ -26,8 +26,11 @@ class UploadProgressManager @Inject constructor(
     }
 
     fun finishProgress(id: Int, success: Boolean, title: String) {
-        val progress = if (success) 100 else 0
-        NotificationHelper.showProgressNotification(context, id, progress, title)
+        if (success) {
+            NotificationHelper.showProgressNotification(context, id, 100, title)
+        } else {
+            NotificationHelper.dismissNotification(context, id)
+        }
     }
 
     fun dismissProgress(chatId: String, fileName: String) {
@@ -38,10 +41,12 @@ class UploadProgressManager @Inject constructor(
 
     fun finishProgress(chatId: String, fileName: String, success: Boolean, title: String) {
         val key = "${chatId}_$fileName"
-        val id = uploadIds.getOrPut(key) { notificationIdGenerator.incrementAndGet() }
-        val progress = if (success) 100 else 0
-        NotificationHelper.showProgressNotification(context, id, progress, title)
-        uploadIds.remove(key)
+        val id = uploadIds.remove(key) ?: return
+        if (success) {
+            NotificationHelper.showProgressNotification(context, id, 100, title)
+        } else {
+            NotificationHelper.dismissNotification(context, id)
+        }
     }
 
     fun dismissProgress(id: Int) {
