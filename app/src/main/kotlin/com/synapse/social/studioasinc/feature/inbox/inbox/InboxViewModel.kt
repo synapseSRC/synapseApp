@@ -11,7 +11,6 @@ import com.synapse.social.studioasinc.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
@@ -27,7 +26,6 @@ class InboxViewModel @Inject constructor(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val subscribeToInboxUpdatesUseCase: SubscribeToInboxUpdatesUseCase,
     private val initializeE2EUseCase: InitializeE2EUseCase,
-    private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val settingsRepository: SettingsRepository,
     private val chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
@@ -108,11 +106,7 @@ class InboxViewModel @Inject constructor(
             getConversationsUseCase().onSuccess { conversationList ->
                 _conversations.value = conversationList.distinctBy { it.chatId }
                 _isLoading.value = false
-                
-                // Mark delivered for anything unread
-                conversationList.filter { it.unreadCount > 0 }.forEach { convo ->
-                    markMessagesAsDeliveredUseCase(convo.chatId)
-                }
+
             }.onFailure { e ->
                 _error.value = "Failed to load conversations: ${e.message}"
                 _isLoading.value = false

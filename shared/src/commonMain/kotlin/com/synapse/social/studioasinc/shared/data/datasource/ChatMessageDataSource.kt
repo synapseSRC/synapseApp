@@ -240,34 +240,26 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
 
         try {
-            client.postgrest.rpc(
-                function = "mark_messages_as_delivered",
-                parameters = mapOf(
-                    "p_chat_id" to chatId
-                )
-            )
-        } catch (e: Exception) {
-            Napier.w("RPC mark_messages_as_delivered failed, attempting fallback update", e)
-            try {
-                client.postgrest.from("messages").update({
-                    set("delivery_status", "delivered")
-                    set("message_state", "delivered")
-                    set("delivered_at", now)
-                    set("updated_at", now)
-                }) {
-                    filter {
-                        eq("chat_id", chatId)
-                        neq("sender_id", currentUserId)
-                        eq("delivery_status", "sent")
-                    }
+            // Keep the write scoped to messages received by this account. A chat-wide RPC
+            // can otherwise acknowledge our own outgoing messages during an inbox refresh.
+            client.postgrest.from("messages").update({
+                set("delivery_status", "delivered")
+                set("message_state", "delivered")
+                set("delivered_at", now)
+                set("updated_at", now)
+            }) {
+                filter {
+                    eq("chat_id", chatId)
+                    neq("sender_id", currentUserId)
+                    eq("delivery_status", "sent")
+                    is("delivered_at", FilterOperator.IS, "null")
                 }
-            } catch (fallbackEx: Exception) {
-                Napier.e("Fallback mark_messages_as_delivered update failed", fallbackEx)
-                throw fallbackEx
             }
+        } catch (e: Exception) {
+            Napier.e("Error marking received messages as delivered", e)
+            throw e
         }
-    }
-}
+    return }}
 
 internal fun filterOutUserDeletedMessages(
     messages: List<MessageDto>,

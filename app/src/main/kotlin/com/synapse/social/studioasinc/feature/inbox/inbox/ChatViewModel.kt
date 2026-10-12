@@ -362,9 +362,12 @@ class ChatViewModel @Inject constructor(
     fun onVisibilityChanged(visible: Boolean) {
         _isScreenVisible.value = visible
         if (visible) {
-            currentChatId?.let {
+            currentChatId?.let { chatId ->
                 viewModelScope.launch {
-                    markMessagesAsReadUseCase(it)
+                    markMessagesAsReadUseCase(chatId)
+                    // The visible chat has now received its history; acknowledge only
+                    // peer messages (the data source enforces sender scoping).
+                    markMessagesAsDeliveredUseCase(chatId)
                 }
             }
         }

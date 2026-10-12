@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -282,47 +283,25 @@ private fun ColumnScope.MessageMetadataRow(
             } else {
                 Modifier
             }
-            when (message.deliveryStatus) {
-                DeliveryStatus.SENDING -> {
-                    Icon(
-                        imageVector = Icons.Filled.Timer,
-                        contentDescription = stringResource(R.string.msg_status_sending),
-                        tint = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
+            Crossfade(
+                targetState = message.deliveryStatus,
+                animationSpec = spring(dampingRatio = 1f, stiffness = 1600f),
+                modifier = statusModifier.size(Sizes.IconSemiSmall),
+                label = "messageDeliveryStatus"
+            ) { deliveryStatus ->
+                val (icon, description, tint) = when (deliveryStatus) {
+                    DeliveryStatus.SENDING -> Triple(Icons.Filled.Timer, stringResource(R.string.msg_status_sending), contentColor.copy(alpha = 0.7f))
+                    DeliveryStatus.FAILED -> Triple(Icons.Filled.Warning, stringResource(R.string.msg_status_failed), MaterialTheme.colorScheme.error)
+                    DeliveryStatus.SENT -> Triple(Icons.Filled.Check, stringResource(R.string.msg_status_sent), contentColor.copy(alpha = 0.7f))
+                    DeliveryStatus.DELIVERED -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_delivered), contentColor.copy(alpha = 0.7f))
+                    DeliveryStatus.READ -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_read), MaterialTheme.colorScheme.primary)
                 }
-                DeliveryStatus.FAILED -> {
-                    Icon(
-                        imageVector = Icons.Filled.Warning,
-                        contentDescription = stringResource(R.string.msg_status_failed),
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = statusModifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.SENT -> {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = stringResource(R.string.msg_status_sent),
-                        tint = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.DELIVERED -> {
-                    Icon(
-                        imageVector = Icons.Filled.DoneAll,
-                        contentDescription = stringResource(R.string.msg_status_delivered),
-                        tint = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.READ -> {
-                    Icon(
-                        imageVector = Icons.Filled.DoneAll,
-                        contentDescription = stringResource(R.string.msg_status_read),
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = description,
+                    tint = tint,
+                    modifier = Modifier.size(Sizes.IconSemiSmall)
+                )
             }
         }
     }
