@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Bell, BellOff, Check, CheckCheck, Download, FileText, Image, Loader2, LockKeyhole, Mic, MoreVertical, Pause, Play, Plus, Send, Square, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
+import { STORAGE_BUCKETS } from '@/config/storageBuckets';
 import type { UserProfile } from '@/types';
 import { getMessageDisplayText, isEncryptedMessageContent } from './chatMessageContent';
 import { deliveryLabel, getMessageDeliveryState, type MessageDeliveryState } from './messageDelivery';
@@ -51,7 +52,7 @@ interface VoiceDraft {
   durationSeconds: number;
 }
 
-const MEDIA_BUCKET = 'web-chat-media';
+const MEDIA_BUCKET = STORAGE_BUCKETS.CHAT_MEDIA;
 const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
 const MAX_BATCH_MEDIA_ITEMS = 10;
 const MAX_BATCH_MEDIA_BYTES = 100 * 1024 * 1024;
