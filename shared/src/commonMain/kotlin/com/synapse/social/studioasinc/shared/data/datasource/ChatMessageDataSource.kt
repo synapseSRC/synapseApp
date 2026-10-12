@@ -259,7 +259,8 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             Napier.e("Error marking received messages as delivered", e)
             throw e
         }
-    return }}
+    }
+}
 
 internal fun filterOutUserDeletedMessages(
     messages: List<MessageDto>,
