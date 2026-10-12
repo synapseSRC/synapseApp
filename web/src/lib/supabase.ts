@@ -1,11 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import { resolveSupabaseConfig } from './supabaseConfig';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
-}
+const { url: supabaseUrl, key: supabaseKey } = resolveSupabaseConfig(import.meta.env);
 
 const fetchWithTimeout: typeof fetch = async (input, init) => {
   const controller = new AbortController();
