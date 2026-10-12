@@ -15,8 +15,65 @@ on:
 
 jobs:
   build:
-    name: 🔨 Build APKs
+    name: 🔨 Build APKs (Blacksmith)
     runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'blacksmith-2vcpu-ubuntu-2404' }}
+    outputs:
+      short_sha: ${{ steps.set_sha.outputs.short_sha }}
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: 🔑 Create google-services.json from secret
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+
+      - name: 🐘 Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: true
+
+      - name: 🏗️ Build Release APK
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
+          SUPABASE_SYNAPSE_S3_ENDPOINT_URL: ${{ secrets.SUPABASE_SYNAPSE_S3_ENDPOINT_URL }}
+          SUPABASE_SYNAPSE_S3_ENDPOINT_REGION: ${{ secrets.SUPABASE_SYNAPSE_S3_ENDPOINT_REGION }}
+          SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID: ${{ secrets.SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID }}
+          SUPABASE_SYNAPSE_S3_ACCESS_KEY: ${{ secrets.SUPABASE_SYNAPSE_S3_ACCESS_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_WEB_CLIENT_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+          GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: 🔖 Set short SHA
+        id: set_sha
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: ✏️ Rename APK with commit hash
+        run: |
+          mv app/build/outputs/apk/release/app-release.apk \
+             app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
+
+      - name: 📤 Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-release-${{ steps.set_sha.outputs.short_sha }}
+          path: app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
+
+  build-fallback:
+    name: 🔨 Build APKs (Fallback to Ubuntu Latest)
+    needs: build
+    if: failure() || cancelled()
+    runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
     outputs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
     steps:
@@ -71,16 +128,26 @@ jobs:
 
   aggregateAndSend:
     name: 📣 Send APKs to Telegram
-    runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'blacksmith-2vcpu-ubuntu-2404' }}
-    needs: build
+    runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
+    needs: [build, build-fallback]
+    if: always() && !cancelled() && (needs.build.result == 'success' || needs.build-fallback.result == 'success')
     steps:
       - name: 🛎️ Checkout
         uses: actions/checkout@v4
 
+      - name: 🔖 Determine Short SHA
+        id: active_sha
+        run: |
+          SHA="${{ needs.build.outputs.short_sha }}"
+          if [ -z "$SHA" ]; then
+            SHA="${{ needs.build-fallback.outputs.short_sha }}"
+          fi
+          echo "short_sha=$SHA" >> $GITHUB_OUTPUT
+
       - name: 📥 Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: apk-release-${{ needs.build.outputs.short_sha }}
+          name: apk-release-${{ steps.active_sha.outputs.short_sha }}
           path: ./downloaded-artifact
 
       - name: 🐍 Set up Python 3
@@ -110,7 +177,7 @@ jobs:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TOPIC_ID: ${{ secrets.TELEGRAM_TOPIC_ID }}
-          APK_PATH: ./downloaded-artifact/app-release-${{ needs.build.outputs.short_sha }}.apk
+          APK_PATH: ./downloaded-artifact/app-release-${{ steps.active_sha.outputs.short_sha }}.apk
           GITHUB_ACTOR: ${{ github.actor }}
         run: python ./.github/workflows/deploy_artifacts.py
         continue-on-error: true
