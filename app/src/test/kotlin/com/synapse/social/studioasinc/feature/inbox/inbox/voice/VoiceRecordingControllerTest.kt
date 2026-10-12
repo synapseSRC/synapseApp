@@ -462,5 +462,4 @@ class VoiceRecordingControllerTest {
         verify(mockRecorder, never()).start(anyObject(), anyObject())
         verify(mockRecorder, never()).cancel()
     }
-return 
 }
