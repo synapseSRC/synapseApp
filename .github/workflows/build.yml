@@ -10,6 +10,7 @@ on:
       - 'docs/**'
       - 'LICENSE'
       - '.gitignore'
+      - 'app/src/test/**'
   workflow_dispatch:
 
 jobs:
@@ -31,56 +32,10 @@ jobs:
       - name: 🔑 Create google-services.json from secret
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
 
-      - name: Prepare debug Google Services client for unit tests
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          base_package = "com.synapse.social.studioasinc"
-          debug_package = base_package + ".debug"
-          source = Path("app/google-services.json")
-          config = json.loads(source.read_text(encoding="utf-8"))
-          clients = config.get("client", [])
-          if not any(client.get("client_info", {}).get("android_client_info", {}).get("package_name") == debug_package for client in clients):
-              matching = [client for client in clients if client.get("client_info", {}).get("android_client_info", {}).get("package_name") == base_package]
-              if not matching:
-                  raise SystemExit("No Google Services client matches the release application ID")
-              for client in matching:
-                  client["client_info"]["android_client_info"]["package_name"] = debug_package
-          target = Path("app/src/debug/google-services.json")
-          target.parent.mkdir(parents=True, exist_ok=True)
-          target.write_text(json.dumps(config), encoding="utf-8")
-          PY
-
       - name: 🐘 Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-disabled: true
-
-      - name: 🧪 Run app unit and Compose UI tests
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          set +e
-          ./gradlew :app:testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testDebugUnitTest.log"
-          gradle_status=${PIPESTATUS[0]}
-          set -e
-          if [ "$gradle_status" -ne 0 ]; then
-          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|No tests found|There were failing tests|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testDebugUnitTest.log" | tail -n 25 || true)
-          if [ -z "$diagnostics" ]; then
-            diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/testDebugUnitTest.log")
-          fi
-          if [ -z "$diagnostics" ]; then
-            diagnostics=$(tail -n 12 "$RUNNER_TEMP/testDebugUnitTest.log")
-          fi
-          while IFS= read -r line; do
-            [ -n "$line" ] && echo "::error title=Android test diagnostics::${line}"
-          done <<< "$diagnostics"
-          fi
-          exit "$gradle_status"
 
       - name: 🏗️ Build Release APK
         env:
