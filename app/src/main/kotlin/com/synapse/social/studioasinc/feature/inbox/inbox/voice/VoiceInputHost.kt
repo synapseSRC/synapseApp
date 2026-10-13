@@ -149,7 +149,6 @@ fun VoiceInputHost(
 }
 
 @Composable
-@Composable
 private fun VoiceInputBarContent(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit
@@ -250,12 +249,22 @@ private fun VoiceWaveformBars(amplitudeHistory: List<Float>, modifier: Modifier 
 private fun ShimmerHintText(text: String, modifier: Modifier = Modifier) {
     val density = LocalDensity.current
     val sweepWidth = with(density) { 112.dp.toPx() }
-    val transition = rememberInfiniteTransition(label = "cancelHintShimmer")
-    val sweepOffset by transition.animateFloat(initialValue = -sweepWidth, targetValue = sweepWidth,
-        animationSpec = infiniteRepeatable(animation = spring(dampingRatio = 0.8f, stiffness = 380f), repeatMode = RepeatMode.Reverse), label = "cancelHintSweep")
+    val sweepOffset = remember(sweepWidth) { Animatable(-sweepWidth) }
+    LaunchedEffect(sweepWidth) {
+        while (true) {
+            sweepOffset.animateTo(
+                targetValue = sweepWidth,
+                animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+            )
+            sweepOffset.animateTo(
+                targetValue = -sweepWidth,
+                animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+            )
+        }
+    }
     val hintColor = MaterialTheme.colorScheme.onSurfaceVariant
     val shimmerBrush = Brush.linearGradient(listOf(hintColor.copy(alpha = 0.25f), hintColor, hintColor.copy(alpha = 0.25f)),
-        start = Offset(sweepOffset, 0f), end = Offset(sweepOffset + sweepWidth, 0f))
+        start = Offset(sweepOffset.value, 0f), end = Offset(sweepOffset.value + sweepWidth, 0f))
     Text(text, modifier = modifier, style = MaterialTheme.typography.labelSmall.copy(brush = shimmerBrush))
 }
 
@@ -312,14 +321,24 @@ fun CanonicalMicButton(
                     )
                 }
 
-                val arrowMotion = rememberInfiniteTransition(label = "lockSwipeCue")
-                val arrowOffset by arrowMotion.animateDp(initialValue = 4.dp, targetValue = 0.dp,
-                    animationSpec = infiniteRepeatable(animation = spring(dampingRatio = 0.8f, stiffness = 380f), repeatMode = RepeatMode.Reverse), label = "lockArrowOffset")
+                val arrowMotion = remember { Animatable(4f) }
+                LaunchedEffect(arrowMotion) {
+                    while (true) {
+                        arrowMotion.animateTo(
+                            targetValue = 0f,
+                            animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+                        )
+                        arrowMotion.animateTo(
+                            targetValue = 4f,
+                            animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+                        )
+                    }
+                }
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = stringResource(R.string.voice_lock_hint),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp).offset(y = arrowOffset)
+                    modifier = Modifier.size(16.dp).offset(y = arrowMotion.value.dp)
                 )
             }
         }
