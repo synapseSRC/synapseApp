@@ -14,9 +14,6 @@ sealed interface VoiceState {
         val dragOffsetYPx: Float = 0f,
         val cancelProgress: Float = 0f,
         val lockProgress: Float = 0f,
-        val isGestureReturning: Boolean = false,
-        val returnOffsetXPx: Float = 0f,
-        val returnOffsetYPx: Float = 0f
     ) : VoiceState
 
     data class Locked(

@@ -457,27 +457,30 @@ fun CanonicalMicButton(
     val recordingState = voiceState as? VoiceState.Recording
     val dragOffsetX = recordingState?.slideOffsetPx ?: 0f
     val dragOffsetY = recordingState?.dragOffsetYPx ?: 0f
-    val gestureReturning = recordingState?.isGestureReturning == true
     val cancelProgress = recordingState?.cancelProgress?.coerceIn(0f, 1f) ?: 0f
-    val returnOffsetX = recordingState?.returnOffsetXPx ?: 0f
-    val returnOffsetY = recordingState?.returnOffsetYPx ?: 0f
-
-    // Project design decision (not an M3 token): restrained scale and halo preserve the fixed pill silhouette.
+    val latestDragOffsetX by rememberUpdatedState(dragOffsetX)
+    val latestDragOffsetY by rememberUpdatedState(dragOffsetY)
+    var isReturning by remember { mutableStateOf(false) }
+    var returnStartX by remember { mutableFloatStateOf(0f) }
+    var returnStartY by remember { mutableFloatStateOf(0f) }
     val returnX = remember { Animatable(0f) }
     val returnY = remember { Animatable(0f) }
-    LaunchedEffect(gestureReturning, returnOffsetX, returnOffsetY, reducedMotion) {
-        if (!gestureReturning) return@LaunchedEffect
+
+    // Return offsets and animation lifetime are UI state; the recording model only stores live gesture progress.
+    LaunchedEffect(isReturning, reducedMotion) {
+        if (!isReturning) return@LaunchedEffect
         if (reducedMotion) {
             returnX.snapTo(0f)
             returnY.snapTo(0f)
         } else {
-            returnX.snapTo(returnOffsetX)
-            returnY.snapTo(returnOffsetY)
+            returnX.snapTo(returnStartX)
+            returnY.snapTo(returnStartY)
             coroutineScope {
                 launch { returnX.animateTo(0f, spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow)) }
                 launch { returnY.animateTo(0f, spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow)) }
             }
         }
+        isReturning = false
     }
 
     val targetScale = if (isActive) ACTIVE_MIC_SCALE else 1f
@@ -517,23 +520,29 @@ fun CanonicalMicButton(
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     down.consume()
+                    isReturning = false
                     onVoiceAction(VoiceAction.StartRecording)
-                    while (true) {
+                    var gestureActive = true
+                    while (gestureActive) {
                         val event = awaitPointerEvent()
                         val change = event.changes.firstOrNull { it.id == down.id }
-                        if (change == null) {
+                        if (change == null || !change.pressed) {
+                            change?.consume()
+                            val returnXOffset = latestDragOffsetX
+                            val returnYOffset = latestDragOffsetY
                             onVoiceAction(VoiceAction.ReleaseRecording)
-                            break
-                        }
-                        if (!change.pressed) {
-                            change.consume()
-                            onVoiceAction(VoiceAction.ReleaseRecording)
-                            break
-                        }
-                        val posChange = change.positionChange()
-                        if (posChange.x != 0f || posChange.y != 0f) {
-                            change.consume()
-                            onVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
+                            if (returnXOffset != 0f || returnYOffset != 0f) {
+                                returnStartX = returnXOffset
+                                returnStartY = returnYOffset
+                                isReturning = true
+                            }
+                            gestureActive = false
+                        } else {
+                            val posChange = change.positionChange()
+                            if (posChange.x != 0f || posChange.y != 0f) {
+                                change.consume()
+                                onVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
+                            }
                         }
                     }
                 }
@@ -546,8 +555,8 @@ fun CanonicalMicButton(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                    translationX = if (gestureReturning) returnX.value else dragOffsetX
-                    translationY = if (gestureReturning) returnY.value else dragOffsetY
+                    translationX = if (isReturning) returnX.value else dragOffsetX
+                    translationY = if (isReturning) returnY.value else dragOffsetY
                 }
                 .shadow(
                     elevation = glowElevation,

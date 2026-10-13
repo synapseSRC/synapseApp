@@ -234,7 +234,6 @@ class VoiceRecordingController(
             dragOffsetYPx = lockOffset,
             cancelProgress = cancelProgress,
             lockProgress = lockProgress,
-            isGestureReturning = false
         )
     }
 
@@ -268,10 +267,7 @@ class VoiceRecordingController(
             slideOffsetPx = 0f,
             dragOffsetYPx = 0f,
             cancelProgress = 0f,
-            lockProgress = 0f,
-            isGestureReturning = true,
-            returnOffsetXPx = currentState.slideOffsetPx,
-            returnOffsetYPx = currentState.dragOffsetYPx
+            lockProgress = 0f
         )
     }
 

@@ -133,78 +133,70 @@ class VoiceInputGestureTest {
     }
 
     @Test
-    fun abandonedSlideUsesSpringToReturnMicToItsExactHomePosition() {
-        val recording = VoiceState.Recording()
-        val state = mutableStateOf<VoiceState>(recording)
+    fun abandonedCancelAndLockSlidesUseSpringToReturnMicHome() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(1L)
         composeRule.mainClock.autoAdvance = false
-        composeRule.setContent {
-            MaterialTheme {
-                CanonicalMicButton(
-                    voiceState = state.value,
-                    onVoiceAction = {},
-                    reducedMotionOverride = false
-                )
-            }
-        }
+        composeRule.setContent { micUnderTest(reducedMotion = false) }
         val home = bounds("voice-recording-mic-visual")
-        composeRule.runOnIdle {
-            state.value = recording.copy(slideOffsetPx = -60f, cancelProgress = 0.6f)
-        }
-        val displaced = bounds("voice-recording-mic-visual")
-        assertEquals(home.centerX - 60f, displaced.centerX, 1f)
 
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
+            moveBy(Offset(x = -size.width.toFloat(), y = 0f))
+        }
+        val displacedX = bounds("voice-recording-mic-visual")
+        assertTrue(displacedX.centerX < home.centerX)
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { up() }
         composeRule.runOnIdle {
-            state.value = recording.copy(
-                isGestureReturning = true,
-                returnOffsetXPx = -60f,
-                slideOffsetPx = 0f,
-                cancelProgress = 0f
-            )
+            val recording = controller.state.value as VoiceState.Recording
+            assertEquals(0f, recording.slideOffsetPx, 0f)
+            assertEquals(0f, recording.cancelProgress, 0f)
         }
         composeRule.mainClock.advanceTimeBy(64L)
-        val inFlight = bounds("voice-recording-mic-visual")
-        assertTrue("return should move smoothly rather than snap", inFlight.centerX > displaced.centerX)
-        assertTrue("return should still be settling mid-animation", inFlight.centerX < home.centerX)
+        val returningX = bounds("voice-recording-mic-visual")
+        assertTrue(returningX.centerX > displacedX.centerX)
+        assertTrue(returningX.centerX < home.centerX)
         composeRule.mainClock.advanceTimeBy(1_000L)
-        assertEquals("horizontal spring must settle at the original position", home.centerX, bounds("voice-recording-mic-visual").centerX, 1f)
+        assertEquals(home.centerX, bounds("voice-recording-mic-visual").centerX, 1f)
 
-        composeRule.runOnIdle {
-            state.value = recording.copy(dragOffsetYPx = -70f)
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
+            moveBy(Offset(x = 0f, y = -size.height.toFloat()))
         }
-        val displacedVertically = bounds("voice-recording-mic-visual")
-        assertEquals(home.centerY - 70f, displacedVertically.centerY, 1f)
+        val displacedY = bounds("voice-recording-mic-visual")
+        assertTrue(displacedY.centerY < home.centerY)
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { up() }
         composeRule.runOnIdle {
-            state.value = recording.copy(
-                isGestureReturning = true,
-                returnOffsetYPx = -70f,
-                dragOffsetYPx = 0f
-            )
+            val recording = controller.state.value as VoiceState.Recording
+            assertEquals(0f, recording.dragOffsetYPx, 0f)
+            assertEquals(0f, recording.lockProgress, 0f)
+            Mockito.verify(recorder, Mockito.never()).cancel()
+            Mockito.verify(recorder, Mockito.never()).stop()
         }
         composeRule.mainClock.advanceTimeBy(64L)
-        val verticalInFlight = bounds("voice-recording-mic-visual")
-        assertTrue(verticalInFlight.centerY > displacedVertically.centerY)
-        assertTrue(verticalInFlight.centerY < home.centerY)
+        val returningY = bounds("voice-recording-mic-visual")
+        assertTrue(returningY.centerY > displacedY.centerY)
+        assertTrue(returningY.centerY < home.centerY)
         composeRule.mainClock.advanceTimeBy(1_000L)
-        assertEquals("vertical spring must settle at the original position", home.centerY, bounds("voice-recording-mic-visual").centerY, 1f)
+        assertEquals(home.centerY, bounds("voice-recording-mic-visual").centerY, 1f)
     }
 
     @Test
-    fun reducedMotionSkipsSpringDisplacementOnAbandonedSlide() {
-        val state = mutableStateOf<VoiceState>(VoiceState.Recording(slideOffsetPx = -50f))
-        composeRule.setContent {
-            MaterialTheme {
-                CanonicalMicButton(voiceState = state.value, onVoiceAction = {}, reducedMotionOverride = true)
-            }
+    fun reducedMotionSkipsAbandonedSlideReturnAnimation() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(1L)
+        composeRule.setContent { micUnderTest(reducedMotion = true) }
+        val home = bounds("voice-recording-mic-visual")
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
+            down(center)
+            moveBy(Offset(x = -size.width.toFloat(), y = 0f))
+            up()
         }
-        val displaced = bounds("voice-recording-mic-visual").centerX
         composeRule.runOnIdle {
-            state.value = VoiceState.Recording(
-                isGestureReturning = true,
-                returnOffsetXPx = -50f,
-                slideOffsetPx = 0f
-            )
+            val state = controller.state.value as VoiceState.Recording
+            assertEquals(0f, state.slideOffsetPx, 0f)
         }
-        assertEquals("reduced motion should skip the return animation", displaced + 50f, bounds("voice-recording-mic-visual").centerX, 1f)
+        assertEquals("reduced motion should settle immediately", home.centerX, bounds("voice-recording-mic-visual").centerX, 1f)
     }
 
     @Test
@@ -376,7 +368,7 @@ class VoiceInputGestureTest {
     }
 
     @Composable
-    private fun micUnderTest() {
+    private fun micUnderTest(reducedMotion: Boolean = true) {
         val voiceState by controller.state.collectAsState()
         MaterialTheme {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -387,7 +379,7 @@ class VoiceInputGestureTest {
                         controller.handleAction(action)
                     },
                     modifier = Modifier.testTag("gesture-test-mic"),
-                    reducedMotionOverride = true
+                    reducedMotionOverride = reducedMotion
                 )
             }
         }

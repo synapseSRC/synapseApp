@@ -203,7 +203,7 @@ class VoiceRecordingControllerTest {
 
 
     @Test
-    fun abandonedCancelAndLockSlidesResetProgressAndCaptureSpringOffsets() {
+    fun abandonedCancelAndLockSlidesResetDragProgressWithoutStoppingRecording() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
 
@@ -214,9 +214,8 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.ReleaseRecording)
 
         val cancelReturn = controller.state.value as VoiceState.Recording
-        assertTrue(cancelReturn.isGestureReturning)
         assertEquals(0f, cancelReturn.slideOffsetPx, 0f)
-        assertEquals(-60f, cancelReturn.returnOffsetXPx, 0.01f)
+        assertEquals("cancel progress clears when the drag is abandoned", 0f, cancelReturn.cancelProgress, 0f)
         assertEquals(0f, cancelReturn.cancelProgress, 0f)
 
         controller.handleAction(VoiceAction.StartRecording)
@@ -226,9 +225,8 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.ReleaseRecording)
 
         val lockReturn = controller.state.value as VoiceState.Recording
-        assertTrue(lockReturn.isGestureReturning)
         assertEquals(0f, lockReturn.dragOffsetYPx, 0f)
-        assertEquals(-70f, lockReturn.returnOffsetYPx, 0.01f)
+        assertEquals("lock progress clears when the drag is abandoned", 0f, lockReturn.lockProgress, 0f)
         assertEquals(0f, lockReturn.lockProgress, 0f)
         verify(mockRecorder, never()).cancel()
         verify(mockRecorder, never()).stop()

@@ -98,7 +98,7 @@ internal fun rememberVoiceShimmerPhase(reducedMotion: Boolean, label: String): F
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = GlowDesign.SHIMMER_DURATION_MILLIS, easing = LinearEasing),
+            animation = tween(durationMillis = GlowDesign.SHIMMER_DURATION_MILLIS, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "voiceCancelShimmerPhase"
@@ -138,7 +138,7 @@ fun VoiceRecordingGlowSurface(
     val tertiary = colors.tertiary
     val activeAlpha by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
-        animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 220f),
+        animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "voiceLiquidSettle"
     )
 
