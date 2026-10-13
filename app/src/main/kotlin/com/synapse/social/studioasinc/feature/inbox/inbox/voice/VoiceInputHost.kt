@@ -3,7 +3,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
@@ -16,9 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -58,91 +61,170 @@ fun VoiceInputHost(
     modifier: Modifier = Modifier,
     normalContent: @Composable () -> Unit
 ) {
-    // Container without clipping so dragging the mic or lock target upward remains visible with headroom
+    val isRecordingMode = voiceState is VoiceState.Recording || voiceState is VoiceState.Locked || voiceState is VoiceState.Pressing
+
+    val currentAmplitude = when (voiceState) {
+        is VoiceState.Recording -> voiceState.amplitudeHistory.lastOrNull() ?: 0.1f
+        is VoiceState.Locked -> voiceState.amplitudeHistory.lastOrNull() ?: 0.1f
+        else -> 0f
+    }
+
+    val smoothedAmp by animateFloatAsState(
+        targetValue = currentAmplitude.coerceIn(0.08f, 1f),
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "smoothedAmp"
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "gradientFlow")
+    val gradientShift by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "gradientShift"
+    )
+
+    val fixedPillShape = RoundedCornerShape(Sizes.CornerMassive)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(horizontal = Spacing.ExtraSmall)
             .padding(top = Spacing.ExtraSmall, bottom = Spacing.Small)
-            .shadow(
-                elevation = Spacing.ExtraSmall,
-                shape = RoundedCornerShape(Sizes.CornerMassive),
-                clip = false
-            )
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(Sizes.CornerMassive)
-            )
     ) {
-        Row(
+        // Ambient Glow / Halo effect spilling onto surrounding environment
+        if (isRecordingMode) {
+            val glowAlpha = (0.30f + smoothedAmp * 0.50f).coerceIn(0f, 0.85f)
+            val glowSpreadRadius = (12 + smoothedAmp * 24)
+
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(all = (-4).dp)
+                    .drawBehind {
+                        val colorCyan = Color(0xFF00F0FF).copy(alpha = glowAlpha)
+                        val colorPurple = Color(0xFFA855F7).copy(alpha = glowAlpha)
+                        val colorBlue = Color(0xFF2979FF).copy(alpha = glowAlpha)
+
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(colorCyan, colorBlue, Color.Transparent),
+                                center = Offset(size.width * 0.3f, size.height * 0.5f),
+                                radius = size.width * 0.6f + glowSpreadRadius
+                            )
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(colorPurple, colorCyan, Color.Transparent),
+                                center = Offset(size.width * 0.7f, size.height * 0.5f),
+                                radius = size.width * 0.6f + glowSpreadRadius
+                            )
+                        )
+                    }
+            )
+        }
+
+        // Fixed Shape Recording / Input Container
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Morphing left/middle composer content area
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                AnimatedContent(
-                    targetState = voiceState,
-                    contentKey = { it.contentStage() },
-                    transitionSpec = {
-                        (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
-                            slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
-                            (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
-                                slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
-                    },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "voiceStageMorph"
-                ) { animatedState ->
-                    if (animatedState.contentStage() == VoiceVisualStage.Normal) {
-                        Box(modifier = Modifier.fillMaxWidth()) { normalContent() }
-                    } else {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            VoiceInputBarContent(voiceState = animatedState, onVoiceAction = onVoiceAction)
-                        }
-                    }
-                }
-            }
-
-            // Persistent Right Action Slot OUTSIDE AnimatedContent
-            // Ensures pointerInput node on CanonicalMicButton is never recreated or disposed during Normal -> Pressing -> Recording
-            val isNormal = voiceState is VoiceState.Normal
-            if (isNormal && showSendButton) {
-                Surface(
-                    modifier = Modifier.size(Sizes.SendButton),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        IconButton(onClick = onSendMessage) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = stringResource(R.string.chat_action_send),
-                                modifier = Modifier.size(Sizes.IconLarge),
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
-                }
-            } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
-                // In Locked, VoiceDraft, Sending, and Failed states, VoiceInputBarContent renders its own right action buttons (Send/Retry)
-                Spacer(modifier = Modifier.width(0.dp))
-            } else {
-                // Canonical Mic Button persistent across Normal (empty text), VoiceReady, Pressing, Recording
-                CanonicalMicButton(
-                    voiceState = voiceState,
-                    onVoiceAction = onVoiceAction
+                .shadow(
+                    elevation = Spacing.ExtraSmall,
+                    shape = fixedPillShape,
+                    clip = false
                 )
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = fixedPillShape
+                )
+                .then(
+                    if (isRecordingMode) {
+                        Modifier.background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFF00F0FF).copy(alpha = 0.22f + smoothedAmp * 0.28f),
+                                    Color(0xFF2979FF).copy(alpha = 0.25f + smoothedAmp * 0.30f),
+                                    Color(0xFFA855F7).copy(alpha = 0.22f + smoothedAmp * 0.28f),
+                                    Color(0xFF00F0FF).copy(alpha = 0.22f + smoothedAmp * 0.28f)
+                                ),
+                                start = Offset(gradientShift, 0f),
+                                end = Offset(gradientShift + 600f, 250f)
+                            ),
+                            shape = fixedPillShape
+                        )
+                    } else Modifier
+                )
+                .clip(fixedPillShape)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Morphing left/middle composer content area
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimatedContent(
+                        targetState = voiceState,
+                        contentKey = { it.contentStage() },
+                        transitionSpec = {
+                            (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
+                                (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                    slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
+                        },
+                        contentAlignment = Alignment.Center,
+                        label = "voiceStageMorph"
+                    ) { animatedState ->
+                        if (animatedState.contentStage() == VoiceVisualStage.Normal) {
+                            Box(modifier = Modifier.fillMaxWidth()) { normalContent() }
+                        } else {
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                VoiceInputBarContent(voiceState = animatedState, onVoiceAction = onVoiceAction)
+                            }
+                        }
+                    }
+                }
+
+                // Persistent Right Action Slot OUTSIDE AnimatedContent
+                val isNormal = voiceState is VoiceState.Normal
+                if (isNormal && showSendButton) {
+                    Surface(
+                        modifier = Modifier.size(Sizes.SendButton),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            IconButton(onClick = onSendMessage) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowUpward,
+                                    contentDescription = stringResource(R.string.chat_action_send),
+                                    modifier = Modifier.size(Sizes.IconLarge),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
+                } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
+                    Spacer(modifier = Modifier.width(0.dp))
+                } else {
+                    CanonicalMicButton(
+                        voiceState = voiceState,
+                        onVoiceAction = onVoiceAction
+                    )
+                }
             }
         }
     }
@@ -153,22 +235,52 @@ private fun VoiceInputBarContent(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         when (voiceState) {
             is VoiceState.VoiceReady, is VoiceState.Pressing -> {
-                IconButton(onClick = { onVoiceAction(VoiceAction.CloseVoiceMode) }, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.Close, stringResource(R.string.action_cancel), tint = MaterialTheme.colorScheme.onSurface)
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    IconButton(onClick = { onVoiceAction(VoiceAction.CloseVoiceMode) }, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Default.Close, stringResource(R.string.action_cancel), tint = MaterialTheme.colorScheme.onSurface)
+                    }
+                    Text(stringResource(R.string.voice_hold_to_record), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Medium))
                 }
-                Text(stringResource(R.string.voice_hold_to_record), style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Medium))
             }
             is VoiceState.Recording -> {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
-                        VoiceWaveformBars(voiceState.amplitudeHistory, Modifier.weight(1f).height(24.dp))
-                        OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
+                // Timer centered horizontally, cancellation text directly beneath timer
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OdometerTimerText(
+                        durationMs = voiceState.durationMs,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    val cancelText = if (voiceState.isArmedForCancel) {
+                        stringResource(R.string.voice_release_to_cancel)
+                    } else {
+                        stringResource(R.string.voice_cancel_hint)
                     }
-                    ShimmerHintText(stringResource(R.string.voice_cancel_hint), Modifier.align(Alignment.Start))
+
+                    val cancelTextColor = if (voiceState.isArmedForCancel) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+
+                    AnimatedContent(
+                        targetState = cancelText,
+                        transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) },
+                        label = "cancelTextTransition"
+                    ) { text ->
+                        ShimmerHintText(
+                            text = text,
+                            baseColor = cancelTextColor,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
             }
             is VoiceState.Locked -> {
@@ -246,7 +358,11 @@ private fun VoiceWaveformBars(amplitudeHistory: List<Float>, modifier: Modifier 
 }
 
 @Composable
-private fun ShimmerHintText(text: String, modifier: Modifier = Modifier) {
+private fun ShimmerHintText(
+    text: String,
+    modifier: Modifier = Modifier,
+    baseColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
+) {
     val density = LocalDensity.current
     val sweepWidth = with(density) { 112.dp.toPx() }
     val sweepOffset = remember(sweepWidth) { Animatable(-sweepWidth) }
@@ -262,9 +378,10 @@ private fun ShimmerHintText(text: String, modifier: Modifier = Modifier) {
             )
         }
     }
-    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val shimmerBrush = Brush.linearGradient(listOf(hintColor.copy(alpha = 0.25f), hintColor, hintColor.copy(alpha = 0.25f)),
-        start = Offset(sweepOffset.value, 0f), end = Offset(sweepOffset.value + sweepWidth, 0f))
+    val shimmerBrush = Brush.linearGradient(
+        listOf(baseColor.copy(alpha = 0.40f), baseColor, baseColor.copy(alpha = 0.40f)),
+        start = Offset(sweepOffset.value, 0f), end = Offset(sweepOffset.value + sweepWidth, 0f)
+    )
     Text(text, modifier = modifier, style = MaterialTheme.typography.labelSmall.copy(brush = shimmerBrush))
 }
 
@@ -292,40 +409,23 @@ fun CanonicalMicButton(
         if (voiceState is VoiceState.Recording) {
             val lockProgress = voiceState.lockProgress
 
+            // Straight vertical slide-up gesture hint indicator aligned near mic button
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-88).dp)
+                    .offset(y = (-80).dp)
                     .graphicsLayer {
-                        alpha = 0.25f + 0.75f * lockProgress.coerceIn(0f, 1f)
-                        scaleX = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
-                        scaleY = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
+                        alpha = (0.35f + 0.65f * lockProgress.coerceIn(0f, 1f))
                     }
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .background(
-                            color = if (lockProgress >= 0.9f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (lockProgress >= 0.9f) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = stringResource(R.string.voice_lock_hint),
-                        tint = if (lockProgress >= 0.9f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
+                // Straight upward chevron motion
                 val arrowMotion = remember { Animatable(4f) }
                 LaunchedEffect(arrowMotion) {
                     while (true) {
                         arrowMotion.animateTo(
-                            targetValue = 0f,
+                            targetValue = -4f,
                             animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
                         )
                         arrowMotion.animateTo(
@@ -334,11 +434,29 @@ fun CanonicalMicButton(
                         )
                     }
                 }
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = stringResource(R.string.voice_lock_hint),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp).offset(y = arrowMotion.value.dp)
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.offset(y = arrowMotion.value.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = null,
+                        tint = if (lockProgress >= 0.8f) Color(0xFF00F0FF) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = null,
+                        tint = if (lockProgress >= 0.8f) Color(0xFF00F0FF).copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.size(16.dp).offset(y = (-6).dp)
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.voice_slide_up_to_lock),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (lockProgress >= 0.8f) Color(0xFF00F0FF) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -379,7 +497,22 @@ fun CanonicalMicButton(
                         }
                     }
                 }
-                .background(MaterialTheme.colorScheme.primary, CircleShape),
+                .shadow(
+                    elevation = if (isPressing || isRecording) 8.dp else 2.dp,
+                    shape = CircleShape,
+                    ambientColor = Color(0xFF00F0FF),
+                    spotColor = Color(0xFFA855F7)
+                )
+                .background(
+                    brush = if (isPressing || isRecording) {
+                        Brush.linearGradient(
+                            listOf(Color(0xFF00F0FF), Color(0xFF2979FF), Color(0xFFA855F7))
+                        )
+                    } else {
+                        SolidColor(MaterialTheme.colorScheme.primary)
+                    },
+                    shape = CircleShape
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(

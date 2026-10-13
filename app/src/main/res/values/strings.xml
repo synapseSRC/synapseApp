@@ -1340,7 +1340,9 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="chat_action_play_video">Play Video</string>
     <string name="chat_action_play_audio">Play Audio</string>
     <string name="chat_action_pause_audio">Pause Audio</string>
-    <string name="voice_cancel_hint">Slide to cancel \u2039</string>
+    <string name="voice_cancel_hint">Slide to cancel</string>
+    <string name="voice_release_to_cancel">Release to cancel</string>
+    <string name="voice_slide_up_to_lock">Slide up to lock</string>
     <string name="voice_hold_to_record">Hold to record</string>
     <string name="voice_sending">Sending voice message…</string>
     <string name="voice_lock_hint">Drag up to lock</string>
