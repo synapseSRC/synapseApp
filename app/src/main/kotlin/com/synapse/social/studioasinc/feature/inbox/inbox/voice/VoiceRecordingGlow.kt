@@ -44,13 +44,13 @@ internal fun rememberVoiceGlowPhase(reducedMotion: Boolean, label: String): Floa
 
 @Composable
 private fun VoiceGlowPhaseAnimation(label: String): Float {
-    // infiniteRepeatable accepts duration-based specs, not SpringSpec; a long tween gives silence a steady, non-pulsing drift.
+    // This Compose version rejects SpringSpec inside infiniteRepeatable; a long eased tween keeps silence moving without a pulse.
     val transition = rememberInfiniteTransition(label = label)
     val phasePosition by transition.animateFloat(
         initialValue = -1f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = GlowDesign.PHASE_DRIFT_DURATION_MILLIS, easing = LinearEasing),
+            animation = tween(durationMillis = GlowDesign.PHASE_DRIFT_DURATION_MILLIS, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "voiceGlowPhasePosition"

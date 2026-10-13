@@ -109,7 +109,7 @@ class VoiceRecordingGlowTest {
             }
         }
         val initialPhase = textFor("animated-phase").toFloat()
-        composeRule.mainClock.advanceTimeBy(250L)
+        composeRule.mainClock.advanceTimeBy(2_000L)
         val movedPhase = textFor("animated-phase").toFloat()
         assertNotEquals("ambient phase should drift with motion enabled", initialPhase, movedPhase)
 
