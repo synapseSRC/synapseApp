@@ -103,7 +103,7 @@ fun VoiceInputHost(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(all = (-4).dp)
+
                     .drawBehind {
                         val colorCyan = Color(0xFF00F0FF).copy(alpha = glowAlpha)
                         val colorPurple = Color(0xFFA855F7).copy(alpha = glowAlpha)
