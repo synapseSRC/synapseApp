@@ -61,6 +61,7 @@ fun ChatInputBar(
     getLinkMetadataUseCase: GetLinkMetadataUseCase?,
     context: Context,
     voiceState: VoiceState = VoiceState.Normal,
+    reducedMotion: Boolean,
     onVoiceAction: (VoiceAction) -> Unit = {},
     onInputTextChange: (String) -> Unit,
     onSendMessage: () -> Unit,
@@ -204,6 +205,7 @@ fun ChatInputBar(
             voiceState = voiceState,
             onVoiceAction = onVoiceAction,
             showSendButton = inputText.isNotEmpty(),
+            reducedMotionOverride = reducedMotion,
             onSendMessage = {
                 onSendMessage()
                 dismissedPreviewUrl = null

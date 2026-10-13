@@ -31,15 +31,15 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 
 private const val LARGE_FONT_SCALE_THRESHOLD = 1.25f
 private const val ACTIVE_MIC_SCALE = 1.08f
 private const val ACTIVE_MIC_GLOW_ALPHA = 0.42f
+private const val MIC_SCALE_DAMPING_RATIO = 0.6f
 private const val LOCK_ARROW_START_OFFSET_DP = 3f
 private const val LOCK_ARROW_END_OFFSET_DP = -3f
-private const val LOCK_ARROW_BOUNCE_DURATION_MILLIS = 1_800
-private const val MIC_SCALE_DAMPING_RATIO = 0.6f
+private const val LOCK_ARROW_GRADIENT_CLEAR_ALPHA = 0f
+private const val LOCK_ARROW_GRADIENT_CORE_ALPHA = 0.75f
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
 private val LOCK_INDICATOR_GAP = 24.dp
@@ -48,7 +48,14 @@ private val LOCK_INDICATOR_WIDTH = 144.dp
 private val LOCK_HINT_TEXT_OFFSET_X = (-32).dp
 private val COMPACT_CANCEL_HINT_MAX_WIDTH = 280.dp
 private val COMPACT_CANCEL_HINT_OFFSET_X = (-32).dp
-private val ACTIVE_MIC_GLOW_ELEVATION = 5.dp
+private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.ExtraSmall + Spacing.Small
+// 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
+private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
+private val LOCK_ARROW_WIDTH = 24.dp
+private val LOCK_ARROW_HEIGHT = 36.dp
+private val LOCK_ARROW_STEM_WIDTH = 2.dp
+private val LOCK_ARROW_STEM_HEIGHT = 22.dp
+private val LOCK_ARROW_ICON_SIZE = 20.dp
 
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
@@ -74,17 +81,17 @@ fun VoiceInputHost(
     onVoiceAction: (VoiceAction) -> Unit,
     showSendButton: Boolean,
     onSendMessage: () -> Unit,
+    reducedMotionOverride: Boolean,
     modifier: Modifier = Modifier,
-    reducedMotionOverride: Boolean? = null,
     normalContent: @Composable () -> Unit
 ) {
-    val reducedMotion = reducedMotionOverride ?: AnimationUtil.rememberReducedMotion()
+    val reducedMotion = reducedMotionOverride
 
     // Container without clipping so dragging the mic or lock target upward remains visible with headroom
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight()
+            .heightIn(min = VOICE_BAR_MIN_HEIGHT)
             .padding(horizontal = Spacing.ExtraSmall)
             .padding(top = Spacing.ExtraSmall, bottom = Spacing.Small)
             .testTag("voice-recording-bar")
@@ -96,8 +103,8 @@ fun VoiceInputHost(
     ) {
         VoiceRecordingGlowSurface(
             voiceState = voiceState,
-            modifier = Modifier.matchParentSize(),
-            reducedMotionOverride = reducedMotion
+            reducedMotionOverride = reducedMotion,
+            modifier = Modifier.matchParentSize()
         )
 
         Row(
@@ -176,8 +183,8 @@ fun VoiceInputHost(
             }
         }
 
-        // The non-match-parent Row above sets this wrap-content Box's size. This overlay is deliberately
-        // excluded from measurement so the timer stays centered over the whole pill without changing its height.
+        // The Row is the measured content child; the explicit minimum height lets the overlay match the settled bar
+        // bounds without participating in the root Box's measurement.
         Box(Modifier.matchParentSize()) {
             VoiceRecordingContentOverlay(voiceState, reducedMotion)
         }
@@ -350,18 +357,18 @@ private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolea
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
     ) {
-        Box(modifier = Modifier.size(width = 24.dp, height = 36.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(width = LOCK_ARROW_WIDTH, height = LOCK_ARROW_HEIGHT), contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .width(2.dp)
-                    .height(22.dp)
+                    .width(LOCK_ARROW_STEM_WIDTH)
+                    .height(LOCK_ARROW_STEM_HEIGHT)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0f),
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0f)
+                                MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA),
+                                MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CORE_ALPHA),
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA)
                             )
                         ),
                         shape = RoundedCornerShape(Spacing.ExtraSmall)
@@ -373,7 +380,7 @@ private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolea
                     .offset(y = if (reducedMotion) 0.dp else arrowTravel.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(20.dp))
             }
         }
@@ -396,7 +403,7 @@ private fun rememberLockArrowTravel(reducedMotion: Boolean): Float {
         initialValue = LOCK_ARROW_START_OFFSET_DP,
         targetValue = LOCK_ARROW_END_OFFSET_DP,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = LOCK_ARROW_BOUNCE_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            animation = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow),
             repeatMode = RepeatMode.Reverse
         ),
         label = "voiceLockArrowTravel"
@@ -424,16 +431,16 @@ private fun animateDpForMotion(
 fun CanonicalMicButton(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit,
-    modifier: Modifier = Modifier,
-    reducedMotionOverride: Boolean? = null
+    reducedMotionOverride: Boolean,
+    modifier: Modifier = Modifier
 ) {
+    val reducedMotion = reducedMotionOverride
     val isPressing = voiceState is VoiceState.Pressing
     val isRecording = voiceState is VoiceState.Recording
     val isActive = isPressing || isRecording
     val dragOffsetX = (voiceState as? VoiceState.Recording)?.slideOffsetPx ?: 0f
     val dragOffsetY = (voiceState as? VoiceState.Recording)?.dragOffsetYPx ?: 0f
 
-    val reducedMotion = reducedMotionOverride ?: AnimationUtil.rememberReducedMotion()
     // Project design decision (not an M3 token): restrained scale and halo preserve the fixed pill silhouette.
     val targetScale = if (isActive) ACTIVE_MIC_SCALE else 1f
     val scale = animateFloatForMotion(

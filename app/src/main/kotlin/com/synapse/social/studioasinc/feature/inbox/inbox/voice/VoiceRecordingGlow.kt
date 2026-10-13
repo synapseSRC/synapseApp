@@ -17,80 +17,46 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
-private object GlowTokens {
+/** A small set of tuning knobs for the voice glow; geometry ratios below are a single normalized art recipe. */
+private object GlowDesign {
     const val MIN_AMPLITUDE = 0.08f
     const val MAX_AMPLITUDE = 1f
-    const val STATIC_PHASE = 0.5f
-    const val PHASE_DRIFT_DURATION_MILLIS = 6_800
+    const val PHASE_CENTER = 0.5f
+    const val MAX_PHASE_DRIFT = 0.04f
     const val FLOW_ALPHA_BASE = 0.07f
-    const val FLOW_ALPHA_PER_INTENSITY = 0.28f
-    const val FLOW_PHASE_TRAVEL = 0.9f
-    const val FLOW_START_PHASE = 0.42f
-    const val FLOW_END_PHASE = 0.9f
-    const val FLOW_PRIMARY_ALPHA = 0.62f
-    const val FLOW_SECONDARY_ALPHA = 0.88f
-    const val FLOW_TERTIARY_ALPHA = 0.76f
-    const val FLOW_END_SECONDARY_ALPHA = 0.94f
-    const val RADIAL_PRIMARY_BASE_ALPHA = 0.04f
-    const val RADIAL_PRIMARY_INTENSITY_ALPHA = 0.18f
-    const val RADIAL_SECONDARY_BASE_ALPHA = 0.025f
-    const val RADIAL_SECONDARY_INTENSITY_ALPHA = 0.09f
-    const val RADIAL_CENTER_START = 0.16f
-    const val RADIAL_CENTER_TRAVEL = 0.66f
-    const val RADIAL_CENTER_Y = 0.42f
-    const val RADIAL_RADIUS = 0.72f
-    const val BORDER_PRIMARY_BASE_ALPHA = 0.32f
-    const val BORDER_PRIMARY_INTENSITY_ALPHA = 0.4f
-    const val BORDER_SECONDARY_BASE_ALPHA = 0.28f
-    const val BORDER_SECONDARY_INTENSITY_ALPHA = 0.42f
-    const val BORDER_TERTIARY_BASE_ALPHA = 0.3f
-    const val BORDER_TERTIARY_INTENSITY_ALPHA = 0.4f
-    const val BORDER_END_X = 1f
-    const val BORDER_START_PHASE = 0.4f
+    const val FLOW_ALPHA_FROM_AMPLITUDE = 0.28f
+    const val AMBIENT_ALPHA_BASE = 0.035f
+    const val AMBIENT_ALPHA_FROM_AMPLITUDE = 0.095f
     const val AMBIENT_RADIUS_WIDTH = 0.7f
     const val AMBIENT_RADIUS_HEIGHT = 1.05f
-    const val AMBIENT_ALPHA_BASE = 0.035f
-    const val AMBIENT_ALPHA_PER_INTENSITY = 0.095f
-    const val AMBIENT_CENTER_Y = 0.88f
-    const val AMBIENT_LEFT_CENTER_X = 0.27f
-    const val AMBIENT_LEFT_DRIFT = 0.12f
-    const val AMBIENT_RIGHT_CENTER_X = 0.73f
-    const val AMBIENT_RIGHT_DRIFT = 0.1f
-    const val AMBIENT_LEFT_SECONDARY_ALPHA = 0.52f
-    const val AMBIENT_RIGHT_PRIMARY_ALPHA = 0.92f
-    const val AMBIENT_RIGHT_SECONDARY_ALPHA = 0.45f
-    const val AMBIENT_CENTER_X = 0.5f
-    const val AMBIENT_CENTER_DRIFT = 0.14f
-    const val AMBIENT_CENTER_Y_OFFSET = 0.12f
-    const val AMBIENT_CENTER_RADIUS = 0.82f
-    const val AMBIENT_CENTER_PRIMARY_ALPHA = 0.62f
 }
 
 private val GLOW_BORDER_STROKE_WIDTH = 1.2.dp
 
 @Composable
 internal fun rememberVoiceGlowPhase(reducedMotion: Boolean, label: String): Float {
-    if (reducedMotion) return GlowTokens.STATIC_PHASE
+    if (reducedMotion) return GlowDesign.PHASE_CENTER
     return VoiceGlowPhaseAnimation(label)
 }
 
 @Composable
 private fun VoiceGlowPhaseAnimation(label: String): Float {
     val transition = rememberInfiniteTransition(label = label)
-    val phase by transition.animateFloat(
-        initialValue = 0f,
+    val springOffset by transition.animateFloat(
+        initialValue = -1f,
         targetValue = 1f,
-        // A deliberately slow linear drift keeps silence subtly alive without a noticeable pulse.
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = GlowTokens.PHASE_DRIFT_DURATION_MILLIS, easing = LinearEasing),
+            animation = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessVeryLow
+            ),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "voiceGlowPhase"
+        label = "voiceGlowSpringDrift"
     )
-    return phase
+    return GlowDesign.PHASE_CENTER + springOffset * GlowDesign.MAX_PHASE_DRIFT
 }
 
 @Composable
@@ -107,19 +73,20 @@ internal fun rememberVoiceGlowIntensity(target: Float, reducedMotion: Boolean, l
 private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
 
 internal fun VoiceState.glowAmplitude(): Float = when (this) {
-    is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: GlowTokens.MIN_AMPLITUDE)
-        .coerceIn(GlowTokens.MIN_AMPLITUDE, GlowTokens.MAX_AMPLITUDE)
-    is VoiceState.Locked -> (amplitudeHistory.lastOrNull() ?: GlowTokens.MIN_AMPLITUDE)
-        .coerceIn(GlowTokens.MIN_AMPLITUDE, GlowTokens.MAX_AMPLITUDE)
+    is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
+        .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
+    is VoiceState.Locked -> (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
+        .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
     else -> 0f
 }
 
 @Composable
 fun VoiceRecordingGlowSurface(
     voiceState: VoiceState,
-    modifier: Modifier = Modifier,
-    reducedMotionOverride: Boolean? = null
+    reducedMotionOverride: Boolean,
+    modifier: Modifier = Modifier
 ) {
+    val reducedMotion = reducedMotionOverride
     val colorScheme = MaterialTheme.colorScheme
     val surface = colorScheme.surfaceContainerHigh
     val shape = RoundedCornerShape(Sizes.CornerMassive)
@@ -128,9 +95,8 @@ fun VoiceRecordingGlowSurface(
         return
     }
 
-    val reducedMotion = reducedMotionOverride ?: AnimationUtil.rememberReducedMotion()
     val phase = rememberVoiceGlowPhase(reducedMotion, "voiceRecordingInterior")
-    val amplitude = voiceState.glowAmplitude().coerceIn(GlowTokens.MIN_AMPLITUDE, GlowTokens.MAX_AMPLITUDE)
+    val amplitude = voiceState.glowAmplitude()
     val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceGlowIntensity")
     val primaryGlow = colorScheme.primary
     val secondaryGlow = colorScheme.secondary
@@ -141,34 +107,36 @@ fun VoiceRecordingGlowSurface(
         val height = size.height
         if (width <= 0f || height <= 0f) return@Canvas
 
+        // Normalized ratios form one compositional recipe so the sweep scales with the pill, not the device.
         val corner = CornerRadius(height / 2f)
-        val boundedIntensity = intensity.coerceIn(GlowTokens.MIN_AMPLITUDE, GlowTokens.MAX_AMPLITUDE)
-        val flowAlpha = GlowTokens.FLOW_ALPHA_BASE + GlowTokens.FLOW_ALPHA_PER_INTENSITY * boundedIntensity
-        val flowX = (phase - GlowTokens.STATIC_PHASE) * width * GlowTokens.FLOW_PHASE_TRAVEL
+        val boundedIntensity = intensity.coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
+        val flowAlpha = GlowDesign.FLOW_ALPHA_BASE + GlowDesign.FLOW_ALPHA_FROM_AMPLITUDE * boundedIntensity
+        val phaseOffset = phase - GlowDesign.PHASE_CENTER
+        val flowX = phaseOffset * width * 0.9f
         drawRoundRect(color = surface, cornerRadius = corner)
         drawRoundRect(
             brush = Brush.linearGradient(
                 colors = listOf(
-                    primaryGlow.copy(alpha = flowAlpha * GlowTokens.FLOW_PRIMARY_ALPHA),
-                    secondaryGlow.copy(alpha = flowAlpha * GlowTokens.FLOW_SECONDARY_ALPHA),
-                    tertiaryGlow.copy(alpha = flowAlpha * GlowTokens.FLOW_TERTIARY_ALPHA),
-                    secondaryGlow.copy(alpha = flowAlpha * GlowTokens.FLOW_END_SECONDARY_ALPHA),
-                    primaryGlow.copy(alpha = flowAlpha * GlowTokens.FLOW_PRIMARY_ALPHA)
+                    primaryGlow.copy(alpha = flowAlpha * 0.62f),
+                    secondaryGlow.copy(alpha = flowAlpha * 0.88f),
+                    tertiaryGlow.copy(alpha = flowAlpha * 0.76f),
+                    secondaryGlow.copy(alpha = flowAlpha * 0.94f),
+                    primaryGlow.copy(alpha = flowAlpha * 0.62f)
                 ),
-                start = Offset(flowX - width * GlowTokens.FLOW_START_PHASE, 0f),
-                end = Offset(flowX + width * GlowTokens.FLOW_END_PHASE, height)
+                start = Offset(flowX - width * 0.42f, 0f),
+                end = Offset(flowX + width * 0.9f, height)
             ),
             cornerRadius = corner
         )
         drawRoundRect(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    primaryGlow.copy(alpha = GlowTokens.RADIAL_PRIMARY_BASE_ALPHA + boundedIntensity * GlowTokens.RADIAL_PRIMARY_INTENSITY_ALPHA),
-                    secondaryGlow.copy(alpha = GlowTokens.RADIAL_SECONDARY_BASE_ALPHA + boundedIntensity * GlowTokens.RADIAL_SECONDARY_INTENSITY_ALPHA),
+                    primaryGlow.copy(alpha = flowAlpha * 0.7f),
+                    secondaryGlow.copy(alpha = flowAlpha * 0.42f),
                     Color.Transparent
                 ),
-                center = Offset(width * (GlowTokens.RADIAL_CENTER_START + phase * GlowTokens.RADIAL_CENTER_TRAVEL), height * GlowTokens.RADIAL_CENTER_Y),
-                radius = width * GlowTokens.RADIAL_RADIUS
+                center = Offset(width * (0.16f + phase * 0.66f), height * 0.42f),
+                radius = width * 0.72f
             ),
             cornerRadius = corner
         )
@@ -176,13 +144,13 @@ fun VoiceRecordingGlowSurface(
         drawRoundRect(
             brush = Brush.linearGradient(
                 colors = listOf(
-                    primaryGlow.copy(alpha = GlowTokens.BORDER_PRIMARY_BASE_ALPHA + boundedIntensity * GlowTokens.BORDER_PRIMARY_INTENSITY_ALPHA),
-                    secondaryGlow.copy(alpha = GlowTokens.BORDER_SECONDARY_BASE_ALPHA + boundedIntensity * GlowTokens.BORDER_SECONDARY_INTENSITY_ALPHA),
-                    tertiaryGlow.copy(alpha = GlowTokens.BORDER_TERTIARY_BASE_ALPHA + boundedIntensity * GlowTokens.BORDER_TERTIARY_INTENSITY_ALPHA),
-                    primaryGlow.copy(alpha = GlowTokens.BORDER_PRIMARY_BASE_ALPHA + boundedIntensity * GlowTokens.BORDER_PRIMARY_INTENSITY_ALPHA)
+                    primaryGlow.copy(alpha = flowAlpha * 1.8f),
+                    secondaryGlow.copy(alpha = flowAlpha * 2f),
+                    tertiaryGlow.copy(alpha = flowAlpha * 1.9f),
+                    primaryGlow.copy(alpha = flowAlpha * 1.8f)
                 ),
-                start = Offset(flowX - width * GlowTokens.BORDER_START_PHASE, 0f),
-                end = Offset(flowX + width * GlowTokens.BORDER_END_X, height)
+                start = Offset(flowX - width * 0.4f, 0f),
+                end = Offset(flowX + width, height)
             ),
             topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f),
             size = Size((width - strokeWidth).coerceAtLeast(0f), (height - strokeWidth).coerceAtLeast(0f)),
@@ -195,15 +163,14 @@ fun VoiceRecordingGlowSurface(
 @Composable
 fun VoiceRecordingAmbientGlow(
     voiceState: VoiceState,
-    modifier: Modifier = Modifier,
-    reducedMotionOverride: Boolean? = null
+    reducedMotionOverride: Boolean,
+    modifier: Modifier = Modifier
 ) {
     if (!voiceState.isGlowActive()) return
+    val reducedMotion = reducedMotionOverride
 
-    val reducedMotion = reducedMotionOverride ?: AnimationUtil.rememberReducedMotion()
     val phase = rememberVoiceGlowPhase(reducedMotion, "voiceRecordingAmbient")
-    val amplitude = voiceState.glowAmplitude().coerceIn(GlowTokens.MIN_AMPLITUDE, GlowTokens.MAX_AMPLITUDE)
-    val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceAmbientIntensity")
+    val intensity = rememberVoiceGlowIntensity(voiceState.glowAmplitude(), reducedMotion, "voiceAmbientIntensity")
     val colorScheme = MaterialTheme.colorScheme
     val primaryGlow = colorScheme.primary
     val secondaryGlow = colorScheme.secondary
@@ -214,16 +181,17 @@ fun VoiceRecordingAmbientGlow(
         val height = size.height
         if (width <= 0f || height <= 0f) return@Canvas
 
-        val radius = maxOf(width * GlowTokens.AMBIENT_RADIUS_WIDTH, height * GlowTokens.AMBIENT_RADIUS_HEIGHT)
-        val alpha = GlowTokens.AMBIENT_ALPHA_BASE + GlowTokens.AMBIENT_ALPHA_PER_INTENSITY * intensity.coerceIn(GlowTokens.MIN_AMPLITUDE, GlowTokens.MAX_AMPLITUDE)
-        val drift = phase - GlowTokens.STATIC_PHASE
-        val centerY = height * GlowTokens.AMBIENT_CENTER_Y
-        val leftCenter = Offset(width * (GlowTokens.AMBIENT_LEFT_CENTER_X + drift * GlowTokens.AMBIENT_LEFT_DRIFT), centerY)
-        val rightCenter = Offset(width * (GlowTokens.AMBIENT_RIGHT_CENTER_X - drift * GlowTokens.AMBIENT_RIGHT_DRIFT), centerY)
+        // Keep the spill soft and proportional to the composer; amplitude only tunes its restrained opacity.
+        val radius = maxOf(width * GlowDesign.AMBIENT_RADIUS_WIDTH, height * GlowDesign.AMBIENT_RADIUS_HEIGHT)
+        val alpha = GlowDesign.AMBIENT_ALPHA_BASE + GlowDesign.AMBIENT_ALPHA_FROM_AMPLITUDE * intensity.coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
+        val drift = phase - GlowDesign.PHASE_CENTER
+        val centerY = height * 0.88f
+        val leftCenter = Offset(width * (0.27f + drift * 0.12f), centerY)
+        val rightCenter = Offset(width * (0.73f - drift * 0.1f), centerY)
 
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(primaryGlow.copy(alpha = alpha), secondaryGlow.copy(alpha = alpha * GlowTokens.AMBIENT_LEFT_SECONDARY_ALPHA), Color.Transparent),
+                colors = listOf(primaryGlow.copy(alpha = alpha), secondaryGlow.copy(alpha = alpha * 0.52f), Color.Transparent),
                 center = leftCenter,
                 radius = radius
             ),
@@ -232,22 +200,22 @@ fun VoiceRecordingAmbientGlow(
         )
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(tertiaryGlow.copy(alpha = alpha * GlowTokens.AMBIENT_RIGHT_PRIMARY_ALPHA), secondaryGlow.copy(alpha = alpha * GlowTokens.AMBIENT_RIGHT_SECONDARY_ALPHA), Color.Transparent),
+                colors = listOf(tertiaryGlow.copy(alpha = alpha * 0.92f), secondaryGlow.copy(alpha = alpha * 0.45f), Color.Transparent),
                 center = rightCenter,
                 radius = radius
             ),
             center = rightCenter,
             radius = radius
         )
-        val center = Offset(width * (GlowTokens.AMBIENT_CENTER_X + drift * GlowTokens.AMBIENT_CENTER_DRIFT), centerY + height * GlowTokens.AMBIENT_CENTER_Y_OFFSET)
+        val center = Offset(width * (0.5f + drift * 0.14f), centerY + height * 0.12f)
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(secondaryGlow.copy(alpha = alpha * GlowTokens.AMBIENT_CENTER_PRIMARY_ALPHA), Color.Transparent),
+                colors = listOf(secondaryGlow.copy(alpha = alpha * 0.62f), Color.Transparent),
                 center = center,
-                radius = radius * GlowTokens.AMBIENT_CENTER_RADIUS
+                radius = radius * 0.82f
             ),
             center = center,
-            radius = radius * GlowTokens.AMBIENT_CENTER_RADIUS
+            radius = radius * 0.82f
         )
     }
 }

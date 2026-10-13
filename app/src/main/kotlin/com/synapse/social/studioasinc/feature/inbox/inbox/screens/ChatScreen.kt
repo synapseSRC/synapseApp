@@ -35,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.media.VoicePlayerManager
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
+import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
@@ -66,6 +67,8 @@ import java.io.File
         onNavigateToProduct: (String) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
+
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
         viewModel.initialize(chatId, participantId)
@@ -402,6 +405,7 @@ import java.io.File
             if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {
                 VoiceRecordingAmbientGlow(
                     voiceState = voiceState,
+                    reducedMotionOverride = reducedMotion,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
@@ -419,6 +423,7 @@ import java.io.File
                     replyingToMessage = replyingToMessage,
                     editingMessage = editingMessage,
                     smartReplies = smartReplies,
+                    reducedMotion = reducedMotion,
                     inputText = inputText,
                     canSendMessage = canSendMessage,
                     currentUserId = currentUserId,
