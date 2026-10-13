@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.graphicsLayer
@@ -26,13 +28,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveWaveformView
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
-private const val LARGE_FONT_SCALE_THRESHOLD = 1.25f
+internal fun voiceCancelTint(normal: Color, cancel: Color, progress: Float): Color =
+    lerp(normal, cancel, progress.coerceIn(0f, 1f))
+
+private const val CANCEL_SHIMMER_BAND_HALF_WIDTH = 0.10f
 private const val ACTIVE_MIC_SCALE = 1.08f
 private const val ACTIVE_MIC_GLOW_ALPHA = 0.42f
 private const val MIC_SCALE_DAMPING_RATIO = 0.6f
@@ -46,9 +53,7 @@ private val MIC_VISUAL_SIZE = 44.dp
 private val LOCK_INDICATOR_GAP = 24.dp
 private val LOCK_INDICATOR_VERTICAL_OFFSET = -(MIC_TOUCH_TARGET_SIZE + LOCK_INDICATOR_GAP)
 private val LOCK_INDICATOR_WIDTH = 144.dp
-private val LOCK_HINT_TEXT_OFFSET_X = (-32).dp
-private val COMPACT_CANCEL_HINT_MAX_WIDTH = 280.dp
-private val COMPACT_CANCEL_HINT_OFFSET_X = (-32).dp
+private val LOCK_INDICATOR_OFFSET_X = -(MIC_TOUCH_TARGET_SIZE / 2 + Spacing.Small)
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.ExtraSmall + Spacing.Small
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
@@ -212,7 +217,7 @@ private fun VoiceInputBarContent(
             }
             is VoiceState.Locked -> {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    IconButton(onClick = { onVoiceAction(VoiceAction.CancelRecording) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.errorContainer, CircleShape)) {
+                    IconButton(onClick = { onVoiceAction(VoiceAction.CancelRecording) }, modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE).background(MaterialTheme.colorScheme.errorContainer, CircleShape).testTag("voice-locked-cancel")) {
                         Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.onErrorContainer)
                     }
                     Column(
@@ -222,22 +227,27 @@ private fun VoiceInputBarContent(
                     ) {
                         OdometerTimerText(
                             voiceState.durationMs,
+                            modifier = Modifier.testTag("voice-locked-timer"),
                             color = if (voiceState.isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = stringResource(if (voiceState.isPaused) R.string.voice_recording_paused_state else R.string.voice_recording_locked_state),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
+                            modifier = Modifier.testTag("voice-locked-status"),
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center
                         )
                     }
-                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePause) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape).testTag("voice-locked-pause")) {
-                        Icon(imageVector = if (voiceState.isPaused) Icons.Default.Mic else Icons.Default.Pause,
-                            contentDescription = stringResource(if (voiceState.isPaused) R.string.cd_play_audio else R.string.cd_pause_audio), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePause) }, modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE).testTag("voice-locked-pause")) {
+                        Icon(
+                            imageVector = if (voiceState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            contentDescription = stringResource(if (voiceState.isPaused) R.string.cd_play_audio else R.string.cd_pause_audio),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                    Spacer(Modifier.width(Spacing.ExtraSmall))
+                    Spacer(Modifier.width(Spacing.Small))
                     Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary, shadowElevation = 2.dp) {
                         IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize().testTag("voice-locked-finish")) {
@@ -292,18 +302,19 @@ private fun VoiceRecordingContentOverlay(voiceState: VoiceState, reducedMotion: 
         enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
         exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
     ) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize()) {
             (voiceState as? VoiceState.Recording)?.let { recording ->
-                RecordingStatusOverlay(recording, reducedMotion)
+                RecordingStatusOverlay(recording, reducedMotion, Modifier.align(Alignment.Center))
+                SlideToLockIndicator(progress = recording.lockProgress, reducedMotion = reducedMotion)
             }
         }
     }
 }
 
 @Composable
-private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMotion: Boolean) {
+private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMotion: Boolean, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Medium),
+        modifier = modifier.fillMaxWidth().padding(horizontal = Spacing.Medium),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
     ) {
@@ -312,48 +323,52 @@ private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMoti
             modifier = Modifier.testTag("voice-recording-timer"),
             color = MaterialTheme.colorScheme.onSurface
         )
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val fontScale = LocalDensity.current.fontScale
-            // Project design decision (not an M3 token): bias the cancel hint away from the right-side mic on compact/high-scale layouts.
-            val compactHintOffset = if (maxWidth < COMPACT_CANCEL_HINT_MAX_WIDTH || fontScale > LARGE_FONT_SCALE_THRESHOLD) COMPACT_CANCEL_HINT_OFFSET_X else 0.dp
-            AnimatedContent(
-                modifier = Modifier.fillMaxWidth(),
-                targetState = voiceState.isArmedForCancel,
-                transitionSpec = {
-                    if (reducedMotion) {
-                        EnterTransition.None togetherWith ExitTransition.None
-                    } else {
-                        fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) togetherWith
-                            fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
-                    }
-                },
-                contentAlignment = Alignment.Center,
-                label = "voiceCancelFeedback"
-            ) { isArmedForCancel ->
-                Text(
-                    text = stringResource(if (isArmedForCancel) R.string.voice_recording_cancel_release else R.string.voice_recording_cancel),
-                    modifier = Modifier.wrapContentWidth().offset(x = compactHintOffset).testTag("voice-cancel-instruction"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2
-                )
-            }
-        }
+        ShimmerCancelHint(reducedMotion)
     }
+}
+
+@Composable
+private fun ShimmerCancelHint(reducedMotion: Boolean) {
+    val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val highlightColor = lerp(baseColor, MaterialTheme.colorScheme.onSurface, 0.68f)
+    val phase = rememberVoiceShimmerPhase(reducedMotion, "voiceCancelShimmer")
+    val center = 0.15f + phase * 0.70f
+    val start = (center - CANCEL_SHIMMER_BAND_HALF_WIDTH).coerceIn(0f, 1f)
+    val end = (center + CANCEL_SHIMMER_BAND_HALF_WIDTH).coerceIn(0f, 1f)
+    val hintBrush = if (reducedMotion) null else Brush.horizontalGradient(
+        colorStops = arrayOf(
+            0f to baseColor,
+            start to baseColor,
+            center.coerceIn(0f, 1f) to highlightColor,
+            end to baseColor,
+            1f to baseColor
+        )
+    )
+    Text(
+        text = stringResource(R.string.voice_recording_cancel),
+        modifier = Modifier.fillMaxWidth().testTag("voice-cancel-instruction"),
+        style = if (hintBrush == null) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodySmall.copy(brush = hintBrush),
+        color = if (hintBrush == null) baseColor else Color.Unspecified,
+        textAlign = TextAlign.Center,
+        maxLines = 2,
+        overflow = TextOverflow.Clip,
+        softWrap = true
+    )
 }
 
 @Composable
 private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolean) {
     val arrowTravel = rememberLockArrowTravel(reducedMotion)
     val alpha = 0.55f + 0.45f * progress.coerceIn(0f, 1f)
+    val fontScale = LocalDensity.current.fontScale
+    val fontScaleOffset = (32f * (fontScale - 1f).coerceAtLeast(0f)).dp
 
     Column(
         modifier = Modifier
-            .align(Alignment.TopCenter)
-            // Project design decision (not an M3 token): translated hint width and end-of-bar placement.
-            .requiredWidth(LOCK_INDICATOR_WIDTH)
-            .offset(y = LOCK_INDICATOR_VERTICAL_OFFSET)
+            .align(Alignment.TopEnd)
+            .widthIn(max = LOCK_INDICATOR_WIDTH)
+            .fillMaxWidth()
+            .offset(x = LOCK_INDICATOR_OFFSET_X, y = LOCK_INDICATOR_VERTICAL_OFFSET - fontScaleOffset)
             .graphicsLayer { this.alpha = if (reducedMotion) 0.72f else alpha },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
@@ -387,11 +402,11 @@ private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolea
         }
         Text(
             text = stringResource(R.string.voice_recording_lock_hint),
-            modifier = Modifier.offset(x = LOCK_HINT_TEXT_OFFSET_X).testTag("voice-slide-lock-hint"),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.ExtraSmall).testTag("voice-slide-lock-hint"),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            maxLines = 2
+            softWrap = true
         )
     }
 }
@@ -439,10 +454,32 @@ fun CanonicalMicButton(
     val isPressing = voiceState is VoiceState.Pressing
     val isRecording = voiceState is VoiceState.Recording
     val isActive = isPressing || isRecording
-    val dragOffsetX = (voiceState as? VoiceState.Recording)?.slideOffsetPx ?: 0f
-    val dragOffsetY = (voiceState as? VoiceState.Recording)?.dragOffsetYPx ?: 0f
+    val recordingState = voiceState as? VoiceState.Recording
+    val dragOffsetX = recordingState?.slideOffsetPx ?: 0f
+    val dragOffsetY = recordingState?.dragOffsetYPx ?: 0f
+    val gestureReturning = recordingState?.isGestureReturning == true
+    val cancelProgress = recordingState?.cancelProgress?.coerceIn(0f, 1f) ?: 0f
+    val returnOffsetX = recordingState?.returnOffsetXPx ?: 0f
+    val returnOffsetY = recordingState?.returnOffsetYPx ?: 0f
 
     // Project design decision (not an M3 token): restrained scale and halo preserve the fixed pill silhouette.
+    val returnX = remember { Animatable(0f) }
+    val returnY = remember { Animatable(0f) }
+    LaunchedEffect(gestureReturning, returnOffsetX, returnOffsetY, reducedMotion) {
+        if (!gestureReturning) return@LaunchedEffect
+        if (reducedMotion) {
+            returnX.snapTo(0f)
+            returnY.snapTo(0f)
+        } else {
+            returnX.snapTo(returnOffsetX)
+            returnY.snapTo(returnOffsetY)
+            coroutineScope {
+                launch { returnX.animateTo(0f, spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow)) }
+                launch { returnY.animateTo(0f, spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow)) }
+            }
+        }
+    }
+
     val targetScale = if (isActive) ACTIVE_MIC_SCALE else 1f
     val scale = animateFloatForMotion(
         targetValue = targetScale,
@@ -450,6 +487,13 @@ fun CanonicalMicButton(
         animationSpec = spring(dampingRatio = MIC_SCALE_DAMPING_RATIO, stiffness = Spring.StiffnessMedium),
         label = "canonicalMicScale"
     )
+    val targetTint = voiceCancelTint(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.error, cancelProgress)
+    val micTint by animateColorAsState(
+        targetValue = targetTint,
+        animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 520f),
+        label = "voiceCancelDragTint"
+    )
+
     val targetGlowAlpha = if (isActive) ACTIVE_MIC_GLOW_ALPHA else 0f
     val glowAlpha = animateFloatForMotion(
         targetValue = targetGlowAlpha,
@@ -496,17 +540,14 @@ fun CanonicalMicButton(
             },
         contentAlignment = Alignment.Center
     ) {
-        if (voiceState is VoiceState.Recording) {
-            SlideToLockIndicator(progress = voiceState.lockProgress, reducedMotion = reducedMotion)
-        }
         Box(
             modifier = Modifier
                 .size(MIC_VISUAL_SIZE)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                    translationX = dragOffsetX
-                    translationY = dragOffsetY
+                    translationX = if (gestureReturning) returnX.value else dragOffsetX
+                    translationY = if (gestureReturning) returnY.value else dragOffsetY
                 }
                 .shadow(
                     elevation = glowElevation,
@@ -515,12 +556,13 @@ fun CanonicalMicButton(
                     ambientColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha),
                     spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha * 0.8f)
                 )
-                .background(MaterialTheme.colorScheme.primary, CircleShape),
+                .background(micTint, CircleShape)
+                .testTag("voice-recording-mic-visual"),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Mic,
-                contentDescription = stringResource(R.string.voice_hold_to_record),
+                contentDescription = stringResource(if (isRecording) R.string.voice_recording_cancel else R.string.voice_hold_to_record),
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(Sizes.IconLarge)
             )

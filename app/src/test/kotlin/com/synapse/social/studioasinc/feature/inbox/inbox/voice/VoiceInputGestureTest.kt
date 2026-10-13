@@ -89,42 +89,28 @@ class VoiceInputGestureTest {
     }
 
     @Test
-    fun horizontalSwipeOutsideMicBoundsCancelsAndReleasesExactlyOnce() {
+    fun cancellationHappensAtDragThresholdBeforeReleaseAndOnlyOnce() {
         composeRule.setContent { micUnderTest() }
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            down(center)
             moveBy(Offset(x = -size.width.toFloat() * 3f, y = 0f))
-            up()
         }
 
         composeRule.runOnIdle {
             assertEquals(1, actions.count { it == VoiceAction.StartRecording })
             assertTrue(actions.filterIsInstance<VoiceAction.Dragged>().any { it.deltaX < 0f })
+            assertEquals("threshold crossing cancels before pointer-up", VoiceState.Normal, controller.state.value)
+            Mockito.verify(recorder, Mockito.times(1)).cancel()
+        }
+
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
+            moveBy(Offset(x = size.width.toFloat(), y = 0f))
+            up()
+        }
+        composeRule.runOnIdle {
             assertEquals(1, actions.count { it == VoiceAction.ReleaseRecording })
             assertEquals(VoiceState.Normal, controller.state.value)
             Mockito.verify(recorder, Mockito.times(1)).cancel()
-        }
-    }
-
-    @Test
-    fun draggingBackInsideCancelThresholdFinishesDraftWithoutCancelling() {
-        Mockito.`when`(recorder.getRecordedDurationMs()).thenReturn(1_000L)
-        Mockito.`when`(recorder.stop()).thenReturn(VoiceRecorderStopResult.Success(outputFile))
-        composeRule.setContent { micUnderTest() }
-        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            down(center)
-            moveBy(Offset(x = -size.width.toFloat() * 3f, y = 0f))
-            moveBy(Offset(x = size.width.toFloat() * 3f, y = 0f))
-            up()
-        }
-
-        composeRule.runOnIdle {
-            assertEquals(1, actions.count { it == VoiceAction.StartRecording })
-            assertTrue(actions.filterIsInstance<VoiceAction.Dragged>().size >= 2)
-            assertEquals(1, actions.count { it == VoiceAction.ReleaseRecording })
-            assertTrue(controller.state.value is VoiceState.VoiceDraft)
-            Mockito.verify(recorder, Mockito.never()).cancel()
-            Mockito.verify(recorder, Mockito.times(1)).stop()
         }
     }
 
@@ -147,6 +133,100 @@ class VoiceInputGestureTest {
     }
 
     @Test
+    fun abandonedSlideUsesSpringToReturnMicToItsExactHomePosition() {
+        val recording = VoiceState.Recording()
+        val state = mutableStateOf<VoiceState>(recording)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            MaterialTheme {
+                CanonicalMicButton(
+                    voiceState = state.value,
+                    onVoiceAction = {},
+                    reducedMotionOverride = false
+                )
+            }
+        }
+        val home = bounds("voice-recording-mic-visual")
+        composeRule.runOnIdle {
+            state.value = recording.copy(slideOffsetPx = -60f, cancelProgress = 0.6f)
+        }
+        val displaced = bounds("voice-recording-mic-visual")
+        assertEquals(home.centerX - 60f, displaced.centerX, 1f)
+
+        composeRule.runOnIdle {
+            state.value = recording.copy(
+                isGestureReturning = true,
+                returnOffsetXPx = -60f,
+                slideOffsetPx = 0f,
+                cancelProgress = 0f
+            )
+        }
+        composeRule.mainClock.advanceTimeBy(64L)
+        val inFlight = bounds("voice-recording-mic-visual")
+        assertTrue("return should move smoothly rather than snap", inFlight.centerX > displaced.centerX)
+        assertTrue("return should still be settling mid-animation", inFlight.centerX < home.centerX)
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        assertEquals("horizontal spring must settle at the original position", home.centerX, bounds("voice-recording-mic-visual").centerX, 1f)
+
+        composeRule.runOnIdle {
+            state.value = recording.copy(dragOffsetYPx = -70f)
+        }
+        val displacedVertically = bounds("voice-recording-mic-visual")
+        assertEquals(home.centerY - 70f, displacedVertically.centerY, 1f)
+        composeRule.runOnIdle {
+            state.value = recording.copy(
+                isGestureReturning = true,
+                returnOffsetYPx = -70f,
+                dragOffsetYPx = 0f
+            )
+        }
+        composeRule.mainClock.advanceTimeBy(64L)
+        val verticalInFlight = bounds("voice-recording-mic-visual")
+        assertTrue(verticalInFlight.centerY > displacedVertically.centerY)
+        assertTrue(verticalInFlight.centerY < home.centerY)
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        assertEquals("vertical spring must settle at the original position", home.centerY, bounds("voice-recording-mic-visual").centerY, 1f)
+    }
+
+    @Test
+    fun reducedMotionSkipsSpringDisplacementOnAbandonedSlide() {
+        val state = mutableStateOf<VoiceState>(VoiceState.Recording(slideOffsetPx = -50f))
+        composeRule.setContent {
+            MaterialTheme {
+                CanonicalMicButton(voiceState = state.value, onVoiceAction = {}, reducedMotionOverride = true)
+            }
+        }
+        val displaced = bounds("voice-recording-mic-visual").centerX
+        composeRule.runOnIdle {
+            state.value = VoiceState.Recording(
+                isGestureReturning = true,
+                returnOffsetXPx = -50f,
+                slideOffsetPx = 0f
+            )
+        }
+        assertEquals("reduced motion should skip the return animation", displaced + 50f, bounds("voice-recording-mic-visual").centerX, 1f)
+    }
+
+    @Test
+    fun lockedCancelControlRemainsFunctionalAndPauseHasAtLeast48DpTarget() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(1L)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -150f))
+        assertTrue(controller.state.value is VoiceState.Locked)
+        composeRule.setContent { voiceHostUnderTest() }
+
+        val pauseBounds = bounds("voice-locked-pause")
+        val minTargetPx = 48f * composeRule.density.density
+        assertTrue("pause target must be at least 48dp wide", pauseBounds.width >= minTargetPx - 0.5f)
+        assertTrue("pause target must be at least 48dp tall", pauseBounds.height >= minTargetPx - 0.5f)
+        composeRule.onNodeWithTag("voice-locked-cancel").performClick()
+        composeRule.runOnIdle {
+            assertEquals(VoiceState.Normal, controller.state.value)
+            Mockito.verify(recorder, Mockito.times(1)).cancel()
+        }
+    }
+
+    @Test
     fun lockedHostPauseResumeAndFinishControlsPreserveDraftFlow() {
         Mockito.`when`(recorder.getRecordedDurationMs()).thenReturn(1_000L)
         Mockito.`when`(recorder.stop()).thenReturn(VoiceRecorderStopResult.Success(outputFile))
@@ -156,6 +236,10 @@ class VoiceInputGestureTest {
         assertTrue(controller.state.value is VoiceState.Locked)
         composeRule.setContent { voiceHostUnderTest() }
 
+        val pauseBounds = bounds("voice-locked-pause")
+        val minTargetPx = 48f * composeRule.density.density
+        assertTrue("pause target must be at least 48dp wide", pauseBounds.width >= minTargetPx - 0.5f)
+        assertTrue("pause target must be at least 48dp tall", pauseBounds.height >= minTargetPx - 0.5f)
         composeRule.onNodeWithTag("voice-locked-pause").assertExists().performClick()
         composeRule.runOnIdle { assertTrue((controller.state.value as VoiceState.Locked).isPaused) }
         composeRule.onNodeWithTag("voice-locked-pause").performClick()
@@ -166,6 +250,48 @@ class VoiceInputGestureTest {
             Mockito.verify(recorder, Mockito.times(1)).stop()
             Mockito.verify(recorder, Mockito.never()).cancel()
         }
+    }
+
+    @Test
+    fun lockedControlsStaySeparatedOnNarrowLayoutAtLargeFontScale() {
+        val baseContext = ApplicationProvider.getApplicationContext<Context>()
+        val configuration = Configuration(baseContext.resources.configuration).apply { fontScale = 1.6f }
+        val largeFontContext = baseContext.createConfigurationContext(configuration)
+
+        composeRule.setContent {
+            val currentDensity = LocalDensity.current
+            CompositionLocalProvider(
+                LocalContext provides largeFontContext,
+                LocalConfiguration provides configuration,
+                LocalDensity provides Density(currentDensity.density, 1.6f)
+            ) {
+                MaterialTheme {
+                    Box(Modifier.width(260.dp).height(180.dp).clipToBounds()) {
+                        VoiceInputHost(
+                            voiceState = VoiceState.Locked(durationMs = 12_000L, amplitudeHistory = listOf(0.3f)),
+                            onVoiceAction = {},
+                            showSendButton = false,
+                            onSendMessage = {},
+                            reducedMotionOverride = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            normalContent = {}
+                        )
+                    }
+                }
+            }
+        }
+
+        val rootWidth = 260.dp.value * composeRule.density.density
+        val cancel = bounds("voice-locked-cancel")
+        val timer = bounds("voice-locked-timer")
+        val status = bounds("voice-locked-status")
+        val pause = bounds("voice-locked-pause")
+        val send = bounds("voice-locked-finish")
+        assertFalse("timer overlaps cancel", overlaps(timer, cancel))
+        assertFalse("timer overlaps pause", overlaps(timer, pause))
+        assertFalse("timer overlaps send", overlaps(timer, send))
+        assertFalse("status overlaps controls", overlaps(status, cancel) || overlaps(status, pause) || overlaps(status, send))
+        assertTrue("status clips beyond the narrow pill", status.left >= 0f && status.right <= rootWidth)
     }
 
     @Test
@@ -208,16 +334,10 @@ class VoiceInputGestureTest {
 
         composeRule.onNodeWithTag("voice-cancel-instruction").assertTextEquals("বাতিল করতে স্লাইড করুন")
         val initialBar = bounds("voice-recording-bar")
-        composeRule.runOnIdle {
-            recordingState.value = (recordingState.value as VoiceState.Recording).copy(isArmedForCancel = true)
-        }
-        composeRule.onNodeWithTag("voice-cancel-instruction").assertTextEquals("বাতিল করতে ছেড়ে দিন")
-        val armedBar = bounds("voice-recording-bar")
-        assertEquals("cancel feedback must not resize the pill", initialBar.height, armedBar.height, 0.5f)
-        composeRule.runOnIdle {
-            recordingState.value = (recordingState.value as VoiceState.Recording).copy(isArmedForCancel = false)
-        }
         composeRule.onNodeWithTag("voice-cancel-instruction").assertTextEquals("বাতিল করতে স্লাইড করুন")
+        val cancelHint = bounds("voice-cancel-instruction")
+        assertEquals("cancel feedback must not resize the pill", initialBar.height, bounds("voice-recording-bar").height, 0.5f)
+        assertEquals("cancel hint must stay horizontally centered", (initialBar.left + initialBar.right) / 2f, (cancelHint.left + cancelHint.right) / 2f, 0.5f)
         composeRule.onNodeWithTag("voice-slide-lock-hint").assertTextEquals("লক করতে ওপরে স্লাইড করুন")
         composeRule.onNodeWithTag("voice-recording-timer").assertExists()
 

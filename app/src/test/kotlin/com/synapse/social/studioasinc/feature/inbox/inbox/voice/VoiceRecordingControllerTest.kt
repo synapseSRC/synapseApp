@@ -123,51 +123,33 @@ class VoiceRecordingControllerTest {
     }
 
     @Test
-    fun `dragging left beyond threshold arms cancel`() {
+    fun cancelAtThresholdIsImmediateAndIdempotent() {
         controller.handleAction(VoiceAction.OpenVoiceMode)
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
 
-        controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 0f))
-
-        val state = controller.state.value as VoiceState.Recording
-        assertTrue(state.isArmedForCancel)
-        assertEquals(1f, state.cancelProgress, 0.01f)
-    }
-
-    @Test
-    fun `releasing while armed for cancel deletes recording and returns to Normal`() {
-        controller.handleAction(VoiceAction.StartRecording)
-        testScope.advanceTimeBy(200)
-
-        controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 0f))
-        controller.handleAction(VoiceAction.ReleaseRecording)
+        controller.handleAction(VoiceAction.Dragged(deltaX = -100f, deltaY = 0f))
 
         assertEquals(VoiceState.Normal, controller.state.value)
-        verify(mockRecorder).cancel()
+        verify(mockRecorder, times(1)).cancel()
+        controller.handleAction(VoiceAction.Dragged(deltaX = -20f, deltaY = 0f))
+        controller.handleAction(VoiceAction.ReleaseRecording)
+        controller.handleAction(VoiceAction.CancelRecording)
+        verify(mockRecorder, times(1)).cancel()
     }
 
     @Test
-    fun `swiping back outside cancel threshold restores normal release behavior`() {
-        val testFile = tempFolder.newFile("recording_after_cancel_back.m4a")
-        testFile.writeText("audio data")
-        `when`(mockRecorder.stop()).thenReturn(VoiceRecorderStopResult.Success(testFile))
-
+    fun thresholdCancelCannotBeUndoneByLaterDragEvents() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
-        testTimeProvider.advanceTimeBy(1000)
-        testScope.advanceTimeBy(100)
 
         controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 0f))
-        assertTrue((controller.state.value as VoiceState.Recording).isArmedForCancel)
-
+        assertEquals(VoiceState.Normal, controller.state.value)
         controller.handleAction(VoiceAction.Dragged(deltaX = 40f, deltaY = 0f))
-        assertFalse((controller.state.value as VoiceState.Recording).isArmedForCancel)
         controller.handleAction(VoiceAction.ReleaseRecording)
 
-        assertTrue(controller.state.value is VoiceState.VoiceDraft)
-        verify(mockRecorder, never()).cancel()
-        verify(mockRecorder).stop()
+        verify(mockRecorder, times(1)).cancel()
+        verify(mockRecorder, never()).stop()
     }
 
     @Test
@@ -191,10 +173,9 @@ class VoiceRecordingControllerTest {
         assertEquals(0f, state.lockProgress, 0f)
         assertEquals(0f, state.slideOffsetPx, 0f)
         controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 0f))
-        assertTrue((controller.state.value as VoiceState.Recording).isArmedForCancel)
+        assertEquals("a fresh left slide cancels immediately", VoiceState.Normal, controller.state.value)
         controller.handleAction(VoiceAction.ReleaseRecording)
-        assertEquals(VoiceState.Normal, controller.state.value)
-        verify(mockRecorder).cancel()
+        verify(mockRecorder, times(1)).cancel()
     }
 
     @Test
@@ -222,6 +203,38 @@ class VoiceRecordingControllerTest {
 
 
     @Test
+    fun abandonedCancelAndLockSlidesResetProgressAndCaptureSpringOffsets() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+
+        controller.handleAction(VoiceAction.Dragged(deltaX = -60f, deltaY = 0f))
+        val cancelDrag = controller.state.value as VoiceState.Recording
+        assertEquals(0.60f, cancelDrag.cancelProgress, 0.01f)
+        assertEquals(-60f, cancelDrag.slideOffsetPx, 0.01f)
+        controller.handleAction(VoiceAction.ReleaseRecording)
+
+        val cancelReturn = controller.state.value as VoiceState.Recording
+        assertTrue(cancelReturn.isGestureReturning)
+        assertEquals(0f, cancelReturn.slideOffsetPx, 0f)
+        assertEquals(-60f, cancelReturn.returnOffsetXPx, 0.01f)
+        assertEquals(0f, cancelReturn.cancelProgress, 0f)
+
+        controller.handleAction(VoiceAction.StartRecording)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -70f))
+        val lockDrag = controller.state.value as VoiceState.Recording
+        assertEquals(-70f, lockDrag.dragOffsetYPx, 0.01f)
+        controller.handleAction(VoiceAction.ReleaseRecording)
+
+        val lockReturn = controller.state.value as VoiceState.Recording
+        assertTrue(lockReturn.isGestureReturning)
+        assertEquals(0f, lockReturn.dragOffsetYPx, 0f)
+        assertEquals(-70f, lockReturn.returnOffsetYPx, 0.01f)
+        assertEquals(0f, lockReturn.lockProgress, 0f)
+        verify(mockRecorder, never()).cancel()
+        verify(mockRecorder, never()).stop()
+    }
+
+    @Test
     fun `upward drag below the new threshold does not lock prematurely`() {
         controller.handleAction(VoiceAction.OpenVoiceMode)
         controller.handleAction(VoiceAction.StartRecording)
@@ -242,6 +255,11 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
 
         assertTrue(controller.state.value is VoiceState.Locked)
+        val commitsAfterLock = hapticCount
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
+        controller.handleAction(VoiceAction.ReleaseRecording)
+        assertEquals(commitsAfterLock, hapticCount)
+        verify(mockRecorder, never()).cancel()
     }
 
     @Test

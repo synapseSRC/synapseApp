@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertDoesNotExist
@@ -40,7 +41,31 @@ class VoiceRecordingGlowTest {
         assertEquals(0.12f, quiet.glowAmplitude(), 0.001f)
         assertEquals(0.86f, loud.glowAmplitude(), 0.001f)
         assertTrue(loud.glowAmplitude() > quiet.glowAmplitude())
-        assertEquals(0.94f, paused.glowAmplitude(), 0.001f)
+        assertEquals(0.08f, paused.glowAmplitude(), 0.001f)
+    }
+
+    @Test
+    fun cancelTintFollowsNormalizedDragProgressAndReturnsToNormalAtZero() {
+        val normal = Color(0xFF315A82)
+        val cancel = Color(0xFFE53935)
+        assertEquals(normal, voiceCancelTint(normal, cancel, 0f))
+        assertEquals(cancel, voiceCancelTint(normal, cancel, 1f))
+        assertEquals(cancel, voiceCancelTint(normal, cancel, 2f))
+        val midpoint = voiceCancelTint(normal, cancel, 0.5f)
+        assertTrue(midpoint.red > normal.red && midpoint.red < cancel.red)
+        assertTrue(midpoint.green > cancel.green && midpoint.green < normal.green)
+    }
+
+    @Test
+    fun quietAndLoudAudioDriveDifferentLiquidSpeedTravelDeformationAndPigment() {
+        val quiet = voiceLiquidMotion(0.08f)
+        val loud = voiceLiquidMotion(0.92f)
+
+        assertTrue("loud audio must move the fluid faster", loud.cyclesPerSecond > quiet.cyclesPerSecond)
+        assertTrue("loud audio must travel farther", loud.travelRatio > quiet.travelRatio)
+        assertTrue("loud audio must deform the contour more", loud.deformation > quiet.deformation)
+        assertTrue("loud audio must increase pigment energy", loud.pigmentAlpha > quiet.pigmentAlpha)
+        assertTrue("quiet audio remains visibly fluid", quiet.pigmentAlpha > 0f && quiet.cyclesPerSecond > 0f)
     }
 
     @Test
@@ -80,16 +105,18 @@ class VoiceRecordingGlowTest {
         composeRule.setContent {
             MaterialTheme {
                 Column {
-                    Text(rememberVoiceGlowPhase(true, "reducedPhase").toString(), Modifier.testTag("reduced-phase"))
+                    Text(rememberVoiceGlowPhase(amplitude.value, active = true, reducedMotion = true, label = "reducedPhase").toString(), Modifier.testTag("reduced-phase"))
                     Text(rememberVoiceGlowIntensity(amplitude.value, true, "reducedIntensity").toString(), Modifier.testTag("reduced-intensity"))
+                    Text(rememberVoiceShimmerPhase(true, "reducedShimmer").toString(), Modifier.testTag("reduced-shimmer"))
                 }
             }
         }
 
-        composeRule.onNodeWithTag("reduced-phase").assertTextEquals("0.5")
+        composeRule.onNodeWithTag("reduced-phase").assertTextEquals("0.0")
         composeRule.onNodeWithTag("reduced-intensity").assertTextEquals("0.12")
+        composeRule.onNodeWithTag("reduced-shimmer").assertTextEquals("0.5")
         composeRule.mainClock.advanceTimeBy(2_000L)
-        composeRule.onNodeWithTag("reduced-phase").assertTextEquals("0.5")
+        composeRule.onNodeWithTag("reduced-phase").assertTextEquals("0.0")
         composeRule.runOnIdle { amplitude.value = 0.84f }
         composeRule.onNodeWithTag("reduced-intensity").assertTextEquals("0.84")
         composeRule.mainClock.advanceTimeBy(1_000L)
@@ -103,15 +130,19 @@ class VoiceRecordingGlowTest {
         composeRule.setContent {
             MaterialTheme {
                 Column {
-                    Text(rememberVoiceGlowPhase(false, "animatedPhase").toString(), Modifier.testTag("animated-phase"))
+                    Text(rememberVoiceGlowPhase(amplitude.value, active = true, reducedMotion = false, label = "animatedPhase").toString(), Modifier.testTag("animated-phase"))
                     Text(rememberVoiceGlowIntensity(amplitude.value, false, "animatedIntensity").toString(), Modifier.testTag("animated-intensity"))
+                    Text(rememberVoiceShimmerPhase(false, "animatedShimmer").toString(), Modifier.testTag("animated-shimmer"))
                 }
             }
         }
         val initialPhase = textFor("animated-phase").toFloat()
+        val initialShimmer = textFor("animated-shimmer").toFloat()
         composeRule.mainClock.advanceTimeBy(2_000L)
         val movedPhase = textFor("animated-phase").toFloat()
+        val movedShimmer = textFor("animated-shimmer").toFloat()
         assertNotEquals("ambient phase should drift with motion enabled", initialPhase, movedPhase)
+        assertNotEquals("cancel hint shimmer should move continuously", initialShimmer, movedShimmer)
 
         val initialIntensity = textFor("animated-intensity").toFloat()
         composeRule.runOnIdle { amplitude.value = 0.84f }

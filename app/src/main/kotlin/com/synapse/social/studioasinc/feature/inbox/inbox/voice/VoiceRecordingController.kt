@@ -44,6 +44,7 @@ class VoiceRecordingController(
     private var pausedAccumulatedDurationMs = 0L
     private var pauseStartTime = 0L
     private var pendingPermissionIntent = false
+    private var releaseHandled = false
 
     fun updateThresholds(cancelPx: Float, lockPx: Float, slopPx: Float) {
         if (cancelPx > 0f) cancelThresholdPx = cancelPx
@@ -64,6 +65,7 @@ class VoiceRecordingController(
                 }
             }
             VoiceAction.StartRecording -> {
+                releaseHandled = false
                 onPressDown()
             }
             is VoiceAction.Dragged -> {
@@ -215,26 +217,30 @@ class VoiceRecordingController(
             .takeIf { gestureDirection == GestureDirection.Cancel } ?: 0f
         val lockProgress = (upDistance / lockThresholdPx).coerceIn(0f, 1f)
             .takeIf { gestureDirection == GestureDirection.Lock } ?: 0f
-        val isArmed = gestureDirection == GestureDirection.Cancel && leftDistance >= cancelThresholdPx
+        // Commit cancellation as soon as the normalized drag reaches its threshold; release is not required.
+        if (gestureDirection == GestureDirection.Cancel && leftDistance >= cancelThresholdPx) {
+            cancelRecording()
+            return
+        }
 
-        // Vertical commitment occurs once; the controller changes to Locked and ignores later release.
+        // A successful lock commits once and subsequent pointer events are ignored in Locked mode.
         if (gestureDirection == GestureDirection.Lock && upDistance >= lockThresholdPx) {
             lockRecording()
             return
         }
 
-        if (isArmed != currentState.isArmedForCancel) onHapticPerform()
-
         _state.value = currentState.copy(
             slideOffsetPx = cancelOffset,
             dragOffsetYPx = lockOffset,
-            isArmedForCancel = isArmed,
             cancelProgress = cancelProgress,
-            lockProgress = lockProgress
+            lockProgress = lockProgress,
+            isGestureReturning = false
         )
     }
 
     private fun handleRelease() {
+        if (releaseHandled) return
+        releaseHandled = true
         val currentState = _state.value
         if (currentState is VoiceState.Pressing) {
             holdJob?.cancel()
@@ -246,12 +252,27 @@ class VoiceRecordingController(
         }
 
         if (currentState is VoiceState.Recording) {
-            if (currentState.isArmedForCancel) {
-                cancelRecording()
+            if (gestureDirection != GestureDirection.Undecided) {
+                returnFromAbandonedSlide(currentState)
             } else {
                 finishRecordingToDraft()
             }
         }
+    }
+
+    private fun returnFromAbandonedSlide(currentState: VoiceState.Recording) {
+        gestureDirection = GestureDirection.Undecided
+        cumulativeX = 0f
+        cumulativeY = 0f
+        _state.value = currentState.copy(
+            slideOffsetPx = 0f,
+            dragOffsetYPx = 0f,
+            cancelProgress = 0f,
+            lockProgress = 0f,
+            isGestureReturning = true,
+            returnOffsetXPx = currentState.slideOffsetPx,
+            returnOffsetYPx = currentState.dragOffsetYPx
+        )
     }
 
     private fun cancelRecording() {
@@ -264,12 +285,14 @@ class VoiceRecordingController(
             voiceRecorder.cancel()
         } catch (_: Exception) {}
         onHapticPerform()
+        releaseHandled = true
         _state.value = VoiceState.Normal
     }
 
     private fun lockRecording() {
         val currentState = _state.value
         if (currentState is VoiceState.Recording) {
+            releaseHandled = true
             onHapticPerform()
             _state.value = VoiceState.Locked(
                 durationMs = currentState.durationMs,

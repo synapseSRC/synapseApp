@@ -10,7 +10,6 @@ on:
       - 'docs/**'
       - 'LICENSE'
       - '.gitignore'
-      - 'app/src/test/**'
   workflow_dispatch:
 
 jobs:
@@ -36,6 +35,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-disabled: true
+
+      - name: 🧪 Run unit and Compose UI tests
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: ./gradlew testDebugUnitTest --no-daemon
 
       - name: 🏗️ Build Release APK
         env:
