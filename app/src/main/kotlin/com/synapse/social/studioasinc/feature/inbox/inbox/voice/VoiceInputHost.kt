@@ -383,7 +383,7 @@ private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolea
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
             }
         }
         Text(
