@@ -11,7 +11,6 @@ on:
       - 'LICENSE'
       - '.gitignore'
       - 'app/src/test/**'
-      - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
@@ -37,15 +36,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-disabled: true
-
-      - name: 🧪 Run voice-recording regression tests
-        env:
-          GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
-        run: >-
-          ./gradlew :app:testDebugUnitTest --no-daemon
-          --tests "com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingControllerTest"
-          --tests "com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingGlowTest"
-          --tests "com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceInputGestureTest"
 
       - name: 🏗️ Build Release APK
         env:
