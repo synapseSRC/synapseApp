@@ -36,17 +36,17 @@ jobs:
         with:
           cache-disabled: true
 
-      - name: 🧪 Run unit and Compose UI tests
+      - name: 🧪 Run release-variant unit and Compose UI tests
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           set +e
-          ./gradlew testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testDebugUnitTest.log"
+          ./gradlew testReleaseUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testReleaseUnitTest.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
-          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testDebugUnitTest.log" | tail -n 25 || true)
+          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testReleaseUnitTest.log" | tail -n 25 || true)
           while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=Android test diagnostics::${line}"
           done <<< "$diagnostics"
