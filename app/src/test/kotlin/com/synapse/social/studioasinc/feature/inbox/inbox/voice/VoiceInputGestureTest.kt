@@ -96,7 +96,7 @@ class VoiceInputGestureTest {
         composeRule.setContent { micUnderTest() }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = -size.width.toFloat() * 3f, y = 0f))
+            moveBy(Offset(x = -150f, y = 0f))
         }
 
         composeRule.runOnIdle {
@@ -107,7 +107,7 @@ class VoiceInputGestureTest {
         }
 
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = size.width.toFloat(), y = 0f))
+            moveBy(Offset(x = 60f, y = 0f))
             up()
         }
         composeRule.runOnIdle {
@@ -122,7 +122,7 @@ class VoiceInputGestureTest {
         composeRule.setContent { micUnderTest() }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
             down(center)
-            moveBy(Offset(x = 0f, y = -size.height.toFloat() * 3f))
+            moveBy(Offset(x = 0f, y = -150f))
             up()
         }
 
@@ -192,7 +192,7 @@ class VoiceInputGestureTest {
         val home = bounds("voice-recording-mic-visual")
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
             down(center)
-            moveBy(Offset(x = -size.width.toFloat(), y = 0f))
+            moveBy(Offset(x = -60f, y = 0f))
             up()
         }
         composeRule.runOnIdle {
