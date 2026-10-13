@@ -81,9 +81,7 @@ class VoiceInputGestureTest {
             lockThresholdPx = 120f,
             directionSlopPx = 12f
         )
-        controller.handleAction(VoiceAction.StartRecording)
-        testScope.advanceTimeBy(1L)
-        assertTrue(controller.state.value is VoiceState.Recording)
+        assertEquals(VoiceState.Normal, controller.state.value)
     }
 
     @After
@@ -105,6 +103,7 @@ class VoiceInputGestureTest {
         }
 
         composeRule.runOnIdle {
+            assertEquals(1, actions.count { it == VoiceAction.StartRecording })
             assertTrue(actions.filterIsInstance<VoiceAction.Dragged>().any { it.deltaX < 0f })
             assertEquals(1, actions.count { it == VoiceAction.ReleaseRecording })
             assertEquals(VoiceState.Normal, controller.state.value)
@@ -122,6 +121,7 @@ class VoiceInputGestureTest {
         }
 
         composeRule.runOnIdle {
+            assertEquals(1, actions.count { it == VoiceAction.StartRecording })
             assertTrue(actions.filterIsInstance<VoiceAction.Dragged>().any { it.deltaY < 0f })
             assertEquals(1, actions.count { it == VoiceAction.ReleaseRecording })
             assertTrue(controller.state.value is VoiceState.Locked)
@@ -182,11 +182,13 @@ class VoiceInputGestureTest {
         composeRule.onNodeWithTag("voice-recording-timer").assertExists()
 
         val rootWidth = 260.dp.value * composeRule.density.density
+        val bar = bounds("voice-recording-bar")
         val timer = bounds("voice-recording-timer")
         val cancel = bounds("voice-cancel-instruction")
         val mic = bounds("voice-recording-mic")
         val lockHint = bounds("voice-slide-lock-hint")
 
+        assertEquals("timer must remain centered in the pill", (bar.left + bar.right) / 2f, (timer.left + timer.right) / 2f, 0.5f)
         assertFalse("timer and cancel text overlap", overlaps(timer, cancel))
         assertFalse("cancel text overlaps the microphone", overlaps(cancel, mic))
         assertFalse("lock hint overlaps the timer", overlaps(lockHint, timer))
