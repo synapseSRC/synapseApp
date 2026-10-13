@@ -31,6 +31,8 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 
 private const val LARGE_FONT_SCALE_THRESHOLD = 1.25f
 private const val ACTIVE_MIC_SCALE = 1.08f
@@ -398,17 +400,20 @@ private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolea
 @Composable
 private fun rememberLockArrowTravel(reducedMotion: Boolean): Float {
     if (reducedMotion) return 0f
-    val transition = rememberInfiniteTransition(label = "voiceLockArrow")
-    val arrowTravel by transition.animateFloat(
-        initialValue = LOCK_ARROW_START_OFFSET_DP,
-        targetValue = LOCK_ARROW_END_OFFSET_DP,
-        animationSpec = infiniteRepeatable(
-            animation = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "voiceLockArrowTravel"
-    )
-    return arrowTravel
+    val arrowMotion = remember { Animatable(LOCK_ARROW_START_OFFSET_DP) }
+    LaunchedEffect(arrowMotion) {
+        while (currentCoroutineContext().isActive) {
+            arrowMotion.animateTo(
+                targetValue = LOCK_ARROW_END_OFFSET_DP,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
+            )
+            arrowMotion.animateTo(
+                targetValue = LOCK_ARROW_START_OFFSET_DP,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
+            )
+        }
+    }
+    return arrowMotion.value
 }
 
 @Composable

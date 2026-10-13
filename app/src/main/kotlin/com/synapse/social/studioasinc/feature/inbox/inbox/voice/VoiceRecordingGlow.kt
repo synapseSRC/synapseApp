@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 
 /** A small set of tuning knobs for the voice glow; geometry ratios below are a single normalized art recipe. */
 private object GlowDesign {
@@ -43,20 +45,20 @@ internal fun rememberVoiceGlowPhase(reducedMotion: Boolean, label: String): Floa
 
 @Composable
 private fun VoiceGlowPhaseAnimation(label: String): Float {
-    val transition = rememberInfiniteTransition(label = label)
-    val springOffset by transition.animateFloat(
-        initialValue = -1f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessVeryLow
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "voiceGlowSpringDrift"
-    )
-    return GlowDesign.PHASE_CENTER + springOffset * GlowDesign.MAX_PHASE_DRIFT
+    val phaseMotion = remember(label) { Animatable(-1f) }
+    LaunchedEffect(phaseMotion) {
+        while (currentCoroutineContext().isActive) {
+            phaseMotion.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
+            )
+            phaseMotion.animateTo(
+                targetValue = -1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
+            )
+        }
+    }
+    return GlowDesign.PHASE_CENTER + phaseMotion.value * GlowDesign.MAX_PHASE_DRIFT
 }
 
 @Composable
