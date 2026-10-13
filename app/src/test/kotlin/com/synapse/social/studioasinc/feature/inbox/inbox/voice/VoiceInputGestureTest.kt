@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 
 import android.content.Context
 import android.content.res.Configuration
-import android.provider.Settings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +27,7 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.fetchSemanticsNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -50,6 +50,8 @@ import org.mockito.Mockito
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private const val TEST_HOST_WIDTH_FRACTION = 0.85f
+
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class VoiceInputGestureTest {
@@ -64,10 +66,6 @@ class VoiceInputGestureTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        Settings.Global.putFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
-        Settings.Global.putFloat(context.contentResolver, Settings.Global.TRANSITION_ANIMATION_SCALE, 0f)
-
         recorder = Mockito.mock(VoiceRecorder::class.java)
         Mockito.`when`(recorder.amplitudeFlow).thenReturn(MutableStateFlow(0))
         outputFile = File.createTempFile("voice-gesture", ".m4a")
@@ -88,9 +86,6 @@ class VoiceInputGestureTest {
     fun cleanUp() {
         controller.cleanup()
         outputFile.delete()
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        Settings.Global.putFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
-        Settings.Global.putFloat(context.contentResolver, Settings.Global.TRANSITION_ANIMATION_SCALE, 1f)
     }
 
     @Test
@@ -112,6 +107,28 @@ class VoiceInputGestureTest {
     }
 
     @Test
+    fun draggingBackInsideCancelThresholdFinishesDraftWithoutCancelling() {
+        Mockito.`when`(recorder.getRecordedDurationMs()).thenReturn(1_000L)
+        Mockito.`when`(recorder.stop()).thenReturn(VoiceRecorderStopResult.Success(outputFile))
+        composeRule.setContent { micUnderTest() }
+        composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
+            down(center)
+            moveBy(Offset(x = -size.width.toFloat() * 3f, y = 0f))
+            moveBy(Offset(x = size.width.toFloat() * 3f, y = 0f))
+            up()
+        }
+
+        composeRule.runOnIdle {
+            assertEquals(1, actions.count { it == VoiceAction.StartRecording })
+            assertTrue(actions.filterIsInstance<VoiceAction.Dragged>().size >= 2)
+            assertEquals(1, actions.count { it == VoiceAction.ReleaseRecording })
+            assertTrue(controller.state.value is VoiceState.VoiceDraft)
+            Mockito.verify(recorder, Mockito.never()).cancel()
+            Mockito.verify(recorder, Mockito.times(1)).stop()
+        }
+    }
+
+    @Test
     fun upwardSwipeOutsideMicBoundsLocksAndReleaseKeepsRecordingAlive() {
         composeRule.setContent { micUnderTest() }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
@@ -125,6 +142,28 @@ class VoiceInputGestureTest {
             assertTrue(actions.filterIsInstance<VoiceAction.Dragged>().any { it.deltaY < 0f })
             assertEquals(1, actions.count { it == VoiceAction.ReleaseRecording })
             assertTrue(controller.state.value is VoiceState.Locked)
+            Mockito.verify(recorder, Mockito.never()).cancel()
+        }
+    }
+
+    @Test
+    fun lockedHostPauseResumeAndFinishControlsPreserveDraftFlow() {
+        Mockito.`when`(recorder.getRecordedDurationMs()).thenReturn(1_000L)
+        Mockito.`when`(recorder.stop()).thenReturn(VoiceRecorderStopResult.Success(outputFile))
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(1L)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -150f))
+        assertTrue(controller.state.value is VoiceState.Locked)
+        composeRule.setContent { voiceHostUnderTest() }
+
+        composeRule.onNodeWithTag("voice-locked-pause").assertExists().performClick()
+        composeRule.runOnIdle { assertTrue((controller.state.value as VoiceState.Locked).isPaused) }
+        composeRule.onNodeWithTag("voice-locked-pause").performClick()
+        composeRule.runOnIdle { assertFalse((controller.state.value as VoiceState.Locked).isPaused) }
+        composeRule.onNodeWithTag("voice-locked-finish").assertExists().performClick()
+        composeRule.runOnIdle {
+            assertTrue(controller.state.value is VoiceState.VoiceDraft)
+            Mockito.verify(recorder, Mockito.times(1)).stop()
             Mockito.verify(recorder, Mockito.never()).cancel()
         }
     }
@@ -158,7 +197,8 @@ class VoiceInputGestureTest {
                             onVoiceAction = {},
                             showSendButton = false,
                             onSendMessage = {},
-                            modifier = Modifier.fillMaxWidth(0.85f),
+                            modifier = Modifier.fillMaxWidth(TEST_HOST_WIDTH_FRACTION),
+                            reducedMotionOverride = true,
                             normalContent = {}
                         )
                     }
@@ -198,6 +238,24 @@ class VoiceInputGestureTest {
     }
 
     @Composable
+    private fun voiceHostUnderTest() {
+        val voiceState by controller.state.collectAsState()
+        MaterialTheme {
+            VoiceInputHost(
+                voiceState = voiceState,
+                onVoiceAction = { action ->
+                    actions.add(action)
+                    controller.handleAction(action)
+                },
+                showSendButton = false,
+                onSendMessage = {},
+                reducedMotionOverride = true,
+                normalContent = {}
+            )
+        }
+    }
+
+    @Composable
     private fun micUnderTest() {
         val voiceState by controller.state.collectAsState()
         MaterialTheme {
@@ -208,7 +266,8 @@ class VoiceInputGestureTest {
                         actions.add(action)
                         controller.handleAction(action)
                     },
-                    modifier = Modifier.testTag("gesture-test-mic")
+                    modifier = Modifier.testTag("gesture-test-mic"),
+                    reducedMotionOverride = true
                 )
             }
         }

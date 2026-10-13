@@ -33,6 +33,23 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 
+private const val LARGE_FONT_SCALE_THRESHOLD = 1.25f
+private const val ACTIVE_MIC_SCALE = 1.08f
+private const val ACTIVE_MIC_GLOW_ALPHA = 0.42f
+private const val LOCK_ARROW_START_OFFSET_DP = 3f
+private const val LOCK_ARROW_END_OFFSET_DP = -3f
+private const val LOCK_ARROW_BOUNCE_DURATION_MILLIS = 1_800
+private const val MIC_SCALE_DAMPING_RATIO = 0.6f
+private val MIC_TOUCH_TARGET_SIZE = 48.dp
+private val MIC_VISUAL_SIZE = 44.dp
+private val LOCK_INDICATOR_GAP = 24.dp
+private val LOCK_INDICATOR_VERTICAL_OFFSET = -(MIC_TOUCH_TARGET_SIZE + LOCK_INDICATOR_GAP)
+private val LOCK_INDICATOR_WIDTH = 144.dp
+private val LOCK_HINT_TEXT_OFFSET_X = (-32).dp
+private val COMPACT_CANCEL_HINT_MAX_WIDTH = 280.dp
+private val COMPACT_CANCEL_HINT_OFFSET_X = (-32).dp
+private val ACTIVE_MIC_GLOW_ELEVATION = 5.dp
+
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
 private fun VoiceState.visualStage(): VoiceVisualStage = when (this) {
@@ -58,9 +75,10 @@ fun VoiceInputHost(
     showSendButton: Boolean,
     onSendMessage: () -> Unit,
     modifier: Modifier = Modifier,
+    reducedMotionOverride: Boolean? = null,
     normalContent: @Composable () -> Unit
 ) {
-    val reducedMotion = AnimationUtil.rememberReducedMotion()
+    val reducedMotion = reducedMotionOverride ?: AnimationUtil.rememberReducedMotion()
 
     // Container without clipping so dragging the mic or lock target upward remains visible with headroom
     Box(
@@ -78,7 +96,8 @@ fun VoiceInputHost(
     ) {
         VoiceRecordingGlowSurface(
             voiceState = voiceState,
-            modifier = Modifier.matchParentSize()
+            modifier = Modifier.matchParentSize(),
+            reducedMotionOverride = reducedMotion
         )
 
         Row(
@@ -151,23 +170,16 @@ fun VoiceInputHost(
                 // Canonical Mic Button persistent across Normal (empty text), VoiceReady, Pressing, Recording
                 CanonicalMicButton(
                     voiceState = voiceState,
-                    onVoiceAction = onVoiceAction
+                    onVoiceAction = onVoiceAction,
+                    reducedMotionOverride = reducedMotion
                 )
             }
         }
 
-        AnimatedVisibility(
-            visible = voiceState is VoiceState.Recording,
-            // A match-parent overlay keeps the pill's measured height tied to the existing composer row.
-            modifier = Modifier.matchParentSize(),
-            enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
-            exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
-        ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                (voiceState as? VoiceState.Recording)?.let { recording ->
-                    RecordingStatusOverlay(recording, reducedMotion)
-                }
-            }
+        // The non-match-parent Row above sets this wrap-content Box's size. This overlay is deliberately
+        // excluded from measurement so the timer stays centered over the whole pill without changing its height.
+        Box(Modifier.matchParentSize()) {
+            VoiceRecordingContentOverlay(voiceState, reducedMotion)
         }
     }
 }
@@ -187,6 +199,7 @@ private fun VoiceInputBarContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Medium))
             }
             is VoiceState.Recording -> {
+                // The single, full-width status layer is drawn over this row in VoiceInputHost so it stays centered across the mic slot.
                 Spacer(modifier = Modifier.fillMaxWidth().height(1.dp))
             }
             is VoiceState.Locked -> {
@@ -212,14 +225,14 @@ private fun VoiceInputBarContent(
                             textAlign = TextAlign.Center
                         )
                     }
-                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePause) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape)) {
+                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePause) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape).testTag("voice-locked-pause")) {
                         Icon(imageVector = if (voiceState.isPaused) Icons.Default.Mic else Icons.Default.Pause,
                             contentDescription = stringResource(if (voiceState.isPaused) R.string.cd_play_audio else R.string.cd_pause_audio), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                     Spacer(Modifier.width(Spacing.ExtraSmall))
                     Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary, shadowElevation = 2.dp) {
-                        IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize()) {
+                        IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize().testTag("voice-locked-finish")) {
                             Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.chat_action_send), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))
                         }
                     }
@@ -264,6 +277,22 @@ private fun VoiceInputBarContent(
 }
 
 @Composable
+private fun VoiceRecordingContentOverlay(voiceState: VoiceState, reducedMotion: Boolean) {
+    AnimatedVisibility(
+        visible = voiceState is VoiceState.Recording,
+        modifier = Modifier.fillMaxSize(),
+        enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
+        exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
+    ) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            (voiceState as? VoiceState.Recording)?.let { recording ->
+                RecordingStatusOverlay(recording, reducedMotion)
+            }
+        }
+    }
+}
+
+@Composable
 private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMotion: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Medium),
@@ -278,7 +307,7 @@ private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMoti
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val fontScale = LocalDensity.current.fontScale
             // Project design decision (not an M3 token): bias the cancel hint away from the right-side mic on compact/high-scale layouts.
-            val compactHintOffset = if (maxWidth < 280.dp || fontScale > 1.25f) (-32).dp else 0.dp
+            val compactHintOffset = if (maxWidth < COMPACT_CANCEL_HINT_MAX_WIDTH || fontScale > LARGE_FONT_SCALE_THRESHOLD) COMPACT_CANCEL_HINT_OFFSET_X else 0.dp
             AnimatedContent(
                 modifier = Modifier.fillMaxWidth(),
                 targetState = voiceState.isArmedForCancel,
@@ -307,34 +336,16 @@ private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMoti
 }
 
 @Composable
-private fun BoxScope.SlideToLockIndicator(progress: Float) {
-    val reducedMotion = AnimationUtil.rememberReducedMotion()
-    val arrowMotion = remember { Animatable(3f) }
-    LaunchedEffect(reducedMotion) {
-        if (reducedMotion) {
-            arrowMotion.snapTo(0f)
-        } else {
-            while (true) {
-                arrowMotion.animateTo(
-                    targetValue = -3f,
-                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-                )
-                arrowMotion.animateTo(
-                    targetValue = 3f,
-                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-                )
-            }
-        }
-    }
-    val arrowTravel = if (reducedMotion) 0f else arrowMotion.value
+private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolean) {
+    val arrowTravel = rememberLockArrowTravel(reducedMotion)
     val alpha = 0.55f + 0.45f * progress.coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier
             .align(Alignment.TopCenter)
             // Project design decision (not an M3 token): translated hint width and end-of-bar placement.
-            .requiredWidth(144.dp)
-            .offset(y = (-72).dp)
+            .requiredWidth(LOCK_INDICATOR_WIDTH)
+            .offset(y = LOCK_INDICATOR_VERTICAL_OFFSET)
             .graphicsLayer { this.alpha = if (reducedMotion) 0.72f else alpha },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
@@ -368,7 +379,7 @@ private fun BoxScope.SlideToLockIndicator(progress: Float) {
         }
         Text(
             text = stringResource(R.string.voice_recording_lock_hint),
-            modifier = Modifier.offset(x = (-32).dp).testTag("voice-slide-lock-hint"),
+            modifier = Modifier.offset(x = LOCK_HINT_TEXT_OFFSET_X).testTag("voice-slide-lock-hint"),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -378,10 +389,43 @@ private fun BoxScope.SlideToLockIndicator(progress: Float) {
 }
 
 @Composable
+private fun rememberLockArrowTravel(reducedMotion: Boolean): Float {
+    if (reducedMotion) return 0f
+    val transition = rememberInfiniteTransition(label = "voiceLockArrow")
+    val arrowTravel by transition.animateFloat(
+        initialValue = LOCK_ARROW_START_OFFSET_DP,
+        targetValue = LOCK_ARROW_END_OFFSET_DP,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = LOCK_ARROW_BOUNCE_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "voiceLockArrowTravel"
+    )
+    return arrowTravel
+}
+
+@Composable
+private fun animateFloatForMotion(
+    targetValue: Float,
+    reducedMotion: Boolean,
+    animationSpec: AnimationSpec<Float>,
+    label: String
+): Float = if (reducedMotion) targetValue else animateFloatAsState(targetValue, animationSpec, label = label).value
+
+@Composable
+private fun animateDpForMotion(
+    targetValue: androidx.compose.ui.unit.Dp,
+    reducedMotion: Boolean,
+    animationSpec: AnimationSpec<androidx.compose.ui.unit.Dp>,
+    label: String
+): androidx.compose.ui.unit.Dp = if (reducedMotion) targetValue else animateDpAsState(targetValue, animationSpec, label = label).value
+
+@Composable
 fun CanonicalMicButton(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    reducedMotionOverride: Boolean? = null
 ) {
     val isPressing = voiceState is VoiceState.Pressing
     val isRecording = voiceState is VoiceState.Recording
@@ -389,30 +433,33 @@ fun CanonicalMicButton(
     val dragOffsetX = (voiceState as? VoiceState.Recording)?.slideOffsetPx ?: 0f
     val dragOffsetY = (voiceState as? VoiceState.Recording)?.dragOffsetYPx ?: 0f
 
-    val reducedMotion = AnimationUtil.rememberReducedMotion()
+    val reducedMotion = reducedMotionOverride ?: AnimationUtil.rememberReducedMotion()
     // Project design decision (not an M3 token): restrained scale and halo preserve the fixed pill silhouette.
-    val targetScale = if (isActive) 1.08f else 1f
-    val scale = if (reducedMotion) targetScale else animateFloatAsState(
+    val targetScale = if (isActive) ACTIVE_MIC_SCALE else 1f
+    val scale = animateFloatForMotion(
         targetValue = targetScale,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
+        reducedMotion = reducedMotion,
+        animationSpec = spring(dampingRatio = MIC_SCALE_DAMPING_RATIO, stiffness = Spring.StiffnessMedium),
         label = "canonicalMicScale"
-    ).value
-    val targetGlowAlpha = if (isActive) 0.42f else 0f
-    val glowAlpha = if (reducedMotion) targetGlowAlpha else animateFloatAsState(
+    )
+    val targetGlowAlpha = if (isActive) ACTIVE_MIC_GLOW_ALPHA else 0f
+    val glowAlpha = animateFloatForMotion(
         targetValue = targetGlowAlpha,
-        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
+        reducedMotion = reducedMotion,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
         label = "canonicalMicGlow"
-    ).value
-    val targetGlowElevation = if (isActive) 5.dp else 0.dp
-    val glowElevation = if (reducedMotion) targetGlowElevation else animateDpAsState(
+    )
+    val targetGlowElevation = if (isActive) ACTIVE_MIC_GLOW_ELEVATION else 0.dp
+    val glowElevation = animateDpForMotion(
         targetValue = targetGlowElevation,
-        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
+        reducedMotion = reducedMotion,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
         label = "canonicalMicElevation"
-    ).value
+    )
 
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(MIC_TOUCH_TARGET_SIZE)
             .testTag("voice-recording-mic")
             .pointerInput(Unit) {
                 awaitEachGesture {
@@ -442,11 +489,11 @@ fun CanonicalMicButton(
         contentAlignment = Alignment.Center
     ) {
         if (voiceState is VoiceState.Recording) {
-            SlideToLockIndicator(progress = voiceState.lockProgress)
+            SlideToLockIndicator(progress = voiceState.lockProgress, reducedMotion = reducedMotion)
         }
         Box(
             modifier = Modifier
-                .size(44.dp)
+                .size(MIC_VISUAL_SIZE)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -457,8 +504,8 @@ fun CanonicalMicButton(
                     elevation = glowElevation,
                     shape = CircleShape,
                     clip = false,
-                    ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
-                    spotColor = MaterialTheme.colorScheme.tertiary.copy(alpha = glowAlpha * 0.8f)
+                    ambientColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha),
+                    spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha * 0.8f)
                 )
                 .background(MaterialTheme.colorScheme.primary, CircleShape),
             contentAlignment = Alignment.Center
