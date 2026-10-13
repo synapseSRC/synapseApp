@@ -46,7 +46,7 @@ jobs:
           ./gradlew testReleaseUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testReleaseUnitTest.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
-          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testReleaseUnitTest.log" | tail -n 25 || true)
+          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|No tests found|There were failing tests|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testReleaseUnitTest.log" | tail -n 25 || true)
           while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=Android test diagnostics::${line}"
           done <<< "$diagnostics"
