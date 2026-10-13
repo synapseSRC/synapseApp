@@ -68,7 +68,13 @@ jobs:
           ./gradlew testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testDebugUnitTest.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
-          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|No tests found|There were failing tests|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testReleaseUnitTest.log" | tail -n 25 || true)
+          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|No tests found|There were failing tests|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testDebugUnitTest.log" | tail -n 25 || true)
+          if [ -z "$diagnostics" ]; then
+            diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/testDebugUnitTest.log")
+          fi
+          if [ -z "$diagnostics" ]; then
+            diagnostics=$(tail -n 12 "$RUNNER_TEMP/testDebugUnitTest.log")
+          fi
           while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=Android test diagnostics::${line}"
           done <<< "$diagnostics"
@@ -95,6 +101,12 @@ jobs:
           gradle_status=${PIPESTATUS[0]}
           set -e
           diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|^> Task .* FAILED|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/assembleRelease.log" | tail -n 25 || true)
+          if [ -z "$diagnostics" ]; then
+            diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/assembleRelease.log")
+          fi
+          if [ -z "$diagnostics" ]; then
+            diagnostics=$(tail -n 12 "$RUNNER_TEMP/assembleRelease.log")
+          fi
           while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=Android release-build diagnostics::${line}"
           done <<< "$diagnostics"
