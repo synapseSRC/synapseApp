@@ -158,12 +158,15 @@ fun VoiceInputHost(
 
         AnimatedVisibility(
             visible = voiceState is VoiceState.Recording,
-            modifier = Modifier.align(Alignment.Center).fillMaxWidth(),
+            // A match-parent overlay keeps the pill's measured height tied to the existing composer row.
+            modifier = Modifier.matchParentSize(),
             enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
             exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
         ) {
-            (voiceState as? VoiceState.Recording)?.let { recording ->
-                RecordingStatusOverlay(recording, reducedMotion)
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                (voiceState as? VoiceState.Recording)?.let { recording ->
+                    RecordingStatusOverlay(recording, reducedMotion)
+                }
             }
         }
     }
