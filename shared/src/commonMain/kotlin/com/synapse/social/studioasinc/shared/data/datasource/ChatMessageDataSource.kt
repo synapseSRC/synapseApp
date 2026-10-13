@@ -252,7 +252,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
                     eq("chat_id", chatId)
                     neq("sender_id", currentUserId)
                     eq("delivery_status", "sent")
-                    is("delivered_at", FilterOperator.IS, "null")
+                    filter("delivered_at", FilterOperator.IS, "null")
                 }
             }
         } catch (e: Exception) {
