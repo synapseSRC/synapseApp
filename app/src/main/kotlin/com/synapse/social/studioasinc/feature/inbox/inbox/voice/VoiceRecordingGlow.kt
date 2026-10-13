@@ -27,6 +27,12 @@ private val VoiceGlowViolet = Color(0xFF9B5CFF)
 
 @Composable
 private fun rememberVoiceGlowPhase(reducedMotion: Boolean, label: String): Float {
+    if (reducedMotion) return 0.5f
+    return VoiceGlowPhaseAnimation(label)
+}
+
+@Composable
+private fun VoiceGlowPhaseAnimation(label: String): Float {
     val transition = rememberInfiniteTransition(label = label)
     val phase by transition.animateFloat(
         initialValue = 0f,
@@ -38,7 +44,18 @@ private fun rememberVoiceGlowPhase(reducedMotion: Boolean, label: String): Float
         ),
         label = "voiceGlowPhase"
     )
-    return if (reducedMotion) 0.5f else phase
+    return phase
+}
+
+@Composable
+private fun rememberVoiceGlowIntensity(target: Float, reducedMotion: Boolean, label: String): Float {
+    if (reducedMotion) return target
+    val intensity by animateFloatAsState(
+        targetValue = target,
+        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
+        label = label
+    )
+    return intensity
 }
 
 private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
@@ -61,11 +78,7 @@ fun VoiceRecordingGlowSurface(voiceState: VoiceState, modifier: Modifier = Modif
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     val phase = rememberVoiceGlowPhase(reducedMotion, "voiceRecordingInterior")
     val amplitude = voiceState.glowAmplitude().coerceIn(0.08f, 1f)
-    val intensity by animateFloatAsState(
-        targetValue = amplitude,
-        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
-        label = "voiceGlowIntensity"
-    )
+    val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceGlowIntensity")
 
     Canvas(modifier.clip(shape)) {
         val width = size.width
@@ -137,11 +150,7 @@ fun VoiceRecordingAmbientGlow(voiceState: VoiceState, modifier: Modifier = Modif
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     val phase = rememberVoiceGlowPhase(reducedMotion, "voiceRecordingAmbient")
     val amplitude = voiceState.glowAmplitude().coerceIn(0.08f, 1f)
-    val intensity by animateFloatAsState(
-        targetValue = amplitude,
-        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
-        label = "voiceAmbientIntensity"
-    )
+    val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceAmbientIntensity")
 
     Canvas(modifier) {
         val width = size.width

@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
@@ -58,6 +60,8 @@ fun VoiceInputHost(
     modifier: Modifier = Modifier,
     normalContent: @Composable () -> Unit
 ) {
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
+
     // Container without clipping so dragging the mic or lock target upward remains visible with headroom
     Box(
         modifier = modifier
@@ -65,6 +69,7 @@ fun VoiceInputHost(
             .wrapContentHeight()
             .padding(horizontal = Spacing.ExtraSmall)
             .padding(top = Spacing.ExtraSmall, bottom = Spacing.Small)
+            .testTag("voice-recording-bar")
             .shadow(
                 elevation = Spacing.ExtraSmall,
                 shape = RoundedCornerShape(Sizes.CornerMassive),
@@ -93,10 +98,14 @@ fun VoiceInputHost(
                     targetState = voiceState,
                     contentKey = { it.contentStage() },
                     transitionSpec = {
-                        (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
-                            slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
-                            (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
-                                slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
+                        if (reducedMotion) {
+                            EnterTransition.None togetherWith ExitTransition.None
+                        } else {
+                            (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
+                                (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                    slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
+                        }
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "voiceStageMorph"
@@ -150,11 +159,11 @@ fun VoiceInputHost(
         AnimatedVisibility(
             visible = voiceState is VoiceState.Recording,
             modifier = Modifier.align(Alignment.Center).fillMaxWidth(),
-            enter = fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
-            exit = fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
+            enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
+            exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
         ) {
             (voiceState as? VoiceState.Recording)?.let { recording ->
-                RecordingStatusOverlay(recording)
+                RecordingStatusOverlay(recording, reducedMotion)
             }
         }
     }
@@ -252,30 +261,44 @@ private fun VoiceInputBarContent(
 }
 
 @Composable
-private fun RecordingStatusOverlay(voiceState: VoiceState.Recording) {
+private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMotion: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Medium),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
     ) {
-        OdometerTimerText(durationMs = voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
-        AnimatedContent(
-            targetState = voiceState.isArmedForCancel,
-            transitionSpec = {
-                fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) togetherWith
-                    fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
-            },
-            contentAlignment = Alignment.Center,
-            label = "voiceCancelFeedback"
-        ) { isArmedForCancel ->
-            Text(
-                text = stringResource(if (isArmedForCancel) R.string.voice_recording_cancel_release else R.string.voice_recording_cancel),
+        OdometerTimerText(
+            durationMs = voiceState.durationMs,
+            modifier = Modifier.testTag("voice-recording-timer"),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val fontScale = LocalDensity.current.fontScale
+            // Project design decision (not an M3 token): bias the cancel hint away from the right-side mic on compact/high-scale layouts.
+            val compactHintOffset = if (maxWidth < 280.dp || fontScale > 1.25f) (-32).dp else 0.dp
+            AnimatedContent(
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1
-            )
+                targetState = voiceState.isArmedForCancel,
+                transitionSpec = {
+                    if (reducedMotion) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else {
+                        fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) togetherWith
+                            fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
+                    }
+                },
+                contentAlignment = Alignment.Center,
+                label = "voiceCancelFeedback"
+            ) { isArmedForCancel ->
+                Text(
+                    text = stringResource(if (isArmedForCancel) R.string.voice_recording_cancel_release else R.string.voice_recording_cancel),
+                    modifier = Modifier.wrapContentWidth().offset(x = compactHintOffset).testTag("voice-cancel-instruction"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2
+                )
+            }
         }
     }
 }
@@ -306,7 +329,8 @@ private fun BoxScope.SlideToLockIndicator(progress: Float) {
     Column(
         modifier = Modifier
             .align(Alignment.TopCenter)
-            // Project design decision (not an M3 token): position the gesture cue just above the mic.
+            // Project design decision (not an M3 token): translated hint width and end-of-bar placement.
+            .requiredWidth(144.dp)
             .offset(y = (-72).dp)
             .graphicsLayer { this.alpha = if (reducedMotion) 0.72f else alpha },
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -341,9 +365,11 @@ private fun BoxScope.SlideToLockIndicator(progress: Float) {
         }
         Text(
             text = stringResource(R.string.voice_recording_lock_hint),
+            modifier = Modifier.offset(x = (-32).dp).testTag("voice-slide-lock-hint"),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            maxLines = 2
         )
     }
 }
@@ -360,26 +386,31 @@ fun CanonicalMicButton(
     val dragOffsetX = (voiceState as? VoiceState.Recording)?.slideOffsetPx ?: 0f
     val dragOffsetY = (voiceState as? VoiceState.Recording)?.dragOffsetYPx ?: 0f
 
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
     // Project design decision (not an M3 token): restrained scale and halo preserve the fixed pill silhouette.
-    val scale by animateFloatAsState(
-        targetValue = if (isActive) 1.08f else 1f,
+    val targetScale = if (isActive) 1.08f else 1f
+    val scale = if (reducedMotion) targetScale else animateFloatAsState(
+        targetValue = targetScale,
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
         label = "canonicalMicScale"
-    )
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isActive) 0.42f else 0f,
+    ).value
+    val targetGlowAlpha = if (isActive) 0.42f else 0f
+    val glowAlpha = if (reducedMotion) targetGlowAlpha else animateFloatAsState(
+        targetValue = targetGlowAlpha,
         animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
         label = "canonicalMicGlow"
-    )
-    val glowElevation by animateDpAsState(
-        targetValue = if (isActive) 5.dp else 0.dp,
+    ).value
+    val targetGlowElevation = if (isActive) 5.dp else 0.dp
+    val glowElevation = if (reducedMotion) targetGlowElevation else animateDpAsState(
+        targetValue = targetGlowElevation,
         animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
         label = "canonicalMicElevation"
-    )
+    ).value
 
     Box(
         modifier = modifier
             .size(48.dp)
+            .testTag("voice-recording-mic")
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
