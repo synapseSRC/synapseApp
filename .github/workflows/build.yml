@@ -89,7 +89,16 @@ jobs:
           GOOGLE_WEB_CLIENT_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
           GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          set +e
+          ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
+          gradle_status=${PIPESTATUS[0]}
+          set -e
+          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|^> Task .* FAILED|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/assembleRelease.log" | tail -n 25 || true)
+          while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=Android release-build diagnostics::${line}"
+          done <<< "$diagnostics"
+          exit "$gradle_status"
 
       - name: 🔖 Set short SHA
         id: set_sha
