@@ -27,12 +27,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveWaveformView
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
+private val VoiceNeonCyan = Color(0xFF00F0FF)
+private val VoiceNeonBlue = Color(0xFF2979FF)
+private val VoiceNeonPurple = Color(0xFFA855F7)
 
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
@@ -76,14 +82,14 @@ fun VoiceInputHost(
     )
 
     val infiniteTransition = rememberInfiniteTransition(label = "gradientFlow")
-    val gradientShift by infiniteTransition.animateFloat(
+    val gradientFraction by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 1000f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 3500, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "gradientShift"
+        label = "gradientFraction"
     )
 
     val fixedPillShape = RoundedCornerShape(Sizes.CornerMassive)
@@ -103,11 +109,10 @@ fun VoiceInputHost(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-
                     .drawBehind {
-                        val colorCyan = Color(0xFF00F0FF).copy(alpha = glowAlpha)
-                        val colorPurple = Color(0xFFA855F7).copy(alpha = glowAlpha)
-                        val colorBlue = Color(0xFF2979FF).copy(alpha = glowAlpha)
+                        val colorCyan = VoiceNeonCyan.copy(alpha = glowAlpha)
+                        val colorPurple = VoiceNeonPurple.copy(alpha = glowAlpha)
+                        val colorBlue = VoiceNeonBlue.copy(alpha = glowAlpha)
 
                         drawCircle(
                             brush = Brush.radialGradient(
@@ -142,19 +147,26 @@ fun VoiceInputHost(
                 )
                 .then(
                     if (isRecordingMode) {
-                        Modifier.background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFF00F0FF).copy(alpha = 0.22f + smoothedAmp * 0.28f),
-                                    Color(0xFF2979FF).copy(alpha = 0.25f + smoothedAmp * 0.30f),
-                                    Color(0xFFA855F7).copy(alpha = 0.22f + smoothedAmp * 0.28f),
-                                    Color(0xFF00F0FF).copy(alpha = 0.22f + smoothedAmp * 0.28f)
+                        Modifier.drawBehind {
+                            val startX = size.width * gradientFraction
+                            val endX = startX + size.width * 1.5f
+                            drawRoundRect(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        VoiceNeonCyan.copy(alpha = 0.22f + smoothedAmp * 0.28f),
+                                        VoiceNeonBlue.copy(alpha = 0.25f + smoothedAmp * 0.30f),
+                                        VoiceNeonPurple.copy(alpha = 0.22f + smoothedAmp * 0.28f),
+                                        VoiceNeonCyan.copy(alpha = 0.22f + smoothedAmp * 0.28f)
+                                    ),
+                                    start = Offset(startX, 0f),
+                                    end = Offset(endX, size.height)
                                 ),
-                                start = Offset(gradientShift, 0f),
-                                end = Offset(gradientShift + 600f, 250f)
-                            ),
-                            shape = fixedPillShape
-                        )
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                                    x = size.height / 2f,
+                                    y = size.height / 2f
+                                )
+                            )
+                        }
                     } else Modifier
                 )
                 .clip(fixedPillShape)
@@ -402,6 +414,8 @@ fun CanonicalMicButton(
         label = "canonicalMicScale"
     )
 
+    val lockHintText = stringResource(R.string.voice_slide_up_to_lock)
+
     Box(
         modifier = modifier.size(44.dp),
         contentAlignment = Alignment.Center
@@ -409,26 +423,29 @@ fun CanonicalMicButton(
         if (voiceState is VoiceState.Recording) {
             val lockProgress = voiceState.lockProgress
 
-            // Straight vertical slide-up gesture hint indicator aligned near mic button
+            // Straight vertical slide-up gesture hint indicator aligned near mic button with accessibility semantics
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = (-80).dp)
+                    .semantics {
+                        contentDescription = lockHintText
+                    }
                     .graphicsLayer {
                         alpha = (0.35f + 0.65f * lockProgress.coerceIn(0f, 1f))
                     }
             ) {
-                // Straight upward chevron motion
-                val arrowMotion = remember { Animatable(4f) }
-                LaunchedEffect(arrowMotion) {
+                // Straight upward chevron motion using dp values
+                val arrowMotionDp = remember { Animatable(4f) }
+                LaunchedEffect(arrowMotionDp) {
                     while (true) {
-                        arrowMotion.animateTo(
+                        arrowMotionDp.animateTo(
                             targetValue = -4f,
                             animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
                         )
-                        arrowMotion.animateTo(
+                        arrowMotionDp.animateTo(
                             targetValue = 4f,
                             animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
                         )
@@ -437,26 +454,26 @@ fun CanonicalMicButton(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.offset(y = arrowMotion.value.dp)
+                    modifier = Modifier.offset(y = arrowMotionDp.value.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowUp,
                         contentDescription = null,
-                        tint = if (lockProgress >= 0.8f) Color(0xFF00F0FF) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
+                        tint = if (lockProgress >= 0.8f) VoiceNeonCyan else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
                         modifier = Modifier.size(18.dp)
                     )
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowUp,
                         contentDescription = null,
-                        tint = if (lockProgress >= 0.8f) Color(0xFF00F0FF).copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        tint = if (lockProgress >= 0.8f) VoiceNeonCyan.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier.size(16.dp).offset(y = (-6).dp)
                     )
                 }
 
                 Text(
-                    text = stringResource(R.string.voice_slide_up_to_lock),
+                    text = lockHintText,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (lockProgress >= 0.8f) Color(0xFF00F0FF) else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (lockProgress >= 0.8f) VoiceNeonCyan else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -500,13 +517,13 @@ fun CanonicalMicButton(
                 .shadow(
                     elevation = if (isPressing || isRecording) 8.dp else 2.dp,
                     shape = CircleShape,
-                    ambientColor = Color(0xFF00F0FF),
-                    spotColor = Color(0xFFA855F7)
+                    ambientColor = VoiceNeonCyan,
+                    spotColor = VoiceNeonPurple
                 )
                 .background(
                     brush = if (isPressing || isRecording) {
                         Brush.linearGradient(
-                            listOf(Color(0xFF00F0FF), Color(0xFF2979FF), Color(0xFFA855F7))
+                            listOf(VoiceNeonCyan, VoiceNeonBlue, VoiceNeonPurple)
                         )
                     } else {
                         SolidColor(MaterialTheme.colorScheme.primary)
