@@ -58,16 +58,17 @@ jobs:
         with:
           cache-disabled: true
 
-      - name: 🧪 Run unit and Compose UI tests
+      - name: 🧪 Run app unit and Compose UI tests
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           set +e
-          ./gradlew testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testDebugUnitTest.log"
+          ./gradlew :app:testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testDebugUnitTest.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
+          if [ "$gradle_status" -ne 0 ]; then
           diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|No tests found|There were failing tests|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testDebugUnitTest.log" | tail -n 25 || true)
           if [ -z "$diagnostics" ]; then
             diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/testDebugUnitTest.log")
@@ -78,6 +79,7 @@ jobs:
           while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=Android test diagnostics::${line}"
           done <<< "$diagnostics"
+          fi
           exit "$gradle_status"
 
       - name: 🏗️ Build Release APK
@@ -100,6 +102,7 @@ jobs:
           ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
+          if [ "$gradle_status" -ne 0 ]; then
           diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|^> Task .* FAILED|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/assembleRelease.log" | tail -n 25 || true)
           if [ -z "$diagnostics" ]; then
             diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/assembleRelease.log")
@@ -110,6 +113,7 @@ jobs:
           while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=Android release-build diagnostics::${line}"
           done <<< "$diagnostics"
+          fi
           exit "$gradle_status"
 
       - name: 🔖 Set short SHA
