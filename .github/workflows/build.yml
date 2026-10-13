@@ -41,7 +41,16 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: ./gradlew testDebugUnitTest --no-daemon
+        run: |
+          set +e
+          ./gradlew testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/testDebugUnitTest.log"
+          gradle_status=${PIPESTATUS[0]}
+          set -e
+          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^> Task .* FAILED|^.*Tests run:|^.* FAILED$|^.*AssertionError:)' "$RUNNER_TEMP/testDebugUnitTest.log" | tail -n 25 || true)
+          while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=Android test diagnostics::${line}"
+          done <<< "$diagnostics"
+          exit "$gradle_status"
 
       - name: 🏗️ Build Release APK
         env:
