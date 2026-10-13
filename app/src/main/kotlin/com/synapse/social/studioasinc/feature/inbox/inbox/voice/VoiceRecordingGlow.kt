@@ -18,8 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
 
 /** A small set of tuning knobs for the voice glow; geometry ratios below are a single normalized art recipe. */
 private object GlowDesign {
@@ -27,6 +25,7 @@ private object GlowDesign {
     const val MAX_AMPLITUDE = 1f
     const val PHASE_CENTER = 0.5f
     const val MAX_PHASE_DRIFT = 0.04f
+    const val PHASE_DRIFT_DURATION_MILLIS = 6_800
     const val FLOW_ALPHA_BASE = 0.07f
     const val FLOW_ALPHA_FROM_AMPLITUDE = 0.28f
     const val AMBIENT_ALPHA_BASE = 0.035f
@@ -45,20 +44,18 @@ internal fun rememberVoiceGlowPhase(reducedMotion: Boolean, label: String): Floa
 
 @Composable
 private fun VoiceGlowPhaseAnimation(label: String): Float {
-    val phaseMotion = remember(label) { Animatable(-1f) }
-    LaunchedEffect(phaseMotion) {
-        while (currentCoroutineContext().isActive) {
-            phaseMotion.animateTo(
-                targetValue = 1f,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
-            )
-            phaseMotion.animateTo(
-                targetValue = -1f,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
-            )
-        }
-    }
-    return GlowDesign.PHASE_CENTER + phaseMotion.value * GlowDesign.MAX_PHASE_DRIFT
+    // infiniteRepeatable accepts duration-based specs, not SpringSpec; a long tween gives silence a steady, non-pulsing drift.
+    val transition = rememberInfiniteTransition(label = label)
+    val phasePosition by transition.animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = GlowDesign.PHASE_DRIFT_DURATION_MILLIS, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "voiceGlowPhasePosition"
+    )
+    return GlowDesign.PHASE_CENTER + phasePosition * GlowDesign.MAX_PHASE_DRIFT
 }
 
 @Composable

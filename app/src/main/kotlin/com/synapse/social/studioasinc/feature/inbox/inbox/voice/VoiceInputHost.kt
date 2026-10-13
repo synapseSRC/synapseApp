@@ -31,8 +31,6 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
 
 private const val LARGE_FONT_SCALE_THRESHOLD = 1.25f
 private const val ACTIVE_MIC_SCALE = 1.08f
@@ -40,6 +38,7 @@ private const val ACTIVE_MIC_GLOW_ALPHA = 0.42f
 private const val MIC_SCALE_DAMPING_RATIO = 0.6f
 private const val LOCK_ARROW_START_OFFSET_DP = 3f
 private const val LOCK_ARROW_END_OFFSET_DP = -3f
+private const val LOCK_ARROW_BOUNCE_DURATION_MILLIS = 1_800
 private const val LOCK_ARROW_GRADIENT_CLEAR_ALPHA = 0f
 private const val LOCK_ARROW_GRADIENT_CORE_ALPHA = 0.75f
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
@@ -400,20 +399,17 @@ private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolea
 @Composable
 private fun rememberLockArrowTravel(reducedMotion: Boolean): Float {
     if (reducedMotion) return 0f
-    val arrowMotion = remember { Animatable(LOCK_ARROW_START_OFFSET_DP) }
-    LaunchedEffect(arrowMotion) {
-        while (currentCoroutineContext().isActive) {
-            arrowMotion.animateTo(
-                targetValue = LOCK_ARROW_END_OFFSET_DP,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
-            )
-            arrowMotion.animateTo(
-                targetValue = LOCK_ARROW_START_OFFSET_DP,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessVeryLow)
-            )
-        }
-    }
-    return arrowMotion.value
+    val transition = rememberInfiniteTransition(label = "voiceLockArrow")
+    val arrowTravel by transition.animateFloat(
+        initialValue = LOCK_ARROW_START_OFFSET_DP,
+        targetValue = LOCK_ARROW_END_OFFSET_DP,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = LOCK_ARROW_BOUNCE_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "voiceLockArrowTravel"
+    )
+    return arrowTravel
 }
 
 @Composable
