@@ -1,0 +1,7 @@
+<resources>
+    <string name="voice_recording_cancel">Slide to cancel</string>
+    <string name="voice_recording_cancel_release">Release to cancel</string>
+    <string name="voice_recording_lock_hint">Slide up to lock</string>
+    <string name="voice_recording_locked_state">Locked · hands-free</string>
+    <string name="voice_recording_paused_state">Recording paused</string>
+</resources>

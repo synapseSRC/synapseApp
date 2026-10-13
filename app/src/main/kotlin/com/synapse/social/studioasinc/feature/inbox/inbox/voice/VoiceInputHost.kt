@@ -3,7 +3,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
@@ -18,11 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
@@ -30,6 +29,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
@@ -70,11 +70,12 @@ fun VoiceInputHost(
                 shape = RoundedCornerShape(Sizes.CornerMassive),
                 clip = false
             )
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(Sizes.CornerMassive)
-            )
     ) {
+        VoiceRecordingGlowSurface(
+            voiceState = voiceState,
+            modifier = Modifier.matchParentSize()
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -145,6 +146,17 @@ fun VoiceInputHost(
                 )
             }
         }
+
+        AnimatedVisibility(
+            visible = voiceState is VoiceState.Recording,
+            modifier = Modifier.align(Alignment.Center).fillMaxWidth(),
+            enter = fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
+            exit = fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
+        ) {
+            (voiceState as? VoiceState.Recording)?.let { recording ->
+                RecordingStatusOverlay(recording)
+            }
+        }
     }
 }
 
@@ -163,22 +175,30 @@ private fun VoiceInputBarContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Medium))
             }
             is VoiceState.Recording -> {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
-                        VoiceWaveformBars(voiceState.amplitudeHistory, Modifier.weight(1f).height(24.dp))
-                        OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
-                    }
-                    ShimmerHintText(stringResource(R.string.voice_cancel_hint), Modifier.align(Alignment.Start))
-                }
+                Spacer(modifier = Modifier.fillMaxWidth().height(1.dp))
             }
             is VoiceState.Locked -> {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     IconButton(onClick = { onVoiceAction(VoiceAction.CancelRecording) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.errorContainer, CircleShape)) {
                         Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.onErrorContainer)
                     }
-                    Row(modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Small)) {
-                        VoiceWaveformBars(voiceState.amplitudeHistory, Modifier.weight(1f).height(28.dp), voiceState.isPaused)
-                        OdometerTimerText(voiceState.durationMs, color = if (voiceState.isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                    Column(
+                        modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                    ) {
+                        OdometerTimerText(
+                            voiceState.durationMs,
+                            color = if (voiceState.isPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(if (voiceState.isPaused) R.string.voice_recording_paused_state else R.string.voice_recording_locked_state),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
                     }
                     IconButton(onClick = { onVoiceAction(VoiceAction.TogglePause) }, modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape)) {
                         Icon(imageVector = if (voiceState.isPaused) Icons.Default.Mic else Icons.Default.Pause,
@@ -232,40 +252,100 @@ private fun VoiceInputBarContent(
 }
 
 @Composable
-private fun VoiceWaveformBars(amplitudeHistory: List<Float>, modifier: Modifier = Modifier, isPaused: Boolean = false) {
-    val recentSamples = remember(amplitudeHistory) { amplitudeHistory.takeLast(7) }
-    val barColor = MaterialTheme.colorScheme.primary
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
-        repeat(7) { index ->
-            val sample = if (isPaused) 0.12f else recentSamples.getOrNull(index) ?: 0.08f
-            val targetHeight = (4f + sample.coerceIn(0f, 1f) * 18f).dp
-            val barHeight by animateDpAsState(targetValue = targetHeight, animationSpec = spring(dampingRatio = 0.8f, stiffness = 800f), label = "voiceWaveBar$index")
-            Box(Modifier.width(3.dp).height(barHeight).clip(CircleShape).background(barColor))
+private fun RecordingStatusOverlay(voiceState: VoiceState.Recording) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Medium),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+    ) {
+        OdometerTimerText(durationMs = voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
+        AnimatedContent(
+            targetState = voiceState.isArmedForCancel,
+            transitionSpec = {
+                fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) togetherWith
+                    fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
+            },
+            contentAlignment = Alignment.Center,
+            label = "voiceCancelFeedback"
+        ) { isArmedForCancel ->
+            Text(
+                text = stringResource(if (isArmedForCancel) R.string.voice_recording_cancel_release else R.string.voice_recording_cancel),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
         }
     }
 }
 
 @Composable
-private fun ShimmerHintText(text: String, modifier: Modifier = Modifier) {
-    val density = LocalDensity.current
-    val sweepWidth = with(density) { 112.dp.toPx() }
-    val sweepOffset = remember(sweepWidth) { Animatable(-sweepWidth) }
-    LaunchedEffect(sweepWidth) {
-        while (true) {
-            sweepOffset.animateTo(
-                targetValue = sweepWidth,
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-            )
-            sweepOffset.animateTo(
-                targetValue = -sweepWidth,
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-            )
+private fun BoxScope.SlideToLockIndicator(progress: Float) {
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
+    val arrowMotion = remember { Animatable(3f) }
+    LaunchedEffect(reducedMotion) {
+        if (reducedMotion) {
+            arrowMotion.snapTo(0f)
+        } else {
+            while (true) {
+                arrowMotion.animateTo(
+                    targetValue = -3f,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+                )
+                arrowMotion.animateTo(
+                    targetValue = 3f,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+                )
+            }
         }
     }
-    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val shimmerBrush = Brush.linearGradient(listOf(hintColor.copy(alpha = 0.25f), hintColor, hintColor.copy(alpha = 0.25f)),
-        start = Offset(sweepOffset.value, 0f), end = Offset(sweepOffset.value + sweepWidth, 0f))
-    Text(text, modifier = modifier, style = MaterialTheme.typography.labelSmall.copy(brush = shimmerBrush))
+    val arrowTravel = if (reducedMotion) 0f else arrowMotion.value
+    val alpha = 0.55f + 0.45f * progress.coerceIn(0f, 1f)
+
+    Column(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            // Project design decision (not an M3 token): position the gesture cue just above the mic.
+            .offset(y = (-72).dp)
+            .graphicsLayer { this.alpha = if (reducedMotion) 0.72f else alpha },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+    ) {
+        Box(modifier = Modifier.size(width = 24.dp, height = 36.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .width(2.dp)
+                    .height(22.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(Spacing.ExtraSmall)
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = if (reducedMotion) 0.dp else arrowTravel.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(20.dp))
+            }
+        }
+        Text(
+            text = stringResource(R.string.voice_recording_lock_hint),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+    }
 }
 
 @Composable
@@ -276,109 +356,76 @@ fun CanonicalMicButton(
 ) {
     val isPressing = voiceState is VoiceState.Pressing
     val isRecording = voiceState is VoiceState.Recording
+    val isActive = isPressing || isRecording
     val dragOffsetX = (voiceState as? VoiceState.Recording)?.slideOffsetPx ?: 0f
     val dragOffsetY = (voiceState as? VoiceState.Recording)?.dragOffsetYPx ?: 0f
 
+    // Project design decision (not an M3 token): restrained scale and halo preserve the fixed pill silhouette.
     val scale by animateFloatAsState(
-        targetValue = if (isPressing || isRecording) 1.25f else 1f,
+        targetValue = if (isActive) 1.08f else 1f,
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
         label = "canonicalMicScale"
     )
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isActive) 0.42f else 0f,
+        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
+        label = "canonicalMicGlow"
+    )
+    val glowElevation by animateDpAsState(
+        targetValue = if (isActive) 5.dp else 0.dp,
+        animationSpec = spring(dampingRatio = 1f, stiffness = 3800f),
+        label = "canonicalMicElevation"
+    )
 
     Box(
-        modifier = modifier.size(44.dp),
+        modifier = modifier
+            .size(48.dp)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+                    onVoiceAction(VoiceAction.StartRecording)
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id }
+                        if (change == null) {
+                            onVoiceAction(VoiceAction.ReleaseRecording)
+                            break
+                        }
+                        if (!change.pressed) {
+                            change.consume()
+                            onVoiceAction(VoiceAction.ReleaseRecording)
+                            break
+                        }
+                        val posChange = change.positionChange()
+                        if (posChange.x != 0f || posChange.y != 0f) {
+                            change.consume()
+                            onVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
+                        }
+                    }
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         if (voiceState is VoiceState.Recording) {
-            val lockProgress = voiceState.lockProgress
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = (-88).dp)
-                    .graphicsLayer {
-                        alpha = 0.25f + 0.75f * lockProgress.coerceIn(0f, 1f)
-                        scaleX = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
-                        scaleY = 0.9f + 0.1f * lockProgress.coerceIn(0f, 1f)
-                    }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .background(
-                            color = if (lockProgress >= 0.9f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (lockProgress >= 0.9f) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = stringResource(R.string.voice_lock_hint),
-                        tint = if (lockProgress >= 0.9f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                val arrowMotion = remember { Animatable(4f) }
-                LaunchedEffect(arrowMotion) {
-                    while (true) {
-                        arrowMotion.animateTo(
-                            targetValue = 0f,
-                            animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-                        )
-                        arrowMotion.animateTo(
-                            targetValue = 4f,
-                            animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-                        )
-                    }
-                }
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = stringResource(R.string.voice_lock_hint),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp).offset(y = arrowMotion.value.dp)
-                )
-            }
+            SlideToLockIndicator(progress = voiceState.lockProgress)
         }
-
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .size(44.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                     translationX = dragOffsetX
                     translationY = dragOffsetY
                 }
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        down.consume()
-                        onVoiceAction(VoiceAction.StartRecording)
-
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull { it.id == down.id }
-                            if (change == null) {
-                                onVoiceAction(VoiceAction.ReleaseRecording)
-                                break
-                            }
-                            if (!change.pressed) {
-                                change.consume()
-                                onVoiceAction(VoiceAction.ReleaseRecording)
-                                break
-                            }
-
-                            val posChange = change.positionChange()
-                            if (posChange.x != 0f || posChange.y != 0f) {
-                                change.consume()
-                                onVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
-                            }
-                        }
-                    }
-                }
+                .shadow(
+                    elevation = glowElevation,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
+                    spotColor = MaterialTheme.colorScheme.tertiary.copy(alpha = glowAlpha * 0.8f)
+                )
                 .background(MaterialTheme.colorScheme.primary, CircleShape),
             contentAlignment = Alignment.Center
         ) {

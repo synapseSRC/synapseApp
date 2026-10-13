@@ -40,6 +40,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecorder
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingController
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingAmbientGlow
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
@@ -397,6 +398,17 @@ import java.io.File
                         )
                     )
             )
+
+            if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {
+                VoiceRecordingAmbientGlow(
+                    voiceState = voiceState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        // Project design decision (not an M3 token): keep spill local to the composer and nearby bubbles.
+                        .height(184.dp)
+                )
+            }
 
             // Redesigned Voice Input Bar & Host
             Box(

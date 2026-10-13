@@ -148,6 +148,29 @@ class VoiceRecordingControllerTest {
     }
 
     @Test
+    fun `swiping back outside cancel threshold restores normal release behavior`() {
+        val testFile = tempFolder.newFile("recording_after_cancel_back.m4a")
+        testFile.writeText("audio data")
+        `when`(mockRecorder.stop()).thenReturn(VoiceRecorderStopResult.Success(testFile))
+
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+        testTimeProvider.advanceTimeBy(1000)
+        testScope.advanceTimeBy(100)
+
+        controller.handleAction(VoiceAction.Dragged(deltaX = -120f, deltaY = 0f))
+        assertTrue((controller.state.value as VoiceState.Recording).isArmedForCancel)
+
+        controller.handleAction(VoiceAction.Dragged(deltaX = 40f, deltaY = 0f))
+        assertFalse((controller.state.value as VoiceState.Recording).isArmedForCancel)
+        controller.handleAction(VoiceAction.ReleaseRecording)
+
+        assertTrue(controller.state.value is VoiceState.VoiceDraft)
+        verify(mockRecorder, never()).cancel()
+        verify(mockRecorder).stop()
+    }
+
+    @Test
     fun `upward intent stays latched until the mic returns to neutral before cancel`() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
@@ -261,6 +284,9 @@ class VoiceRecordingControllerTest {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
         testTimeProvider.advanceTimeBy(1000)
+        testScope.advanceTimeBy(100)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -130f))
+        assertTrue(controller.state.value is VoiceState.Locked)
 
         controller.handleAction(VoiceAction.FinishRecording)
 
