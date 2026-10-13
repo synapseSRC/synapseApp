@@ -52,6 +52,9 @@ import org.robolectric.annotation.Config
 
 private const val TEST_HOST_WIDTH_FRACTION = 0.85f
 
+private val Rect.centerX: Float get() = left + width / 2f
+private val Rect.centerY: Float get() = top + height / 2f
+
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class VoiceInputGestureTest {
@@ -142,7 +145,7 @@ class VoiceInputGestureTest {
 
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = -size.width.toFloat(), y = 0f))
+            moveBy(Offset(x = -60f, y = 0f))
         }
         val displacedX = bounds("voice-recording-mic-visual")
         assertTrue(displacedX.centerX < home.centerX)
@@ -161,7 +164,7 @@ class VoiceInputGestureTest {
 
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = 0f, y = -size.height.toFloat()))
+            moveBy(Offset(x = 0f, y = -60f))
         }
         val displacedY = bounds("voice-recording-mic-visual")
         assertTrue(displacedY.centerY < home.centerY)
