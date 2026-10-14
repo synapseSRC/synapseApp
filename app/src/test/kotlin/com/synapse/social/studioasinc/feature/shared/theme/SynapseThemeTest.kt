@@ -3,7 +3,6 @@ package com.synapse.social.studioasinc.feature.shared.theme
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SynapseThemeTest {
