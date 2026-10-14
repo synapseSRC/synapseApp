@@ -10,7 +10,7 @@ import coil3.load
 import coil3.request.ImageRequest
 import coil3.request.Disposable
 import coil3.request.error
-import coil3.request.httpHeaders
+import coil3.network.httpHeaders
 import coil3.request.placeholder
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
