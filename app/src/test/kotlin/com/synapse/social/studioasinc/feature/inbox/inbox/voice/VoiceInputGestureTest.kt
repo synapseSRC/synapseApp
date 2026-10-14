@@ -411,6 +411,8 @@ class VoiceInputGestureTest {
         assertTrue("lock hint is clipped on the left", lockHint.left >= root.left)
         assertTrue("lock hint is clipped on the right", lockHint.right <= root.right)
         assertTrue("lock cue is clipped above the composer", lockHint.top >= root.top)
+        assertTrue("lock arrow is clipped above the composer", lockArrow.top >= root.top)
+        assertTrue("lock arrow is clipped at a horizontal edge", lockArrow.left >= root.left && lockArrow.right <= root.right)
         assertTrue("lock text should stay above the microphone", lockHint.bottom < mic.top)
         assertEquals("up arrow should track the actual microphone center", mic.centerX, lockArrow.centerX, 1f)
         assertTrue("measured composer width must remain compact", root.width <= rootWidth + 1f)
