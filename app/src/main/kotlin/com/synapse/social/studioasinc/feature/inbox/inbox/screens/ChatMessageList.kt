@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.DateDividerChip
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.GroupPosition
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.MessageBubble
@@ -71,6 +72,7 @@ internal fun ChatMessageList(
     onOpenEphemeralMedia: (String) -> Unit = {},
     onOpenMap: (Double, Double) -> Unit = { _, _ -> },
     onContactAction: (String) -> Unit = {},
+    bottomContentPadding: Dp = Sizes.WidthLarge,
     modifier: Modifier = Modifier,
     onLocateMessage: (String) -> Unit = {},
     groupMemberNames: Map<String, String> = emptyMap()
@@ -122,12 +124,12 @@ internal fun ChatMessageList(
         state = listState,
         modifier = modifier
             .fillMaxSize(),
-        // Extra bottom padding so last messages aren't hidden behind the floating input
+        // Reserve the measured composer/lock-gesture lane so the latest messages stay unobscured.
         contentPadding = PaddingValues(
             start = Spacing.Small,
             end = Spacing.Small,
             top = Spacing.Medium,
-            bottom = Sizes.WidthLarge
+            bottom = bottomContentPadding
         ),
         reverseLayout = true
     ) {

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -43,6 +44,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecorder
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingController
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingAmbientGlow
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceGestureConfig
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
@@ -147,6 +149,7 @@ import java.io.File
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
 
     val listState = rememberLazyListState()
+    var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val focusManager = LocalFocusManager.current
@@ -154,9 +157,12 @@ import java.io.File
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
-    val cancelThresholdPx = with(density) { 100.dp.toPx() }
-    val lockThresholdPx = with(density) { 120.dp.toPx() }
-    val directionSlopPx = with(density) { 12.dp.toPx() }
+    val gestureConfig = remember { VoiceGestureConfig() }
+    val cancelThresholdPx = with(density) { gestureConfig.cancelThresholdDp.dp.toPx() }
+    val lockThresholdPx = with(density) { gestureConfig.lockThresholdDp.dp.toPx() }
+    val directionSlopPx = with(density) { gestureConfig.directionSlopDp.dp.toPx() }
+    val composerHeight = with(density) { composerHeightPx.toDp() }
+    val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.Small)
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
 
@@ -174,6 +180,7 @@ import java.io.File
             onSendVoiceMessage = { audioFile, durationMs, onResult ->
                 viewModel.uploadVoiceMessage(audioFile, durationMs, onResult)
             },
+            gestureConfig = gestureConfig,
             cancelThresholdPx = cancelThresholdPx,
             lockThresholdPx = lockThresholdPx,
             directionSlopPx = directionSlopPx
@@ -328,6 +335,7 @@ import java.io.File
                         modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
+                        bottomContentPadding = messageListBottomPadding,
                         currentUserId = currentUserId,
                         selectedMessageIds = selectedMessageIds,
                         chatFontScale = chatFontScale,
@@ -418,6 +426,7 @@ import java.io.File
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .onSizeChanged { composerHeightPx = it.height }
             ) {
                 ChatInputBar(
                     replyingToMessage = replyingToMessage,
