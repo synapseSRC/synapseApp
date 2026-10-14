@@ -60,17 +60,8 @@ class SendMessageUseCase(
         }
 
         if (signalProtocolManager == null) {
-            Napier.w("E2EE_ENCRYPT: SignalProtocolManager is null — sending plain text message", tag = "E2EE")
-            return repository.sendMessage(
-                chatId = chatId,
-                content = content,
-                mediaUrl = mediaUrl,
-                messageType = messageType,
-                expiresAt = expiresAt,
-                replyToId = replyToId,
-                senderPlaintext = content,
-                attachments = attachments,
-                metadataContainer = metadataContainer
+            return Result.failure(
+                IllegalStateException("End-to-end encryption is unavailable on this client. Message was not sent.")
             )
         }
 

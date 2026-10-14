@@ -55,6 +55,7 @@ class KMPHelper {
         self.chatRepository = shared.SupabaseChatRepository(
             dataSource: shared.SupabaseChatDataSource(),
             client: shared.SupabaseClient.shared.client,
+            // Intentionally unavailable until an approved provider is integrated; the shared send use case fails closed.
             signalProtocolManager: nil,
             mediaUploadRepository: mediaUploadRepository,
             presenceRepository: nil,
