@@ -497,9 +497,11 @@ class VoiceRecordingController(
                 delay(60)
                 val elapsed = timeProvider.currentTimeMillis() - recordingStartTime - pausedAccumulatedDurationMs
 
-                val maxExpectedAmp = 28000f
+                // MediaRecorder reports 16-bit peak amplitude; use full scale so loud input is not clipped early.
+                val maxExpectedAmp = 32767f
                 val targetNormAmp = (lastRawAmplitude / maxExpectedAmp).coerceIn(0.08f, 1f)
-                smoothedAmplitude = smoothedAmplitude * 0.65f + targetNormAmp * 0.35f
+                // A quicker envelope preserves real transients for both the waveform and liquid surface.
+                smoothedAmplitude = smoothedAmplitude * 0.42f + targetNormAmp * 0.58f
 
                 _state.update { current ->
                     when (current) {
