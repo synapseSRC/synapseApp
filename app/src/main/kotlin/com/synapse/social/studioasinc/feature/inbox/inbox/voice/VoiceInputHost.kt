@@ -41,6 +41,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import dev.chrisbanes.haze.HazeState
 
 internal fun voiceCancelTint(normal: Color, cancel: Color, progress: Float): Color =
     lerp(normal, cancel, progress.coerceIn(0f, 1f))
@@ -92,6 +93,7 @@ fun VoiceInputHost(
     showSendButton: Boolean,
     onSendMessage: () -> Unit,
     reducedMotionOverride: Boolean,
+    hazeState: HazeState? = null,
     modifier: Modifier = Modifier,
     normalContent: @Composable () -> Unit
 ) {
@@ -176,6 +178,7 @@ fun VoiceInputHost(
             VoiceRecordingGlowSurface(
                 voiceState = voiceState,
                 reducedMotionOverride = reducedMotion,
+                hazeState = hazeState,
                 modifier = Modifier.matchParentSize()
             )
 
