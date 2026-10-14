@@ -139,6 +139,49 @@ class VoiceRecordingControllerTest {
     }
 
     @Test
+    fun pointerInterruptionCancelsAnActiveGestureOnlyOnce() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+        assertTrue(controller.state.value is VoiceState.Recording)
+
+        controller.handleAction(VoiceAction.PointerGestureInterrupted)
+        assertEquals(VoiceState.Normal, controller.state.value)
+        verify(mockRecorder, times(1)).cancel()
+
+        // A late up event after cancellation must not stop or cancel the recorder again.
+        controller.handleAction(VoiceAction.ReleaseRecording)
+        verify(mockRecorder, times(1)).cancel()
+        verify(mockRecorder, never()).stop()
+    }
+
+    @Test
+    fun pointerInterruptionAfterLockPreservesTheActiveLockedRecording() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(200)
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -120f))
+        assertTrue(controller.state.value is VoiceState.Locked)
+
+        controller.handleAction(VoiceAction.PointerGestureInterrupted)
+
+        assertTrue(controller.state.value is VoiceState.Locked)
+        verify(mockRecorder, never()).cancel()
+        verify(mockRecorder, never()).stop()
+    }
+
+    @Test
+    fun pointerInterruptionDuringPressDoesNotStartARecording() {
+        controller.handleAction(VoiceAction.StartRecording)
+        assertEquals(VoiceState.Pressing, controller.state.value)
+
+        controller.handleAction(VoiceAction.PointerGestureInterrupted)
+        testScope.advanceTimeBy(200)
+
+        assertEquals(VoiceState.Normal, controller.state.value)
+        verify(mockRecorder, never()).start(anyObject(), anyObject())
+        verify(mockRecorder, never()).cancel()
+    }
+
+    @Test
     fun thresholdCancelCannotBeUndoneByLaterDragEvents() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(200)
