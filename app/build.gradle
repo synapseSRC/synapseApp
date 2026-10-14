@@ -376,6 +376,10 @@ dependencies {
     // Exif Interface
     implementation "androidx.exifinterface:exifinterface:1.4.2"
 
+    // Source-backed Compose backdrop blur for the liquid-glass chat composer
+    implementation "dev.chrisbanes.haze:haze:2.0.1"
+    implementation "dev.chrisbanes.haze:haze-blur:2.0.1"
+
     // Testing
     testImplementation composeBom
     testImplementation 'androidx.compose.ui:ui-test'

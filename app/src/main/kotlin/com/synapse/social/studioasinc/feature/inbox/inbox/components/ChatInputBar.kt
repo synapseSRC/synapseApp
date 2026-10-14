@@ -48,6 +48,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
+import dev.chrisbanes.haze.HazeState
 
 @Composable
 fun ChatInputBar(
@@ -62,6 +63,7 @@ fun ChatInputBar(
     context: Context,
     voiceState: VoiceState = VoiceState.Normal,
     reducedMotion: Boolean,
+    hazeState: HazeState? = null,
     onVoiceAction: (VoiceAction) -> Unit = {},
     onInputTextChange: (String) -> Unit,
     onSendMessage: () -> Unit,
@@ -206,6 +208,7 @@ fun ChatInputBar(
             onVoiceAction = onVoiceAction,
             showSendButton = inputText.isNotEmpty(),
             reducedMotionOverride = reducedMotion,
+            hazeState = hazeState,
             onSendMessage = {
                 onSendMessage()
                 dismissedPreviewUrl = null
