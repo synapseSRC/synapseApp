@@ -74,6 +74,19 @@ class VoiceRecordingController(
             VoiceAction.ReleaseRecording -> {
                 handleRelease()
             }
+            VoiceAction.PointerGestureInterrupted -> {
+                when (_state.value) {
+                    is VoiceState.Pressing -> {
+                        holdJob?.cancel()
+                        holdJob = null
+                        releaseHandled = true
+                        _state.value = VoiceState.Normal
+                    }
+                    is VoiceState.Recording -> cancelRecording()
+                    // A successful lock disposes the drag recognizer by design; do not cancel the recorder.
+                    else -> Unit
+                }
+            }
             VoiceAction.CancelRecording -> {
                 when (_state.value) {
                     is VoiceState.Pressing -> {

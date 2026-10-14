@@ -6,6 +6,7 @@ sealed interface VoiceAction {
     object StartRecording : VoiceAction
     data class Dragged(val deltaX: Float, val deltaY: Float) : VoiceAction
     object ReleaseRecording : VoiceAction
+    object PointerGestureInterrupted : VoiceAction
     object CancelRecording : VoiceAction
     object TogglePause : VoiceAction
     object FinishRecording : VoiceAction
