@@ -49,7 +49,8 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.exoplayer.ExoPlayer
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import coil3.request.videoFramePercent
+import coil3.request.crossfade
+import coil3.video.videoFramePercent
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceMessagePlayerViewModel
 import com.synapse.social.studioasinc.feature.shared.reels.VideoPlayerViewModel

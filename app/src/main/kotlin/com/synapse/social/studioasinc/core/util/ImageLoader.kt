@@ -5,9 +5,13 @@ import android.graphics.drawable.Drawable
 import android.util.Log
 import android.widget.ImageView
 import coil3.imageLoader
+import coil3.network.NetworkHeaders
 import coil3.load
 import coil3.request.ImageRequest
 import coil3.request.Disposable
+import coil3.request.error
+import coil3.request.httpHeaders
+import coil3.request.placeholder
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import io.github.jan.supabase.auth.auth
@@ -118,8 +122,12 @@ object ImageLoader {
                 null
             }
             val token = sessionToken.takeIf { !it.isNullOrBlank() } ?: BuildConfig.SUPABASE_ANON_KEY
-            builder.addHeader("Authorization", "Bearer $token")
-            builder.addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+            builder.httpHeaders(
+                NetworkHeaders.Builder()
+                    .set("Authorization", "Bearer $token")
+                    .set("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                    .build()
+            )
         }
     }
 

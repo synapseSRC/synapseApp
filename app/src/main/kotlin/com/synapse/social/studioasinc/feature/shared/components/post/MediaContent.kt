@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil3.asDrawable
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import com.synapse.social.studioasinc.core.ui.util.AmbientColorExtractor
@@ -60,6 +61,7 @@ fun MediaContent(
     postViewStyle: PostViewStyle = PostViewStyle.SWIPE
 ) {
     if (mediaUrls.isEmpty()) return
+    val context = androidx.compose.ui.platform.LocalContext.current
     val atmosphereState = LocalUiAtmosphere.current
     val extractedColors = remember { mutableStateMapOf<Int, UiAtmosphereColors>() }
 
@@ -72,7 +74,7 @@ fun MediaContent(
                 .clickable { onMediaClick(0) }
         ) {
             AsyncImage(
-                model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                model = coil3.request.ImageRequest.Builder(context)
                     .data(url)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
@@ -84,7 +86,7 @@ fun MediaContent(
                     .clip(RoundedCornerShape(Sizes.CornerMedium)),
                 contentScale = ContentScale.Crop,
                 onSuccess = { result ->
-                    AmbientColorExtractor.extractColorsFromDrawable(result.result.drawable) { colors ->
+                    AmbientColorExtractor.extractColorsFromDrawable(result.result.image.asDrawable(context.resources)) { colors ->
                         extractedColors[0] = colors
                         atmosphereState.updateColors(colors)
                     }
@@ -125,7 +127,7 @@ fun MediaContent(
                         .padding(vertical = Spacing.Small)
                 ) {
                     AsyncImage(
-                        model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                        model = coil3.request.ImageRequest.Builder(context)
                             .data(mediaUrls[page])
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
@@ -137,7 +139,7 @@ fun MediaContent(
                             .clip(RoundedCornerShape(Sizes.CornerMedium)),
                         contentScale = ContentScale.Crop,
                         onSuccess = { result ->
-                            AmbientColorExtractor.extractColorsFromDrawable(result.result.drawable) { colors ->
+                            AmbientColorExtractor.extractColorsFromDrawable(result.result.image.asDrawable(context.resources)) { colors ->
                                 extractedColors[page] = colors
                                 if (page == pagerState.currentPage) {
                                     atmosphereState.updateColors(colors)
@@ -244,7 +246,7 @@ fun MediaGridItem(
     onClick: () -> Unit
 ) {
     AsyncImage(
-        model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+        model = coil3.request.ImageRequest.Builder(context)
             .data(url)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)

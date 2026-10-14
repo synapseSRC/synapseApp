@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.AsyncImage
+import coil3.request.crossfade
 import coil3.request.ImageRequest
 import com.synapse.social.studioasinc.shared.domain.model.SearchNews
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes

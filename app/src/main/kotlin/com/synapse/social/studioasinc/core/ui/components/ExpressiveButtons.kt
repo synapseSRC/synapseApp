@@ -50,7 +50,7 @@ fun ExpressiveToggleButton(
         checked = checked,
         onCheckedChange = onCheckedChange,
         modifier = modifier,
-        shapes = ToggleButtonDefaults.shapes(
+        shapes = ToggleButtonDefaults.shapesFor(ToggleButtonDefaults.size).copy(
             pressedShape = MaterialShapes.Cookie4Sided.toShape(),
             checkedShape = MaterialShapes.Clover4Leaf.toShape()
         ),
