@@ -124,6 +124,33 @@ class VoiceRecordingGlowTest {
     }
 
     @Test
+    fun glowPhaseStopsWhenInactiveAndResumesOnTheComposeFrameClock() {
+        val active = mutableStateOf(true)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            MaterialTheme {
+                Text(
+                    rememberVoiceGlowPhase(0.5f, active.value, reducedMotion = false, label = "activePhase").toString(),
+                    Modifier.testTag("active-phase")
+                )
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        val movingPhase = textFor("active-phase").toFloat()
+        assertTrue("active glow phase should advance", movingPhase > 0f)
+
+        composeRule.runOnIdle { active.value = false }
+        val inactivePhase = textFor("active-phase").toFloat()
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        assertEquals("inactive glow must stop requesting phase updates", inactivePhase, textFor("active-phase").toFloat(), 0f)
+
+        composeRule.runOnIdle { active.value = true }
+        composeRule.mainClock.advanceTimeBy(128L)
+        assertNotEquals("active glow resumes using the Compose frame clock", inactivePhase, textFor("active-phase").toFloat())
+    }
+
+    @Test
     fun allowedMotionDriftsGlowPhaseAndSmoothsAmplitudeChanges() {
         val amplitude = mutableStateOf(0.12f)
         composeRule.mainClock.autoAdvance = false
