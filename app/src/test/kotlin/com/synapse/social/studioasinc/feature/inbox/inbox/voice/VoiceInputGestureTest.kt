@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.fetchSemanticsNode
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -55,6 +56,12 @@ private const val TEST_HOST_WIDTH_FRACTION = 0.85f
 private val Rect.centerX: Float get() = left + width / 2f
 private val Rect.centerY: Float get() = top + height / 2f
 
+@Suppress("UNCHECKED_CAST")
+private fun <T> anyObject(): T {
+    Mockito.any<T>()
+    return null as T
+}
+
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class VoiceInputGestureTest {
@@ -78,9 +85,9 @@ class VoiceInputGestureTest {
             voicePlayerManager = null,
             getOutputFile = { outputFile },
             gestureConfig = VoiceGestureConfig(holdThresholdMs = 0L),
-            cancelThresholdPx = 100f,
-            lockThresholdPx = 120f,
-            directionSlopPx = 12f
+            cancelThresholdPx = 100f * composeRule.density.density,
+            lockThresholdPx = 120f * composeRule.density.density,
+            directionSlopPx = 12f * composeRule.density.density
         )
         assertEquals(VoiceState.Normal, controller.state.value)
     }
@@ -94,9 +101,10 @@ class VoiceInputGestureTest {
     @Test
     fun cancellationHappensAtDragThresholdBeforeReleaseAndOnlyOnce() {
         composeRule.setContent { micUnderTest() }
+        val micSize = bounds("voice-recording-mic")
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = -150f, y = 0f))
+            moveBy(Offset(x = -micSize.width * 3f, y = 0f))
         }
 
         composeRule.runOnIdle {
@@ -107,7 +115,7 @@ class VoiceInputGestureTest {
         }
 
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = 60f, y = 0f))
+            moveBy(Offset(x = micSize.width * 1.25f, y = 0f))
             up()
         }
         composeRule.runOnIdle {
@@ -120,9 +128,10 @@ class VoiceInputGestureTest {
     @Test
     fun upwardSwipeOutsideMicBoundsLocksAndReleaseKeepsRecordingAlive() {
         composeRule.setContent { micUnderTest() }
+        val micSize = bounds("voice-recording-mic")
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
             down(center)
-            moveBy(Offset(x = 0f, y = -150f))
+            moveBy(Offset(x = 0f, y = -micSize.height * 3f))
             up()
         }
 
@@ -141,11 +150,17 @@ class VoiceInputGestureTest {
         testScope.advanceTimeBy(1L)
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent { micUnderTest(reducedMotion = false) }
+        val micSize = bounds("voice-recording-mic")
+        controller.updateThresholds(
+            cancelPx = micSize.width * 2f,
+            lockPx = micSize.height * 2f,
+            slopPx = VoiceGestureConfig().directionSlopDp * composeRule.density.density
+        )
         val home = bounds("voice-recording-mic-visual")
 
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = -60f, y = 0f))
+            moveBy(Offset(x = -micSize.width, y = 0f))
         }
         val displacedX = bounds("voice-recording-mic-visual")
         assertTrue(displacedX.centerX < home.centerX)
@@ -164,7 +179,7 @@ class VoiceInputGestureTest {
 
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput { down(center) }
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
-            moveBy(Offset(x = 0f, y = -60f))
+            moveBy(Offset(x = 0f, y = -micSize.height))
         }
         val displacedY = bounds("voice-recording-mic-visual")
         assertTrue(displacedY.centerY < home.centerY)
@@ -189,10 +204,16 @@ class VoiceInputGestureTest {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(1L)
         composeRule.setContent { micUnderTest(reducedMotion = true) }
+        val micSize = bounds("voice-recording-mic")
+        controller.updateThresholds(
+            cancelPx = micSize.width * 2f,
+            lockPx = micSize.height * 2f,
+            slopPx = VoiceGestureConfig().directionSlopDp * composeRule.density.density
+        )
         val home = bounds("voice-recording-mic-visual")
         composeRule.onNodeWithTag("gesture-test-mic").performTouchInput {
             down(center)
-            moveBy(Offset(x = -60f, y = 0f))
+            moveBy(Offset(x = -micSize.width, y = 0f))
             up()
         }
         composeRule.runOnIdle {
@@ -203,10 +224,47 @@ class VoiceInputGestureTest {
     }
 
     @Test
+    fun successfulLockSpringsMicHomeWhileLockedRecordingContinues() {
+        controller.handleAction(VoiceAction.StartRecording)
+        testScope.advanceTimeBy(1L)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent { voiceHostUnderTest(reducedMotion = false) }
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        val home = bounds("voice-recording-mic-visual")
+
+        composeRule.onNodeWithTag("voice-recording-mic").performTouchInput {
+            down(center)
+            moveBy(Offset(x = 0f, y = -controller.lockThresholdPx * 1.25f))
+        }
+        composeRule.runOnIdle {
+            assertTrue("threshold crossing commits locked state", controller.state.value is VoiceState.Locked)
+            assertEquals(1, actions.count { it == VoiceAction.StartRecording })
+            assertEquals(0, actions.count { it == VoiceAction.ReleaseRecording })
+            Mockito.verify(recorder, Mockito.times(1)).start(anyObject(), anyObject())
+            Mockito.verify(recorder, Mockito.never()).cancel()
+            Mockito.verify(recorder, Mockito.never()).stop()
+        }
+
+        val displaced = bounds("voice-lock-returning-mic-visual")
+        assertTrue("the locked transition starts from the dragged mic position", displaced.centerY < home.centerY)
+        composeRule.mainClock.advanceTimeBy(64L)
+        val returning = bounds("voice-lock-returning-mic-visual")
+        assertTrue("the successful-lock spring moves back toward home", returning.centerY > displaced.centerY)
+        assertTrue("spring remains between the displaced and home positions", returning.centerY < home.centerY)
+        composeRule.mainClock.advanceTimeBy(1_200L)
+        composeRule.onNodeWithTag("voice-lock-returning-mic-visual").assertDoesNotExist()
+        composeRule.runOnIdle {
+            assertTrue("the recorder remains active after locking", controller.state.value is VoiceState.Locked)
+            Mockito.verify(recorder, Mockito.never()).cancel()
+            Mockito.verify(recorder, Mockito.never()).stop()
+        }
+    }
+
+    @Test
     fun lockedCancelControlRemainsFunctionalAndPauseHasAtLeast48DpTarget() {
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(1L)
-        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -150f))
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -controller.lockThresholdPx * 1.25f))
         assertTrue(controller.state.value is VoiceState.Locked)
         composeRule.setContent { voiceHostUnderTest() }
 
@@ -227,7 +285,7 @@ class VoiceInputGestureTest {
         Mockito.`when`(recorder.stop()).thenReturn(VoiceRecorderStopResult.Success(outputFile))
         controller.handleAction(VoiceAction.StartRecording)
         testScope.advanceTimeBy(1L)
-        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -150f))
+        controller.handleAction(VoiceAction.Dragged(deltaX = 0f, deltaY = -controller.lockThresholdPx * 1.25f))
         assertTrue(controller.state.value is VoiceState.Locked)
         composeRule.setContent { voiceHostUnderTest() }
 
@@ -310,8 +368,8 @@ class VoiceInputGestureTest {
             ) {
                 MaterialTheme {
                     Box(
-                        modifier = Modifier.width(260.dp).height(220.dp).clipToBounds(),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier.width(260.dp).height(420.dp).clipToBounds().testTag("compact-recording-root"),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
                         VoiceInputHost(
                             voiceState = recordingState.value,
@@ -342,18 +400,24 @@ class VoiceInputGestureTest {
         val cancel = bounds("voice-cancel-instruction")
         val mic = bounds("voice-recording-mic")
         val lockHint = bounds("voice-slide-lock-hint")
+        val lockArrow = bounds("voice-lock-arrow")
+        val root = bounds("compact-recording-root")
 
         assertEquals("timer must remain centered in the pill", (bar.left + bar.right) / 2f, (timer.left + timer.right) / 2f, 0.5f)
         assertFalse("timer and cancel text overlap", overlaps(timer, cancel))
         assertFalse("cancel text overlaps the microphone", overlaps(cancel, mic))
         assertFalse("lock hint overlaps the timer", overlaps(lockHint, timer))
         assertFalse("lock hint overlaps the microphone", overlaps(lockHint, mic))
-        assertTrue("lock hint is clipped on the left", lockHint.left >= 0f)
-        assertTrue("lock hint is clipped on the right", lockHint.right <= rootWidth)
+        assertTrue("lock hint is clipped on the left", lockHint.left >= root.left)
+        assertTrue("lock hint is clipped on the right", lockHint.right <= root.right)
+        assertTrue("lock cue is clipped above the composer", lockHint.top >= root.top)
+        assertTrue("lock text should stay above the microphone", lockHint.bottom < mic.top)
+        assertEquals("up arrow should track the actual microphone center", mic.centerX, lockArrow.centerX, 1f)
+        assertTrue("measured composer width must remain compact", root.width <= rootWidth + 1f)
     }
 
     @Composable
-    private fun voiceHostUnderTest() {
+    private fun voiceHostUnderTest(reducedMotion: Boolean = true) {
         val voiceState by controller.state.collectAsState()
         MaterialTheme {
             VoiceInputHost(
@@ -364,7 +428,7 @@ class VoiceInputGestureTest {
                 },
                 showSendButton = false,
                 onSendMessage = {},
-                reducedMotionOverride = true,
+                reducedMotionOverride = reducedMotion,
                 normalContent = {}
             )
         }

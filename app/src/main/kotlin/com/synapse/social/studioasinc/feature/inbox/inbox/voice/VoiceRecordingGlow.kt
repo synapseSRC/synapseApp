@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 
 import androidx.compose.animation.core.*
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +65,9 @@ internal fun rememberVoiceGlowPhase(amplitude: Float, active: Boolean, reducedMo
             return@LaunchedEffect
         }
         var previousFrameNanos = 0L
-        while (true) {
+        // LaunchedEffect owns this frame loop: it is cancelled when glow activity ends or motion is reduced.
+        // The Compose frame clock provides deterministic test-clock frames, while the amplitude stays live.
+        while (active && !reducedMotion) {
             val frameNanos = withFrameNanos { it }
             if (previousFrameNanos != 0L) {
                 val elapsedSeconds = ((frameNanos - previousFrameNanos) / 1_000_000_000f).coerceIn(0f, 0.05f)
@@ -109,6 +110,10 @@ internal fun rememberVoiceShimmerPhase(reducedMotion: Boolean, label: String): F
 
 private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
 
+/**
+ * Paused recordings use the nonzero minimum as a calm idle glow instead of animating stale speech energy.
+ * Active recordings continue to follow their latest amplitude sample.
+ */
 internal fun VoiceState.glowAmplitude(): Float = when (this) {
     is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
         .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
