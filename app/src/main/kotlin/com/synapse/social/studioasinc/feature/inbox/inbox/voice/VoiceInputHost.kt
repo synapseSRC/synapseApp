@@ -19,17 +19,23 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveWaveformView
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
@@ -50,10 +56,8 @@ private const val LOCK_ARROW_GRADIENT_CLEAR_ALPHA = 0f
 private const val LOCK_ARROW_GRADIENT_CORE_ALPHA = 0.75f
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
-private val LOCK_INDICATOR_GAP = 24.dp
-private val LOCK_INDICATOR_VERTICAL_OFFSET = -(MIC_TOUCH_TARGET_SIZE + LOCK_INDICATOR_GAP)
+private val LOCK_INDICATOR_GAP = Spacing.Small
 private val LOCK_INDICATOR_WIDTH = 144.dp
-private val LOCK_INDICATOR_OFFSET_X = -(MIC_TOUCH_TARGET_SIZE / 2 + Spacing.Small)
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.ExtraSmall + Spacing.Small
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
@@ -92,107 +96,210 @@ fun VoiceInputHost(
     normalContent: @Composable () -> Unit
 ) {
     val reducedMotion = reducedMotionOverride
+    val density = LocalDensity.current
+    var lockIndicatorHeightPx by remember { mutableIntStateOf(0) }
+    var hostBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
+    var micBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
+    var lastMicBoundsInHost by remember { mutableStateOf<Rect?>(null) }
+    var lastLockGestureOffsetYPx by remember { mutableFloatStateOf(0f) }
+    var lockReturnStarted by remember { mutableStateOf(false) }
+    var lockReturnStartYPx by remember { mutableFloatStateOf(0f) }
+    val lockReturnYPx = remember { Animatable(0f) }
+    val isLocked = voiceState is VoiceState.Locked
 
-    // Container without clipping so dragging the mic or lock target upward remains visible with headroom
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = VOICE_BAR_MIN_HEIGHT)
-            .padding(horizontal = Spacing.ExtraSmall)
-            .padding(top = Spacing.ExtraSmall, bottom = Spacing.Small)
-            .testTag("voice-recording-bar")
-            .shadow(
-                elevation = Spacing.ExtraSmall,
-                shape = RoundedCornerShape(Sizes.CornerMassive),
-                clip = false
-            )
-    ) {
-        VoiceRecordingGlowSurface(
-            voiceState = voiceState,
-            reducedMotionOverride = reducedMotion,
-            modifier = Modifier.matchParentSize()
+    val micBoundsInHost = remember(hostBoundsInRoot, micBoundsInRoot) {
+        val host = hostBoundsInRoot
+        val mic = micBoundsInRoot
+        if (host == null || mic == null) null else Rect(
+            left = mic.left - host.left,
+            top = mic.top - host.top,
+            right = mic.right - host.left,
+            bottom = mic.bottom - host.top
         )
+    }
+    SideEffect {
+        micBoundsInHost?.let { lastMicBoundsInHost = it }
+    }
 
-        Row(
+    // A lock changes the recording UI immediately, but the mic's displaced visual completes its spring return.
+    LaunchedEffect(isLocked, reducedMotion) {
+        if (isLocked && lastLockGestureOffsetYPx < 0f && !reducedMotion) {
+            lockReturnStartYPx = lastLockGestureOffsetYPx
+            lockReturnYPx.snapTo(lastLockGestureOffsetYPx)
+            lockReturnStarted = true
+            lockReturnYPx.animateTo(
+                targetValue = 0f,
+                animationSpec = spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow)
+            )
+            lastLockGestureOffsetYPx = 0f
+            lockReturnStarted = false
+        } else {
+            lockReturnStarted = false
+            lastLockGestureOffsetYPx = 0f
+            lockReturnStartYPx = 0f
+            lockReturnYPx.snapTo(0f)
+        }
+    }
+
+    val lockLaneIsNeeded = voiceState is VoiceState.Recording || (isLocked && lastLockGestureOffsetYPx < 0f && !reducedMotion)
+    val lockLaneHeight = if (lockLaneIsNeeded) {
+        with(density) { lockIndicatorHeightPx.toDp() } +
+            LOCK_INDICATOR_GAP + VoiceGestureConfig().lockThresholdDp.dp
+    } else {
+        0.dp
+    }
+    val animatedLockLaneHeight = animateDpForMotion(
+        targetValue = lockLaneHeight,
+        reducedMotion = reducedMotion,
+        animationSpec = spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow),
+        label = "voiceLockHintHeadroom"
+    )
+
+    // Measured headroom follows the actual localized/font-scaled cue and the configured upward gesture travel.
+    // The pill stays at the bottom while the chat list can reserve the host's full measured height.
+    Column(modifier = modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(animatedLockLaneHeight))
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .heightIn(min = VOICE_BAR_MIN_HEIGHT)
+                .padding(horizontal = Spacing.ExtraSmall)
+                .padding(top = Spacing.ExtraSmall, bottom = Spacing.Small)
+                .onGloballyPositioned { hostBoundsInRoot = it.boundsInRoot() }
+                .testTag("voice-recording-bar")
+                .shadow(
+                    elevation = Spacing.ExtraSmall,
+                    shape = RoundedCornerShape(Sizes.CornerMassive),
+                    clip = false
+                )
         ) {
-            // Morphing left/middle composer content area
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.CenterStart
+            VoiceRecordingGlowSurface(
+                voiceState = voiceState,
+                reducedMotionOverride = reducedMotion,
+                modifier = Modifier.matchParentSize()
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+                    .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                AnimatedContent(
-                    targetState = voiceState,
-                    contentKey = { it.contentStage() },
-                    transitionSpec = {
-                        if (reducedMotion) {
-                            EnterTransition.None togetherWith ExitTransition.None
+                // Morphing left/middle composer content area
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    AnimatedContent(
+                        targetState = voiceState,
+                        contentKey = { it.contentStage() },
+                        transitionSpec = {
+                            if (reducedMotion) {
+                                EnterTransition.None togetherWith ExitTransition.None
+                            } else {
+                                (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                    slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
+                                    (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
+                                        slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
+                            }
+                        },
+                        contentAlignment = Alignment.CenterStart,
+                        label = "voiceStageMorph"
+                    ) { animatedState ->
+                        if (animatedState.contentStage() == VoiceVisualStage.Normal) {
+                            Box(modifier = Modifier.fillMaxWidth()) { normalContent() }
                         } else {
-                            (fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
-                                slideInVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { it / 8 }) togetherWith
-                                (fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) +
-                                    slideOutVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) { -it / 8 })
-                        }
-                    },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "voiceStageMorph"
-                ) { animatedState ->
-                    if (animatedState.contentStage() == VoiceVisualStage.Normal) {
-                        Box(modifier = Modifier.fillMaxWidth()) { normalContent() }
-                    } else {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            VoiceInputBarContent(voiceState = animatedState, onVoiceAction = onVoiceAction)
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                VoiceInputBarContent(voiceState = animatedState, onVoiceAction = onVoiceAction)
+                            }
                         }
                     }
                 }
+
+                // Keep the mic recognizer outside AnimatedContent across Normal/Pressing/Recording.
+                val isNormal = voiceState is VoiceState.Normal
+                if (isNormal && showSendButton) {
+                    Surface(
+                        modifier = Modifier.size(Sizes.SendButton),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            IconButton(onClick = onSendMessage) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowUpward,
+                                    contentDescription = stringResource(R.string.chat_action_send),
+                                    modifier = Modifier.size(Sizes.IconLarge),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
+                } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
+                    Spacer(modifier = Modifier.width(0.dp))
+                } else {
+                    CanonicalMicButton(
+                        voiceState = voiceState,
+                        onVoiceAction = onVoiceAction,
+                        reducedMotionOverride = reducedMotion,
+                        onMicBoundsChanged = { micBoundsInRoot = it },
+                        onGestureOffsetChanged = { lastLockGestureOffsetYPx = it }
+                    )
+                }
             }
 
-            // Persistent Right Action Slot OUTSIDE AnimatedContent
-            // Ensures pointerInput node on CanonicalMicButton is never recreated or disposed during Normal -> Pressing -> Recording
-            val isNormal = voiceState is VoiceState.Normal
-            if (isNormal && showSendButton) {
-                Surface(
-                    modifier = Modifier.size(Sizes.SendButton),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
+            // This overlay shares the pill's bounds; its cue is laid out from the measured mic anchor.
+            Box(Modifier.matchParentSize()) {
+                VoiceRecordingContentOverlay(
+                    voiceState = voiceState,
+                    reducedMotion = reducedMotion,
+                    micBoundsInHost = micBoundsInHost,
+                    lockIndicatorHeightPx = lockIndicatorHeightPx,
+                    onLockIndicatorHeightChanged = { lockIndicatorHeightPx = it }
+                )
+            }
+
+            if (lockReturnStarted) {
+                lastMicBoundsInHost?.let { micBounds ->
+                    val returnOffset = lockReturnYPx.value
+                    val returnAlpha = if (lockReturnStartYPx == 0f) 0f else
+                        (kotlin.math.abs(returnOffset / lockReturnStartYPx)).coerceIn(0f, 1f)
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .absoluteOffset {
+                                IntOffset(
+                                    x = micBounds.left.roundToInt(),
+                                    y = (micBounds.top + returnOffset).roundToInt()
+                                )
+                            }
+                            .size(MIC_TOUCH_TARGET_SIZE)
+                            .graphicsLayer { alpha = returnAlpha }
+                            .testTag("voice-lock-returning-mic"),
+                        contentAlignment = Alignment.Center
                     ) {
-                        IconButton(onClick = onSendMessage) {
+                        Box(
+                            modifier = Modifier
+                                .size(MIC_VISUAL_SIZE)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                .testTag("voice-lock-returning-mic-visual"),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = stringResource(R.string.chat_action_send),
-                                modifier = Modifier.size(Sizes.IconLarge),
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(Sizes.IconLarge)
                             )
                         }
                     }
                 }
-            } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
-                // In Locked, VoiceDraft, Sending, and Failed states, VoiceInputBarContent renders its own right action buttons (Send/Retry)
-                Spacer(modifier = Modifier.width(0.dp))
-            } else {
-                // Canonical Mic Button persistent across Normal (empty text), VoiceReady, Pressing, Recording
-                CanonicalMicButton(
-                    voiceState = voiceState,
-                    onVoiceAction = onVoiceAction,
-                    reducedMotionOverride = reducedMotion
-                )
             }
-        }
-
-        // The Row is the measured content child; the explicit minimum height lets the overlay match the settled bar
-        // bounds without participating in the root Box's measurement.
-        Box(Modifier.matchParentSize()) {
-            VoiceRecordingContentOverlay(voiceState, reducedMotion)
         }
     }
 }
@@ -295,17 +402,51 @@ private fun VoiceInputBarContent(
 }
 
 @Composable
-private fun VoiceRecordingContentOverlay(voiceState: VoiceState, reducedMotion: Boolean) {
+private fun VoiceRecordingContentOverlay(
+    voiceState: VoiceState,
+    reducedMotion: Boolean,
+    micBoundsInHost: Rect?,
+    lockIndicatorHeightPx: Int,
+    onLockIndicatorHeightChanged: (Int) -> Unit
+) {
     AnimatedVisibility(
         visible = voiceState is VoiceState.Recording,
         modifier = Modifier.fillMaxSize(),
         enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
         exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
     ) {
-        Box(Modifier.fillMaxSize()) {
-            (voiceState as? VoiceState.Recording)?.let { recording ->
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val density = LocalDensity.current
+            val recording = voiceState as? VoiceState.Recording
+            if (recording != null) {
                 RecordingStatusOverlay(recording, reducedMotion, Modifier.align(Alignment.Center))
-                SlideToLockIndicator(progress = recording.lockProgress, reducedMotion = reducedMotion)
+                micBoundsInHost?.let { micBounds ->
+                    val safeWidth = (maxWidth - Spacing.ExtraSmall - Spacing.ExtraSmall).coerceAtLeast(0.dp)
+                    val indicatorWidth = minOf(LOCK_INDICATOR_WIDTH, safeWidth)
+                    val parentWidthPx = with(density) { maxWidth.toPx() }
+                    val indicatorWidthPx = with(density) { indicatorWidth.toPx() }
+                    val arrowWidthPx = with(density) { LOCK_ARROW_WIDTH.toPx() }
+                    val gapPx = with(density) { LOCK_INDICATOR_GAP.toPx() }
+                    val micCenterX = (micBounds.left + micBounds.right) / 2f + recording.slideOffsetPx
+                    val micTop = micBounds.top + recording.dragOffsetYPx
+                    val leftPx = (micCenterX - indicatorWidthPx / 2f)
+                        .coerceIn(0f, (parentWidthPx - indicatorWidthPx).coerceAtLeast(0f))
+                    val arrowLeftPx = (micCenterX - leftPx - arrowWidthPx / 2f)
+                        .coerceIn(0f, (indicatorWidthPx - arrowWidthPx).coerceAtLeast(0f))
+                    val topPx = micTop - lockIndicatorHeightPx - gapPx
+
+                    SlideToLockIndicator(
+                        progress = recording.lockProgress,
+                        reducedMotion = reducedMotion,
+                        columnWidth = indicatorWidth,
+                        arrowOffsetX = with(density) { arrowLeftPx.toDp() },
+                        measuredHeightPx = lockIndicatorHeightPx,
+                        onHeightChanged = onLockIndicatorHeightChanged,
+                        modifier = Modifier
+                            .absoluteOffset { IntOffset(leftPx.roundToInt(), topPx.roundToInt()) }
+                            .width(indicatorWidth)
+                    )
+                }
             }
         }
     }
@@ -357,47 +498,63 @@ private fun ShimmerCancelHint(reducedMotion: Boolean) {
 }
 
 @Composable
-private fun BoxScope.SlideToLockIndicator(progress: Float, reducedMotion: Boolean) {
+private fun SlideToLockIndicator(
+    progress: Float,
+    reducedMotion: Boolean,
+    columnWidth: androidx.compose.ui.unit.Dp,
+    arrowOffsetX: androidx.compose.ui.unit.Dp,
+    measuredHeightPx: Int,
+    onHeightChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val arrowTravel = rememberLockArrowTravel(reducedMotion)
-    val alpha = 0.55f + 0.45f * progress.coerceIn(0f, 1f)
-    val fontScale = LocalDensity.current.fontScale
-    val fontScaleOffset = (32f * (fontScale - 1f).coerceAtLeast(0f)).dp
+    val alpha = when {
+        measuredHeightPx == 0 -> 0f
+        reducedMotion -> 0.72f
+        else -> 0.55f + 0.45f * progress.coerceIn(0f, 1f)
+    }
 
     Column(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .widthIn(max = LOCK_INDICATOR_WIDTH)
-            .fillMaxWidth()
-            .offset(x = LOCK_INDICATOR_OFFSET_X, y = LOCK_INDICATOR_VERTICAL_OFFSET - fontScaleOffset)
-            .graphicsLayer { this.alpha = if (reducedMotion) 0.72f else alpha },
+        modifier = modifier
+            .width(columnWidth)
+            .onSizeChanged { onHeightChanged(it.height) }
+            .graphicsLayer { this.alpha = alpha },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
     ) {
-        Box(modifier = Modifier.size(width = LOCK_ARROW_WIDTH, height = LOCK_ARROW_HEIGHT), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxWidth().height(LOCK_ARROW_HEIGHT)) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .width(LOCK_ARROW_STEM_WIDTH)
-                    .height(LOCK_ARROW_STEM_HEIGHT)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA),
-                                MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CORE_ALPHA),
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA)
-                            )
-                        ),
-                        shape = RoundedCornerShape(Spacing.ExtraSmall)
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = if (reducedMotion) 0.dp else arrowTravel.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .absoluteOffset(x = arrowOffsetX)
+                    .size(width = LOCK_ARROW_WIDTH, height = LOCK_ARROW_HEIGHT)
+                    .testTag("voice-lock-arrow"),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .width(LOCK_ARROW_STEM_WIDTH)
+                        .height(LOCK_ARROW_STEM_HEIGHT)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CORE_ALPHA),
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA)
+                                )
+                            ),
+                            shape = RoundedCornerShape(Spacing.ExtraSmall)
+                        )
+                )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = if (reducedMotion) 0.dp else arrowTravel.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
+                }
             }
         }
         Text(
@@ -448,7 +605,9 @@ fun CanonicalMicButton(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit,
     reducedMotionOverride: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onMicBoundsChanged: (Rect) -> Unit = {},
+    onGestureOffsetChanged: (Float) -> Unit = {}
 ) {
     val reducedMotion = reducedMotionOverride
     val isPressing = voiceState is VoiceState.Pressing
@@ -460,6 +619,12 @@ fun CanonicalMicButton(
     val cancelProgress = recordingState?.cancelProgress?.coerceIn(0f, 1f) ?: 0f
     val latestDragOffsetX by rememberUpdatedState(dragOffsetX)
     val latestDragOffsetY by rememberUpdatedState(dragOffsetY)
+    val latestVoiceAction by rememberUpdatedState(onVoiceAction)
+    val latestMicBoundsChanged by rememberUpdatedState(onMicBoundsChanged)
+    val latestGestureOffsetChanged by rememberUpdatedState(onGestureOffsetChanged)
+    val lockTravelThresholdPx = with(LocalDensity.current) {
+        VoiceGestureConfig().lockThresholdDp.dp.toPx()
+    }
     var isReturning by remember { mutableStateOf(false) }
     var returnStartX by remember { mutableFloatStateOf(0f) }
     var returnStartY by remember { mutableFloatStateOf(0f) }
@@ -515,34 +680,58 @@ fun CanonicalMicButton(
     Box(
         modifier = modifier
             .size(MIC_TOUCH_TARGET_SIZE)
+            .onGloballyPositioned { latestMicBoundsChanged(it.boundsInRoot()) }
             .testTag("voice-recording-mic")
-            .pointerInput(Unit) {
+            .pointerInput(lockTravelThresholdPx) {
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     down.consume()
                     isReturning = false
-                    onVoiceAction(VoiceAction.StartRecording)
-                    var gestureActive = true
-                    while (gestureActive) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull { it.id == down.id }
-                        if (change == null || !change.pressed) {
-                            change?.consume()
+                    latestGestureOffsetChanged(0f)
+                    var gestureStarted = false
+                    var gestureFinished = false
+                    var gestureOffsetY = 0f
+                    try {
+                        latestVoiceAction(VoiceAction.StartRecording)
+                        gestureStarted = true
+                        var gestureActive = true
+                        while (gestureActive) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id }
+                            if (change == null || !change.pressed) {
+                                change?.consume()
+                                val returnXOffset = latestDragOffsetX
+                                val returnYOffset = latestDragOffsetY
+                                gestureFinished = true
+                                latestVoiceAction(VoiceAction.ReleaseRecording)
+                                if (returnXOffset != 0f || returnYOffset != 0f) {
+                                    returnStartX = returnXOffset
+                                    returnStartY = returnYOffset
+                                    isReturning = true
+                                }
+                                gestureActive = false
+                            } else {
+                                val posChange = change.positionChange()
+                                if (posChange.x != 0f || posChange.y != 0f) {
+                                    change.consume()
+                                    gestureOffsetY = (gestureOffsetY + posChange.y).coerceAtLeast(-lockTravelThresholdPx)
+                                    latestGestureOffsetChanged(gestureOffsetY)
+                                    latestVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
+                                }
+                            }
+                        }
+                    } finally {
+                        // Normal lift is handled above; cancellation must not strand a Pressing/Recording recorder.
+                        // The controller intentionally ignores this action after the gesture successfully locks.
+                        if (gestureStarted && !gestureFinished) {
                             val returnXOffset = latestDragOffsetX
                             val returnYOffset = latestDragOffsetY
-                            onVoiceAction(VoiceAction.ReleaseRecording)
                             if (returnXOffset != 0f || returnYOffset != 0f) {
                                 returnStartX = returnXOffset
                                 returnStartY = returnYOffset
                                 isReturning = true
                             }
-                            gestureActive = false
-                        } else {
-                            val posChange = change.positionChange()
-                            if (posChange.x != 0f || posChange.y != 0f) {
-                                change.consume()
-                                onVoiceAction(VoiceAction.Dragged(posChange.x, posChange.y))
-                            }
+                            latestVoiceAction(VoiceAction.PointerGestureInterrupted)
                         }
                     }
                 }
