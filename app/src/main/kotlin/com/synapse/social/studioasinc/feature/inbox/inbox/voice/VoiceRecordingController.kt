@@ -506,9 +506,9 @@ class VoiceRecordingController(
                 val targetAmp = (0.08f + 0.92f * dbNormalized).coerceIn(0.08f, 1f)
                 // Fast attack for immediate speech response, smooth release for natural fluid decay
                 smoothedAmplitude = if (targetAmp > smoothedAmplitude) {
-                    smoothedAmplitude * 0.35f + targetAmp * 0.65f
+                    smoothedAmplitude * 0.20f + targetAmp * 0.80f
                 } else {
-                    smoothedAmplitude * 0.85f + targetAmp * 0.15f
+                    smoothedAmplitude * 0.88f + targetAmp * 0.12f
                 }
 
                 _state.update { current ->

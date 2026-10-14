@@ -1,8 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 
-import android.graphics.RenderEffect as AndroidRenderEffect
 import android.graphics.RuntimeShader
-import android.graphics.Shader
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
@@ -20,49 +18,50 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlin.math.cos
 import kotlin.math.sin
 
 private object GlowColors {
-    val Cyan = Color(0xFF00E5FF)
-    val ElectricBlue = Color(0xFF2979FF)
-    val Violet = Color(0xFF7C4DFF)
-    val DeepPurple = Color(0xFF651FFF)
-    val CrestHighlight = Color(0xFFE0F7FA)
+    val Cyan = Color(0xFF00F2FE)
+    val ElectricBlue = Color(0xFF4FACFE)
+    val BrightViolet = Color(0xFF00C6FF)
+    val DeepPurple = Color(0xFF7000FF)
+    val CrestHighlight = Color(0xFFE0FFFF)
+    val SpecularRim = Color(0x80FFFFFF)
 }
 
 private object GlowDesign {
     const val MIN_AMPLITUDE = 0.08f
     const val MAX_AMPLITUDE = 1.0f
     const val TAU = 6.2831855f
-    const val FLUID_NODES = 24
+    const val FLUID_NODES = 28
 }
 
-/** Lightweight 1D spring-coupled fluid surface simulation */
+/** 1D spring-coupled fluid surface simulation with dramatic audio reactivity */
 internal class FluidSurfaceSimulation(private val nodeCount: Int = GlowDesign.FLUID_NODES) {
     val heights = FloatArray(nodeCount) { 0f }
     private val velocities = FloatArray(nodeCount) { 0f }
 
     fun update(dt: Float, audioEnergy: Float, phase: Float) {
-        val springK = 22f
-        val coupling = 14f
-        val damping = 0.86f
+        val springK = 8f
+        val coupling = 18f
+        val damping = 0.92f
 
-        // Audio energy injects impulses into the fluid surface
-        if (audioEnergy > 0.09f) {
-            val impulse = audioEnergy * 2.2f
-            val nodeIndex = ((nodeCount - 1) * (0.5f + 0.4f * sin(phase * 5f))).toInt().coerceIn(1, nodeCount - 2)
-            velocities[nodeIndex] += impulse
-            velocities[nodeIndex - 1] += impulse * 0.6f
-            velocities[nodeIndex + 1] += impulse * 0.6f
+        // Audio energy introduces energetic wave impulses across fluid surface
+        if (audioEnergy > 0.08f) {
+            val impulse = audioEnergy * 4.8f
+            val primaryNode = ((nodeCount - 1) * (0.5f + 0.38f * sin(phase * 4.2f))).toInt().coerceIn(2, nodeCount - 3)
+            velocities[primaryNode] += impulse
+            velocities[primaryNode - 1] += impulse * 0.75f
+            velocities[primaryNode + 1] += impulse * 0.75f
+            velocities[primaryNode - 2] += impulse * 0.40f
+            velocities[primaryNode + 2] += impulse * 0.40f
         }
 
-        // Fluid spring physics step
+        // Connected fluid boundary physics step
         for (i in 0 until nodeCount) {
             val left = if (i > 0) heights[i - 1] else heights[i]
             val right = if (i < nodeCount - 1) heights[i + 1] else heights[i]
@@ -72,7 +71,7 @@ internal class FluidSurfaceSimulation(private val nodeCount: Int = GlowDesign.FL
             val accel = springForce + couplingForce
 
             velocities[i] = (velocities[i] + accel * dt) * damping
-            heights[i] = (heights[i] + velocities[i] * dt).coerceIn(-0.35f, 0.35f)
+            heights[i] = (heights[i] + velocities[i] * dt).coerceIn(-0.65f, 0.65f)
         }
     }
 }
@@ -88,31 +87,31 @@ uniform float4 colorViolet;
 half4 main(in float2 fragCoord) {
     float2 uv = fragCoord / iResolution;
 
-    // Multi-frequency wave displacement
-    float w1 = sin(uv.x * 12.0 + iTime * 3.8) * 0.045 * iAmplitude;
-    float w2 = cos(uv.x * 22.0 - iTime * 2.5) * 0.022 * iAmplitude;
-    float w3 = sin(uv.x * 6.0 + iTime * 1.2) * 0.025; // Continuous subtle alive motion
+    // High-amplitude, multi-frequency wave displacement (up to 40% height variation)
+    float w1 = sin(uv.x * 8.0 + iTime * 4.5) * 0.16 * iAmplitude;
+    float w2 = cos(uv.x * 15.0 - iTime * 3.2) * 0.10 * iAmplitude;
+    float w3 = sin(uv.x * 4.0 + iTime * 2.0) * 0.04; // Alive baseline motion
 
-    float waveHeight = 0.74 - (w1 + w2 + w3 + iAmplitude * 0.16);
+    float waveHeight = 0.64 - (w1 + w2 + w3 + iAmplitude * 0.18);
 
     if (uv.y < waveHeight) {
-        // Soft translucent shine above wave surface
-        float shine = smoothstep(0.0, waveHeight, uv.y) * 0.05 * iAmplitude;
-        return half4(colorCyan.rgb, shine);
+        // Frosted liquid glass interior shine above wave crest
+        float glassShine = smoothstep(0.0, waveHeight, uv.y) * (0.08 + 0.06 * iAmplitude);
+        return half4(colorCyan.rgb, glassShine);
     }
 
-    // Liquid body fill with luminous cyan-blue-violet gradient
+    // Liquid body fill with vibrant cyan-blue-violet gradient
     float depth = (uv.y - waveHeight) / max(0.01, 1.0 - waveHeight);
-    float xPos = uv.x + sin(iTime * 0.7 + uv.y * 2.5) * 0.12;
+    float xPos = uv.x + sin(iTime * 0.9 + uv.y * 3.0) * 0.18;
 
-    float3 col = mix(colorCyan.rgb, colorBlue.rgb, clamp(xPos * 1.1, 0.0, 1.0));
-    col = mix(col, colorViolet.rgb, clamp(depth * 1.2, 0.0, 1.0));
+    float3 col = mix(colorCyan.rgb, colorBlue.rgb, clamp(xPos * 1.2, 0.0, 1.0));
+    col = mix(col, colorViolet.rgb, clamp(depth * 1.3, 0.0, 1.0));
 
-    // Luminous crest highlight along liquid boundary
-    float crest = smoothstep(0.035, 0.0, abs(uv.y - waveHeight));
-    col += float3(0.55, 0.92, 1.0) * crest * (0.65 + 0.35 * iAmplitude);
+    // Intense luminous crest highlight along wave boundary
+    float crest = smoothstep(0.05, 0.0, abs(uv.y - waveHeight));
+    col += float3(0.60, 0.95, 1.0) * crest * (0.85 + 0.40 * iAmplitude);
 
-    float alpha = clamp(0.78 + 0.22 * iAmplitude, 0.0, 1.0);
+    float alpha = clamp(0.82 + 0.18 * iAmplitude, 0.0, 1.0);
     return half4(col, alpha);
 }
 """
@@ -125,7 +124,7 @@ private class LiquidShaderHolder {
     init {
         runtimeShader.setFloatUniform("colorCyan", GlowColors.Cyan.red, GlowColors.Cyan.green, GlowColors.Cyan.blue, GlowColors.Cyan.alpha)
         runtimeShader.setFloatUniform("colorBlue", GlowColors.ElectricBlue.red, GlowColors.ElectricBlue.green, GlowColors.ElectricBlue.blue, GlowColors.ElectricBlue.alpha)
-        runtimeShader.setFloatUniform("colorViolet", GlowColors.Violet.red, GlowColors.Violet.green, GlowColors.Violet.blue, GlowColors.Violet.alpha)
+        runtimeShader.setFloatUniform("colorViolet", GlowColors.DeepPurple.red, GlowColors.DeepPurple.green, GlowColors.DeepPurple.blue, GlowColors.DeepPurple.alpha)
     }
 
     fun updateUniforms(width: Float, height: Float, timeSeconds: Float, amplitude: Float) {
@@ -160,7 +159,7 @@ internal fun rememberVoiceGlowPhase(amplitude: Float, active: Boolean, reducedMo
             val frameNanos = withFrameNanos { it }
             if (previousFrameNanos != 0L) {
                 val elapsedSeconds = ((frameNanos - previousFrameNanos) / 1_000_000_000f).coerceIn(0f, 0.05f)
-                val speed = 0.25f + 0.75f * latestAmplitude
+                val speed = 0.35f + 1.15f * latestAmplitude
                 phase += elapsedSeconds * speed
                 if (phase >= 1000f) phase -= 1000f
             }
@@ -175,7 +174,7 @@ internal fun rememberVoiceGlowIntensity(target: Float, reducedMotion: Boolean, l
     if (reducedMotion) return target
     val intensity by animateFloatAsState(
         targetValue = target,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 320f),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 450f),
         label = label
     )
     return intensity
@@ -205,7 +204,7 @@ fun VoiceRecordingGlowSurface(
 ) {
     val active = voiceState.isGlowActive()
     val reducedMotion = reducedMotionOverride
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
+    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
     val shape = RoundedCornerShape(Sizes.CornerMassive)
     val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
     val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")
@@ -234,19 +233,7 @@ fun VoiceRecordingGlowSurface(
         }
     }
 
-    val glassModifier = modifier
-        .clip(shape)
-        .then(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Modifier.graphicsLayer {
-                    renderEffect = AndroidRenderEffect.createBlurEffect(
-                        16f, 16f, Shader.TileMode.CLAMP
-                    ).asComposeRenderEffect()
-                }
-            } else Modifier
-        )
-
-    Box(modifier = glassModifier) {
+    Box(modifier = modifier.clip(shape)) {
         Canvas(Modifier.matchParentSize()) {
             val width = size.width
             val height = size.height
@@ -272,23 +259,23 @@ fun VoiceRecordingGlowSurface(
                     alpha = activeAlpha
                 )
             } else {
-                // Canvas Path Fallback (API 26..32)
+                // Canvas Path Fallback (API 26..32) with dramatic 40% wave displacement
                 val nodes = GlowDesign.FLUID_NODES
                 val stepX = width / (nodes - 1)
-                val baseWaveY = height * (0.76f - 0.14f * intensity)
+                val baseWaveY = height * (0.65f - 0.20f * intensity)
 
                 liquidPath.reset()
                 crestPath.reset()
 
-                val startY = (baseWaveY + fluidSim.heights[0] * height * 0.3f).coerceIn(0f, height)
+                val startY = (baseWaveY + fluidSim.heights[0] * height * 0.5f).coerceIn(0f, height)
                 liquidPath.moveTo(0f, startY)
                 crestPath.moveTo(0f, startY)
 
                 for (i in 0 until nodes - 1) {
                     val x1 = i * stepX
-                    val y1 = (baseWaveY + fluidSim.heights[i] * height * 0.3f).coerceIn(0f, height)
+                    val y1 = (baseWaveY + fluidSim.heights[i] * height * 0.5f).coerceIn(0f, height)
                     val x2 = (i + 1) * stepX
-                    val y2 = (baseWaveY + fluidSim.heights[i + 1] * height * 0.3f).coerceIn(0f, height)
+                    val y2 = (baseWaveY + fluidSim.heights[i + 1] * height * 0.5f).coerceIn(0f, height)
 
                     val cx = (x1 + x2) / 2f
                     val cy = (y1 + y2) / 2f
@@ -297,7 +284,7 @@ fun VoiceRecordingGlowSurface(
                     crestPath.quadraticTo(x1, y1, cx, cy)
                 }
 
-                val lastY = (baseWaveY + fluidSim.heights[nodes - 1] * height * 0.3f).coerceIn(0f, height)
+                val lastY = (baseWaveY + fluidSim.heights[nodes - 1] * height * 0.5f).coerceIn(0f, height)
                 liquidPath.lineTo(width, lastY)
                 crestPath.lineTo(width, lastY)
 
@@ -311,12 +298,12 @@ fun VoiceRecordingGlowSurface(
                     path = liquidPath,
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            GlowColors.Cyan.copy(alpha = 0.90f * activeAlpha),
-                            GlowColors.ElectricBlue.copy(alpha = 0.85f * activeAlpha),
-                            GlowColors.Violet.copy(alpha = 0.80f * activeAlpha),
-                            GlowColors.DeepPurple.copy(alpha = 0.90f * activeAlpha)
+                            GlowColors.Cyan.copy(alpha = 0.95f * activeAlpha),
+                            GlowColors.ElectricBlue.copy(alpha = 0.90f * activeAlpha),
+                            GlowColors.BrightViolet.copy(alpha = 0.85f * activeAlpha),
+                            GlowColors.DeepPurple.copy(alpha = 0.95f * activeAlpha)
                         ),
-                        startY = height * 0.5f,
+                        startY = height * 0.35f,
                         endY = height
                     )
                 )
@@ -329,22 +316,22 @@ fun VoiceRecordingGlowSurface(
                             GlowColors.Cyan,
                             GlowColors.CrestHighlight,
                             GlowColors.ElectricBlue,
-                            GlowColors.Violet
+                            GlowColors.BrightViolet
                         )
                     ),
-                    style = Stroke(width = 2.5.dp.toPx())
+                    style = Stroke(width = 3.5.dp.toPx())
                 )
             }
 
-            // Glass Specular Rim Border
-            val borderAlpha = activeAlpha * (0.25f + intensity * 0.20f)
-            val strokePx = 1.5.dp.toPx()
+            // Glass Specular Rim Border & Refraction Highlight
+            val borderAlpha = activeAlpha * (0.35f + intensity * 0.25f)
+            val strokePx = 1.8.dp.toPx()
             drawRoundRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = borderAlpha * 1.2f),
+                        GlowColors.SpecularRim.copy(alpha = borderAlpha * 1.5f),
                         GlowColors.Cyan.copy(alpha = borderAlpha),
-                        GlowColors.Violet.copy(alpha = borderAlpha * 0.8f)
+                        GlowColors.DeepPurple.copy(alpha = borderAlpha * 0.9f)
                     )
                 ),
                 topLeft = Offset(strokePx / 2f, strokePx / 2f),
@@ -374,12 +361,12 @@ fun VoiceRecordingAmbientGlow(
         if (width <= 0f || height <= 0f) return@Canvas
 
         val angle = phase * GlowDesign.TAU
-        val radius = maxOf(width * 0.65f, height * 0.95f)
-        val alpha = 0.12f + 0.18f * amplitude.coerceIn(0f, 1f)
+        val radius = maxOf(width * 0.70f, height * 1.05f)
+        val alpha = 0.15f + 0.25f * amplitude.coerceIn(0f, 1f)
 
-        val leftCenter = Offset(width * (0.28f + 0.05f * sin(angle)), height * 0.85f)
-        val rightCenter = Offset(width * (0.72f - 0.05f * cos(angle * 0.8f)), height * 0.85f)
-        val center = Offset(width * 0.5f, height * 0.92f)
+        val leftCenter = Offset(width * (0.28f + 0.08f * sin(angle)), height * 0.82f)
+        val rightCenter = Offset(width * (0.72f - 0.08f * cos(angle * 0.8f)), height * 0.82f)
+        val center = Offset(width * 0.5f, height * 0.90f)
 
         drawCircle(
             brush = Brush.radialGradient(
@@ -392,7 +379,7 @@ fun VoiceRecordingAmbientGlow(
         )
         drawCircle(
             brush = Brush.radialGradient(
-                listOf(GlowColors.Violet.copy(alpha = alpha * 0.85f), GlowColors.ElectricBlue.copy(alpha = alpha * 0.40f), Color.Transparent),
+                listOf(GlowColors.BrightViolet.copy(alpha = alpha * 0.85f), GlowColors.ElectricBlue.copy(alpha = alpha * 0.40f), Color.Transparent),
                 center = rightCenter,
                 radius = radius
             ),
@@ -401,12 +388,12 @@ fun VoiceRecordingAmbientGlow(
         )
         drawCircle(
             brush = Brush.radialGradient(
-                listOf(GlowColors.ElectricBlue.copy(alpha = alpha * 0.6f), Color.Transparent),
+                listOf(GlowColors.ElectricBlue.copy(alpha = alpha * 0.65f), Color.Transparent),
                 center = center,
-                radius = radius * 0.75f
+                radius = radius * 0.80f
             ),
             center = center,
-            radius = radius * 0.75f
+            radius = radius * 0.80f
         )
     }
 }
