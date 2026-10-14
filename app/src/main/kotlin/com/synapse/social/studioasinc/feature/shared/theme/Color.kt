@@ -2,11 +2,6 @@ package com.synapse.social.studioasinc.feature.shared.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Synapse Blue Brand Palette
-val SynapseBlue = Color(0xFF1976D2)
-val SynapseDarkBlue = Color(0xFF00497D)
-val SynapseLightBlue = Color(0xFFBBDEFB)
-
 // Light Theme Scheme (Synapse Blue M3 Expressive)
 val LightPrimary = Color(0xFF0061A4)
 val LightOnPrimary = Color(0xFFFFFFFF)
@@ -43,6 +38,11 @@ val LightSurfaceContainerLow = Color(0xFFF2F3FA)
 val LightSurfaceContainer = Color(0xFFECEEF6)
 val LightSurfaceContainerHigh = Color(0xFFE6E8F0)
 val LightSurfaceContainerHighest = Color(0xFFE0E2EC)
+
+// Synapse Blue Brand Palette (Harmonized with M3 Primary Tones)
+val SynapseBlue = LightPrimary
+val SynapseDarkBlue = Color(0xFF00497D)
+val SynapseLightBlue = Color(0xFFBBDEFB)
 
 // Dark Theme Scheme (Synapse Blue M3 Expressive)
 val DarkPrimary = Color(0xFF9ECAFF)
@@ -140,9 +140,9 @@ val InteractionIconDefault = Color(0xFF657786)
 val InteractionLikeActive = Color(0xFFE0245E)
 val InteractionRepostActive = Color(0xFF17BF63)
 
-// Accent & Content Accents
+// Accent & Content Accents (Harmonized with M3 Brand Roles)
 val AccentOrange = Color(0xFFD97706)
-val AccentBlue = Color(0xFF1976D2)
+val AccentBlue = LightPrimary
 val AccentYellow = Color(0xFFCA8A04)
 
 // Neutral Grays
@@ -171,7 +171,7 @@ val ShimmerBase = Color(0xFFE0E0E0)
 val ShimmerHighlight = Color(0xFFF5F5F5)
 
 /**
- * Safely parses a hex color string (e.g. "#1976D2") and returns a fallback Color if parsing fails or input is null.
+ * Safely parses a hex color string (e.g. "#0061A4") and returns a fallback Color if parsing fails or input is null.
  */
 fun safeParseColorHex(hex: String?, fallback: Color): Color {
     if (hex.isNullOrBlank()) return fallback

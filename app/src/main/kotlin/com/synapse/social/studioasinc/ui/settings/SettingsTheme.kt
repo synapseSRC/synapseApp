@@ -24,98 +24,67 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
-
-
-
-
-
 object SettingsColors {
-
 
     val categoryIconTint: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.primary
 
-
-
     val categoryBackground: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.primaryContainer
-
-
-
 
     val sectionTitle: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.primary
 
-
-
     val cardBackground: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.surfaceContainerLow
-
-
 
     val screenBackground: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.background
 
-
-
     val cardBackgroundElevated: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.surfaceContainerHigh
-
-
 
     val destructiveButton: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.errorContainer
 
-
-
     val destructiveText: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.onErrorContainer
-
-
 
     val toggleActive: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.primary
 
-
-
     val toggleTrack: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.surfaceVariant
 
-
-
     val chevronIcon: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-
-
+        get() = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
 
     val divider: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.outlineVariant
-
-
 
     val itemIcon: Color
         @Composable
@@ -128,24 +97,17 @@ object SettingsColors {
         get() = MaterialTheme.colorScheme.surfaceContainerHigh
 }
 
-
-
 object SettingsShapes {
-
 
     val cardShape: Shape
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.large
 
-
-
     val sectionShape: Shape
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.large
-
-
 
     val itemShape: Shape
         @Composable
@@ -157,14 +119,10 @@ object SettingsShapes {
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.medium
 
-
-
     val inputShape: Shape
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.medium
-
-
 
     val chipShape: Shape
         @Composable
@@ -195,108 +153,68 @@ object SettingsShapes {
     }
 }
 
-
-
 object SettingsSpacing {
-
 
     val screenPadding: Dp = Spacing.Medium
 
-
-
     val sectionSpacing: Dp = Spacing.SmallMedium
-
-
 
     val itemSpacing: Dp = Spacing.ExtraSmall
 
-
-
     val itemPadding: PaddingValues = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium)
-
-
 
     val itemHorizontalPadding: Dp = Spacing.Medium
 
-
-
     val itemVerticalPadding: Dp = Spacing.SmallMedium
-
-
 
     val iconSize: Dp = Spacing.Large
 
-
-
     val avatarSize: Dp = Sizes.AvatarSemiLarge
-
-
 
     val profileHeaderPadding: Dp = Spacing.Medium
 
-
-
     val iconTextSpacing: Dp = Spacing.Medium
-
-
 
     val minTouchTarget: Dp = Spacing.Huge
 }
 
-
-
 object SettingsTypography {
-
 
     val screenTitle: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.headlineMedium
 
-
-
     val sectionHeader: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.titleMedium
-
-
 
     val itemTitle: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
 
-
-
     val itemSubtitle: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.bodyMedium
-
-
 
     val profileName: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.titleLarge
 
-
-
     val profileEmail: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.bodyMedium
-
-
 
     val buttonText: TextStyle
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.labelLarge
 }
-
-
 
 enum class SettingsItemPosition {
 
@@ -307,8 +225,6 @@ enum class SettingsItemPosition {
     Middle,
 
     Bottom;
-
-
 
     @Composable
     fun getShape(): Shape = when (this) {

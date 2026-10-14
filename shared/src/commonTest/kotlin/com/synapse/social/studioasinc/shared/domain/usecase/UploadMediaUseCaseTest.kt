@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.shared.domain.usecase
 import com.synapse.social.studioasinc.shared.domain.model.MediaType
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
+import com.synapse.social.studioasinc.shared.domain.model.UploadResult
 import com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository
@@ -49,12 +50,14 @@ class UploadMediaUseCaseTest {
             config: StorageConfig,
             bucketName: String?,
             onProgress: (Float) -> Unit
-        ): Result<com.synapse.social.studioasinc.shared.domain.model.UploadResult> {
+        ): Result<UploadResult> {
             attemptedProviders.add(provider)
             attemptedBuckets.add(bucketName)
-            return uploadHandler(filePath, provider, bucketName).map { url ->
-                com.synapse.social.studioasinc.shared.domain.model.UploadResult(url = url)
-            }
+            val res: Result<String> = uploadHandler(filePath, provider, bucketName)
+            return res.fold(
+                onSuccess = { url -> Result.success(UploadResult(url = url)) },
+                onFailure = { err -> Result.failure(err) }
+            )
         }
 
         override fun deleteFile(filePath: String) {}
@@ -274,7 +277,8 @@ class UploadMediaUseCaseTest {
         val result = useCase(filePath = "test.jpg", mediaType = MediaType.PHOTO, onProgress = {})
 
         assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is IllegalStateException)
+        val exc = result.exceptionOrNull()
+        assertTrue(exc is IllegalStateException)
         assertTrue(uploadRepo.attemptedProviders.isEmpty())
     }
 }

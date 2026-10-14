@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.shared.theme
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SynapseThemeTest {
@@ -11,6 +12,8 @@ class SynapseThemeTest {
     fun testBrandPrimaryIsBlueBased() {
         assertEquals(Color(0xFF0061A4), LightPrimary)
         assertEquals(Color(0xFF9ECAFF), DarkPrimary)
+        assertEquals(LightPrimary, SynapseBlue)
+        assertEquals(LightPrimary, AccentBlue)
 
         assertNotEquals(Color(0xFF6750A4), LightPrimary)
         assertNotEquals(Color(0xFFD0BCFF), DarkPrimary)
@@ -29,6 +32,16 @@ class SynapseThemeTest {
         assertEquals(Color(0xFF1D2024), DarkSurfaceContainer)
         assertEquals(Color(0xFF282A2F), DarkSurfaceContainerHigh)
         assertEquals(Color(0xFF33353A), DarkSurfaceContainerHighest)
+    }
+
+    @Test
+    fun testDomainSemanticColorsAreDefined() {
+        assertEquals(Color(0xFF1B6D33), LightSuccess)
+        assertEquals(Color(0xFF8CDB96), DarkSuccess)
+        assertEquals(Color(0xFF7D5300), LightWarning)
+        assertEquals(Color(0xFFFBB849), DarkWarning)
+        assertEquals(Color(0xFF2E7D32), StatusOnline)
+        assertEquals(Color(0xFF757575), StatusOffline)
     }
 
     @Test

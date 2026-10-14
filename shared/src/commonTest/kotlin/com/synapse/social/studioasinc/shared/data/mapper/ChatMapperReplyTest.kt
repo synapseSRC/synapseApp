@@ -22,4 +22,3 @@ class ChatMapperReplyTest {
         assertEquals("original-message-id", restored.replyToId)
     }
 }
-return 

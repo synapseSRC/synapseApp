@@ -140,5 +140,7 @@ private fun createDummyChatRepository(): ChatRepository {
         override fun subscribeToMessageReactions(chatId: String): Flow<MessageReaction> = emptyFlow()
         override suspend fun setDisappearingMode(chatId: String, mode: DisappearingMode): Result<Unit> = Result.success(Unit)
         override suspend fun getDisappearingMode(chatId: String): Result<DisappearingMode> = Result.success(DisappearingMode.OFF)
+        override suspend fun voteInPoll(messageId: String, optionId: String, pollId: String): Result<Unit> = Result.success(Unit)
+        override suspend fun markViewOnceConsumed(messageId: String): Result<Unit> = Result.success(Unit)
     }
 }
