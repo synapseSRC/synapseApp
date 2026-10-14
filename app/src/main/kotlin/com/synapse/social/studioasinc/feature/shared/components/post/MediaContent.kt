@@ -245,6 +245,7 @@ fun MediaGridItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     AsyncImage(
         model = coil3.request.ImageRequest.Builder(context)
             .data(url)
