@@ -4,9 +4,14 @@ import android.graphics.Paint as PlatformPaint
 import android.graphics.Path as PlatformPath
 import android.graphics.RuntimeShader
 import android.os.Build
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +66,8 @@ private const val VOICE_LIQUID_AGSL = """
 private object GlowDesign {
     const val MIN_AMPLITUDE = 0.08f
     const val MAX_AMPLITUDE = 1f
+    const val PHASE_CENTER = 0.5f
+    const val SHIMMER_DURATION_MILLIS = 2_600
     const val WAVE_NODE_COUNT = 44
     const val MIN_ACTIVE_LIFT = 0.055f
     const val MAX_ACTIVE_LIFT = 0.34f
@@ -144,6 +151,22 @@ internal class VoiceLiquidWaveSimulation(
  * Audio-reactive liquid recording pill with an independently clipped backdrop-glass layer.
  * The backdrop is blurred below this Canvas; timer, hint, and action controls are drawn by the host above it.
  */
+@Composable
+internal fun rememberVoiceShimmerPhase(reducedMotion: Boolean, label: String): Float {
+    if (reducedMotion) return GlowDesign.PHASE_CENTER
+    val transition = rememberInfiniteTransition(label = label)
+    val phase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = GlowDesign.SHIMMER_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "voiceCancelShimmerPhase"
+    )
+    return phase
+}
+
 @Composable
 fun VoiceRecordingGlowSurface(
     voiceState: VoiceState,
