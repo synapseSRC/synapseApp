@@ -4,11 +4,11 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.text.Spanned
 import android.widget.TextView
-import coil.ImageLoader
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.Disposable
-import coil.target.Target
+import coil3.ImageLoader
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.Disposable
+import coil3.target.Target
 import io.noties.markwon.AbstractMarkwonPlugin
 import io.noties.markwon.MarkwonConfiguration
 import io.noties.markwon.MarkwonSpansFactory

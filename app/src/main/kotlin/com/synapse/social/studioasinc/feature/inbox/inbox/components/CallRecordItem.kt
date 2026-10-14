@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.CallDirection
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.CallRecord
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.CallType

@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.Log
 import android.widget.ImageView
-import coil.imageLoader
-import coil.load
-import coil.request.ImageRequest
-import coil.request.Disposable
+import coil3.imageLoader
+import coil3.load
+import coil3.request.ImageRequest
+import coil3.request.Disposable
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import io.github.jan.supabase.auth.auth

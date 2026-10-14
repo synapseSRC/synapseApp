@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import com.synapse.social.studioasinc.core.util.ImageLoader
 import com.synapse.social.studioasinc.R

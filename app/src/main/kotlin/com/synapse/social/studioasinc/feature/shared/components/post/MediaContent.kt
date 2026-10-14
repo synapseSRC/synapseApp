@@ -23,8 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.CachePolicy
+import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
 import com.synapse.social.studioasinc.core.ui.util.AmbientColorExtractor
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -72,7 +72,7 @@ fun MediaContent(
                 .clickable { onMediaClick(0) }
         ) {
             AsyncImage(
-                model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                     .data(url)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
@@ -125,7 +125,7 @@ fun MediaContent(
                         .padding(vertical = Spacing.Small)
                 ) {
                     AsyncImage(
-                        model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                        model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                             .data(mediaUrls[page])
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
@@ -244,7 +244,7 @@ fun MediaGridItem(
     onClick: () -> Unit
 ) {
     AsyncImage(
-        model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+        model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
             .data(url)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)

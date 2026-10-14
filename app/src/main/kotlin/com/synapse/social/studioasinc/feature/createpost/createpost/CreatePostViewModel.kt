@@ -25,7 +25,7 @@ import com.synapse.social.studioasinc.domain.usecase.search.SearchLocationsUseCa
 import com.synapse.social.studioasinc.domain.usecase.search.SearchFeelingsUseCase
 import com.synapse.social.studioasinc.domain.repository.ScheduledPostRepository
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager

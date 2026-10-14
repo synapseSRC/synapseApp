@@ -14,7 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataCo
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.serialization.json.Json
 
 class SqlDelightCachedMessageDao(

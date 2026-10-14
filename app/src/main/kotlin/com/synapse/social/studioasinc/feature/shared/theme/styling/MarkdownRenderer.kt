@@ -32,7 +32,7 @@ import com.synapse.social.studioasinc.core.util.CoilImagesPlugin
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import io.noties.markwon.linkify.LinkifyPlugin
 import io.noties.markwon.LinkResolver
-import coil.imageLoader
+import coil3.imageLoader
 
 class MarkdownRenderer private constructor(private val markwon: Markwon) {
 

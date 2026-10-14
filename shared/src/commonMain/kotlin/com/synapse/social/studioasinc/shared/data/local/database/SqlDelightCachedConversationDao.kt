@@ -1,13 +1,12 @@
 package com.synapse.social.studioasinc.shared.data.local.database
-import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.data.database.CachedConversation
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import kotlinx.coroutines.Dispatchers
-
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 class SqlDelightCachedConversationDao(
     private val db: StorageDatabase
@@ -26,9 +25,10 @@ class SqlDelightCachedConversationDao(
         db.cachedConversationQueries.selectAll().executeAsList().map { toDomainConversation(it) }
     }
 
-        override suspend fun deleteByChatId(chatId: String) {
+    override suspend fun deleteByChatId(chatId: String) {
         withContext(AppDispatchers.IO) { db.cachedConversationQueries.deleteConversation(chatId) }
     }
+
     override suspend fun deleteAll() {
         withContext(AppDispatchers.IO) {
             db.cachedConversationQueries.deleteAll()

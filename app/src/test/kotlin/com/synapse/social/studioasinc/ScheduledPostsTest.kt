@@ -6,7 +6,7 @@ import com.synapse.social.studioasinc.data.repository.toDomain
 import com.synapse.social.studioasinc.data.repository.toDto
 import com.synapse.social.studioasinc.domain.model.CreatePostRequest
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import org.junit.Test
 import org.junit.Assert.assertEquals

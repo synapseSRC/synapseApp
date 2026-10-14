@@ -19,9 +19,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.decode.SvgDecoder
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.svg.SvgDecoder
+import coil3.request.ImageRequest
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.GroupPosition
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.MessageBubble
@@ -34,7 +34,7 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatListLayou
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 private const val MAX_BLUR_RADIUS = 50f
 

@@ -6,9 +6,9 @@ import android.graphics.drawable.BitmapDrawable
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import coil.ImageLoader
-import coil.ImageLoaderFactory
-import coil.decode.VideoFrameDecoder
+import coil3.ImageLoader
+import coil3.ImageLoaderFactory
+import coil3.video.VideoFrameDecoder
 import dagger.hilt.android.HiltAndroidApp
 import com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService
 import com.synapse.social.studioasinc.data.remote.services.AuthDevelopmentUtils
@@ -73,9 +73,11 @@ class SynapseApplication : Application(), ImageLoaderFactory {
             .build()
 
         return ImageLoader.Builder(this)
-            .okHttpClient(okHttpClient)
+            .components {
+                add(coil3.network.okhttp.OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
+                add(VideoFrameDecoder.Factory())
+            }
             .placeholder(placeholder)
-            .components { add(VideoFrameDecoder.Factory()) }
             .build()
     }
 

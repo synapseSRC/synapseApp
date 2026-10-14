@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.shared.util
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -12,7 +12,7 @@ object TimestampFormatter {
         return try {
             val instant = Instant.parse(timestamp)
             val now = Clock.System.now()
-            val diff = now.minus(instant).inWholeSeconds
+            val diff = now.epochSeconds - instant.epochSeconds
             
             when {
                 diff < 60 -> "Just now"

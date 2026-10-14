@@ -57,7 +57,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.AutoDownloadManager
 import com.synapse.social.studioasinc.core.util.DownloadManager
@@ -644,7 +644,7 @@ fun MessageBubble(
                                         }
                                         message.messageType == MessageType.IMAGE -> {
                                             AsyncImage(
-                                                model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                                model = coil3.request.ImageRequest.Builder(LocalContext.current)
                                                     .data(message.mediaUrl)
                                                     .crossfade(true)
                                                     .build(),

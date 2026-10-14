@@ -33,7 +33,7 @@ if (parsedSentryAgentTraceSampleRate < 0.0 || parsedSentryAgentTraceSampleRate >
 
 android {
     namespace = "com.synapse.social.studioasinc"
-    compileSdk 36
+    compileSdk 37
     buildToolsVersion = "36.0.0"
 
     signingConfigs {
@@ -187,7 +187,8 @@ android {
 configurations.all {
     exclude group: 'com.google.protobuf', module: 'protobuf-java'
     resolutionStrategy {
-        force 'org.jetbrains.kotlinx:kotlinx-datetime:0.6.1'
+        force 'org.jetbrains.kotlinx:kotlinx-datetime:0.7.1'
+        force 'com.squareup.okhttp3:okhttp:5.3.2'
     }
 }
 
@@ -200,12 +201,12 @@ dependencies {
     implementation "com.russhwolf:multiplatform-settings:1.3.0"
 
     // Jetpack Compose
-    def composeBom = platform('androidx.compose:compose-bom:2026.03.01')
+    def composeBom = platform('androidx.compose:compose-bom:2026.09.00')
     implementation composeBom
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.graphics:graphics-shapes:1.0.1'
-    implementation 'androidx.compose.material3:material3:1.5.0-alpha16'
+    implementation 'androidx.compose.material3:material3:1.5.0-beta01'
     implementation 'androidx.compose.material:material-icons-extended'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.activity:activity-compose:1.13.0'
@@ -216,56 +217,53 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
     // ZXing for QR code generation
-    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.google.zxing:core:3.5.4'
 
-    // Coil for Compose image loading
-    implementation 'io.coil-kt:coil-compose:2.7.0'
-    implementation 'io.coil-kt:coil-svg:2.7.0'
-    implementation 'io.coil-kt:coil-video:2.7.0'
-    implementation 'io.coil-kt:coil:2.7.0'
+    // Coil 3 for Compose image loading
+    implementation 'io.coil-kt.coil3:coil-compose:3.6.3'
+    implementation 'io.coil-kt.coil3:coil-svg:3.6.3'
+    implementation 'io.coil-kt.coil3:coil-video:3.6.3'
+    implementation 'io.coil-kt.coil3:coil-network-okhttp:3.6.3'
+    implementation 'io.coil-kt.coil3:coil:3.6.3'
 
     // Accompanist for system UI controller
     implementation 'com.google.accompanist:accompanist-systemuicontroller:0.36.0'
     implementation 'com.google.accompanist:accompanist-swiperefresh:0.36.0'
 
     // Hilt for dependency injection
-    implementation 'com.google.dagger:hilt-android:2.59.2'
-    ksp 'com.google.dagger:hilt-compiler:2.59.2'
+    implementation 'com.google.dagger:hilt-android:2.60.1'
+    ksp 'com.google.dagger:hilt-compiler:2.60.1'
     implementation 'androidx.hilt:hilt-navigation-compose:1.3.0'
 
-    // Supabase BOM and dependencies (3.x uses auth-kt instead of gotrue-kt and requires Ktor 3.x)
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.4.1"))
+    // Supabase BOM and dependencies
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.8.0"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:realtime-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:functions-kt")
-    // Note: ktor-client-android removed — it doesn't support WebSockets.
-    // OkHttp engine handles both HTTP and WebSocket on Android.
-    implementation("io.ktor:ktor-client-okhttp:3.4.2")
+    implementation("io.ktor:ktor-client-okhttp:3.6.0")
 
     // Serialization for Supabase
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-    implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+    implementation("io.ktor:ktor-client-content-negotiation:3.6.0")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.0")
 
     // Firebase Vertex AI for Gemini
-    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+    implementation(platform("com.google.firebase:firebase-bom:35.0.0"))
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-vertexai:16.0.0")
     implementation("com.google.genai:google-genai:1.29.0")
 
     // SQLDelight Driver
-    implementation "app.cash.sqldelight:android-driver:2.3.2"
-    implementation "app.cash.sqldelight:coroutines-extensions:2.3.2"
-
-
+    implementation "app.cash.sqldelight:android-driver:2.4.0"
+    implementation "app.cash.sqldelight:coroutines-extensions:2.4.0"
 
     // Biometric authentication
     implementation 'androidx.biometric:biometric:1.1.0'
-    implementation "androidx.credentials:credentials:1.5.0"
-    implementation "androidx.credentials:credentials-play-services-auth:1.5.0"
+    implementation "androidx.credentials:credentials:1.6.0"
+    implementation "androidx.credentials:credentials-play-services-auth:1.6.0"
     
     // Google Sign-In with Credential Manager
     implementation 'com.google.android.gms:play-services-auth:21.5.1'
@@ -274,17 +272,17 @@ dependencies {
     // AndroidX Core & UI Components
     implementation 'androidx.palette:palette-ktx:1.0.0'
     implementation 'androidx.core:core-splashscreen:1.2.0'
-    implementation 'androidx.core:core-ktx:1.18.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.core:core-ktx:1.19.1'
+    implementation 'androidx.appcompat:appcompat:1.8.0'
     implementation 'androidx.activity:activity-ktx:1.13.0'
-    implementation 'androidx.fragment:fragment-ktx:1.8.9'
+    implementation 'androidx.fragment:fragment-ktx:1.9.1'
     implementation 'com.google.android.material:material:1.14.0-alpha10'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.2.0'
 
     // Common UI components
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
     implementation 'androidx.viewpager2:viewpager2:1.1.0'
 
     // Image zoom functionality
@@ -294,17 +292,17 @@ dependencies {
     implementation 'com.vanniktech:android-image-cropper:4.7.0'
 
     // AndroidX Architecture Components
-    implementation 'androidx.lifecycle:lifecycle-process:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.11.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.11.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.11.0'
     // Navigation Component 2.x
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.7'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.9.7'
-    implementation 'androidx.navigation:navigation-compose:2.9.7'
-    implementation 'androidx.work:work-runtime-ktx:2.11.2'
-    implementation 'androidx.paging:paging-runtime-ktx:3.4.2'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.10.2'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.10.2'
+    implementation 'androidx.navigation:navigation-compose:2.10.2'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
+    implementation 'androidx.paging:paging-runtime-ktx:3.5.3'
     implementation 'androidx.preference:preference-ktx:1.2.1'
 
     // DataStore for preferences
@@ -313,16 +311,13 @@ dependencies {
     // EncryptedSharedPreferences
     implementation 'androidx.security:security-crypto:1.1.0-beta01'
 
-    // Paging Compose - Added explicitly as per reviewer
-    implementation "androidx.paging:paging-compose:3.4.2"
+    // Paging Compose
+    implementation "androidx.paging:paging-compose:3.5.3"
 
     // Media3 for Video
-    implementation "androidx.media3:media3-exoplayer:1.10.0"
-    implementation "androidx.media3:media3-ui:1.10.0"
-    implementation "androidx.media3:media3-common:1.10.0"
-
-    // Google Play services - Removed as not needed with Supabase
-    // implementation 'com.google.android.gms:play-services-auth:21.5.1'
+    implementation "androidx.media3:media3-exoplayer:1.11.1"
+    implementation "androidx.media3:media3-ui:1.11.1"
+    implementation "androidx.media3:media3-common:1.11.1"
 
     // Networking
     implementation 'com.squareup.okhttp3:okhttp:5.3.2'
@@ -331,17 +326,12 @@ dependencies {
     // UI Components (Non-AndroidX)
     implementation 'com.onesignal:OneSignal:5.7.1'
 
-    // Local AARs
-
     // Security Crypto
     implementation "androidx.security:security-crypto:1.1.0-beta01"
 
     // Kotlin coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2'
-
-    // Desugaring for Java 8+ APIs
-    // coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.11.0'
 
     // Sentry error monitoring and tracing
     implementation 'io.sentry:sentry-android:8.60.0'
@@ -350,7 +340,7 @@ dependencies {
     implementation("io.github.aakira:napier:2.7.1")
 
     // Misc / helpers
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.3.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.4.21"
     implementation 'androidx.browser:browser:1.10.0'
 
     // Markdown (Markwon + GFM)
@@ -366,7 +356,7 @@ dependencies {
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.12'
 
     // CameraX
-    def camerax_version = "1.4.0"
+    def camerax_version = "1.6.2"
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
@@ -381,19 +371,16 @@ dependencies {
     testImplementation 'androidx.compose.ui:ui-test'
     testImplementation 'androidx.compose.ui:ui-test-junit4'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.mockito:mockito-core:5.18.0'
+    testImplementation 'org.mockito:mockito-core:5.24.0'
     testImplementation 'org.mockito.kotlin:mockito-kotlin:5.4.0'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0'
-    testImplementation 'org.robolectric:robolectric:4.15.1'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0'
+    testImplementation 'org.robolectric:robolectric:4.17'
     testImplementation 'androidx.test:core:1.7.0'
     testImplementation 'androidx.test.ext:junit:1.3.0'
     testImplementation 'androidx.test:runner:1.7.0'
-}
 
-// Supabase configuration is handled through BuildConfig
-dependencies {
     // Charts (Vico)
-    implementation "com.patrykandpatrick.vico:compose:2.1.3"
-    implementation "com.patrykandpatrick.vico:compose-m3:2.1.3"
+    implementation "com.patrykandpatrick.vico:compose:3.3.1"
+    implementation "com.patrykandpatrick.vico:compose-m3:3.3.1"
 }

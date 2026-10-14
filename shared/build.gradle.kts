@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.library")
     kotlin("multiplatform")
-    kotlin("plugin.serialization") version "2.3.20"
+    kotlin("plugin.serialization") version "2.4.21"
     id("com.google.devtools.ksp")
     id("app.cash.sqldelight")
 }
@@ -17,7 +17,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime")) {
-                useVersion("0.6.1")
+                useVersion("0.7.1")
             }
         }
     }
@@ -71,8 +71,8 @@ kotlin {
     sourceSets {
         all {
             languageSettings.apply {
-                apiVersion = "2.3"
-                languageVersion = "2.3"
+                apiVersion = "2.4"
+                languageVersion = "2.4"
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlinx.cinterop.ExperimentalForeignApi")
                 optIn("kotlinx.cinterop.BetaInteropApi")
@@ -83,39 +83,39 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // Supabase & Ktor
-                implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:3.4.1"))
+                implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:3.8.0"))
                 implementation("io.github.jan-tennert.supabase:postgrest-kt")
                 implementation("io.github.jan-tennert.supabase:auth-kt")
                 implementation("io.github.jan-tennert.supabase:realtime-kt")
                 implementation("io.github.jan-tennert.supabase:storage-kt")
                 implementation("io.github.jan-tennert.supabase:functions-kt")
-                implementation("io.ktor:ktor-client-core:3.4.2")
+                implementation("io.ktor:ktor-client-core:3.6.0")
                 implementation("com.fleeksoft.ksoup:ksoup:0.2.0")
-                implementation("io.ktor:ktor-client-content-negotiation:3.4.2")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.2")
+                implementation("io.ktor:ktor-client-content-negotiation:3.6.0")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.0")
 
                 // Serialization
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
                 // Coroutines
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
                 // DateTime
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
 
                 // Logging
                 implementation("io.github.aakira:napier:2.7.1")
 
                 // DI
-                implementation("io.insert-koin:koin-core:4.1.1")
+                implementation("io.insert-koin:koin-core:4.2.2")
                 implementation("javax.inject:javax.inject:1")
 
                 // Settings
                 implementation("com.russhwolf:multiplatform-settings-no-arg:1.3.0")
 
                 // SQLDelight
-                implementation("app.cash.sqldelight:runtime:2.3.2")
-                implementation("app.cash.sqldelight:coroutines-extensions:2.3.2")
+                implementation("app.cash.sqldelight:runtime:2.4.0")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.4.0")
             }
         }
 
@@ -124,34 +124,34 @@ kotlin {
             dependencies {
                 // CIO engine is the recommended engine for Compose Desktop — pure Kotlin,
                 // no native libs, no jlink stripping issues unlike ktor-client-okhttp
-                implementation("io.ktor:ktor-client-cio:3.4.2")
-                implementation("app.cash.sqldelight:sqlite-driver:2.3.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1")
+                implementation("io.ktor:ktor-client-cio:3.6.0")
+                implementation("app.cash.sqldelight:sqlite-driver:2.4.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1")
             }
         }
         val wasmJsMain by getting {
             dependencies {
-                implementation("app.cash.sqldelight:web-worker-driver:2.3.2")
+                implementation("app.cash.sqldelight:web-worker-driver:2.4.0")
             }
         }
 
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-                implementation("io.ktor:ktor-client-mock:3.4.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+                implementation("io.ktor:ktor-client-mock:3.6.0")
             }
         }
 
         val androidMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-okhttp:3.4.2")
+                implementation("io.ktor:ktor-client-okhttp:3.6.0")
                 implementation("org.whispersystems:signal-protocol-android:2.8.1")
                 implementation("androidx.security:security-crypto:1.1.0-beta01")
                 implementation("androidx.exifinterface:exifinterface:1.4.2")
-                implementation("app.cash.sqldelight:android-driver:2.3.2")
-                implementation("io.insert-koin:koin-android:4.1.1")
+                implementation("app.cash.sqldelight:android-driver:2.4.0")
+                implementation("io.insert-koin:koin-android:4.2.2")
                 implementation("io.sentry:sentry-android:8.60.0")
             }
         }
@@ -159,15 +159,15 @@ kotlin {
         val androidUnitTest by getting {
             dependencies {
                 implementation("junit:junit:4.13.2")
-                implementation("org.mockito:mockito-core:5.18.0")
+                implementation("org.mockito:mockito-core:5.24.0")
             }
         }
 
         if (true) {
             val iosMain by getting {
                 dependencies {
-                    implementation("io.ktor:ktor-client-darwin:3.4.2")
-                    implementation("app.cash.sqldelight:native-driver:2.3.2")
+                    implementation("io.ktor:ktor-client-darwin:3.6.0")
+                    implementation("app.cash.sqldelight:native-driver:2.4.0")
                 }
             }
         }
@@ -188,7 +188,7 @@ dependencies {
 
 android {
     namespace = "com.synapse.social.studioasinc.shared"
-    compileSdk = 36
+    compileSdk = 37
     buildToolsVersion = "36.0.0"
     defaultConfig {
         minSdk = 26
@@ -246,11 +246,11 @@ android {
 
 configurations.all {
     resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-        force("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+        force("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
         eachDependency {
             if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-stdlib")) {
-                useVersion("2.3.20")
+                useVersion("2.4.21")
             }
         }
     }

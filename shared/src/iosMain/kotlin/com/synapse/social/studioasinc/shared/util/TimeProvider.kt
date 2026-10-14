@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.shared.util
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 
 @OptIn(kotlin.time.ExperimentalTime::class)

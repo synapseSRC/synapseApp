@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
@@ -203,8 +203,8 @@ class SupabasePresenceRepository(
         return try {
             val lastSeenInstant = kotlinx.datetime.Instant.parse(lastSeen)
             val now = Clock.System.now()
-            val diff = now - lastSeenInstant
-            diff.inWholeMinutes < windowMinutes
+            val diffSeconds = now.epochSeconds - lastSeenInstant.epochSeconds
+            (diffSeconds / 60) < windowMinutes
         } catch (e: Exception) {
             Napier.w("⚠️ Failed to parse last_seen timestamp: $lastSeen", e)
             false
