@@ -31,7 +31,7 @@
     <string name="backup_cloud_not_configured">Cloud backups are unavailable in this app configuration.</string>
     <string name="backup_cloud_sign_in_required">Sign in to your Synapse account to use cloud backup.</string>
     <string name="backup_cloud_offline">You’re offline. Reconnect to use cloud backup; your local preferences remain available.</string>
-    <string name="backup_cloud_empty">No cloud backup yet. Use Back up now to create one.</string>
+    <string name="backup_cloud_empty">No cloud backup yet. Use Back up now to create your initial cloud backup.</string>
     <string name="backup_cloud_ready">Cloud backup is available. Settings are up to date.</string>
     <string name="backup_cloud_syncing">Syncing settings…</string>
     <string name="backup_cloud_conflict">Local and cloud settings need your choice.</string>
@@ -39,12 +39,13 @@
     <string name="backup_cloud_created_at">Cloud backup created: %1$s · Version %2$d</string>
     <string name="backup_last_successful_sync">Last successful sync: %1$s</string>
     <string name="backup_cloud_overwrite_note">Back up now replaces this account’s previous cloud snapshot. Cloud data is private to your signed-in account.</string>
-    <string name="backup_cloud_backup_now">Back up now</string>
+    <string name="backup_auto_sync_note">Automatic sync keeps your cloud backup aligned when online after an initial backup exists. The first cloud backup requires explicit action via Back up now.</string>
+    <string name="backup_cloud_backup_now">Back up to cloud</string>
     <string name="backup_cloud_restore">Restore from cloud</string>
     <string name="backup_sync_now">Sync now</string>
     <string name="backup_cloud_created">Settings backed up to your Synapse account.</string>
     <string name="backup_sync_success">Settings are synced with your Synapse account.</string>
-    <string name="backup_no_cloud_backup">No cloud backup exists yet. Use Back up now to create one.</string>
+    <string name="backup_no_cloud_backup">No cloud backup exists yet. Use Back up to cloud to create one.</string>
     <string name="backup_scope_title">What gets backed up</string>
     <string name="backup_category_appearance">Appearance and theme</string>
     <string name="backup_category_chat">Chat preferences</string>

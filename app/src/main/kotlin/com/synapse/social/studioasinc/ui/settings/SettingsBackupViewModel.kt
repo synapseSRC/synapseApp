@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-
 enum class BackupDestinationMode { LOCAL, CLOUD }
 enum class CloudBackupUiStatus { CHECKING, NOT_CONFIGURED, SIGN_IN_REQUIRED, OFFLINE, NO_BACKUP, READY, SYNCING, CONFLICT, ERROR }
 enum class RestoreBackupSource { LOCAL, FILE, CLOUD }
@@ -155,7 +154,7 @@ class SettingsBackupViewModel @Inject constructor(
         _uiState.update { it.copy(isBusy = true, localErrorResource = null) }
         backupManager.exportCurrentBackup(uri).fold(
             onSuccess = { metadata ->
-                _uiState.update { it.copy(isBusy = false, localBackup = metadata, localErrorResource = null) }
+                _uiState.update { it.copy(isBusy = false, localErrorResource = null) }
                 emit(R.string.backup_export_success)
             },
             onFailure = { error -> fail(error, cloud = false) }
@@ -170,7 +169,6 @@ class SettingsBackupViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isBusy = false,
-                        localBackup = metadata,
                         localErrorResource = null,
                         pendingRestore = PendingSettingsRestore(metadata.backup, RestoreBackupSource.FILE)
                     )

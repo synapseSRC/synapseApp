@@ -130,7 +130,6 @@ class SettingsBackupManager @Inject constructor(
         withContext(Dispatchers.IO) {
             val backup = captureCurrentBackup()
             val contents = SettingsBackupCodec.encode(backup).toByteArray(Charsets.UTF_8)
-            saveLocalBackup(backup)
             val output = context.contentResolver.openOutputStream(uri, "w")
                 ?: throw SettingsBackupStorageException()
             output.use { it.write(contents) }
@@ -143,7 +142,6 @@ class SettingsBackupManager @Inject constructor(
             val input = context.contentResolver.openInputStream(uri)
                 ?: throw SettingsBackupStorageException()
             val backup = SettingsBackupCodec.decode(input.use(::readLimited))
-            saveLocalBackup(backup)
             SettingsBackupMetadata(backup, SettingsBackupCodec.encode(backup).toByteArray(Charsets.UTF_8).size.toLong())
         }
     }
@@ -152,6 +150,7 @@ class SettingsBackupManager @Inject constructor(
         withContext(Dispatchers.IO) {
             val mutation = SettingsBackupCodec.prepareRestore(backup)
             settingsDataStore.updatePreferencesForBackup(mutation)
+            saveLocalBackup(backup)
         }
     }
 

@@ -245,7 +245,11 @@ fun SettingsBackupScreen(
                             pending.backup.version
                         )
                     )
-                    Text(stringResource(R.string.backup_restore_warning))
+                    Text(
+                        stringResource(R.string.backup_restore_warning),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             },
             confirmButton = {
@@ -404,6 +408,11 @@ private fun CloudBackupSection(
             }
             Text(
                 stringResource(R.string.backup_cloud_overwrite_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                stringResource(R.string.backup_auto_sync_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
