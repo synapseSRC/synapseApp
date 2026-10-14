@@ -59,7 +59,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.LocalDate
@@ -865,7 +865,7 @@ fun formatMessageDate(isoString: String): String {
     return try {
         val instant = Instant.parse(isoString)
         val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val today = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()).toLocalDateTime(TimeZone.currentSystemDefault()).date
         val msgDate = local.date
         when {
             msgDate == today -> "Today"
