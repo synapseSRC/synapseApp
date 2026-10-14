@@ -1,0 +1,11 @@
+package = platform.CoreCrypto
+
+compilerOpts = -I/usr/include
+linkerOpts = -L/usr/lib/system -lcorecrypto -framework Security -framework CoreFoundation
+
+---
+
+#include <stdint.h>
+#include <CommonCrypto/CommonCrypto.h>
+#include <CommonCrypto/CommonHMAC.h>
+#include <CommonCrypto/CommonRandom.h>
