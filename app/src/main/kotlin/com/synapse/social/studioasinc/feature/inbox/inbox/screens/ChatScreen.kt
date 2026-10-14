@@ -76,32 +76,10 @@ import java.io.File
         viewModel.initialize(chatId, participantId)
     }
 
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    var isFirstResume by rememberSaveable { mutableStateOf(true) }
-    DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            when (event) {
-                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
-                    viewModel.onVisibilityChanged(true)
-                    if (isFirstResume) {
-                        isFirstResume = false
-                    } else {
-                        viewModel.restartSubscriptions()
-                        viewModel.refreshMessages()
-                    }
-                }
-                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
-                    viewModel.onVisibilityChanged(false)
-                }
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            viewModel.onVisibilityChanged(false)
-        }
-    }
+
+
+
+
 
     val messages by viewModel.messages.collectAsState()
     val chatItems by viewModel.chatItems.collectAsState()
@@ -162,10 +140,6 @@ import java.io.File
     val lockThresholdPx = with(density) { gestureConfig.lockThresholdDp.dp.toPx() }
     val directionSlopPx = with(density) { gestureConfig.directionSlopDp.dp.toPx() }
     val composerHeight = with(density) { composerHeightPx.toDp() }
-    val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.Small)
-
-    var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
-
     // Voice Recording Infrastructure
     val voiceRecorder = remember { VoiceRecorder(context) }
     val voicePlayerManager = remember { VoicePlayerManager(context.applicationContext) }
@@ -186,6 +160,38 @@ import java.io.File
             directionSlopPx = directionSlopPx
         )
     }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var isFirstResume by rememberSaveable { mutableStateOf(true) }
+    DisposableEffect(lifecycleOwner, voiceController) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
+                    viewModel.onVisibilityChanged(true)
+                    if (isFirstResume) {
+                        isFirstResume = false
+                    } else {
+                        viewModel.restartSubscriptions()
+                        viewModel.refreshMessages()
+                    }
+                }
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
+                    viewModel.onVisibilityChanged(false)
+                    voiceController.onPauseBackground()
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onVisibilityChanged(false)
+        }
+    }
+
+    val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.Small)
+
+    var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
 
     LaunchedEffect(cancelThresholdPx, lockThresholdPx, directionSlopPx) {
         voiceController.updateThresholds(cancelThresholdPx, lockThresholdPx, directionSlopPx)

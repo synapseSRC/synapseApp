@@ -427,7 +427,7 @@ private fun VoiceRecordingContentOverlay(
                     val indicatorWidthPx = with(density) { indicatorWidth.toPx() }
                     val arrowWidthPx = with(density) { LOCK_ARROW_WIDTH.toPx() }
                     val gapPx = with(density) { LOCK_INDICATOR_GAP.toPx() }
-                    val micCenterX = (micBounds.left + micBounds.right) / 2f + recording.slideOffsetPx
+                    val micCenterX = (micBounds.left + micBounds.right) / 2f
                     val micTop = micBounds.top + recording.dragOffsetYPx
                     val leftPx = (micCenterX - indicatorWidthPx / 2f)
                         .coerceIn(0f, (parentWidthPx - indicatorWidthPx).coerceAtLeast(0f))

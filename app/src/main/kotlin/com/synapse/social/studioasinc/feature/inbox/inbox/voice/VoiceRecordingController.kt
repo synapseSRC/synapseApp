@@ -46,6 +46,16 @@ class VoiceRecordingController(
     private var pendingPermissionIntent = false
     private var releaseHandled = false
 
+    fun onPauseBackground() {
+        val currentState = _state.value
+        if (currentState is VoiceState.Recording) {
+            lockRecording()
+            togglePause()
+        } else if (currentState is VoiceState.Locked && !currentState.isPaused) {
+            togglePause()
+        }
+    }
+
     fun updateThresholds(cancelPx: Float, lockPx: Float, slopPx: Float) {
         if (cancelPx > 0f) cancelThresholdPx = cancelPx
         if (lockPx > 0f) lockThresholdPx = lockPx
@@ -257,18 +267,18 @@ class VoiceRecordingController(
         if (currentState is VoiceState.Pressing) {
             holdJob?.cancel()
             holdJob = null
-            // Single tap: start recording immediately and lock it into locked recording state
-            startActualRecording()
-            lockRecording()
+            // Single tap only if pointer was not moved significantly
+            if (abs(cumulativeX) < 15f && abs(cumulativeY) < 15f) {
+                startActualRecording()
+                lockRecording()
+            } else {
+                _state.value = VoiceState.Normal
+            }
             return
         }
 
         if (currentState is VoiceState.Recording) {
-            if (gestureDirection != GestureDirection.Undecided) {
-                returnFromAbandonedSlide(currentState)
-            } else {
-                finishRecordingToDraft()
-            }
+            finishRecordingToDraft()
         }
     }
 
