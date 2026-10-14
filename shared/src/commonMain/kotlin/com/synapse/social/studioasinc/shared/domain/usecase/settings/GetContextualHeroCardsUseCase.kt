@@ -38,7 +38,7 @@ class GetContextualHeroCardsUseCase(
                     icon = "security",
                     action = SettingsAction.Navigate("settings_account"), // Or specific backup route
                     priority = 20,
-                    backgroundColor = "#6200EE"
+                    backgroundColor = "#0061A4"
                 ))
             }
 
