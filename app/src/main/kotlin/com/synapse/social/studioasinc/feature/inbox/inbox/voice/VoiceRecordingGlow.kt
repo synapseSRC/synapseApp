@@ -156,9 +156,10 @@ internal fun VoiceState.glowAmplitude(): Float = when (this) {
 }
 
 @Composable
-internal fun rememberVoiceGlowPhase(amplitude: Float, active: Boolean, reducedMotion: Boolean, label: String): Float {
+internal fun rememberVoiceGlowPhase(amplitude: Float, active: Boolean, isPaused: Boolean, reducedMotion: Boolean, label: String): Float {
     var phase by remember(label) { mutableFloatStateOf(0f) }
     val latestAmplitude by rememberUpdatedState(amplitude)
+    val latestPaused by rememberUpdatedState(isPaused)
     LaunchedEffect(active, reducedMotion) {
         if (!active || reducedMotion) {
             if (reducedMotion) phase = 0f
@@ -169,9 +170,11 @@ internal fun rememberVoiceGlowPhase(amplitude: Float, active: Boolean, reducedMo
             val frameNanos = withFrameNanos { it }
             if (previousFrameNanos != 0L) {
                 val elapsedSeconds = ((frameNanos - previousFrameNanos) / 1_000_000_000f).coerceIn(0f, 0.05f)
-                val speed = 0.35f + 1.15f * latestAmplitude
-                phase += elapsedSeconds * speed
-                if (phase >= 1000f) phase -= 1000f
+                if (!latestPaused) {
+                    val speed = 0.35f + 1.15f * latestAmplitude
+                    phase += elapsedSeconds * speed
+                    if (phase >= 1000f) phase -= 1000f
+                }
             }
             previousFrameNanos = frameNanos
         }
@@ -218,7 +221,8 @@ fun VoiceRecordingGlowSurface(
     val shape = RoundedCornerShape(Sizes.CornerMassive)
     val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
     val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")
-    val phase = rememberVoiceGlowPhase(intensity, active, reducedMotion, "voiceRecordingInterior")
+    val isPaused = (voiceState as? VoiceState.Locked)?.isPaused == true
+    val phase = rememberVoiceGlowPhase(intensity, active, isPaused, reducedMotion, "voiceRecordingInterior")
 
     val activeAlpha by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
@@ -235,8 +239,8 @@ fun VoiceRecordingGlowSurface(
         } else null
     }
 
-    LaunchedEffect(phase, intensity, active) {
-        if (active) {
+    LaunchedEffect(phase, intensity, active, isPaused) {
+        if (active && !isPaused) {
             fluidSim.update(0.04f, intensity, phase)
         }
     }
@@ -328,7 +332,8 @@ fun VoiceRecordingAmbientGlow(
     if (!voiceState.isGlowActive()) return
     val reducedMotion = reducedMotionOverride
     val amplitude = voiceState.glowAmplitude()
-    val phase = rememberVoiceGlowPhase(amplitude, true, reducedMotion, "voiceRecordingAmbient")
+    val isPaused = (voiceState as? VoiceState.Locked)?.isPaused == true
+    val phase = rememberVoiceGlowPhase(amplitude, true, isPaused, reducedMotion, "voiceRecordingAmbient")
     val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceAmbientIntensity")
 
     Canvas(modifier) {

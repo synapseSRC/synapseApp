@@ -324,8 +324,8 @@ private fun VoiceInputBarContent(
             }
             is VoiceState.Locked -> {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    IconButton(onClick = { onVoiceAction(VoiceAction.CancelRecording) }, modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE).background(MaterialTheme.colorScheme.errorContainer, CircleShape).testTag("voice-locked-cancel")) {
-                        Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.onErrorContainer)
+                    IconButton(onClick = { onVoiceAction(VoiceAction.CancelRecording) }, modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE).testTag("voice-locked-cancel")) {
+                        Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
                     }
                     Column(
                         modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small),
