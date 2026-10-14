@@ -31,6 +31,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.rememberHazeState
+import dev.chrisbanes.haze.hazeSource
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
@@ -70,6 +72,7 @@ import java.io.File
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
+    val composerHazeState = rememberHazeState()
 
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
@@ -332,7 +335,9 @@ import java.io.File
                 }
                 else -> {
                     ChatMessageList(
-                        modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f }
+                            .hazeSource(state = composerHazeState),
                         chatItems = chatItems,
                         messages = messages,
                         bottomContentPadding = messageListBottomPadding,
@@ -433,6 +438,7 @@ import java.io.File
                     editingMessage = editingMessage,
                     smartReplies = smartReplies,
                     reducedMotion = reducedMotion,
+                    hazeState = composerHazeState,
                     inputText = inputText,
                     canSendMessage = canSendMessage,
                     currentUserId = currentUserId,
