@@ -1,17 +1,16 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 
+import android.graphics.RenderEffect as AndroidRenderEffect
+import android.graphics.RuntimeShader
+import android.graphics.Shader
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
@@ -20,39 +19,131 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlin.math.cos
 import kotlin.math.sin
 
-private object GlowDesign {
-    const val MIN_AMPLITUDE = 0.08f
-    const val MAX_AMPLITUDE = 1f
-    const val TAU = 6.2831855f
-    const val PHASE_CENTER = 0.5f
-    const val SHIMMER_DURATION_MILLIS = 2_600
-    const val SHIMMER_HIGHLIGHT_HALF_WIDTH = 0.10f
+private object GlowColors {
+    val Cyan = Color(0xFF00E5FF)
+    val ElectricBlue = Color(0xFF2979FF)
+    val Violet = Color(0xFF7C4DFF)
+    val DeepPurple = Color(0xFF651FFF)
+    val CrestHighlight = Color(0xFFE0F7FA)
 }
 
-/** Audio energy drives temporal speed, travel distance, organic contour deformation, and pigment intensity. */
-internal data class VoiceLiquidMotion(
-    val cyclesPerSecond: Float,
-    val travelRatio: Float,
-    val deformation: Float,
-    val pigmentAlpha: Float
-)
+private object GlowDesign {
+    const val MIN_AMPLITUDE = 0.08f
+    const val MAX_AMPLITUDE = 1.0f
+    const val TAU = 6.2831855f
+    const val FLUID_NODES = 24
+}
 
-internal fun voiceLiquidMotion(amplitude: Float): VoiceLiquidMotion {
-    val bounded = amplitude.coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
-    val energy = ((bounded - GlowDesign.MIN_AMPLITUDE) / (GlowDesign.MAX_AMPLITUDE - GlowDesign.MIN_AMPLITUDE))
-        .coerceIn(0f, 1f)
-    return VoiceLiquidMotion(
-        cyclesPerSecond = 0.035f + 0.245f * energy,
-        travelRatio = 0.025f + 0.135f * energy,
-        deformation = 0.025f + 0.19f * energy,
-        pigmentAlpha = 0.24f + 0.13f * energy
-    )
+/** Lightweight 1D spring-coupled fluid surface simulation */
+internal class FluidSurfaceSimulation(private val nodeCount: Int = GlowDesign.FLUID_NODES) {
+    val heights = FloatArray(nodeCount) { 0f }
+    private val velocities = FloatArray(nodeCount) { 0f }
+
+    fun update(dt: Float, audioEnergy: Float, phase: Float) {
+        val springK = 22f
+        val coupling = 14f
+        val damping = 0.86f
+
+        // Audio energy injects impulses into the fluid surface
+        if (audioEnergy > 0.09f) {
+            val impulse = audioEnergy * 2.2f
+            val nodeIndex = ((nodeCount - 1) * (0.5f + 0.4f * sin(phase * 5f))).toInt().coerceIn(1, nodeCount - 2)
+            velocities[nodeIndex] += impulse
+            velocities[nodeIndex - 1] += impulse * 0.6f
+            velocities[nodeIndex + 1] += impulse * 0.6f
+        }
+
+        // Fluid spring physics step
+        for (i in 0 until nodeCount) {
+            val left = if (i > 0) heights[i - 1] else heights[i]
+            val right = if (i < nodeCount - 1) heights[i + 1] else heights[i]
+
+            val springForce = -springK * heights[i]
+            val couplingForce = coupling * (left + right - 2f * heights[i])
+            val accel = springForce + couplingForce
+
+            velocities[i] = (velocities[i] + accel * dt) * damping
+            heights[i] = (heights[i] + velocities[i] * dt).coerceIn(-0.35f, 0.35f)
+        }
+    }
+}
+
+private const val LIQUID_AGSL_SHADER = """
+uniform float2 iResolution;
+uniform float iTime;
+uniform float iAmplitude;
+uniform float4 colorCyan;
+uniform float4 colorBlue;
+uniform float4 colorViolet;
+
+half4 main(in float2 fragCoord) {
+    float2 uv = fragCoord / iResolution;
+
+    // Multi-frequency wave displacement
+    float w1 = sin(uv.x * 12.0 + iTime * 3.8) * 0.045 * iAmplitude;
+    float w2 = cos(uv.x * 22.0 - iTime * 2.5) * 0.022 * iAmplitude;
+    float w3 = sin(uv.x * 6.0 + iTime * 1.2) * 0.025; // Continuous subtle alive motion
+
+    float waveHeight = 0.74 - (w1 + w2 + w3 + iAmplitude * 0.16);
+
+    if (uv.y < waveHeight) {
+        // Soft translucent shine above wave surface
+        float shine = smoothstep(0.0, waveHeight, uv.y) * 0.05 * iAmplitude;
+        return half4(colorCyan.rgb, shine);
+    }
+
+    // Liquid body fill with luminous cyan-blue-violet gradient
+    float depth = (uv.y - waveHeight) / max(0.01, 1.0 - waveHeight);
+    float xPos = uv.x + sin(iTime * 0.7 + uv.y * 2.5) * 0.12;
+
+    float3 col = mix(colorCyan.rgb, colorBlue.rgb, clamp(xPos * 1.1, 0.0, 1.0));
+    col = mix(col, colorViolet.rgb, clamp(depth * 1.2, 0.0, 1.0));
+
+    // Luminous crest highlight along liquid boundary
+    float crest = smoothstep(0.035, 0.0, abs(uv.y - waveHeight));
+    col += float3(0.55, 0.92, 1.0) * crest * (0.65 + 0.35 * iAmplitude);
+
+    float alpha = clamp(0.78 + 0.22 * iAmplitude, 0.0, 1.0);
+    return half4(col, alpha);
+}
+"""
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+private class LiquidShaderHolder {
+    val runtimeShader = RuntimeShader(LIQUID_AGSL_SHADER)
+    val shaderBrush = ShaderBrush(runtimeShader)
+
+    init {
+        runtimeShader.setFloatUniform("colorCyan", GlowColors.Cyan.red, GlowColors.Cyan.green, GlowColors.Cyan.blue, GlowColors.Cyan.alpha)
+        runtimeShader.setFloatUniform("colorBlue", GlowColors.ElectricBlue.red, GlowColors.ElectricBlue.green, GlowColors.ElectricBlue.blue, GlowColors.ElectricBlue.alpha)
+        runtimeShader.setFloatUniform("colorViolet", GlowColors.Violet.red, GlowColors.Violet.green, GlowColors.Violet.blue, GlowColors.Violet.alpha)
+    }
+
+    fun updateUniforms(width: Float, height: Float, timeSeconds: Float, amplitude: Float) {
+        runtimeShader.setFloatUniform("iResolution", width, height)
+        runtimeShader.setFloatUniform("iTime", timeSeconds)
+        runtimeShader.setFloatUniform("iAmplitude", amplitude)
+    }
+}
+
+private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
+
+internal fun VoiceState.glowAmplitude(): Float = when (this) {
+    is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
+        .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
+    is VoiceState.Locked -> if (isPaused) GlowDesign.MIN_AMPLITUDE else
+        (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
+            .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
+    else -> 0f
 }
 
 @Composable
@@ -65,15 +156,13 @@ internal fun rememberVoiceGlowPhase(amplitude: Float, active: Boolean, reducedMo
             return@LaunchedEffect
         }
         var previousFrameNanos = 0L
-        // LaunchedEffect owns this frame loop: it is cancelled when glow activity ends or motion is reduced.
-        // The Compose frame clock provides deterministic test-clock frames, while the amplitude stays live.
         while (active && !reducedMotion) {
             val frameNanos = withFrameNanos { it }
             if (previousFrameNanos != 0L) {
                 val elapsedSeconds = ((frameNanos - previousFrameNanos) / 1_000_000_000f).coerceIn(0f, 0.05f)
-                val advance = elapsedSeconds * voiceLiquidMotion(latestAmplitude).cyclesPerSecond
-                phase += advance
-                if (phase >= 1f) phase -= 1f
+                val speed = 0.25f + 0.75f * latestAmplitude
+                phase += elapsedSeconds * speed
+                if (phase >= 1000f) phase -= 1000f
             }
             previousFrameNanos = frameNanos
         }
@@ -86,7 +175,7 @@ internal fun rememberVoiceGlowIntensity(target: Float, reducedMotion: Boolean, l
     if (reducedMotion) return target
     val intensity by animateFloatAsState(
         targetValue = target,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 280f),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 320f),
         label = label
     )
     return intensity
@@ -94,33 +183,18 @@ internal fun rememberVoiceGlowIntensity(target: Float, reducedMotion: Boolean, l
 
 @Composable
 internal fun rememberVoiceShimmerPhase(reducedMotion: Boolean, label: String): Float {
-    if (reducedMotion) return GlowDesign.PHASE_CENTER
+    if (reducedMotion) return 0.5f
     val transition = rememberInfiniteTransition(label = label)
     val phase by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = GlowDesign.SHIMMER_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 2600, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "voiceCancelShimmerPhase"
     )
     return phase
-}
-
-private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
-
-/**
- * Paused recordings use the nonzero minimum as a calm idle glow instead of animating stale speech energy.
- * Active recordings continue to follow their latest amplitude sample.
- */
-internal fun VoiceState.glowAmplitude(): Float = when (this) {
-    is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
-        .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
-    is VoiceState.Locked -> if (isPaused) GlowDesign.MIN_AMPLITUDE else
-        (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
-            .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
-    else -> 0f
 }
 
 @Composable
@@ -131,140 +205,154 @@ fun VoiceRecordingGlowSurface(
 ) {
     val active = voiceState.isGlowActive()
     val reducedMotion = reducedMotionOverride
-    val colorScheme = MaterialTheme.colorScheme
-    val surface = colorScheme.surfaceContainerHigh
+    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
     val shape = RoundedCornerShape(Sizes.CornerMassive)
     val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
     val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")
     val phase = rememberVoiceGlowPhase(intensity, active, reducedMotion, "voiceRecordingInterior")
-    val colors = MaterialTheme.colorScheme
-    val liquidContour = remember { Path() }
-    val primary = colors.primary
-    val secondary = colors.secondary
-    val tertiary = colors.tertiary
+
     val activeAlpha by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
         animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "voiceLiquidSettle"
     )
 
-    Canvas(modifier.clip(shape)) {
-        val width = size.width
-        val height = size.height
-        if (width <= 0f || height <= 0f) return@Canvas
+    val fluidSim = remember { FluidSurfaceSimulation() }
+    val liquidPath = remember { Path() }
+    val crestPath = remember { Path() }
 
-        val corner = CornerRadius(height / 2f)
-        drawRoundRect(color = surface, cornerRadius = corner)
-        if (activeAlpha <= 0.001f) return@Canvas
+    // AGSL Shader instance cached for API 33+
+    val shaderHolder = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            LiquidShaderHolder()
+        } else null
+    }
 
-        val motion = voiceLiquidMotion(intensity)
-        val energy = ((intensity - GlowDesign.MIN_AMPLITUDE) / (GlowDesign.MAX_AMPLITUDE - GlowDesign.MIN_AMPLITUDE))
-            .coerceIn(0f, 1f)
-        val angle = phase * GlowDesign.TAU
-        val travel = motion.travelRatio
-        val warp = motion.deformation
-        val centerX = width * (0.48f + travel * sin(angle * 0.72f))
-        val centerY = height * (0.48f + travel * 0.50f * cos(angle * 0.93f))
-        val radiusX = width * (0.70f + warp * 0.18f * sin(angle * 1.13f))
-        val radiusY = height * (0.82f + warp * 0.45f * cos(angle * 0.81f))
-
-        // A changing cubic contour plus overlapping pigment lobes creates soft, morphing liquid rather than a brightness pulse.
-        liquidContour.reset()
-        liquidContour.apply {
-            moveTo(centerX, centerY - radiusY)
-            cubicTo(
-                centerX + radiusX * (0.56f + warp * sin(angle)), centerY - radiusY * 1.13f,
-                centerX + radiusX * 1.12f, centerY - radiusY * (0.55f + warp * cos(angle * 0.7f)),
-                centerX + radiusX * (1f + warp * sin(angle * 1.4f)), centerY
-            )
-            cubicTo(
-                centerX + radiusX * 1.10f, centerY + radiusY * (0.48f + warp * sin(angle * 0.8f)),
-                centerX + radiusX * (0.52f + warp * cos(angle * 1.2f)), centerY + radiusY * 1.10f,
-                centerX, centerY + radiusY * (1f + warp * sin(angle * 0.9f))
-            )
-            cubicTo(
-                centerX - radiusX * (0.62f + warp * sin(angle * 1.1f)), centerY + radiusY * 1.07f,
-                centerX - radiusX * 1.12f, centerY + radiusY * (0.42f + warp * cos(angle)),
-                centerX - radiusX * (1f + warp * cos(angle * 1.3f)), centerY
-            )
-            cubicTo(
-                centerX - radiusX * 1.08f, centerY - radiusY * (0.58f + warp * sin(angle * 0.6f)),
-                centerX - radiusX * (0.48f + warp * cos(angle * 1.5f)), centerY - radiusY * 1.12f,
-                centerX, centerY - radiusY
-            )
-            close()
+    LaunchedEffect(phase, intensity, active) {
+        if (active) {
+            fluidSim.update(0.04f, intensity, phase)
         }
-        val pigment = motion.pigmentAlpha * activeAlpha
-        val sweep = width * (0.85f + travel)
-        val sweepCenter = centerX + width * travel * cos(angle)
-        drawPath(
-            path = liquidContour,
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    primary.copy(alpha = pigment * 0.72f),
-                    secondary.copy(alpha = pigment),
-                    tertiary.copy(alpha = pigment * 0.82f),
-                    primary.copy(alpha = pigment * 0.92f)
-                ),
-                start = Offset(sweepCenter - sweep, 0f),
-                end = Offset(sweepCenter + sweep, height)
+    }
+
+    val glassModifier = modifier
+        .clip(shape)
+        .then(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Modifier.graphicsLayer {
+                    renderEffect = AndroidRenderEffect.createBlurEffect(
+                        16f, 16f, Shader.TileMode.CLAMP
+                    ).asComposeRenderEffect()
+                }
+            } else Modifier
+        )
+
+    Box(modifier = glassModifier) {
+        Canvas(Modifier.matchParentSize()) {
+            val width = size.width
+            val height = size.height
+            if (width <= 0f || height <= 0f) return@Canvas
+
+            val corner = CornerRadius(height / 2f)
+
+            // Translucent glass base surface
+            drawRoundRect(
+                color = surfaceColor,
+                cornerRadius = corner
             )
-        )
 
-        val lobeRadius = width * (0.46f + 0.06f * energy)
-        val leftCenter = Offset(
-            width * (0.19f + travel * sin(angle * 0.87f + 0.7f)),
-            height * (0.43f + travel * 1.4f * cos(angle * 0.66f))
-        )
-        val rightCenter = Offset(
-            width * (0.79f - travel * cos(angle * 0.74f + 0.8f)),
-            height * (0.55f + travel * 1.5f * sin(angle * 0.91f + 0.3f))
-        )
-        val centerLobe = Offset(
-            width * (0.52f + travel * sin(angle * 1.1f + 1.7f)),
-            height * (0.44f + travel * cos(angle * 0.8f + 1.2f))
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(primary.copy(alpha = pigment * 0.75f), secondary.copy(alpha = pigment * 0.38f), Color.Transparent),
-                center = leftCenter,
-                radius = lobeRadius
-            ),
-            center = leftCenter,
-            radius = lobeRadius
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(tertiary.copy(alpha = pigment * 0.78f), secondary.copy(alpha = pigment * 0.42f), Color.Transparent),
-                center = rightCenter,
-                radius = lobeRadius * (0.86f + warp * 0.25f * sin(angle))
-            ),
-            center = rightCenter,
-            radius = lobeRadius * (0.86f + warp * 0.25f * sin(angle))
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(secondary.copy(alpha = pigment * 0.42f), Color.Transparent),
-                center = centerLobe,
-                radius = lobeRadius * (0.62f + warp * 0.2f * cos(angle * 1.2f))
-            ),
-            center = centerLobe,
-            radius = lobeRadius * (0.62f + warp * 0.2f * cos(angle * 1.2f))
-        )
+            if (activeAlpha <= 0.001f) return@Canvas
 
-        val borderAlpha = activeAlpha * (0.11f + energy * 0.08f)
-        val stroke = 1.2.dp.toPx()
-        drawRoundRect(
-            brush = Brush.linearGradient(
-                colors = listOf(primary.copy(alpha = borderAlpha), secondary.copy(alpha = borderAlpha * 1.15f), tertiary.copy(alpha = borderAlpha)),
-                start = Offset(sweepCenter - sweep, 0f),
-                end = Offset(sweepCenter + sweep, height)
-            ),
-            topLeft = Offset(stroke / 2f, stroke / 2f),
-            size = Size((width - stroke).coerceAtLeast(0f), (height - stroke).coerceAtLeast(0f)),
-            cornerRadius = CornerRadius(((height - stroke) / 2f).coerceAtLeast(0f)),
-            style = Stroke(width = stroke)
-        )
+            val supportsAgsl = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shaderHolder != null
+
+            if (supportsAgsl) {
+                shaderHolder.updateUniforms(width, height, phase, intensity * activeAlpha)
+                drawRoundRect(
+                    brush = shaderHolder.shaderBrush,
+                    cornerRadius = corner,
+                    alpha = activeAlpha
+                )
+            } else {
+                // Canvas Path Fallback (API 26..32)
+                val nodes = GlowDesign.FLUID_NODES
+                val stepX = width / (nodes - 1)
+                val baseWaveY = height * (0.76f - 0.14f * intensity)
+
+                liquidPath.reset()
+                crestPath.reset()
+
+                val startY = (baseWaveY + fluidSim.heights[0] * height * 0.3f).coerceIn(0f, height)
+                liquidPath.moveTo(0f, startY)
+                crestPath.moveTo(0f, startY)
+
+                for (i in 0 until nodes - 1) {
+                    val x1 = i * stepX
+                    val y1 = (baseWaveY + fluidSim.heights[i] * height * 0.3f).coerceIn(0f, height)
+                    val x2 = (i + 1) * stepX
+                    val y2 = (baseWaveY + fluidSim.heights[i + 1] * height * 0.3f).coerceIn(0f, height)
+
+                    val cx = (x1 + x2) / 2f
+                    val cy = (y1 + y2) / 2f
+
+                    liquidPath.quadraticTo(x1, y1, cx, cy)
+                    crestPath.quadraticTo(x1, y1, cx, cy)
+                }
+
+                val lastY = (baseWaveY + fluidSim.heights[nodes - 1] * height * 0.3f).coerceIn(0f, height)
+                liquidPath.lineTo(width, lastY)
+                crestPath.lineTo(width, lastY)
+
+                // Close liquid path around bottom edge
+                liquidPath.lineTo(width, height)
+                liquidPath.lineTo(0f, height)
+                liquidPath.close()
+
+                // Draw liquid body fill
+                drawPath(
+                    path = liquidPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            GlowColors.Cyan.copy(alpha = 0.90f * activeAlpha),
+                            GlowColors.ElectricBlue.copy(alpha = 0.85f * activeAlpha),
+                            GlowColors.Violet.copy(alpha = 0.80f * activeAlpha),
+                            GlowColors.DeepPurple.copy(alpha = 0.90f * activeAlpha)
+                        ),
+                        startY = height * 0.5f,
+                        endY = height
+                    )
+                )
+
+                // Draw luminous wave crest highlight
+                drawPath(
+                    path = crestPath,
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            GlowColors.Cyan,
+                            GlowColors.CrestHighlight,
+                            GlowColors.ElectricBlue,
+                            GlowColors.Violet
+                        )
+                    ),
+                    style = Stroke(width = 2.5.dp.toPx())
+                )
+            }
+
+            // Glass Specular Rim Border
+            val borderAlpha = activeAlpha * (0.25f + intensity * 0.20f)
+            val strokePx = 1.5.dp.toPx()
+            drawRoundRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = borderAlpha * 1.2f),
+                        GlowColors.Cyan.copy(alpha = borderAlpha),
+                        GlowColors.Violet.copy(alpha = borderAlpha * 0.8f)
+                    )
+                ),
+                topLeft = Offset(strokePx / 2f, strokePx / 2f),
+                size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
+                cornerRadius = CornerRadius(((height - strokePx) / 2f).coerceAtLeast(0f)),
+                style = Stroke(width = strokePx)
+            )
+        }
     }
 }
 
@@ -279,36 +367,46 @@ fun VoiceRecordingAmbientGlow(
     val amplitude = voiceState.glowAmplitude()
     val phase = rememberVoiceGlowPhase(amplitude, true, reducedMotion, "voiceRecordingAmbient")
     val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceAmbientIntensity")
-    val colorScheme = MaterialTheme.colorScheme
-    val primary = colorScheme.primary
-    val secondary = colorScheme.secondary
-    val tertiary = colorScheme.tertiary
 
     Canvas(modifier) {
         val width = size.width
         val height = size.height
         if (width <= 0f || height <= 0f) return@Canvas
 
-        val motion = voiceLiquidMotion(intensity)
         val angle = phase * GlowDesign.TAU
-        val travel = motion.travelRatio
-        val radius = maxOf(width * 0.70f, height * 1.05f)
-        val alpha = 0.10f + 0.11f * ((intensity - GlowDesign.MIN_AMPLITUDE) / (GlowDesign.MAX_AMPLITUDE - GlowDesign.MIN_AMPLITUDE)).coerceIn(0f, 1f)
-        val y = height * (0.88f + 0.05f * cos(angle))
-        val left = Offset(width * (0.27f + travel * sin(angle)), y)
-        val right = Offset(width * (0.73f - travel * cos(angle * 0.83f)), y)
-        val center = Offset(width * (0.5f + travel * sin(angle * 0.7f + 1f)), height * 0.94f)
+        val radius = maxOf(width * 0.65f, height * 0.95f)
+        val alpha = 0.12f + 0.18f * amplitude.coerceIn(0f, 1f)
+
+        val leftCenter = Offset(width * (0.28f + 0.05f * sin(angle)), height * 0.85f)
+        val rightCenter = Offset(width * (0.72f - 0.05f * cos(angle * 0.8f)), height * 0.85f)
+        val center = Offset(width * 0.5f, height * 0.92f)
+
         drawCircle(
-            brush = Brush.radialGradient(listOf(primary.copy(alpha = alpha), secondary.copy(alpha = alpha * 0.5f), Color.Transparent), left, radius),
-            center = left, radius = radius
+            brush = Brush.radialGradient(
+                listOf(GlowColors.Cyan.copy(alpha = alpha), GlowColors.ElectricBlue.copy(alpha = alpha * 0.5f), Color.Transparent),
+                center = leftCenter,
+                radius = radius
+            ),
+            center = leftCenter,
+            radius = radius
         )
         drawCircle(
-            brush = Brush.radialGradient(listOf(tertiary.copy(alpha = alpha * 0.86f), secondary.copy(alpha = alpha * 0.42f), Color.Transparent), right, radius),
-            center = right, radius = radius
+            brush = Brush.radialGradient(
+                listOf(GlowColors.Violet.copy(alpha = alpha * 0.85f), GlowColors.ElectricBlue.copy(alpha = alpha * 0.40f), Color.Transparent),
+                center = rightCenter,
+                radius = radius
+            ),
+            center = rightCenter,
+            radius = radius
         )
         drawCircle(
-            brush = Brush.radialGradient(listOf(secondary.copy(alpha = alpha * 0.62f), Color.Transparent), center, radius * 0.74f),
-            center = center, radius = radius * 0.74f
+            brush = Brush.radialGradient(
+                listOf(GlowColors.ElectricBlue.copy(alpha = alpha * 0.6f), Color.Transparent),
+                center = center,
+                radius = radius * 0.75f
+            ),
+            center = center,
+            radius = radius * 0.75f
         )
     }
 }

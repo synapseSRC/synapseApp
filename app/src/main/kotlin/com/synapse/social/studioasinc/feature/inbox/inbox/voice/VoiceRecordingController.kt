@@ -497,9 +497,19 @@ class VoiceRecordingController(
                 delay(60)
                 val elapsed = timeProvider.currentTimeMillis() - recordingStartTime - pausedAccumulatedDurationMs
 
-                val maxExpectedAmp = 28000f
-                val targetNormAmp = (lastRawAmplitude / maxExpectedAmp).coerceIn(0.08f, 1f)
-                smoothedAmplitude = smoothedAmplitude * 0.65f + targetNormAmp * 0.35f
+                // Perceptual logarithmic scaling (dB-like curve) for high audio reactivity
+                val rawNormalized = (lastRawAmplitude / 32767f).coerceIn(0f, 1f)
+                val dbNormalized = if (rawNormalized > 0f) {
+                    (kotlin.math.log10(1f + 19f * rawNormalized) / kotlin.math.log10(20f)).coerceIn(0f, 1f)
+                } else 0f
+
+                val targetAmp = (0.08f + 0.92f * dbNormalized).coerceIn(0.08f, 1f)
+                // Fast attack for immediate speech response, smooth release for natural fluid decay
+                smoothedAmplitude = if (targetAmp > smoothedAmplitude) {
+                    smoothedAmplitude * 0.35f + targetAmp * 0.65f
+                } else {
+                    smoothedAmplitude * 0.85f + targetAmp * 0.15f
+                }
 
                 _state.update { current ->
                     when (current) {
