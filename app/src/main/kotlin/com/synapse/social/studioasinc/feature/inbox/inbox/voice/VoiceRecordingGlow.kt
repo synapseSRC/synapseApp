@@ -31,11 +31,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.StoryRingEnd
 import com.synapse.social.studioasinc.feature.shared.theme.StoryRingMiddle
-import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.blur.HazeBlurStyle
-import dev.chrisbanes.haze.blur.HazeColorEffect
-import dev.chrisbanes.haze.blur.hazeBlur
+import dev.chrisbanes.haze.hazeEffect
 import kotlin.math.abs
 import kotlin.math.ceil
 
@@ -177,13 +176,12 @@ fun VoiceRecordingGlowSurface(
     // My design decision (not an M3 token): a localized 16dp backdrop blur keeps chat details soft
     // while the Compose controls in VoiceInputHost remain crisp and readable.
     val glassStyle = remember(surface) {
-        HazeBlurStyle {
-            blurRadius(16.dp)
-            blurEnabled(true)
-            backgroundColor(surface.copy(alpha = 0.40f))
-            colorEffects(listOf(HazeColorEffect.tint(surface.copy(alpha = 0.12f))))
-            fallbackColorEffect(HazeColorEffect.tint(surface.copy(alpha = 0.76f)))
-        }
+        HazeStyle(
+            backgroundColor = surface.copy(alpha = 0.40f),
+            tints = listOf(HazeTint(surface.copy(alpha = 0.12f))),
+            blurRadius = 16.dp,
+            fallbackTint = HazeTint(surface.copy(alpha = 0.76f))
+        )
     }
 
     LaunchedEffect(active, reducedMotion, paused) {
@@ -210,10 +208,10 @@ fun VoiceRecordingGlowSurface(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .hazeBlur(
-                        input = HazeInput.Sources(hazeState),
+                    .hazeEffect(
+                        state = hazeState,
                         style = glassStyle
-                    )
+                    ) { blurEnabled = true }
             )
         }
 
