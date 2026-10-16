@@ -24,9 +24,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import com.synapse.social.studioasinc.ui.components.ExpressivePullToRefreshIndicator
 import com.synapse.social.studioasinc.ui.home.FeedLoading
 import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -47,6 +48,7 @@ fun NotificationHeader(date: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun NotificationsScreen(
     viewModel: NotificationsViewModel = hiltViewModel(),
@@ -100,7 +102,7 @@ fun NotificationsScreen(
                 onRefresh = { viewModel.refresh() },
                 state = pullToRefreshState,
                 indicator = {
-                    ExpressivePullToRefreshIndicator(
+                    PullToRefreshDefaults.LoadingIndicator(
                         state = pullToRefreshState,
                         isRefreshing = uiState.isLoading,
                         modifier = Modifier.align(Alignment.TopCenter)
