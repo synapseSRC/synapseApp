@@ -550,12 +550,15 @@ class ChatViewModel @Inject constructor(
                 )
             }
 
+            val reconciledMessage = (existing ?: matchingOptimisticMessage)
+                ?.mergeMonotonic(mergedMessage)
+                ?: mergedMessage
             val replaced = when {
-                existing != null -> with(messagingDelegate) { current.replaceById(newMessage.id, mergedMessage) }
+                existing != null -> with(messagingDelegate) { current.replaceById(newMessage.id, reconciledMessage) }
                 matchingOptimisticMessage != null -> with(messagingDelegate) {
-                    current.replaceById(matchingOptimisticMessage.id, mergedMessage)
+                    current.replaceById(matchingOptimisticMessage.id, reconciledMessage)
                 }
-                else -> current + mergedMessage
+                else -> current + reconciledMessage
             }
             replaced
                 .filterNot {
