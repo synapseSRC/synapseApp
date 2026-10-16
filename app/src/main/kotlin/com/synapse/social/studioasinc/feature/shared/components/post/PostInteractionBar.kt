@@ -46,9 +46,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.synapse.social.studioasinc.feature.shared.components.AnimatedCounter
-import com.synapse.social.studioasinc.feature.shared.theme.InteractionIconDefault
-import com.synapse.social.studioasinc.feature.shared.theme.InteractionLikeActive
-import com.synapse.social.studioasinc.feature.shared.theme.InteractionRepostActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,9 +79,9 @@ fun PostInteractionBar(
 
     Column(modifier = modifier.fillMaxWidth()) {
 
-        val iconColor = InteractionIconDefault
-        val likeActiveColor = InteractionLikeActive
-        val repostActiveColor = InteractionRepostActive
+        val iconColor = MaterialTheme.colorScheme.onSurfaceVariant
+        val likeActiveColor = MaterialTheme.colorScheme.primary
+        val repostActiveColor = MaterialTheme.colorScheme.secondary
         val blueAlpha = 0.1f
 
         Row(
