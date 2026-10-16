@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -170,6 +171,10 @@ fun AppearanceScreen(
                         )
                         Spacer(modifier = Modifier.height(Spacing.Medium))
 
+                        val connectedLeadingShapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        val connectedMiddleShapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
+                        val connectedTrailingShapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+
                         ButtonGroup(
                             overflowIndicator = { menuState ->
                                 ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
@@ -182,9 +187,9 @@ fun AppearanceScreen(
                             options.forEachIndexed { index, label ->
                                 val isSelected = label == selected
                                 val buttonShapes = when (index) {
-                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                    options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    0 -> connectedLeadingShapes
+                                    options.lastIndex -> connectedTrailingShapes
+                                    else -> connectedMiddleShapes
                                 }
                                 val selectStyle = {
                                     val style = viewModel.getPostViewStyleFromDisplayName(label)

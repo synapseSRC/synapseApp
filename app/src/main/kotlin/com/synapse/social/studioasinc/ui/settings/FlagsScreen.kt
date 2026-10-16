@@ -98,6 +98,8 @@ fun FlagsScreen(
                                 Spacer(modifier = Modifier.height(Spacing.Medium))
 
                                 val options = NavigationPlacement.entries
+                                val topPlacementLabel = stringResource(R.string.settings_navigation_placement_top)
+                                val bottomPlacementLabel = stringResource(R.string.settings_navigation_placement_bottom)
                                 ButtonGroup(
                                     overflowIndicator = { menuState ->
                                         ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
@@ -109,8 +111,8 @@ fun FlagsScreen(
                                 ) {
                                     options.forEach { option ->
                                         val label = when (option) {
-                                            NavigationPlacement.TOP -> stringResource(R.string.settings_navigation_placement_top)
-                                            NavigationPlacement.BOTTOM -> stringResource(R.string.settings_navigation_placement_bottom)
+                                            NavigationPlacement.TOP -> topPlacementLabel
+                                            NavigationPlacement.BOTTOM -> bottomPlacementLabel
                                         }
                                         toggleableItem(
                                             checked = option == navigationPlacement,
