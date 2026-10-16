@@ -22,8 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PlayCircleOutline
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,11 +36,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MediaGridContent(
     mediaItems: List<PickedFile>,
@@ -49,9 +55,14 @@ fun MediaGridContent(
     onFileClicked: (PickedFile) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val filterChipShapes = FilterChipDefaults.shapes()
+
     if (isLoading) {
+        val loadingDescription = stringResource(R.string.settings_loading_description)
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            LoadingIndicator(
+                modifier = Modifier.semantics { contentDescription = loadingDescription }
+            )
         }
         return
     }
@@ -80,7 +91,8 @@ fun MediaGridContent(
                                 },
                                 style = MaterialTheme.typography.labelMedium
                             )
-                        }
+                        },
+                        shapes = filterChipShapes
                     )
                 }
             }

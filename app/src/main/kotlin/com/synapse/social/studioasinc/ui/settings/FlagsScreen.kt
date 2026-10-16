@@ -21,7 +21,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FlagsScreen(
     viewModel: FlagsViewModel,
@@ -98,19 +98,27 @@ fun FlagsScreen(
                                 Spacer(modifier = Modifier.height(Spacing.Medium))
 
                                 val options = NavigationPlacement.entries
-                                SingleChoiceSegmentedButtonRow(
-                                    modifier = Modifier.fillMaxWidth()
+                                ButtonGroup(
+                                    overflowIndicator = { menuState ->
+                                        ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    expandedRatio = 0f,
+                                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    options.forEachIndexed { index, option ->
+                                    options.forEach { option ->
                                         val label = when (option) {
                                             NavigationPlacement.TOP -> stringResource(R.string.settings_navigation_placement_top)
                                             NavigationPlacement.BOTTOM -> stringResource(R.string.settings_navigation_placement_bottom)
                                         }
-                                        SegmentedButton(
-                                            shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                                            onClick = { viewModel.setNavigationPlacement(option) },
-                                            selected = option == navigationPlacement,
-                                            label = { Text(label) }
+                                        toggleableItem(
+                                            checked = option == navigationPlacement,
+                                            label = label,
+                                            onCheckedChange = { checked ->
+                                                if (checked) viewModel.setNavigationPlacement(option)
+                                            },
+                                            weight = 1f
                                         )
                                     }
                                 }

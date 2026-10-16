@@ -4,11 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
@@ -17,7 +20,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppearanceScreen(
     viewModel: AppearanceViewModel,
@@ -167,37 +170,71 @@ fun AppearanceScreen(
                         )
                         Spacer(modifier = Modifier.height(Spacing.Medium))
 
-                        SingleChoiceSegmentedButtonRow(
-                            modifier = Modifier.fillMaxWidth()
+                        ButtonGroup(
+                            overflowIndicator = { menuState ->
+                                ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            expandedRatio = 0f,
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
                             options.forEachIndexed { index, label ->
-                                SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                                    onClick = {
-                                        val style = viewModel.getPostViewStyleFromDisplayName(label)
-                                        viewModel.setPostViewStyle(style)
-                                    },
-                                    selected = label == selected,
-                                    label = {
-                                        Row(
-                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
+                                val isSelected = label == selected
+                                val buttonShapes = when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                }
+                                val selectStyle = {
+                                    val style = viewModel.getPostViewStyleFromDisplayName(label)
+                                    viewModel.setPostViewStyle(style)
+                                }
+
+                                customItem(
+                                    buttonGroupContent = {
+                                        ToggleButton(
+                                            checked = isSelected,
+                                            onCheckedChange = { checked ->
+                                                if (checked) selectStyle()
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .semantics { role = Role.RadioButton },
+                                            shapes = buttonShapes
                                         ) {
-                                            Text(label)
-                                            if (label == "Grid") {
-                                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-                                                Badge(
-                                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(R.string.appearance_beta),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = 0.dp)
-                                                    )
+                                            Row(
+                                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(label)
+                                                if (label == "Grid") {
+                                                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                                    Badge(
+                                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.appearance_beta),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = 0.dp)
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
+                                    },
+                                    menuContent = { menuState ->
+                                        DropdownMenuItem(
+                                            text = { Text(label) },
+                                            trailingIcon = {
+                                                if (isSelected) Icon(Icons.Default.Check, contentDescription = null)
+                                            },
+                                            onClick = {
+                                                menuState.dismiss()
+                                                selectStyle()
+                                            }
+                                        )
                                     }
                                 )
                             }
