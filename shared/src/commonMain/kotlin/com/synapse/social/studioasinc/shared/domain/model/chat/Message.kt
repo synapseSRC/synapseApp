@@ -34,7 +34,9 @@ data class Message(
     val linkPreview: LinkPreview? = null,
     val attachments: List<MessageAttachment> = emptyList(),
     val mediaGroupId: String? = null,
-    val metadataContainer: MessageMetadataContainer? = null
+    val metadataContainer: MessageMetadataContainer? = null,
+    /** Stable local identity retained when an optimistic message receives its server ID. */
+    val clientId: String = id
 ) {
     fun isFromMe(currentUserId: String): Boolean = senderId == currentUserId
 

@@ -96,6 +96,33 @@ internal fun ChatMessageList(
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     val reversedItems = remember(chatItems) { chatItems.reversed() }
+    val groupPositions = remember(reversedItems) {
+        val messageEntries = reversedItems.mapIndexedNotNull { index, item ->
+            (item as? ChatListItem.MessageItem)?.let { index to it.message }
+        }
+        val positions = MutableList<GroupPosition?>(reversedItems.size) { null }
+
+        messageEntries.forEachIndexed { messageIndex, entry ->
+            val itemIndex = entry.first
+            val message = entry.second
+            val olderMessage = messageEntries.getOrNull(messageIndex + 1)?.second
+            val newerMessage = messageEntries.getOrNull(messageIndex - 1)?.second
+            val hasOlder = olderMessage != null &&
+                olderMessage.senderId == message.senderId &&
+                isWithinTimeThreshold(olderMessage.createdAt, message.createdAt)
+            val hasNewer = newerMessage != null &&
+                newerMessage.senderId == message.senderId &&
+                isWithinTimeThreshold(message.createdAt, newerMessage.createdAt)
+
+            positions[itemIndex] = when {
+                !hasOlder && !hasNewer -> GroupPosition.SINGLE
+                !hasOlder && hasNewer -> GroupPosition.FIRST
+                hasOlder && !hasNewer -> GroupPosition.LAST
+                else -> GroupPosition.MIDDLE
+            }
+        }
+        positions
+    }
     val pendingQuoteTargetId = remember { mutableStateOf<String?>(null) }
     LaunchedEffect(pendingQuoteTargetId.value, reversedItems) {
         val targetId = pendingQuoteTargetId.value ?: return@LaunchedEffect
@@ -143,7 +170,7 @@ internal fun ChatMessageList(
             when (item) {
                  is ChatListItem.DateDivider -> "date_${item.label}"
                  is ChatListItem.UnreadDivider -> "unread_divider"
-                 is ChatListItem.MessageItem -> item.message.id ?: "msg_${item.message.createdAt}"
+                 is ChatListItem.MessageItem -> item.message.clientId
              }
          }) { index, item ->
             when (item) {
@@ -151,16 +178,7 @@ internal fun ChatMessageList(
                 is ChatListItem.UnreadDivider -> UnreadDividerRow(count = item.count)
                 is ChatListItem.MessageItem -> {
                     val message = item.message
-                    val prevMessageItem = reversedItems.drop(index + 1).filterIsInstance<ChatListItem.MessageItem>().firstOrNull()
-                    val nextMessageItem = reversedItems.take(index).filterIsInstance<ChatListItem.MessageItem>().lastOrNull()
-                    val hasOlder = prevMessageItem != null && prevMessageItem.message.senderId == message.senderId && isWithinTimeThreshold(prevMessageItem.message.createdAt, message.createdAt)
-                    val hasNewer = nextMessageItem != null && nextMessageItem.message.senderId == message.senderId && isWithinTimeThreshold(message.createdAt, nextMessageItem.message.createdAt)
-                    val position = when {
-                        !hasOlder && !hasNewer -> GroupPosition.SINGLE
-                        !hasOlder && hasNewer -> GroupPosition.FIRST
-                        hasOlder && !hasNewer -> GroupPosition.LAST
-                        else -> GroupPosition.MIDDLE
-                    }
+                    val position = groupPositions.getOrNull(index) ?: GroupPosition.SINGLE
                     val isSelected = message.id in selectedMessageIds
                     val quotedOriginal = message.replyToId?.let(messagesMap::get)
                     LaunchedEffect(message.replyToId, quotedOriginal?.id) {

@@ -10,6 +10,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 
 class ChatInputDelegate(
     private val broadcastTypingStatusUseCase: BroadcastTypingStatusUseCase,
@@ -29,6 +32,7 @@ class ChatInputDelegate(
 ) {
     private var typingDebounceJob: Job? = null
     private var isCurrentlyTyping = false
+    private val sendQueueMutexes = ConcurrentHashMap<String, Mutex>()
 
     fun onInputTextChange(newText: String) {
         _inputText.value = newText
@@ -70,46 +74,52 @@ class ChatInputDelegate(
         }
 
         val chunks = messagingDelegate.splitIntoChunks(text, chatMaxMessageChunkSizeProvider())
-
-        if (!isE2EEReadyProvider()) {
-            Napier.d("E2EE not ready, waiting for initialization...", tag = "E2EE")
-            viewModelScope.launch {
-                var attempts = 0
-                while (!isE2EEReadyProvider() && attempts < 30) {
-                    delay(100)
-                    attempts++
-                }
-                if (isE2EEReadyProvider()) {
-                    Napier.d("E2EE ready after waiting", tag = "E2EE")
-                } else {
-                    Napier.w("E2EE initialization timeout, proceeding anyway", tag = "E2EE")
-                }
-                sendChunks(chatId, chunks)
-            }
-            return
-        }
-
-        sendChunks(chatId, chunks)
-    }
-
-    private fun sendChunks(chatId: String, chunks: List<String>) {
         val currentMode = disappearingModeProvider()
         val expiresAt = currentMode.seconds?.let { seconds ->
             java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
                 .plusSeconds(seconds)
                 .format(java.time.format.DateTimeFormatter.ISO_INSTANT)
         }
+        val replyToId = _replyingToMessage.value?.id
 
-        val replyToMessage = _replyingToMessage.value
+        // Consume this draft now; repeated taps cannot enqueue it twice, and later typing or
+        // reply selection is not cleared when this send eventually leaves the E2EE queue.
         _replyingToMessage.value = null
         _inputText.value = ""
 
+        viewModelScope.launch {
+            sendQueueMutexes.computeIfAbsent(chatId) { Mutex() }.withLock {
+                if (!isE2EEReadyProvider()) {
+                    Napier.d("E2EE not ready, waiting for initialization...", tag = "E2EE")
+                    var attempts = 0
+                    while (!isE2EEReadyProvider() && attempts < 30) {
+                        delay(100)
+                        attempts++
+                    }
+                    if (isE2EEReadyProvider()) {
+                        Napier.d("E2EE ready after waiting", tag = "E2EE")
+                    } else {
+                        Napier.w("E2EE initialization timeout, proceeding anyway", tag = "E2EE")
+                    }
+                }
+
+                sendChunks(chatId, chunks, expiresAt, replyToId)
+            }
+        }
+    }
+
+    private fun sendChunks(
+        chatId: String,
+        chunks: List<String>,
+        expiresAt: String?,
+        replyToId: String?
+    ) {
         chunks.forEach { chunk ->
             messagingDelegate.performSendMessage(
                 chatId = chatId,
                 text = chunk,
                 expiresAt = expiresAt,
-                replyToId = replyToMessage?.id,
+                replyToId = replyToId,
                 onError = { error ->
                     _error.value = "Failed to send: $error"
                     _toastMessage.value = error ?: "Failed to send message"

@@ -22,7 +22,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class ChatMessagingDelegate(
     private val sendMessageUseCase: SendMessageUseCase,
@@ -43,6 +47,8 @@ class ChatMessagingDelegate(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val pendingTempIds = MutableStateFlow<Set<String>>(emptySet())
+
+    private val sendMutexes = ConcurrentHashMap<String, Mutex>()
 
     private val paginationCursorLock = Any()
     private var _oldestLoadedPageMessage: Message? = null
@@ -86,6 +92,7 @@ class ChatMessagingDelegate(
     }
 
     fun clearMessages() {
+        pendingTempIds.value = emptySet()
         _messages.value = emptyList()
         synchronized(paginationCursorLock) { _oldestLoadedPageMessage = null }
     }
@@ -124,36 +131,25 @@ class ChatMessagingDelegate(
                 (current + newMessage).distinctBy { it.id }.sortedBy { msg -> msg.createdAt }
             }
 
-            sendMessageUseCase(
-                chatId = chatId,
-                content = text,
-                messageType = "text",
-                expiresAt = expiresAt,
-                replyToId = replyToId
-            ).onSuccess { actualMessage ->
-                pendingTempIds.update { it - tempId }
-                _messages.update { current ->
-                    val hasTempMessage = current.any { it.id == tempId }
-                    val hasActualMessage = current.any { it.id == actualMessage.id }
-                    when {
-                        hasTempMessage && !hasActualMessage -> {
-                            current.updateById(tempId) { tempMsg ->
-                                val updated = if (tempMsg.content !in ENCRYPTED_PLACEHOLDERS &&
-                                    actualMessage.content in ENCRYPTED_PLACEHOLDERS) {
-                                    actualMessage.copy(content = tempMsg.content)
-                                } else {
-                                    actualMessage
-                                }
-                                tempMsg.mergeMonotonic(updated)
-                            }.sortedBy { msg -> msg.createdAt }
-                        }
-                        hasTempMessage && hasActualMessage -> {
-                            current.filter { it.id != tempId }
-                                .sortedBy { msg -> msg.createdAt }
-                        }
-                        else -> current
-                    }
+            val sendMutex = sendMutexes.computeIfAbsent(chatId) { Mutex() }
+            val sendResult: Result<Message> = try {
+                sendMutex.withLock {
+                    sendMessageUseCase(
+                        chatId = chatId,
+                        content = text,
+                        messageType = "text",
+                        expiresAt = expiresAt,
+                        replyToId = replyToId
+                    )
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+
+            sendResult.onSuccess { actualMessage ->
+                completeOptimisticSend(tempId, actualMessage)
             }.onFailure { e ->
                 pendingTempIds.update { it - tempId }
                 onError(e.message)
@@ -164,6 +160,38 @@ class ChatMessagingDelegate(
                             failureReason = e.message
                         )
                     }
+                }
+            }
+        }
+    }
+
+    fun completeOptimisticSend(tempId: String, actualMessage: Message) {
+        pendingTempIds.update { it - tempId }
+        _messages.update { current ->
+            val optimisticMessage = current.firstOrNull { it.id == tempId } ?: return@update current
+
+            when {
+                actualMessage.id == tempId -> {
+                    current.updateById(tempId) { temp ->
+                        temp.mergeMonotonic(actualMessage.copy(clientId = temp.clientId))
+                    }.sortedBy { it.createdAt }
+                }
+                current.any { it.id == actualMessage.id } -> {
+                    current
+                        .map { message ->
+                            if (message.id == actualMessage.id) {
+                                message.copy(clientId = optimisticMessage.clientId)
+                            } else {
+                                message
+                            }
+                        }
+                        .filterNot { it.id == tempId }
+                        .sortedBy { it.createdAt }
+                }
+                else -> {
+                    current.updateById(tempId) { temp ->
+                        temp.mergeMonotonic(actualMessage.copy(clientId = temp.clientId))
+                    }.sortedBy { it.createdAt }
                 }
             }
         }

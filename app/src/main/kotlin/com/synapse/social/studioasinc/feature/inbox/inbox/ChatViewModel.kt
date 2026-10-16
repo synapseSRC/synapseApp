@@ -223,26 +223,7 @@ class ChatViewModel @Inject constructor(
                 }
             }
         },
-        onOptimisticMessageSuccess = { tempId, actualMessage ->
-            messagingDelegate.pendingTempIds.update { it - tempId }
-            messagingDelegate._messages.update { current ->
-                val hasTempMessage = current.any { it.id == tempId }
-                val hasActualMessage = current.any { it.id == actualMessage.id }
-                when {
-                    hasTempMessage && !hasActualMessage -> {
-                        with(messagingDelegate) {
-                            current.replaceById(tempId, actualMessage)
-                                .sortedBy { msg -> msg.createdAt }
-                        }
-                    }
-                    hasTempMessage && hasActualMessage -> {
-                        current.filter { it.id != tempId }
-                            .sortedBy { msg -> msg.createdAt }
-                    }
-                    else -> current
-                }
-            }
-        },
+        onOptimisticMessageSuccess = messagingDelegate::completeOptimisticSend,
         onOptimisticMessageFailed = { tempId, errorMessage ->
             messagingDelegate.pendingTempIds.update { it - tempId }
             _error.value = errorMessage
@@ -507,60 +488,83 @@ class ChatViewModel @Inject constructor(
         Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
 
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
+        val currentSnapshot = messagingDelegate._messages.value
+        val matchingOptimisticMessage = if (newMessage.senderId == currentUserId) {
+            val pendingIds = messagingDelegate.pendingTempIds.value
+            currentSnapshot.asSequence()
+                .filter { it.id in pendingIds && it.id != newMessage.id }
+                .filter { it.chatId == newMessage.chatId && it.senderId == newMessage.senderId }
+                .filter { it.messageType == newMessage.messageType && it.replyToId == newMessage.replyToId }
+                .filter { it.content == newMessage.content || newMessage.content in encryptedPlaceholders }
+                .minByOrNull { it.createdAt }
+        } else {
+            null
+        }
+
+        matchingOptimisticMessage?.let { optimistic ->
+            messagingDelegate.pendingTempIds.update { it - optimistic.id }
+        }
+
         messagingDelegate._messages.update { current ->
-            val existing = current.find { it.id == newMessage.id }
-
-            if (existing != null) {
-                val mergedMessage = if (
-                    existing.content !in encryptedPlaceholders &&
-                    newMessage.content in encryptedPlaceholders
-                ) {
-                    existing.copy(
-                        deliveryStatus = newMessage.deliveryStatus,
-                        readBy = newMessage.readBy,
-                        updatedAt = newMessage.updatedAt
-                    )
-                } else {
-                    val contentChanged = existing.content != newMessage.content
-                    newMessage.copy(
-                        isEdited = if (contentChanged) newMessage.isEdited else existing.isEdited,
-                        reactions = if (newMessage.reactions.isEmpty()) existing.reactions else newMessage.reactions,
-                        userReaction = if (newMessage.reactions.isEmpty()) existing.userReaction else newMessage.userReaction
-                    )
-                }
-                with(messagingDelegate) { current.replaceById(newMessage.id, mergedMessage) }
-            } else {
-                val tempId = messagingDelegate.pendingTempIds.value.firstOrNull { id ->
-                    val tempMsg = current.find { it.id == id } ?: return@firstOrNull false
-                    tempMsg.senderId == newMessage.senderId &&
-                        (tempMsg.content == newMessage.content ||
-                            newMessage.content in encryptedPlaceholders)
-                }
-
-                if (tempId != null && newMessage.senderId == currentUserId) {
-                    messagingDelegate.pendingTempIds.update { it - tempId }
-                    val tempMsg = current.find { it.id == tempId }
-                    val finalMessage = if (
-                        tempMsg != null &&
-                        tempMsg.content !in encryptedPlaceholders &&
-                        newMessage.content in encryptedPlaceholders
-                    ) {
-                        newMessage.copy(content = tempMsg.content)
-                    } else {
-                        newMessage
-                    }
-
-                    with(messagingDelegate) {
-                        current.replaceById(tempId, finalMessage)
-                            .distinctBy { it.id }
-                            .sortedBy { it.createdAt }
-                    }
-                } else {
-                    (current + newMessage)
-                        .distinctBy { it.id }
-                        .sortedBy { it.createdAt }
-                }
+            val existing = current.firstOrNull { it.id == newMessage.id }
+            val stableClientId = matchingOptimisticMessage?.clientId
+                ?: existing?.clientId
+                ?: newMessage.clientId
+            val displayContent = when {
+                existing != null && existing.content !in encryptedPlaceholders &&
+                    newMessage.content in encryptedPlaceholders -> existing.content
+                matchingOptimisticMessage != null && matchingOptimisticMessage.content !in encryptedPlaceholders &&
+                    newMessage.content in encryptedPlaceholders -> matchingOptimisticMessage.content
+                else -> newMessage.content
             }
+
+            val mergedMessage = if (
+                existing != null && existing.content !in encryptedPlaceholders &&
+                newMessage.content in encryptedPlaceholders
+            ) {
+                existing.copy(
+                    deliveryStatus = newMessage.deliveryStatus,
+                    readBy = newMessage.readBy,
+                    updatedAt = newMessage.updatedAt,
+                    clientId = stableClientId
+                )
+            } else {
+                newMessage.copy(
+                    content = displayContent,
+                    clientId = stableClientId,
+                    isEdited = if (existing != null && existing.content != newMessage.content) {
+                        newMessage.isEdited
+                    } else {
+                        existing?.isEdited ?: newMessage.isEdited
+                    },
+                    reactions = if (newMessage.reactions.isEmpty()) {
+                        existing?.reactions ?: newMessage.reactions
+                    } else {
+                        newMessage.reactions
+                    },
+                    userReaction = if (newMessage.reactions.isEmpty()) {
+                        existing?.userReaction ?: newMessage.userReaction
+                    } else {
+                        newMessage.userReaction
+                    }
+                )
+            }
+
+            val replaced = when {
+                existing != null -> with(messagingDelegate) { current.replaceById(newMessage.id, mergedMessage) }
+                matchingOptimisticMessage != null -> with(messagingDelegate) {
+                    current.replaceById(matchingOptimisticMessage.id, mergedMessage)
+                }
+                else -> current + mergedMessage
+            }
+            replaced
+                .filterNot {
+                    matchingOptimisticMessage != null &&
+                        it.id == matchingOptimisticMessage.id &&
+                        it.id != newMessage.id
+                }
+                .distinctBy { it.id }
+                .sortedBy { it.createdAt }
         }
         aiDelegate.generateSmartReplies(messages.value)
 

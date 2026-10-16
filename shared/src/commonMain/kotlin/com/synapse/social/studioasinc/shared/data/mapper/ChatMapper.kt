@@ -170,6 +170,7 @@ object ChatMapper {
         }
 
         return newer.copy(
+            clientId = this.clientId,
             deliveryStatus = mergedDelivery,
             contentStatus = mergedContentStatus,
             isDeleted = mergedContentStatus == ContentStatus.DELETED,
