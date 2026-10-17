@@ -128,13 +128,13 @@ fun MediaPreviewDialog(
                             Surface(
                                 shape = RoundedCornerShape(Sizes.CornerSmall),
                                 color = if (quality == MediaUploadQuality.HD) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.padding(Spacing.Tiny)
+                                modifier = Modifier.padding(Spacing.space2)
                             ) {
                                 Text(
                                     text = if (quality == MediaUploadQuality.HD) stringResource(R.string.media_quality_hd) else stringResource(R.string.media_quality_standard),
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                     color = if (quality == MediaUploadQuality.HD) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                                    modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                 )
                             }
                         }
@@ -204,8 +204,8 @@ fun MediaPreviewDialog(
                     LazyRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+                            .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         itemsIndexed(mediaItems, key = { _, item -> item.uri.toString() }) { index, file ->
@@ -231,7 +231,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
-                                        .padding(Spacing.Tiny)
+                                        .padding(Spacing.space2)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape),
                                     contentAlignment = Alignment.Center
@@ -246,7 +246,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(Spacing.Tiny)
+                                        .padding(Spacing.space2)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.error, CircleShape)
                                         .clickable {
@@ -261,7 +261,7 @@ fun MediaPreviewDialog(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Remove media",
                                         tint = MaterialTheme.colorScheme.onError,
-                                        modifier = Modifier.size(Spacing.Small)
+                                        modifier = Modifier.size(Sizes.IconExtraSmall)
                                     )
                                 }
                             }
@@ -272,7 +272,7 @@ fun MediaPreviewDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.Medium)
+                        .padding(Spacing.space16)
                         .imePadding(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -291,7 +291,7 @@ fun MediaPreviewDialog(
                         ),
                         shape = RoundedCornerShape(Sizes.CornerExtraLarge)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     BadgedBox(
                         badge = {
                             if (mediaItems.size > 1) {

@@ -26,7 +26,7 @@ fun DetailItem(
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -36,7 +36,7 @@ fun DetailItem(
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(

@@ -51,7 +51,7 @@ fun InboxLargeTopAppBar(
             Text(
                 text = title,
                 fontWeight = FontWeight.Normal,
-                modifier = Modifier.padding(start = Spacing.Small)
+                modifier = Modifier.padding(start = Spacing.space8)
             )
         },
         actions = {
@@ -63,7 +63,7 @@ fun InboxLargeTopAppBar(
                  modifier = Modifier.clickable(onClick = onProfileClick)
              )
 
-             Spacer(modifier = Modifier.width(Spacing.Medium))
+             Spacer(modifier = Modifier.width(Spacing.space16))
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,

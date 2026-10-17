@@ -51,7 +51,7 @@ fun ContactsTabScreen(
                 onValueChange = { viewModel.searchContacts(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 placeholder = { Text(stringResource(R.string.search_contacts_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.settings_search_settings_placeholder)) },
                 singleLine = true,
@@ -85,7 +85,7 @@ fun ContactsTabScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = Spacing.Large, vertical = Spacing.Small)
+                                    .padding(horizontal = Spacing.space24, vertical = Spacing.space8)
                             )
                         }
 
@@ -112,7 +112,7 @@ fun ContactsTabScreen(
             onClick = onNavigateToSearch,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = contentPadding.calculateBottomPadding() + Spacing.Medium, end = Spacing.Medium)
+                .padding(bottom = contentPadding.calculateBottomPadding() + Spacing.space16, end = Spacing.space16)
         ) {
             Icon(Icons.Default.GroupAdd, contentDescription = stringResource(R.string.find_friends))
         }

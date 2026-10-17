@@ -98,7 +98,7 @@ fun InboxEmptyState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -134,7 +134,7 @@ fun InboxEmptyState(
             modifier = Modifier.alpha(contentAlpha)
         )
 
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
 
         Text(
             text = description,
@@ -143,7 +143,7 @@ fun InboxEmptyState(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .alpha(contentAlpha)
-                .padding(horizontal = Spacing.Large)
+                .padding(horizontal = Spacing.space24)
         )
 
         if (actionText != null) {
@@ -163,7 +163,7 @@ fun InboxEmptyState(
                         contentDescription = null,
                         modifier = Modifier.size(Sizes.IconMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(actionText)
                 }
             }
@@ -187,7 +187,7 @@ fun CompactEmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.Large),
+            .padding(Spacing.space24),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
@@ -197,7 +197,7 @@ fun CompactEmptyState(
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         )
 
-        Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.height(Spacing.space12))
 
         Text(
             text = message,

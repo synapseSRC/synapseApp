@@ -34,17 +34,17 @@ fun CommentPreview(
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
                 RoundedCornerShape(Sizes.CornerMedium)
             )
-            .padding(Spacing.SmallMedium)
+            .padding(Spacing.space12)
     ) {
         if (topCommentAuthor != null && topCommentText != null) {
-            Row(modifier = Modifier.padding(bottom = Spacing.Small)) {
+            Row(modifier = Modifier.padding(bottom = Spacing.space8)) {
                 Text(
                     text = topCommentAuthor,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = topCommentText,
                     style = MaterialTheme.typography.bodyMedium,

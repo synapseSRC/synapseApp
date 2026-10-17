@@ -72,7 +72,7 @@ fun AuthTextField(
         modifier = modifier
             .fillMaxWidth()
             .scale(scale)
-            .padding(vertical = Spacing.Small)
+            .padding(vertical = Spacing.space8)
     ) {
         OutlinedTextField(
             value = value,
@@ -146,7 +146,7 @@ fun AuthTextField(
                     text = error,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = Spacing.Medium, top = Spacing.ExtraSmall)
+                    modifier = Modifier.padding(start = Spacing.space16, top = Spacing.space4)
                 )
             }
         }

@@ -141,7 +141,7 @@ private fun AnimatedGridItem(
             VideoIndicator(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(Spacing.Small)
+                    .padding(Spacing.space8)
             )
         }
 
@@ -150,7 +150,7 @@ private fun AnimatedGridItem(
             MultipleMediaIndicator(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(Spacing.Small)
+                    .padding(Spacing.space8)
             )
         }
 
@@ -158,7 +158,7 @@ private fun AnimatedGridItem(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(Spacing.ExtraLarge)
+                .height(Sizes.ProfileGridOverlayHeight)
                 .align(Alignment.BottomCenter)
                 .background(
                     brush = Brush.verticalGradient(
@@ -246,12 +246,12 @@ private fun PhotoGridEmptyState(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(Sizes.HeightExtraLarge)
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Icon(
                 imageVector = Icons.Default.Collections,

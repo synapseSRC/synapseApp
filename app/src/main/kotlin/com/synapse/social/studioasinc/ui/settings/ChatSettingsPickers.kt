@@ -51,7 +51,7 @@ internal fun ThemePicker(
                 horizontal = SettingsSpacing.itemHorizontalPadding,
                 vertical = SettingsSpacing.itemVerticalPadding
             ),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
     ) {
         themes.forEach { theme ->
             val isSelected = theme == selectedTheme
@@ -77,7 +77,7 @@ internal fun ThemePicker(
                         role = Role.RadioButton
                         contentDescription = themeDescription
                     }
-                    .padding(vertical = Spacing.ExtraSmall)
+                    .padding(vertical = Spacing.space4)
             ) {
                 Box(
                     modifier = Modifier
@@ -97,11 +97,11 @@ internal fun ThemePicker(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(Spacing.Large)
+                            modifier = Modifier.size(Sizes.IconLarge)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 Text(
                     text = themeName,
                     style = SettingsTypography.itemSubtitle,
@@ -172,13 +172,13 @@ internal fun WallpaperTypeSelector(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
         )
-        Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.height(Spacing.space12))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             wallpapers.forEach { wallpaper ->
                 val isSelected = wallpaper == selectedWallpaper
@@ -219,11 +219,11 @@ internal fun WallpaperTypeSelector(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(Spacing.Large)
+                                modifier = Modifier.size(Sizes.IconLarge)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = wallpaperName,
                         style = SettingsTypography.itemSubtitle,
@@ -273,21 +273,21 @@ internal fun SolidColorSelector(
                 Icon(
                     imageVector = Icons.Default.ColorLens,
                     contentDescription = null,
-                    modifier = Modifier.size(Spacing.MediumLarge)
+                    modifier = Modifier.size(Sizes.IconDefault)
                 )
-                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.width(Spacing.space4))
                 Text("Custom Color")
             }
         }
 
-        Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.height(Spacing.space12))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             // Custom Color Wheel Swatch
             val isCustomSelected = selectedColor != null && selectedColor !in presetColors
@@ -314,14 +314,14 @@ internal fun SolidColorSelector(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Custom Selected",
                         tint = iconTint,
-                        modifier = Modifier.size(Spacing.Large)
+                        modifier = Modifier.size(Sizes.IconLarge)
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Default.ColorLens,
                         contentDescription = "Custom Color",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(Spacing.MediumLarge)
+                        modifier = Modifier.size(Sizes.IconDefault)
                     )
                 }
             }
@@ -351,7 +351,7 @@ internal fun SolidColorSelector(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(Spacing.Large)
+                            modifier = Modifier.size(Sizes.IconLarge)
                         )
                     }
                 }
@@ -396,7 +396,7 @@ private fun ExpressiveColorPickerDialog(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 Icon(
                     imageVector = Icons.Default.ColorLens,
@@ -411,7 +411,7 @@ private fun ExpressiveColorPickerDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 // Preview Card
                 Box(
@@ -441,7 +441,7 @@ private fun ExpressiveColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
                     extendedSwatches.forEach { swatchHex ->
                         val swatchColor = safeParseColorHex(swatchHex, Color.Gray)
@@ -464,7 +464,7 @@ private fun ExpressiveColorPickerDialog(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
                                     tint = if (swatchColor.luminance() > 0.5f) Color.Black else Color.White,
-                                    modifier = Modifier.size(Spacing.Medium)
+                                    modifier = Modifier.size(Sizes.IconSemiMedium)
                                 )
                             }
                         }
@@ -536,14 +536,14 @@ internal fun PatternSelector(
             modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
         )
 
-        Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.height(Spacing.space12))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             items.forEach { item ->
                 val isSelected = item == selectedWallpaperValue
@@ -592,7 +592,7 @@ internal fun PatternSelector(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(Spacing.Large)
+                                modifier = Modifier.size(Sizes.IconLarge)
                             )
                         }
                     }
@@ -634,7 +634,7 @@ internal fun BlurSlider(
             )
         }
 
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
 
         Slider(
             value = localBlur,

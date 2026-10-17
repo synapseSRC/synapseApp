@@ -43,7 +43,7 @@ fun CallRecordItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onCallClick(callRecord.userId, callRecord.isVideo) }
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -55,7 +55,7 @@ fun CallRecordItem(
                 .clip(CircleShape)
         )
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -75,7 +75,7 @@ fun CallRecordItem(
                     modifier = Modifier.size(Sizes.IconSmall),
                     tint = if (callRecord.direction == CallDirection.MISSED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.width(Spacing.space4))
                 Text(
                     text = TimestampFormatter.formatRelative(Instant.fromEpochMilliseconds(callRecord.timestamp).toString()),
                     style = MaterialTheme.typography.bodySmall,

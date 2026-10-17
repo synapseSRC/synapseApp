@@ -152,7 +152,7 @@ fun CoverPhotoWithProfile(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = Spacing.Medium)
+                .padding(start = Spacing.space16)
                 .offset(y = profileImageOffset)
         ) {
             ProfileImageWithRing(
@@ -205,7 +205,7 @@ fun ProfileImageWithRing(
         label = "storyRotation"
     )
 
-    val ringWidth = Spacing.ExtraSmall
+    val ringWidth = Sizes.AvatarBorder
     val ringPadding = Sizes.BorderSelected
 
     Box(
@@ -247,7 +247,7 @@ fun ProfileImageWithRing(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (hasStory) ringWidth else Spacing.None)
+                .padding(if (hasStory) ringWidth else Spacing.space0)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surface)
         )
@@ -255,7 +255,7 @@ fun ProfileImageWithRing(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (hasStory) ringWidth + ringPadding else Spacing.ExtraSmall)
+                .padding(if (hasStory) ringWidth + ringPadding else Spacing.space4)
                 .clip(shape),
             contentAlignment = Alignment.Center
         ) {
@@ -275,7 +275,7 @@ fun ProfileImageWithRing(
                     .size(size * 0.25f)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(Spacing.Tiny)
+                    .padding(Spacing.space2)
                     .clip(CircleShape)
                     .background(StatusOnline)
                     .semantics {
@@ -302,8 +302,8 @@ private fun CoverPhotoPreview() {
 private fun ProfileImageWithRingPreview() {
     MaterialTheme {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             ProfileImageWithRing(
                 avatar = null,

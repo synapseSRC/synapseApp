@@ -29,7 +29,7 @@ fun ChatIntroHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.ExtraLarge, horizontal = Spacing.Medium),
+            .padding(vertical = Spacing.space32, horizontal = Spacing.space16),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val rawName = participantProfile?.displayName ?: participantProfile?.name
@@ -43,7 +43,7 @@ fun ChatIntroHeader(
             shape = RoundedCornerShape(Sizes.CornerExtraLarge)
         )
 
-        Spacer(modifier = Modifier.height(Spacing.Medium))
+        Spacer(modifier = Modifier.height(Spacing.space16))
 
         Text(
             text = rawName,
@@ -51,7 +51,7 @@ fun ChatIntroHeader(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
 
         val subtitle = if (!participantProfile?.bio.isNullOrBlank()) {
             participantProfile?.bio ?: ""
@@ -71,25 +71,25 @@ fun ChatIntroHeader(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(Spacing.MediumLarge))
+        Spacer(modifier = Modifier.height(Spacing.space20))
 
         OutlinedButton(onClick = onViewProfile) {
             Text(text = stringResource(id = R.string.view_profile))
         }
 
-        Spacer(modifier = Modifier.height(Spacing.Large))
+        Spacer(modifier = Modifier.height(Spacing.space24))
 
         Surface(
             shape = RoundedCornerShape(Sizes.CornerFull),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shadowElevation = Spacing.None,
+            shadowElevation = Sizes.ElevationNone,
             tonalElevation = Sizes.BorderThin,
-            modifier = Modifier.padding(horizontal = Spacing.Medium)
+            modifier = Modifier.padding(horizontal = Spacing.space16)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
@@ -97,7 +97,7 @@ fun ChatIntroHeader(
                     modifier = Modifier.size(Sizes.IconSemiSmall),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = stringResource(id = R.string.messages_are_end_to_end_encrypted),
                     style = MaterialTheme.typography.labelMedium,
