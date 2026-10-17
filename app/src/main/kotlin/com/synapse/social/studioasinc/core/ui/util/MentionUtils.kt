@@ -10,6 +10,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
+import com.synapse.social.studioasinc.core.di.DatabaseEntryPoint
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
