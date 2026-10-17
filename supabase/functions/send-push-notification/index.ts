@@ -34,7 +34,7 @@ async function constantTimeEqual(a: string, b: string): Promise<boolean> {
   ])
   const aDigest = new Uint8Array(aHash)
   const bDigest = new Uint8Array(bHash)
-  let diff = aBytes.length ^ bBytes.length
+  let diff = 0
   for (let i = 0; i < aDigest.length; i++) diff |= aDigest[i] ^ bDigest[i]
   return diff === 0
 }
@@ -405,9 +405,9 @@ async function sendOneSignalPush(
   }
 
   const parsedResult = isRecord(result) ? result : {}
-  const notificationId = typeof parsedResult.id === "string" ? parsedResult.id.trim() : ""
+  const acceptedNotificationId = typeof parsedResult.id === "string" ? parsedResult.id.trim() : ""
   const errorCategories = oneSignalErrorCategories(parsedResult)
-  if (!response.ok || !notificationId || errorCategories.length > 0) {
+  if (!response.ok || !acceptedNotificationId || errorCategories.length > 0) {
     const failure = !response.ok
       ? "http_" + response.status
       : errorCategories.length > 0
@@ -419,7 +419,7 @@ async function sendOneSignalPush(
     })
     throw new Error("OneSignal did not accept push notification: " + failure)
   }
-  return { accepted: true, notificationId }
+  return { accepted: true, notificationId: acceptedNotificationId }
 }
 
 serve(async (req: Request) => {
