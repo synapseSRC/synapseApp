@@ -51,11 +51,22 @@ DECLARE
 BEGIN
   IF NEW.in_reply_to_post_id IS NULL THEN RETURN NEW; END IF;
   SELECT p.author_uid INTO v_parent_author FROM public.posts p WHERE p.id = NEW.in_reply_to_post_id;
+  IF v_parent_author IS NULL THEN RETURN NEW; END IF;
   SELECT COALESCE(u.display_name, u.username, 'Someone') INTO v_name FROM public.users u WHERE u.uid = NEW.author_uid;
   SELECT u.uid INTO v_syra_uid FROM public.users u WHERE lower(COALESCE(u.username, '')) = 'syra' LIMIT 1;
   v_is_syra_response := v_syra_uid IS NOT NULL AND NEW.author_uid = v_syra_uid AND EXISTS (
     SELECT 1 FROM public.posts parent WHERE parent.id = NEW.in_reply_to_post_id
-      AND COALESCE(parent.post_text, '') ~* '(^|[^[:alnum:]_])@syra([^[:alnum:]_]|$)'
+      AND EXISTS (
+        SELECT 1
+        FROM LATERAL regexp_matches(
+          COALESCE(parent.post_text, ''),
+          '(^|[^[:alnum:]_])@([[:alnum:]_]+)',
+          'g'
+        ) AS token(parts)
+        JOIN public.users mentioned
+          ON lower(mentioned.username) = lower(token.parts[2])
+        WHERE mentioned.uid = v_syra_uid
+      )
   );
   v_type := CASE WHEN v_is_syra_response THEN 'NEW_REPLY' WHEN EXISTS (
     SELECT 1 FROM public.posts parent WHERE parent.id = NEW.in_reply_to_post_id AND parent.in_reply_to_post_id IS NULL
@@ -63,7 +74,7 @@ BEGIN
   v_body := CASE WHEN v_is_syra_response THEN COALESCE(v_name, 'Someone') || ' replied to your post.'
     WHEN v_type = 'NEW_COMMENT' THEN COALESCE(v_name, 'Someone') || ' commented on your post.'
     ELSE COALESCE(v_name, 'Someone') || ' replied to your comment.' END;
-  v_data := jsonb_build_object('postId', NEW.root_post_id, 'commentId', NEW.id::text, 'targetType', 'POST_COMMENT', 'target_id', NEW.id::text);
+  v_data := jsonb_build_object('postId', COALESCE(NEW.root_post_id, NEW.in_reply_to_post_id), 'commentId', NEW.id::text, 'targetType', 'POST_COMMENT', 'target_id', NEW.id::text);
   PERFORM private.create_user_notification(v_parent_author, NEW.author_uid, v_type, CASE WHEN v_type = 'NEW_COMMENT' THEN 'New comment' ELSE 'New reply' END, v_body, v_data);
   IF NEW.root_post_id IS NOT NULL THEN
     SELECT p.author_uid INTO v_root_author FROM public.posts p WHERE p.id = NEW.root_post_id;
@@ -76,3 +87,10 @@ END;
 $function$;
 
 COMMIT;
+
+
+DROP TRIGGER IF EXISTS trg_notifications_post_reply ON public.posts;
+CREATE TRIGGER trg_notifications_post_reply
+AFTER INSERT ON public.posts
+FOR EACH ROW
+EXECUTE FUNCTION private.handle_post_reply_notification();
