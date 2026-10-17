@@ -47,9 +47,6 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         metadata: String? = null
     ): MessageDto = messages.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId, attachments, metadata)
 
-    suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) =
-        messages.sendMessageNotification(recipientId, senderId, message, chatId)
-
     suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? =
         keys.getOtherParticipantId(chatId, currentUserId)
 
