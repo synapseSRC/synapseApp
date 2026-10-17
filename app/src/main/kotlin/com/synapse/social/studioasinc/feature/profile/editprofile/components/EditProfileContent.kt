@@ -35,8 +35,8 @@ fun EditProfileContent(
         contentPadding = PaddingValues(
             start = SettingsSpacing.screenPadding,
             end = SettingsSpacing.screenPadding,
-            top = paddingValues.calculateTopPadding() + Spacing.Small,
-            bottom = paddingValues.calculateBottomPadding() + Spacing.Large
+            top = paddingValues.calculateTopPadding() + Spacing.space8,
+            bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
     ) {

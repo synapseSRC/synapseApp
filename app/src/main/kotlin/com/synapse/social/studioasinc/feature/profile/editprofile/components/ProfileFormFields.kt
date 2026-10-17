@@ -51,10 +51,10 @@ fun ProfileFormFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        tonalElevation = Sizes.ElevationNone
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16)
         ) {
 
             UsernameField(
@@ -63,7 +63,7 @@ fun ProfileFormFields(
                 validation = usernameValidation
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
 
             OutlinedTextField(
@@ -91,7 +91,7 @@ fun ProfileFormFields(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
 
             OutlinedTextField(
@@ -211,12 +211,12 @@ fun LocationFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        tonalElevation = Sizes.ElevationNone
     ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
-            Text(stringResource(R.string.section_location), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
+        Column(modifier = Modifier.padding(Spacing.space16)) {
+            Text(stringResource(R.string.section_location), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.space16))
             ProfileTextField(currentCity, onCurrentCityChange, "Current City", "e.g., New York, NY", Icons.Filled.LocationOn)
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             ProfileTextField(hometown, onHometownChange, "Hometown", "e.g., Los Angeles, CA", Icons.Filled.LocationOn)
         }
     }
@@ -233,14 +233,14 @@ fun WorkAndEducationFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        tonalElevation = Sizes.ElevationNone
     ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
-            Text(stringResource(R.string.section_work_education), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
+        Column(modifier = Modifier.padding(Spacing.space16)) {
+            Text(stringResource(R.string.section_work_education), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.space16))
             ProfileTextField(occupation, onOccupationChange, "Occupation", "e.g., Software Engineer")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             ProfileTextField(workplace, onWorkplaceChange, "Workplace", "e.g., Google")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             ProfileTextField(education, onEducationChange, "Education", "e.g., Stanford University")
         }
     }
@@ -257,14 +257,14 @@ fun SocialLinksFields(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        tonalElevation = Sizes.ElevationNone
     ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
-            Text(stringResource(R.string.section_social_web), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
+        Column(modifier = Modifier.padding(Spacing.space16)) {
+            Text(stringResource(R.string.section_social_web), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.space16))
             ProfileTextField(discordTag, onDiscordTagChange, "Discord Tag", "e.g., User#1234")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             ProfileTextField(githubProfile, onGithubProfileChange, "GitHub", "e.g., github.com/username")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             ProfileTextField(personalWebsite, onPersonalWebsiteChange, "Website", "e.g., https://mysite.com")
         }
     }

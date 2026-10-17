@@ -42,13 +42,13 @@ fun EditProfileTopBar(
         actions = {
             if (isSaving) {
                 ExpressiveLoadingIndicator(
-                    modifier = Modifier.padding(end = Spacing.Medium).size(Sizes.IconLarge)
+                    modifier = Modifier.padding(end = Spacing.space16).size(Sizes.IconLarge)
                 )
             } else {
                 TextButton(
                     onClick = onSaveClick,
                     enabled = canSave,
-                    modifier = Modifier.padding(end = Spacing.Small)
+                    modifier = Modifier.padding(end = Spacing.space8)
                 ) {
                     Text(stringResource(R.string.action_save))
                 }

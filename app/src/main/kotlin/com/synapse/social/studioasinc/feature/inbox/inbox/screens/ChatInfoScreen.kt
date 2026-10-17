@@ -109,9 +109,9 @@ fun ChatInfoScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 // Error banner if present
                 uiState.errorMessageRes?.let { errorRes ->
@@ -124,7 +124,7 @@ fun ChatInfoScreen(
                             text = stringResource(errorRes),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(Spacing.Medium)
+                            modifier = Modifier.padding(Spacing.space16)
                         )
                     }
                 }
@@ -138,7 +138,7 @@ fun ChatInfoScreen(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
+                    modifier = Modifier.padding(vertical = Spacing.space4)
                 ) {
                     UserAvatarWithStatus(
                         userId = userId,
@@ -148,7 +148,7 @@ fun ChatInfoScreen(
                         displayName = displayName
                     )
 
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
 
                     Text(
                         text = displayName,
@@ -185,7 +185,7 @@ fun ChatInfoScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Spacing.ExtraSmall),
+                        .padding(vertical = Spacing.space4),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -216,7 +216,7 @@ fun ChatInfoScreen(
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Row(
-                        modifier = Modifier.padding(Spacing.Medium),
+                        modifier = Modifier.padding(Spacing.space16),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -226,7 +226,7 @@ fun ChatInfoScreen(
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(modifier = Modifier.width(Spacing.Medium))
+                            Spacer(modifier = Modifier.width(Spacing.space16))
                             Text(
                                 text = stringResource(R.string.chat_info_media_links_docs),
                                 style = MaterialTheme.typography.bodyLarge,
@@ -241,7 +241,7 @@ fun ChatInfoScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                Spacer(modifier = Modifier.width(Spacing.space4))
                             }
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -371,7 +371,7 @@ fun ChatInfoScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
             }
         }
     }
@@ -496,7 +496,7 @@ private fun CircularQuickAction(
                 modifier = Modifier.size(Sizes.IconDefault)
             )
         }
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
@@ -519,7 +519,7 @@ private fun SettingsSectionGroup(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
             )
         }
         Surface(
@@ -547,7 +547,7 @@ private fun SettingsClickableItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -555,7 +555,7 @@ private fun SettingsClickableItem(
             contentDescription = title,
             tint = iconTint
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -588,7 +588,7 @@ private fun SettingsInfoItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -596,7 +596,7 @@ private fun SettingsInfoItem(
             contentDescription = title,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -627,7 +627,7 @@ private fun SettingsSwitchItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCheckedChange(!checked) }
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -635,7 +635,7 @@ private fun SettingsSwitchItem(
             contentDescription = title,
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
