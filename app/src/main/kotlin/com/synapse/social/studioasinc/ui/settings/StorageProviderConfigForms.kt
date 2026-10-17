@@ -61,7 +61,7 @@ internal fun ImgBBConfigContent(
     var localApiKey by remember(apiKey) { mutableStateOf(if (isUsingFallback) "" else apiKey) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
@@ -97,7 +97,7 @@ internal fun CloudinaryConfigContent(
     var localUploadPreset by remember(uploadPreset) { mutableStateOf(uploadPreset) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         OutlinedTextField(
             value = localCloudName,
             onValueChange = { localCloudName = it },
@@ -155,7 +155,7 @@ internal fun SupabaseConfigContent(
     var localBucketName by remember(bucketName) { mutableStateOf(bucketName) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         OutlinedTextField(
             value = localUrl,
             onValueChange = { localUrl = it },
@@ -227,7 +227,7 @@ internal fun R2ConfigContent(
     var localBucketName by remember(bucketName) { mutableStateOf(bucketName) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         OutlinedTextField(
             value = localAccountId,
             onValueChange = { localAccountId = it },
@@ -330,7 +330,7 @@ internal fun SaveConnectButton(
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = Sizes.BorderDefault
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Spacer(modifier = Modifier.width(Spacing.space16))
                         Text(stringResource(R.string.storage_connecting))
                     }
                 }
@@ -341,7 +341,7 @@ internal fun SaveConnectButton(
                             contentDescription = null,
                             modifier = Modifier.size(Sizes.IconDefault)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Spacer(modifier = Modifier.width(Spacing.space16))
                         Text(stringResource(R.string.upload_complete))
                     }
                 }
@@ -362,17 +362,17 @@ internal fun HelpText(text: String) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Spacing.SmallMedium))
+            .clip(RoundedCornerShape(Sizes.CornerDefault))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(Spacing.Medium)
+            .padding(Spacing.space16)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Outlined.Help,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(Spacing.MediumLarge)
+            modifier = Modifier.size(Sizes.IconDefault)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,

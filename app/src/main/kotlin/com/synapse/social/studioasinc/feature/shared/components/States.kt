@@ -47,7 +47,7 @@ fun ErrorState(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error
             )
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             Button(onClick = onRetry) {
                 Text(stringResource(R.string.action_retry))
             }

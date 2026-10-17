@@ -1,5 +1,9 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.clickable
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.*
@@ -120,7 +124,7 @@ fun NotificationSettingsContent(
         snackbarHost = {
             error?.let { errorMessage ->
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = onClearError) {
                             Text(stringResource(R.string.action_dismiss))
@@ -137,7 +141,7 @@ fun NotificationSettingsContent(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = SettingsSpacing.screenPadding),
-            contentPadding = PaddingValues(bottom = Spacing.ExtraLarge),
+            contentPadding = PaddingValues(bottom = Spacing.space32),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
             item {
@@ -329,13 +333,13 @@ private fun QuietHoursItem(
                     horizontal = SettingsSpacing.itemHorizontalPadding,
                     vertical = SettingsSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Schedule,
                 contentDescription = null,
-                modifier = Modifier.size(SettingsSpacing.iconSize),
+                modifier = Modifier.size(Sizes.IconLarge),
                 tint = SettingsColors.itemIcon
             )
             Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
@@ -355,7 +359,7 @@ private fun QuietHoursItem(
                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
             Switch(
                 checked = notificationPreferences.quietHoursEnabled,
                 onCheckedChange = onToggleQuietHours,
@@ -389,11 +393,11 @@ private fun QuietHoursTimePickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card {
             Column(
-                modifier = Modifier.padding(Spacing.Medium),
+                modifier = Modifier.padding(Spacing.space16),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
                 TimePicker(state = state)
                 Row(
                     modifier = Modifier.fillMaxWidth(),

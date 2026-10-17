@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -126,7 +128,7 @@ fun SettingsBackupScreen(
                 .padding(padding)
                 .padding(horizontal = SettingsSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(vertical = Spacing.Small)
+            contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
                 Card(
@@ -139,16 +141,16 @@ fun SettingsBackupScreen(
                                 imageVector = Icons.Filled.Backup,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(SettingsSpacing.iconSize)
+                                modifier = Modifier.size(Sizes.IconLarge)
                             )
-                            Spacer(Modifier.size(Spacing.Medium))
+                            Spacer(Modifier.size(Spacing.space16))
                             Text(
                                 text = stringResource(R.string.backup_restore_title),
                                 style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        Spacer(Modifier.height(Spacing.SmallMedium))
+                        Spacer(Modifier.height(Spacing.space12))
                         Text(
                             text = stringResource(R.string.backup_restore_intro),
                             style = MaterialTheme.typography.bodyLarge,
@@ -159,7 +161,7 @@ fun SettingsBackupScreen(
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = stringResource(R.string.backup_destination_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -236,7 +238,7 @@ fun SettingsBackupScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         stringResource(
                             R.string.backup_restore_preview_message,
@@ -270,7 +272,7 @@ fun SettingsBackupScreen(
             onDismissRequest = { viewModel.dismissConflict() },
             title = { Text(stringResource(R.string.backup_conflict_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(stringResource(R.string.backup_conflict_message))
                     Text(
                         stringResource(
@@ -324,7 +326,7 @@ private fun LocalBackupSection(
     ) {
         Column(
             modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_local_status_title), style = MaterialTheme.typography.titleMedium)
             val metadata = state.localBackup
@@ -346,22 +348,22 @@ private fun LocalBackupSection(
             state.localErrorResource?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
             Button(onClick = onCreate, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Backup, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_create_local))
             }
             OutlinedButton(onClick = onRestore, enabled = !state.isBusy && metadata != null, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Restore, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_restore))
             }
             OutlinedButton(onClick = onExport, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.FileDownload, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_export_file))
             }
             OutlinedButton(onClick = onImport, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.FileUpload, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_import_file))
             }
         }
@@ -382,11 +384,11 @@ private fun CloudBackupSection(
     ) {
         Column(
             modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Cloud, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_status_title), style = MaterialTheme.typography.titleMedium)
             }
             Text(
@@ -418,7 +420,7 @@ private fun CloudBackupSection(
             )
             Button(onClick = onBackup, enabled = state.canUseCloud, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Backup, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_backup_now))
             }
             OutlinedButton(
@@ -427,12 +429,12 @@ private fun CloudBackupSection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Filled.Restore, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_restore))
             }
             OutlinedButton(onClick = onSync, enabled = state.canUseCloud, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Sync, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_sync_now))
             }
         }
@@ -456,7 +458,7 @@ private fun IncludedSettingsSection() {
     ) {
         Column(
             modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_scope_title), style = MaterialTheme.typography.titleMedium)
             categories.forEach { category ->
@@ -478,7 +480,7 @@ private fun PrivacyAndRestoreNote() {
     ) {
         Column(
             modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_privacy_title), style = MaterialTheme.typography.titleMedium)
             Text(

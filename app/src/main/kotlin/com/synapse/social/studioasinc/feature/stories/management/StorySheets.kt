@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.stories.management
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -54,13 +56,13 @@ fun ViewerListSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(bottom = Spacing.space32)
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -68,7 +70,7 @@ fun ViewerListSheet(
                     contentDescription = null,
                     modifier = Modifier.size(Sizes.IconLarge)
                 )
-                Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+                Spacer(modifier = Modifier.width(Spacing.space12))
                 Text(
                     text = stringResource(R.string.seen_by_count, viewers.size),
                     style = MaterialTheme.typography.titleMedium,
@@ -76,7 +78,7 @@ fun ViewerListSheet(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.space8))
 
             when {
                 isLoading -> {
@@ -103,7 +105,7 @@ fun ViewerListSheet(
                                 modifier = Modifier.size(Sizes.IconGiant),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+                            Spacer(modifier = Modifier.height(Spacing.space12))
                             Text(
                                 text = stringResource(R.string.no_views_yet),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -114,7 +116,7 @@ fun ViewerListSheet(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium)
+                        contentPadding = PaddingValues(horizontal = Spacing.space16)
                     ) {
                         items(viewers) { viewWithUser ->
                             ViewerListItem(
@@ -141,7 +143,7 @@ private fun ViewerListItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = Spacing.SmallMedium),
+            .padding(vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -150,17 +152,17 @@ private fun ViewerListItem(
                 model = viewer.avatar,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(Sizes.TouchTarget)
+                    .size(AccessibilitySizes.touchTarget)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(Sizes.TouchTarget)
+                    .size(AccessibilitySizes.touchTarget)
                     .clip(CircleShape)
                     .then(
-                        Modifier.padding(Spacing.None)
+                        Modifier.padding(Spacing.space0)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -171,7 +173,7 @@ private fun ViewerListItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -219,7 +221,7 @@ fun StoryOptionsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(bottom = Spacing.space32)
         ) {
             if (isOwnStory) {
 
@@ -298,12 +300,12 @@ fun StoryReactionsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(bottom = Spacing.space32)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -313,7 +315,7 @@ fun StoryReactionsSheet(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.space8))
 
             if (reactions.isEmpty()) {
                 Box(
@@ -330,7 +332,7 @@ fun StoryReactionsSheet(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = Spacing.Medium)
+                    contentPadding = PaddingValues(horizontal = Spacing.space16)
                 ) {
                     items(reactions) { reaction ->
                         StoryReactionItem(reaction = reaction)
@@ -349,13 +351,13 @@ fun StoryReactionItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.SmallMedium),
+            .padding(vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // User info could be fetched or passed here. For now show UI based on storyId/userId
         Box(
             modifier = Modifier
-                .size(Sizes.TouchTarget)
+                .size(AccessibilitySizes.touchTarget)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
@@ -363,7 +365,7 @@ fun StoryReactionItem(
             Text(text = reaction.emoji, style = MaterialTheme.typography.titleMedium)
         }
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(

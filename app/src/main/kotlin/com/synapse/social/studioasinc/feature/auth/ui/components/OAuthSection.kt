@@ -25,7 +25,7 @@ fun OAuthSection(
     onAppleClick: () -> Unit,
     onGitHubClick: () -> Unit
 ) {
-    Spacer(modifier = Modifier.height(Spacing.Large))
+    Spacer(modifier = Modifier.height(Spacing.space24))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -40,7 +40,7 @@ fun OAuthSection(
         Text(
             text = stringResource(id = R.string.or_continue_with),
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(horizontal = Spacing.Medium),
+            modifier = Modifier.padding(horizontal = Spacing.space16),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(
@@ -51,9 +51,9 @@ fun OAuthSection(
         )
     }
 
-    Spacer(modifier = Modifier.height(Spacing.Large))
+    Spacer(modifier = Modifier.height(Spacing.space24))
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space12)) {
         OAuthButton(
             provider = "Google",
             onClick = onGoogleClick

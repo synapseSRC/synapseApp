@@ -40,7 +40,7 @@ fun EmailVerificationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Large),
+                .padding(Spacing.space24),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -51,7 +51,7 @@ fun EmailVerificationScreen(
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Large))
+            Spacer(modifier = Modifier.height(Spacing.space24))
 
             Text(
                 text = stringResource(R.string.email_verification_title),
@@ -59,7 +59,7 @@ fun EmailVerificationScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             Text(
                 text = stringResource(R.string.email_verification_subtitle),
@@ -75,14 +75,14 @@ fun EmailVerificationScreen(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+            Spacer(modifier = Modifier.height(Spacing.space32))
 
             if (state.isResent) {
                 Text(
                     text = stringResource(R.string.email_verification_resent),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = Spacing.Medium)
+                    modifier = Modifier.padding(bottom = Spacing.space16)
                 )
             }
 
@@ -99,7 +99,7 @@ fun EmailVerificationScreen(
                         progress = { state.resendCooldownSeconds / 60f },
                         modifier = Modifier.size(Sizes.IconGiant),
                     )
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
                     Text(
                         text = stringResource(R.string.email_verification_resend_wait, state.resendCooldownSeconds),
                         style = MaterialTheme.typography.bodyMedium
@@ -107,7 +107,7 @@ fun EmailVerificationScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Large))
+            Spacer(modifier = Modifier.height(Spacing.space24))
 
             OutlinedButton(
                 onClick = onBackToSignInClick
