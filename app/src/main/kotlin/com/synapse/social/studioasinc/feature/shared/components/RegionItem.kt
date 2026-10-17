@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.shared.components
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -31,8 +33,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun getRegionShapeForItem(index: Int, size: Int): Shape {
-    val largeRadius = Spacing.Large
-    val smallRadius = Spacing.ExtraSmall
+    val largeRadius = Sizes.CornerExtraLarge
+    val smallRadius = Sizes.CornerSmall
     return when {
         size == 1 -> RoundedCornerShape(largeRadius)
         index == 0 -> RoundedCornerShape(topStart = largeRadius, topEnd = largeRadius, bottomStart = smallRadius, bottomEnd = smallRadius)
@@ -70,7 +72,7 @@ fun RegionItem(
         color = containerColor,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Tiny)
+            .padding(vertical = Spacing.space2)
             .clickable { onRegionSelected(region) }
     ) {
         ListItem(

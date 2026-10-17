@@ -35,7 +35,7 @@ fun PostContent(
             val colorOnSurface = MaterialTheme.colorScheme.onSurface
 
             AndroidView(
-                modifier = Modifier.padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small),
+                modifier = Modifier.padding(horizontal = Spacing.space12, vertical = Spacing.space8),
                 factory = { ctx ->
                     TextView(ctx).apply {
                         setTextColor(colorOnSurface.toArgb())
@@ -70,7 +70,7 @@ fun PostContent(
                 Text(
                     text = stringResource(R.string.post_more_media_format, mediaItems.size - 1),
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(Spacing.SmallMedium),
+                    modifier = Modifier.padding(Spacing.space12),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

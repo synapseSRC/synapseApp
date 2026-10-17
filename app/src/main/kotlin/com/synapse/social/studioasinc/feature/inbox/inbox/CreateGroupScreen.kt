@@ -79,7 +79,7 @@ fun CreateGroupScreen(
                 Text(
                     text = error ?: "",
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(Spacing.Medium)
+                    modifier = Modifier.padding(Spacing.space16)
                 )
             }
 
@@ -92,8 +92,8 @@ fun CreateGroupScreen(
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                        .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
                 ) {
                     items(selectedUsers, key = { it.uid }) { user ->
                         SelectedUserItem(
@@ -110,7 +110,7 @@ fun CreateGroupScreen(
                 label = { Text(stringResource(R.string.group_name_label)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 singleLine = true
             )
 
@@ -120,7 +120,7 @@ fun CreateGroupScreen(
                 label = { Text(stringResource(R.string.search_by_username_hint)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 singleLine = true,
                 placeholder = { Text(stringResource(R.string.search_hint)) }
             )
@@ -128,7 +128,7 @@ fun CreateGroupScreen(
             Text(
                 text = stringResource(id = R.string.select_members, selectedUsers.size),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             )
 
             if (isLoading && users.isEmpty()) {
@@ -161,7 +161,7 @@ private fun UserSelectionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val displayName = user.displayName?.takeIf { it.isNotBlank() && it != "null" }
@@ -172,7 +172,7 @@ private fun UserSelectionItem(
             displayName = displayName,
             size = Sizes.IconMassive
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(
             text = displayName,
             style = MaterialTheme.typography.bodyLarge,
@@ -217,18 +217,18 @@ private fun SelectedUserItem(
                 modifier = Modifier
                     .size(Sizes.IconDefault)
                     .align(Alignment.TopEnd)
-                    .offset(x = Spacing.Small, y = (-Spacing.ExtraSmall))
+                    .offset(x = Spacing.space8, y = (-Spacing.space4))
                     .clickable(onClick = onRemove)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Remove",
-                    modifier = Modifier.padding(Spacing.Tiny),
+                    modifier = Modifier.padding(Spacing.space2),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
         Text(
             text = firstName,
             style = MaterialTheme.typography.bodySmall,

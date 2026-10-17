@@ -46,7 +46,7 @@ fun ForgotPasswordScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Large),
+                .padding(Spacing.space24),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -56,7 +56,7 @@ fun ForgotPasswordScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Text(
                 text = stringResource(R.string.forgot_password_subtitle),
@@ -64,7 +64,7 @@ fun ForgotPasswordScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+            Spacer(modifier = Modifier.height(Spacing.space32))
 
             ErrorCard(
                 error = state.generalError,
@@ -83,7 +83,7 @@ fun ForgotPasswordScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(Spacing.Large))
+                Spacer(modifier = Modifier.height(Spacing.space24))
                 AuthButton(
                     text = stringResource(R.string.forgot_password_back),
                     onClick = onBackClick
@@ -108,7 +108,7 @@ fun ForgotPasswordScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Large))
+                Spacer(modifier = Modifier.height(Spacing.space24))
 
                 AuthButton(
                     text = stringResource(R.string.forgot_password_continue),
@@ -118,7 +118,7 @@ fun ForgotPasswordScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 OutlinedButton(
                     onClick = onBackClick

@@ -37,7 +37,7 @@ fun NotificationHeader(date: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
     ) {
         Text(
             text = date,
@@ -54,7 +54,7 @@ fun NotificationsScreen(
     viewModel: NotificationsViewModel = hiltViewModel(),
     onNotificationClick: (UiNotification) -> Unit,
     onUserClick: (String) -> Unit,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(Spacing.space0)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
@@ -151,19 +151,19 @@ fun NotificationsScreen(
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = Spacing.Medium)
+                                                .padding(horizontal = Spacing.space16)
                                                 .background(
                                                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                                                 )
                                         ) {
                                             HorizontalDivider(
-                                                modifier = Modifier.padding(horizontal = Spacing.Medium),
+                                                modifier = Modifier.padding(horizontal = Spacing.space16),
                                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                                                 thickness = 0.5.dp
                                             )
                                         }
                                     } else {
-                                        Spacer(modifier = Modifier.height(Spacing.Small))
+                                        Spacer(modifier = Modifier.height(Spacing.space8))
                                     }
                                 }
                             }

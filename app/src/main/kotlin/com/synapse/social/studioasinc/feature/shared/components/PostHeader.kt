@@ -30,7 +30,7 @@ fun PostHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.SmallMedium),
+            .padding(Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -41,7 +41,7 @@ fun PostHeader(
                 .clickable(onClick = onUserClick)
         )
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -51,7 +51,7 @@ fun PostHeader(
                     fontWeight = FontWeight.Bold
                 )
                 if (isVerified) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Icon(
                         imageVector = Icons.Default.Verified,
                         contentDescription = stringResource(R.string.cd_selected),

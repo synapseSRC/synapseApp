@@ -48,7 +48,7 @@ fun FeedError(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = message, color = MaterialTheme.colorScheme.error)
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             Button(onClick = onRetry) {
                 Text(stringResource(R.string.retry))
             }
@@ -78,7 +78,7 @@ fun PostShimmer() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+                .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
         ) {
             // Left Column: Avatar
             Column(
@@ -88,7 +88,7 @@ fun PostShimmer() {
                 ShimmerCircle(size = Sizes.AvatarDefault)
             }
 
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
 
             // Right Column: Content
             Column(modifier = Modifier.weight(1f)) {
@@ -98,20 +98,20 @@ fun PostShimmer() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthLarge).height(Sizes.ShimmerTextSmall))
-                    Spacer(modifier = Modifier.width(Spacing.Small))
-                    ShimmerBox(modifier = Modifier.width(Spacing.ButtonHeight).height(Sizes.ShimmerTextSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
+                    ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthExtraSmall).height(Sizes.ShimmerTextSmall))
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 // Text Content
                 ShimmerBox(modifier = Modifier.fillMaxWidth(0.9f).height(Sizes.ShimmerTextSmall))
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 ShimmerBox(modifier = Modifier.fillMaxWidth(0.7f).height(Sizes.ShimmerTextSmall))
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 ShimmerBox(modifier = Modifier.fillMaxWidth(0.4f).height(Sizes.ShimmerTextSmall))
 
-                Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+                Spacer(modifier = Modifier.height(Spacing.space12))
 
                 // Media Area
                 ShimmerBox(modifier = Modifier.fillMaxWidth().height(Sizes.HeightExtraLarge))
@@ -120,12 +120,12 @@ fun PostShimmer() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = Spacing.Small, bottom = Spacing.ExtraSmall),
+                        .padding(top = Spacing.space8, bottom = Spacing.space4),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     repeat(4) {
-                        ShimmerBox(modifier = Modifier.width(Spacing.Huge).height(Sizes.HeightSmall))
+                        ShimmerBox(modifier = Modifier.width(Sizes.ShimmerActionWidth).height(Sizes.HeightSmall))
                     }
                     ShimmerBox(modifier = Modifier.width(Sizes.IconLarge).height(Sizes.HeightSmall))
                 }

@@ -26,7 +26,7 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -36,14 +36,14 @@ fun EmptyState(
             modifier = Modifier.size(Sizes.AvatarExtraLarge),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         )
-        Spacer(modifier = Modifier.height(Spacing.Medium))
+        Spacer(modifier = Modifier.height(Spacing.space16))
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
@@ -51,7 +51,7 @@ fun EmptyState(
             textAlign = TextAlign.Center
         )
         if (actionText != null && onActionClick != null) {
-            Spacer(modifier = Modifier.height(Spacing.Large))
+            Spacer(modifier = Modifier.height(Spacing.space24))
             Button(onClick = onActionClick) {
                 Text(actionText)
             }

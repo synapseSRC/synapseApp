@@ -39,8 +39,8 @@ fun BlockedUserItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                horizontal = Spacing.Medium,
-                vertical = Spacing.Small
+                horizontal = Spacing.space16,
+                vertical = Spacing.space8
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -54,7 +54,7 @@ fun BlockedUserItem(
             contentScale = ContentScale.Crop
         )
         
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         
         // Username
         Text(
@@ -66,7 +66,7 @@ fun BlockedUserItem(
             modifier = Modifier.weight(1f)
         )
         
-        Spacer(modifier = Modifier.width(Spacing.Small))
+        Spacer(modifier = Modifier.width(Spacing.space8))
         
         // Unblock Button
         OutlinedButton(

@@ -130,7 +130,7 @@ fun GroupInfoScreen(
                 Text(
                     text = error ?: "",
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(Spacing.Medium)
+                    modifier = Modifier.padding(Spacing.space16)
                 )
             }
 
@@ -139,7 +139,7 @@ fun GroupInfoScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                        .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -155,7 +155,7 @@ fun GroupInfoScreen(
             Text(
                 text = stringResource(id = R.string.members_count, members.size),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             )
 
             if (isLoading && members.isEmpty()) {
@@ -184,7 +184,7 @@ fun GroupInfoScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(Spacing.Medium)
+                                .padding(Spacing.space16)
                         ) {
                             Text(stringResource(R.string.leave_group))
                         }
@@ -209,7 +209,7 @@ private fun GroupMemberItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -220,7 +220,7 @@ private fun GroupMemberItem(
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         val displayName = user.displayName?.takeIf { it.isNotBlank() && it != "null" }
             ?: user.username?.takeIf { it.isNotBlank() && it != "null" }
             ?: "Unknown"

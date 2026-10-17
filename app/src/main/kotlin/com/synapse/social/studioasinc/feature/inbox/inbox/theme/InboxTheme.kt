@@ -95,9 +95,9 @@ object InboxShapes {
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.large
 
-    val GroupedListTopShape = RoundedCornerShape(topStart = Spacing.Medium, topEnd = Spacing.Medium, bottomStart = Spacing.ExtraSmall, bottomEnd = Spacing.ExtraSmall)
-    val GroupedListMiddleShape = RoundedCornerShape(Spacing.ExtraSmall)
-    val GroupedListBottomShape = RoundedCornerShape(topStart = Spacing.ExtraSmall, topEnd = Spacing.ExtraSmall, bottomStart = Spacing.Medium, bottomEnd = Spacing.Medium)
+    val GroupedListTopShape = RoundedCornerShape(topStart = Sizes.CornerLarge, topEnd = Sizes.CornerLarge, bottomStart = Sizes.CornerSmall, bottomEnd = Sizes.CornerSmall)
+    val GroupedListMiddleShape = RoundedCornerShape(Sizes.CornerSmall)
+    val GroupedListBottomShape = RoundedCornerShape(topStart = Sizes.CornerSmall, topEnd = Sizes.CornerSmall, bottomStart = Sizes.CornerLarge, bottomEnd = Sizes.CornerLarge)
     val GroupedListSingleShape: androidx.compose.ui.graphics.Shape
         @Composable
         @ReadOnlyComposable
@@ -160,9 +160,9 @@ object InboxDimens {
     val UnreadBadgeSize = Sizes.IconSmallMedium
     val UnreadBadgeSizeSmall = Sizes.IconMedium
     val StoryRingWidth = Sizes.BorderSelected
-    val ChatItemPadding = Spacing.Medium
-    val ChatItemVerticalSpacing = Spacing.Small
-    val GroupedItemGap = Sizes.BorderDefault
+    val ChatItemPadding = Spacing.space16
+    val ChatItemVerticalSpacing = Spacing.space8
+    val GroupedItemGap = Spacing.space2
     val SectionHeaderHeight = Sizes.AvatarSmall
     val SwipeActionIconSize = Sizes.IconExtraLarge
     val FABSize = Sizes.AvatarLarge

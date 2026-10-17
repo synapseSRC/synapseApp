@@ -50,12 +50,12 @@ fun ProfileHeaderCard(
         ) {
 
             Box(
-                modifier = Modifier.size(SettingsSpacing.avatarSize)
+                modifier = Modifier.size(Sizes.AvatarSemiLarge)
             ) {
                 com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
                     avatarUrl = avatarUrl,
                     displayName = displayName,
-                    size = SettingsSpacing.avatarSize,
+                    size = Sizes.AvatarSemiLarge,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -64,13 +64,13 @@ fun ProfileHeaderCard(
                     shape = CircleShape,
                     color = androidx.compose.ui.graphics.Color.Transparent,
                     border = androidx.compose.foundation.BorderStroke(
-                        width = Spacing.Tiny,
+                        width = Sizes.BorderDefault,
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                     )
                 ) {}
             }
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
 
             Column(
@@ -124,14 +124,14 @@ fun SettingsInfoItem(
     ) {
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
+                    modifier = Modifier.size(Sizes.IconLarge),
                     tint = SettingsColors.itemIcon
                 )
             }
@@ -143,7 +143,7 @@ fun SettingsInfoItem(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 if (value.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = value,
                         style = SettingsTypography.itemSubtitle,

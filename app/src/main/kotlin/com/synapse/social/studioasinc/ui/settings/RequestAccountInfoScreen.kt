@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -123,7 +125,7 @@ fun RequestAccountInfoScreen(
                             Text(stringResource(R.string.action_processing_request))
                         } else {
                             Icon(Icons.Default.Download, contentDescription = null)
-                            Spacer(Modifier.width(Spacing.Small))
+                            Spacer(Modifier.width(Spacing.space8))
                             Text(stringResource(R.string.action_request_reports))
                         }
                     }
@@ -190,12 +192,12 @@ fun RequestAccountInfoScreen(
                     shape = SettingsShapes.inputShape
                 ) {
                     Icon(Icons.Default.FileDownload, contentDescription = null)
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(stringResource(R.string.action_download_report))
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
         }
     }
 }
@@ -239,8 +241,8 @@ private fun AccountInfoStatusBanner(status: RequestStatus) {
                     imageVector = content.icon,
                     contentDescription = null,
                     modifier = Modifier
-                        .padding(Spacing.Small)
-                        .size(SettingsSpacing.iconSize),
+                        .padding(Spacing.space8)
+                        .size(Sizes.IconLarge),
                     tint = if (content.isReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
@@ -251,7 +253,7 @@ private fun AccountInfoStatusBanner(status: RequestStatus) {
                     style = SettingsTypography.itemTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = content.desc,
                     style = SettingsTypography.itemSubtitle,
@@ -295,7 +297,7 @@ private fun AccountInfoSelectionRow(
                     horizontal = SettingsSpacing.itemHorizontalPadding,
                     vertical = SettingsSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
@@ -306,8 +308,8 @@ private fun AccountInfoSelectionRow(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier
-                        .padding(Spacing.Small)
-                        .size(SettingsSpacing.iconSize),
+                        .padding(Spacing.space8)
+                        .size(Sizes.IconLarge),
                     tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -318,14 +320,14 @@ private fun AccountInfoSelectionRow(
                     style = SettingsTypography.itemTitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = subtitle,
                     style = SettingsTypography.itemSubtitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.Small))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Checkbox(
                 checked = selected,
                 onCheckedChange = null,

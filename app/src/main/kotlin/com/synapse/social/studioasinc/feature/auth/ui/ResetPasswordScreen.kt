@@ -49,7 +49,7 @@ fun ResetPasswordScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(Spacing.Large),
+                .padding(Spacing.space24),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -59,7 +59,7 @@ fun ResetPasswordScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+            Spacer(modifier = Modifier.height(Spacing.space32))
 
             ErrorCard(
                 error = state.generalError,
@@ -82,11 +82,11 @@ fun ResetPasswordScreen(
             if (state.password.isNotEmpty()) {
                 PasswordStrengthIndicator(
                     strength = state.passwordStrength,
-                    modifier = Modifier.padding(top = Spacing.Small)
+                    modifier = Modifier.padding(top = Spacing.space8)
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             AuthTextField(
                 value = state.confirmPassword,
@@ -107,7 +107,7 @@ fun ResetPasswordScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Large))
+            Spacer(modifier = Modifier.height(Spacing.space24))
 
             AuthButton(
                 text = stringResource(R.string.reset_password_button),

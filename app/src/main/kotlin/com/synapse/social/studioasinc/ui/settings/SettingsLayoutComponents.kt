@@ -37,13 +37,13 @@ fun SettingsSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space12)
     ) {
         Text(
             text = title,
             style = SettingsTypography.sectionHeader,
             color = SettingsColors.sectionTitle,
-            modifier = Modifier.padding(start = Spacing.Small)
+            modifier = Modifier.padding(start = Spacing.space8)
         )
         Column(
             modifier = Modifier.fillMaxWidth(),
