@@ -40,14 +40,14 @@ fun AddApiKeyDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Large, vertical = Spacing.Medium)
-                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + Spacing.Medium)
+                .padding(horizontal = Spacing.space24, vertical = Spacing.space16)
+                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + Spacing.space16)
         ) {
             Text(
                 text = stringResource(R.string.api_add_key_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = Spacing.Medium)
+                modifier = Modifier.padding(bottom = Spacing.space16)
             )
 
             var expanded by remember { mutableStateOf(false) }
@@ -84,7 +84,7 @@ fun AddApiKeyDialog(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = apiKey,
@@ -104,7 +104,7 @@ fun AddApiKeyDialog(
                 shape = SettingsShapes.inputShape
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = keyName,
@@ -115,7 +115,7 @@ fun AddApiKeyDialog(
                 shape = SettingsShapes.inputShape
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = usageLimit,
@@ -127,7 +127,7 @@ fun AddApiKeyDialog(
                 shape = SettingsShapes.inputShape
             )
 
-            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+            Spacer(modifier = Modifier.height(Spacing.space32))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -137,7 +137,7 @@ fun AddApiKeyDialog(
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.settings_cancel))
                 }
-                Spacer(modifier = Modifier.width(Spacing.Medium))
+                Spacer(modifier = Modifier.width(Spacing.space16))
                 Button(
                     onClick = {
                         onAdd(

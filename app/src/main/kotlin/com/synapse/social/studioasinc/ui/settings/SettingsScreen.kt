@@ -82,19 +82,19 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
-            contentPadding = PaddingValues(vertical = Spacing.Small)
+                .padding(horizontal = Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
+            contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = stringResource(R.string.settings_account_short),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = Spacing.SmallMedium, bottom = Spacing.ExtraSmall)
+                        modifier = Modifier.padding(start = Spacing.space12, bottom = Spacing.space4)
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)) {
                         SettingRow(
@@ -124,13 +124,13 @@ fun SettingsScreen(
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = stringResource(R.string.settings_security_short),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = Spacing.SmallMedium, bottom = Spacing.ExtraSmall)
+                        modifier = Modifier.padding(start = Spacing.space12, bottom = Spacing.space4)
                     )
                     SettingsCard {
                         SettingRow(
@@ -160,13 +160,13 @@ fun SettingsScreen(
                         contentDescription = null,
                         modifier = Modifier.size(Sizes.IconMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(stringResource(R.string.action_log_out))
                 }
             }
 
             item {
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
             }
         }
     }
@@ -222,7 +222,7 @@ private fun SettingRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.Medium),
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (imageUrl != null) {
@@ -242,7 +242,7 @@ private fun SettingRow(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = Spacing.Medium)
+                    .padding(start = Spacing.space16)
             ) {
                 Text(
                     text = title,

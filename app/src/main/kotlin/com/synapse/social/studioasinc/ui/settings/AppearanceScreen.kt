@@ -58,7 +58,7 @@ fun AppearanceScreen(
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -163,13 +163,13 @@ fun AppearanceScreen(
                             style = SettingsTypography.itemTitle,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                        Spacer(modifier = Modifier.height(Spacing.space4))
                         Text(
                             text = stringResource(R.string.appearance_post_media_grid_subtitle),
                             style = SettingsTypography.itemSubtitle,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
 
                         val connectedLeadingShapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
                         val connectedMiddleShapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
@@ -214,7 +214,7 @@ fun AppearanceScreen(
                                             ) {
                                                 Text(label)
                                                 if (label == "Grid") {
-                                                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                                    Spacer(modifier = Modifier.width(Spacing.space4))
                                                     Badge(
                                                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                                                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -222,7 +222,7 @@ fun AppearanceScreen(
                                                         Text(
                                                             text = stringResource(R.string.appearance_beta),
                                                             style = MaterialTheme.typography.labelSmall,
-                                                            modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = 0.dp)
+                                                            modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space0)
                                                         )
                                                     }
                                                 }

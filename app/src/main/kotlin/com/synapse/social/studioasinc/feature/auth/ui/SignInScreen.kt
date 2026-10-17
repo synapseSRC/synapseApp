@@ -68,7 +68,7 @@ private fun SignInHeader() {
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         Text(
             text = stringResource(R.string.sign_in_subtitle),
             style = MaterialTheme.typography.bodyLarge,
@@ -121,7 +121,7 @@ private fun SignInForm(
         })
     )
 
-    Spacer(modifier = Modifier.height(Spacing.Small))
+    Spacer(modifier = Modifier.height(Spacing.space8))
 
     Text(
         text = stringResource(R.string.forgot_password_link),
@@ -130,11 +130,11 @@ private fun SignInForm(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onForgotPasswordClick() }
-            .padding(vertical = Spacing.ExtraSmall),
+            .padding(vertical = Spacing.space4),
         textAlign = TextAlign.End
     )
 
-    Spacer(modifier = Modifier.height(Spacing.Medium))
+    Spacer(modifier = Modifier.height(Spacing.space16))
 
     AuthButton(
         text = stringResource(R.string.action_sign_in),
@@ -152,7 +152,7 @@ private fun SignInForm(
         onGitHubClick = { onOAuthClick("GitHub") }
     )
 
-    Spacer(modifier = Modifier.height(Spacing.Large))
+    Spacer(modifier = Modifier.height(Spacing.space24))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(text = stringResource(R.string.dont_have_account), style = MaterialTheme.typography.bodyMedium)

@@ -64,7 +64,7 @@ fun PasskeysScreen(
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -130,14 +130,14 @@ private fun PasskeyItemRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             Icon(
                 imageVector = Icons.Default.Key,
@@ -175,7 +175,7 @@ private fun EmptyPasskeysState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -185,13 +185,13 @@ private fun EmptyPasskeysState(modifier: Modifier = Modifier) {
             modifier = Modifier.size(Sizes.AvatarSemiLarge),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
         )
-        Spacer(modifier = Modifier.height(Spacing.Medium))
+        Spacer(modifier = Modifier.height(Spacing.space16))
         Text(
             text = stringResource(R.string.settings_no_passkeys_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         Text(
             text = stringResource(R.string.settings_passkeys_description),
             style = MaterialTheme.typography.bodyMedium,

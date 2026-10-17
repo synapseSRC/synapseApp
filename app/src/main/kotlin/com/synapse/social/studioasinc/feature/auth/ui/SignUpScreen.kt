@@ -73,7 +73,7 @@ private fun SignUpHeader() {
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         Text(
             text = stringResource(R.string.sign_up_subtitle),
             style = MaterialTheme.typography.bodyLarge,
@@ -140,11 +140,11 @@ private fun SignUpForm(
     if (state.password.isNotEmpty()) {
         PasswordStrengthIndicator(
             strength = state.passwordStrength,
-            modifier = Modifier.padding(top = Spacing.Small)
+            modifier = Modifier.padding(top = Spacing.space8)
         )
     }
 
-    Spacer(modifier = Modifier.height(Spacing.Medium))
+    Spacer(modifier = Modifier.height(Spacing.space16))
 
     AuthButton(
         text = stringResource(R.string.action_sign_up),
@@ -162,7 +162,7 @@ private fun SignUpForm(
         onGitHubClick = { onOAuthClick("GitHub") }
     )
 
-    Spacer(modifier = Modifier.height(Spacing.Large))
+    Spacer(modifier = Modifier.height(Spacing.space24))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(text = stringResource(R.string.already_have_account), style = MaterialTheme.typography.bodyMedium)

@@ -28,7 +28,7 @@ private fun EmptyFavouritesCard() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.ExtraLarge),
+                .padding(Spacing.space32),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
@@ -38,7 +38,7 @@ private fun EmptyFavouritesCard() {
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
             
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             
             Text(
                 text = stringResource(R.string.no_favourites_yet),
@@ -46,7 +46,7 @@ private fun EmptyFavouritesCard() {
                 color = MaterialTheme.colorScheme.onSurface
             )
             
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             
             Text(
                 text = stringResource(R.string.add_contacts_favourites),
@@ -90,7 +90,7 @@ fun FavouritesScreen(
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
             item {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 EmptyFavouritesCard()
             }
 
