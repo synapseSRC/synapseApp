@@ -39,7 +39,7 @@ fun BasicInformationSection(
         SettingsHeaderItem(title = stringResource(R.string.section_basic_information))
 
         SettingsCard {
-            Column(modifier = Modifier.padding(Spacing.Medium)) {
+            Column(modifier = Modifier.padding(Spacing.space16)) {
                 // Display Name
                 OutlinedTextField(
                     value = nickname,
@@ -61,7 +61,7 @@ fun BasicInformationSection(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 // Username
                 UsernameField(
@@ -70,7 +70,7 @@ fun BasicInformationSection(
                     validation = usernameValidation
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 // Bio
                 OutlinedTextField(

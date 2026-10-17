@@ -55,7 +55,7 @@ fun MediaPreviewGrid(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space16)
     ) {
         mediaItems.forEachIndexed { index, item ->
             Box(
@@ -82,7 +82,7 @@ fun MediaItemView(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = Spacing.SmallPlus, end = Spacing.SmallPlus)
+                .padding(top = Spacing.space10, end = Spacing.space10)
                 .clip(RoundedCornerShape(Sizes.CornerDefault))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
@@ -115,16 +115,16 @@ fun MediaItemView(
                     onClick = onEdit,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(Spacing.Small)
+                        .padding(Spacing.space8)
                         .height(Sizes.HeightButtonSmall),
-                    contentPadding = PaddingValues(horizontal = Spacing.Small, vertical = 0.dp),
+                    contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space0),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(Sizes.IconSmall))
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Text(stringResource(R.string.action_edit), style = MaterialTheme.typography.labelSmall)
                 }
             }
@@ -138,7 +138,7 @@ fun MediaItemView(
                 .size(Sizes.IconHuge),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = Spacing.ExtraSmall,
+            tonalElevation = Sizes.ElevationMedium,
             shadowElevation = Sizes.BorderDefault
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -157,9 +157,9 @@ fun PollPreviewCard(poll: PollData, onDelete: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f)),
         shape = RoundedCornerShape(Sizes.CornerLarge),
-        modifier = Modifier.fillMaxWidth().padding(top = Spacing.Small)
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.space8)
     ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
+        Column(modifier = Modifier.padding(Spacing.space16)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -174,16 +174,16 @@ fun PollPreviewCard(poll: PollData, onDelete: () -> Unit) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_remove), modifier = Modifier.size(Sizes.IconSemiMedium))
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             poll.options.forEach { option ->
                 Surface(
                     shape = RoundedCornerShape(Sizes.CornerMedium),
                     color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.ExtraSmall)
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
                 ) {
                     Text(
                         text = option,
-                        modifier = Modifier.padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small),
+                        modifier = Modifier.padding(horizontal = Spacing.space12, vertical = Spacing.space8),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -197,14 +197,14 @@ fun YoutubePreviewCard(url: String, onDelete: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f)),
         shape = RoundedCornerShape(Sizes.CornerLarge),
-        modifier = Modifier.fillMaxWidth().padding(top = Spacing.Small)
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.space8)
     ) {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
+            modifier = Modifier.padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(Sizes.IconHuge))
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = stringResource(R.string.label_youtube_video), style = MaterialTheme.typography.labelMedium)
                 Text(text = url, maxLines = 1, style = MaterialTheme.typography.bodySmall)
@@ -221,14 +221,14 @@ fun LocationPreviewCard(location: LocationData, onDelete: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f)),
         shape = RoundedCornerShape(Sizes.CornerLarge),
-        modifier = Modifier.fillMaxWidth().padding(top = Spacing.Small)
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.space8)
     ) {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
+            modifier = Modifier.padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Sizes.IconHuge))
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = location.name, style = MaterialTheme.typography.titleSmall)
                 location.address?.let {

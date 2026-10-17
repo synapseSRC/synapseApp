@@ -64,16 +64,16 @@ fun LicensesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium),
-            contentPadding = PaddingValues(top = Spacing.Medium, bottom = Spacing.ExtraLarge)
+                .padding(horizontal = Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space12),
+            contentPadding = PaddingValues(top = Spacing.space16, bottom = Spacing.space32)
         ) {
             item {
                 Text(
                     text = stringResource(R.string.settings_licenses_intro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = Spacing.Small)
+                    modifier = Modifier.padding(bottom = Spacing.space8)
                 )
             }
 
@@ -104,7 +104,7 @@ fun LicenseItem(license: License) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -117,7 +117,7 @@ fun LicenseItem(license: License) {
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = stringResource(R.string.settings_license_detail, license.developer, license.licenseType),
                         style = MaterialTheme.typography.bodySmall,
@@ -137,10 +137,10 @@ fun LicenseItem(license: License) {
 
             AnimatedVisibility(visible = expanded) {
                 Column(
-                    modifier = Modifier.padding(top = Spacing.Medium)
+                    modifier = Modifier.padding(top = Spacing.space16)
                 ) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                    Spacer(modifier = Modifier.height(Spacing.space16))
 
 
                     Surface(
@@ -151,7 +151,7 @@ fun LicenseItem(license: License) {
                         shape = MaterialTheme.shapes.small,
                         border = androidx.compose.foundation.BorderStroke(Sizes.BorderThin, MaterialTheme.colorScheme.outlineVariant)
                     ) {
-                        Box(modifier = Modifier.padding(Spacing.SmallMedium)) {
+                        Box(modifier = Modifier.padding(Spacing.space12)) {
                             Text(
                                 text = license.licenseContent,
                                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
@@ -161,19 +161,19 @@ fun LicenseItem(license: License) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                    Spacer(modifier = Modifier.height(Spacing.space16))
 
                     Button(
                         onClick = { uriHandler.openUri(license.licenseUrl) },
                         modifier = Modifier.align(Alignment.End),
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = null,
                             modifier = Modifier.size(Sizes.IconSemiMedium)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(stringResource(R.string.action_view_full_license))
                     }
                 }

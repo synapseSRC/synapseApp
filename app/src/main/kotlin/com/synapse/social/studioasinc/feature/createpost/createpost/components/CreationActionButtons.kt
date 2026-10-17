@@ -59,20 +59,20 @@ fun PrivacySelectionSheet(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = Spacing.Large)
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(horizontal = Spacing.space24)
+                .padding(bottom = Spacing.space32)
         ) {
             Text(
                 stringResource(R.string.privacy_who_can_see),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = Spacing.Small)
+                modifier = Modifier.padding(bottom = Spacing.space8)
             )
             Text(
                 stringResource(R.string.privacy_post_visibility_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = Spacing.Large)
+                modifier = Modifier.padding(bottom = Spacing.space24)
             )
 
             val options = listOf(
@@ -88,7 +88,7 @@ fun PrivacySelectionSheet(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(Sizes.CornerDefault))
                         .clickable { onPrivacySelected(label.lowercase()) }
-                        .padding(vertical = Spacing.SmallMedium, horizontal = Spacing.Small),
+                        .padding(vertical = Spacing.space12, horizontal = Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
@@ -102,7 +102,7 @@ fun PrivacySelectionSheet(
                     ) {
                         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
-                    Spacer(modifier = Modifier.width(Spacing.Medium))
+                    Spacer(modifier = Modifier.width(Spacing.space16))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -129,14 +129,14 @@ fun AddToPostSheet(
 ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = Spacing.Medium)
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(horizontal = Spacing.space16)
+                .padding(bottom = Spacing.space32)
         ) {
             Text(
                 stringResource(R.string.add_content),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = Spacing.MediumLarge, start = Spacing.Small)
+                modifier = Modifier.padding(bottom = Spacing.space20, start = Spacing.space8)
             )
 
             val actions = listOf(
@@ -162,7 +162,7 @@ fun AddToPostSheet(
                                 action()
                                 onDismiss()
                             })
-                            .padding(vertical = Spacing.SmallMedium, horizontal = Spacing.Small),
+                            .padding(vertical = Spacing.space12, horizontal = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Surface(
@@ -179,7 +179,7 @@ fun AddToPostSheet(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Spacer(modifier = Modifier.width(Spacing.space16))
                         Text(
                             text = label,
                             style = MaterialTheme.typography.bodyLarge,
@@ -210,14 +210,14 @@ fun StickyBottomActionArea(
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = Spacing.Small,
+        shadowElevation = Sizes.ElevationHigh,
         tonalElevation = Sizes.BorderDefault,
         shape = RoundedCornerShape(topStart = Sizes.CornerLarge, topEnd = Sizes.CornerLarge)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
@@ -268,25 +268,25 @@ fun TagPeopleSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface
     ) {
-         Column(modifier = Modifier.padding(Spacing.Medium)) {
+         Column(modifier = Modifier.padding(Spacing.space16)) {
              Text(stringResource(R.string.tag_people_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-             Spacer(modifier = Modifier.height(Spacing.Medium))
+             Spacer(modifier = Modifier.height(Spacing.space16))
              LazyColumn {
                  items(mockUsers) { user ->
                      Row(
                          modifier = Modifier
                              .fillMaxWidth()
                              .clickable { onPersonSelected(user) }
-                             .padding(vertical = Spacing.SmallMedium),
+                             .padding(vertical = Spacing.space12),
                          verticalAlignment = Alignment.CenterVertically
                      ) {
                          Box(modifier = Modifier.size(Sizes.IconMassive).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape))
-                         Spacer(modifier = Modifier.width(Spacing.Medium))
+                         Spacer(modifier = Modifier.width(Spacing.space16))
                          Text(user.displayName ?: user.username ?: "Unknown")
                      }
                  }
              }
-             Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+             Spacer(modifier = Modifier.height(Spacing.space32))
          }
     }
 }
@@ -310,13 +310,13 @@ fun FeelingActivitySheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface
     ) {
-         Column(modifier = Modifier.padding(Spacing.Medium)) {
+         Column(modifier = Modifier.padding(Spacing.space16)) {
              Text(stringResource(R.string.feeling_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-             Spacer(modifier = Modifier.height(Spacing.Medium))
+             Spacer(modifier = Modifier.height(Spacing.space16))
              LazyVerticalGrid(
                  columns = GridCells.Fixed(2),
-                 verticalArrangement = Arrangement.spacedBy(Spacing.Small),
-                 horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                 verticalArrangement = Arrangement.spacedBy(Spacing.space8),
+                 horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
              ) {
                  items(feelings) { feeling ->
                      Surface(
@@ -325,17 +325,17 @@ fun FeelingActivitySheet(
                          onClick = { onFeelingSelected(feeling) }
                      ) {
                          Row(
-                             modifier = Modifier.padding(Spacing.Medium),
+                             modifier = Modifier.padding(Spacing.space16),
                              verticalAlignment = Alignment.CenterVertically
                          ) {
                              Text(feeling.emoji, style = MaterialTheme.typography.headlineSmall)
-                             Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+                             Spacer(modifier = Modifier.width(Spacing.space12))
                              Text(feeling.text)
                          }
                      }
                  }
              }
-             Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+             Spacer(modifier = Modifier.height(Spacing.space32))
          }
     }
 }

@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.createpost
 
+import androidx.compose.ui.graphics.RectangleShape
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -81,7 +83,7 @@ fun FullScreenSearchDialog(
                         onValueChange = onSearchQueryChange,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                            .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                         placeholder = { Text(searchPlaceholder) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -142,7 +144,7 @@ fun TagPeopleScreen(
                 }
             } else if (searchResults.isEmpty() && searchQuery.isNotEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(Spacing.ExtraLarge), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(Spacing.space32), contentAlignment = Alignment.Center) {
                         Text(stringResource(R.string.no_people_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -191,7 +193,7 @@ fun LocationSelectScreen(
                  }
             } else if (searchResults.isEmpty() && searchQuery.isNotEmpty()) {
                  item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(Spacing.ExtraLarge), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(Spacing.space32), contentAlignment = Alignment.Center) {
                         Text(stringResource(R.string.no_locations_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -263,12 +265,12 @@ fun FeelingSelectScreen(
             }
 
             LazyColumn(
-                contentPadding = PaddingValues(Spacing.Medium),
+                contentPadding = PaddingValues(Spacing.space16),
                 modifier = Modifier.fillMaxSize()
             ) {
                  if (filteredFeelings.isEmpty()) {
                      item {
-                         Box(modifier = Modifier.fillMaxWidth().padding(top = Spacing.ButtonHeight), contentAlignment = Alignment.Center) {
+                         Box(modifier = Modifier.fillMaxWidth().padding(top = Spacing.space40), contentAlignment = Alignment.Center) {
                              Text(stringResource(R.string.no_results_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                          }
                      }
@@ -326,12 +328,12 @@ fun FeelingSelectScreen(
                                  Box {
                                      Row(
                                          modifier = Modifier
-                                             .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Medium)
+                                             .padding(horizontal = Spacing.space12, vertical = Spacing.space16)
                                              .fillMaxWidth(),
                                          verticalAlignment = Alignment.CenterVertically
                                      ) {
                                          Text(feeling.emoji, style = MaterialTheme.typography.titleLarge)
-                                         Spacer(modifier = Modifier.width(Spacing.Small))
+                                         Spacer(modifier = Modifier.width(Spacing.space8))
                                          Text(
                                              text = feeling.text,
                                              style = MaterialTheme.typography.bodyMedium,
@@ -344,14 +346,14 @@ fun FeelingSelectScreen(
                                              Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                              contentDescription = null,
                                              tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                             modifier = Modifier.size(Spacing.Medium)
+                                             modifier = Modifier.size(Sizes.IconSemiMedium)
                                          )
                                      }
 
                                      // Bottom divider (horizontal)
                                      if (!isLastRow) {
                                          HorizontalDivider(
-                                             modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = Spacing.SmallMedium),
+                                             modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = Spacing.space12),
                                              color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                              thickness = Sizes.BorderHairline
                                          )
@@ -362,7 +364,7 @@ fun FeelingSelectScreen(
                                          VerticalDivider(
                                              modifier = Modifier
                                                  .align(Alignment.CenterEnd)
-                                                 .padding(vertical = Spacing.SmallMedium)
+                                                 .padding(vertical = Spacing.space12)
                                                  .height(Sizes.HeightSmall),
                                              color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                              thickness = Sizes.BorderHairline
@@ -380,7 +382,7 @@ fun FeelingSelectScreen(
                  }
                  
                  item {
-                     Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+                     Spacer(modifier = Modifier.height(Spacing.space32))
                  }
             }
         }
@@ -401,7 +403,7 @@ fun UserSelectionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (user.avatar != null) {
@@ -427,7 +429,7 @@ fun UserSelectionItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -463,7 +465,7 @@ fun LocationItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
@@ -476,7 +478,7 @@ fun LocationItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column {
             Text(
@@ -502,7 +504,7 @@ fun UserSkeletonItem() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -511,18 +513,18 @@ fun UserSkeletonItem() {
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column(modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .height(Spacing.Medium)
+                    .height(Sizes.ShimmerLineHeight)
                     .fillMaxWidth(0.6f)
                     .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Sizes.CornerSmall))
             )
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             Box(
                 modifier = Modifier
-                    .height(Spacing.SmallMedium)
+                    .height(Sizes.ShimmerLineHeightSmall)
                     .fillMaxWidth(0.4f)
                     .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Sizes.CornerSmall))
             )
@@ -535,7 +537,7 @@ fun LocationSkeletonItem() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
          Box(
@@ -544,18 +546,18 @@ fun LocationSkeletonItem() {
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column(modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .height(Spacing.Medium)
+                    .height(Sizes.ShimmerLineHeight)
                     .fillMaxWidth(0.5f)
                     .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Sizes.CornerSmall))
             )
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             Box(
                 modifier = Modifier
-                    .height(Spacing.SmallMedium)
+                    .height(Sizes.ShimmerLineHeightSmall)
                     .fillMaxWidth(0.8f)
                     .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Sizes.CornerSmall))
             )

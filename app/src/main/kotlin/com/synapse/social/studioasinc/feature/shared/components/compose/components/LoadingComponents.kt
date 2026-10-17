@@ -19,7 +19,7 @@ fun LoadingSynapse(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Spacing.Small),
+            .padding(Spacing.space8),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -35,7 +35,7 @@ fun LoadingIndicatorComponent(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         contentAlignment = Alignment.Center
     ) {
         LoadingIndicator(
@@ -51,7 +51,7 @@ fun EndOfListIndicator(modifier: Modifier = Modifier) {
         text = stringResource(R.string.no_more_posts_available),
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.Large),
+            .padding(Spacing.space24),
         textAlign = TextAlign.Center,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
