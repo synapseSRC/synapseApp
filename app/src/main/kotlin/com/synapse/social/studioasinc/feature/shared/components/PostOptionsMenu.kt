@@ -42,7 +42,7 @@ fun PostOptionsMenu(
         onDismissRequest = onDismiss,
         sheetState = sheetState
     ) {
-        Column(modifier = Modifier.padding(bottom = Spacing.Medium)) {
+        Column(modifier = Modifier.padding(bottom = Spacing.space16)) {
             if (isOwner) {
                 OptionItem(
                     icon = Icons.Outlined.Delete,
@@ -80,11 +80,11 @@ fun OptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(imageVector = icon, contentDescription = null)
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
     }
 }

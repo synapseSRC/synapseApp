@@ -75,7 +75,7 @@ fun PollContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+            .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
     ) {
 
         if (question.isNotBlank()) {
@@ -84,7 +84,7 @@ fun PollContent(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = Spacing.SmallMedium)
+                modifier = Modifier.padding(bottom = Spacing.space12)
             )
         }
 
@@ -99,14 +99,14 @@ fun PollContent(
                     onVote(option.id)
                 }
             )
-            Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.height(Spacing.space12))
         }
 
         Text(
             text = if (totalVotes == 1) "$totalVotes vote" else "$totalVotes votes",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.ExtraSmall)
+            modifier = Modifier.padding(top = Spacing.space4)
         )
     }
 }
@@ -216,7 +216,7 @@ fun AnimatedPollOptionItem(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -230,7 +230,7 @@ fun AnimatedPollOptionItem(
                     Box(
                         modifier = Modifier
                             .scale(checkIconScale)
-                            .padding(end = Spacing.SmallMedium)
+                            .padding(end = Spacing.space12)
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
@@ -252,7 +252,7 @@ fun AnimatedPollOptionItem(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 if (hasVoted && option.voteCount > 0) {
                     Text(

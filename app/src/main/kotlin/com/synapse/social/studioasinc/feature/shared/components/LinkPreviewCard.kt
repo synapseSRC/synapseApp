@@ -110,7 +110,7 @@ fun LinkPreviewCard(
                                 .height(Sizes.HeightCard)
                         )
                     }
-                    Column(modifier = Modifier.padding(Spacing.SmallMedium)) {
+                    Column(modifier = Modifier.padding(Spacing.space12)) {
                         if (!preview.domain.isNullOrBlank()) {
                             Text(
                                 text = preview.domain ?: "",
@@ -119,7 +119,7 @@ fun LinkPreviewCard(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                            Spacer(modifier = Modifier.height(Spacing.space4))
                         }
                         if (!preview.title.isNullOrBlank()) {
                             Text(
@@ -132,7 +132,7 @@ fun LinkPreviewCard(
                             )
                         }
                         if (!preview.description.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                            Spacer(modifier = Modifier.height(Spacing.space4))
                             Text(
                                 text = preview.description ?: "",
                                 style = MaterialTheme.typography.bodySmall,
@@ -149,7 +149,7 @@ fun LinkPreviewCard(
                         onClick = onRemove,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(Spacing.ExtraSmall)
+                            .padding(Spacing.space4)
                             .size(Sizes.IconLarge)
                             .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f), shape = RoundedCornerShape(Sizes.CornerDefault))
                     ) {
@@ -157,7 +157,7 @@ fun LinkPreviewCard(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Remove Link Preview",
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(Spacing.Medium)
+                            modifier = Modifier.size(Sizes.IconSemiMedium)
                         )
                     }
                 }

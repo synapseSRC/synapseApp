@@ -66,26 +66,26 @@ fun QuotePostScreen(
                 placeholder = { Text(stringResource(R.string.quote_post_hint)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(Spacing.Medium)
+                    .padding(Spacing.space16)
                     .heightIn(min = 120.dp),
                 maxLines = 10
             )
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.Medium))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.space16))
 
             Text(
                 text = stringResource(R.string.quoting),
                 style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(Spacing.Medium)
+                modifier = Modifier.padding(Spacing.space16)
             )
 
             if (state.isLoading && state.post == null) {
-                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.ExtraLarge), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.space32), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (state.post != null) {
                 Surface(
-                    modifier = Modifier.padding(horizontal = Spacing.Medium),
+                    modifier = Modifier.padding(horizontal = Spacing.space16),
                     tonalElevation = 1.dp,
                     shape = MaterialTheme.shapes.medium
                 ) {
@@ -103,12 +103,12 @@ fun QuotePostScreen(
                         onOptionsClick = {},
                         onPollVote = {},
                         onQuoteClick = {},
-                        modifier = Modifier.padding(Spacing.Small)
+                        modifier = Modifier.padding(Spacing.space8)
                     ) }
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
         }
     }
 }

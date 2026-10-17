@@ -110,7 +110,7 @@ fun PrivacyCheckupCategoryScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Large),
+                            .padding(Spacing.space24),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Surface(
@@ -131,7 +131,7 @@ fun PrivacyCheckupCategoryScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
 
                         Text(
                             text = config.title,
@@ -141,7 +141,7 @@ fun PrivacyCheckupCategoryScreen(
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
 
                         Text(
                             text = config.heroSubtitle,

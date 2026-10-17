@@ -1,4 +1,6 @@
 package com.synapse.social.studioasinc.feature.shared.components.post
+
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
  
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -186,7 +188,7 @@ fun PostContent(
             val resolvedUseCase = getLinkMetadataUseCase ?: LocalLinkMetadataUseCase.current
             if (resolvedUseCase != null) {
                 previewsToShow.forEach { preview ->
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
                     LinkPreviewCard(
                         url = preview.url,
                         useCase = resolvedUseCase,
@@ -197,7 +199,7 @@ fun PostContent(
                             imageUrl = preview.imageUrl,
                             domain = preview.domain
                         ),
-                        modifier = Modifier.padding(top = Spacing.ExtraSmall)
+                        modifier = Modifier.padding(top = Spacing.space4)
                     )
                 }
             }
@@ -213,7 +215,7 @@ fun PostContent(
         }
  
         if (quotedPost != null) {
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             QuotedPostCard(
                 quotedPost = quotedPost,
                 onPostClick = { /* Handled by parent or specific click */ }
@@ -240,7 +242,7 @@ fun QuotedPostCard(
             )
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onPostClick)
-            .padding(Spacing.Medium)
+            .padding(Spacing.space16)
     ) {
         if (quotedPost.isDeleted == true) {
             Text(
@@ -254,11 +256,11 @@ fun QuotedPostCard(
                     model = quotedPost.avatarUrl,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(Spacing.Large)
+                        .size(Sizes.IconLarge)
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = quotedPost.displayName ?: quotedPost.username ?: "Unknown",
                     style = MaterialTheme.typography.labelLarge,
@@ -266,9 +268,9 @@ fun QuotedPostCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 if (quotedPost.isVerified) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                 }
-                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.width(Spacing.space4))
                 Text(
                     text = stringResource(R.string.post_username_format, quotedPost.username ?: ""),
                     style = MaterialTheme.typography.labelMedium,
@@ -277,7 +279,7 @@ fun QuotedPostCard(
             }
 
             if (!quotedPost.postText.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = quotedPost.postText ?: "",
                     style = MaterialTheme.typography.bodyMedium,
@@ -288,7 +290,7 @@ fun QuotedPostCard(
             }
 
             if (!quotedPost.mediaItems.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

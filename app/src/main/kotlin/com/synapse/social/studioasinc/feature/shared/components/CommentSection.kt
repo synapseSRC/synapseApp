@@ -63,18 +63,18 @@ fun CommentSection(
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = Spacing.SmallMedium)
+                .padding(horizontal = Spacing.space12)
         ) {
             items(comments) { comment ->
                 ExpandableCommentThread(comment)
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
             }
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Small),
+                .padding(Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
@@ -83,7 +83,7 @@ fun CommentSection(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text(stringResource(R.string.comment_write)) }
             )
-            Spacer(modifier = Modifier.width(Spacing.Small))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             IconButton(
                 onClick = {
                     if (newCommentText.isNotBlank()) {
@@ -126,7 +126,7 @@ fun ExpandableCommentThread(comment: Comment, level: Int = 0) {
 fun NestedCommentList(replies: List<Comment>, level: Int) {
     Column(modifier = Modifier.fillMaxWidth()) {
         replies.forEach { reply ->
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             ExpandableCommentThread(comment = reply, level = level)
         }
     }
@@ -139,7 +139,7 @@ fun CommentItem(
     expanded: Boolean = false,
     onExpandToggle: () -> Unit = {}
 ) {
-    val paddingStart = (level * 16).dp.coerceAtMost(Sizes.CommentMaxIndent)
+    val paddingStart = (level * Spacing.space16.value).dp.coerceAtMost(Spacing.space64)
 
     Box(
         modifier = Modifier
@@ -149,7 +149,7 @@ fun CommentItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = Spacing.ExtraSmall)
+                .padding(vertical = Spacing.space4)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -158,7 +158,7 @@ fun CommentItem(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = comment.timestamp,
                     style = MaterialTheme.typography.bodySmall,
@@ -166,7 +166,7 @@ fun CommentItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
 
             Text(
                 text = comment.text,
@@ -175,11 +175,11 @@ fun CommentItem(
             )
 
             if (comment.replies.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Row(
                     modifier = Modifier
                         .clickable { onExpandToggle() }
-                        .padding(vertical = Spacing.ExtraSmall),
+                        .padding(vertical = Spacing.space4),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -190,14 +190,14 @@ fun CommentItem(
                     )
 
                     if (!expanded) {
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Badge(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                         ) {
                             Text(
                                 text = comment.replies.size.toString(),
-                                modifier = Modifier.padding(horizontal = Spacing.Tiny)
+                                modifier = Modifier.padding(horizontal = Spacing.space2)
                             )
                         }
                     }

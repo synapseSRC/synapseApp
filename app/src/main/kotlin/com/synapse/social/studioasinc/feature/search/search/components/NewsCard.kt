@@ -33,7 +33,7 @@ fun NewsCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium)
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12)
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -50,7 +50,7 @@ fun NewsCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Text(
                 text = news.headline,
@@ -63,7 +63,7 @@ fun NewsCard(
         }
 
         if (!news.imageUrl.isNullOrBlank()) {
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(news.imageUrl)

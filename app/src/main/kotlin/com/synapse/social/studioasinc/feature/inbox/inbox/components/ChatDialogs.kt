@@ -33,7 +33,7 @@ fun DisappearingModeDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = Spacing.Small),
+                            .padding(vertical = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -43,7 +43,7 @@ fun DisappearingModeDialog(
                                 onDismissRequest()
                             }
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(label)
                     }
                 }
@@ -97,7 +97,7 @@ fun ChatSummaryDialog(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(stringResource(R.string.chat_summary_title))
                 }
             },

@@ -34,14 +34,14 @@ fun QuickPostArea(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = Spacing.Small),
+            .padding(bottom = Spacing.space8),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -54,16 +54,16 @@ fun QuickPostArea(
                     displayName = displayName
                 )
 
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(Spacing.ButtonHeight)
+                        .height(Sizes.ButtonHeight)
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable(onClick = onClick)
-                        .padding(horizontal = Spacing.Medium),
+                        .padding(horizontal = Spacing.space16),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
@@ -74,9 +74,9 @@ fun QuickPostArea(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -116,9 +116,9 @@ private fun QuickPostAction(
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(Spacing.Small))
+            .clip(RoundedCornerShape(Sizes.CornerMedium))
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Small, vertical = Spacing.Small),
+            .padding(horizontal = Spacing.space8, vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -128,7 +128,7 @@ private fun QuickPostAction(
             tint = tint,
             modifier = Modifier.size(Sizes.IconLarge)
         )
-        Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.width(Spacing.space4))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),

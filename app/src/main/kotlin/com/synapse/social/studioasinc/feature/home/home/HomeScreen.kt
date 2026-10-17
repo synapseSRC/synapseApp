@@ -138,13 +138,13 @@ fun HomeScreen(
                                         imageUrl = userAvatarUrl,
                                         contentDescription = stringResource(R.string.profile),
                                         size = Sizes.AvatarTiny,
-                                        modifier = Modifier.padding(start = Spacing.ExtraSmall, end = Spacing.Small),
+                                        modifier = Modifier.padding(start = Spacing.space4, end = Spacing.space8),
                                         onClick = { onNavigateToProfile("me") }
                                     )
                                 } else {
                                     IconButton(
                                         onClick = { onNavigateToProfile("me") },
-                                        modifier = Modifier.padding(start = Spacing.ExtraSmall, end = Spacing.Small)
+                                        modifier = Modifier.padding(start = Spacing.space4, end = Spacing.space8)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Person,
@@ -239,7 +239,7 @@ fun HomeScreen(
                 onNavigateToCreateReel = onNavigateToCreateReel,
                 onNavigateToCreatePost = { onNavigateToCreatePost(null) },
                 modifier = Modifier.padding(innerPadding),
-                bottomPadding = if (isBottomMode) Sizes.HeightLarge else Spacing.None
+                bottomPadding = if (isBottomMode) Sizes.HeightLarge else Spacing.space0
             )
         }
 
@@ -263,8 +263,8 @@ fun HomeScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(
-                            end = Spacing.Medium,
-                            bottom = if (isBottomMode) Sizes.HeightLarge else Spacing.Medium
+                            end = Spacing.space16,
+                            bottom = if (isBottomMode) Sizes.HeightLarge else Spacing.space16
                         )
                         .graphicsLayer {
                             translationY = if (isBottomMode) navBarTranslationY * size.height else 0f

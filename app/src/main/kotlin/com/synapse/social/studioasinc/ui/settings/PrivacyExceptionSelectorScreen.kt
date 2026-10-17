@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -77,7 +79,7 @@ fun PrivacyExceptionSelectorScreen(
                         enabled = !uiState.isSaving && !uiState.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = SettingsSpacing.minTouchTarget),
+                            .heightIn(min = AccessibilitySizes.minimumTouchTarget),
                         shape = SettingsShapes.itemShape
                     ) {
                         if (uiState.isSaving) {
@@ -109,7 +111,7 @@ fun PrivacyExceptionSelectorScreen(
                 onValueChange = onSearchQueryChanged,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = SettingsSpacing.screenPadding, vertical = Spacing.Small),
+                    .padding(horizontal = SettingsSpacing.screenPadding, vertical = Spacing.space8),
                 placeholder = { Text(stringResource(R.string.settings_search_settings_placeholder)) },
                 leadingIcon = {
                     Icon(
@@ -140,7 +142,7 @@ fun PrivacyExceptionSelectorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(Spacing.Large),
+                        .padding(Spacing.space24),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -149,7 +151,7 @@ fun PrivacyExceptionSelectorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(Spacing.Large),
+                        .padding(Spacing.space24),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -164,7 +166,7 @@ fun PrivacyExceptionSelectorScreen(
                         .fillMaxSize()
                         .padding(horizontal = SettingsSpacing.screenPadding),
                     verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing),
-                    contentPadding = PaddingValues(bottom = Spacing.Large)
+                    contentPadding = PaddingValues(bottom = Spacing.space24)
                 ) {
                     itemsIndexed(
                         items = uiState.filteredContacts,
@@ -203,7 +205,7 @@ fun PrivacyExceptionSelectorScreen(
                                         horizontal = SettingsSpacing.itemHorizontalPadding,
                                         vertical = SettingsSpacing.itemVerticalPadding
                                     )
-                                    .heightIn(min = SettingsSpacing.minTouchTarget),
+                                    .heightIn(min = AccessibilitySizes.minimumTouchTarget),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // Avatar
@@ -244,7 +246,7 @@ fun PrivacyExceptionSelectorScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     if (handle.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = handle,
                                             style = SettingsTypography.itemSubtitle,
@@ -253,7 +255,7 @@ fun PrivacyExceptionSelectorScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(Spacing.Medium))
+                                Spacer(modifier = Modifier.width(Spacing.space16))
 
                                 Checkbox(
                                     checked = isSelected,
