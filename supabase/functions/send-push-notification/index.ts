@@ -122,6 +122,35 @@ function isInsideQuietHours(quietHours: unknown, now = new Date()): boolean {
   }
 }
 
+let webhookSecretLoad: Promise<string | null> | null = null
+let cachedWebhookSecret: { value: string | null; expiresAt: number } | null = null
+
+async function getCachedWebhookSecret(): Promise<string | null> {
+  if (cachedWebhookSecret && cachedWebhookSecret.expiresAt > Date.now()) return cachedWebhookSecret.value
+  if (!webhookSecretLoad) {
+    webhookSecretLoad = (async () => {
+      const sql = postgres(SUPABASE_DB_URL!, { max: 1, prepare: false })
+      try {
+        return await loadWebhookSecret(sql)
+      } finally {
+        try {
+          await sql.end({ timeout: 2 })
+        } catch {
+          console.warn("Could not close notification database connection")
+        }
+      }
+    })()
+  }
+  const pendingLoad = webhookSecretLoad
+  try {
+    const value = await pendingLoad
+    cachedWebhookSecret = { value, expiresAt: Date.now() + 60_000 }
+    return value
+  } finally {
+    if (webhookSecretLoad === pendingLoad) webhookSecretLoad = null
+  }
+}
+
 async function loadWebhookSecret(sql: ReturnType<typeof postgres>): Promise<string | null> {
   const rows = await sql.unsafe(
     "select decrypted_secret from vault.decrypted_secrets where name = $1 limit 1",
@@ -439,10 +468,9 @@ serve(async (req: Request) => {
   }
 
   const suppliedSecret = req.headers.get("x-notification-webhook-secret") ?? ""
-  const sql = postgres(SUPABASE_DB_URL, { max: 1, prepare: false })
 
   try {
-    const expectedSecret = await loadWebhookSecret(sql)
+    const expectedSecret = await getCachedWebhookSecret()
     if (!expectedSecret) {
       console.error("Notification webhook secret is not configured in Vault")
       return json({ error: "Service configuration is incomplete" }, 503)
@@ -571,11 +599,5 @@ serve(async (req: Request) => {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Notification push error:", message)
     return json({ error: "Notification push failed" }, 500)
-  } finally {
-    try {
-      await sql.end({ timeout: 2 })
-    } catch {
-      console.warn("Could not close notification database connection")
-    }
   }
 })
