@@ -375,7 +375,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
         system: { ...oldSystem, security: notifications.security, updates: notifications.updates },
         web: { ...oldWeb, in_app: notifications.inApp, reminders: notifications.reminders, high_priority: notifications.highPriority, reactions: notifications.reactions },
       };
-      const quietHours = { ...oldQuiet, enabled: notifications.quietHours, start: notifications.quietStart, end: notifications.quietEnd };
+      const quietHours = {
+        ...oldQuiet,
+        enabled: notifications.quietHours,
+        start: notifications.quietStart,
+        end: notifications.quietEnd,
+        timezone: oldQuiet.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
       const payload = {
         ...notificationSettingsRow,
         user_id: user.id,
