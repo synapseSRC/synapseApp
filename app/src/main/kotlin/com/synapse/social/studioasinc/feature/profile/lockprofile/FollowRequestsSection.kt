@@ -17,7 +17,7 @@ internal fun FollowRequestsSection(
     onReject: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-        Spacer(modifier = Modifier.height(Spacing.Large))
+        Spacer(modifier = Modifier.height(Spacing.space24))
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text(stringResource(R.string.follow_requests_title), style = MaterialTheme.typography.titleMedium)
             TextButton(onClick = onRefresh, enabled = !uiState.isLoadingRequests) {
@@ -34,8 +34,8 @@ internal fun FollowRequestsSection(
             Text(stringResource(R.string.follow_requests_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         uiState.followRequests.forEach { request ->
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.ExtraSmall)) {
-                Column(modifier = Modifier.fillMaxWidth().padding(Spacing.Medium)) {
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(Spacing.space16)) {
                     Text(request.displayName?.takeIf { it.isNotBlank() } ?: request.username, style = MaterialTheme.typography.titleSmall)
                     Text(stringResource(R.string.follow_request_requested_label, request.username), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {

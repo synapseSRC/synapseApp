@@ -105,8 +105,8 @@ fun ChatsTabScreen(
             LazyColumn(
                 modifier = modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = Spacing.Small,
-                    bottom = Spacing.Small,
+                    top = Spacing.space8,
+                    bottom = Spacing.space8,
                     start = contentPadding.calculateStartPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
                     end = contentPadding.calculateEndPadding(androidx.compose.ui.platform.LocalLayoutDirection.current)
                 ),
@@ -161,7 +161,7 @@ fun ChatsTabScreen(
                     }
 
                     SwipeToDismissBox(
-                        modifier = Modifier.padding(horizontal = Spacing.Medium),
+                        modifier = Modifier.padding(horizontal = Spacing.space16),
                         state = dismissState,
                         backgroundContent = {
                             val isStartToEnd = dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd
@@ -207,18 +207,18 @@ fun ChatsTabScreen(
                                     .fillMaxSize()
                                     .clip(shape)
                                     .background(color)
-                                    .padding(horizontal = Spacing.Medium),
+                                    .padding(horizontal = Spacing.space16),
                                 contentAlignment = alignment
                             ) {
                                 if (dismissState.dismissDirection != SwipeToDismissBoxValue.Settled) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                                             Text(text, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-                                            Spacer(modifier = Modifier.width(Spacing.Small))
+                                            Spacer(modifier = Modifier.width(Spacing.space8))
                                             Icon(icon, contentDescription = text, tint = MaterialTheme.colorScheme.onPrimary)
                                         } else {
                                             Icon(icon, contentDescription = text, tint = MaterialTheme.colorScheme.onPrimary)
-                                            Spacer(modifier = Modifier.width(Spacing.Small))
+                                            Spacer(modifier = Modifier.width(Spacing.space8))
                                             Text(text, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                                         }
                                     }
@@ -268,7 +268,7 @@ private fun ConversationItem(
                     .fillMaxSize()
                     .clip(shape)
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-                    .padding(horizontal = Spacing.Medium),
+                    .padding(horizontal = Spacing.space16),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -278,7 +278,7 @@ private fun ConversationItem(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(Sizes.IconSemiMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(
                         text = stringResource(R.string.inbox_quick_peak),
                         style = MaterialTheme.typography.labelSmall,
@@ -298,7 +298,7 @@ private fun ConversationItem(
                     onClick = onClick,
                     onLongClick = { if (folders.isNotEmpty()) showFolderSheet = true }
                 )
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
         // Avatar with online indicator
@@ -320,7 +320,7 @@ private fun ConversationItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         // Details
         Column(modifier = Modifier.weight(1f)) {
@@ -333,7 +333,7 @@ private fun ConversationItem(
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Locked",
-                        modifier = Modifier.size(Spacing.Medium).padding(end = Spacing.ExtraSmall),
+                        modifier = Modifier.size(Sizes.IconSemiMedium).padding(end = Spacing.space4),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -354,7 +354,7 @@ private fun ConversationItem(
             }
 
             if (layout == ChatListLayout.DOUBLE_LINE) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -373,7 +373,7 @@ private fun ConversationItem(
                     )
 
                     if (conversation.unreadCount > 0) {
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Surface(
                             color = MaterialTheme.colorScheme.primary,
                             shape = CircleShape,
@@ -402,7 +402,7 @@ private fun ConversationItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f).padding(end = Spacing.Small)
+                        modifier = Modifier.weight(1f).padding(end = Spacing.space8)
                     )
 
                     if (conversation.unreadCount > 0) {
@@ -433,9 +433,9 @@ private fun ConversationItem(
                 text = stringResource(R.string.move_to_folder),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = androidx.compose.ui.Modifier.padding(
-                    start = Spacing.Medium,
-                    end = Spacing.Medium,
-                    bottom = Spacing.Small
+                    start = Spacing.space16,
+                    end = Spacing.space16,
+                    bottom = Spacing.space8
                 )
             )
             folders.forEach { folder ->
@@ -458,7 +458,7 @@ private fun ConversationItem(
                     }
                 )
             }
-            Spacer(modifier = androidx.compose.ui.Modifier.height(Spacing.Large))
+            Spacer(modifier = androidx.compose.ui.Modifier.height(Spacing.space24))
         }
     }
 }

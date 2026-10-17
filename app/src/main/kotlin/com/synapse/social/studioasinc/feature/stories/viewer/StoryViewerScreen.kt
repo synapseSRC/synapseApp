@@ -101,7 +101,7 @@ fun StoryReplyBar(
             .height(Sizes.AvatarLarge)
             .clip(RoundedCornerShape(Sizes.CornerMassive))
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
-            .padding(horizontal = Spacing.Medium),
+            .padding(horizontal = Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextField(
@@ -230,7 +230,7 @@ fun StoryViewerScreen(
                     onClick = { viewModel.cycleContentScale() },
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(Spacing.Medium)
+                        .padding(Spacing.space16)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Crop,
@@ -246,7 +246,7 @@ fun StoryViewerScreen(
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = Spacing.Medium),
+                            .padding(bottom = Spacing.space16),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(
@@ -262,7 +262,7 @@ fun StoryViewerScreen(
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
-                            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                            Spacer(modifier = Modifier.width(Spacing.space4))
                             Text(
                                 text = stringResource(R.string.seen_by_count, viewsCount),
                                 color = MaterialTheme.colorScheme.onPrimary
@@ -270,7 +270,7 @@ fun StoryViewerScreen(
                         }
 
                         if (reactionsCount > 0) {
-                            Spacer(modifier = Modifier.width(Spacing.Medium))
+                            Spacer(modifier = Modifier.width(Spacing.space16))
                             TextButton(
                                 onClick = { viewModel.showReactionsSheet() }
                             ) {
@@ -287,7 +287,7 @@ fun StoryViewerScreen(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .padding(Spacing.Medium)
+                            .padding(Spacing.space16)
                     ) {
                         QuickReactionsRow(
                             userReaction = uiState.userReaction,
@@ -300,7 +300,7 @@ fun StoryViewerScreen(
                             }
                         )
 
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
 
                         StoryReplyBar(
                             replyText = uiState.replyText,
@@ -315,7 +315,7 @@ fun StoryViewerScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = Spacing.Medium, start = Spacing.Small, end = Spacing.Small)
+                        .padding(top = Spacing.space16, start = Spacing.space8, end = Spacing.space8)
                 ) {
 
                     StoryProgressBar(
@@ -325,7 +325,7 @@ fun StoryViewerScreen(
                         isPaused = uiState.isPaused || !isActive
                     )
 
-                    Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+                    Spacer(modifier = Modifier.height(Spacing.space12))
 
 
                     StoryUserHeader(
@@ -500,8 +500,8 @@ fun StoryProgressBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(Spacing.ExtraSmall),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+            .height(Sizes.StoryProgressHeight),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
     ) {
         for (i in 0 until steps) {
             val progress = when {
@@ -515,7 +515,7 @@ fun StoryProgressBar(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(Spacing.Tiny)),
+                    .clip(RoundedCornerShape(Sizes.CornerSharp)),
                 color = MaterialTheme.colorScheme.onPrimary,
                 trackColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f),
             )
@@ -534,7 +534,7 @@ fun StoryUserHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -561,7 +561,7 @@ fun StoryUserHeader(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Small))
+        Spacer(modifier = Modifier.width(Spacing.space8))
 
 
         Column(modifier = Modifier.weight(1f)) {
@@ -573,7 +573,7 @@ fun StoryUserHeader(
                 )
 
                 if (expiresAt != null) {
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     StoryExpiryCountdown(expiresAt = expiresAt)
                 }
             }

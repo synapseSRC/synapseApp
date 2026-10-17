@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.profile.components
 
+import androidx.compose.ui.graphics.RectangleShape
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +25,7 @@ fun ProfileHeaderShimmer(modifier: Modifier = Modifier) {
     val contentPaddingTop = coverHeight - overlap
     val avatarSize = Sizes.AvatarHuge
     val avatarPaddingTop = contentPaddingTop - (avatarSize * 0.20f)
-    val textSpacerTop = (avatarSize * 0.80f) + Spacing.SmallMedium
+    val textSpacerTop = (avatarSize * 0.80f) + Spacing.space12
 
     Box(
         modifier = modifier.fillMaxWidth()
@@ -32,7 +34,7 @@ fun ProfileHeaderShimmer(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(coverHeight),
-            shape = RoundedCornerShape(Spacing.None)
+            shape = RectangleShape
         )
 
         Box(
@@ -45,7 +47,7 @@ fun ProfileHeaderShimmer(modifier: Modifier = Modifier) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium)
+                    .padding(horizontal = Spacing.space16)
             ) {
                 Spacer(modifier = Modifier.height(textSpacerTop))
             }
@@ -53,7 +55,7 @@ fun ProfileHeaderShimmer(modifier: Modifier = Modifier) {
 
         Box(
             modifier = Modifier
-                .padding(start = Spacing.Medium)
+                .padding(start = Spacing.space16)
                 .padding(top = avatarPaddingTop)
         ) {
             ShimmerCircle(size = avatarSize)
@@ -67,7 +69,7 @@ fun ProfileBioShimmer(displayName: String? = null, modifier: Modifier = Modifier
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Spacing.Medium)
+            .padding(horizontal = Spacing.space16)
     ) {
         if (displayName != null) {
             Text(
@@ -84,20 +86,20 @@ fun ProfileBioShimmer(displayName: String? = null, modifier: Modifier = Modifier
             )
         }
 
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
         ShimmerBox(
             modifier = Modifier
                 .width(Sizes.ShimmerWidthMedium)
-                .height(Spacing.MediumLarge)
+                .height(Sizes.ShimmerLineHeightLarge)
         )
 
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         ShimmerBox(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .height(Sizes.ShimmerTextSmall)
         )
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
         ShimmerBox(
             modifier = Modifier
                 .fillMaxWidth(0.6f)
@@ -112,7 +114,7 @@ fun ProfileStatsShimmer(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Spacing.Medium)
+            .padding(horizontal = Spacing.space16)
     ) {
         ShimmerBox(
             modifier = Modifier
@@ -128,15 +130,15 @@ fun ProfileActionsShimmer(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Spacing.Medium),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+            .padding(horizontal = Spacing.space16),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(2) {
             ShimmerBox(
                 modifier = Modifier
                     .weight(1f)
-                    .height(Spacing.ButtonHeight),
+                    .height(Sizes.ButtonHeight),
                 shape = RoundedCornerShape(Sizes.CornerExtraLarge)
             )
         }
@@ -149,21 +151,21 @@ fun ProfileDetailsShimmer(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Spacing.Medium)
+            .padding(horizontal = Spacing.space16)
     ) {
         ShimmerBox(
             modifier = Modifier
                 .width(Sizes.ShimmerWidthMedium)
                 .height(Sizes.ShimmerTextMedium)
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         repeat(3) {
             ShimmerBox(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(Sizes.ShimmerTextSmall)
             )
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
         }
     }
 }
@@ -174,15 +176,15 @@ fun FollowingSectionShimmer(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Spacing.Medium),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            .padding(horizontal = Spacing.space16),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
     ) {
         repeat(4) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 ShimmerCircle(size = Sizes.AvatarLarge)
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 ShimmerBox(
                     modifier = Modifier
                         .width(Sizes.AvatarLarge)
@@ -203,45 +205,45 @@ fun PostCardSkeleton(modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+                .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
         ) {
             Box(
-                modifier = Modifier.width(Spacing.Huge),
+                modifier = Modifier.width(Sizes.IconGiant),
                 contentAlignment = Alignment.TopCenter
             ) {
                 ShimmerCircle(size = Sizes.IconGiant)
             }
 
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
 
             Column(modifier = Modifier.weight(1f)) {
                 ShimmerBox(
                     modifier = Modifier
                         .width(Sizes.ShimmerWidthLarge)
-                        .height(Spacing.MediumLarge)
+                        .height(Sizes.ShimmerLineHeightLarge)
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 ShimmerBox(
                     modifier = Modifier
                         .width(Sizes.ShimmerWidthSmallMedium)
                         .height(Sizes.ShimmerTextSmall)
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 ShimmerBox(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .height(Sizes.ShimmerTextSmall)
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 ShimmerBox(
                     modifier = Modifier
                         .fillMaxWidth(0.6f)
                         .height(Sizes.ShimmerTextSmall)
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 ShimmerBox(
                     modifier = Modifier
@@ -249,7 +251,7 @@ fun PostCardSkeleton(modifier: Modifier = Modifier) {
                         .height(Sizes.HeightExtraLarge)
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+                Spacer(modifier = Modifier.height(Spacing.space12))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -258,14 +260,14 @@ fun PostCardSkeleton(modifier: Modifier = Modifier) {
                     repeat(4) {
                         ShimmerBox(
                             modifier = Modifier
-                                .width(Spacing.ExtraLarge)
+                                .width(Sizes.ShimmerWidthTiny)
                                 .height(Sizes.HeightSmall)
                         )
                     }
                 }
             }
         }
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
     }
 }
 
@@ -274,12 +276,12 @@ fun PhotoGridSkeleton(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.Tiny)
+            .padding(Spacing.space2)
     ) {
         repeat(3) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space2)
             ) {
                 repeat(3) {
                     ShimmerBox(
@@ -290,7 +292,7 @@ fun PhotoGridSkeleton(modifier: Modifier = Modifier) {
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.Tiny))
+            Spacer(modifier = Modifier.height(Spacing.space2))
         }
     }
 }

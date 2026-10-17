@@ -160,7 +160,7 @@ fun SynapseFilePicker(
                                         viewModel.toggleSelection(file.uri, maxSelection)
                                     }
                                 },
-                                modifier = Modifier.padding(bottom = Spacing.Huge),
+                                modifier = Modifier.padding(bottom = Spacing.space48),
                                 selectedUris = uiState.selectedUris,
                                 maxSelection = maxSelection
                             )
@@ -178,7 +178,7 @@ fun SynapseFilePicker(
                                         viewModel.toggleSelection(file.uri, maxSelection)
                                     }
                                 },
-                                modifier = Modifier.padding(bottom = Spacing.Huge),
+                                modifier = Modifier.padding(bottom = Spacing.space48),
                                 selectedUris = uiState.selectedUris,
                                 maxSelection = maxSelection
                             )
@@ -191,7 +191,7 @@ fun SynapseFilePicker(
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = Spacing.Large),
+                    .padding(bottom = Spacing.space24),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AnimatedVisibility(visible = uiState.selectedUris.isNotEmpty() && maxSelection > 1) {
@@ -202,7 +202,7 @@ fun SynapseFilePicker(
                             onFilesSelected(selectedFiles)
                             onDismissRequest()
                         },
-                        modifier = Modifier.padding(bottom = Spacing.Medium)
+                        modifier = Modifier.padding(bottom = Spacing.space16)
                     ) {
                         Text(stringResource(R.string.picker_send_button, uiState.selectedUris.size))
                     }
@@ -211,13 +211,13 @@ fun SynapseFilePicker(
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceContainer,
-                    shadowElevation = Spacing.ExtraSmall
+                    shadowElevation = Sizes.ElevationMedium
                 ) {
                     Row(
                         modifier = Modifier
-                            .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                            .padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                     ) {
                         FilePickerCategory.values().forEach { category ->
                             IconButton(

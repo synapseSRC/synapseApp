@@ -34,12 +34,12 @@ fun CommentShimmerItem() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+                .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
         ) {
             // Left Column: Avatar
             ShimmerCircle(size = avatarSize)
 
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
 
             // Right Column: Header, Content, Interaction Bar
             Column(modifier = Modifier.weight(1f)) {
@@ -48,17 +48,17 @@ fun CommentShimmerItem() {
                     ShimmerBox(
                         modifier = Modifier
                             .width(Sizes.ShimmerWidthSmallMedium)
-                            .height(Spacing.Medium)
+                            .height(Sizes.ShimmerLineHeight)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     ShimmerBox(
                         modifier = Modifier
                             .width(Sizes.ShimmerWidthMedium)
-                            .height(Spacing.SmallMedium)
+                            .height(Sizes.ShimmerLineHeightSmall)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 // Content
                 ShimmerBox(
@@ -66,14 +66,14 @@ fun CommentShimmerItem() {
                         .fillMaxWidth(0.9f)
                         .height(Sizes.ShimmerTextSmall)
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 ShimmerBox(
                     modifier = Modifier
                         .fillMaxWidth(0.6f)
                         .height(Sizes.ShimmerTextSmall)
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 // Interaction Bar
                 Row(
@@ -88,7 +88,7 @@ fun CommentShimmerItem() {
         }
 
         HorizontalDivider(
-            modifier = Modifier.padding(horizontal = Spacing.SmallMedium),
+            modifier = Modifier.padding(horizontal = Spacing.space12),
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
             thickness = Sizes.BorderHairline
         )

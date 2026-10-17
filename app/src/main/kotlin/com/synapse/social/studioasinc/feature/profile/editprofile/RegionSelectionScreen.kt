@@ -118,7 +118,7 @@ fun RegionSelectionScreen(
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
                     ) {
                         regionListItems(filteredCountries, onRegionSelected)
                     }
@@ -126,7 +126,7 @@ fun RegionSelectionScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                    contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
                 ) {
                     regionListItems(filteredCountries, onRegionSelected)
                 }

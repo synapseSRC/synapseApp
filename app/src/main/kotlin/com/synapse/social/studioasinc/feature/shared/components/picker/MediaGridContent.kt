@@ -75,8 +75,8 @@ fun MediaGridContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    .padding(horizontal = Spacing.space8, vertical = Spacing.space4),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 MediaFilter.entries.forEach { filter ->
                     FilterChip(
@@ -103,9 +103,9 @@ fun MediaGridContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = Spacing.Huge),
+                        .padding(top = Spacing.space48),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Image,
@@ -180,7 +180,7 @@ fun MediaGridItem(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(Spacing.Small)
+                    .padding(Spacing.space8)
                     .size(Sizes.IconLarge)
             )
         }
@@ -193,12 +193,12 @@ fun MediaGridItem(
                 color = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(Spacing.ExtraSmall)
+                    .padding(Spacing.space4)
                     .background(
                         color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                         shape = RoundedCornerShape(Sizes.CornerSmall)
                     )
-                    .padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
+                    .padding(horizontal = Spacing.space4, vertical = Spacing.space2)
             )
         }
 
@@ -207,7 +207,7 @@ fun MediaGridItem(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(Spacing.Small)
+                    .padding(Spacing.space8)
                     .size(Sizes.IconLarge)
                     .clip(CircleShape)
                     .background(
