@@ -159,7 +159,7 @@ class SupabaseNotificationRepository(
     override suspend fun fetchPreferences(userId: String): NotificationPreferences? {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId) {
-            val error = IllegalStateException("User $currentUserId is not authorized to fetch preferences for $userId")
+            val error = IllegalStateException("Unauthorized access attempt detected")
             Napier.e("IDOR attempt: User $currentUserId tried to fetch preferences for $userId", error)
             throw error
         }
@@ -181,7 +181,7 @@ class SupabaseNotificationRepository(
     override suspend fun updatePreferences(userId: String, preferences: NotificationPreferences) {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId || userId != preferences.userId) {
-            val error = IllegalStateException("User $currentUserId is not authorized to update preferences for ${preferences.userId}")
+            val error = IllegalStateException("Unauthorized access attempt detected")
             Napier.e("IDOR attempt: User $currentUserId tried to update preferences for ${preferences.userId}", error)
             throw error
         }

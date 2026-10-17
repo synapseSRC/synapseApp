@@ -15,6 +15,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicLong
+import com.synapse.social.studioasinc.shared.core.util.getCurrentIsoTime
 import javax.inject.Inject
 import kotlinx.serialization.json.*
 
@@ -36,7 +38,7 @@ class NotificationSettingsViewModel @Inject constructor(
     private val preferencesUpdateMutex = Mutex()
     private var persistedPreferences = NotificationPreferences()
     private var preferencesLoaded = false
-    private var latestPreferenceUpdateVersion = 0L
+    private val latestPreferenceUpdateVersion = AtomicLong(0L)
 
     init {
         loadNotificationPreferences()
@@ -97,7 +99,7 @@ class NotificationSettingsViewModel @Inject constructor(
 
         val newPreferences = updateBlock(_notificationPreferences.value)
         _notificationPreferences.value = newPreferences
-        val requestVersion = ++latestPreferenceUpdateVersion
+        val requestVersion = latestPreferenceUpdateVersion.incrementAndGet()
 
         viewModelScope.launch {
             try {
@@ -105,21 +107,23 @@ class NotificationSettingsViewModel @Inject constructor(
                     ?: throw IllegalStateException("User is not authenticated")
                 preferencesUpdateMutex.withLock {
                     val preferencesToPersist = _notificationPreferences.value
-                    val versionBeingPersisted = latestPreferenceUpdateVersion
+                    val versionBeingPersisted = latestPreferenceUpdateVersion.get()
                     if (preferencesToPersist != persistedPreferences) {
                         notificationRepository.updatePreferences(userId, mapPreferencesToDomain(userId, preferencesToPersist))
                         persistedPreferences = preferencesToPersist
                         updateOneSignalTags(preferencesToPersist)
                     }
-                    if (latestPreferenceUpdateVersion == versionBeingPersisted) _error.value = null
+                    if (latestPreferenceUpdateVersion.get() == versionBeingPersisted) _error.value = null
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 android.util.Log.e("NotificationSettingsViewModel", "Failed to update preferences", e)
                 _error.value = "Failed to sync preferences"
-                if (latestPreferenceUpdateVersion == requestVersion) {
-                    _notificationPreferences.value = persistedPreferences
+                preferencesUpdateMutex.withLock {
+                    if (latestPreferenceUpdateVersion.get() == requestVersion) {
+                        _notificationPreferences.value = persistedPreferences
+                    }
                 }
             }
         }
@@ -181,7 +185,7 @@ class NotificationSettingsViewModel @Inject constructor(
             },
             doNotDisturb = prefs.doNotDisturb,
             dndUntil = prefs.dndUntil,
-            updatedAt = null // Or current time
+            updatedAt = getCurrentIsoTime()
         )
     }
 
