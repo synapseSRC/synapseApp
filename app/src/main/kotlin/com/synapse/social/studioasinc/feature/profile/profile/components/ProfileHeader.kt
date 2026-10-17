@@ -73,8 +73,8 @@ fun ProfileHeader(
     val contentPaddingTop = coverHeight - overlap
     val avatarSize = Sizes.AvatarHuge
     val avatarPaddingTop = contentPaddingTop - (avatarSize * 0.20f)
-    val textSpacerTop = (avatarSize * 0.80f) + Spacing.SmallMedium
-    val avatarBorderWidth = Spacing.ExtraSmall
+    val textSpacerTop = (avatarSize * 0.80f) + Spacing.space12
+    val avatarBorderWidth = Sizes.AvatarBorder
 
     Box(
         modifier = modifier.fillMaxWidth()
@@ -97,7 +97,7 @@ fun ProfileHeader(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium)
+                    .padding(horizontal = Spacing.space16)
             ) {
                 Spacer(modifier = Modifier.height(textSpacerTop))
 
@@ -106,7 +106,7 @@ fun ProfileHeader(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
                     ) {
                         Text(
                             text = name ?: username,
@@ -137,7 +137,7 @@ fun ProfileHeader(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                    Spacer(modifier = Modifier.height(Spacing.space16))
 
                     InlineStatsText(
                         postsCount = postsCount,
@@ -148,7 +148,7 @@ fun ProfileHeader(
                 }
 
                 // Add spacing before bio
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 if (!bio.isNullOrBlank()) {
                     ExpandableBio(
@@ -156,7 +156,7 @@ fun ProfileHeader(
                         expanded = bioExpanded,
                         onToggle = onToggleBio
                     )
-                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                    Spacer(modifier = Modifier.height(Spacing.space16))
                 }
 
 
@@ -174,14 +174,14 @@ fun ProfileHeader(
                     onMoreClick = onMoreClick
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
             }
         }
 
         // Avatar overlapping equally
         Box(
             modifier = Modifier
-                .padding(start = Spacing.Medium)
+                .padding(start = Spacing.space16)
                 .padding(top = avatarPaddingTop)
         ) {
             ProfileImageWithRing(
@@ -259,7 +259,7 @@ private fun ExpandableBio(
         }
 
         if (shouldCollapse) {
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = if (expanded) stringResource(R.string.show_less) else stringResource(R.string.see_more),
                 style = MaterialTheme.typography.labelLarge,
@@ -285,10 +285,10 @@ private fun ProfileActionButtons(
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val buttonShapes = ButtonDefaults.shapesFor(Spacing.ButtonHeight)
+    val buttonShapes = ButtonDefaults.shapesFor(Sizes.ButtonHeight)
     val buttonContentPadding = PaddingValues(
-        horizontal = Spacing.Medium,
-        vertical = Spacing.SmallMedium
+        horizontal = Spacing.space16,
+        vertical = Spacing.space12
     )
     val addStoryInteractionSource = remember { MutableInteractionSource() }
     val editProfileInteractionSource = remember { MutableInteractionSource() }
@@ -301,7 +301,7 @@ private fun ProfileActionButtons(
             ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
         },
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isOwnProfile) {
@@ -312,7 +312,7 @@ private fun ProfileActionButtons(
                         modifier = Modifier
                             .weight(1f)
                             .animateWidth(addStoryInteractionSource)
-                            .height(Spacing.ButtonHeight),
+                            .height(Sizes.ButtonHeight),
                         shapes = buttonShapes,
                         interactionSource = addStoryInteractionSource,
                         contentPadding = buttonContentPadding
@@ -342,7 +342,7 @@ private fun ProfileActionButtons(
                         modifier = Modifier
                             .weight(1f)
                             .animateWidth(editProfileInteractionSource)
-                            .height(Spacing.ButtonHeight),
+                            .height(Sizes.ButtonHeight),
                         shapes = buttonShapes,
                         interactionSource = editProfileInteractionSource,
                         contentPadding = buttonContentPadding
@@ -376,7 +376,7 @@ private fun ProfileActionButtons(
                         modifier = Modifier
                             .weight(1f)
                             .animateWidth(followInteractionSource)
-                            .height(Spacing.ButtonHeight),
+                            .height(Sizes.ButtonHeight),
                         interactionSource = followInteractionSource
                     )
                 },
@@ -409,7 +409,7 @@ private fun ProfileActionButtons(
                         modifier = Modifier
                             .weight(1f)
                             .animateWidth(messageInteractionSource)
-                            .height(Spacing.ButtonHeight),
+                            .height(Sizes.ButtonHeight),
                         shapes = buttonShapes,
                         interactionSource = messageInteractionSource,
                         contentPadding = buttonContentPadding
@@ -475,7 +475,7 @@ fun AnimatedFollowButton(
         },
         modifier = modifier,
         enabled = !isLoading,
-        shapes = ButtonDefaults.shapesFor(Spacing.ButtonHeight),
+        shapes = ButtonDefaults.shapesFor(Sizes.ButtonHeight),
         interactionSource = interactionSource,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
@@ -575,7 +575,7 @@ private fun InlineStatsText(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.followers).lowercase(),
                 style = MaterialTheme.typography.bodyMedium,
@@ -602,7 +602,7 @@ private fun InlineStatsText(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.following).lowercase(),
                 style = MaterialTheme.typography.bodyMedium,
@@ -627,7 +627,7 @@ private fun InlineStatsText(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.posts).lowercase(),
                 style = MaterialTheme.typography.bodyMedium,

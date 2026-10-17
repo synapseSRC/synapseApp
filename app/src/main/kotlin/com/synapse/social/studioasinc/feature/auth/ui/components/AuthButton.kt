@@ -66,7 +66,7 @@ fun AuthButton(
         ),
         modifier = modifier
             .fillMaxWidth()
-            .height(Spacing.Huge)
+            .height(Sizes.ButtonHeightLarge)
             .scale(scale)
     ) {
         if (loading) {

@@ -62,7 +62,7 @@ fun CommentsList(
         if (comments.loadState.refresh is LoadState.Error) {
              item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(Spacing.Medium),
+                    modifier = Modifier.fillMaxWidth().padding(Spacing.space16),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(androidx.compose.ui.res.stringResource(com.synapse.social.studioasinc.R.string.loading_posts_error))
@@ -75,7 +75,7 @@ fun CommentsList(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.ExtraLarge),
+                        .padding(Spacing.space32),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(androidx.compose.ui.res.stringResource(com.synapse.social.studioasinc.R.string.no_comments))
@@ -121,7 +121,7 @@ fun CommentsList(
         if (comments.loadState.append is LoadState.Loading) {
              item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(Spacing.Medium),
+                    modifier = Modifier.fillMaxWidth().padding(Spacing.space16),
                     contentAlignment = Alignment.Center
                 ) {
                     ExpressiveLoadingIndicator()

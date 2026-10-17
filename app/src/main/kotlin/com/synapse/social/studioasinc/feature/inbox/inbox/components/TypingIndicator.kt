@@ -55,15 +55,15 @@ fun TypingIndicator(
 
     Box(
         modifier = modifier
-            .padding(vertical = Spacing.Small)
+            .padding(vertical = Spacing.space8)
             .clip(RoundedCornerShape(
                 topStart = Sizes.CornerMassive,
                 topEnd = Sizes.CornerMassive,
-                bottomStart = Spacing.ExtraSmall,
+                bottomStart = Sizes.CornerSmall,
                 bottomEnd = Sizes.CornerMassive
             ))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -71,12 +71,12 @@ fun TypingIndicator(
             dots.forEachIndexed { index, animatable ->
                 Box(
                     modifier = Modifier
-                        .offset(y = (-Spacing.ExtraSmall.value * animatable.value).dp)
-                        .size(Spacing.ExtraSmallMedium)
+                        .offset(y = (-Sizes.TypingIndicatorBounceOffset.value * animatable.value).dp)
+                        .size(Sizes.TypingIndicatorDot)
                         .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
                 )
                 if (index < dots.size - 1) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                 }
             }
         }

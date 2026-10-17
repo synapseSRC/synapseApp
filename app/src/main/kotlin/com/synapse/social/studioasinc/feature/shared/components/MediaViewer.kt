@@ -52,7 +52,7 @@ fun MediaViewer(
             onClick = onDismiss,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -68,7 +68,7 @@ fun MediaViewer(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = Sizes.PaddingTopClose)
+                    .padding(top = Spacing.space28)
             )
         }
     }

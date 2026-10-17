@@ -323,14 +323,14 @@ fun StackedMediaCard(
                             shape = RoundedCornerShape(Sizes.CornerSmall),
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(start = Spacing.Medium, bottom = Spacing.Small)
+                                .padding(start = Spacing.space16, bottom = Spacing.space8)
                                 .semantics { contentDescription = durationDescription }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(
-                                    horizontal = Spacing.ExtraSmall,
-                                    vertical = Spacing.Tiny
+                                    horizontal = Spacing.space4,
+                                    vertical = Spacing.space2
                                 )
                             ) {
                                 Icon(
@@ -339,7 +339,7 @@ fun StackedMediaCard(
                                     tint = Color.White,
                                     modifier = Modifier.size(Sizes.IconSmall)
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.Tiny))
+                                Spacer(modifier = Modifier.width(Spacing.space2))
                                 Text(
                                     text = durationLabel,
                                     style = MaterialTheme.typography.labelSmall,
@@ -355,13 +355,13 @@ fun StackedMediaCard(
                     shape = RoundedCornerShape(Sizes.CornerSmall),
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(Spacing.Small)
+                        .padding(Spacing.space8)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(
-                            horizontal = Spacing.ExtraSmall,
-                            vertical = Spacing.Tiny
+                            horizontal = Spacing.space4,
+                            vertical = Spacing.space2
                         )
                     ) {
                         Icon(
@@ -370,7 +370,7 @@ fun StackedMediaCard(
                             tint = Color.White,
                             modifier = Modifier.size(Sizes.IconSmall)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Tiny))
+                        Spacer(modifier = Modifier.width(Spacing.space2))
                         Text(
                             text = totalCount.toString(),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),

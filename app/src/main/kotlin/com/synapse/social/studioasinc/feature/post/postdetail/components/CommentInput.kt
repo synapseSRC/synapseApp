@@ -68,7 +68,7 @@ fun CommentInput(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
             verticalAlignment = Alignment.Bottom
         ) {
             com.synapse.social.studioasinc.ui.components.CircularAvatar(
@@ -78,9 +78,9 @@ fun CommentInput(
                 size = Sizes.AvatarSmall
             )
 
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
 
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                 if (replyToParticipants.isNotEmpty()) {
                     val maxShown = 3
                     val shown = replyToParticipants.take(maxShown)
@@ -115,7 +115,7 @@ fun CommentInput(
                         if (selectedMediaUri != null) {
                             Box(
                                 modifier = Modifier
-                                    .padding(start = Spacing.Medium, end = Spacing.Medium, top = Spacing.SmallMedium)
+                                    .padding(start = Spacing.space16, end = Spacing.space16, top = Spacing.space12)
                                     .size(Sizes.MediaPreviewSmall)
                                     .clip(RoundedCornerShape(Sizes.CornerDefault))
                                     .border(Sizes.BorderThin, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Sizes.CornerDefault))
@@ -131,7 +131,7 @@ fun CommentInput(
                                     shape = CircleShape,
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(Spacing.Small)
+                                        .padding(Spacing.space8)
                                         .size(Sizes.IconLarge)
                                         .clickable { selectedMediaUri = null }
                                 ) {
@@ -139,7 +139,7 @@ fun CommentInput(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Remove media",
                                         tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.padding(Spacing.ExtraSmall)
+                                        modifier = Modifier.padding(Spacing.space4)
                                     )
                                 }
                             }

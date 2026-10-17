@@ -34,7 +34,7 @@ fun PostMenuBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.Medium)
+                .padding(bottom = Spacing.space16)
         ) {
             val options = mutableListOf<PostOption>()
             if (isOwnPost) {

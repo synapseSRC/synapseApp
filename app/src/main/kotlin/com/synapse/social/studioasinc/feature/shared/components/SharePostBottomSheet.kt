@@ -33,12 +33,12 @@ fun SharePostBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = Spacing.Medium)
+                .padding(vertical = Spacing.space16)
         ) {
             Text(
                 text = stringResource(R.string.share_post),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             )
 
             ShareOption(
@@ -77,7 +77,7 @@ fun SharePostBottomSheet(
                 }
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
         }
     }
 }
@@ -92,7 +92,7 @@ private fun ShareOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -100,7 +100,7 @@ private fun ShareOption(
             contentDescription = null,
             modifier = Modifier.size(Sizes.IconLarge)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge

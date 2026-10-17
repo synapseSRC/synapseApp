@@ -84,7 +84,7 @@ fun FileListContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f))
-                            .padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
+                            .padding(horizontal = Spacing.space16, vertical = Spacing.space4)
                     ) {
                         Text(
                             text = initial.toString(),
@@ -103,7 +103,7 @@ fun FileListContent(
                         maxSelection = maxSelection
                     )
                     HorizontalDivider(
-                        modifier = Modifier.padding(start = Spacing.Huge + Spacing.Large),
+                        modifier = Modifier.padding(start = Spacing.space48 + Spacing.space24),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                 }
@@ -116,9 +116,9 @@ fun FileListContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onFileClicked(file) }
-                        .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                        .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
                 ) {
                     Icon(
                         imageVector = when (category) {
@@ -147,11 +147,11 @@ fun FileListContent(
                         Checkbox(
                             checked = file.uri in selectedUris,
                             onCheckedChange = null,
-                            modifier = Modifier.padding(start = Spacing.Small)
+                            modifier = Modifier.padding(start = Spacing.space8)
                         )
                     }
                 }
-                HorizontalDivider(modifier = Modifier.padding(start = Spacing.Huge))
+                HorizontalDivider(modifier = Modifier.padding(start = Spacing.space48))
             }
         }
     }
@@ -171,7 +171,7 @@ private fun ContactListItem(
             .fillMaxWidth()
             .clip(ButtonDefaults.shape)
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallPlus),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space10),
         verticalAlignment = Alignment.CenterVertically
     ) {
         UserAvatar(
@@ -180,7 +180,7 @@ private fun ContactListItem(
             displayName = file.fileName
         )
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -201,7 +201,7 @@ private fun ContactListItem(
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = null,
-                modifier = Modifier.padding(start = Spacing.Small)
+                modifier = Modifier.padding(start = Spacing.space8)
             )
         }
     }
