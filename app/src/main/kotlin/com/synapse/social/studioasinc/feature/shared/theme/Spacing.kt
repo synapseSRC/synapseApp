@@ -48,7 +48,6 @@ object Sizes {
     val AvatarDefault = SynapseSizes.AvatarDefault.dp
     val AvatarLarge = SynapseSizes.AvatarLarge.dp
     val AvatarExtraLarge = SynapseSizes.AvatarExtraLarge.dp
-    val AvatarXLarge = SynapseSizes.AvatarXLarge.dp
     val AvatarHuge = SynapseSizes.AvatarHuge.dp
 
     // My design decision (not in M3): Border widths
@@ -81,7 +80,6 @@ object Sizes {
     val Height120 = SynapseSizes.Height120.dp
     val HeightPreview = SynapseSizes.HeightPreview.dp
     val HeightStoryTray = SynapseSizes.HeightStoryTray.dp
-    val HeightStoryTrayExpanded = SynapseSizes.HeightStoryTrayExpanded.dp
     val HeightStoryTrayExpanded = SynapseSizes.HeightStoryTrayExpanded.dp
     val HeightMediaSingle = SynapseSizes.HeightMediaSingle.dp
     val HeightMediaGrid2 = SynapseSizes.HeightMediaGrid2.dp
