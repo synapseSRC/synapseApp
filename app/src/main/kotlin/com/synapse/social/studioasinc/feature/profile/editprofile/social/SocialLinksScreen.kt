@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.presentation.editprofile.social
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -151,7 +153,7 @@ fun SocialLinksScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.error
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(Spacing.space16))
                             Button(onClick = { viewModel.onEvent(SocialLinksEvent.RetryClicked) }) {
                                 Text(text = stringResource(R.string.retry))
                             }

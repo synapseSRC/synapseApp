@@ -41,9 +41,9 @@ fun ContactCardBubble(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = Spacing.space4)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!metadata?.avatarUrl.isNullOrBlank()) {
                     AsyncImage(
@@ -77,7 +77,7 @@ fun ContactCardBubble(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Spacing.space12))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = metadata?.name ?: "Contact",
@@ -94,7 +94,7 @@ fun ContactCardBubble(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(Spacing.space10))
             OutlinedButton(
                 onClick = { metadata?.phoneNumber?.let { onContactAction(it) } },
                 modifier = Modifier.fillMaxWidth(),
@@ -105,7 +105,7 @@ fun ContactCardBubble(
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(Spacing.space6))
                 Text(
                     text = "Add Contact",
                     style = MaterialTheme.typography.labelLarge,
@@ -127,12 +127,12 @@ fun MapCardBubble(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = Spacing.space4)
             .clickable {
                 metadata?.let { onOpenMap(it.latitude, it.longitude) }
             }
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Map,
@@ -140,7 +140,7 @@ fun MapCardBubble(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = metadata?.locationName ?: "Map Location",
                     style = MaterialTheme.typography.titleMedium,
@@ -149,7 +149,7 @@ fun MapCardBubble(
                 )
             }
             if (metadata != null) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = "Lat: ${metadata.latitude}, Lon: ${metadata.longitude} (Zoom: ${metadata.zoomLevel.toInt()})",
                     style = MaterialTheme.typography.bodySmall,
@@ -169,7 +169,7 @@ fun LocationCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
             metadata?.let { onOpenMap(it.latitude, it.longitude) }
         }
     ) {
@@ -188,7 +188,7 @@ fun LocationCardBubble(
                     modifier = Modifier.size(48.dp)
                 )
             }
-            Column(modifier = Modifier.padding(10.dp)) {
+            Column(modifier = Modifier.padding(Spacing.space10)) {
                 Text(
                     text = metadata?.title ?: "Location Share",
                     style = MaterialTheme.typography.titleSmall,
@@ -218,10 +218,10 @@ fun LiveLocationCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onOpenLiveMap() }
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable { onOpenLiveMap() }
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -238,7 +238,7 @@ fun LiveLocationCardBubble(
                     modifier = Modifier.size(22.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Live Location",
@@ -266,9 +266,9 @@ fun PollCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Poll,
@@ -276,7 +276,7 @@ fun PollCardBubble(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(Spacing.space6))
                 Text(
                     text = metadata?.question ?: "Poll",
                     style = MaterialTheme.typography.titleMedium,
@@ -284,7 +284,7 @@ fun PollCardBubble(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             metadata?.options?.forEach { option ->
                 val totalVotes = metadata.options.sumOf { it.voteCount }.coerceAtLeast(1)
                 val percentage = (option.voteCount.toFloat() / totalVotes)
@@ -294,7 +294,7 @@ fun PollCardBubble(
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = Spacing.space4)
                         .clickable { onVoteOption(messageId, option.id) }
                 ) {
                     Box(modifier = Modifier.fillMaxWidth()) {
@@ -305,7 +305,7 @@ fun PollCardBubble(
                                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
                         )
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = Spacing.space10, vertical = Spacing.space8),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -338,10 +338,10 @@ fun MusicCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
     ) {
         Row(
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(Spacing.space10),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
@@ -353,7 +353,7 @@ fun MusicCardBubble(
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.secondaryContainer)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = metadata?.title ?: "Audio Track",
@@ -391,18 +391,18 @@ fun SharedPostCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
             metadata?.postId?.let { onOpenPost(it) }
         }
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(Spacing.space10)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
                     model = metadata?.authorAvatarUrl,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp).clip(CircleShape)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(Spacing.space6))
                 Text(
                     text = metadata?.authorName ?: "User Post",
                     style = MaterialTheme.typography.labelMedium,
@@ -411,7 +411,7 @@ fun SharedPostCardBubble(
                 )
             }
             metadata?.mediaUrl?.let { url ->
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(Spacing.space6))
                 AsyncImage(
                     model = url,
                     contentDescription = "Post Media",
@@ -423,7 +423,7 @@ fun SharedPostCardBubble(
                 )
             }
             metadata?.content?.let { text ->
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodySmall,
@@ -445,12 +445,12 @@ fun SharedStoryCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
             metadata?.storyId?.let { onOpenStory(it) }
         }
     ) {
         Row(
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(Spacing.space10),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -467,7 +467,7 @@ fun SharedStoryCardBubble(
                     modifier = Modifier.size(48.dp).clip(CircleShape)
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${metadata?.authorName ?: "User"}'s Story",
@@ -494,11 +494,11 @@ fun EventCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
             metadata?.eventId?.let { onOpenEvent(it) }
         }
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Event,
@@ -506,7 +506,7 @@ fun EventCardBubble(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(22.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = metadata?.title ?: "Event",
                     style = MaterialTheme.typography.titleMedium,
@@ -514,7 +514,7 @@ fun EventCardBubble(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             metadata?.startTimeIso?.let {
                 Text(
                     text = "📅 $it",
@@ -542,18 +542,18 @@ fun ProductCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
             metadata?.productId?.let { onOpenProduct(it) }
         }
     ) {
-        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.padding(Spacing.space10), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = metadata?.imageUrl,
                 contentDescription = "Product Image",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = metadata?.title ?: "Product",
@@ -580,16 +580,16 @@ fun PaymentCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.padding(Spacing.space12), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Payments,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(32.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Payment ${metadata?.status ?: "COMPLETED"}",
@@ -616,9 +616,9 @@ fun CodeSnippetCardBubble(
     Surface(
         color = Color(0xFF1E1E1E),
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(Spacing.space10)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -638,7 +638,7 @@ fun CodeSnippetCardBubble(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(Spacing.space6))
             Text(
                 text = metadata?.code ?: "",
                 fontFamily = FontFamily.Monospace,
@@ -657,16 +657,16 @@ fun CallLogCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
     ) {
-        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.padding(Spacing.space10), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = if (metadata?.isVideo == true) Icons.Default.Videocam else Icons.Default.Phone,
                 contentDescription = null,
                 tint = if (metadata?.callStatus == "MISSED") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (metadata?.isVideo == true) "Video Call" else "Voice Call",
@@ -694,20 +694,20 @@ fun ViewOnceCardBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
             if (metadata?.isConsumed != true && mediaUrl != null) {
                 onOpenEphemeralMedia(mediaUrl)
             }
         }
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.padding(Spacing.space12), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Timer,
                 contentDescription = null,
                 tint = if (metadata?.isConsumed == true) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (metadata?.mode == "VIEW_TWICE") "View Twice Media" else "View Once Media",
@@ -747,7 +747,7 @@ fun FileMessageBubble(
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.ExtraSmall)
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
     ) {
         Box(
             modifier = Modifier
@@ -755,7 +755,7 @@ fun FileMessageBubble(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(Spacing.Small)
+                modifier = Modifier.padding(Spacing.space8)
             ) {
                 val icon = fileIconForExtension(fileExt)
                 Box(
@@ -772,7 +772,7 @@ fun FileMessageBubble(
                         modifier = Modifier.size(22.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.Center
@@ -791,7 +791,7 @@ fun FileMessageBubble(
                         color = contentColor.copy(alpha = 0.7f)
                     )
                 }
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 IconButton(
                     onClick = { url?.let { downloadFile(url, fileName) } },
                     modifier = Modifier.size(36.dp)

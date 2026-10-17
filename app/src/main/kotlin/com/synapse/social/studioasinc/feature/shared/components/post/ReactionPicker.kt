@@ -37,7 +37,7 @@ fun ReactionPicker(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             ReactionType.values().forEach { reaction ->
@@ -62,7 +62,7 @@ fun ReactionItem(
         Text(
             text = reaction.emoji,
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(Spacing.ExtraSmall)
+            modifier = Modifier.padding(Spacing.space4)
         )
     }
 }

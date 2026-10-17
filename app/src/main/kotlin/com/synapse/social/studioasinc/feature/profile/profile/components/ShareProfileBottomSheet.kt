@@ -27,11 +27,11 @@ fun ShareProfileBottomSheet(
     onShareExternal: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(bottom = Spacing.Medium)) {
+        Column(modifier = Modifier.padding(bottom = Spacing.space16)) {
             Text(
                 stringResource(R.string.share_profile),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             )
 
             ShareOption(
@@ -68,11 +68,11 @@ private fun ShareOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(Sizes.IconLarge))
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
