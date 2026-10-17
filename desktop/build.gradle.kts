@@ -49,6 +49,10 @@ compose.desktop {
         nativeDistributions {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe)
             packageName = "Synapse Desktop"
+            linux {
+                // Debian package names must be lowercase and cannot contain spaces.
+                packageName = "synapse-desktop"
+            }
             packageVersion = "1.0.0"
             jvmArgs("--enable-native-access=ALL-UNNAMED")
             modules(
