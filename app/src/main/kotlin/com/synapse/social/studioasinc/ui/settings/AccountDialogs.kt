@@ -52,7 +52,7 @@ fun ChangeEmailDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 Text(
                     text = stringResource(R.string.change_email_dialog_message),
@@ -135,7 +135,7 @@ fun ChangeEmailDialog(
                     ExpressiveLoadingIndicator(
                         modifier = Modifier.size(Sizes.IconSemiMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
                 Text(stringResource(R.string.action_change_email))
             }
@@ -182,7 +182,7 @@ fun ChangePasswordDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 Text(
                     text = stringResource(R.string.change_password_dialog_message),
@@ -311,7 +311,7 @@ fun ChangePasswordDialog(
                         modifier = Modifier.size(Sizes.IconSemiMedium),
                         strokeWidth = Sizes.BorderDefault
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
                 Text(stringResource(R.string.action_change_password))
             }
@@ -333,17 +333,17 @@ fun ChangePasswordDialog(
 @Composable
 private fun PasswordStrengthIndicator(strength: Int) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
         ) {
             repeat(4) { index ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(Spacing.ExtraSmall)
+                        .height(Sizes.PasswordStrengthBarHeight)
                         .then(
                             if (index < strength) {
                                 Modifier.background(
@@ -419,7 +419,7 @@ fun DeleteAccountDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 Text(
                     text = stringResource(R.string.delete_account_dialog_message),
@@ -443,7 +443,7 @@ fun DeleteAccountDialog(
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         ),
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(Spacing.SmallMedium)
+                        modifier = Modifier.padding(Spacing.space12)
                     )
                 }
 
@@ -498,7 +498,7 @@ fun DeleteAccountDialog(
                         modifier = Modifier.size(Sizes.IconSemiMedium),
                         color = MaterialTheme.colorScheme.onError
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
                 Text(stringResource(R.string.action_delete_account))
             }

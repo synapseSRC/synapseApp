@@ -79,7 +79,7 @@ fun SettingsHubScreen(
                             .fillMaxSize()
                             .padding(horizontal = SettingsSpacing.screenPadding),
                         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-                        contentPadding = PaddingValues(vertical = Spacing.Small)
+                        contentPadding = PaddingValues(vertical = Spacing.space8)
                     ) {
                         item {
                             SettingsSearchBar(
@@ -109,7 +109,7 @@ fun SettingsHubScreen(
                         }
 
                         item {
-                            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+                            Spacer(modifier = Modifier.height(Spacing.space32))
                         }
                     }
 
@@ -142,18 +142,18 @@ fun SettingsSearchBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         shape = CircleShape,
         color = SettingsColors.cardBackground,
         tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
             Box(modifier = Modifier.weight(1f)) {
                 if (query.isEmpty()) {
                     Text(stringResource(R.string.settings_search_settings_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -181,8 +181,8 @@ fun SettingsHeroCardsSection(
     onCardClick: (HeroCard) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(vertical = Spacing.Small),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+        contentPadding = PaddingValues(vertical = Spacing.space8),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
     ) {
         items(heroCards) { card ->
             Card(
@@ -196,15 +196,15 @@ fun SettingsHeroCardsSection(
                     )
                 )
             ) {
-                Column(modifier = Modifier.padding(Spacing.Medium)) {
+                Column(modifier = Modifier.padding(Spacing.space16)) {
                     Icon(
                         imageVector = if (card.id == "storage_cleanup") Icons.Filled.Storage else Icons.Filled.Shield,
                         contentDescription = null,
                         modifier = Modifier.size(Sizes.IconHuge)
                     )
-                    Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+                    Spacer(modifier = Modifier.height(Spacing.space12))
                     Text(card.title, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(card.description, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -225,8 +225,8 @@ fun SettingsCommandPaletteResults(
         color = MaterialTheme.colorScheme.background
     ) {
         LazyColumn(
-            modifier = Modifier.padding(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            modifier = Modifier.padding(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             items(results) { node ->
                 val action = node.action
@@ -243,7 +243,7 @@ fun SettingsCommandPaletteResults(
                     colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
                 ) {
                     Row(
-                        modifier = Modifier.padding(Spacing.Medium),
+                        modifier = Modifier.padding(Spacing.space16),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {

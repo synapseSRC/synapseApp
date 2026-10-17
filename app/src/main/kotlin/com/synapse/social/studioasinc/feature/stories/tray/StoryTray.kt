@@ -61,11 +61,11 @@ fun StoryTray(
             HorizontalUncontainedCarousel(
                 state = state,
                 itemWidth = Sizes.WidthMassive,
-                itemSpacing = Spacing.Small,
-                contentPadding = PaddingValues(horizontal = Spacing.Medium),
+                itemSpacing = Spacing.space8,
+                contentPadding = PaddingValues(horizontal = Spacing.space16),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = Spacing.Small)
+                    .padding(vertical = Spacing.space8)
                     .height(Sizes.HeightStoryTray)
             ) { index ->
                 if (index == 0) {
@@ -113,7 +113,7 @@ fun StoryTray(
         }
 
         HorizontalDivider(
-            modifier = Modifier.padding(top = Spacing.Small),
+            modifier = Modifier.padding(top = Spacing.space8),
             thickness = Sizes.BorderHairline,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
@@ -172,7 +172,7 @@ private fun StoryCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(Spacing.Small)
+                    .padding(Spacing.space8)
             ) {
 
                 Box(
@@ -193,7 +193,7 @@ private fun StoryCard(
                             .then(
                                 if (hasUnseen) {
                                     Modifier.border(
-                                        width = Spacing.Tiny,
+                                        width = Sizes.BorderDefault,
                                         brush = Brush.sweepGradient(storyGradientColors),
                                         shape = CircleShape
                                     )
@@ -208,7 +208,7 @@ private fun StoryCard(
                                     Modifier
                                 }
                             )
-                            .padding(Spacing.Tiny)
+                            .padding(Spacing.space2)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surface)
                     ) {
@@ -257,12 +257,12 @@ private fun StoryCard(
                     if (!isAddButton && privacy != null) {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-                            shape = RoundedCornerShape(Spacing.Tiny),
-                            modifier = Modifier.padding(bottom = Spacing.Tiny)
+                            shape = RoundedCornerShape(Sizes.CornerSharp),
+                            modifier = Modifier.padding(bottom = Spacing.space2)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
+                                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space2)
                             ) {
                                 Text(
                                     text = when (privacy) {
@@ -273,7 +273,7 @@ private fun StoryCard(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.Tiny))
+                                Spacer(modifier = Modifier.width(Spacing.space2))
                                 Icon(
                                     imageVector = when (privacy) {
                                         StoryPrivacy.PUBLIC -> Icons.Default.Public
@@ -281,7 +281,7 @@ private fun StoryCard(
                                         StoryPrivacy.ALL_FRIENDS -> Icons.Default.Lock
                                     },
                                     contentDescription = null,
-                                    modifier = Modifier.size(Spacing.SmallMedium),
+                                    modifier = Modifier.size(Sizes.IconSmall),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }

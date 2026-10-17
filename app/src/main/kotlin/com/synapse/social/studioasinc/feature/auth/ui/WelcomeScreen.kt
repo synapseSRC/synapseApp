@@ -38,11 +38,11 @@ fun WelcomeScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = Spacing.Large, vertical = Spacing.ExtraLarge),
+            .padding(horizontal = Spacing.space24, vertical = Spacing.space32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Spacer(modifier = Modifier.height(Spacing.Large))
+        Spacer(modifier = Modifier.height(Spacing.space24))
 
         // Brand Identity & Header Section
         Column(
@@ -54,7 +54,7 @@ fun WelcomeScreen(
                 contentDescription = stringResource(id = R.string.app_name),
                 modifier = Modifier
                     .size(112.dp)
-                    .padding(bottom = Spacing.Medium)
+                    .padding(bottom = Spacing.space16)
             )
 
             Text(
@@ -64,18 +64,18 @@ fun WelcomeScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Text(
                 text = stringResource(id = R.string.welcome_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = Spacing.Medium)
+                modifier = Modifier.padding(horizontal = Spacing.space16)
             )
         }
 
-        Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+        Spacer(modifier = Modifier.height(Spacing.space32))
 
         // Actions Hierarchy
         Column(
@@ -91,13 +91,13 @@ fun WelcomeScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedButton(
                 onClick = onSignInClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(Spacing.Huge)
+                    .height(Sizes.ButtonHeightLarge)
             ) {
                 Text(
                     text = stringResource(id = R.string.welcome_already_have_account),
@@ -106,14 +106,14 @@ fun WelcomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Large))
+            Spacer(modifier = Modifier.height(Spacing.space24))
 
             Text(
                 text = stringResource(id = R.string.welcome_terms_notice),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = Spacing.Medium)
+                modifier = Modifier.padding(horizontal = Spacing.space16)
             )
         }
     }

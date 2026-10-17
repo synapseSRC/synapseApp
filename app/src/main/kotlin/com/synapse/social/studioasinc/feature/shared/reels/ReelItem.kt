@@ -181,7 +181,7 @@ fun ReelItem(
             onToggleMute = { videoViewModel.toggleMute() },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = Spacing.Huge, end = Spacing.Medium)
+                .padding(top = Spacing.space48, end = Spacing.space16)
         )
 
         ReelActionButtons(
@@ -194,7 +194,7 @@ fun ReelItem(
             onMoreClick = onMoreClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = Spacing.NavBarHeight, end = Spacing.Medium)
+                .padding(bottom = Sizes.NavBarHeight, end = Spacing.space16)
         )
 
         ReelUserInfo(
@@ -206,7 +206,7 @@ fun ReelItem(
             onUserClick = onUserClick,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(bottom = Spacing.SmallPlus)
+                .padding(bottom = Spacing.space10)
         )
         if (showHeartAnimation) {
             HeartAnimation(
@@ -266,7 +266,7 @@ private fun ReelCenterControls(
         Box(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.4f), shape = MaterialTheme.shapes.medium)
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
         ) {
             IconButton(
                 onClick = onTogglePlayPause
@@ -332,7 +332,7 @@ private fun ReelActionButtons(
                 )
             }
             Text(text = "${reel.likesCount}", color = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.size(Spacing.Medium))
+            Spacer(modifier = Modifier.size(Spacing.space16))
 
             IconButton(onClick = onOpposeClick) {
                 Icon(
@@ -342,7 +342,7 @@ private fun ReelActionButtons(
                 )
             }
             Text(text = "${reel.opposeCount}", color = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.size(Spacing.Medium))
+            Spacer(modifier = Modifier.size(Spacing.space16))
 
             IconButton(onClick = onCommentClick) {
                 Icon(
@@ -352,7 +352,7 @@ private fun ReelActionButtons(
                 )
             }
             Text(text = "${reel.commentCount}", color = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.size(Spacing.Medium))
+            Spacer(modifier = Modifier.size(Spacing.space16))
 
             IconButton(onClick = onShareClick) {
                 Icon(
@@ -362,7 +362,7 @@ private fun ReelActionButtons(
                 )
             }
             Text(text = "${reel.shareCount}", color = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.size(Spacing.Medium))
+            Spacer(modifier = Modifier.size(Spacing.space16))
 
             IconButton(onClick = onMoreClick) {
                 Icon(
@@ -395,16 +395,16 @@ private fun ReelUserInfo(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(start = Spacing.Medium, end = Sizes.WidthLarge, bottom = Spacing.SmallPlus)
+                    .padding(start = Spacing.space16, end = Sizes.WidthLarge, bottom = Spacing.space10)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularAvatar(
                         imageUrl = reel.creatorAvatarUrl,
                         contentDescription = null,
-                        size = Spacing.ExtraLarge,
+                        size = Spacing.space32,
                         onClick = onUserClick
                     )
-                    Spacer(modifier = Modifier.size(Spacing.Small))
+                    Spacer(modifier = Modifier.size(Spacing.space8))
                     Column {
                         Text(
                             text = reel.creatorUsername ?: "Unknown",
@@ -421,7 +421,7 @@ private fun ReelUserInfo(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.size(Spacing.Small))
+                Spacer(modifier = Modifier.size(Spacing.space8))
                 reel.caption?.let { caption ->
                     if (caption.isNotEmpty()) {
                         Text(
