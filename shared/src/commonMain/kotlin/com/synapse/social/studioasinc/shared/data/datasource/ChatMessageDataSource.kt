@@ -7,7 +7,6 @@ import com.synapse.social.studioasinc.shared.data.dto.chat.UserDeletedMessageDto
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.postgrest.query.Order
@@ -16,7 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonObject
 
 internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
 
@@ -88,22 +86,6 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             val newMessage = NewMessageDto(chatId, senderId, content, messageType, mediaUrl, expiresAt, replyToId, attachments = attachments, metadata = metadata)
             client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
         }
-
-    suspend fun sendMessageNotification(recipientId: String, senderId: String, message: String, chatId: String) = withContext(AppDispatchers.IO) {
-        try {
-            client.functions.invoke("send-push-notification", buildJsonObject {
-                put("recipient_id", recipientId)
-                put("sender_id", senderId)
-                put("message", message)
-                put("type", "NEW_MESSAGE")
-                putJsonObject("data") {
-                    put("chat_id", chatId)
-                }
-            })
-        } catch (e: Exception) {
-            Napier.e("Failed to send notification", e)
-        }
-    }
 
     suspend fun getMessageById(messageId: String): MessageDto? = withContext(AppDispatchers.IO) {
         try {

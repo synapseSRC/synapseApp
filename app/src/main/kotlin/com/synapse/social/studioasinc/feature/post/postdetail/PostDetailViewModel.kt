@@ -27,7 +27,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.synapse.social.studioasinc.core.util.NotificationHelper
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeThreadUseCase
 
@@ -203,19 +202,7 @@ class PostDetailViewModel @Inject constructor(
             
             postActionsRepository.updateLocalPost(optimisticPost.post)
 
-            reactionRepository.toggleReaction(postId, "post", reactionType, currentReaction, skipCheck = true).onSuccess {
-                val ownerId = currentPost.post.authorUid
-                val myId = _uiState.value.currentUserId
-                if (!isRemoving && ownerId != myId && myId != null) {
-                    NotificationHelper.sendNotification(
-                        recipientUid = ownerId,
-                        senderUid = myId,
-                        message = "Someone reacted to your post.",
-                        notificationType = "NEW_LIKE_POST",
-                        data = mapOf("postId" to postId)
-                    )
-                }
-            }.onFailure {
+            reactionRepository.toggleReaction(postId, "post", reactionType, currentReaction, skipCheck = true).onFailure {
                 _uiState.update { it.copy(post = currentPost) }
                 PostEventBus.emit(PostEvent.Updated(currentPost.post))
             }
@@ -247,37 +234,11 @@ class PostDetailViewModel @Inject constructor(
                     mediaUrl = uploadedItems.firstOrNull()?.url
                 }
 
-                val participants = _uiState.value.replyToParticipants
                 commentRepository.createComment(postId, content, mediaUrl, parentId).onSuccess {
                     refreshComments()
                     invalidateComments()
                     setReplyTo(null)
 
-                    val ownerId = _uiState.value.post?.post?.authorUid
-                    val myId = _uiState.value.currentUserId
-                    if (ownerId != null && myId != null && ownerId != myId) {
-                        NotificationHelper.sendNotification(
-                            recipientUid = ownerId,
-                            senderUid = myId,
-                            message = if (parentId != null) "Someone replied to your comment." else "Someone commented on your post.",
-                            notificationType = if (parentId != null) "NEW_REPLY" else "NEW_COMMENT",
-                            data = mapOf("postId" to postId)
-                        )
-                    }
-                    // Notify all other thread participants (exclude post owner already notified, and self)
-                    if (myId != null) {
-                        participants
-                            .filter { it.uid != myId && it.uid != ownerId }
-                            .forEach { participant ->
-                                NotificationHelper.sendNotification(
-                                    recipientUid = participant.uid,
-                                    senderUid = myId,
-                                    message = "Someone replied to a thread you're in.",
-                                    notificationType = "NEW_REPLY",
-                                    data = mapOf("postId" to postId)
-                                )
-                            }
-                    }
                 }.onFailure { e ->
                     _uiState.update { it.copy(error = e.message ?: "Failed to add comment") }
                 }
