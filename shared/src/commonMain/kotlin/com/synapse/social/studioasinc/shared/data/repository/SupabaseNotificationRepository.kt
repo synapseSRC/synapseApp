@@ -159,8 +159,9 @@ class SupabaseNotificationRepository(
     override suspend fun fetchPreferences(userId: String): NotificationPreferences? {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId) {
-            Napier.e("IDOR attempt: User $currentUserId tried to fetch preferences for $userId")
-            return null
+            val error = IllegalStateException("User $currentUserId is not authorized to fetch preferences for $userId")
+            Napier.e("IDOR attempt: User $currentUserId tried to fetch preferences for $userId", error)
+            throw error
         }
         return try {
             supabase.postgrest.from("notification_preferences")
@@ -169,23 +170,31 @@ class SupabaseNotificationRepository(
                 }
                 .decodeSingleOrNull<NotificationPreferencesDto>()
                 ?.toDomain()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Failed to fetch preferences for $userId", e)
-            null
+            throw e
         }
     }
 
     override suspend fun updatePreferences(userId: String, preferences: NotificationPreferences) {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId || userId != preferences.userId) {
-            Napier.e("IDOR attempt: User $currentUserId tried to update preferences for ${preferences.userId}")
-            return
+            val error = IllegalStateException("User $currentUserId is not authorized to update preferences for ${preferences.userId}")
+            Napier.e("IDOR attempt: User $currentUserId tried to update preferences for ${preferences.userId}", error)
+            throw error
         }
         try {
             supabase.postgrest.from("notification_preferences")
-                .upsert(preferences.toDto())
+                .upsert(preferences.toDto()) {
+                    onConflict = "user_id"
+                }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Failed to update preferences for ${preferences.userId}", e)
+            throw e
         }
     }
 
