@@ -56,9 +56,9 @@ private const val LOCK_ARROW_GRADIENT_CLEAR_ALPHA = 0f
 private const val LOCK_ARROW_GRADIENT_CORE_ALPHA = 0.75f
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
-private val LOCK_INDICATOR_GAP = Spacing.Small
+private val LOCK_INDICATOR_GAP = Spacing.space8
 private val LOCK_INDICATOR_WIDTH = 144.dp
-private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.ExtraSmall + Spacing.Small
+private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.space4 + Spacing.space8
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
 private val LOCK_ARROW_WIDTH = 24.dp
@@ -163,12 +163,12 @@ fun VoiceInputHost(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = VOICE_BAR_MIN_HEIGHT)
-                .padding(horizontal = Spacing.ExtraSmall)
-                .padding(top = Spacing.ExtraSmall, bottom = Spacing.Small)
+                .padding(horizontal = Spacing.space4)
+                .padding(top = Spacing.space4, bottom = Spacing.space8)
                 .onGloballyPositioned { hostBoundsInRoot = it.boundsInRoot() }
                 .testTag("voice-recording-bar")
                 .shadow(
-                    elevation = Spacing.ExtraSmall,
+                    elevation = Sizes.ElevationMedium,
                     shape = RoundedCornerShape(Sizes.CornerMassive),
                     clip = false
                 )
@@ -183,7 +183,7 @@ fun VoiceInputHost(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 52.dp)
-                    .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
+                    .padding(horizontal = Spacing.space8, vertical = Spacing.space4),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -242,7 +242,7 @@ fun VoiceInputHost(
                         }
                     }
                 } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
-                    Spacer(modifier = Modifier.width(0.dp))
+                    Spacer(modifier = Modifier.width(Spacing.space0))
                 } else {
                     CanonicalMicButton(
                         voiceState = voiceState,
@@ -316,11 +316,11 @@ private fun VoiceInputBarContent(
                     Icon(Icons.Default.Close, stringResource(R.string.action_cancel), tint = MaterialTheme.colorScheme.onSurface)
                 }
                 Text(stringResource(R.string.voice_hold_to_record), style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Medium))
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(horizontal = Spacing.space16))
             }
             is VoiceState.Recording -> {
                 // The single, full-width status layer is drawn over this row in VoiceInputHost so it stays centered across the mic slot.
-                Spacer(modifier = Modifier.fillMaxWidth().height(1.dp))
+                Spacer(modifier = Modifier.fillMaxWidth().height(1.dp)) // 1dp row reserve is component-specific, not a foundation spacing step
             }
             is VoiceState.Locked -> {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -328,9 +328,9 @@ private fun VoiceInputBarContent(
                         Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
                     }
                     Column(
-                        modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small),
+                        modifier = Modifier.weight(1f).padding(horizontal = Spacing.space8),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.space4)
                     ) {
                         OdometerTimerText(
                             voiceState.durationMs,
@@ -354,7 +354,7 @@ private fun VoiceInputBarContent(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Spacer(Modifier.width(Spacing.Small))
+                    Spacer(Modifier.width(Spacing.space8))
                     Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary, shadowElevation = 2.dp) {
                         IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize().testTag("voice-locked-finish")) {
@@ -384,15 +384,15 @@ private fun VoiceInputBarContent(
                 }
             }
             is VoiceState.Sending -> {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.Medium), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space16), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(Spacing.Medium))
+                    Spacer(Modifier.width(Spacing.space16))
                     Text(stringResource(R.string.voice_sending), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             is VoiceState.Failed -> {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(voiceState.error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f).padding(horizontal = Spacing.Small))
+                    Text(voiceState.error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f).padding(horizontal = Spacing.space8))
                     TextButton(onClick = { if (voiceState.draftFile != null) onVoiceAction(VoiceAction.SendDraft) else onVoiceAction(VoiceAction.OpenVoiceMode) }) { Text(stringResource(R.string.retry)) }
                 }
             }
@@ -421,7 +421,7 @@ private fun VoiceRecordingContentOverlay(
             if (recording != null) {
                 RecordingStatusOverlay(recording, reducedMotion, Modifier.align(Alignment.Center))
                 micBoundsInHost?.let { micBounds ->
-                    val safeWidth = (maxWidth - Spacing.ExtraSmall - Spacing.ExtraSmall).coerceAtLeast(0.dp)
+                    val safeWidth = (maxWidth - Spacing.space4 - Spacing.space4).coerceAtLeast(0.dp)
                     val indicatorWidth = minOf(LOCK_INDICATOR_WIDTH, safeWidth)
                     val parentWidthPx = with(density) { maxWidth.toPx() }
                     val indicatorWidthPx = with(density) { indicatorWidth.toPx() }
@@ -455,9 +455,9 @@ private fun VoiceRecordingContentOverlay(
 @Composable
 private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMotion: Boolean, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = Spacing.Medium),
+        modifier = modifier.fillMaxWidth().padding(horizontal = Spacing.space16),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space4)
     ) {
         OdometerTimerText(
             durationMs = voiceState.durationMs,
@@ -520,7 +520,7 @@ private fun SlideToLockIndicator(
             .onSizeChanged { onHeightChanged(it.height) }
             .graphicsLayer { this.alpha = alpha },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space4)
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(LOCK_ARROW_HEIGHT)) {
             Box(
@@ -543,7 +543,7 @@ private fun SlideToLockIndicator(
                                     MaterialTheme.colorScheme.tertiary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA)
                                 )
                             ),
-                            shape = RoundedCornerShape(Spacing.ExtraSmall)
+                            shape = RoundedCornerShape(Sizes.CornerSmall)
                         )
                 )
                 Column(
@@ -559,7 +559,7 @@ private fun SlideToLockIndicator(
         }
         Text(
             text = stringResource(R.string.voice_recording_lock_hint),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.ExtraSmall).testTag("voice-slide-lock-hint"),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space4).testTag("voice-slide-lock-hint"),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

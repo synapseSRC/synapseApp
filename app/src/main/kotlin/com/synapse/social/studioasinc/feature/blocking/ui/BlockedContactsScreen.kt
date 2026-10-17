@@ -98,7 +98,7 @@ fun BlockedContactsScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
-                            vertical = Spacing.Small
+                            vertical = Spacing.space8
                         )
                     ) {
                         itemsIndexed(

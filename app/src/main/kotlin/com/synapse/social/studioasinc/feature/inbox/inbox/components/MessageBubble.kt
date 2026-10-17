@@ -86,7 +86,7 @@ fun RepliesIndicatorRow(count: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = Spacing.Small),
+            .padding(top = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -94,7 +94,7 @@ fun RepliesIndicatorRow(count: Int) {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        HorizontalDivider(modifier = Modifier.weight(1f).padding(start = Spacing.Small))
+        HorizontalDivider(modifier = Modifier.weight(1f).padding(start = Spacing.space8))
     }
 }
 
@@ -109,7 +109,7 @@ fun SenderHeaderRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = Spacing.Small),
+            .padding(bottom = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (showAvatar) {
@@ -122,7 +122,7 @@ fun SenderHeaderRow(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
-            Spacer(modifier = Modifier.width(Spacing.Small))
+            Spacer(modifier = Modifier.width(Spacing.space8))
         }
         Column {
             Text(
@@ -152,7 +152,7 @@ fun DateDividerChip(label: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -162,7 +162,7 @@ fun DateDividerChip(label: String) {
         ) {
             Text(
                 text = label,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall),
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -174,8 +174,8 @@ fun DateDividerChip(label: String) {
 private fun WavyDivider(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         val path = Path()
-        val waveLength = Spacing.Large.toPx()
-        val amplitude = Spacing.Tiny.toPx()
+        val waveLength = Sizes.MessageWaveLength.toPx()
+        val amplitude = Sizes.MessageWaveAmplitude.toPx()
 
         path.moveTo(0f, size.height / 2f)
         var currentX = 0f
@@ -204,17 +204,17 @@ fun UnreadDividerRow(count: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        WavyDivider(modifier = Modifier.weight(1f).height(Spacing.ExtraSmallMedium), color = MaterialTheme.colorScheme.primary)
+        WavyDivider(modifier = Modifier.weight(1f).height(Sizes.WavyDividerHeight), color = MaterialTheme.colorScheme.primary)
         Text(
             text = stringResource(if (count == 1) R.string.chat_divider_unread_one else R.string.chat_divider_unread_other, count),
-            modifier = Modifier.padding(horizontal = Spacing.Medium),
+            modifier = Modifier.padding(horizontal = Spacing.space16),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        WavyDivider(modifier = Modifier.weight(1f).height(Spacing.ExtraSmallMedium), color = MaterialTheme.colorScheme.primary)
+        WavyDivider(modifier = Modifier.weight(1f).height(Sizes.WavyDividerHeight), color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -256,7 +256,7 @@ private fun ColumnScope.MessageMetadataRow(
     Row(
         modifier = modifier
             .align(if (isFromMe) Alignment.End else Alignment.Start)
-            .padding(top = Spacing.ExtraSmall),
+            .padding(top = Spacing.space4),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -266,7 +266,7 @@ private fun ColumnScope.MessageMetadataRow(
                 style = MaterialTheme.typography.labelSmall,
                 color = contentColor.copy(alpha = 0.7f),
                 fontStyle = FontStyle.Italic,
-                modifier = Modifier.padding(end = Spacing.ExtraSmall)
+                modifier = Modifier.padding(end = Spacing.space4)
             )
         }
 
@@ -277,7 +277,7 @@ private fun ColumnScope.MessageMetadataRow(
         )
 
         if (isFromMe && message.contentStatus != ContentStatus.DELETED && !message.isDeleted) {
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             val statusModifier = if (onRetryClick != null && message.deliveryStatus == DeliveryStatus.FAILED) {
                 Modifier.clickable { onRetryClick() }
             } else {
@@ -415,8 +415,8 @@ fun MessageBubble(
                 indication = null
             )
             .padding(
-                top = if (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) Spacing.Small else Spacing.None,
-                bottom = Spacing.Tiny
+                top = if (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) Spacing.space8 else Spacing.space0,
+                bottom = Spacing.space2
             )
             .offset { IntOffset(offsetX.value.toInt(), 0) }
             .pointerInput(Unit) {
@@ -467,7 +467,7 @@ fun MessageBubble(
                 } else {
                     Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
                 }
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
             }
             Column(
                 horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
@@ -497,7 +497,7 @@ fun MessageBubble(
                         color = if (hasReplyPreview) containerColor else Color.Transparent,
                         contentColor = contentColor,
                         shape = if (hasReplyPreview) shape else androidx.compose.ui.graphics.RectangleShape,
-                        tonalElevation = if (hasReplyPreview) Sizes.BorderThin else Spacing.None
+                        tonalElevation = if (hasReplyPreview) Sizes.BorderThin else Sizes.ElevationNone
                     ) {
                         Column(horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start) {
                             if (hasReplyPreview) {
@@ -508,18 +508,18 @@ fun MessageBubble(
                                     originalSenderName = replyToSenderName,
                                     fontScale = fontScale,
                                     modifier = Modifier
-                                        .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                                        .padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                         .widthIn(max = bubbleMaxWidth),
-                                    shape = RoundedCornerShape((radius - Spacing.Small).coerceAtLeast(Sizes.CornerSmall)),
+                                    shape = RoundedCornerShape((radius - Sizes.CornerMedium).coerceAtLeast(Sizes.CornerSmall)),
                                     onClick = { message.replyToId?.let(onQuoteClick) }
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                Spacer(modifier = Modifier.height(Spacing.space4))
                             }
 
                             if ((message.isForwarded || message.forwardedFromMessageId != null) && !isDeletedMessage) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = Spacing.ExtraSmall)
+                                modifier = Modifier.padding(bottom = Spacing.space4)
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
@@ -527,7 +527,7 @@ fun MessageBubble(
                                     tint = contentColor.copy(alpha = 0.7f),
                                     modifier = Modifier.size(Sizes.IconSemiSmall)
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                Spacer(modifier = Modifier.width(Spacing.space4))
                                 Text(
                                     text = "Forwarded",
                                     style = MaterialTheme.typography.labelSmall,
@@ -544,13 +544,13 @@ fun MessageBubble(
                                 shape = shape,
                                 tonalElevation = Sizes.BorderThin
                             ) {
-                                Column(modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)) {
+                                Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Filled.Block,
                                             contentDescription = stringResource(R.string.cd_deleted_message),
                                             tint = contentColor.copy(alpha = 0.6f),
-                                            modifier = Modifier.size(Sizes.IconSemiSmall).padding(end = Spacing.ExtraSmall)
+                                            modifier = Modifier.size(Sizes.IconSemiSmall).padding(end = Spacing.space4)
                                         )
                                         Text(
                                             text = stringResource(R.string.msg_deleted),
@@ -611,7 +611,7 @@ fun MessageBubble(
                                         Column(
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.Center,
-                                            modifier = Modifier.padding(Spacing.Medium)
+                                            modifier = Modifier.padding(Spacing.space16)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Download,
@@ -619,7 +619,7 @@ fun MessageBubble(
                                                 tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.size(Sizes.IconLarge)
                                             )
-                                            Spacer(modifier = Modifier.height(Spacing.Small))
+                                            Spacer(modifier = Modifier.height(Spacing.space8))
                                             Text(
                                                 text = "Tap to load media",
                                                 style = MaterialTheme.typography.labelLarge,
@@ -662,12 +662,12 @@ fun MessageBubble(
                             }
 
                             if (message.content.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                Spacer(modifier = Modifier.height(Spacing.space4))
                                 Surface(
                                     color = if (hasReplyPreview) Color.Transparent else containerColor,
                                     contentColor = contentColor,
                                     shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
-                                    tonalElevation = if (hasReplyPreview) Spacing.None else Sizes.BorderThin
+                                    tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
                                 ) {
                                     Text(
                                         text = message.content,
@@ -675,7 +675,7 @@ fun MessageBubble(
                                             color = contentColor,
                                             fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
                                         ),
-                                        modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                                        modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                                     )
                                 }
                             }
@@ -689,11 +689,11 @@ fun MessageBubble(
                                 color = if (hasReplyPreview) Color.Transparent else containerColor,
                                 contentColor = contentColor,
                                 shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
-                                tonalElevation = if (hasReplyPreview) Spacing.None else Sizes.BorderThin
+                                tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
                             ) {
-                                Column(modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Small)) {
+                                Column(modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space8)) {
                                     Column(
-                                        modifier = Modifier.padding(horizontal = Spacing.Small),
+                                        modifier = Modifier.padding(horizontal = Spacing.space8),
                                         horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
                                     ) {
                                         when (message.messageType) {
@@ -712,15 +712,15 @@ fun MessageBubble(
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
                                                             modifier = Modifier
-                                                                .height(Spacing.ExtraLarge)
-                                                                .padding(horizontal = Spacing.Small)
+                                                                .height(Sizes.AudioFallbackRowHeight)
+                                                                .padding(horizontal = Spacing.space8)
                                                         ) {
                                                             CircularProgressIndicator(
                                                                 modifier = Modifier.size(Sizes.IconSemiMedium),
                                                                 color = contentColor,
                                                                 strokeWidth = Sizes.BorderDefault
                                                             )
-                                                            Spacer(modifier = Modifier.width(Spacing.Small))
+                                                            Spacer(modifier = Modifier.width(Spacing.space8))
                                                             Text(
                                                                 text = message.content.ifBlank { stringResource(R.string.chat_media_audio_voice) },
                                                                 style = MaterialTheme.typography.bodyMedium,
@@ -874,7 +874,7 @@ fun MessageBubble(
                                                         AsyncImage(
                                                             model = url,
                                                             contentDescription = "Sticker or GIF",
-                                                            modifier = Modifier.size(150.dp).padding(4.dp)
+                                                            modifier = Modifier.size(150.dp).padding(Spacing.space4)
                                                         )
                                                     }
                                                     MessageMetadataRow(message = message, isFromMe = isFromMe, contentColor = contentColor, onRetryClick = onRetryClick)
@@ -887,7 +887,7 @@ fun MessageBubble(
                                                         LinkPreviewCard(
                                                             url = firstUrl,
                                                             useCase = getLinkMetadataUseCase,
-                                                            modifier = Modifier.padding(bottom = Spacing.Small)
+                                                            modifier = Modifier.padding(bottom = Spacing.space8)
                                                         )
                                                     }
 
@@ -960,10 +960,10 @@ fun MessageBubble(
                     @OptIn(ExperimentalLayoutApi::class)
                     FlowRow(
                         modifier = Modifier
-                            .padding(top = Spacing.Tiny)
-                            .padding(horizontal = Spacing.ExtraSmall),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny, if (isFromMe) Alignment.End else Alignment.Start),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.Tiny)
+                            .padding(top = Spacing.space2)
+                            .padding(horizontal = Spacing.space4),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space2, if (isFromMe) Alignment.End else Alignment.Start),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.space2)
                     ) {
                         reactions.forEach { (emoji, count) ->
                             val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
@@ -973,13 +973,13 @@ fun MessageBubble(
                                     MaterialTheme.colorScheme.primaryContainer
                                 else
                                     MaterialTheme.colorScheme.surfaceVariant,
-                                tonalElevation = Spacing.Tiny,
+                                tonalElevation = Sizes.ElevationLow,
                                 modifier = Modifier.clickable { onReactionSelected(type) }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = Spacing.ExtraSmallMedium, vertical = Spacing.Tiny),
+                                    modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.space2)
                                 ) {
                                     Text(text = emoji, fontSize = FontSizes.Small)
                                     if (count > 1) {

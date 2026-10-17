@@ -88,7 +88,7 @@ fun ChatTopAppBar(
                         showActiveStatus = true,
                         displayName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
-                    Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+                    Spacer(modifier = Modifier.width(Spacing.space12))
                     Column {
                         Text(
                             text = participantProfile?.displayName
@@ -115,7 +115,7 @@ fun ChatTopAppBar(
                                 color = statusColor
                             )
                             if (disappearingMode != DisappearingMode.OFF) {
-                                Spacer(modifier = Modifier.width(Spacing.Small))
+                                Spacer(modifier = Modifier.width(Spacing.space8))
                                 Icon(
                                     Icons.Default.Timer,
                                     contentDescription = "Disappearing messages on",
