@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.desktop.ui
 
+import com.synapse.social.studioasinc.shared.theme.SynapseSpacing
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -26,13 +27,13 @@ fun LoginScreen(
         contentAlignment = Alignment.Center
     ) {
         Card(
-            modifier = Modifier.width(400.dp).padding(16.dp),
+            modifier = Modifier.width(400.dp).padding(SynapseSpacing.space16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(SynapseSpacing.space24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(SynapseSpacing.space16.dp)
             ) {
                 Text(
                     text = "Synapse Social",
@@ -46,7 +47,7 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(SynapseSpacing.space8.dp))
 
                 OutlinedTextField(
                     value = email,
@@ -74,7 +75,7 @@ fun LoginScreen(
                         text = error!!,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(top = SynapseSpacing.space4.dp)
                     )
                 }
 

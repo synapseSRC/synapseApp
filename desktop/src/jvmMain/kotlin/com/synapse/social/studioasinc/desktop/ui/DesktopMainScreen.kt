@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.shared.theme.SynapseSpacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
@@ -87,8 +88,8 @@ fun DesktopMainScreen(
         }
     }
 
-    val horizontalPaddingSmall = 12.dp
-    val verticalPaddingSmall = 8.dp
+    val horizontalPaddingSmall = SynapseSpacing.space12.dp
+    val verticalPaddingSmall = SynapseSpacing.space8.dp
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -106,7 +107,7 @@ fun DesktopMainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = verticalPaddingSmall),
+                            .padding(horizontal = SynapseSpacing.space16.dp, vertical = verticalPaddingSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -148,8 +149,8 @@ fun DesktopMainScreen(
                     )
 
                     Row(
-                        modifier = Modifier.padding(horizontal = horizontalPaddingSmall, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(horizontal = horizontalPaddingSmall, vertical = SynapseSpacing.space4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(SynapseSpacing.space8.dp)
                     ) {
                         FilterChip(
                             selected = activeFilter == ConversationFilter.ALL,
@@ -175,7 +176,7 @@ fun DesktopMainScreen(
                             CircularProgressIndicator()
                         }
                     } else if (error != null) {
-                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxSize().padding(SynapseSpacing.space16.dp), contentAlignment = Alignment.Center) {
                             Text(
                                 text = error ?: "",
                                 color = MaterialTheme.colorScheme.error,
@@ -284,7 +285,7 @@ fun ContactAvatar(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
                     .align(Alignment.BottomEnd)
-                    .padding(1.5.dp)
+                    .padding(1.5.dp) // optical component inset, intentionally outside the foundation spacing scale
             ) {
                 Box(
                     modifier = Modifier
@@ -309,7 +310,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = SynapseSpacing.space8.dp, vertical = SynapseSpacing.space4.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(backgroundColor)
             .pointerInput(Unit) {
@@ -324,7 +325,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                 }
             }
             .clickable(onClick = onClick)
-            .padding(12.dp),
+            .padding(SynapseSpacing.space12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ContactAvatar(
@@ -332,7 +333,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
             avatarUrl = conversation.participantAvatar,
             isOnline = conversation.isOnline
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(SynapseSpacing.space12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -359,14 +360,14 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                     conversation.lastMessage
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(SynapseSpacing.space4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    modifier = Modifier.weight(1f).padding(end = SynapseSpacing.space8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (!conversation.isGroup && conversation.lastMessage.isNotEmpty() && conversation.unreadCount == 0) {
@@ -376,7 +377,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                             tint = Color.Gray,
                             modifier = Modifier.size(14.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(SynapseSpacing.space4.dp))
                     }
                     Text(
                         text = displayText,
@@ -389,13 +390,13 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                     Surface(
                         color = MaterialTheme.colorScheme.error,
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.padding(start = 4.dp)
+                        modifier = Modifier.padding(start = SynapseSpacing.space4.dp)
                     ) {
                         Text(
                             text = conversation.unreadCount.toString(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onError,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = SynapseSpacing.space6.dp, vertical = SynapseSpacing.space2.dp),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -434,7 +435,7 @@ fun ChatDetailView(
             shadowElevation = 4.dp
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(SynapseSpacing.space16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ContactAvatar(
@@ -442,7 +443,7 @@ fun ChatDetailView(
                     avatarUrl = conversation.participantAvatar,
                     isOnline = conversation.isOnline
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(SynapseSpacing.space16.dp))
                 Column {
                     Text(
                         text = conversation.participantName,
@@ -506,7 +507,7 @@ fun ChatDetailView(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(SynapseSpacing.space16.dp)
         ) {
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -535,7 +536,7 @@ fun ChatDetailView(
                                 }
                                 is ChatListEntry.MessageEntry -> {
                                     MessageItem(entry.message, currentUserId)
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(SynapseSpacing.space8.dp))
                                 }
                             }
                         }
@@ -545,7 +546,7 @@ fun ChatDetailView(
                     if (!isAtBottom) {
                         FloatingActionButton(
                             onClick = { scope.launch { listState.animateScrollToItem(chatEntries.lastIndex) } },
-                            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(40.dp),
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(SynapseSpacing.space16.dp).size(40.dp),
                             containerColor = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to latest")
@@ -561,7 +562,7 @@ fun ChatDetailView(
             shadowElevation = 8.dp
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(SynapseSpacing.space16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TooltipBox(
@@ -582,7 +583,7 @@ fun ChatDetailView(
                         Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
                     }
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(SynapseSpacing.space4.dp))
                 OutlinedTextField(
                     value = messageText,
                     onValueChange = { messageText = it },
@@ -603,7 +604,7 @@ fun ChatDetailView(
                     shape = RoundedCornerShape(24.dp),
                     maxLines = 5
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(SynapseSpacing.space8.dp))
                 IconButton(
                     onClick = {
                         if (messageText.isNotBlank()) {
@@ -669,13 +670,13 @@ fun MessageItem(message: Message, currentUserId: String?) {
                 Surface(
                     color = bubbleColor,
                     shape = bubbleShape,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    modifier = Modifier.padding(horizontal = SynapseSpacing.space4.dp)
                 ) {
                     Text(
                         text = if (isMe) "🚫 You deleted this message" else "🚫 This message was deleted",
                         color = textColor.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                        modifier = Modifier.padding(horizontal = SynapseSpacing.space16.dp, vertical = SynapseSpacing.space10.dp)
                     )
                 }
             } else {
@@ -684,10 +685,10 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         Surface(
                             color = bubbleColor,
                             shape = bubbleShape,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = SynapseSpacing.space4.dp)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                modifier = Modifier.padding(horizontal = SynapseSpacing.space16.dp, vertical = SynapseSpacing.space10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -696,7 +697,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                                     tint = textColor,
                                     modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(SynapseSpacing.space8.dp))
                                 Text(
                                     text = "Voice call - ${message.content}",
                                     color = textColor,
@@ -709,13 +710,13 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         Surface(
                             color = bubbleColor,
                             shape = bubbleShape,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = SynapseSpacing.space4.dp)
                         ) {
                             Text(
                                 text = message.content,
                                 color = textColor,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                modifier = Modifier.padding(horizontal = SynapseSpacing.space16.dp, vertical = SynapseSpacing.space10.dp)
                             )
                         }
                     }
@@ -723,13 +724,13 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         Surface(
                             color = bubbleColor,
                             shape = bubbleShape,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = SynapseSpacing.space4.dp)
                         ) {
                             Text(
                                 text = "📎 [${message.messageType.name.lowercase()} attachment]",
                                 color = textColor,
                                 style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                modifier = Modifier.padding(horizontal = SynapseSpacing.space16.dp, vertical = SynapseSpacing.space10.dp)
                             )
                         }
                     }
@@ -747,7 +748,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = SynapseSpacing.space8.dp, vertical = SynapseSpacing.space2.dp)
             ) {
                 Text(
                     text = formattedTime,
@@ -755,7 +756,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 if (isMe) {
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(SynapseSpacing.space4.dp))
                     when (message.deliveryStatus) {
                         com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING -> {
                             Icon(
@@ -828,7 +829,7 @@ fun EmptyState(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
+        modifier = modifier.fillMaxSize().padding(SynapseSpacing.space32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -838,7 +839,7 @@ fun EmptyState(
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(SynapseSpacing.space16.dp))
         Text(
             text = headline,
             style = MaterialTheme.typography.titleMedium,
@@ -846,7 +847,7 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(SynapseSpacing.space8.dp))
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
@@ -891,7 +892,7 @@ fun buildChatEntries(messages: List<Message>): List<ChatListEntry> {
 
 @Composable
 fun DateSeparator(label: String) {
-    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = SynapseSpacing.space8.dp), contentAlignment = Alignment.Center) {
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
@@ -900,7 +901,7 @@ fun DateSeparator(label: String) {
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = SynapseSpacing.space12.dp, vertical = SynapseSpacing.space4.dp)
             )
         }
     }
