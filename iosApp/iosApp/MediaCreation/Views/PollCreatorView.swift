@@ -8,14 +8,14 @@ struct PollCreatorView: View {
     let durations = [1, 3, 7]
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.space16) {
             HStack {
                 Text(String(localized: "poll_title"))
                     .font(.headline)
                 Spacer()
             }
 
-            VStack(spacing: 12) {
+            VStack(spacing: AppTheme.Spacing.space12) {
                 ForEach(0..<options.count, id: \.self) { index in
                     HStack {
                         TextField(String(format: String(localized: "poll_option_placeholder"), index + 1), text: $options[index])

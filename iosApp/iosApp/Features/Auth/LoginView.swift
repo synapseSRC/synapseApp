@@ -6,7 +6,7 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            VStack(spacing: 20) {
+            VStack(spacing: AppTheme.Spacing.space20) {
                 Text(String(localized: "auth_login_welcome_back"))
                     .font(.largeTitle)
                     .fontWeight(.bold)

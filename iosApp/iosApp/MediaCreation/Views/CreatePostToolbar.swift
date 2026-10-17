@@ -9,7 +9,7 @@ struct CreatePostToolbar: View {
     @Binding var audienceType: AudienceType
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: AppTheme.Spacing.space16) {
             Button(action: onPhotoTapped) {
                 Image(systemName: "photo.on.rectangle")
                     .font(.title3)
@@ -51,7 +51,7 @@ struct CreatePostToolbar: View {
                     }
                 }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.space4) {
                     Image(systemName: iconFor(audienceType))
                         .font(.subheadline)
                     Text(audienceType.rawValue)
@@ -60,8 +60,8 @@ struct CreatePostToolbar: View {
                     Image(systemName: "chevron.down")
                         .font(.caption)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, AppTheme.Spacing.space12)
+                .padding(.vertical, AppTheme.Spacing.space6)
                 .background(Color.blue.opacity(0.1))
                 .foregroundColor(.blue)
                 .cornerRadius(16)

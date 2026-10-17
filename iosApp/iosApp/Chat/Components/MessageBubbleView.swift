@@ -17,17 +17,17 @@ struct MessageBubbleView: View {
             if isCurrentUser {
                 Spacer()
                 MessageContent(message: message, isCurrentUser: true)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 4)
-                    .padding(.bottom, 2)
+                    .padding(.horizontal, AppTheme.Spacing.space12)
+                    .padding(.top, AppTheme.Spacing.space4)
+                    .padding(.bottom, AppTheme.Spacing.space2)
                     .frame(maxWidth: 260)
                     .cornerRadius(12, corners: [.topLeading], cornerRadii: [12])
                     .background(Color(UIColor.systemBlue).opacity(0.1))
             } else {
                 MessageContent(message: message, isCurrentUser: false)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 4)
-                    .padding(.bottom, 2)
+                    .padding(.horizontal, AppTheme.Spacing.space12)
+                    .padding(.top, AppTheme.Spacing.space4)
+                    .padding(.bottom, AppTheme.Spacing.space2)
                     .frame(maxWidth: 260, alignment: .leading)
                     .cornerRadius(12)
                     .background(Color(UIColor.systemGray6))
@@ -36,7 +36,7 @@ struct MessageBubbleView: View {
                 Spacer()
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, AppTheme.Spacing.space16)
     }
 }
 
@@ -101,12 +101,12 @@ private struct MessageContent: View {
     let isCurrentUser: Bool
 
     var body: some View {
-        VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 4) {
+        VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: AppTheme.Spacing.space4) {
             HStack {
                 if !message.isForwarded {
                     MessageText(message: message, isCurrentUser: isCurrentUser)
                 } else {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
                         MessageText(message: message, isCurrentUser: isCurrentUser)
                         ForwardedMessageCardView(message: message)
                     }
@@ -159,7 +159,7 @@ private struct MessageText: View {
     let isCurrentUser: Bool
 
     var body: some View {
-        VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 2) {
+        VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: AppTheme.Spacing.space2) {
             if !message.isDeleted && !message.isFailed {
                 if !message.isDeleted {
                     Text(message.text)
@@ -210,7 +210,7 @@ private struct ReplyMessageView: View {
     let message: SwiftMessage
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
             Text("Reply to \(message.text)")
                 .font(.caption)
                 .foregroundColor(.secondary)

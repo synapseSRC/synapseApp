@@ -5,11 +5,11 @@ struct SignupView: View {
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: AppTheme.Spacing.space20) {
             Text(String(localized: "auth_signup_title"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .padding(.bottom, 20)
+                .padding(.bottom, AppTheme.Spacing.space20)
 
             if let error = viewModel.errorMessage {
                 Text(error)

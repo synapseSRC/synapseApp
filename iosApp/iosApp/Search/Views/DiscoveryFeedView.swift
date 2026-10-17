@@ -24,18 +24,18 @@ struct DiscoveryFeedView: View {
             }
         } else {
             ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space20) {
 
                 // Recommended Users
                 if !viewModel.suggestedUsers.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.space10) {
                         Text("Suggested Accounts")
                             .font(.title2)
                             .fontWeight(.bold)
                             .padding(.horizontal)
 
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
+                            HStack(spacing: AppTheme.Spacing.space16) {
                                 ForEach(viewModel.suggestedUsers, id: \.id) { user in
                                     SuggestedUserCard(user: user)
                                 }
@@ -48,7 +48,7 @@ struct DiscoveryFeedView: View {
 
                 // Trending Hashtags - Pinterest Style
                 if !viewModel.trendingHashtags.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.space10) {
                         HStack {
                             Text("Trending Now")
                                 .font(.title2)
@@ -61,9 +61,9 @@ struct DiscoveryFeedView: View {
 
                         let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
-                        LazyVGrid(columns: columns, spacing: 16) {
+                        LazyVGrid(columns: columns, spacing: AppTheme.Spacing.space16) {
                             ForEach(viewModel.trendingHashtags, id: \.id) { hashtag in
-                                VStack(alignment: .leading, spacing: 8) {
+                                VStack(alignment: .leading, spacing: AppTheme.Spacing.space8) {
                                     Text("#\(hashtag.tag)")
                                         .font(.headline)
                                         .foregroundColor(.primary)
@@ -89,7 +89,7 @@ struct DiscoveryFeedView: View {
                 // Bottom Padding
                 Spacer(minLength: 40)
             }
-            .padding(.top, 16)
+            .padding(.top, AppTheme.Spacing.space16)
         }
         }
         } // End Group
@@ -102,7 +102,7 @@ struct SuggestedUserCard: View {
     let user: SearchAccount
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.space8) {
             // Avatar Placeholder
             Circle()
                 .fill(Color.gray.opacity(0.3))
@@ -113,7 +113,7 @@ struct SuggestedUserCard: View {
                         .font(.title3)
                 )
 
-            VStack(spacing: 2) {
+            VStack(spacing: AppTheme.Spacing.space2) {
                 Text(user.displayName ?? user.handle ?? "Unknown")
                     .font(.subheadline)
                     .fontWeight(.semibold)
@@ -133,11 +133,11 @@ struct SuggestedUserCard: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, AppTheme.Spacing.space6)
                     .background(Color.blue)
                     .cornerRadius(12)
             }
-            .padding(.top, 4)
+            .padding(.top, AppTheme.Spacing.space4)
         }
         .padding()
         .frame(width: 140)

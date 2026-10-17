@@ -6,7 +6,7 @@ struct ErrorBoundaryView: View {
     let retryAction: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.space16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .resizable()
                 .scaledToFit()
@@ -22,18 +22,18 @@ struct ErrorBoundaryView: View {
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, AppTheme.Spacing.space32)
 
             Button(action: retryAction) {
                 Text(String(localized: "action_try_again"))
                     .fontWeight(.bold)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, AppTheme.Spacing.space24)
+                    .padding(.vertical, AppTheme.Spacing.space12)
                     .background(AppTheme.primaryColor)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }
-            .padding(.top, 8)
+            .padding(.top, AppTheme.Spacing.space8)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

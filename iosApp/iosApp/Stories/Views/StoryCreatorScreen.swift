@@ -120,7 +120,7 @@ struct StoryCreatorScreen: View {
 
                         // Top Controls
                         VStack {
-                            HStack(spacing: 20) {
+                            HStack(spacing: AppTheme.Spacing.space20) {
                                 Button(action: {
                                     viewModel.clearMedia()
                                     lines.removeAll()
@@ -129,7 +129,7 @@ struct StoryCreatorScreen: View {
                                     Image(systemName: "xmark")
                                         .font(.title)
                                         .foregroundColor(.white)
-                                        .padding(10)
+                                        .padding(AppTheme.Spacing.space10)
                                         .background(Color.black.opacity(0.5))
                                         .clipShape(Circle())
                                 }
@@ -148,7 +148,7 @@ struct StoryCreatorScreen: View {
                                     Image(systemName: "scribble")
                                         .font(.title)
                                         .foregroundColor(isDrawingMode ? .blue : .white)
-                                        .padding(10)
+                                        .padding(AppTheme.Spacing.space10)
                                         .background(Color.black.opacity(0.5))
                                         .clipShape(Circle())
                                 }
@@ -163,12 +163,12 @@ struct StoryCreatorScreen: View {
                                     Image(systemName: "face.smiling")
                                         .font(.title)
                                         .foregroundColor(.white)
-                                        .padding(10)
+                                        .padding(AppTheme.Spacing.space10)
                                         .background(Color.black.opacity(0.5))
                                         .clipShape(Circle())
                                 }
                             }
-                            .padding(.top, 50)
+                            .padding(.top, 50) // story header clearance, intentionally component-specific
                             .padding(.horizontal)
 
                             Spacer()
@@ -250,7 +250,7 @@ struct StoryCreatorScreen: View {
                         // Placeholder for alignment
                         Color.clear.frame(width: 50, height: 50)
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, AppTheme.Spacing.space40)
                 }
             }
         }

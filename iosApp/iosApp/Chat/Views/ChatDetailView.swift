@@ -11,10 +11,10 @@ struct ChatDetailView: View {
     @State private var showingDisappearingModeSheet = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: AppTheme.Spacing.space0) {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 8) {
+                    LazyVStack(spacing: AppTheme.Spacing.space8) {
                         if viewModel.isLoading && viewModel.messages.isEmpty {
                             ProgressView()
                                 .padding()
@@ -86,15 +86,15 @@ struct ChatDetailView: View {
                 Text(error)
                     .font(.caption)
                     .foregroundColor(.white)
-                    .padding(8)
+                    .padding(AppTheme.Spacing.space8)
                     .background(AppTheme.errorColor.opacity(0.8))
                     .cornerRadius(8)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, AppTheme.Spacing.space4)
             }
 
             if !viewModel.smartReplies.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.space8) {
                         ForEach(viewModel.smartReplies, id: \.self) { reply in
                             Button(action: {
                                 viewModel.sendMessage(content: reply)
@@ -109,7 +109,7 @@ struct ChatDetailView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, AppTheme.Spacing.space4)
                 }
             }
 

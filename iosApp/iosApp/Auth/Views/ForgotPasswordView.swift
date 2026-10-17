@@ -5,11 +5,11 @@ struct ForgotPasswordView: View {
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: AppTheme.Spacing.space20) {
             Text(String(localized: "auth_forgot_password_title"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .padding(.bottom, 10)
+                .padding(.bottom, AppTheme.Spacing.space10)
 
             Text(String(localized: "auth_forgot_password_description"))
                 .font(.subheadline)
@@ -51,7 +51,7 @@ struct ForgotPasswordView: View {
 
             Spacer()
         }
-        .padding(.top, 40)
+        .padding(.top, AppTheme.Spacing.space40)
         .navigationBarTitle(String(localized: "auth_forgot_password_nav_title"), displayMode: .inline)
         .alert(isPresented: $viewModel.isEmailSent) {
             Alert(
