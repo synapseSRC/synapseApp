@@ -62,7 +62,7 @@ fun FlagsScreen(
                 .padding(paddingValues)
                 .padding(horizontal = SettingsSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(vertical = Spacing.Small)
+            contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
                 Column(
@@ -89,13 +89,13 @@ fun FlagsScreen(
                                     style = SettingsTypography.itemTitle,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                Spacer(modifier = Modifier.height(Spacing.space4))
                                 Text(
                                     text = stringResource(R.string.settings_navigation_placement_subtitle),
                                     style = SettingsTypography.itemSubtitle,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.Medium))
+                                Spacer(modifier = Modifier.height(Spacing.space16))
 
                                 val options = NavigationPlacement.entries
                                 val topPlacementLabel = stringResource(R.string.settings_navigation_placement_top)

@@ -47,7 +47,7 @@ private fun AvatarPreviewCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Large),
+                .padding(Spacing.space24),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -57,7 +57,7 @@ private fun AvatarPreviewCard(
                 if (isUploading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(Sizes.IconGiant),
-                        strokeWidth = Spacing.ExtraSmall,
+                        strokeWidth = Sizes.ProgressIndicatorStrokeWidth,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else {
@@ -92,7 +92,7 @@ private fun AvatarPreviewCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             
             Text(
                 text = if (isUploading) stringResource(R.string.uploading) else stringResource(R.string.current_profile_photo_label),
@@ -101,7 +101,7 @@ private fun AvatarPreviewCard(
             )
             
             if (!isUploading) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.choose_option_below),
                     style = MaterialTheme.typography.bodyMedium,
@@ -227,7 +227,7 @@ fun AvatarScreen(
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
             item {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 AvatarPreviewCard(
                     avatarUrl = uiState.currentAvatarUrl,
                     isUploading = uiState.isUploading

@@ -34,7 +34,7 @@ fun ApiKeyItem(
                 style = SettingsTypography.itemTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = "${apiKey.provider.uppercase()} • ${apiKey.usageCount}/${apiKey.usageLimit ?: "∞"} used",
                 style = SettingsTypography.itemSubtitle,

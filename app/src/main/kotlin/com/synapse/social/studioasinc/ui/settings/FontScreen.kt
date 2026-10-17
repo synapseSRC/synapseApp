@@ -71,7 +71,7 @@ fun FontScreen(
         snackbarHost = {
             if (uiState.error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -89,7 +89,7 @@ fun FontScreen(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
                 .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             items(uiState.fonts, key = { it.id }) { font ->
                 FontCard(
@@ -127,7 +127,7 @@ private fun FontCard(
     ) {
         Row(
             modifier = Modifier
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -140,7 +140,7 @@ private fun FontCard(
                     fontFamily = font.fontFamily,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.settings_font_preview),
                     style = MaterialTheme.typography.bodyMedium,

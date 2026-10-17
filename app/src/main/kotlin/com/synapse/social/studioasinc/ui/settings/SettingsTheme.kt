@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -155,27 +154,22 @@ object SettingsShapes {
 
 object SettingsSpacing {
 
-    val screenPadding: Dp = Spacing.Medium
+    val screenPadding: Dp = Spacing.space16
 
-    val sectionSpacing: Dp = Spacing.SmallMedium
+    val sectionSpacing: Dp = Spacing.space12
 
-    val itemSpacing: Dp = Spacing.ExtraSmall
+    val itemSpacing: Dp = Spacing.space4
 
-    val itemPadding: PaddingValues = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium)
+    val itemPadding: PaddingValues = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space12)
 
-    val itemHorizontalPadding: Dp = Spacing.Medium
+    val itemHorizontalPadding: Dp = Spacing.space16
 
-    val itemVerticalPadding: Dp = Spacing.SmallMedium
+    val itemVerticalPadding: Dp = Spacing.space12
 
-    val iconSize: Dp = Spacing.Large
+    val profileHeaderPadding: Dp = Spacing.space16
 
-    val avatarSize: Dp = Sizes.AvatarSemiLarge
+    val iconTextSpacing: Dp = Spacing.space16
 
-    val profileHeaderPadding: Dp = Spacing.Medium
-
-    val iconTextSpacing: Dp = Spacing.Medium
-
-    val minTouchTarget: Dp = Spacing.Huge
 }
 
 object SettingsTypography {
@@ -232,13 +226,13 @@ enum class SettingsItemPosition {
         Top -> RoundedCornerShape(
             topStart = Sizes.CornerMassive,
             topEnd = Sizes.CornerMassive,
-            bottomStart = Spacing.ExtraSmall,
-            bottomEnd = Spacing.ExtraSmall
+            bottomStart = Sizes.CornerSmall,
+            bottomEnd = Sizes.CornerSmall
         )
-        Middle -> RoundedCornerShape(Spacing.ExtraSmall)
+        Middle -> RoundedCornerShape(Sizes.CornerSmall)
         Bottom -> RoundedCornerShape(
-            topStart = Spacing.ExtraSmall,
-            topEnd = Spacing.ExtraSmall,
+            topStart = Sizes.CornerSmall,
+            topEnd = Sizes.CornerSmall,
             bottomStart = Sizes.CornerMassive,
             bottomEnd = Sizes.CornerMassive
         )
