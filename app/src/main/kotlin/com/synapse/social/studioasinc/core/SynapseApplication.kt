@@ -16,8 +16,11 @@ import dagger.hilt.android.HiltAndroidApp
 import com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService
 import com.synapse.social.studioasinc.data.remote.services.AuthDevelopmentUtils
 import com.onesignal.OneSignal
+import com.onesignal.notifications.INotificationClickEvent
+import com.onesignal.notifications.INotificationClickListener
 import com.onesignal.debug.LogLevel
 import com.synapse.social.studioasinc.core.config.NotificationConfig
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
 import com.synapse.social.studioasinc.core.util.MediaCacheCleanupManager
 import com.synapse.social.studioasinc.core.util.SupabaseStorageImageInterceptor
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
@@ -200,6 +203,12 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
         }
 
         OneSignal.initWithContext(this, appId)
+
+        OneSignal.Notifications.addClickListener(object : INotificationClickListener {
+            override fun onClick(event: INotificationClickEvent) {
+                NotificationNavigationCoordinator.onNotificationClick(event.notification.additionalData)
+            }
+        })
 
         // Listen for subscription changes
         OneSignal.User.pushSubscription.addObserver(object : com.onesignal.user.subscriptions.IPushSubscriptionObserver {

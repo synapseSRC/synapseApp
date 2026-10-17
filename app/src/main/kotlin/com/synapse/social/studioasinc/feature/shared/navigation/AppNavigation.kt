@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,10 +22,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.synapse.social.studioasinc.core.auth.AuthHelper
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationRequest
 import com.synapse.social.studioasinc.feature.auth.ui.AuthScreen
 import com.synapse.social.studioasinc.ui.home.HomeScreen
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileScreen
@@ -66,6 +72,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.core.auth.GoogleAuthHelper
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -75,6 +82,49 @@ fun AppNavigation(
     reelUploadManager: ReelUploadManager,
     modifier: Modifier = Modifier
 ) {
+    var pendingNotificationRequest by remember { mutableStateOf<NotificationNavigationRequest?>(null) }
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(navController) {
+        NotificationNavigationCoordinator.requests.collect { request ->
+            pendingNotificationRequest = request
+        }
+    }
+
+    LaunchedEffect(pendingNotificationRequest, currentBackStackEntry) {
+        val request = pendingNotificationRequest ?: return@LaunchedEffect
+        val currentEntry = currentBackStackEntry ?: return@LaunchedEffect
+        if (currentEntry.destination.hasRoute<AppDestination.Auth>()) return@LaunchedEffect
+
+        pendingNotificationRequest = null
+        NotificationNavigationCoordinator.clearHomeNavigation()
+
+        val routedToRootDestination = when (request.target) {
+            "CHAT" -> request.chatId?.takeIf { it.isNotBlank() }?.let { chatId ->
+                navController.navigate(AppDestination.Chat(chatId = chatId, userId = request.userId?.takeIf { it.isNotBlank() })) { launchSingleTop = true }
+                true
+            } ?: false
+            "PROFILE" -> request.userId?.takeIf { it.isNotBlank() }?.let { userId ->
+                navController.navigate(AppDestination.Profile(userId)) { launchSingleTop = true }
+                true
+            } ?: false
+            "FOLLOW_REQUESTS" -> {
+                navController.navigate(AppDestination.LockProfile) { launchSingleTop = true }
+                true
+            }
+            else -> false
+        }
+
+        if (!routedToRootDestination) {
+            val homeRequest = if (request.target in setOf("POST", "POST_COMMENT", "NOTIFICATIONS")) request
+                else request.copy(target = "NOTIFICATIONS", postId = null, commentId = null)
+            NotificationNavigationCoordinator.requestHomeNavigation(homeRequest)
+            if (!currentEntry.destination.hasRoute<AppDestination.Home>()) {
+                navController.navigate(AppDestination.Home) { launchSingleTop = true }
+            }
+        }
+    }
+
     SharedTransitionLayout(modifier = modifier) {
         NavHost(
             navController = navController,
