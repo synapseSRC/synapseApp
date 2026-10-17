@@ -135,6 +135,7 @@ class NotificationSettingsViewModel @Inject constructor(
                     put("comments", prefs.commentsEnabled)
                     put("replies", prefs.repliesEnabled)
                     put("follows", prefs.followsEnabled)
+                    put("messages", prefs.messagesEnabled)
                     put("mentions", prefs.mentionsEnabled)
                 })
                 put("content", buildJsonObject {
@@ -150,6 +151,7 @@ class NotificationSettingsViewModel @Inject constructor(
                 put("enabled", prefs.quietHoursEnabled)
                 put("start", prefs.quietHoursStart)
                 put("end", prefs.quietHoursEnd)
+                put("timezone", java.util.TimeZone.getDefault().id)
             },
             doNotDisturb = prefs.doNotDisturb,
             dndUntil = prefs.dndUntil,
