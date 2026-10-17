@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.media
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -337,7 +339,7 @@ private fun ProfileMediaVisualPreview(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = Spacing.space16)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Cover Banner Preview
@@ -377,14 +379,14 @@ private fun ProfileMediaVisualPreview(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.space48))
             }
 
             // Overlapping Avatar Preview
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 20.dp)
+                    .padding(start = Spacing.space20)
                     .offset(y = 8.dp)
             ) {
                 Box(
@@ -453,7 +455,7 @@ private fun ProfilePhotoGroup(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Spacing.space16),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -532,7 +534,7 @@ private fun CoverPhotoGroup(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Spacing.space16),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

@@ -221,7 +221,7 @@ internal fun StoryTopControls(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -290,7 +290,7 @@ internal fun StoryBottomControls(
 ) {
     Button(
         onClick = onPost,
-        modifier = modifier.padding(Spacing.Medium)
+        modifier = modifier.padding(Spacing.space16)
     ) {
         if (isPosting) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))

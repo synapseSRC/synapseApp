@@ -189,7 +189,7 @@ import java.io.File
         }
     }
 
-    val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.Small)
+    val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.space8)
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
 
@@ -330,7 +330,7 @@ import java.io.File
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
                         TextButton(onClick = { viewModel.initialize(chatId, participantId) }) {
                             Text(stringResource(R.string.action_retry))
                         }
