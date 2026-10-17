@@ -54,8 +54,8 @@ fun DisappearingMessagesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                .padding(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -63,7 +63,7 @@ fun DisappearingMessagesScreen(
                 color = MaterialTheme.colorScheme.surfaceContainer
             ) {
                 Row(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -71,7 +71,7 @@ fun DisappearingMessagesScreen(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Medium))
+                    Spacer(modifier = Modifier.width(Spacing.space16))
                     Text(
                         text = stringResource(R.string.disappearing_message_description),
                         style = MaterialTheme.typography.bodySmall,
@@ -132,7 +132,7 @@ private fun DisappearingModeOptionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

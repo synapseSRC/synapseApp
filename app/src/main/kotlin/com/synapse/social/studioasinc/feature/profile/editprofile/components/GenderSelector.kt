@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.presentation.editprofile.components
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -41,10 +43,10 @@ fun GenderSelector(
         modifier = modifier.fillMaxWidth(),
         shape = SettingsShapes.sectionShape,
         color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        tonalElevation = Sizes.ElevationNone
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16)
         ) {
             Text(
                 text = stringResource(id = R.string.gender),
@@ -52,14 +54,14 @@ fun GenderSelector(
                 color = SettingsColors.sectionTitle
             )
 
-            Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.height(Spacing.space12))
 
             ButtonGroup(
                 modifier = Modifier.fillMaxWidth(),
                 overflowIndicator = { menuState ->
                     ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
                 },
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 toggleableItem(
                     checked = selectedGender == Gender.Male,

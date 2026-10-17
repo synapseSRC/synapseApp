@@ -29,8 +29,8 @@ fun ContentFilterBar(
         color = MaterialTheme.colorScheme.surface
     ) {
         LazyRow(
-            modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium),
+            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space12),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items(ProfileContentFilter.values()) { filter ->

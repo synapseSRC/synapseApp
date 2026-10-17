@@ -78,7 +78,7 @@ fun UserDetailsSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small)
+            .padding(vertical = Spacing.space8)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -100,7 +100,7 @@ fun UserDetailsSection(
             }
         }
 
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
 
         Column(
             modifier = Modifier
@@ -148,7 +148,7 @@ private fun ExpandCollapseButton(
         modifier = Modifier.minimumInteractiveComponentSize()
     ) {
         Text(if (expanded) stringResource(R.string.less) else stringResource(R.string.more))
-        Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.width(Spacing.space4))
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
             contentDescription = if (expanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
@@ -214,11 +214,11 @@ private fun ExpandedDetailsContent(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = Spacing.Small, top = Spacing.SmallMedium, bottom = Spacing.ExtraSmall)
+            modifier = Modifier.padding(start = Spacing.space8, top = Spacing.space12, bottom = Spacing.space4)
         )
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
         // Personal info (no section header — top-level)
         details.joinedDate?.takeIf { it.isNotBlank() }?.let {
             SimpleDetailItem(Icons.Outlined.CalendarToday, stringResource(R.string.joined), it, animationDelay = 0)
@@ -302,17 +302,17 @@ private fun ExpandedDetailsContent(
         }
 
         if (details.linkedAccounts.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.height(Spacing.space12))
             Text(
                 text = stringResource(R.string.linked_accounts),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space8)
             )
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
-                modifier = Modifier.padding(horizontal = Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                modifier = Modifier.padding(horizontal = Spacing.space8)
             ) {
                 details.linkedAccounts.forEach { account ->
                     LinkedAccountChip(account = account)
@@ -358,7 +358,7 @@ private fun SimpleDetailItem(
                     Modifier
                 }
             )
-            .padding(vertical = Spacing.Small, horizontal = Spacing.Small),
+            .padding(vertical = Spacing.space8, horizontal = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -367,7 +367,7 @@ private fun SimpleDetailItem(
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(Sizes.IconDefault)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column {
             Text(
                 text = value,

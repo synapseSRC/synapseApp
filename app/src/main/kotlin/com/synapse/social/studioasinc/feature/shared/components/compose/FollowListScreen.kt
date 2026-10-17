@@ -78,7 +78,7 @@ fun FollowListScreen(
             PrimaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.fillMaxWidth(),
-                edgePadding = Spacing.Small
+                edgePadding = Spacing.space8
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -134,8 +134,8 @@ fun FollowListScreen(
 
                         else -> {
                             LazyColumn(
-                                contentPadding = PaddingValues(vertical = Spacing.Small),
-                                verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                                contentPadding = PaddingValues(vertical = Spacing.space8),
+                                verticalArrangement = Arrangement.spacedBy(Spacing.space4)
                             ) {
                                 items(users) { user ->
                                     UserListItem(

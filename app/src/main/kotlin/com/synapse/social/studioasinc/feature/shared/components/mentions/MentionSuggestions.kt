@@ -32,11 +32,11 @@ fun MentionSuggestions(
             .fillMaxWidth()
             .heightIn(max = Sizes.HeightExtraLarge),
         shape = MaterialTheme.shapes.medium,
-        tonalElevation = Spacing.ExtraSmall,
-        shadowElevation = Spacing.Small
+        tonalElevation = Sizes.ElevationMedium,
+        shadowElevation = Sizes.ElevationHigh
     ) {
         LazyColumn(
-            contentPadding = PaddingValues(vertical = Spacing.ExtraSmall)
+            contentPadding = PaddingValues(vertical = Spacing.space4)
         ) {
             items(suggestions) { user ->
                 MentionUserItem(user = user, onClick = { onUserSelected(user) })

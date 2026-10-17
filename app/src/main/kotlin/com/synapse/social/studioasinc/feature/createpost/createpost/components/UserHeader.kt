@@ -60,7 +60,7 @@ fun UserHeader(
         verticalAlignment = Alignment.Top,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Medium)
+            .padding(vertical = Spacing.space16)
     ) {
 
         com.synapse.social.studioasinc.ui.components.CircularAvatar(
@@ -71,7 +71,7 @@ fun UserHeader(
             displayName = user?.displayName ?: user?.username
         )
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
 
         Column {
@@ -142,7 +142,7 @@ fun UserHeader(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Tiny))
+            Spacer(modifier = Modifier.height(Spacing.space2))
 
 
             Surface(
@@ -153,7 +153,7 @@ fun UserHeader(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = Spacing.ExtraSmall)
+                    modifier = Modifier.padding(horizontal = Spacing.space4)
                 ) {
                     Icon(
                         imageVector = when(privacy) {
@@ -165,13 +165,13 @@ fun UserHeader(
                         modifier = Modifier.size(Sizes.IconSmall),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Text(
                         text = privacy.replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Tiny))
+                    Spacer(modifier = Modifier.width(Spacing.space2))
                     Icon(
                         Icons.Default.ArrowDropDown,
                         contentDescription = null,

@@ -97,7 +97,7 @@ fun LocationScreen(
                         if (uiState.isSaving) {
                             ExpressiveLoadingIndicator(
                                 modifier = Modifier
-                                    .padding(end = Spacing.Medium)
+                                    .padding(end = Spacing.space16)
                                     .size(Sizes.IconDefault)
                             )
                         } else {
@@ -147,8 +147,8 @@ fun LocationContent(
         contentPadding = PaddingValues(
             start = SettingsSpacing.screenPadding,
             end = SettingsSpacing.screenPadding,
-            top = paddingValues.calculateTopPadding() + Spacing.Small,
-            bottom = paddingValues.calculateBottomPadding() + Spacing.Large
+            top = paddingValues.calculateTopPadding() + Spacing.space8,
+            bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
     ) {
@@ -174,7 +174,7 @@ fun LocationContent(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(Spacing.Medium)
+                                .padding(Spacing.space16)
                         ) {
                             OutlinedTextField(
                                 value = uiState.currentCity,
@@ -208,7 +208,7 @@ fun LocationContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Medium)
+                            .padding(Spacing.space16)
                     ) {
                         OutlinedTextField(
                             value = uiState.hometown,

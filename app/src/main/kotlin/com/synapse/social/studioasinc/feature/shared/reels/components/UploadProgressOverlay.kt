@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.shared.reels.components
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.animation.AnimatedVisibility
 import com.synapse.social.studioasinc.R
 import androidx.compose.animation.expandVertically
@@ -30,14 +32,14 @@ fun UploadProgressOverlay(
     ) {
         Card(
             modifier = Modifier
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
                 .fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(Spacing.Small),
+            elevation = CardDefaults.cardElevation(Sizes.ElevationHigh),
             colors = CardDefaults.cardColors(
                 containerColor = if (error != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
-            Column(modifier = Modifier.padding(Spacing.Medium)) {
+            Column(modifier = Modifier.padding(Spacing.space16)) {
                 if (error != null) {
                     Text(
                         text = stringResource(R.string.upload_failed),
@@ -51,7 +53,7 @@ fun UploadProgressOverlay(
                     )
                     Button(
                         onClick = { uploadManager.clearError() },
-                        modifier = Modifier.align(Alignment.End).padding(top = Spacing.Small),
+                        modifier = Modifier.align(Alignment.End).padding(top = Spacing.space8),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text(stringResource(R.string.action_dismiss))
@@ -73,7 +75,7 @@ fun UploadProgressOverlay(
                     }
                     LinearProgressIndicator(
                         progress = { progress ?: 0f },
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.Small)
+                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.space8)
                     )
                 }
             }

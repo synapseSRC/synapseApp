@@ -62,10 +62,10 @@ fun PollCreationSheet(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = Spacing.Large)
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(horizontal = Spacing.space24)
+                .padding(bottom = Spacing.space32)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             Text(stringResource(R.string.poll_create_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
@@ -100,7 +100,7 @@ fun PollCreationSheet(
                     modifier = Modifier.align(Alignment.Start)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(stringResource(R.string.poll_add_option))
                 }
             }
@@ -116,7 +116,7 @@ fun PollCreationSheet(
                 enabled = question.isNotBlank() && options.count { it.isNotBlank() } >= 2,
                 shape = RoundedCornerShape(Sizes.CornerDefault)
             ) {
-                Text(stringResource(R.string.poll_add_to_post), modifier = Modifier.padding(vertical = Spacing.ExtraSmallMedium))
+                Text(stringResource(R.string.poll_add_to_post), modifier = Modifier.padding(vertical = Spacing.space6))
             }
         }
     }
