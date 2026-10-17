@@ -83,7 +83,7 @@ fun ManageStorageScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .padding(horizontal = SettingsSpacing.screenPadding),
-                contentPadding = PaddingValues(top = Spacing.Small, bottom = Spacing.ExtraLarge),
+                contentPadding = PaddingValues(top = Spacing.space8, bottom = Spacing.space32),
                 verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
             ) {
                 item {
@@ -183,7 +183,7 @@ fun ClearCacheSection(
                 SettingsDivider()
                 CacheCategoryRow(stringResource(R.string.storage_temp_data), formatBytes(storageUsage.otherSize))
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 Button(
                     onClick = onClearCacheClick,
@@ -213,7 +213,7 @@ private fun CacheCategoryRow(name: String, size: String) {
             .fillMaxWidth()
             .padding(
                 horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = Spacing.Small
+                vertical = Spacing.space8
             ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -257,7 +257,7 @@ fun LargeFilesSection(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                            Spacer(modifier = Modifier.height(Spacing.space4))
                             Text(
                                 text = formatBytes(file.size),
                                 style = SettingsTypography.itemSubtitle,

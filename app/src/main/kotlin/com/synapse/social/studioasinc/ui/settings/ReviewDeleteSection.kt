@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,13 +25,13 @@ fun ReviewDeleteSection(largeFiles: List<LargeFileInfo>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(Spacing.Large)
+            .padding(Spacing.space24)
     ) {
         Text(
             text = stringResource(R.string.storage_review_delete),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = Spacing.Medium)
+            modifier = Modifier.padding(bottom = Spacing.space16)
         )
 
         val size = formatBytes(largeFiles.sumOf { it.size })
@@ -62,8 +64,8 @@ fun ReviewDeleteSection(largeFiles: List<LargeFileInfo>) {
                     contentDescription = stringResource(R.string.cd_chevron_right)
                 )
             },
-            modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
+            modifier = Modifier.padding(vertical = Spacing.space4)
         )
     }
-    HorizontalDivider(thickness = Spacing.Small, color = MaterialTheme.colorScheme.surfaceContainerLowest)
+    HorizontalDivider(thickness = Sizes.DividerThickness, color = MaterialTheme.colorScheme.surfaceContainerLowest)
 }

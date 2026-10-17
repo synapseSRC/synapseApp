@@ -58,7 +58,7 @@ fun LanguageRegionScreen(
 
             error?.let { errorMessage ->
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -76,7 +76,7 @@ fun LanguageRegionScreen(
                 .padding(padding)
                 .padding(horizontal = SettingsSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(vertical = Spacing.Medium)
+            contentPadding = PaddingValues(vertical = Spacing.space16)
         ) {
 
             item {
@@ -86,7 +86,7 @@ fun LanguageRegionScreen(
                         text = stringResource(R.string.language_current_format, currentLanguageName),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                        modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                     )
 
                     availableLanguages.forEachIndexed { index, languageOption ->
@@ -126,7 +126,7 @@ fun LanguageRegionScreen(
 
 
             item {
-                Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+                Spacer(modifier = Modifier.height(Spacing.space32))
             }
         }
     }
@@ -173,7 +173,7 @@ private fun LanguageSelectionItem(
 
 
                 if (languageOption.name != languageOption.nativeName) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = languageOption.name,
                         style = MaterialTheme.typography.bodyMedium,

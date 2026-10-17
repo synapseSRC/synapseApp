@@ -98,7 +98,7 @@ fun SelectRegionScreen(
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
                     ) {
                         itemsIndexed(filteredRegions) { index, region ->
                             val shape = getRegionShapeForItem(index, filteredRegions.size)
@@ -137,7 +137,7 @@ fun SelectRegionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
             ) {
                 itemsIndexed(filteredRegions) { index, region ->
                     val shape = getRegionShapeForItem(index, filteredRegions.size)

@@ -68,7 +68,7 @@ fun PrivacyCheckupScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Large),
+                            .padding(Spacing.space24),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Surface(
@@ -89,7 +89,7 @@ fun PrivacyCheckupScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
 
                         Text(
                             text = "Your privacy matters",
@@ -98,7 +98,7 @@ fun PrivacyCheckupScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
 
                         Text(
                             text = "Control your privacy settings and set up the privacy options that match how you want to use the app.",
@@ -154,7 +154,7 @@ fun PrivacyCheckupScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Spacing.Small)
+                        .padding(vertical = Spacing.space8)
                 )
             }
         }

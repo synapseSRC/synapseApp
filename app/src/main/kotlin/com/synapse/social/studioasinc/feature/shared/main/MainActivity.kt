@@ -294,7 +294,7 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.weight(1f))
@@ -318,7 +318,7 @@ fun MainScreen(
                 contentDescription = "Company Trademark",
                 modifier = Modifier
                     .height(100.dp)
-                    .padding(bottom = Spacing.MediumLarge),
+                    .padding(bottom = Spacing.space20),
                 contentScale = ContentScale.Fit
             )
 
@@ -396,11 +396,11 @@ fun UpdateDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             shape = RoundedCornerShape(Sizes.CornerLarge),
         ) {
             Column(
-                modifier = Modifier.padding(Spacing.Large),
+                modifier = Modifier.padding(Spacing.space24),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -410,7 +410,7 @@ fun UpdateDialog(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 Text(
                     text = stringResource(R.string.version_prefix),
@@ -418,7 +418,7 @@ fun UpdateDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 Text(
                     text = changelog.replace("\\n", "\n"),
@@ -427,7 +427,7 @@ fun UpdateDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Large))
+                Spacer(modifier = Modifier.height(Spacing.space24))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -461,7 +461,7 @@ fun ProfilePicSuggestionDialog(
         text = {
             Column {
                 Text(text = stringResource(R.string.add_profile_picture_message))
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { hideAgain = !hideAgain }
@@ -499,11 +499,11 @@ fun ErrorDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             shape = RoundedCornerShape(Sizes.CornerLarge),
         ) {
             Column(
-                modifier = Modifier.padding(Spacing.Large),
+                modifier = Modifier.padding(Spacing.space24),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -513,7 +513,7 @@ fun ErrorDialog(
                     color = MaterialTheme.colorScheme.error
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 Text(
                     text = message,
@@ -522,7 +522,7 @@ fun ErrorDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Large))
+                Spacer(modifier = Modifier.height(Spacing.space24))
 
                 Button(onClick = onDismiss) {
                     Text(stringResource(R.string.action_ok))

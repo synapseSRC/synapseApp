@@ -69,8 +69,8 @@ fun ChangeNumberScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
+                .padding(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(

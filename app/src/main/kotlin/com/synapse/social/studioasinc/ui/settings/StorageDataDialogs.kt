@@ -18,7 +18,7 @@ fun MediaQualityBottomSheet(
     onQualitySelected: (MediaUploadQuality) -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
-        Column(modifier = Modifier.padding(bottom = Spacing.ExtraLarge)) {
+        Column(modifier = Modifier.padding(bottom = Spacing.space32)) {
             Text(
                 text = stringResource(R.string.settings_photo_upload_quality_title),
                 style = MaterialTheme.typography.titleLarge,
@@ -72,7 +72,7 @@ fun AutoDownloadDialog(
                                     tempSelection.add(type)
                                 }
                             }
-                            .padding(vertical = Spacing.Small),
+                            .padding(vertical = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(

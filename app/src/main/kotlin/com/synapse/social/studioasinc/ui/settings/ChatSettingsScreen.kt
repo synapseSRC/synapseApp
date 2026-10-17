@@ -82,7 +82,7 @@ fun ChatSettingsScreen(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
                 .padding(horizontal = SettingsSpacing.screenPadding),
-            contentPadding = PaddingValues(bottom = Spacing.ExtraLarge),
+            contentPadding = PaddingValues(bottom = Spacing.space32),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
             item {
@@ -125,7 +125,7 @@ fun ChatSettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
                             )
-                            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                            Spacer(modifier = Modifier.height(Spacing.space4))
                             ThemePicker(
                                 selectedTheme = chatThemePreset,
                                 onThemeSelected = { viewModel.updateChatThemePreset(it) }
@@ -281,7 +281,7 @@ private fun ChatLivePreview(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(SettingsSpacing.itemHorizontalPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             MessageBubble(
                 message = Message(
