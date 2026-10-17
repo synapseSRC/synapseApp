@@ -51,7 +51,7 @@ fun ContactItem(
                 onClick = { onContactClick(contact) },
                 onLongClick = { onContactLongClick(contact) }
             )
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box {
@@ -75,7 +75,7 @@ fun ContactItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(

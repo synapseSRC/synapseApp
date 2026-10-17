@@ -78,7 +78,7 @@ fun SettingsSearchScreen(
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(Spacing.Medium),
+                    .padding(Spacing.space16),
                 placeholder = { Text(stringResource(R.string.settings_search_hint)) },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null)
@@ -89,7 +89,7 @@ fun SettingsSearchScreen(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = Spacing.Medium)
+                contentPadding = PaddingValues(horizontal = Spacing.space16)
             ) {
                 items(filteredItems) { item ->
                     SettingsSearchResultItem(
@@ -111,14 +111,14 @@ private fun SettingsSearchResultItem(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.ExtraSmall),
+            .padding(vertical = Spacing.space4),
         colors = CardDefaults.cardColors(
             containerColor = SettingsColors.cardBackground
         ),
         shape = SettingsShapes.itemShape
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16)
         ) {
             Text(
                 text = item.title,

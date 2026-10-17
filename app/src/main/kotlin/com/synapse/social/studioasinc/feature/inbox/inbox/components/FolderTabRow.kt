@@ -32,8 +32,8 @@ fun FolderTabRow(
 
     LazyRow(
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
     ) {
         item {
             FilterChip(

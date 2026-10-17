@@ -144,7 +144,7 @@ private fun AnimatedReelItem(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(Spacing.Small),
+                .padding(Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -153,7 +153,7 @@ private fun AnimatedReelItem(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(Sizes.IconSmall)
             )
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.reel),
                 style = MaterialTheme.typography.labelSmall,
@@ -193,12 +193,12 @@ private fun ReelsGridEmptyState(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(Sizes.HeightExtraLarge)
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Icon(
                 imageVector = Icons.Default.VideoLibrary,

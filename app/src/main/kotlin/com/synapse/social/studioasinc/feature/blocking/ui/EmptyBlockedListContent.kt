@@ -26,7 +26,7 @@ fun EmptyBlockedListContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Spacing.Large),
+            .padding(Spacing.space24),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

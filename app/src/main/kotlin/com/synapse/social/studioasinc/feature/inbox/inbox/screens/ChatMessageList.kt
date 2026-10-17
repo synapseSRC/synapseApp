@@ -153,16 +153,16 @@ internal fun ChatMessageList(
             .fillMaxSize(),
         // Reserve the measured composer/lock-gesture lane so the latest messages stay unobscured.
         contentPadding = PaddingValues(
-            start = Spacing.Small,
-            end = Spacing.Small,
-            top = Spacing.Medium,
+            start = Spacing.space8,
+            end = Spacing.space8,
+            top = Spacing.space16,
             bottom = bottomContentPadding
         ),
         reverseLayout = true
     ) {
         if (typingStatus != null && typingStatus.isTyping) {
             item(key = "typing_indicator") {
-                TypingIndicator(modifier = Modifier.padding(bottom = Spacing.Small))
+                TypingIndicator(modifier = Modifier.padding(bottom = Spacing.space8))
             }
         }
 
@@ -185,7 +185,7 @@ internal fun ChatMessageList(
                         val targetId = message.replyToId?.takeIf { it.isNotBlank() && quotedOriginal == null }
                         targetId?.let(onLocateMessage)
                     }
-                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.Small else Spacing.Tiny
+                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space8 else Spacing.space2
                     val animateModifier = if (!reducedMotion) {
                         Modifier.animateItem(
                             fadeInSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
@@ -264,7 +264,7 @@ internal fun ChatMessageList(
 
         if (isLoadingMore) {
             item(key = "loading_more") {
-                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.Small), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().padding(Spacing.space8), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }

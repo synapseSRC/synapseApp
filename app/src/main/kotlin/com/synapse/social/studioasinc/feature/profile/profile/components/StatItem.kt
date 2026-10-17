@@ -51,7 +51,7 @@ fun StatItem(
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onClick()
             }
-            .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+            .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
             .minimumInteractiveComponentSize()
             .scale(scale)
             .semantics {
@@ -130,8 +130,8 @@ fun StatsRow(
 private fun StatItemPreview() {
     MaterialTheme {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             StatItem(
                 count = 1234,

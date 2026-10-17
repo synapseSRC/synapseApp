@@ -38,7 +38,7 @@ fun AuthScreenLayout(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(Spacing.Large),
+                    .padding(Spacing.space24),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -58,7 +58,7 @@ fun AuthScreenLayout(
                         .weight(1f)
                         .fillMaxHeight()
                         .verticalScroll(rememberScrollState())
-                        .padding(start = Spacing.Large),
+                        .padding(start = Spacing.space24),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -71,12 +71,12 @@ fun AuthScreenLayout(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
-                    .padding(Spacing.Large),
+                    .padding(Spacing.space24),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 header()
-                Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+                Spacer(modifier = Modifier.height(Spacing.space32))
                 form()
             }
         }

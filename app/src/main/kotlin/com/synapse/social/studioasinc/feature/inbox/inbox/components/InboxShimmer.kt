@@ -23,7 +23,7 @@ fun InboxShimmer(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = Spacing.Small),
+        contentPadding = PaddingValues(vertical = Spacing.space8),
         verticalArrangement = Arrangement.spacedBy(InboxTheme.dimens.GroupedItemGap)
     ) {
         items(itemCount) { index ->
@@ -37,7 +37,7 @@ fun InboxShimmer(
             }
             
             ConversationItemShimmer(
-                modifier = Modifier.padding(horizontal = Spacing.Medium),
+                modifier = Modifier.padding(horizontal = Spacing.space16),
                 shape = shape
             )
         }
@@ -54,12 +54,12 @@ private fun ConversationItemShimmer(
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ShimmerCircle(size = InboxTheme.dimens.AvatarSize)
         
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         
         Column(modifier = Modifier.weight(1f)) {
             Row(
@@ -69,19 +69,19 @@ private fun ConversationItemShimmer(
                 ShimmerBox(
                     modifier = Modifier
                         .width(Sizes.Height120)
-                        .height(Spacing.Medium),
+                        .height(Sizes.ShimmerLineHeight),
                     shape = RoundedCornerShape(Sizes.CornerSmall)
                 )
                 
                 ShimmerBox(
                     modifier = Modifier
-                        .width(Spacing.ButtonHeight)
-                        .height(Spacing.SmallMedium),
+                        .width(Sizes.ShimmerWidthExtraSmall)
+                        .height(Sizes.ShimmerLineHeightSmall),
                     shape = RoundedCornerShape(Sizes.CornerSmall)
                 )
             }
             
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             
             ShimmerBox(
                 modifier = Modifier

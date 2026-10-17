@@ -46,7 +46,7 @@ fun HashtagCard(
             modifier = Modifier
                 .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -56,7 +56,7 @@ fun HashtagCard(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = stringResource(R.string.common_people_talking_count, formatCount(hashtag.count)),
                 style = MaterialTheme.typography.bodySmall,
@@ -114,7 +114,7 @@ fun Sparkline(
             path = path,
             color = color,
             style = Stroke(
-                width = Spacing.Tiny.toPx(),
+                width = Sizes.BorderDefault.toPx(),
                 cap = StrokeCap.Round,
                 join = StrokeJoin.Round
             )

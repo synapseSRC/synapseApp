@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
+import androidx.compose.ui.graphics.RectangleShape
+
 import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -90,8 +92,8 @@ fun ChatInputBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.ExtraSmall)
-            .padding(top = Spacing.ExtraSmall, bottom = Spacing.Medium)
+            .padding(horizontal = Spacing.space4)
+            .padding(top = Spacing.space4, bottom = Spacing.space16)
     ) {
         // Shared quote preview keeps the composer context consistent with sent reply bubbles.
         AnimatedVisibility(
@@ -132,15 +134,15 @@ fun ChatInputBar(
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = if (replyingToMessage == null) RoundedCornerShape(topStart = Sizes.CornerExtraLarge, topEnd = Sizes.CornerExtraLarge) else RoundedCornerShape(Spacing.None),
+                shape = if (replyingToMessage == null) RoundedCornerShape(topStart = Sizes.CornerExtraLarge, topEnd = Sizes.CornerExtraLarge) else RectangleShape,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                    modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(Sizes.IconSemiMedium))
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.editing_message_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Text(
@@ -167,8 +169,8 @@ fun ChatInputBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(Spacing.ExtraSmall),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    .padding(Spacing.space4),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 smartReplies.forEach { reply ->
                     AssistChip(
@@ -196,7 +198,7 @@ fun ChatInputBar(
                 url = firstUrl,
                 useCase = getLinkMetadataUseCase,
                 onRemove = { dismissedPreviewUrl = firstUrl },
-                modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.ExtraSmallMedium).fillMaxWidth()
+                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space6).fillMaxWidth()
             )
         }
 
@@ -219,7 +221,7 @@ fun ChatInputBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.ExtraSmall),
+                    .padding(horizontal = Spacing.space4),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box {
@@ -268,7 +270,7 @@ fun ChatInputBar(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
 
                 BasicTextField(
                     value = inputText,
@@ -276,8 +278,8 @@ fun ChatInputBar(
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = Sizes.InputButtonCompact)
-                        .padding(horizontal = Spacing.ExtraSmall)
-                        .padding(vertical = Spacing.ExtraSmall)
+                        .padding(horizontal = Spacing.space4)
+                        .padding(vertical = Spacing.space4)
                         .focusRequester(focusRequester)
                         .onFocusChanged { isFocused = it.isFocused }
                         .graphicsLayer {
@@ -290,7 +292,7 @@ fun ChatInputBar(
                         .drawWithContent {
                             drawContent()
                             if (size.height > Sizes.HeartSize.toPx()) {
-                                val fadeSize = Spacing.Medium.toPx()
+                                val fadeSize = Sizes.ChatInputFadeSize.toPx()
                                 drawRect(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(Color.Transparent, Color.Black),
@@ -334,7 +336,7 @@ fun ChatInputBar(
                 text = stringResource(R.string.only_admins_can_message_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = Spacing.ExtraSmall)
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = Spacing.space4)
             )
         }
     }

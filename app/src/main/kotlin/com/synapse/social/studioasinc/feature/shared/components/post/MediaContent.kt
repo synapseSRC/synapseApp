@@ -70,7 +70,7 @@ fun MediaContent(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(vertical = Spacing.Small)
+                .padding(vertical = Spacing.space8)
                 .clickable { onMediaClick(0) }
         ) {
             AsyncImage(
@@ -98,7 +98,7 @@ fun MediaContent(
                     contentDescription = "Play Video",
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(Spacing.Medium),
+                        .padding(Spacing.space16),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
@@ -124,7 +124,7 @@ fun MediaContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onMediaClick(page) }
-                        .padding(vertical = Spacing.Small)
+                        .padding(vertical = Spacing.space8)
                 ) {
                     AsyncImage(
                         model = coil3.request.ImageRequest.Builder(context)
@@ -156,12 +156,12 @@ fun MediaContent(
                     text = "${pagerState.currentPage + 1}/${mediaUrls.size}",
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(Spacing.Medium)
+                        .padding(Spacing.space16)
                         .background(
                             color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f),
                             shape = RoundedCornerShape(Sizes.CornerDefault)
                         )
-                        .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
+                        .padding(horizontal = Spacing.space8, vertical = Spacing.space4),
                     color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.labelSmall
                 )
@@ -182,7 +182,7 @@ fun PostMediaGrid(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small)
+            .padding(vertical = Spacing.space8)
             .clip(RoundedCornerShape(Sizes.CornerMedium))
     ) {
         when (count) {
