@@ -46,6 +46,8 @@ object SynapseSizes {
     const val AvatarDefault = 48f
     const val AvatarLarge = 56f
     const val AvatarExtraLarge = 80f
+    /** Diameter of the extra-large avatar variant, in dp. */
+    const val AvatarXLarge = 88f
     const val AvatarHuge = 110f
 
     const val StatusDotSmall = 8f
@@ -75,6 +77,8 @@ object SynapseSizes {
     const val Height120 = 120f
     const val HeightPreview = 300f
     const val HeightStoryTray = 180f
+    /** Height of the expanded story tray, in dp. */
+    const val HeightStoryTrayExpanded = 220f
     const val HeightMediaSingle = 400f
     const val HeightMediaGrid2 = 400f
     const val HeightMediaGrid3Top = 350f
@@ -125,4 +129,10 @@ object SynapseSizes {
     const val MaxGridHeight = 2000f
     const val AvatarBorder = 4f
     const val ProfileImageOffset = -48f
+
+    // Tuned batch-media stack geometry, independent of the spacing scale.
+    /** Horizontal reserve for the chat batch-media stack, in dp. */
+    const val BatchMediaStackHorizontalReserve = 48f
+    /** Vertical reserve for the chat batch-media stack, in dp. */
+    const val BatchMediaStackVerticalReserve = 28f
 }
