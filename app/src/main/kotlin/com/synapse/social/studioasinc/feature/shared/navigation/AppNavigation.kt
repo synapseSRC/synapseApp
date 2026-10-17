@@ -99,8 +99,6 @@ fun AppNavigation(
         if (currentEntry.destination.hasRoute<AppDestination.Auth>()) return@LaunchedEffect
 
         pendingNotificationRequest = null
-        NotificationNavigationCoordinator.clearHomeNavigation()
-
         val routedToRootDestination = when (request.target) {
             "CHAT" -> request.chatId?.takeIf { it.isNotBlank() }?.let { chatId ->
                 navController.navigate(AppDestination.Chat(chatId = chatId, userId = request.userId?.takeIf { it.isNotBlank() })) { launchSingleTop = true }
@@ -118,12 +116,17 @@ fun AppNavigation(
         }
 
         if (!routedToRootDestination) {
+            if (request.target == "CHAT" || request.target == "PROFILE") {
+                android.util.Log.w("NotificationNavigation", "Push target is missing its required identifier; using Notifications")
+            }
             val homeRequest = if (request.target in setOf("POST", "POST_COMMENT", "NOTIFICATIONS")) request
                 else request.copy(target = "NOTIFICATIONS", postId = null, commentId = null)
             NotificationNavigationCoordinator.requestHomeNavigation(homeRequest)
             if (!currentEntry.destination.hasRoute<AppDestination.Home>()) {
                 navController.navigate(AppDestination.Home) { launchSingleTop = true }
             }
+        } else {
+            NotificationNavigationCoordinator.clearHomeNavigation()
         }
     }
 

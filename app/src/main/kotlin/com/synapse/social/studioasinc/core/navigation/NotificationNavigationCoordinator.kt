@@ -29,22 +29,27 @@ object NotificationNavigationCoordinator {
     val requests = requestChannel.receiveAsFlow()
     val pendingHomeNavigation = _pendingHomeNavigation.asStateFlow()
 
-    @Synchronized
     fun onNotificationClick(additionalData: JSONObject?) {
         val request = parse(additionalData)
         val key = request.notificationId?.let { "notification:$it" }
             ?: listOf(request.target, request.postId, request.commentId, request.chatId, request.messageId, request.userId)
                 .joinToString(separator = ":") { it.orEmpty() }
         val now = SystemClock.elapsedRealtime()
-        recentRequests.entries.removeAll { now - it.value >= DUPLICATE_WINDOW_MS }
-        if (recentRequests.containsKey(key)) return
-        if (recentRequests.size >= 64) recentRequests.remove(recentRequests.keys.first())
-        recentRequests[key] = now
+        val accepted = synchronized(recentRequests) {
+            recentRequests.entries.removeAll { now - it.value >= DUPLICATE_WINDOW_MS }
+            if (recentRequests.containsKey(key)) {
+                false
+            } else {
+                if (recentRequests.size >= 64) recentRequests.remove(recentRequests.keys.first())
+                recentRequests[key] = now
+                true
+            }
+        }
+        if (!accepted) return
         if (requestChannel.trySend(request).isFailure) {
-            recentRequests.remove(key)
+            synchronized(recentRequests) { recentRequests.remove(key) }
         }
     }
-
     fun requestHomeNavigation(request: NotificationNavigationRequest) {
         _pendingHomeNavigation.value = request
     }
@@ -87,7 +92,7 @@ object NotificationNavigationCoordinator {
             ?: targetId?.takeIf { target == "POST" || legacyTarget == "POST" }
         val commentId = firstString(navigation, "commentId", "comment_id")
             ?: firstString(data, "commentId", "comment_id")
-            ?: targetId?.takeIf { target == "POST_COMMENT" && legacyTarget == "POST_COMMENT" }
+            ?: targetId?.takeIf { target == "POST_COMMENT" && (legacyTarget == "POST_COMMENT" || eventType in COMMENT_TYPES) }
 
         return NotificationNavigationRequest(
             target = target,
