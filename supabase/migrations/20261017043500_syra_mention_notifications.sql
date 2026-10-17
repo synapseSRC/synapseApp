@@ -86,11 +86,10 @@ BEGIN
 END;
 $function$;
 
-COMMIT;
-
-
 DROP TRIGGER IF EXISTS trg_notifications_post_reply ON public.posts;
 CREATE TRIGGER trg_notifications_post_reply
 AFTER INSERT ON public.posts
 FOR EACH ROW
 EXECUTE FUNCTION private.handle_post_reply_notification();
+
+COMMIT;
