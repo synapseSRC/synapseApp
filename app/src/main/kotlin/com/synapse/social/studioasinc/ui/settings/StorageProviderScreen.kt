@@ -144,7 +144,7 @@ private fun AssignProvidersTab(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             horizontal = SettingsSpacing.screenPadding,
-            vertical = Spacing.Medium
+            vertical = Spacing.space16
         ),
         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
     ) {
@@ -226,7 +226,7 @@ private fun MediaAssignmentRow(
                 style = SettingsTypography.itemTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = selectedDisplayName,
                 style = SettingsTypography.itemSubtitle,
@@ -234,7 +234,7 @@ private fun MediaAssignmentRow(
             )
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Icon(
             imageVector = Icons.Default.KeyboardArrowRight,
@@ -289,12 +289,12 @@ private fun ProviderSelectionList(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = Spacing.Huge)
+            .padding(bottom = Spacing.space48)
     ) {
         Text(
             text = stringResource(R.string.storage_provider_selection) + " - $title",
             style = SettingsTypography.sectionHeader,
-            modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium)
+            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space12)
         )
 
         providers.forEachIndexed { index, provider ->
@@ -305,7 +305,7 @@ private fun ProviderSelectionList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onProviderSelect(displayName) }
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Medium),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space16),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -344,7 +344,7 @@ private fun ProviderSetupTab(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             horizontal = SettingsSpacing.screenPadding,
-            vertical = Spacing.Medium
+            vertical = Spacing.space16
         ),
         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
     ) {
@@ -420,7 +420,7 @@ private fun ProviderRow(
                     style = SettingsTypography.itemTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Surface(
                     shape = SettingsShapes.chipShape,
                     color = if (isConfigured) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
@@ -432,13 +432,13 @@ private fun ProviderRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isConfigured) MaterialTheme.colorScheme.onPrimaryContainer
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Tiny)
+                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space2)
                     )
                 }
             }
 
             if (usage.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.storage_used_for, usage),
                     style = SettingsTypography.itemSubtitle,
@@ -447,7 +447,7 @@ private fun ProviderRow(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Icon(
             imageVector = Icons.Default.KeyboardArrowRight,
@@ -462,7 +462,7 @@ private fun ProviderRow(
             sheetState = sheetState,
             containerColor = SettingsColors.cardBackgroundElevated
         ) {
-            Box(modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Large)) {
+            Box(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space24)) {
                 when (provider) {
                     StorageProvider.IMGBB -> ImgBBConfigContent(
                         apiKey = storageConfig.imgBBKey,
@@ -503,7 +503,7 @@ private fun ProviderRow(
                     else -> {}
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.Huge))
+            Spacer(modifier = Modifier.height(Spacing.space48))
         }
     }
 }

@@ -8,24 +8,22 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
 
 object ProfileDimensions {
 
-    val spacing0 = Spacing.None
-    val spacing2 = Spacing.Tiny
-    val spacing4 = Spacing.ExtraSmall
-    val spacing8 = Spacing.Small
-    val spacing12 = Spacing.SmallMedium
-    val spacing16 = Spacing.Medium
-    val spacing20 = Spacing.MediumLarge
-    val spacing24 = Spacing.Large
-    val spacing32 = Spacing.ExtraLarge
-    val spacing48 = Spacing.Huge
+    val spacing0 = Spacing.space0
+    val spacing2 = Spacing.space2
+    val spacing4 = Spacing.space4
+    val spacing8 = Spacing.space8
+    val spacing12 = Spacing.space12
+    val spacing16 = Spacing.space16
+    val spacing20 = Spacing.space20
+    val spacing24 = Spacing.space24
+    val spacing32 = Spacing.space32
+    val spacing48 = Spacing.space48
 
 
     val profileImageSmall = Sizes.AvatarMedium
@@ -54,7 +52,7 @@ object ProfileDimensions {
     val buttonCornerRadius = Sizes.CornerDefault
 
 
-    val photoGridSpacing = Spacing.Tiny
+    val photoGridSpacing = Spacing.space2
     val photoGridCornerRadius = Sizes.CornerSmall
 
 

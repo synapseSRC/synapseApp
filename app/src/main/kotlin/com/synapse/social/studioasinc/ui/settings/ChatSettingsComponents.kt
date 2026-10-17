@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -46,7 +48,7 @@ fun ChatRadioItem(
                     horizontal = SettingsSpacing.itemHorizontalPadding,
                     vertical = SettingsSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
@@ -71,7 +73,7 @@ fun ChatRadioItem(
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = subtitle,
                         style = SettingsTypography.itemSubtitle,

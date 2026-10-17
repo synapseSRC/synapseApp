@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -103,7 +105,7 @@ private fun SettingsToggleItemContent(
                     horizontal = SettingsSpacing.itemHorizontalPadding,
                     vertical = SettingsSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -123,7 +125,7 @@ private fun SettingsToggleItemContent(
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = subtitle,
                         style = SettingsTypography.itemSubtitle,
@@ -133,7 +135,7 @@ private fun SettingsToggleItemContent(
                 }
             }
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
 
             Switch(
@@ -201,7 +203,7 @@ private fun SettingsClickableItemContent(
                     horizontal = SettingsSpacing.itemHorizontalPadding,
                     vertical = SettingsSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -221,7 +223,7 @@ private fun SettingsClickableItemContent(
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = subtitle,
                         style = SettingsTypography.itemSubtitle,
@@ -232,11 +234,11 @@ private fun SettingsClickableItemContent(
             }
 
             if (trailingIcon != null) {
-                Spacer(modifier = Modifier.width(Spacing.Medium))
+                Spacer(modifier = Modifier.width(Spacing.space16))
                 Icon(
                     imageVector = trailingIcon,
                     contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
+                    modifier = Modifier.size(Sizes.IconLarge),
                     tint = SettingsColors.chevronIcon
                 )
             }
@@ -298,7 +300,7 @@ private fun SettingsNavigationItemContent(
                     horizontal = SettingsSpacing.itemHorizontalPadding,
                     vertical = SettingsSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -318,7 +320,7 @@ private fun SettingsNavigationItemContent(
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = subtitle,
                         style = SettingsTypography.itemSubtitle,
@@ -328,13 +330,13 @@ private fun SettingsNavigationItemContent(
                 }
             }
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
 
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                modifier = Modifier.size(SettingsSpacing.iconSize),
+                modifier = Modifier.size(Sizes.IconLarge),
                 tint = SettingsColors.chevronIcon
             )
         }
@@ -395,23 +397,23 @@ fun SettingsSelectionItem(
             }
 
             if (subtitle != null) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = subtitle,
                     style = SettingsTypography.itemSubtitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                    modifier = Modifier.padding(start = if (icon != null) Spacing.ButtonHeight else 0.dp)
+                    modifier = Modifier.padding(start = if (icon != null) Spacing.space40 else Spacing.space0)
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
 
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { if (enabled) expanded = !expanded },
-                modifier = Modifier.padding(start = if (icon != null) Spacing.ButtonHeight else 0.dp)
+                modifier = Modifier.padding(start = if (icon != null) Spacing.space40 else Spacing.space0)
             ) {
                 OutlinedTextField(
                     value = selectedOption,
@@ -496,7 +498,7 @@ fun SettingsSliderItem(
                     )
 
                     if (subtitle != null) {
-                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                        Spacer(modifier = Modifier.height(Spacing.space4))
                         Text(
                             text = subtitle,
                             style = SettingsTypography.itemSubtitle,
@@ -506,7 +508,7 @@ fun SettingsSliderItem(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(Spacing.Medium))
+                Spacer(modifier = Modifier.width(Spacing.space16))
 
                 Text(
                     text = valueLabel(value),
@@ -515,7 +517,7 @@ fun SettingsSliderItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Slider(
                 value = value,

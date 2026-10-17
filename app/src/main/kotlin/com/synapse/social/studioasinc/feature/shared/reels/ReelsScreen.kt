@@ -32,7 +32,7 @@ fun ReelsScreen(
     onUserClick: (String) -> Unit,
     onCommentClick: (String) -> Unit,
     onBackClick: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(Spacing.space0)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val reels = uiState.reels
@@ -148,7 +148,7 @@ fun ErrorFeed(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = message, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(Spacing.Medium))
+        Spacer(modifier = Modifier.height(Spacing.space16))
         Button(onClick = onRetry) {
             Text(stringResource(R.string.action_retry))
         }
@@ -163,7 +163,7 @@ fun EmptyFeed(onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = stringResource(R.string.no_reels_found), color = MaterialTheme.colorScheme.onBackground)
-        Spacer(modifier = Modifier.height(Spacing.Medium))
+        Spacer(modifier = Modifier.height(Spacing.space16))
         Button(onClick = onRetry) {
             Text(stringResource(R.string.action_refresh))
         }
@@ -180,29 +180,29 @@ fun ReelShimmerItem() {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(bottom = Spacing.ButtonHeight, start = Spacing.Medium, end = Spacing.Medium)
+                .padding(bottom = Spacing.space40, start = Spacing.space16, end = Spacing.space16)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ShimmerBox(modifier = Modifier.size(Spacing.ExtraLarge), shape = androidx.compose.foundation.shape.CircleShape)
-                Spacer(modifier = Modifier.size(Spacing.Small))
-                ShimmerBox(modifier = Modifier.width(Sizes.WidthExtraLarge).height(Spacing.MediumLarge))
+                ShimmerBox(modifier = Modifier.size(Sizes.AvatarCompact), shape = androidx.compose.foundation.shape.CircleShape)
+                Spacer(modifier = Modifier.size(Spacing.space8))
+                ShimmerBox(modifier = Modifier.width(Sizes.WidthExtraLarge).height(Sizes.ShimmerLineHeightLarge))
             }
-            Spacer(modifier = Modifier.size(Spacing.SmallMedium))
-            ShimmerBox(modifier = Modifier.fillMaxWidth(0.6f).height(Spacing.Medium))
-            Spacer(modifier = Modifier.size(Spacing.Small))
-            ShimmerBox(modifier = Modifier.fillMaxWidth(0.4f).height(Spacing.Medium))
+            Spacer(modifier = Modifier.size(Spacing.space12))
+            ShimmerBox(modifier = Modifier.fillMaxWidth(0.6f).height(Sizes.ShimmerLineHeight))
+            Spacer(modifier = Modifier.size(Spacing.space8))
+            ShimmerBox(modifier = Modifier.fillMaxWidth(0.4f).height(Sizes.ShimmerLineHeight))
         }
 
 
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = Spacing.NavBarHeight, end = Spacing.Medium),
+                .padding(bottom = Sizes.NavBarHeight, end = Spacing.space16),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             repeat(4) {
-                ShimmerBox(modifier = Modifier.size(Spacing.ExtraLarge), shape = androidx.compose.foundation.shape.CircleShape)
-                Spacer(modifier = Modifier.size(Spacing.Medium))
+                ShimmerBox(modifier = Modifier.size(Sizes.AvatarCompact), shape = androidx.compose.foundation.shape.CircleShape)
+                Spacer(modifier = Modifier.size(Spacing.space16))
             }
         }
     }

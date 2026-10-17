@@ -104,7 +104,7 @@ fun PrivacySecurityContent(
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = onClearError) {
                             Text(stringResource(R.string.action_dismiss))
@@ -185,7 +185,7 @@ fun PrivacySecurityContent(
 
 
             item {
-                Spacer(modifier = Modifier.height(Spacing.Large))
+                Spacer(modifier = Modifier.height(Spacing.space24))
             }
         }
     }

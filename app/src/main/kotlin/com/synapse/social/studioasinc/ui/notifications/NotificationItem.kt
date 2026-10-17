@@ -56,7 +56,7 @@ enum class NotificationGroupPosition {
 @Composable
 fun getNotificationCardShape(position: NotificationGroupPosition): androidx.compose.ui.graphics.Shape {
     val outer = Sizes.CornerLarge
-    val inner = Spacing.ExtraSmall
+    val inner = Sizes.CornerSmall
     return when (position) {
         NotificationGroupPosition.SINGLE -> MaterialTheme.shapes.large
         NotificationGroupPosition.FIRST -> RoundedCornerShape(
@@ -96,7 +96,7 @@ fun NotificationItem(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium)
+            .padding(horizontal = Spacing.space16)
             .clip(shape)
             .background(backgroundColor)
             .clickable { onNotificationClick(notification) }
@@ -104,7 +104,7 @@ fun NotificationItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CircularAvatar(
@@ -116,7 +116,7 @@ fun NotificationItem(
                 }
             )
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -129,14 +129,14 @@ fun NotificationItem(
                             notification.actorId?.let { onUserClick(it) }
                         }
                     )
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Text(
                         text = messageString,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = notification.timestamp,
                     style = MaterialTheme.typography.labelSmall,
@@ -145,11 +145,11 @@ fun NotificationItem(
             }
 
             if (!notification.isRead) {
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
 
                 Box(
                     modifier = Modifier
-                        .size(Spacing.Small)
+                        .size(Sizes.StatusDotSmall)
                         .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape)
                 )
             }

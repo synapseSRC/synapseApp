@@ -63,7 +63,7 @@ fun AccountSettingsScreen(
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -276,7 +276,7 @@ private fun LinkedAccountItem(
         ) {
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
 
                 val brandIconRes = getProviderIcon(provider)
@@ -284,14 +284,14 @@ private fun LinkedAccountItem(
                     Icon(
                         painter = painterResource(brandIconRes),
                         contentDescription = null,
-                        modifier = Modifier.size(SettingsSpacing.iconSize),
+                        modifier = Modifier.size(Sizes.IconLarge),
                         tint = androidx.compose.ui.graphics.Color.Unspecified
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Filled.Info,
                         contentDescription = null,
-                        modifier = Modifier.size(SettingsSpacing.iconSize)
+                        modifier = Modifier.size(Sizes.IconLarge)
                     )
                 }
 
@@ -303,7 +303,7 @@ private fun LinkedAccountItem(
                         color = if (enabled) MaterialTheme.colorScheme.onSurface
                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = if (isLinked) stringResource(R.string.settings_linked_accounts_connected) else stringResource(R.string.settings_linked_accounts_not_connected),
                         style = SettingsTypography.itemSubtitle,

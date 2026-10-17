@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -76,7 +78,7 @@ fun <T> PrivacySelectionScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(
                             horizontal = SettingsSpacing.itemHorizontalPadding,
-                            vertical = Spacing.Small
+                            vertical = Spacing.space8
                         )
                     )
                 }
@@ -124,7 +126,7 @@ fun <T> PrivacySelectionScreen(
                                         horizontal = SettingsSpacing.itemHorizontalPadding,
                                         vertical = SettingsSpacing.itemVerticalPadding
                                     )
-                                    .heightIn(min = SettingsSpacing.minTouchTarget),
+                                    .heightIn(min = AccessibilitySizes.minimumTouchTarget),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(
@@ -137,7 +139,7 @@ fun <T> PrivacySelectionScreen(
                                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                     )
                                     if (option.subtitle != null) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = option.subtitle,
                                             style = SettingsTypography.itemSubtitle,
@@ -147,7 +149,7 @@ fun <T> PrivacySelectionScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(Spacing.Medium))
+                                Spacer(modifier = Modifier.width(Spacing.space16))
 
                                 RadioButton(
                                     selected = isSelected,
