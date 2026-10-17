@@ -65,7 +65,7 @@ object NotificationConfig {
         return if (USE_CLIENT_SIDE_NOTIFICATIONS) {
             "Client-side OneSignal via Edge Function"
         } else {
-            "Server-side via Supabase Edge Function"
+            "Server-side via Supabase database triggers"
         }
     }
 
