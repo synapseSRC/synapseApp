@@ -65,7 +65,7 @@ fun SharedContentScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(Spacing.Large),
+                    .padding(Spacing.space24),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

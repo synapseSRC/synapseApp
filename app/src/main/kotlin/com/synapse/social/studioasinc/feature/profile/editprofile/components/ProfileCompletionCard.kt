@@ -91,10 +91,10 @@ fun ProfileCompletionCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        tonalElevation = Sizes.ElevationNone
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -115,7 +115,7 @@ fun ProfileCompletionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             LinearProgressIndicator(
                 progress = { completeness.percentage / 100f },
@@ -127,7 +127,7 @@ fun ProfileCompletionCard(
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -142,7 +142,7 @@ fun ProfileCompletionCard(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                        Spacer(modifier = Modifier.width(Spacing.space4))
                         Text(
                             text = stringResource(R.string.profile_complete),
                             style = MaterialTheme.typography.bodySmall,

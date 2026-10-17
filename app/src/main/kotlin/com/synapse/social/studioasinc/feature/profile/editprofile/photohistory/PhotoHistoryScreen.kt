@@ -162,7 +162,7 @@ fun PhotoHistoryScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
 
                     Text(
                         text = stringResource(R.string.previous_photos_here),
@@ -175,8 +175,8 @@ fun PhotoHistoryScreen(
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = Sizes.Height120),
                     contentPadding = PaddingValues(SettingsSpacing.screenPadding),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.Small),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.space8),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     itemsIndexed(
@@ -218,7 +218,7 @@ fun PhotoHistoryItem(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        elevation = CardDefaults.cardElevation(defaultElevation = Spacing.None)
+        elevation = CardDefaults.cardElevation(defaultElevation = Sizes.ElevationNone)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -248,7 +248,7 @@ fun PhotoHistoryItem(
                         modifier = Modifier
                             .size(Sizes.IconHuge)
                             .background(MaterialTheme.colorScheme.primary, CircleShape)
-                            .padding(Spacing.ExtraSmall)
+                            .padding(Spacing.space4)
                     )
                 }
             }

@@ -97,7 +97,7 @@ fun WorkEducationScreen(
                         if (uiState.isSaving) {
                             ExpressiveLoadingIndicator(
                                 modifier = Modifier
-                                    .padding(end = Spacing.Medium)
+                                    .padding(end = Spacing.space16)
                                     .size(Sizes.IconDefault)
                             )
                         } else {
@@ -147,8 +147,8 @@ fun WorkEducationContent(
         contentPadding = PaddingValues(
             start = SettingsSpacing.screenPadding,
             end = SettingsSpacing.screenPadding,
-            top = paddingValues.calculateTopPadding() + Spacing.Small,
-            bottom = paddingValues.calculateBottomPadding() + Spacing.Large
+            top = paddingValues.calculateTopPadding() + Spacing.space8,
+            bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
         verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
     ) {
@@ -159,8 +159,8 @@ fun WorkEducationContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Medium),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                            .padding(Spacing.space16),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.space16)
                     ) {
                         OutlinedTextField(
                             value = uiState.occupation,
@@ -213,7 +213,7 @@ fun WorkEducationContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Medium)
+                            .padding(Spacing.space16)
                     ) {
                         OutlinedTextField(
                             value = uiState.education,

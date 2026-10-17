@@ -37,12 +37,12 @@ fun CommentOptionsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.Medium)
+                .padding(bottom = Spacing.space16)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 QuickAction(
@@ -81,7 +81,7 @@ fun CommentOptionsBottomSheet(
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.space8))
 
             val options = mutableListOf<PostOption>()
             if (isOwnComment && !comment.isDeleted) {

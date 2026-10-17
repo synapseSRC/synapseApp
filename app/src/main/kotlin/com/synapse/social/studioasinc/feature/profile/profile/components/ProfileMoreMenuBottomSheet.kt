@@ -36,7 +36,7 @@ fun ProfileMoreMenuBottomSheet(
     val context = LocalContext.current
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(bottom = Spacing.Medium)) {
+        Column(modifier = Modifier.padding(bottom = Spacing.space16)) {
             MenuOption(
                 icon = Icons.Default.Share,
                 text = stringResource(R.string.share_profile),
@@ -63,7 +63,7 @@ fun ProfileMoreMenuBottomSheet(
                 onClick = { onQrCode(); onDismiss() }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.space8))
 
             if (isOwnProfile) {
                 MenuOption(
@@ -105,11 +105,11 @@ private fun MenuOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(Sizes.IconLarge))
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
