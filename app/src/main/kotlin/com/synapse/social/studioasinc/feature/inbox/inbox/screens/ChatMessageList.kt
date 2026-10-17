@@ -75,7 +75,8 @@ internal fun ChatMessageList(
     bottomContentPadding: Dp = Sizes.WidthLarge,
     modifier: Modifier = Modifier,
     onLocateMessage: (String) -> Unit = {},
-    groupMemberNames: Map<String, String> = emptyMap()
+    groupMemberNames: Map<String, String> = emptyMap(),
+    initialMessageId: String? = null
 ) {
     val scope = rememberCoroutineScope()
     val messagesMap = remember(messages) {
@@ -124,6 +125,12 @@ internal fun ChatMessageList(
         positions
     }
     val pendingQuoteTargetId = remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(initialMessageId) {
+        initialMessageId?.takeIf { it.isNotBlank() }?.let { messageId ->
+            pendingQuoteTargetId.value = messageId
+            onLocateMessage(messageId)
+        }
+    }
     LaunchedEffect(pendingQuoteTargetId.value, reversedItems) {
         val targetId = pendingQuoteTargetId.value ?: return@LaunchedEffect
         val targetIndex = reversedItems.indexOfFirst {

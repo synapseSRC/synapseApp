@@ -101,7 +101,7 @@ fun AppNavigation(
         pendingNotificationRequest = null
         val routedToRootDestination = when (request.target) {
             "CHAT" -> request.chatId?.takeIf { it.isNotBlank() }?.let { chatId ->
-                navController.navigate(AppDestination.Chat(chatId = chatId, userId = request.userId?.takeIf { it.isNotBlank() })) { launchSingleTop = true }
+                navController.navigate(AppDestination.Chat(chatId = chatId, userId = request.userId?.takeIf { it.isNotBlank() }, messageId = request.messageId)) { launchSingleTop = true }
                 true
             } ?: false
             "PROFILE" -> request.userId?.takeIf { it.isNotBlank() }?.let { userId ->
@@ -265,6 +265,7 @@ fun NavGraphBuilder.inboxGraph(
                     participantId = args.userId,
                     initialParticipantName = args.participantName,
                     initialParticipantAvatar = args.participantAvatar,
+                    initialMessageId = args.messageId,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToGroupInfo = { chatId, groupName ->
                         navController.navigate(AppDestination.GroupInfo(chatId, groupName))
