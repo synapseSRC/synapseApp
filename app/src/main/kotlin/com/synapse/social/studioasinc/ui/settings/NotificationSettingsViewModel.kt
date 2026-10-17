@@ -112,6 +112,7 @@ class NotificationSettingsViewModel @Inject constructor(
             commentsEnabled = social["comments"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_COMMENTS_ENABLED,
             repliesEnabled = social["replies"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_REPLIES_ENABLED,
             followsEnabled = social["follows"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_FOLLOWS_ENABLED,
+            messagesEnabled = social["messages"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_MESSAGES_ENABLED,
             mentionsEnabled = social["mentions"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_MENTIONS_ENABLED,
             newPostsEnabled = content["new_posts"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_NEW_POSTS_ENABLED,
             sharesEnabled = content["shares"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_SHARES_ENABLED,
