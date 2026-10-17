@@ -65,7 +65,7 @@ fun ProfileImageSection(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = Spacing.Tiny
+        tonalElevation = Sizes.ElevationLow
     ) {
         Column {
 
@@ -120,7 +120,7 @@ fun ProfileImageSection(
                                         modifier = Modifier.size(Sizes.IconHuge)
                                     )
                                     if (coverUploadState.canRetry) {
-                                        Spacer(modifier = Modifier.height(Spacing.Small))
+                                        Spacer(modifier = Modifier.height(Spacing.space8))
                                         androidx.compose.material3.TextButton(
                                             onClick = onRetryCoverUpload,
                                             colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
@@ -227,13 +227,13 @@ fun ProfileImageSection(
                                         modifier = Modifier.size(Sizes.IconDefault)
                                     )
                                     if (avatarUploadState.canRetry) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         androidx.compose.material3.TextButton(
                                             onClick = onRetryAvatarUpload,
                                             colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
                                                 contentColor = MaterialTheme.colorScheme.onPrimary
                                             ),
-                                            contentPadding = PaddingValues(horizontal = Spacing.Small, vertical = Spacing.Tiny)
+                                            contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space2)
                                         ) {
                                             Text(stringResource(R.string.action_retry), style = MaterialTheme.typography.labelSmall)
                                         }

@@ -79,7 +79,7 @@ fun PostHeader(
                     VerifiedBadge()
                 }
 
-                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.width(Spacing.space4))
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
@@ -170,7 +170,7 @@ fun PostHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = Spacing.Tiny)
+                modifier = Modifier.padding(top = Spacing.space2)
             )
         }
 

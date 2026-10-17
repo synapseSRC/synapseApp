@@ -66,13 +66,13 @@ fun MessageContextMenu(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(bottom = Spacing.space32)
         ) {
             // Reactions Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(Spacing.Medium),
+                    .padding(Spacing.space16),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ReactionType.values().forEach { reaction ->

@@ -162,9 +162,9 @@ internal fun QuotedMessagePreview(
                         size = androidx.compose.ui.geometry.Size(indicatorWidth, size.height)
                     )
                 }
-                .padding(start = Spacing.Medium, end = Spacing.ExtraSmall, top = Spacing.ExtraSmall, bottom = Spacing.ExtraSmall),
+                .padding(start = Spacing.space16, end = Spacing.space4, top = Spacing.space4, bottom = Spacing.space4),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             val thumbnailUrl = preview.thumbnailUrl?.takeIf { canLoadThumbnail }
             if (thumbnailUrl != null) {

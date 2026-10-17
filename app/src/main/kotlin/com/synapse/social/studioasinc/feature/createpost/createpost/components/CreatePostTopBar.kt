@@ -110,8 +110,8 @@ fun CreatePostTopBar(
                 enabled = isEnabled,
                 shapes = ButtonDefaults.shapesFor(Sizes.HeightMedium),
                 contentPadding = PaddingValues(
-                    horizontal = Spacing.Medium,
-                    vertical = Spacing.SmallMedium
+                    horizontal = Spacing.space16,
+                    vertical = Spacing.space12
                 )
             ) {
                 Text(
@@ -120,7 +120,7 @@ fun CreatePostTopBar(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,

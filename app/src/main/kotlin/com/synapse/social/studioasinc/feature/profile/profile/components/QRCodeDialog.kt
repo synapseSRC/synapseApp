@@ -52,7 +52,7 @@ fun QRCodeDialog(
                         modifier = Modifier.size(Sizes.QRCodeSize)
                     )
                 }
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
                 Text(
                     "@$username",
                     style = MaterialTheme.typography.titleMedium

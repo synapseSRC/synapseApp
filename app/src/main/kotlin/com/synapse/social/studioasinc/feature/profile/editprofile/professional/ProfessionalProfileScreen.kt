@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.professional
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -106,7 +108,7 @@ fun ProfessionalProfileScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = SettingsSpacing.screenPadding),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Large)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space24)
             ) {
                 item {
                     AccountTypeSection(
@@ -138,7 +140,7 @@ fun ProfessionalProfileScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(Spacing.Large))
+                    Spacer(modifier = Modifier.height(Spacing.space24))
                 }
             }
         }
@@ -154,7 +156,7 @@ private fun AccountTypeSection(
 ) {
     SettingsSection(title = stringResource(R.string.professional_section_account_type)) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
             modifier = Modifier.padding(vertical = SettingsSpacing.itemVerticalPadding)
         ) {
             Row(
@@ -178,10 +180,10 @@ private fun AccountTypeSection(
                     },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(SettingsSpacing.iconSize)
+                    modifier = Modifier.size(Sizes.IconLarge)
                 )
                 Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = when (accountType) {
                             AccountType.PERSONAL -> stringResource(R.string.professional_account_type_personal)
@@ -247,7 +249,7 @@ private fun ProfessionalIdentitySection(
                 horizontal = SettingsSpacing.itemHorizontalPadding,
                 vertical = SettingsSpacing.itemVerticalPadding
             ),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             OutlinedTextField(
                 value = occupation,

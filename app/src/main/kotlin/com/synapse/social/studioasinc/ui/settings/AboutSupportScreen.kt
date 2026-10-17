@@ -115,8 +115,8 @@ fun AboutSupportScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(vertical = Spacing.Medium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
+            contentPadding = PaddingValues(vertical = Spacing.space16)
         ) {
 
             item {
@@ -197,7 +197,7 @@ fun AboutSupportScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(vertical = Spacing.space16),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -228,7 +228,7 @@ private fun AppInfoHeaderCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(Spacing.space20),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -237,10 +237,10 @@ private fun AppInfoHeaderCard(
                 modifier = Modifier.size(56.dp)
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.space6)) {
                 Text(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
@@ -248,7 +248,7 @@ private fun AppInfoHeaderCard(
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
@@ -256,7 +256,7 @@ private fun AppInfoHeaderCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .padding(horizontal = Spacing.space10, vertical = Spacing.space4)
                     ) {
                         Text(
                             text = appVersion.ifBlank { "1.0.0" },
@@ -270,7 +270,7 @@ private fun AppInfoHeaderCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .padding(horizontal = Spacing.space10, vertical = Spacing.space4)
                     ) {
                         Text(
                             text = buildNumber.ifBlank { "UNIVERSAL" },
@@ -300,13 +300,13 @@ private fun LeadDeveloperCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(Spacing.space20),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
 
                 Box(
@@ -329,7 +329,7 @@ private fun LeadDeveloperCard(
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space2)) {
                     Text(
                         text = "Ashik Ahmed",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -346,7 +346,7 @@ private fun LeadDeveloperCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
             ) {
                 SocialButton(
                     imageVector = Icons.Filled.Language,
@@ -376,7 +376,7 @@ private fun LeadDeveloperCard(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space12)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Coffee,
@@ -384,7 +384,7 @@ private fun LeadDeveloperCard(
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = "Buy me a coffee!",
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
@@ -435,7 +435,7 @@ private fun CollaboratorItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = SettingsSpacing.itemHorizontalPadding, vertical = 12.dp),
+                .padding(horizontal = SettingsSpacing.itemHorizontalPadding, vertical = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -448,7 +448,7 @@ private fun CollaboratorItem(
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(Spacing.space12))
 
 
             Column(modifier = Modifier.weight(1f)) {
@@ -465,7 +465,7 @@ private fun CollaboratorItem(
             }
 
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                 SmallIconButton(
                     imageVector = Icons.Filled.Coffee,
                     onClick = onCoffeeClick

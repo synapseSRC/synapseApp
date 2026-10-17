@@ -112,7 +112,7 @@ private fun StoryCameraPreview(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(Spacing.Large)
+                .padding(Spacing.space24)
         ) {
             Button(onClick = onGalleryClick) {
                 Text(stringResource(R.string.story_open_gallery))

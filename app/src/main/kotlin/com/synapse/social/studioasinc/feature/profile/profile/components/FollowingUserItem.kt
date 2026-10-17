@@ -59,7 +59,7 @@ fun FollowingUserItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
 
         Text(
             text = user.username,
