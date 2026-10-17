@@ -9,7 +9,7 @@ struct StoryAvatarView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: AppTheme.Spacing.space4) {
                 ZStack(alignment: .bottomTrailing) {
                     // Avatar or Placeholder
                     ZStack {
@@ -33,7 +33,7 @@ struct StoryAvatarView: View {
                     }
                     .frame(width: 60, height: 60)
                     .clipShape(Circle())
-                    .padding(3)
+                    .padding(3) // optical image-ring inset, intentionally component-specific
                     .background(
                         Group {
                             if hasUnseen {

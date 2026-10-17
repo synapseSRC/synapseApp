@@ -48,7 +48,7 @@ struct CreatePostScreen: View {
                                         Rectangle()
                                             .fill(Color(.systemGray4))
                                             .frame(width: 2, height: 20)
-                                            .padding(.leading, 24)
+                                            .padding(.leading, AppTheme.Spacing.space24)
                                         Spacer()
 
                                         Button(action: {
@@ -84,8 +84,8 @@ struct CreatePostScreen: View {
                                         Text("\(viewModel.characterCount)/280")
                                             .font(.caption)
                                             .foregroundColor(viewModel.characterCount > 280 ? .red : (viewModel.characterCount > 260 ? .orange : .gray))
-                                            .padding(.trailing, 24)
-                                            .padding(.bottom, 8)
+                                            .padding(.trailing, AppTheme.Spacing.space24)
+                                            .padding(.bottom, AppTheme.Spacing.space8)
                                     } else {
                                         // Thread post
                                         RichTextEditor(text: Binding(
@@ -176,7 +176,7 @@ struct CreatePostScreen: View {
                                                     .foregroundColor(.red)
                                                     .background(Color.white.clipShape(Circle()))
                                             }
-                                            .padding(4)
+                                            .padding(AppTheme.Spacing.space4)
                                             .accessibilityLabel("Remove media attachment")
                                         }
                                     }
@@ -411,7 +411,7 @@ struct CameraCaptureScreen: View {
                     .padding()
                     Spacer()
                 }
-                .padding(.bottom, 30)
+                .padding(.bottom, 30) // component-specific footer inset; kept outside the foundation scale
             }
         }
         .onChange(of: capturedMediaURL) { url in

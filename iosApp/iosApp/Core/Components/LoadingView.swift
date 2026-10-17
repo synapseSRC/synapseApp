@@ -4,7 +4,7 @@ struct LoadingView: View {
     let message: String
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.space16) {
             ProgressView()
                 .scaleEffect(1.5)
             Text(message)

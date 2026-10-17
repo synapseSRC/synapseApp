@@ -20,7 +20,7 @@ struct HomeView: View {
                         Divider()
                             .background(Color.gray.opacity(0.3))
 
-                        LazyVStack(spacing: 0) {
+                        LazyVStack(spacing: AppTheme.Spacing.space0) {
                             ForEach(viewModel.uiState.posts) { post in
                                 NavigationLink(value: post) {
                                     PostCardView(
