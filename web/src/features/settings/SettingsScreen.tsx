@@ -380,7 +380,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
         enabled: notifications.quietHours,
         start: notifications.quietStart,
         end: notifications.quietEnd,
-        timezone: oldQuiet.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: typeof oldQuiet.timezone === 'string' ? oldQuiet.timezone : Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       const payload = {
         ...notificationSettingsRow,
