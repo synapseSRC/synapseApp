@@ -19,3 +19,8 @@
 # Keep gRPC classes for network communication
 -keep class io.grpc.** { *; }
 -keep class io.grpc.android.** { *; }
+
+# libsignal-android (org.signal:libsignal-android)
+-keep class org.signal.libsignal.** { *; }
+-keepclassmembers class org.signal.libsignal.** { *; }
+-dontwarn org.signal.libsignal.**

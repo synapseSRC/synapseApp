@@ -5,17 +5,21 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import org.whispersystems.libsignal.IdentityKey
-import org.whispersystems.libsignal.IdentityKeyPair
-import org.whispersystems.libsignal.SignalProtocolAddress
-import org.whispersystems.libsignal.state.IdentityKeyStore
-import org.whispersystems.libsignal.state.PreKeyRecord
-import org.whispersystems.libsignal.state.PreKeyStore
-import org.whispersystems.libsignal.state.SessionRecord
-import org.whispersystems.libsignal.state.SessionStore
-import org.whispersystems.libsignal.state.SignalProtocolStore
-import org.whispersystems.libsignal.state.SignedPreKeyRecord
-import org.whispersystems.libsignal.state.SignedPreKeyStore
+
+// ── libsignal-android (org.signal:libsignal-android) ─────────────────────────
+// Replaces archived org.whispersystems:signal-protocol-android:2.8.x.
+// IdentityKey(ByteArray) — the 'offset' second parameter was removed in new API.
+import org.signal.libsignal.protocol.IdentityKey
+import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.SignalProtocolAddress
+import org.signal.libsignal.protocol.state.IdentityKeyStore
+import org.signal.libsignal.protocol.state.PreKeyRecord
+import org.signal.libsignal.protocol.state.PreKeyStore
+import org.signal.libsignal.protocol.state.SessionRecord
+import org.signal.libsignal.protocol.state.SessionStore
+import org.signal.libsignal.protocol.state.SignalProtocolStore
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord
+import org.signal.libsignal.protocol.state.SignedPreKeyStore
 
 class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
 
@@ -33,7 +37,7 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
         )
     }
 
-    // --- IdentityKeyStore ---
+    // ─── IdentityKeyStore ────────────────────────────────────────────────────
 
     override fun getIdentityKeyPair(): IdentityKeyPair {
         val serialized = prefs.getString("identity_key_pair", null)
@@ -48,7 +52,12 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
     }
 
     override fun saveIdentity(address: SignalProtocolAddress, identityKey: IdentityKey): Boolean {
-        prefs.edit().putString("identity_${address.name}_${address.deviceId}", Base64.encodeToString(identityKey.serialize(), Base64.DEFAULT)).apply()
+        prefs.edit()
+            .putString(
+                "identity_${address.name}_${address.deviceId}",
+                Base64.encodeToString(identityKey.serialize(), Base64.DEFAULT)
+            )
+            .apply()
         return true
     }
 
@@ -59,16 +68,16 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
     ): Boolean {
         // Simple TOFU: Trust On First Use
         val existing = prefs.getString("identity_${address.name}_${address.deviceId}", null)
-        if (existing == null) {
-            return true
-        }
-        val existingKey = IdentityKey(Base64.decode(existing, Base64.DEFAULT), 0)
+        if (existing == null) return true
+        // IdentityKey(bytes) — no offset in libsignal-android
+        val existingKey = IdentityKey(Base64.decode(existing, Base64.DEFAULT))
         return existingKey == identityKey
     }
 
     override fun getIdentity(address: SignalProtocolAddress): IdentityKey? {
-        val existing = prefs.getString("identity_${address.name}_${address.deviceId}", null) ?: return null
-        return IdentityKey(Base64.decode(existing, Base64.DEFAULT), 0)
+        val existing = prefs.getString("identity_${address.name}_${address.deviceId}", null)
+            ?: return null
+        return IdentityKey(Base64.decode(existing, Base64.DEFAULT))
     }
 
     fun storeLocalIdentity(identityKeyPair: IdentityKeyPair, registrationId: Int) {
@@ -78,7 +87,7 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
             .putLong("last_key_rotation", System.currentTimeMillis())
             .apply()
     }
-    
+
     fun hasIdentity(): Boolean {
         return prefs.contains("identity_key_pair") && prefs.contains("local_registration_id")
     }
@@ -89,31 +98,33 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
 
     fun checkKeyRotationNeeded(thresholdDays: Int = 30): Boolean {
         val lastRotation = getLastKeyRotation()
-        if (lastRotation == 0L) return false // Never rotated, use initial keys
-        
+        if (lastRotation == 0L) return false
         val daysSinceRotation = (System.currentTimeMillis() - lastRotation) / (1000 * 60 * 60 * 24)
         return daysSinceRotation >= thresholdDays
     }
 
-    // --- PreKeyStore ---
+    // ─── PreKeyStore ─────────────────────────────────────────────────────────
+
     override fun loadPreKey(preKeyId: Int): PreKeyRecord {
-        val serialized = prefs.getString("prekey_$preKeyId", null) ?: throw IllegalStateException("No prekey found")
+        val serialized = prefs.getString("prekey_$preKeyId", null)
+            ?: throw IllegalStateException("No prekey found")
         return PreKeyRecord(Base64.decode(serialized, Base64.DEFAULT))
     }
 
     override fun storePreKey(preKeyId: Int, record: PreKeyRecord) {
-        prefs.edit().putString("prekey_$preKeyId", Base64.encodeToString(record.serialize(), Base64.DEFAULT)).apply()
+        prefs.edit()
+            .putString("prekey_$preKeyId", Base64.encodeToString(record.serialize(), Base64.DEFAULT))
+            .apply()
     }
 
-    override fun containsPreKey(preKeyId: Int): Boolean {
-        return prefs.contains("prekey_$preKeyId")
-    }
+    override fun containsPreKey(preKeyId: Int): Boolean = prefs.contains("prekey_$preKeyId")
 
     override fun removePreKey(preKeyId: Int) {
         prefs.edit().remove("prekey_$preKeyId").apply()
     }
 
-    // --- SessionStore ---
+    // ─── SessionStore ─────────────────────────────────────────────────────────
+
     override fun loadSession(address: SignalProtocolAddress): SessionRecord {
         val serialized = prefs.getString("session_${address.name}_${address.deviceId}", null)
         return if (serialized != null) {
@@ -123,12 +134,15 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
         }
     }
 
-    override fun getSubDeviceSessions(name: String): List<Int> {
-        return emptyList()
-    }
+    override fun getSubDeviceSessions(name: String): List<Int> = emptyList()
 
     override fun storeSession(address: SignalProtocolAddress, record: SessionRecord) {
-        prefs.edit().putString("session_${address.name}_${address.deviceId}", Base64.encodeToString(record.serialize(), Base64.DEFAULT)).apply()
+        prefs.edit()
+            .putString(
+                "session_${address.name}_${address.deviceId}",
+                Base64.encodeToString(record.serialize(), Base64.DEFAULT)
+            )
+            .apply()
     }
 
     override fun containsSession(address: SignalProtocolAddress): Boolean {
@@ -140,26 +154,27 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
     }
 
     override fun deleteAllSessions(name: String) {
-        // Not perfectly implemented for full deletion, but adequate for simple needs
+        // No-op in this secondary store; primary session management is in AndroidSignalStore.
     }
 
-    // --- SignedPreKeyStore ---
+    // ─── SignedPreKeyStore ────────────────────────────────────────────────────
+
     override fun loadSignedPreKey(signedPreKeyId: Int): SignedPreKeyRecord {
-        val serialized = prefs.getString("signedprekey_$signedPreKeyId", null) ?: throw IllegalStateException("No signed prekey")
+        val serialized = prefs.getString("signedprekey_$signedPreKeyId", null)
+            ?: throw IllegalStateException("No signed prekey")
         return SignedPreKeyRecord(Base64.decode(serialized, Base64.DEFAULT))
     }
 
-    override fun loadSignedPreKeys(): List<SignedPreKeyRecord> {
-        return emptyList() // Naive impl
-    }
+    override fun loadSignedPreKeys(): List<SignedPreKeyRecord> = emptyList()
 
     override fun storeSignedPreKey(signedPreKeyId: Int, record: SignedPreKeyRecord) {
-        prefs.edit().putString("signedprekey_$signedPreKeyId", Base64.encodeToString(record.serialize(), Base64.DEFAULT)).apply()
+        prefs.edit()
+            .putString("signedprekey_$signedPreKeyId", Base64.encodeToString(record.serialize(), Base64.DEFAULT))
+            .apply()
     }
 
-    override fun containsSignedPreKey(signedPreKeyId: Int): Boolean {
-        return prefs.contains("signedprekey_$signedPreKeyId")
-    }
+    override fun containsSignedPreKey(signedPreKeyId: Int): Boolean =
+        prefs.contains("signedprekey_$signedPreKeyId")
 
     override fun removeSignedPreKey(signedPreKeyId: Int) {
         prefs.edit().remove("signedprekey_$signedPreKeyId").apply()

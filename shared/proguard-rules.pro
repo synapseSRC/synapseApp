@@ -30,3 +30,10 @@
 # Ktor
 -keep class io.ktor.** { *; }
 -dontwarn io.ktor.**
+
+# libsignal-android (org.signal:libsignal-android)
+# The library ships native .so files loaded via JNI. Keep the entire public API
+# and JNI bridge so nothing is stripped when minification is enabled.
+-keep class org.signal.libsignal.** { *; }
+-keepclassmembers class org.signal.libsignal.** { *; }
+-dontwarn org.signal.libsignal.**

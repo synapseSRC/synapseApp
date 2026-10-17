@@ -5,17 +5,22 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import org.whispersystems.libsignal.IdentityKey
-import org.whispersystems.libsignal.IdentityKeyPair
-import org.whispersystems.libsignal.SignalProtocolAddress
-import org.whispersystems.libsignal.state.IdentityKeyStore
-import org.whispersystems.libsignal.state.PreKeyRecord
-import org.whispersystems.libsignal.state.PreKeyStore
-import org.whispersystems.libsignal.state.SessionRecord
-import org.whispersystems.libsignal.state.SessionStore
-import org.whispersystems.libsignal.state.SignedPreKeyRecord
-import org.whispersystems.libsignal.state.SignedPreKeyStore
-import org.whispersystems.libsignal.state.SignalProtocolStore
+
+// ── libsignal-android (org.signal:libsignal-android) ─────────────────────────
+// Replaces archived org.whispersystems:signal-protocol-android:2.8.x.
+// Key API change: IdentityKey(ByteArray) — the 'offset' second parameter was removed.
+import org.signal.libsignal.protocol.IdentityKey
+import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.SignalProtocolAddress
+import org.signal.libsignal.protocol.state.IdentityKeyStore
+import org.signal.libsignal.protocol.state.PreKeyRecord
+import org.signal.libsignal.protocol.state.PreKeyStore
+import org.signal.libsignal.protocol.state.SessionRecord
+import org.signal.libsignal.protocol.state.SessionStore
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord
+import org.signal.libsignal.protocol.state.SignedPreKeyStore
+import org.signal.libsignal.protocol.state.SignalProtocolStore
+
 import java.io.IOException
 
 class AndroidSignalStore(context: Context, private val sharedPreferences: SharedPreferences? = null) : SignalProtocolStore {
@@ -34,7 +39,7 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: Exception) {
-             throw RuntimeException("Failed to initialize encrypted storage", e)
+            throw RuntimeException("Failed to initialize encrypted storage", e)
         }
     }
 
@@ -44,6 +49,7 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         }
     }
 
+    // ─── IdentityKeyStore ────────────────────────────────────────────────────
 
     override fun getIdentityKeyPair(): IdentityKeyPair {
         val encoded = prefs.getString("identity_key_pair", null) ?: throw IOException("No identity key pair")
@@ -58,42 +64,58 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         val key = "identity_${address.name}_${address.deviceId}"
         val existing = prefs.getString(key, null)
         if (existing != null) {
-            val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP), 0)
+            // new IdentityKey(bytes) — no offset parameter in libsignal-android
+            val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP))
             if (existingKey != identityKey) {
-                prefs.edit().putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to save identity key")
+                prefs.edit()
+                    .putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
+                    .commitOrThrow("Failed to save identity key")
                 return true
             }
             return false
         }
-        prefs.edit().putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to save identity key")
+        prefs.edit()
+            .putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
+            .commitOrThrow("Failed to save identity key")
         return true
     }
 
-    override fun isTrustedIdentity(address: SignalProtocolAddress, identityKey: IdentityKey, direction: IdentityKeyStore.Direction?): Boolean {
-         val key = "identity_${address.name}_${address.deviceId}"
-         val existing = prefs.getString(key, null)
-         if (existing == null) return true
-         val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP), 0)
-         if (existingKey != identityKey) {
-             prefs.edit().putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to save identity key")
-         }
-         return true
+    override fun isTrustedIdentity(
+        address: SignalProtocolAddress,
+        identityKey: IdentityKey,
+        direction: IdentityKeyStore.Direction?
+    ): Boolean {
+        val key = "identity_${address.name}_${address.deviceId}"
+        val existing = prefs.getString(key, null)
+        if (existing == null) return true
+        val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP))
+        if (existingKey != identityKey) {
+            prefs.edit()
+                .putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
+                .commitOrThrow("Failed to save identity key")
+        }
+        return true
     }
 
     override fun getIdentity(address: SignalProtocolAddress): IdentityKey? {
         val key = "identity_${address.name}_${address.deviceId}"
         val existing = prefs.getString(key, null) ?: return null
-        return IdentityKey(Base64.decode(existing, Base64.NO_WRAP), 0)
+        return IdentityKey(Base64.decode(existing, Base64.NO_WRAP))
     }
 
     fun saveIdentityKeyPair(identityKeyPair: IdentityKeyPair) {
-        prefs.edit().putString("identity_key_pair", Base64.encodeToString(identityKeyPair.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to save identity key pair")
+        prefs.edit()
+            .putString("identity_key_pair", Base64.encodeToString(identityKeyPair.serialize(), Base64.NO_WRAP))
+            .commitOrThrow("Failed to save identity key pair")
     }
 
     fun saveLocalRegistrationId(registrationId: Int) {
-        prefs.edit().putInt("registration_id", registrationId).commitOrThrow("Failed to save registration id")
+        prefs.edit()
+            .putInt("registration_id", registrationId)
+            .commitOrThrow("Failed to save registration id")
     }
 
+    // ─── PreKeyStore ─────────────────────────────────────────────────────────
 
     override fun loadPreKey(preKeyId: Int): PreKeyRecord {
         val encoded = prefs.getString("prekey_$preKeyId", null) ?: throw IOException("No such prekey")
@@ -101,7 +123,9 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     }
 
     override fun storePreKey(preKeyId: Int, record: PreKeyRecord) {
-        prefs.edit().putString("prekey_$preKeyId", Base64.encodeToString(record.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to store prekey")
+        prefs.edit()
+            .putString("prekey_$preKeyId", Base64.encodeToString(record.serialize(), Base64.NO_WRAP))
+            .commitOrThrow("Failed to store prekey")
     }
 
     override fun containsPreKey(preKeyId: Int): Boolean {
@@ -109,14 +133,18 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     }
 
     override fun removePreKey(preKeyId: Int) {
-        prefs.edit().remove("prekey_$preKeyId").commitOrThrow("Failed to remove prekey")
+        prefs.edit()
+            .remove("prekey_$preKeyId")
+            .commitOrThrow("Failed to remove prekey")
     }
 
+    // ─── SignedPreKeyStore ────────────────────────────────────────────────────
 
     private val signedPreKeyIdsKey = "signed_prekey_ids"
 
     override fun loadSignedPreKey(signedPreKeyId: Int): SignedPreKeyRecord {
-        val encoded = prefs.getString("signed_prekey_$signedPreKeyId", null) ?: throw IOException("No such signed prekey")
+        val encoded = prefs.getString("signed_prekey_$signedPreKeyId", null)
+            ?: throw IOException("No such signed prekey")
         return SignedPreKeyRecord(Base64.decode(encoded, Base64.NO_WRAP))
     }
 
@@ -125,17 +153,16 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         val list = mutableListOf<SignedPreKeyRecord>()
         for (idStr in ids) {
             try {
-                val id = idStr.toInt()
-                list.add(loadSignedPreKey(id))
-            } catch (e: Exception) {
-
-            }
+                list.add(loadSignedPreKey(idStr.toInt()))
+            } catch (_: Exception) { /* skip corrupt entries */ }
         }
         return list
     }
 
     override fun storeSignedPreKey(signedPreKeyId: Int, record: SignedPreKeyRecord) {
-        prefs.edit().putString("signed_prekey_$signedPreKeyId", Base64.encodeToString(record.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to store signed prekey")
+        prefs.edit()
+            .putString("signed_prekey_$signedPreKeyId", Base64.encodeToString(record.serialize(), Base64.NO_WRAP))
+            .commitOrThrow("Failed to store signed prekey")
 
         val ids = prefs.getStringSet(signedPreKeyIdsKey, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
         ids.add(signedPreKeyId.toString())
@@ -147,13 +174,16 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     }
 
     override fun removeSignedPreKey(signedPreKeyId: Int) {
-         prefs.edit().remove("signed_prekey_$signedPreKeyId").commitOrThrow("Failed to remove signed prekey")
+        prefs.edit()
+            .remove("signed_prekey_$signedPreKeyId")
+            .commitOrThrow("Failed to remove signed prekey")
 
-         val ids = prefs.getStringSet(signedPreKeyIdsKey, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-         ids.remove(signedPreKeyId.toString())
-         prefs.edit().putStringSet(signedPreKeyIdsKey, ids).commitOrThrow("Failed to update signed prekey ids")
+        val ids = prefs.getStringSet(signedPreKeyIdsKey, mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+        ids.remove(signedPreKeyId.toString())
+        prefs.edit().putStringSet(signedPreKeyIdsKey, ids).commitOrThrow("Failed to update signed prekey ids")
     }
 
+    // ─── SessionStore ─────────────────────────────────────────────────────────
 
     override fun loadSession(address: SignalProtocolAddress): SessionRecord {
         val key = "session_${address.name}_${address.deviceId}"
@@ -171,12 +201,14 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
 
     override fun storeSession(address: SignalProtocolAddress, record: SessionRecord) {
         val key = "session_${address.name}_${address.deviceId}"
-        prefs.edit().putString(key, Base64.encodeToString(record.serialize(), Base64.NO_WRAP)).commitOrThrow("Failed to store session")
+        prefs.edit()
+            .putString(key, Base64.encodeToString(record.serialize(), Base64.NO_WRAP))
+            .commitOrThrow("Failed to store session")
     }
 
     override fun containsSession(address: SignalProtocolAddress): Boolean {
-         val key = "session_${address.name}_${address.deviceId}"
-         return prefs.contains(key)
+        val key = "session_${address.name}_${address.deviceId}"
+        return prefs.contains(key)
     }
 
     override fun deleteSession(address: SignalProtocolAddress) {
@@ -204,7 +236,9 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
                     val lastUnderscoreIndex = key.lastIndexOf('_')
                     if (lastUnderscoreIndex > prefix.length) {
                         val storedNameLength = lastUnderscoreIndex - prefix.length
-                        if (storedNameLength == name.length && key.regionMatches(prefix.length, name, 0, storedNameLength)) {
+                        if (storedNameLength == name.length &&
+                            key.regionMatches(prefix.length, name, 0, storedNameLength)
+                        ) {
                             editor.remove(key)
                             deletedCount++
                         }
@@ -218,16 +252,13 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         }
     }
 
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    fun getLastSignedPreKeyId(): Int {
-        return prefs.getInt("last_signed_prekey_id", 0)
-    }
+    fun getLastSignedPreKeyId(): Int = prefs.getInt("last_signed_prekey_id", 0)
 
     fun setLastSignedPreKeyId(id: Int) {
         prefs.edit().putInt("last_signed_prekey_id", id).commitOrThrow("Failed to save last signed prekey id")
     }
-
-    // --- Convenience helpers used by AndroidSignalProtocolManager ---
 
     @get:JvmName("identityKeyPairHelper")
     val identityKeyPair: IdentityKeyPair
@@ -240,7 +271,9 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     fun storeLocalIdentity(identityKeyPair: IdentityKeyPair, registrationId: Int) {
         saveIdentityKeyPair(identityKeyPair)
         saveLocalRegistrationId(registrationId)
-        prefs.edit().putLong("last_key_rotation", System.currentTimeMillis()).commitOrThrow("Failed to save key rotation timestamp")
+        prefs.edit()
+            .putLong("last_key_rotation", System.currentTimeMillis())
+            .commitOrThrow("Failed to save key rotation timestamp")
     }
 
     fun checkKeyRotationNeeded(thresholdDays: Int = 30): Boolean {
