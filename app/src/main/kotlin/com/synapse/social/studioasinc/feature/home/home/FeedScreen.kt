@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.home
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -71,7 +73,7 @@ fun FeedScreen(
     onStoryClick: (String, List<String>) -> Unit = { _, _ -> },
     onAddStoryClick: () -> Unit = {},
     onCreatePostClick: () -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(Spacing.space0)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val atmosphereState = LocalUiAtmosphere.current

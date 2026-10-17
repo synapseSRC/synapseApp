@@ -23,7 +23,7 @@ struct HomeFeedView: View {
                     }
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 0) {
+                        LazyVStack(spacing: AppTheme.Spacing.space0) {
                             ForEach(viewModel.posts) { post in
                                 NavigationLink(destination: PostDetailView(post: post)) {
                                     PostCardView(

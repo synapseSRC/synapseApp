@@ -43,7 +43,7 @@ fun OdometerTimerText(
             text = ":",
             style = style,
             color = color,
-            modifier = Modifier.padding(horizontal = 1.dp)
+            modifier = Modifier.padding(horizontal = 1.dp) // optical separator inset; retained as a component-specific exception
         )
 
         // Seconds - tens digit

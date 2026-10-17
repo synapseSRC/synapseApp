@@ -36,10 +36,23 @@ struct AppTheme {
         }
     }
 
+    /// CGFloat adapters over Synapse's custom shared scale; these are not M3 spacing tokens.
     struct Spacing {
-        static let small = CGFloat(shared.SynapseTheme.shared.SpacingSmall)
-        static let medium = CGFloat(shared.SynapseTheme.shared.SpacingMedium)
-        static let large = CGFloat(shared.SynapseTheme.shared.SpacingLarge)
+        static let space0 = CGFloat(shared.SynapseSpacing.shared.space0)
+        static let space2 = CGFloat(shared.SynapseSpacing.shared.space2)
+        static let space4 = CGFloat(shared.SynapseSpacing.shared.space4)
+        static let space6 = CGFloat(shared.SynapseSpacing.shared.space6)
+        static let space8 = CGFloat(shared.SynapseSpacing.shared.space8)
+        static let space10 = CGFloat(shared.SynapseSpacing.shared.space10)
+        static let space12 = CGFloat(shared.SynapseSpacing.shared.space12)
+        static let space16 = CGFloat(shared.SynapseSpacing.shared.space16)
+        static let space20 = CGFloat(shared.SynapseSpacing.shared.space20)
+        static let space24 = CGFloat(shared.SynapseSpacing.shared.space24)
+        static let space28 = CGFloat(shared.SynapseSpacing.shared.space28)
+        static let space32 = CGFloat(shared.SynapseSpacing.shared.space32)
+        static let space40 = CGFloat(shared.SynapseSpacing.shared.space40)
+        static let space48 = CGFloat(shared.SynapseSpacing.shared.space48)
+        static let space64 = CGFloat(shared.SynapseSpacing.shared.space64)
     }
 
     struct Fonts {

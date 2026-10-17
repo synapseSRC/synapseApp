@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -82,7 +84,7 @@ fun ScheduledPostsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
+                            .padding(Spacing.space24),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -91,7 +93,7 @@ fun ScheduledPostsScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                         Button(onClick = { viewModel.loadScheduledPosts() }) {
                             Text(stringResource(R.string.retry))
                         }
@@ -102,7 +104,7 @@ fun ScheduledPostsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(32.dp),
+                            .padding(Spacing.space32),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -112,20 +114,20 @@ fun ScheduledPostsScreen(
                             modifier = Modifier.size(64.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                         Text(
                             text = stringResource(R.string.scheduled_posts_empty),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
                         Text(
                             text = stringResource(R.string.scheduled_posts_empty_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier.padding(horizontal = Spacing.space16)
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(Spacing.space24))
                         Button(
                             onClick = {
                                 context.startActivity(Intent(context, CreatePostActivity::class.java))
@@ -139,8 +141,8 @@ fun ScheduledPostsScreen(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding = PaddingValues(Spacing.space16),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.space12)
                     ) {
                         items(uiState.posts, key = { it.id }) { scheduledPost ->
                             ScheduledPostCard(
@@ -216,7 +218,7 @@ private fun ScheduledPostCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(Spacing.space16)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -272,7 +274,7 @@ private fun ScheduledPostCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             // Post content preview
             val text = scheduledPost.postRequest.postText
@@ -283,7 +285,7 @@ private fun ScheduledPostCard(
                     maxLines = 4,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.space8))
             }
 
             if (scheduledPost.postRequest.mediaItems.isNotEmpty()) {
@@ -292,7 +294,7 @@ private fun ScheduledPostCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.space4))
             }
 
             scheduledPost.postRequest.pollQuestion?.let { pollQ ->
@@ -301,11 +303,11 @@ private fun ScheduledPostCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.space4))
             }
 
             scheduledPost.errorMessage?.let { err ->
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer,
                     shape = RoundedCornerShape(8.dp),
@@ -315,12 +317,12 @@ private fun ScheduledPostCard(
                         text = "Error: $err",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier.padding(Spacing.space8)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.space12))
 
             // Scheduled time label
             val formattedTime = remember(scheduledPost.scheduledAt) {
@@ -362,7 +364,7 @@ private fun StatusBadge(status: String) {
             style = MaterialTheme.typography.labelSmall,
             color = textColor,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = Spacing.space10, vertical = Spacing.space4)
         )
     }
 }

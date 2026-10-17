@@ -1,23 +1,33 @@
 package com.synapse.social.studioasinc.shared.theme
 
+/**
+ * Synapse's custom shared spacing scale. These are project tokens, not Material 3 spacing tokens.
+ */
 object SynapseSpacing {
-    const val None = 0f
-    const val Tiny = 2f
-    const val ExtraSmall = 4f
-    const val ExtraSmallMedium = 6f
-    const val Small = 8f
-    const val SmallPlus = 10f
-    const val SmallMedium = 12f
-    const val Medium = 16f
-    const val MediumLarge = 20f
-    const val Large = 24f
-    const val ExtraLarge = 32f
-    const val Huge = 48f
-    const val ButtonHeight = 40f
-    const val NavBarHeight = 60f
+    const val space0 = 0f
+    const val space2 = 2f
+    const val space4 = 4f
+    // Retained for active 6dp gaps/padding.
+    const val space6 = 6f
+    const val space8 = 8f
+    // Retained for active 10dp gaps/padding.
+    const val space10 = 10f
+    const val space12 = 12f
+    const val space16 = 16f
+    const val space20 = 20f
+    const val space24 = 24f
+    // Existing media-stack reserve and media-viewer inset.
+    const val space28 = 28f
+    const val space32 = 32f
+    // Preserves current iOS layout gaps/padding.
+    const val space40 = 40f
+    const val space48 = 48f
+    // Existing maximum comment indentation.
+    const val space64 = 64f
 }
 
 object SynapseSizes {
+    const val IconExtraSmall = 8f
     const val IconSmall = 12f
     const val IconSemiSmall = 14f
     const val IconSemiMedium = 16f
@@ -29,6 +39,7 @@ object SynapseSizes {
     const val IconMassive = 40f
     const val IconGiant = 48f
 
+    const val AvatarCompact = 32f
     const val AvatarTiny = 28f
     const val AvatarSmall = 36f
     const val AvatarMedium = 40f
@@ -37,6 +48,7 @@ object SynapseSizes {
     const val AvatarExtraLarge = 80f
     const val AvatarHuge = 110f
 
+    const val StatusDotSmall = 8f
     const val BorderThin = 1f
     const val BorderHairline = 0.5f
     const val BorderDefault = 2f
@@ -50,6 +62,10 @@ object SynapseSizes {
     const val CornerMassive = 28f
     const val CornerSharp = 2f
 
+    // Component dimensions are kept separate from the spacing scale.
+    const val ButtonHeight = 40f
+    const val ButtonHeightLarge = 48f
+    const val NavBarHeight = 60f
     const val HeightSmall = 24f
     const val HeightButtonSmall = 28f
     const val HeightMedium = 40f
@@ -76,15 +92,15 @@ object SynapseSizes {
 
     const val ShimmerTextSmall = 14f
     const val ShimmerTextMedium = 28f
+    const val ShimmerWidthTiny = 32f
+    const val ShimmerWidthExtraSmall = 40f
+    const val ShimmerActionWidth = 48f
     const val ShimmerWidthSmall = 60f
     const val ShimmerWidthSmallMedium = 80f
     const val ShimmerWidthMedium = 100f
     const val ShimmerWidthLarge = 120f
     const val ShimmerWidthExtraLarge = 150f
 
-    const val AvatarHugeOffset = 60f
-    const val AvatarHugeHalfOffset = 55f
-    const val CommentIndent = 68f
 
     const val SendButton = 44f
     const val SendButtonCompact = 36f
