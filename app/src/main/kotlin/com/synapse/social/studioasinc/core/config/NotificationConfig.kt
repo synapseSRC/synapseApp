@@ -15,5 +15,5 @@ object NotificationConfig {
     const val TAG_MESSAGES = "messages"
     const val TAG_GLOBAL_ENABLED = "global_enabled"
 
-    const val ENABLE_DEBUG_LOGGING = true
+    val ENABLE_DEBUG_LOGGING = BuildConfig.DEBUG
 }
