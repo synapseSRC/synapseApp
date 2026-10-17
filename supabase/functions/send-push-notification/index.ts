@@ -66,12 +66,20 @@ function typePreference(type: string): { section: string; key: string; legacy: s
     NEW_MESSAGE: { section: "social", key: "messages", legacy: "messages_enabled" },
     NEW_LIKE_POST: { section: "social", key: "likes", legacy: "likes_enabled" },
     NEW_LIKE_COMMENT: { section: "social", key: "likes", legacy: "likes_enabled" },
+    LIKE_POST: { section: "social", key: "likes", legacy: "likes_enabled" },
+    LIKE_COMMENT: { section: "social", key: "likes", legacy: "likes_enabled" },
+    REACTION: { section: "social", key: "likes", legacy: "likes_enabled" },
+    NEW_REACTION: { section: "social", key: "likes", legacy: "likes_enabled" },
     NEW_COMMENT: { section: "social", key: "comments", legacy: "comments_enabled" },
+    COMMENT: { section: "social", key: "comments", legacy: "comments_enabled" },
+    REPLY: { section: "social", key: "replies", legacy: "replies_enabled" },
     NEW_REPLY: { section: "social", key: "replies", legacy: "replies_enabled" },
     MENTION: { section: "social", key: "mentions", legacy: "mentions_enabled" },
     NEW_FOLLOWER: { section: "social", key: "follows", legacy: "follows_enabled" },
+    FOLLOW: { section: "social", key: "follows", legacy: "follows_enabled" },
     FOLLOW_REQUEST: { section: "social", key: "follows", legacy: "follows_enabled" },
     NEW_POST: { section: "content", key: "new_posts", legacy: "new_posts_enabled" },
+    POST: { section: "content", key: "new_posts", legacy: "new_posts_enabled" },
     SHARE: { section: "content", key: "shares", legacy: "shares_enabled" },
   }
   return map[type] ?? null
@@ -144,11 +152,11 @@ async function shouldSuppressForPreferences(
   }
 
   const setting = typePreference(type)
-  if (setting) {
-    const settings = isRecord(prefs.settings) ? prefs.settings : {}
-    const section = isRecord(settings[setting.section]) ? settings[setting.section] as JsonRecord : {}
-    if (section[setting.key] === false || settings[setting.legacy] === false) return true
-  }
+  // Unknown notification types must not bypass a saved category preference.
+  if (!setting) return true
+  const settings = isRecord(prefs.settings) ? prefs.settings : {}
+  const section = isRecord(settings[setting.section]) ? settings[setting.section] as JsonRecord : {}
+  if (section[setting.key] === false || settings[setting.legacy] === false) return true
 
   return isInsideQuietHours(prefs.quiet_hours)
 }
