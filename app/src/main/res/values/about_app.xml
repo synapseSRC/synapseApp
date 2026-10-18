@@ -4,12 +4,12 @@
     <string name="about_back">Back</string>
     <string name="about_share">Share</string>
     <string name="about_share_chooser">Share Synapse</string>
-    <string name="about_share_message">Synapse %1$s — get the app and see what&apos;s new.</string>
+    <string name="about_share_message">Synapse %1$s — get the app and see what\'s new.</string>
     <string name="about_product_name">Synapse</string>
     <string name="about_version_build">Version %1$s (Build %2$s)</string>
     <string name="about_version_unknown">Unknown</string>
     <string name="about_version_copied">Version copied</string>
-    <string name="about_whats_new_title">What&apos;s new</string>
+    <string name="about_whats_new_title">What\'s new</string>
     <string name="about_whats_new_supporting">Recent updates and release notes</string>
     <string name="about_licenses_title">Open source licenses</string>
     <string name="about_licenses_supporting">Third-party software notices</string>
@@ -22,14 +22,14 @@
     <string name="about_update_title">Check for updates</string>
     <string name="about_update_latest">Latest version is installed</string>
     <string name="about_update_checking">Checking for updates…</string>
-    <string name="about_update_unavailable">Couldn&apos;t check for updates</string>
+    <string name="about_update_unavailable">Couldn\'t check for updates</string>
     <string name="about_update_available">Version %1$s is available</string>
     <string name="about_rate_title">Rate on Google Play</string>
     <string name="about_rate_supporting">Support development with a review</string>
     <string name="about_play_store_url">https://play.google.com/store/apps/details?id=%1$s</string>
     <string name="about_footer_copyright">© 2026 StudioAs Inc. All rights reserved.</string>
 
-    <string name="about_whats_new_screen_title">What&apos;s New</string>
+    <string name="about_whats_new_screen_title">What\'s New</string>
     <string name="about_release_100_title">Version 1.0.0 (Latest)</string>
     <string name="about_release_100_description">Reduced background memory footprint and instant offline note synchronization.</string>
     <string name="about_release_310_title">Version 3.1.0</string>
@@ -71,7 +71,7 @@
     <string name="about_author_airbnb">Airbnb, Inc.</string>
 
     <string name="about_feedback_screen_title">Feedback</string>
-    <string name="about_feedback_heading">We&apos;d love to hear from you</string>
+    <string name="about_feedback_heading">We\'d love to hear from you</string>
     <string name="about_feedback_category_label">Feedback category</string>
     <string name="about_feedback_category_feature">Feature suggestion</string>
     <string name="about_feedback_category_bug">Bug report</string>
