@@ -8,6 +8,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 class FeedbackRepositoryImpl @Inject constructor() : FeedbackRepository {
@@ -23,7 +24,7 @@ class FeedbackRepositoryImpl @Inject constructor() : FeedbackRepository {
         @SerialName("device_info") val deviceInfo: String
     )
 
-    override suspend fun submitFeedback(submission: FeedbackSubmission): Result<Unit> = runCatching {
+    override suspend fun submitFeedback(submission: FeedbackSubmission): Result<Unit> = try {
         check(SupabaseClient.isConfigured()) { "Feedback service is not configured" }
         check(SupabaseClient.getUrl().startsWith("https://", ignoreCase = true)) {
             "Feedback submission requires encrypted HTTPS transport"
@@ -47,7 +48,11 @@ class FeedbackRepositoryImpl @Inject constructor() : FeedbackRepository {
                 )
             )
         Log.d(TAG, "Feedback submitted: category=" + submission.category)
-        Unit
+        Result.success(Unit)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Result.failure(error)
     }
 
     companion object {

@@ -10,6 +10,7 @@ import com.synapse.social.studioasinc.domain.usecase.about.CheckForUpdatesUseCas
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,16 +45,17 @@ class AboutSupportViewModel @Inject constructor(
 
     private fun loadAppInfo() {
         viewModelScope.launch {
-            runCatching { readAppInfo() }
-                .onSuccess { (version, build) ->
-                    _appVersion.value = version
-                    _buildNumber.value = build
-                }
-                .onFailure {
-                    val unknown = getApplication<Application>().getString(R.string.about_version_unknown)
-                    _appVersion.value = unknown
-                    _buildNumber.value = unknown
-                }
+            try {
+                val (version, build) = readAppInfo()
+                _appVersion.value = version
+                _buildNumber.value = build
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                val unknown = getApplication<Application>().getString(R.string.about_version_unknown)
+                _appVersion.value = unknown
+                _buildNumber.value = unknown
+            }
         }
     }
 

@@ -19,7 +19,7 @@ class ValidateFeedbackUseCase @Inject constructor() {
         val local = parts[0]
         val domain = parts[1]
         return local.isNotBlank() && domain.contains('.') &&
-            !local.any(Char::isWhitespace) && !domain.any(Char::isWhitespace) &&
+            !local.any { it.isWhitespace() } && !domain.any { it.isWhitespace() } &&
             !domain.startsWith('.') && !domain.endsWith('.')
     }
 }
