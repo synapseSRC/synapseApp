@@ -10,7 +10,6 @@ import com.synapse.social.studioasinc.domain.usecase.about.CheckForUpdatesUseCas
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

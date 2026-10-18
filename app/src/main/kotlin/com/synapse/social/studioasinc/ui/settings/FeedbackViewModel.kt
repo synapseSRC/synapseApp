@@ -48,16 +48,13 @@ class FeedbackViewModel @Inject constructor(
         if (_submissionState.value == FeedbackSubmissionState.Sending) return
         val cleanedEmail = email.trim()
         val validation = validateFeedbackUseCase(cleanedEmail, description)
-        val issue = (validation.exceptionOrNull() as? FeedbackValidationException)?.issue
-        if (issue != null) {
-            _submissionState.value = when (issue) {
+        val validationError = validation.exceptionOrNull()
+        if (validationError != null) {
+            _submissionState.value = when ((validationError as? FeedbackValidationException)?.issue) {
                 FeedbackValidationIssue.DescriptionRequired -> FeedbackSubmissionState.InvalidDescription
                 FeedbackValidationIssue.InvalidEmail -> FeedbackSubmissionState.InvalidEmail
+                null -> FeedbackSubmissionState.Failed
             }
-            return
-        }
-        if (validation.isFailure) {
-            _submissionState.value = FeedbackSubmissionState.Failed
             return
         }
 
