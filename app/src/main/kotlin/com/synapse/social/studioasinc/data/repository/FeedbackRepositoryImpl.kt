@@ -31,6 +31,10 @@ class FeedbackRepositoryImpl {
         buildNumber: String,
         deviceInfo: String
     ): Result<Unit> = runCatching {
+        check(SupabaseClient.isConfigured()) { "Feedback service is not configured" }
+        check(SupabaseClient.getUrl().startsWith("https://", ignoreCase = true)) {
+            "Feedback submission requires encrypted HTTPS transport"
+        }
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Result.failure(Exception("Not authenticated"))
 

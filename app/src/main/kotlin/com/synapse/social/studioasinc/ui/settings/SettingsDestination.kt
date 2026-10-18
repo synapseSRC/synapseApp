@@ -38,6 +38,12 @@ sealed class SettingsDestination(val route: String) {
 
     object About : SettingsDestination(ROUTE_ABOUT)
 
+    object WhatsNew : SettingsDestination(ROUTE_WHATS_NEW)
+
+    object Feedback : SettingsDestination(ROUTE_FEEDBACK)
+
+    object AboutEmpty : SettingsDestination(ROUTE_ABOUT_EMPTY)
+
 
 
     object StorageProvider : SettingsDestination(ROUTE_STORAGE_PROVIDER)
@@ -134,6 +140,9 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_STORAGE_PROVIDER = "settings_storage_provider"
         const val ROUTE_LANGUAGE = "settings_language"
         const val ROUTE_ABOUT = "settings_about"
+        const val ROUTE_WHATS_NEW = "settings_about_whats_new"
+        const val ROUTE_FEEDBACK = "settings_about_feedback"
+        const val ROUTE_ABOUT_EMPTY = "settings_about_empty"
         const val ROUTE_LICENSES = "settings_licenses"
         const val ROUTE_SYNAPSE_PLUS = "settings_synapse_plus"
         const val ROUTE_AVATAR = "settings_avatar"
@@ -182,6 +191,9 @@ sealed class SettingsDestination(val route: String) {
             StorageProvider,
             Language,
             About,
+            WhatsNew,
+            Feedback,
+            AboutEmpty,
             Licenses,
             SynapsePlus,
             Avatar,
@@ -225,6 +237,9 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_STORAGE_PROVIDER -> StorageProvider
             ROUTE_LANGUAGE -> Language
             ROUTE_ABOUT -> About
+            ROUTE_WHATS_NEW -> WhatsNew
+            ROUTE_FEEDBACK -> Feedback
+            ROUTE_ABOUT_EMPTY -> AboutEmpty
             ROUTE_LICENSES -> Licenses
             ROUTE_SYNAPSE_PLUS -> SynapsePlus
             ROUTE_AVATAR -> Avatar

@@ -1,502 +1,402 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Launch
+import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Policy
+import androidx.compose.material.icons.filled.RateReview
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
-import com.synapse.social.studioasinc.core.util.ImageLoader
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
-
-private object AboutSupportConstants {
-    val URL_GITHUB_BUG_REPORT = SynapseConfig.GITHUB_BUG_REPORT_URL
-    val URL_APP_WEBSITE = SynapseConfig.APP_WEBSITE_URL
-    val URL_GITHUB_REPO = SynapseConfig.GITHUB_BUG_REPORT_URL.substringBefore("/issues")
-    val URL_DONATE = "https://buymeacoffee.com"
-    val URL_DISCORD = "https://discord.gg"
-    val URL_TELEGRAM = "https://t.me"
-}
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutSupportScreen(
     onBackClick: () -> Unit,
     onNavigateToLicenses: () -> Unit = {},
+    onNavigateToWhatsNew: () -> Unit = {},
+    onNavigateToFeedback: () -> Unit = {},
     viewModel: AboutSupportViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
+    val clipboard = LocalClipboardManager.current
     val appVersion by viewModel.appVersion.collectAsState()
     val buildNumber by viewModel.buildNumber.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val message by viewModel.message.collectAsState()
+    val updateStatus by viewModel.updateStatus.collectAsState()
+    val shownVersion = appVersion.substringBefore('-').ifBlank { context.getString(R.string.about_version_unknown) }
+    val shownBuild = buildNumber.ifBlank { context.getString(R.string.about_version_unknown) }
+    val versionLabel = stringResource(R.string.about_version_build, shownVersion, shownBuild)
 
+    // Keep the status truthful: the row is checked on entry and remains manually refreshable.
+    LaunchedEffect(viewModel) { viewModel.checkForUpdates() }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(error) {
-        error?.let {
-            snackbarHostState.showSnackbar(
-                message = it,
-                duration = SnackbarDuration.Short
-            )
-            viewModel.clearError()
-        }
-    }
-
-    LaunchedEffect(message) {
-        message?.let {
-            snackbarHostState.showSnackbar(
-                message = it,
-                duration = SnackbarDuration.Short
-            )
-            viewModel.clearMessage()
-        }
-    }
-
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MediumTopAppBar(
-                title = { Text(stringResource(R.string.settings_about_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.settings_back_button),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+    AboutAppTheme {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.surface,
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.about_app_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.about_back)
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                val share = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        context.getString(R.string.about_share_message, versionLabel)
+                                    )
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(share, context.getString(R.string.about_share_chooser))
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Share,
+                                contentDescription = stringResource(R.string.about_share)
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+        ) { insets ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(insets),
+                contentPadding = PaddingValues(
+                    start = Spacing.space16,
+                    top = Spacing.space16,
+                    end = Spacing.space16,
+                    bottom = Spacing.space24
                 ),
-                scrollBehavior = scrollBehavior
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
-            contentPadding = PaddingValues(vertical = Spacing.space16)
-        ) {
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
+            ) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space2),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = { IntentUtils.openUrl(context, AboutSupportViewModel.APP_WEBSITE_URL) },
+                            modifier = Modifier.height(dimensionResource(R.dimen.about_connected_button_height)),
+                            shape = RoundedCornerShape(
+                                topStart = 50.dp,
+                                bottomStart = 50.dp,
+                                topEnd = dimensionResource(R.dimen.about_list_inner_corner),
+                                bottomEnd = dimensionResource(R.dimen.about_list_inner_corner)
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            contentPadding = PaddingValues(horizontal = Spacing.space16)
+                        ) {
+                            Text(stringResource(R.string.about_product_name))
+                        }
+                        Button(
+                            onClick = {
+                                clipboard.setText(AnnotatedString(versionLabel))
+                                Toast.makeText(context, R.string.about_version_copied, Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.height(dimensionResource(R.dimen.about_connected_button_height)),
+                            shape = RoundedCornerShape(
+                                topStart = dimensionResource(R.dimen.about_list_inner_corner),
+                                bottomStart = dimensionResource(R.dimen.about_list_inner_corner),
+                                topEnd = 50.dp,
+                                bottomEnd = 50.dp
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            contentPadding = PaddingValues(horizontal = Spacing.space16)
+                        ) {
+                            Text(stringResource(R.string.about_version_build, shownVersion, shownBuild))
+                        }
+                    }
+                }
 
-            item {
-                AppInfoHeaderCard(
-                    appVersion = appVersion,
-                    buildNumber = if (buildNumber.isNotBlank()) buildNumber else "UNIVERSAL"
-                )
-            }
-
-
-            item {
-                LeadDeveloperCard(
-                    onWebsiteClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_APP_WEBSITE) },
-                    onGithubClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_GITHUB_REPO) },
-                    onSocialClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_APP_WEBSITE) },
-                    onCoffeeClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_DONATE) }
-                )
-            }
-
-
-            item {
-                SettingsSection(title = "Collaborators") {
-                    CollaboratorItem(
-                        name = "Adriel O'Connel",
-                        role = "Collaborator",
-                        avatarRes = R.drawable.ic_launcher_foreground,
-                        onCoffeeClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_DONATE) },
-                        onGithubClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_GITHUB_REPO) },
-                        position = SettingsItemPosition.Top
-                    )
-                    CollaboratorItem(
-                        name = "Nyx",
-                        role = "Collaborator",
-                        avatarRes = R.drawable.ic_launcher_foreground,
-                        onCoffeeClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_DONATE) },
-                        onGithubClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_GITHUB_REPO) },
-                        position = SettingsItemPosition.Bottom
+                item {
+                    AboutListGroup(
+                        items = listOf(
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_whats_new_title),
+                                supportingText = stringResource(R.string.about_whats_new_supporting),
+                                leadingIcon = Icons.Filled.NewReleases,
+                                trailingIcon = Icons.Filled.ChevronRight,
+                                onClick = onNavigateToWhatsNew
+                            ),
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_licenses_title),
+                                supportingText = stringResource(R.string.about_licenses_supporting),
+                                leadingIcon = Icons.Filled.Code,
+                                trailingIcon = Icons.Filled.ChevronRight,
+                                onClick = onNavigateToLicenses
+                            ),
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_feedback_title),
+                                supportingText = stringResource(R.string.about_feedback_supporting),
+                                leadingIcon = Icons.Filled.RateReview,
+                                trailingIcon = Icons.Filled.ChevronRight,
+                                onClick = onNavigateToFeedback
+                            ),
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_privacy_title),
+                                supportingText = stringResource(R.string.about_privacy_supporting),
+                                leadingIcon = Icons.Filled.Policy,
+                                trailingIcon = Icons.Filled.OpenInNew,
+                                onClick = { IntentUtils.openUrl(context, viewModel.getPrivacyPolicyUrl()) }
+                            ),
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_terms_title),
+                                supportingText = stringResource(R.string.about_terms_supporting),
+                                leadingIcon = Icons.Filled.Description,
+                                trailingIcon = Icons.Filled.OpenInNew,
+                                onClick = { IntentUtils.openUrl(context, viewModel.getTermsOfServiceUrl()) }
+                            )
+                        )
                     )
                 }
-            }
 
-
-            item {
-                SettingsSection(title = "Community & Info") {
-                    SettingsClickableItem(
-                        title = "Discord server",
-                        imageVector = Icons.Filled.Forum,
-                        onClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_DISCORD) },
-                        position = SettingsItemPosition.Top
-                    )
-                    SettingsClickableItem(
-                        title = "Telegram channel",
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        onClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_TELEGRAM) },
-                        position = SettingsItemPosition.Middle
-                    )
-                    SettingsClickableItem(
-                        title = "View repository",
-                        imageVector = Icons.Filled.Code,
-                        onClick = { IntentUtils.openUrl(context, AboutSupportConstants.URL_GITHUB_REPO) },
-                        position = SettingsItemPosition.Middle
-                    )
-                    SettingsNavigationItem(
-                        title = "GNU General Public License v3.0",
-                        subtitle = "Free, open-source software. You may use, study, share, and improve it",
-                        imageVector = Icons.Filled.Info,
-                        onClick = {
-                            viewModel.navigateToLicenses()
-                            onNavigateToLicenses()
-                        },
-                        position = SettingsItemPosition.Bottom
+                item {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = Spacing.space16),
+                        thickness = dimensionResource(R.dimen.about_divider_thickness),
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
                 }
-            }
 
+                item {
+                    AboutListGroup(
+                        items = listOf(
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_update_title),
+                                supportingText = updateStatus.supportingText(context),
+                                leadingIcon = Icons.Filled.SystemUpdate,
+                                trailingIcon = if (updateStatus is AboutUpdateStatus.UpToDate) {
+                                    Icons.Filled.Done
+                                } else {
+                                    Icons.Filled.ChevronRight
+                                },
+                                onClick = {
+                                    val state = updateStatus
+                                    if (state is AboutUpdateStatus.UpdateAvailable) {
+                                        IntentUtils.openUrl(context, state.releaseUrl)
+                                    } else {
+                                        viewModel.checkForUpdates()
+                                    }
+                                }
+                            ),
+                            AboutLinkItem(
+                                title = stringResource(R.string.about_rate_title),
+                                supportingText = stringResource(R.string.about_rate_supporting),
+                                leadingIcon = Icons.Filled.Star,
+                                trailingIcon = Icons.Filled.Launch,
+                                onClick = {
+                                    IntentUtils.openUrl(
+                                        context,
+                                        context.getString(R.string.about_play_store_url, context.packageName)
+                                    )
+                                }
+                            )
+                        )
+                    )
+                }
 
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = Spacing.space16),
-                    contentAlignment = Alignment.Center
-                ) {
+                item {
                     Text(
-                        text = "This project stands with Palestine 🇵🇸",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        text = stringResource(R.string.about_footer_copyright),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.space4),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.End
                     )
                 }
             }
         }
     }
-
 }
 
+private fun AboutUpdateStatus.supportingText(context: android.content.Context): String = when (this) {
+    AboutUpdateStatus.Idle -> context.getString(R.string.about_update_latest)
+    AboutUpdateStatus.Checking -> context.getString(R.string.about_update_checking)
+    AboutUpdateStatus.UpToDate -> context.getString(R.string.about_update_latest)
+    AboutUpdateStatus.Unavailable -> context.getString(R.string.about_update_unavailable)
+    is AboutUpdateStatus.UpdateAvailable -> context.getString(R.string.about_update_available, version)
+}
 
+internal data class AboutLinkItem(
+    val title: String,
+    val supportingText: String,
+    val leadingIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    val trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    val onClick: (() -> Unit)? = null
+)
 
 @Composable
-private fun AppInfoHeaderCard(
-    appVersion: String,
-    buildNumber: String
+internal fun AboutListGroup(items: List<AboutLinkItem>) {
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.about_list_item_gap))) {
+        items.forEachIndexed { index, item ->
+            AboutListItem(
+                item = item,
+                shape = aboutListShape(index, items.size),
+                minimumHeight = dimensionResource(R.dimen.about_list_item_min_height)
+            )
+        }
+    }
+}
+
+@Composable
+internal fun AboutListItem(
+    item: AboutLinkItem,
+    shape: androidx.compose.ui.graphics.Shape,
+    minimumHeight: Dp
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackground
-    ) {
+    val rowContent: @Composable () -> Unit = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.space20),
+                .heightIn(min = minimumHeight)
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            SettingsIconBadge(
-                imageVector = Icons.Filled.MusicNote,
-                modifier = Modifier.size(56.dp)
-            )
-
+            Surface(
+                modifier = Modifier.size(dimensionResource(R.dimen.about_icon_container_size)),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = item.leadingIcon,
+                        contentDescription = null,
+                        modifier = Modifier.size(dimensionResource(R.dimen.about_icon_size))
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(Spacing.space16))
-
-
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.space6)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
                 Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
-                            .padding(horizontal = Spacing.space10, vertical = Spacing.space4)
-                    ) {
-                        Text(
-                            text = appVersion.ifBlank { "1.0.0" },
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                            .padding(horizontal = Spacing.space10, vertical = Spacing.space4)
-                    ) {
-                        Text(
-                            text = buildNumber.ifBlank { "UNIVERSAL" },
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LeadDeveloperCard(
-    onWebsiteClick: () -> Unit,
-    onGithubClick: () -> Unit,
-    onSocialClick: () -> Unit,
-    onCoffeeClick: () -> Unit
-) {
-    val context = LocalContext.current
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackground
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.space20),
-            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
-        ) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
-            ) {
-
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(SettingsShapes.scallopedShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AsyncImage(
-                        model = ImageLoader.buildImageRequest(
-                            context = context,
-                            url = "https://i.ibb.co.com/QFBvXr8T/FB-IMG-1787669749645.jpg"
-                        ),
-                        contentDescription = "Lead Developer",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(SettingsShapes.scallopedShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space2)) {
-                    Text(
-                        text = "Ashik Ahmed",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Lead developer",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
-            ) {
-                SocialButton(
-                    imageVector = Icons.Filled.Language,
-                    onClick = onWebsiteClick,
-                    modifier = Modifier.weight(1f)
-                )
-                SocialButton(
-                    imageVector = Icons.Filled.Code,
-                    onClick = onGithubClick,
-                    modifier = Modifier.weight(1f)
-                )
-                SocialButton(
-                    imageVector = Icons.Filled.CameraAlt,
-                    onClick = onSocialClick,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-
-            Button(
-                onClick = onCoffeeClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(26.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space12)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Coffee,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(Spacing.space8))
-                Text(
-                    text = "Buy me a coffee!",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SocialButton(
-    imageVector: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = SettingsColors.iconContainerBackground
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = imageVector,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp),
-                tint = SettingsColors.itemIcon
-            )
-        }
-    }
-}
-
-@Composable
-private fun CollaboratorItem(
-    name: String,
-    role: String,
-    avatarRes: Int,
-    onCoffeeClick: () -> Unit,
-    onGithubClick: () -> Unit,
-    position: SettingsItemPosition
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = position.getShape(),
-        color = SettingsColors.cardBackground
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SettingsSpacing.itemHorizontalPadding, vertical = Spacing.space12),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Image(
-                painter = painterResource(avatarRes),
-                contentDescription = name,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            )
-
-            Spacer(modifier = Modifier.width(Spacing.space12))
-
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = name,
-                    style = SettingsTypography.itemTitle,
+                    text = item.title,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = role,
-                    style = SettingsTypography.itemSubtitle,
+                    text = item.supportingText,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                SmallIconButton(
-                    imageVector = Icons.Filled.Coffee,
-                    onClick = onCoffeeClick
-                )
-                SmallIconButton(
-                    imageVector = Icons.Filled.Code,
-                    onClick = onGithubClick
+            item.trailingIcon?.let { icon ->
+                Spacer(modifier = Modifier.width(Spacing.space8))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(dimensionResource(R.dimen.about_icon_size)),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
+
+    if (item.onClick == null) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = shape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ) { rowContent() }
+    } else {
+        Surface(
+            onClick = item.onClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = shape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ) { rowContent() }
+    }
 }
 
 @Composable
-private fun SmallIconButton(
-    imageVector: ImageVector,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(SettingsColors.iconContainerBackground)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = imageVector,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = SettingsColors.itemIcon
-        )
+internal fun aboutListShape(index: Int, count: Int): androidx.compose.ui.graphics.Shape {
+    val outer = dimensionResource(R.dimen.about_list_outer_corner)
+    val inner = dimensionResource(R.dimen.about_list_inner_corner)
+    return when {
+        count <= 1 -> RoundedCornerShape(outer)
+        index == 0 -> RoundedCornerShape(topStart = outer, topEnd = outer, bottomStart = inner, bottomEnd = inner)
+        index == count - 1 -> RoundedCornerShape(topStart = inner, topEnd = inner, bottomStart = outer, bottomEnd = outer)
+        else -> RoundedCornerShape(inner)
     }
 }

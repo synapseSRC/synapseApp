@@ -2,6 +2,13 @@ package com.synapse.social.studioasinc.ui.settings
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -560,17 +567,58 @@ fun SettingsNavHost(
                 onNavigateToLicenses = {
                     navController.navigate(SettingsDestination.ROUTE_LICENSES)
                 },
+                onNavigateToWhatsNew = {
+                    navController.navigate(SettingsDestination.ROUTE_WHATS_NEW)
+                },
+                onNavigateToFeedback = {
+                    navController.navigate(SettingsDestination.ROUTE_FEEDBACK)
+                },
                 viewModel = viewModel
             )
         }
 
 
-        composable(route = SettingsDestination.ROUTE_LICENSES) {
-            LicensesScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
+        composable(
+            route = SettingsDestination.ROUTE_LICENSES,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            AboutOpenSourceScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(
+            route = SettingsDestination.ROUTE_WHATS_NEW,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            WhatsNewScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(
+            route = SettingsDestination.ROUTE_FEEDBACK,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            FeedbackScreen(
+                onBackClick = { navController.popBackStack() },
+                onSubmitSuccess = { navController.popBackStack() }
             )
+        }
+
+        composable(
+            route = SettingsDestination.ROUTE_ABOUT_EMPTY,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            AboutEmptyScreen(onBackClick = { navController.popBackStack() })
         }
 
 
@@ -693,3 +741,28 @@ private fun ChatPlaceholderScreen(
         }
     }
 }
+
+
+private fun aboutForwardEnter(): EnterTransition =
+    slideInHorizontally(
+        initialOffsetX = { width -> width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeIn(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
+
+private fun aboutForwardExit(): ExitTransition =
+    slideOutHorizontally(
+        targetOffsetX = { width -> -width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeOut(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
+
+private fun aboutBackEnter(): EnterTransition =
+    slideInHorizontally(
+        initialOffsetX = { width -> -width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeIn(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
+
+private fun aboutBackExit(): ExitTransition =
+    slideOutHorizontally(
+        targetOffsetX = { width -> width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeOut(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
