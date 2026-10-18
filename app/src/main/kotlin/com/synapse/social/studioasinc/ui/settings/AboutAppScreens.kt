@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.OfflineBolt
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sell
@@ -46,6 +47,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -547,7 +549,7 @@ fun AboutOpenSourceScreen(
                                     title = entry.name,
                                     supportingText = entry.licenseAndAuthor,
                                     leadingIcon = Icons.Filled.Code,
-                                    trailingIcon = Icons.Filled.Launch,
+                                    trailingIcon = Icons.Filled.OpenInNew,
                                     onClick = { IntentUtils.openUrl(context, entry.repositoryUrl) }
                                 )
                             }
@@ -638,7 +640,7 @@ fun FeedbackScreen(
                             label = { Text(stringResource(R.string.about_feedback_category_label)) },
                             leadingIcon = { Icon(Icons.Filled.Category, contentDescription = null) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor()
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                         )
                         ExposedDropdownMenu(
                             expanded = categoryMenuExpanded,
