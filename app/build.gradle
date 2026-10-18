@@ -181,6 +181,8 @@ android {
     packaging {
         resources.excludes.add("META-INF/*")
         resources.excludes.add("META-INF/DEPENDENCIES")
+        resources.excludes.add("**/libsignal_jni*.dylib")
+        resources.excludes.add("**/signal_jni*.dll")
     }
 }
 

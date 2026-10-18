@@ -149,6 +149,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-okhttp:3.6.0")
                 // Official Signal Protocol client library (modern API under org.signal.libsignal.*)
                 implementation("org.signal:libsignal-client:0.66.2")
+                implementation("org.signal:libsignal-android:0.66.2")
                 implementation("androidx.security:security-crypto:1.1.0-beta01")
                 implementation("androidx.exifinterface:exifinterface:1.4.2")
                 implementation("app.cash.sqldelight:android-driver:2.4.0")
