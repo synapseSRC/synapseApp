@@ -566,6 +566,8 @@ private enum class FeedbackCategory(val labelRes: Int) {
     Other(R.string.about_feedback_category_other)
 }
 
+private val feedbackCategories = FeedbackCategory.entries
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedbackScreen(
@@ -592,7 +594,6 @@ fun FeedbackScreen(
     val diagnosticsLabel = stringResource(R.string.about_feedback_diagnostics)
     val emailError = submissionState == FeedbackSubmissionState.InvalidEmail
     val descriptionError = submissionState == FeedbackSubmissionState.InvalidDescription
-    val categories = FeedbackCategory.values()
 
     AboutAppTheme {
         Scaffold(
@@ -647,7 +648,7 @@ fun FeedbackScreen(
                                 shape = RoundedCornerShape(dimensionResource(R.dimen.about_menu_corner))
                             )
                         ) {
-                            categories.forEach { option ->
+                            feedbackCategories.forEach { option ->
                                 DropdownMenuItem(
                                     text = { Text(stringResource(option.labelRes)) },
                                     onClick = { category = option; categoryMenuExpanded = false }

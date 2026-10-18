@@ -104,25 +104,17 @@ class FeedbackViewModel @Inject constructor(
         return packet.toString()
     }
 
-    private fun captureAppThreadTraces(): String = Thread.getAllStackTraces()
-        .entries
+    private fun captureAppThreadTraces(): String = Thread.currentThread().stackTrace
         .asSequence()
-        .filter { (_, frames) -> frames.any { it.className.startsWith("com.synapse.social") } }
-        .sortedBy { (thread, _) -> thread.name }
-        .take(MAX_DIAGNOSTIC_THREADS)
-        .joinToString(separator = "\n\n") { (thread, frames) ->
-            buildString {
-                append("Thread: ").append(thread.name).append('\n')
-                frames.take(MAX_FRAMES_PER_THREAD).forEach { frame ->
-                    append("  at ").append(frame.toString()).append('\n')
-                }
-            }
-        }
+        .filter { frame -> frame.className.startsWith("com.synapse.social") }
+        .take(MAX_SANITIZED_FRAMES)
+        .map { frame -> frame.className.substringBefore('$') + "." + frame.methodName }
+        .joinToString(separator = "\n")
         .take(MAX_DIAGNOSTIC_CHARACTERS)
 
+
     companion object {
-        private const val MAX_DIAGNOSTIC_THREADS = 12
-        private const val MAX_FRAMES_PER_THREAD = 30
+        private const val MAX_SANITIZED_FRAMES = 30
         private const val MAX_DIAGNOSTIC_CHARACTERS = 24_000
     }
 }

@@ -30,7 +30,7 @@ class FeedbackRepositoryImpl @Inject constructor() : FeedbackRepository {
             "Feedback submission requires encrypted HTTPS transport"
         }
         val userId = client.auth.currentUserOrNull()?.id
-            ?: return Result.failure(Exception("Not authenticated"))
+            ?: throw IllegalStateException("Not authenticated")
         val contactDescription = if (submission.email.isBlank()) {
             submission.description
         } else {
