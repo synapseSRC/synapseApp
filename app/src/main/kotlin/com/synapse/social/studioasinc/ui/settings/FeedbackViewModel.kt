@@ -2,12 +2,15 @@ package com.synapse.social.studioasinc.ui.settings
 
 import android.app.Application
 import android.os.Build
-import android.util.Patterns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.data.repository.FeedbackRepositoryImpl
-import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
+import com.synapse.social.studioasinc.domain.model.FeedbackSubmission
+import com.synapse.social.studioasinc.domain.usecase.about.FeedbackValidationException
+import com.synapse.social.studioasinc.domain.usecase.about.FeedbackValidationIssue
+import com.synapse.social.studioasinc.domain.usecase.about.SubmitFeedbackUseCase
+import com.synapse.social.studioasinc.domain.usecase.about.ValidateFeedbackUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import javax.inject.Inject
 
 enum class FeedbackSubmissionState {
     Idle,
@@ -25,8 +29,12 @@ enum class FeedbackSubmissionState {
     Failed
 }
 
-class FeedbackViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = FeedbackRepositoryImpl()
+@HiltViewModel
+class FeedbackViewModel @Inject constructor(
+    application: Application,
+    private val validateFeedbackUseCase: ValidateFeedbackUseCase,
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase
+) : AndroidViewModel(application) {
     private val _submissionState = MutableStateFlow(FeedbackSubmissionState.Idle)
     val submissionState: StateFlow<FeedbackSubmissionState> = _submissionState.asStateFlow()
 
@@ -39,55 +47,58 @@ class FeedbackViewModel(application: Application) : AndroidViewModel(application
     fun submitFeedback(category: String, email: String, description: String, includeDiagnostics: Boolean) {
         if (_submissionState.value == FeedbackSubmissionState.Sending) return
         val cleanedEmail = email.trim()
-        if (description.isBlank()) {
-            _submissionState.value = FeedbackSubmissionState.InvalidDescription
+        val validation = validateFeedbackUseCase(cleanedEmail, description)
+        val issue = (validation.exceptionOrNull() as? FeedbackValidationException)?.issue
+        if (issue != null) {
+            _submissionState.value = when (issue) {
+                FeedbackValidationIssue.DescriptionRequired -> FeedbackSubmissionState.InvalidDescription
+                FeedbackValidationIssue.InvalidEmail -> FeedbackSubmissionState.InvalidEmail
+            }
             return
         }
-        if (cleanedEmail.isNotBlank() && !Patterns.EMAIL_ADDRESS.matcher(cleanedEmail).matches()) {
-            _submissionState.value = FeedbackSubmissionState.InvalidEmail
+        if (validation.isFailure) {
+            _submissionState.value = FeedbackSubmissionState.Failed
             return
         }
 
         _submissionState.value = FeedbackSubmissionState.Sending
         viewModelScope.launch {
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    check(SupabaseClient.isConfigured()) { "Feedback service is not configured" }
+            try {
+                val submission = withContext(Dispatchers.IO) {
                     val app = getApplication<Application>()
                     val packageInfo = app.packageManager.getPackageInfo(app.packageName, 0)
-                    val appVersion = packageInfo.versionName ?: "Unknown"
+                    val appVersion = packageInfo.versionName ?: app.getString(com.synapse.social.studioasinc.R.string.about_version_unknown)
                     val buildNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         packageInfo.longVersionCode.toString()
                     } else {
                         @Suppress("DEPRECATION")
                         packageInfo.versionCode.toString()
                     }
-                    val packet = buildDeviceInfoPacket(cleanedEmail, includeDiagnostics)
-                    val descriptionWithContact = if (cleanedEmail.isBlank()) {
-                        description.trim()
-                    } else {
-                        getApplication<Application>().getString(R.string.about_feedback_contact_line, description.trim(), cleanedEmail)
-                    }
-                    repository.submitFeedback(
+                    FeedbackSubmission(
                         category = category,
-                        description = descriptionWithContact,
+                        email = cleanedEmail,
+                        description = description.trim(),
                         appVersion = appVersion,
                         buildNumber = buildNumber,
-                        deviceInfo = packet
-                    ).getOrThrow()
+                        deviceInfo = buildDeviceInfoPacket(includeDiagnostics)
+                    )
                 }
+                val result = submitFeedbackUseCase(submission)
+                _submissionState.value = if (result.isSuccess) FeedbackSubmissionState.Sent else FeedbackSubmissionState.Failed
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _submissionState.value = FeedbackSubmissionState.Failed
             }
-            _submissionState.value = if (result.isSuccess) FeedbackSubmissionState.Sent else FeedbackSubmissionState.Failed
         }
     }
 
-    private fun buildDeviceInfoPacket(email: String, includeDiagnostics: Boolean): String {
+    private fun buildDeviceInfoPacket(includeDiagnostics: Boolean): String {
         val packet = JSONObject()
-        if (email.isNotBlank()) packet.put("contact_email", email)
         packet.put("diagnostics_included", includeDiagnostics)
         if (includeDiagnostics) {
-            packet.put("device_model", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
-            packet.put("os_version", "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+            packet.put("device_model", (Build.MANUFACTURER + " " + Build.MODEL).trim())
+            packet.put("os_version", "Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")")
             packet.put("stack_traces", captureAppThreadTraces())
         }
         return packet.toString()

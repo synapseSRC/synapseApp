@@ -89,7 +89,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -203,7 +203,10 @@ private data class ReleaseEntry(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun WhatsNewScreen(onBackClick: () -> Unit) {
+fun WhatsNewScreen(
+    onBackClick: () -> Unit,
+    viewModel: WhatsNewViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val releases = listOf(
         ReleaseEntry(
@@ -227,7 +230,7 @@ fun WhatsNewScreen(onBackClick: () -> Unit) {
             Icons.Filled.Security
         )
     )
-    var expandedLatest by rememberSaveable { mutableStateOf(false) }
+    val whatsNewState by viewModel.uiState.collectAsState()
     val githubReleasesUrl = stringResource(R.string.about_github_releases_url)
 
     AboutAppTheme {
@@ -271,8 +274,8 @@ fun WhatsNewScreen(onBackClick: () -> Unit) {
                         entry = release,
                         shape = aboutListShape(index, releases.size),
                         expandable = index == 0,
-                        expanded = expandedLatest,
-                        onToggle = { expandedLatest = !expandedLatest }
+                        expanded = whatsNewState.expandedLatest,
+                        onToggle = viewModel::toggleLatestRelease
                     )
                 }
                 item { Spacer(modifier = Modifier.height(Spacing.space48)) }
@@ -391,55 +394,48 @@ internal fun AboutLeadingIcon(imageVector: ImageVector) {
     }
 }
 
-private data class LicenseEntry(
-    val name: String,
-    val licenseAndAuthor: String,
-    val author: String,
-    val repositoryUrl: String
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutOpenSourceScreen(onBackClick: () -> Unit) {
+fun AboutOpenSourceScreen(
+    onBackClick: () -> Unit,
+    viewModel: AboutOpenSourceViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
-    var query by rememberSaveable { mutableStateOf("") }
     var filterMenuOpen by remember { mutableStateOf(false) }
-    var sortByAuthor by rememberSaveable { mutableStateOf(false) }
+    val licenseState by viewModel.uiState.collectAsState()
     val allEntries = listOf(
-        LicenseEntry(
+        AboutLicenseEntry(
             stringResource(R.string.about_license_compose),
             stringResource(R.string.about_license_compose_detail),
             stringResource(R.string.about_author_android),
             stringResource(R.string.about_license_url_android)
         ),
-        LicenseEntry(
+        AboutLicenseEntry(
             stringResource(R.string.about_license_coroutines),
             stringResource(R.string.about_license_coroutines_detail),
             stringResource(R.string.about_author_jetbrains),
             stringResource(R.string.about_license_url_coroutines)
         ),
-        LicenseEntry(
+        AboutLicenseEntry(
             stringResource(R.string.about_license_coil),
             stringResource(R.string.about_license_coil_detail),
             stringResource(R.string.about_author_coil),
             stringResource(R.string.about_license_url_coil)
         ),
-        LicenseEntry(
+        AboutLicenseEntry(
             stringResource(R.string.about_license_retrofit),
             stringResource(R.string.about_license_retrofit_detail),
             stringResource(R.string.about_author_square),
             stringResource(R.string.about_license_url_retrofit)
         ),
-        LicenseEntry(
+        AboutLicenseEntry(
             stringResource(R.string.about_license_lottie),
             stringResource(R.string.about_license_lottie_detail),
             stringResource(R.string.about_author_airbnb),
             stringResource(R.string.about_license_url_lottie)
         )
     )
-    val visibleEntries = allEntries
-        .filter { it.name.contains(query, ignoreCase = true) || it.licenseAndAuthor.contains(query, ignoreCase = true) }
-        .let { entries -> if (sortByAuthor) entries.sortedBy { it.author } else entries }
+    val visibleEntries = viewModel.visibleEntries(allEntries)
 
     AboutAppTheme {
         Scaffold(
@@ -482,15 +478,15 @@ fun AboutOpenSourceScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(Spacing.space12))
                             BasicTextField(
-                                value = query,
-                                onValueChange = { query = it },
+                                value = licenseState.query,
+                                onValueChange = viewModel::onQueryChanged,
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                 decorationBox = { innerTextField ->
                                     Box {
-                                        if (query.isEmpty()) {
+                                        if (licenseState.query.isEmpty()) {
                                             Text(
                                                 stringResource(R.string.about_license_search_placeholder),
                                                 style = MaterialTheme.typography.bodyLarge,
@@ -520,12 +516,12 @@ fun AboutOpenSourceScreen(onBackClick: () -> Unit) {
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.about_license_sort_name)) },
-                                        onClick = { sortByAuthor = false; filterMenuOpen = false },
+                                        onClick = { viewModel.setSortByAuthor(false); filterMenuOpen = false },
                                         leadingIcon = { Icon(Icons.Filled.Code, contentDescription = null) }
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.about_license_sort_author)) },
-                                        onClick = { sortByAuthor = true; filterMenuOpen = false },
+                                        onClick = { viewModel.setSortByAuthor(true); filterMenuOpen = false },
                                         leadingIcon = { Icon(Icons.Filled.Category, contentDescription = null) }
                                     )
                                 }
@@ -575,7 +571,7 @@ private enum class FeedbackCategory(val labelRes: Int) {
 fun FeedbackScreen(
     onBackClick: () -> Unit,
     onSubmitSuccess: () -> Unit,
-    viewModel: FeedbackViewModel = viewModel()
+    viewModel: FeedbackViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var category by rememberSaveable { mutableStateOf(FeedbackCategory.FeatureSuggestion) }

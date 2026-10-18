@@ -559,7 +559,7 @@ fun SettingsNavHost(
 
 
         composable(route = SettingsDestination.ROUTE_ABOUT) {
-            val viewModel: AboutSupportViewModel = viewModel()
+            val viewModel: AboutSupportViewModel = hiltViewModel()
             AboutSupportScreen(
                 onBackClick = {
                     navController.popBackStack()

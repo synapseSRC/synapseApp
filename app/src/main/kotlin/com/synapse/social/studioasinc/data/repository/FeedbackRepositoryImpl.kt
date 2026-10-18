@@ -1,15 +1,16 @@
 package com.synapse.social.studioasinc.data.repository
 
 import android.util.Log
+import com.synapse.social.studioasinc.domain.model.FeedbackSubmission
+import com.synapse.social.studioasinc.domain.repository.FeedbackRepository
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import javax.inject.Inject
 
-
-
-class FeedbackRepositoryImpl {
+class FeedbackRepositoryImpl @Inject constructor() : FeedbackRepository {
     private val client = SupabaseClient.client
 
     @Serializable
@@ -22,33 +23,30 @@ class FeedbackRepositoryImpl {
         @SerialName("device_info") val deviceInfo: String
     )
 
-
-
-    suspend fun submitFeedback(
-        category: String,
-        description: String,
-        appVersion: String,
-        buildNumber: String,
-        deviceInfo: String
-    ): Result<Unit> = runCatching {
+    override suspend fun submitFeedback(submission: FeedbackSubmission): Result<Unit> = runCatching {
         check(SupabaseClient.isConfigured()) { "Feedback service is not configured" }
         check(SupabaseClient.getUrl().startsWith("https://", ignoreCase = true)) {
             "Feedback submission requires encrypted HTTPS transport"
         }
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Result.failure(Exception("Not authenticated"))
-
+        val contactDescription = if (submission.email.isBlank()) {
+            submission.description
+        } else {
+            submission.description + "\n\nContact email: " + submission.email
+        }
         client.from("feedback")
-            .insert(Feedback(
-                userId = userId,
-                category = category,
-                description = description,
-                appVersion = appVersion,
-                buildNumber = buildNumber,
-                deviceInfo = deviceInfo
-            ))
-
-        Log.d(TAG, "Feedback submitted: category=$category")
+            .insert(
+                Feedback(
+                    userId = userId,
+                    category = submission.category,
+                    description = contactDescription,
+                    appVersion = submission.appVersion,
+                    buildNumber = submission.buildNumber,
+                    deviceInfo = submission.deviceInfo
+                )
+            )
+        Log.d(TAG, "Feedback submitted: category=" + submission.category)
         Unit
     }
 

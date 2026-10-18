@@ -57,7 +57,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -69,7 +69,7 @@ fun AboutSupportScreen(
     onNavigateToLicenses: () -> Unit = {},
     onNavigateToWhatsNew: () -> Unit = {},
     onNavigateToFeedback: () -> Unit = {},
-    viewModel: AboutSupportViewModel = viewModel()
+    viewModel: AboutSupportViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
