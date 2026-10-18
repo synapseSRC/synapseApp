@@ -94,4 +94,11 @@ internal fun createPublicStorageUrl(
     supabase: SupabaseClient,
     bucketName: String,
     path: String
-): String = supabase.storage.from(bucketName).publicUrl(path)
+): String = try {
+    supabase.storage.from(bucketName).publicUrl(path)
+} catch (e: Exception) {
+    // In headless test environments where Settings/ResumableCache is not initialized,
+    // construct the standard Supabase public storage endpoint URL.
+    val base = supabase.supabaseUrl.trimEnd('/')
+    "$base/storage/v1/object/public/$bucketName/$path"
+}

@@ -51,7 +51,6 @@ private fun SynapseColorScheme.toComposeColorScheme(): ColorScheme {
 private val LightColorScheme = SharedTheme.colors.Light.toComposeColorScheme()
 private val DarkColorScheme = SharedTheme.colors.Dark.toComposeColorScheme()
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SynapseTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -59,9 +58,8 @@ fun SynapseTheme(
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = colorScheme,
-        motionScheme = MotionScheme.expressive(),
         content = content
     )
 }

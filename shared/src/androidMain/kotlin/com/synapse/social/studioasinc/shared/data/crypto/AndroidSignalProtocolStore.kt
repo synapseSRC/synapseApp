@@ -179,4 +179,83 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
     override fun removeSignedPreKey(signedPreKeyId: Int) {
         prefs.edit().remove("signedprekey_$signedPreKeyId").apply()
     }
+
+    override fun loadExistingSessions(addresses: List<SignalProtocolAddress>): List<SessionRecord> {
+        val result = mutableListOf<SessionRecord>()
+        for (addr in addresses) {
+            val key = "session_${addr.name}_${addr.deviceId}"
+            val serialized = prefs.getString(key, null)
+            if (serialized != null) {
+                result.add(SessionRecord(Base64.decode(serialized, Base64.DEFAULT)))
+            }
+        }
+        return result
+    }
+
+    // ─── SenderKeyStore ───────────────────────────────────────────────────────
+
+    override fun storeSenderKey(
+        sender: SignalProtocolAddress,
+        distributionId: java.util.UUID,
+        record: org.signal.libsignal.protocol.groups.state.SenderKeyRecord
+    ) {
+        val key = "senderkey_${sender.name}_${sender.deviceId}_${distributionId}"
+        prefs.edit().putString(key, Base64.encodeToString(record.serialize(), Base64.DEFAULT)).apply()
+    }
+
+    override fun loadSenderKey(
+        sender: SignalProtocolAddress,
+        distributionId: java.util.UUID
+    ): org.signal.libsignal.protocol.groups.state.SenderKeyRecord? {
+        val key = "senderkey_${sender.name}_${sender.deviceId}_${distributionId}"
+        val serialized = prefs.getString(key, null) ?: return null
+        return try {
+            org.signal.libsignal.protocol.groups.state.SenderKeyRecord(Base64.decode(serialized, Base64.DEFAULT))
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // ─── KyberPreKeyStore ─────────────────────────────────────────────────────
+
+    override fun loadKyberPreKey(kyberPreKeyId: Int): org.signal.libsignal.protocol.state.KyberPreKeyRecord {
+        val serialized = prefs.getString("kyberprekey_$kyberPreKeyId", null)
+            ?: throw org.signal.libsignal.protocol.InvalidKeyIdException("No Kyber prekey: $kyberPreKeyId")
+        return org.signal.libsignal.protocol.state.KyberPreKeyRecord(Base64.decode(serialized, Base64.DEFAULT))
+    }
+
+    override fun loadKyberPreKeys(): List<org.signal.libsignal.protocol.state.KyberPreKeyRecord> {
+        val result = mutableListOf<org.signal.libsignal.protocol.state.KyberPreKeyRecord>()
+        for (key in prefs.all.keys) {
+            if (key.startsWith("kyberprekey_")) {
+                val serialized = prefs.getString(key, null)
+                if (serialized != null) {
+                    try {
+                        result.add(
+                            org.signal.libsignal.protocol.state.KyberPreKeyRecord(
+                                Base64.decode(serialized, Base64.DEFAULT)
+                            )
+                        )
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+        return result
+    }
+
+    override fun storeKyberPreKey(
+        kyberPreKeyId: Int,
+        record: org.signal.libsignal.protocol.state.KyberPreKeyRecord
+    ) {
+        prefs.edit()
+            .putString("kyberprekey_$kyberPreKeyId", Base64.encodeToString(record.serialize(), Base64.DEFAULT))
+            .apply()
+    }
+
+    override fun containsKyberPreKey(kyberPreKeyId: Int): Boolean =
+        prefs.contains("kyberprekey_$kyberPreKeyId")
+
+    override fun markKyberPreKeyUsed(kyberPreKeyId: Int) {
+        prefs.edit().putBoolean("kyberprekey_used_$kyberPreKeyId", true).apply()
+    }
 }

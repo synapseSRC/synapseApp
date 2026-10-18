@@ -41,9 +41,9 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
             identityKeyPair = store.identityKeyPair
             registrationId = store.getLocalRegistrationId()
         } else {
-            // Fresh generation
+            // Fresh generation using libsignal API
             Logger.d("E2EE_INIT: Generating new identity key pair", tag = "E2EE")
-            identityKeyPair = KeyHelper.generateIdentityKeyPair()
+            identityKeyPair = IdentityKeyPair.generate()
             registrationId = KeyHelper.generateRegistrationId(false)
             store.storeLocalIdentity(identityKeyPair, registrationId)
         }
@@ -51,7 +51,14 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
         // Generate a signed pre-key. Using an ID derived from current time to avoid overwriting
         // issues while staying within the expected Int range for Signal protocols.
         val signedPreKeyId = (System.currentTimeMillis() / 1000 % 0x00FFFFFF).toInt()
-        val signedPreKey = KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId)
+        val signedPreKeyPair = org.signal.libsignal.protocol.ecc.Curve.generateKeyPair()
+        val signedPreKeySignature = identityKeyPair.privateKey.calculateSignature(signedPreKeyPair.publicKey.serialize())
+        val signedPreKey = SignedPreKeyRecord(
+            signedPreKeyId,
+            System.currentTimeMillis(),
+            signedPreKeyPair,
+            signedPreKeySignature
+        )
         store.storeSignedPreKey(signedPreKey.id, signedPreKey)
         Logger.d(
             "E2EE_INIT: Stored identity and signed pre-key locally (regId: $registrationId, signedKeyId: $signedPreKeyId)",
@@ -69,9 +76,11 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
 
     override suspend fun generateOneTimePreKeys(startId: Int, count: Int): List<SignalOneTimePreKey> {
         Logger.d("E2EE_INIT: Generating $count one-time pre-keys starting from ID $startId", tag = "E2EE")
-        val preKeys = KeyHelper.generatePreKeys(startId, count)
         val resultList = mutableListOf<SignalOneTimePreKey>()
-        for (preKey in preKeys) {
+        for (i in 0 until count) {
+            val keyId = (startId + i) % 0xFFFFFF
+            val keyPair = org.signal.libsignal.protocol.ecc.Curve.generateKeyPair()
+            val preKey = PreKeyRecord(keyId, keyPair)
             store.storePreKey(preKey.id, preKey)
             resultList.add(
                 SignalOneTimePreKey(

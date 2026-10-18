@@ -366,9 +366,12 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
     }
 
     private fun initializeMaintenanceServices() {
-
-        mediaCacheCleanupManager = MediaCacheCleanupManager(this)
-        mediaCacheCleanupManager.initialize()
+        try {
+            mediaCacheCleanupManager = MediaCacheCleanupManager(this)
+            mediaCacheCleanupManager.initialize()
+        } catch (e: Exception) {
+            Napier.w("Skipping maintenance services initialization: ${e.message}", e, tag = "SynapseApplication")
+        }
     }
 
     override fun onTerminate() {

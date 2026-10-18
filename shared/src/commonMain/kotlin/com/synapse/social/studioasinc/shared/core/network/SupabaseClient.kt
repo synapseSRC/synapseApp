@@ -49,7 +49,18 @@ object SupabaseClient {
                     isLenient = true
                     coerceInputValues = true
                 })
-                install(Auth)
+                install(Auth) {
+                    sessionManager = try {
+                        io.github.jan.supabase.auth.SettingsSessionManager()
+                    } catch (e: Throwable) {
+                        io.github.jan.supabase.auth.MemorySessionManager()
+                    }
+                    codeVerifierCache = try {
+                        io.github.jan.supabase.auth.SettingsCodeVerifierCache()
+                    } catch (e: Throwable) {
+                        io.github.jan.supabase.auth.MemoryCodeVerifierCache()
+                    }
+                }
                 install(Postgrest)
                 install(Realtime)
                 install(Functions)
