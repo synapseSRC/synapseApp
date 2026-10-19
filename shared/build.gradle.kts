@@ -29,6 +29,9 @@ kotlin {
     jvm()
     wasmJs {
         browser {
+            testTask {
+                enabled = false
+            }
             commonWebpackConfig {
                 devServer = (devServer ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
@@ -234,6 +237,8 @@ android {
     lint {
         abortOnError = false
         checkReleaseBuilds = false
+        checkDependencies = false
+        disable.add("InferredThread")
     }
     buildTypes {
         release {

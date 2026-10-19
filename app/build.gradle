@@ -60,7 +60,6 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         compileOptions {
-            // coreLibraryDesugaringEnabled = true
         }
     }
 
@@ -144,6 +143,7 @@ android {
     }
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -196,6 +196,8 @@ configurations.all {
 
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
     // Shared Module
     implementation(project(':shared')) {
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
