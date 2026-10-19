@@ -10,7 +10,6 @@ interface IAuthenticationService {
     suspend fun signOut(): Result<Unit>
 
 
-    suspend fun createUserProfile(userId: String, email: String, username: String): Result<Unit>
     suspend fun ensureProfileExists(userId: String, email: String): Result<Unit>
 
 

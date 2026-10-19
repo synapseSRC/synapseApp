@@ -2,9 +2,6 @@ package com.synapse.social.studioasinc.shared.data.repository
 import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
-import com.synapse.social.studioasinc.shared.data.model.UserProfileInsert
-import com.synapse.social.studioasinc.shared.data.model.UserSettingsInsert
-import com.synapse.social.studioasinc.shared.data.model.UserPresenceInsert
 import com.synapse.social.studioasinc.shared.data.mapper.AuthErrorMapper
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
@@ -30,9 +27,9 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Count
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.functions.functions
 import kotlin.time.ExperimentalTime
@@ -85,20 +82,23 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
 
     /**
-     * Registers a new user and immediately initializes their profile in the database.
-     *
-     * This is a convenience method that chains [signUp] and [ensureProfileExists]
-     * to ensure the application state is consistent immediately after registration.
+     * Registers a new user with the requested username in Auth metadata, then verifies
+     * that the database Auth trigger created the corresponding profile.
      */
     override suspend fun signUpWithProfile(email: String, password: String, username: String): Result<String> {
         return try {
-            val signUpResult = signUp(email, password)
-            if (signUpResult.isSuccess) {
-                val userId = signUpResult.getOrThrow()
-                ensureProfileExists(userId, email, username).map { userId }
-            } else {
-                signUpResult
+            val userId = withContext(AppDispatchers.IO) {
+                val user = client.auth.signUpWith(Email) {
+                    this.email = email
+                    this.password = password
+                    data = buildJsonObject {
+                        put("username", username)
+                    }
+                }
+                user?.id ?: client.auth.currentUserOrNull()?.id
+                    ?: throw IllegalStateException("User ID not found")
             }
+            ensureProfileExists(userId, email, username).map { userId }
         } catch (e: Exception) {
             logSafeError("Sign up with profile failed", e)
             val authError = AuthErrorMapper.mapException(e)
@@ -107,48 +107,28 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
 
     /**
-     * Verifies if a user profile exists in the 'users' table and creates one if it's missing.
-     *
-     * This synchronization step is crucial for new users or those who signed up via
-     * mechanisms that don't automatically trigger profile creation.
+     * Verifies that the Auth trigger created the user's profile in the 'users' table.
+     * Profile creation is owned by the on_auth_user_created_profile database trigger.
      *
      * @param userId The unique identifier for the user.
-     * @param email The user's email address, used to generate a default username if needed.
-     * @param username An optional preferred username.
+     * @param email The user's email address.
+     * @param username The preferred username passed to the database Auth trigger.
      */
     override suspend fun ensureProfileExists(userId: String, email: String, username: String?): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
                 Napier.d("Checking if user profile exists for userId: $userId", tag = TAG)
-                val count = client.from("users").select(columns = Columns.list("id")) {
+                val count = client.from("users").select(columns = Columns.list("uid")) {
                     count(Count.EXACT)
                     filter {
-                        eq("id", userId)
+                        eq("uid", userId)
                     }
-                }.countOrNull()
-                Napier.d("User profile count for $userId: $count", tag = TAG)
+                }.countOrNull() ?: throw IllegalStateException("Unable to verify profile for user $userId")
 
-                if (count == null || count == 0L) {
-                    Napier.d("Profile does not exist for $userId, creating new profile...", tag = TAG)
-                    val actualUsername = username ?: email.substringBefore("@")
-
-                    // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
-                    val profileInsert = UserProfileInsert(
-                        uid = userId, // Ensure ID is passed if model requires it
-                        username = actualUsername
-                    )
-                    Napier.d("Inserting user profile for $userId into users table...", tag = TAG)
-                    client.from("users").insert(profileInsert)
-                    Napier.d("Successfully inserted user profile for $userId.", tag = TAG)
-
-                    // Note: user_settings and user_presence are automatically created by database trigger
-                    // when the user signs up via Supabase Auth (see handle_new_auth_user trigger)
-                    // No need to manually insert them here
-
-                    Napier.d("User profile created: $userId", tag = TAG)
-                } else {
-                    Napier.d("Profile already exists for $userId.", tag = TAG)
+                if (count == 0L) {
+                    throw IllegalStateException("Profile for user $userId has not been created by the Auth trigger")
                 }
+                Napier.d("Verified existing profile for $userId", tag = TAG)
                 Result.success(Unit)
             }
         } catch (e: Exception) {

@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.shared.data.model
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerialName
 
 @Serializable
 data class UserSettingsInsert(
@@ -13,9 +12,3 @@ data class UserPresenceInsert(
     val user_id: String
 )
 
-@Serializable
-// SECURITY: Sensitive fields (account_premium, verify, banned) are intentionally omitted.
-data class UserProfileInsert(
-    @SerialName("id") val uid: String,
-    val username: String
-)

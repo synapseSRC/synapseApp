@@ -3,9 +3,6 @@ import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.local.SecureStorage
-import com.synapse.social.studioasinc.shared.data.model.UserProfileInsert
-import com.synapse.social.studioasinc.shared.data.model.UserSettingsInsert
-import com.synapse.social.studioasinc.shared.data.model.UserPresenceInsert
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.OtpType
@@ -71,42 +68,20 @@ class SupabaseAuthenticationService(
         }
     }
 
-    override suspend fun createUserProfile(userId: String, email: String, username: String): Result<Unit> {
-        return try {
-            withContext(AppDispatchers.IO) {
-                val profileInsert = UserProfileInsert(
-                    uid = userId,
-                    username = username
-                )
-                client.from("users").insert(profileInsert)
-
-                // Note: user_settings and user_presence are automatically created by database trigger
-                // when the user signs up via Supabase Auth (see handle_new_auth_user trigger)
-
-                Napier.d("User profile created successfully: $userId")
-                Result.success(Unit)
-            }
-        } catch (e: Exception) {
-            Napier.e("Create user profile failed", e)
-            Result.failure(e)
-        }
-    }
-
     override suspend fun ensureProfileExists(userId: String, email: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
-                val count = client.from("users").select(columns = Columns.list("id")) {
+                val count = client.from("users").select(columns = Columns.list("uid")) {
                     count(Count.EXACT)
                     filter {
-                        eq("id", userId)
+                        eq("uid", userId)
                     }
-                }.countOrNull()
+                }.countOrNull() ?: throw IllegalStateException("Unable to verify profile for user $userId")
 
-                if (count == null || count == 0L) {
-                    createUserProfile(userId, email, email.substringBefore("@"))
-                } else {
-                    Result.success(Unit)
+                if (count == 0L) {
+                    throw IllegalStateException("Profile for user $userId has not been created by the Auth trigger")
                 }
+                Result.success(Unit)
             }
         } catch (e: Exception) {
             Napier.e("Ensure profile exists failed", e)
