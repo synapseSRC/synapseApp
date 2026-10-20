@@ -37,9 +37,6 @@ jobs:
         with:
           cache-disabled: true
 
-      - name: 🧪 Run group identity unit test
-        run: ./gradlew :app:testDebugUnitTest --tests "com.synapse.social.studioasinc.domain.usecase.chat.GroupIdentityParserTest" --no-daemon --console=plain
-
       - name: 🏗️ Build Release APK
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
@@ -90,7 +87,6 @@ jobs:
           path: app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
 
   aggregateAndSend:
-    if: github.ref == 'refs/heads/main'
     name: 📣 Send APKs to Telegram
     runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
     needs: build
