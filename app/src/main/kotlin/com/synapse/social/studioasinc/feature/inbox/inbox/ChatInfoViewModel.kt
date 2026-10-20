@@ -141,37 +141,29 @@ class ChatInfoViewModel @Inject constructor(
 
                 getCommonGroupsUseCase(userId)
                     .onSuccess { groupResult ->
-                        if (groupResult.hasIncompleteResults) markLoadFailure()
                         _uiState.update {
                             it.copy(
                                 commonGroups = groupResult.groups,
                                 isLoadingCommonGroups = false,
                                 commonGroupsErrorRes = if (groupResult.hasIncompleteResults) {
-                                    R.string.chat_info_error_load_groups
+                                    R.string.chat_info_error_load_groups_partial
                                 } else {
                                     null
-                                },
-                                errorMessageRes = if (groupResult.hasIncompleteResults) {
-                                    R.string.chat_info_error_load_groups
-                                } else {
-                                    it.errorMessageRes
                                 }
                             )
                         }
                     }
                     .onFailure {
-                        markLoadFailure()
                         _uiState.update {
                             it.copy(
                                 isLoadingCommonGroups = false,
-                                commonGroupsErrorRes = R.string.chat_info_error_load_groups,
-                                errorMessageRes = R.string.chat_info_error_load_groups
+                                commonGroupsErrorRes = R.string.chat_info_error_load_groups
                             )
                         }
                     }
             }
 
-            if (chatId.isNotBlank()) {
+                        if (chatId.isNotBlank()) {
                 _uiState.update { it.copy(isLocked = chatLockManager.isChatLocked(chatId)) }
 
                 getConversationMuteStatusUseCase(chatId)
@@ -202,18 +194,67 @@ class ChatInfoViewModel @Inject constructor(
                         }
                     }
                     .onFailure {
-                        markLoadFailure()
                         _uiState.update {
                             it.copy(
                                 isLoadingSharedContent = false,
-                                sharedContentErrorRes = R.string.chat_info_error_load_shared_content,
-                                errorMessageRes = R.string.chat_info_error_load_shared_content
+                                sharedContentErrorRes = R.string.chat_info_error_load_shared_content
                             )
                         }
                     }
             }
 
             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    fun retryCommonGroups(userId: String) {
+        if (userId.isBlank() || _uiState.value.isLoadingCommonGroups) return
+        _uiState.update { it.copy(isLoadingCommonGroups = true, commonGroupsErrorRes = null) }
+        viewModelScope.launch {
+            getCommonGroupsUseCase(userId)
+                .onSuccess { result ->
+                    _uiState.update {
+                        it.copy(
+                            commonGroups = result.groups,
+                            isLoadingCommonGroups = false,
+                            commonGroupsErrorRes = if (result.hasIncompleteResults) {
+                                R.string.chat_info_error_load_groups_partial
+                            } else {
+                                null
+                            }
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(isLoadingCommonGroups = false, commonGroupsErrorRes = R.string.chat_info_error_load_groups)
+                    }
+                }
+        }
+    }
+
+    fun retrySharedContent(chatId: String) {
+        if (chatId.isBlank() || _uiState.value.isLoadingSharedContent) return
+        _uiState.update { it.copy(isLoadingSharedContent = true, sharedContentErrorRes = null) }
+        viewModelScope.launch {
+            getSharedContentSummaryUseCase(chatId)
+                .onSuccess { summary ->
+                    _uiState.update {
+                        it.copy(
+                            mediaCount = summary.mediaCount,
+                            linkCount = summary.linkCount,
+                            fileCount = summary.fileCount,
+                            isSharedContentSample = summary.isSample,
+                            isLoadingSharedContent = false,
+                            sharedContentErrorRes = null
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(isLoadingSharedContent = false, sharedContentErrorRes = R.string.chat_info_error_load_shared_content)
+                    }
+                }
         }
     }
 
