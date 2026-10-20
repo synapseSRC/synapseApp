@@ -1,6 +1,7 @@
 # ---------------------------------------------------
 # General and Operating System Exclusions
 # ---------------------------------------------------
+.playwright-mcp
 .kiro
 .DS_Store
 .AppleDouble

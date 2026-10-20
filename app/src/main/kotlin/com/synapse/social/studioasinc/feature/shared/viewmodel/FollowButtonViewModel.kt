@@ -88,21 +88,36 @@ class FollowButtonViewModel @Inject constructor(
 
         if (!isOperationInProgress.compareAndSet(false, true)) return
 
+        val previousState = _uiState.value
+        val wasFollowingOrRequested = previousState.isFollowing || previousState.isFollowRequested
+
+        // Optimistic update: flip state immediately so the button changes instantly
+        _uiState.value = if (wasFollowingOrRequested) {
+            previousState.copy(isFollowing = false, isFollowRequested = false, isLoading = false)
+        } else {
+            previousState.copy(
+                isFollowing = !previousState.isPrivate,
+                isFollowRequested = previousState.isPrivate,
+                isLoading = false
+            )
+        }
+
         viewModelScope.launch {
             try {
-                val currentState = _uiState.value
-                _uiState.value = currentState.copy(isLoading = true)
-
-                val result = if (currentState.isFollowing || currentState.isFollowRequested) {
+                val result = if (wasFollowingOrRequested) {
                     followService.unfollowUser(currentUid, targetUid)
                 } else {
                     followService.followUser(currentUid, targetUid)
                 }
 
                 result.fold(
-                    onSuccess = { checkFollowStatus() },
+                    onSuccess = {
+                        // Confirm with server state in background (non-blocking)
+                        checkFollowStatus()
+                    },
                     onFailure = {
-                        _uiState.value = _uiState.value.copy(isLoading = false)
+                        // Revert optimistic update on failure
+                        _uiState.value = previousState.copy(isLoading = false)
                     }
                 )
             } finally {

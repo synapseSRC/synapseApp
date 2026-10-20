@@ -98,9 +98,6 @@ internal fun ChatMessageList(
     val initialKeysCaptured = remember { mutableStateOf(false) }
     val initialItemKeys = remember { mutableSetOf<String>() }
     val oldestInitialCreatedAt = remember { mutableStateOf<String?>(null) }
-    // Tracks every item key ever composed so fadeInSpec fires exactly once per item.
-    // Seeded with initialItemKeys so items present at first load never fade in.
-    val seenItemKeys = remember { mutableSetOf<String>() }
     if (!initialKeysCaptured.value && chatItems.isNotEmpty()) {
         chatItems.forEach { item ->
             when (item) {
@@ -109,7 +106,6 @@ internal fun ChatMessageList(
                 is ChatListItem.MessageItem -> initialItemKeys.add(item.message.clientId)
             }
         }
-        seenItemKeys.addAll(initialItemKeys)
         oldestInitialCreatedAt.value = messages.minByOrNull { it.createdAt }?.createdAt
         initialKeysCaptured.value = true
     }
@@ -234,16 +230,16 @@ internal fun ChatMessageList(
             )
 
             // Track whether this is the very first time this item is composed.
-            // Once an item is added to seenItemKeys, fadeInSpec will be null
-            // for all future recompositions — preventing flicker when the
-            // LazyColumn recycles items (e.g. composer height changes on typing).
-            val isFirstAppearance = if (!isHistorical && itemKey !in seenItemKeys) {
-                seenItemKeys.add(itemKey)
-                true
-            } else {
-                seenItemKeys.add(itemKey) // still track it
-                false
-            }
+            //
+            // Using remember(itemKey) instead of a shared MutableSet mutation in the
+            // body prevents flicker when the LazyColumn recomposes due to unrelated
+            // state changes (e.g. composerHeightPx changing on every keystroke).
+            //
+            // remember(itemKey) { true } returns true on the very first composition
+            // for a given key and false on all subsequent recompositions — which is
+            // exactly the "fire once per new item" semantic we need, with no mutable
+            // shared state mutated in the body.
+            val isFirstAppearance = !isHistorical && remember(itemKey) { true }
 
             // Shared placement and entrance spec for items.
             // Project design decision: critically-damped spatial spring

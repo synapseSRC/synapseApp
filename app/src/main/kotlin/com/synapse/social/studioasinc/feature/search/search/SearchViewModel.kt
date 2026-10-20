@@ -301,26 +301,47 @@ class SearchViewModel @Inject constructor(
     }
 
     fun toggleFollow(accountId: String) {
-        viewModelScope.launch {
-            val currentUserId = authRepository.getCurrentUserId() ?: return@launch
-            val account = currentState.accounts.find { it.id == accountId } ?: return@launch
+        val currentUserId = authRepository.getCurrentUserId() ?: return
+        val account = currentState.accounts.find { it.id == accountId } ?: return
+        val wasFollowing = account.isFollowing
+        val delta = if (wasFollowing) -1 else 1
 
-            val result = if (account.isFollowing) {
+        // Optimistic update: change follow state and followers count immediately
+        updateState { state ->
+            state.copy(
+                accounts = state.accounts.map { acc ->
+                    if (acc.id == accountId) {
+                        acc.copy(
+                            isFollowing = !wasFollowing,
+                            followersCount = maxOf(0, acc.followersCount + delta)
+                        )
+                    } else acc
+                }
+            )
+        }
+
+        viewModelScope.launch {
+            val result = if (wasFollowing) {
                 unfollowUserUseCase(currentUserId, accountId)
             } else {
                 followUserUseCase(currentUserId, accountId)
             }
 
-            result.onSuccess {
+            result.onFailure { err ->
+                // Revert optimistic update on failure
                 updateState { state ->
                     state.copy(
+                        error = err.message,
                         accounts = state.accounts.map { acc ->
-                            if (acc.id == accountId) acc.copy(isFollowing = !acc.isFollowing) else acc
+                            if (acc.id == accountId) {
+                                acc.copy(
+                                    isFollowing = wasFollowing,
+                                    followersCount = maxOf(0, acc.followersCount - delta)
+                                )
+                            } else acc
                         }
                     )
                 }
-            }.onFailure { err ->
-                updateState { it.copy(error = err.message) }
             }
         }
     }
