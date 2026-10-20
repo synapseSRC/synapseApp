@@ -7,6 +7,10 @@ import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageReactionDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.UserPublicKeyDto
 import com.synapse.social.studioasinc.shared.domain.model.User
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOptions
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupInvitePreview
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinOutcome
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +27,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> =
         conversations.getConversations()
+
+    suspend fun getArchivedConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> =
+        conversations.getConversations(archivedOnly = true)
 
     suspend fun getLastMessage(chatId: String): MessageDto? =
         conversations.getLastMessage(chatId)
@@ -59,8 +66,16 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getOrCreateChat(otherUserId: String): String? =
         conversations.getOrCreateChat(otherUserId)
 
-    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): String? =
-        conversations.createGroupChat(name, participantIds, avatarUrl)
+    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions()): String? =
+        conversations.createGroupChat(name, participantIds, avatarUrl, options)
+
+    suspend fun getGroupInviteCode(chatId: String): String? = groups.getGroupInviteCode(chatId)
+    suspend fun rotateGroupInviteCode(chatId: String): String = groups.rotateGroupInviteCode(chatId)
+    suspend fun getPendingGroupJoinRequests(chatId: String): List<GroupJoinRequest> = groups.getPendingGroupJoinRequests(chatId)
+    suspend fun approveGroupJoinRequest(requestId: String) = groups.approveGroupJoinRequest(requestId)
+    suspend fun declineGroupJoinRequest(requestId: String) = groups.declineGroupJoinRequest(requestId)
+    suspend fun resolveGroupInvite(inviteCode: String): GroupInvitePreview? = groups.resolveGroupInvite(inviteCode)
+    suspend fun requestGroupJoinByInvite(inviteCode: String): GroupJoinOutcome = groups.requestGroupJoinByInvite(inviteCode)
 
     suspend fun getChatInfo(chatId: String): ChatDto? =
         conversations.getChatInfo(chatId)
@@ -92,11 +107,17 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) =
         conversations.updateConversationArchiveStatus(chatId, isArchived)
 
+    suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean) =
+        conversations.updateConversationPinnedStatus(chatId, isPinned)
+
     suspend fun getConversationMuteStatus(chatId: String): Boolean =
         conversations.getConversationMuteStatus(chatId)
 
     suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean) =
         conversations.setConversationMuteStatus(chatId, isMuted)
+
+    suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean) =
+        conversations.updateConversationMutedStatus(chatId, isMuted)
 
     suspend fun deleteConversation(chatId: String) =
         conversations.deleteConversation(chatId)
