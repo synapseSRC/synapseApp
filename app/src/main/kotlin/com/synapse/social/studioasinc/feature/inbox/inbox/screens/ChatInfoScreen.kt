@@ -99,32 +99,6 @@ fun ChatInfoScreen(
     viewModel: ChatInfoViewModel = hiltViewModel()
 ) {
     // Inherit the activity SynapseTheme so appearance settings and dynamic colors apply.
-    ChatInfoScreenContent(
-        chatId = chatId,
-        userId = userId,
-        onNavigateBack = onNavigateBack,
-        onNavigateToProfile = onNavigateToProfile,
-        onNavigateToCreateGroup = onNavigateToCreateGroup,
-        onNavigateToDisappearingMessages = onNavigateToDisappearingMessages,
-        onNavigateToSharedContent = onNavigateToSharedContent,
-        onNavigateToChatPrivacy = onNavigateToChatPrivacy,
-        viewModel = viewModel
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChatInfoScreenContent(
-    chatId: String,
-    userId: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToProfile: (String) -> Unit,
-    onNavigateToCreateGroup: () -> Unit,
-    onNavigateToDisappearingMessages: (String) -> Unit,
-    onNavigateToSharedContent: (String, Int) -> Unit,
-    onNavigateToChatPrivacy: (String) -> Unit,
-    viewModel: ChatInfoViewModel
-) {
     LaunchedEffect(chatId, userId) { viewModel.loadChatInfo(chatId, userId) }
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
