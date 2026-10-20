@@ -1,0 +1,12 @@
+# Keep Edge Function request verification consistent with the current production settings.
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.syra-reply-dm]
+verify_jwt = true
+
+[functions.syra-reply-comment]
+verify_jwt = false
+
+[functions.ai-generate]
+verify_jwt = false
