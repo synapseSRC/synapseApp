@@ -63,6 +63,7 @@ internal fun ChatMessageList(
     onRetryClick: (Message) -> Unit = {},
     onReactionSelected: (String, SharedReactionType) -> Unit,
     onNavigateToProfile: (String) -> Unit,
+    onOpenEncryption: () -> Unit = {},
     onOpenBatchGallery: (Message) -> Unit = {},
     onVoteOption: (messageId: String, optionId: String) -> Unit = { _, _ -> },
     onOpenPost: (String) -> Unit = {},
@@ -264,7 +265,8 @@ internal fun ChatMessageList(
                     participantProfile = participantProfile,
                     initialParticipantName = initialParticipantName,
                     avatarUrl = participantAvatarUrl,
-                    onViewProfile = { (participantProfile?.uid ?: participantId)?.let(onNavigateToProfile) }
+                    onViewProfile = { (participantProfile?.uid ?: participantId)?.let(onNavigateToProfile) },
+                    onOpenEncryption = onOpenEncryption
                 )
             }
         }

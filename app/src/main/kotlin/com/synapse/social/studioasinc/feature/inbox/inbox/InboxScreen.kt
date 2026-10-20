@@ -162,7 +162,7 @@ fun InboxScreen(
                             onArchive = { viewModel.archiveConversation(it) },
                             onDelete = { viewModel.deleteConversation(it) },
                             onUndoArchive = { viewModel.undoArchiveConversation(it) },
-                            onAssignToFolder = { chatId, folderId -> viewModel.assignConversationToFolder(chatId, folderId) }
+                            onAssignToFolder = { chatId, folderId -> viewModel.assignConversationToFolder(chatId, folderId) },
                         )
                     }
                 }

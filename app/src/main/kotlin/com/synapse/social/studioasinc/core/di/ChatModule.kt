@@ -376,4 +376,28 @@ object ChatModule {
         return VoiceUploadService(uploadMediaUseCase, imgBBUploadService, context)
     }
 
+    @Provides
+    @Singleton
+    fun provideChatVerificationRepository(
+        @ApplicationContext context: Context,
+        client: SupabaseClientType,
+        signalProtocolManager: SignalProtocolManager,
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.domain.repository.ChatVerificationRepository =
+        com.synapse.social.studioasinc.data.repository.ChatVerificationRepositoryImpl(context, client, signalProtocolManager, chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideLoadChatVerificationUseCase(repository: com.synapse.social.studioasinc.domain.repository.ChatVerificationRepository) =
+        com.synapse.social.studioasinc.domain.usecase.chat.LoadChatVerificationUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideSetChatVerificationUseCase(repository: com.synapse.social.studioasinc.domain.repository.ChatVerificationRepository) =
+        com.synapse.social.studioasinc.domain.usecase.chat.SetChatVerificationUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideVerifyScannedChatCodeUseCase(repository: com.synapse.social.studioasinc.domain.repository.ChatVerificationRepository) =
+        com.synapse.social.studioasinc.domain.usecase.chat.VerifyScannedChatCodeUseCase(repository)
 }

@@ -140,6 +140,7 @@ fun ChatTopAppBar(
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
+
                 IconButton(onClick = {
                     if (participantProfile?.accountType != "group") {
                         onNavigateToChatInfo(chatId, participantId ?: "")

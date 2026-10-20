@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
@@ -24,6 +26,7 @@ fun ChatIntroHeader(
     initialParticipantName: String?,
     avatarUrl: String?,
     onViewProfile: () -> Unit,
+    onOpenEncryption: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -89,7 +92,9 @@ fun ChatIntroHeader(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
+                modifier = Modifier
+                    .clickable(role = Role.Button, onClick = onOpenEncryption)
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,

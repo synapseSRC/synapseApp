@@ -71,6 +71,7 @@ import java.io.File
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
+    var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
 
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
@@ -365,6 +366,7 @@ import java.io.File
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },
                         onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
                         onNavigateToProfile = onNavigateToProfile,
+                        onOpenEncryption = { showEncryptionSheet = true },
                         onLocateMessage = viewModel::loadQuotedMessage,
                         onOpenBatchGallery = { batchGalleryMessage = it },
                         onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
@@ -537,6 +539,18 @@ import java.io.File
             }
         )
     }
+    if (showEncryptionSheet && !isGroupChat) {
+        ChatEncryptionSheet(
+            chatId = chatId,
+            participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
+                ?: participantProfile?.name?.takeIf { it.isNotBlank() }
+                ?: participantProfile?.username?.takeIf { it.isNotBlank() }
+                ?: initialParticipantName?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.chat_security_contact_fallback),
+            onDismiss = { showEncryptionSheet = false }
+        )
+    }
+
 }
 
 @dagger.hilt.EntryPoint
