@@ -226,15 +226,10 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
     }
 
     suspend fun getParticipantIds(chatId: String): List<String> = withContext(AppDispatchers.IO) {
-        try {
-            client.postgrest.from("chat_participants")
-                .select(columns = Columns.list("chat_id", "user_id")) {
-                    filter { eq("chat_id", chatId) }
-                }.decodeList<ChatParticipantDto>().map { it.userId }
-        } catch (e: Exception) {
-            Napier.e("Error getting participant ids", e)
-            emptyList()
-        }
+        client.postgrest.from("chat_participants")
+            .select(columns = Columns.list("chat_id", "user_id")) {
+                filter { eq("chat_id", chatId) }
+            }.decodeList<ChatParticipantDto>().map { it.userId }
     }
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) = withContext(AppDispatchers.IO) {
