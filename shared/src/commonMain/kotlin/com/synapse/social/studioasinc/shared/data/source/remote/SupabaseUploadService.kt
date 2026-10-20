@@ -42,7 +42,15 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 }
                 // Verify protected uploads can be signed before returning a reference for persistence.
                 if (targetBucket in protectedMediaBuckets) {
-                    bucket.createSignedUrl(path = path, expiresIn = 15.minutes)
+                    try {
+                        bucket.createSignedUrl(path = path, expiresIn = 15.minutes)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (verificationError: Exception) {
+                        throw UploadError.StorageVerificationError(
+                            "Upload succeeded, but signing verification failed for $targetBucket/$path: ${verificationError.message ?: "unknown error"}"
+                        )
+                    }
                 }
                 onProgress(1.0f)
             }
@@ -54,6 +62,11 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 }
             Napier.d("Supabase upload successful to $targetBucket", tag = "SupabaseUpload")
             return UploadResult(url = url, deleteUrl = null)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (e: UploadError.StorageVerificationError) {
+            Napier.e("Supabase upload succeeded but protected object verification failed: $targetBucket", e, tag = "SupabaseUpload")
+            throw e
         } catch (e: Exception) {
             Napier.e("Supabase upload failed to bucket: $targetBucket", e, tag = "SupabaseUpload")
             val fallbackBucket = if (targetBucket in protectedMediaBuckets) {

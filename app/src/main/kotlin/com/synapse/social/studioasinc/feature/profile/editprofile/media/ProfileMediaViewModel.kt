@@ -134,19 +134,35 @@ class ProfileMediaViewModel @Inject constructor(
                 val uploadResult = compressAndUploadAvatar(uri)
                 uploadResult.fold(
                     onSuccess = { url ->
-                        _uiState.update {
-                            it.copy(
-                                avatarUrl = url,
-                                avatarUploadState = UploadState.Success,
-                                pendingAvatarUri = null,
-                                showShareToFeedDialog = true
-                            )
-                        }
                         val userId = repository.getCurrentUserId()
-                        if (userId != null) {
+                        if (userId == null) {
+                            _uiState.update {
+                                it.copy(avatarUploadState = UploadState.Error("User not logged in"))
+                            }
+                        } else {
                             val updateData = mapOf("avatar" to url)
-                            repository.updateProfile(userId, updateData)
-                            repository.addToProfileHistory(userId, url)
+                            repository.updateProfile(userId, updateData).fold(
+                                onSuccess = {
+                                    repository.addToProfileHistory(userId, url)
+                                    _uiState.update {
+                                        it.copy(
+                                            avatarUrl = url,
+                                            avatarUploadState = UploadState.Success,
+                                            pendingAvatarUri = null,
+                                            showShareToFeedDialog = true
+                                        )
+                                    }
+                                },
+                                onFailure = { saveError ->
+                                    _uiState.update {
+                                        it.copy(
+                                            avatarUploadState = UploadState.Error(
+                                                "Avatar uploaded but profile save failed: ${saveError.message ?: "unknown error"}"
+                                            )
+                                        )
+                                    }
+                                }
+                            )
                         }
                     },
                     onFailure = { error ->
@@ -155,6 +171,8 @@ class ProfileMediaViewModel @Inject constructor(
                         }
                     }
                 )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(avatarUploadState = UploadState.Error("Unexpected error: ${e.message}"))

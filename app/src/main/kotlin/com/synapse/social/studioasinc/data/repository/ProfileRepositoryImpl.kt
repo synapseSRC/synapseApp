@@ -205,6 +205,8 @@ class ProfileRepositoryImpl(
                             return@flow
                         }
                     }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
                 } catch (createError: Exception) {
                     android.util.Log.e("ProfileRepository", "Failed to create missing profile", createError)
                 }
@@ -228,6 +230,8 @@ class ProfileRepositoryImpl(
             val profile = parseUserProfile(response, postCount.toInt())
             android.util.Log.d("ProfileRepository", "Profile loaded successfully for userId: $actualUserId")
             emit(Result.success(profile))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             android.util.Log.e("ProfileRepository", "Failed to load profile for userId: $actualUserId", e)
             emit(Result.failure(Exception("Failed to load profile: ${e.message}", e)))
