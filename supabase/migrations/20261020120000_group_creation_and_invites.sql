@@ -34,8 +34,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
-DECLARE next_code text;
-DECLARE current_uid text := get_current_user_uid();
+DECLARE
+    next_code text;
+    current_uid text := get_current_user_uid();
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
     UPDATE public.chats AS c
@@ -77,8 +78,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
-DECLARE target_chat public.chats%ROWTYPE;
-DECLARE current_uid text := get_current_user_uid();
+DECLARE
+    target_chat public.chats%ROWTYPE;
+    current_uid text := get_current_user_uid();
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
     SELECT * INTO target_chat FROM public.chats
@@ -107,8 +109,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
-DECLARE request_row public.group_join_requests%ROWTYPE;
-DECLARE current_uid text := get_current_user_uid();
+DECLARE
+    request_row public.group_join_requests%ROWTYPE;
+    current_uid text := get_current_user_uid();
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
     SELECT * INTO request_row FROM public.group_join_requests WHERE id = p_request_id FOR UPDATE;
@@ -127,8 +130,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
-DECLARE request_row public.group_join_requests%ROWTYPE;
-DECLARE current_uid text := get_current_user_uid();
+DECLARE
+    request_row public.group_join_requests%ROWTYPE;
+    current_uid text := get_current_user_uid();
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
     SELECT * INTO request_row FROM public.group_join_requests WHERE id = p_request_id FOR UPDATE;
@@ -233,8 +237,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
-DECLARE current_uid text := get_current_user_uid();
-DECLARE creator_uid text;
+DECLARE
+    current_uid text := get_current_user_uid();
+    creator_uid text;
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
     IF NOT private.is_chat_admin(p_chat_id, current_uid) THEN RAISE EXCEPTION 'Admin permission required'; END IF;
@@ -252,10 +257,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
-DECLARE current_uid text := get_current_user_uid();
-DECLARE creator_uid text;
-DECLARE target_is_admin boolean;
-DECLARE admin_count bigint;
+DECLARE
+    current_uid text := get_current_user_uid();
+    creator_uid text;
+    target_is_admin boolean;
+    admin_count bigint;
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
     IF NOT private.is_chat_admin(p_chat_id, current_uid) THEN RAISE EXCEPTION 'Admin permission required'; END IF;
