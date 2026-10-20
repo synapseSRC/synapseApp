@@ -15,7 +15,6 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
@@ -57,12 +56,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun removeGroupMember(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chat_participants").delete {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", userId)
-                }
-            }
+            client.postgrest.rpc("remove_group_member", mapOf("p_chat_id" to chatId, "p_user_id" to userId))
         } catch (e: Exception) {
             Napier.e("Error removing group member", e)
             throw e
@@ -71,14 +65,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun promoteToAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chat_participants").update({
-                set("is_admin", true)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", userId)
-                }
-            }
+            client.postgrest.rpc("set_group_member_admin", mapOf("p_chat_id" to chatId, "p_user_id" to userId, "p_is_admin" to true))
         } catch (e: Exception) {
             Napier.e("Error promoting member to admin", e)
             throw e
@@ -87,14 +74,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun demoteAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chat_participants").update({
-                set("is_admin", false)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", userId)
-                }
-            }
+            client.postgrest.rpc("set_group_member_admin", mapOf("p_chat_id" to chatId, "p_user_id" to userId, "p_is_admin" to false))
         } catch (e: Exception) {
             Napier.e("Error demoting admin", e)
             throw e

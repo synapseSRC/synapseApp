@@ -13,7 +13,18 @@ import dagger.hilt.android.AndroidEntryPoint
 class GroupInviteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val inviteCode = intent?.data?.lastPathSegment.orEmpty()
+        val inviteCode = intent?.data
+            ?.takeIf { uri ->
+                uri.scheme == "https" && uri.host == "synapse.chat" &&
+                    uri.pathSegments.size == 2 && uri.pathSegments.firstOrNull() == "g"
+            }
+            ?.lastPathSegment
+            ?.takeIf { code ->
+                code.length == 32 && code.all { character ->
+                    character in '0'..'9' || character.lowercaseChar() in 'a'..'f'
+                }
+            }
+            .orEmpty()
         setContent {
             GroupInviteScreen(
                 inviteCode = inviteCode,
