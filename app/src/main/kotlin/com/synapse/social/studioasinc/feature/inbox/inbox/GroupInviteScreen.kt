@@ -66,7 +66,7 @@ fun GroupInviteScreen(
                     }
                 )
             },
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding).padding(Spacing.space16), contentAlignment = Alignment.Center) {
                 when {

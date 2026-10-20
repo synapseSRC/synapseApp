@@ -141,7 +141,8 @@ fun GroupInfoScreen(
                         }
                     }
                 )
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ) { padding ->
             Column(
                 modifier = Modifier
