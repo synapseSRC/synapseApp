@@ -9,7 +9,6 @@
     <string name="inbox_username_format">@%1$s</string>
     <string name="inbox_search_title">Search &amp; Discovery</string>
     <string name="inbox_loading">Loading…</string>
-    <string name="inbox_ai_refresh">Adjust or refresh briefing</string>
     <string name="inbox_ai_banner_empty">No unread conversations to summarize</string>
     <string name="inbox_filter_unread_count">Unread (%1$d)</string>
     <string name="inbox_filter_all">All</string>
