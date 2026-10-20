@@ -185,22 +185,21 @@ internal fun ChatMessageList(
             item(key = "typing_indicator") {
                 val typingModifier = if (!reducedMotion) {
                     Modifier.animateItem(
-                        // M3 fast effects spring: damping 1.0 (no overshoot), stiffness 3800
+                        // M3 fast effects spring — damping 1.0 (no overshoot).
+                        // Stiffness 5000 for near-instant opacity settle (~60 ms).
                         fadeInSpec = spring(
                             dampingRatio = 1.0f,
-                            stiffness = 3800f
+                            stiffness = 5000f
                         ),
                         fadeOutSpec = spring(
                             dampingRatio = 1.0f,
-                            stiffness = 3800f
+                            stiffness = 5000f
                         ),
-                        // Critically-damped spatial spring: no overshoot, fast settle.
-                        // Project design decision: damping 1.0 / stiffness 1500 to
-                        // prevent visible bounce when the typing indicator pushes
-                        // messages upward.
+                        // Critically-damped spatial spring: stiffness 3000 for
+                        // fast slide-up (~80 ms) when the indicator pushes bubbles.
                         placementSpec = spring(
                             dampingRatio = 1.0f,
-                            stiffness = 1500f
+                            stiffness = 3000f
                         )
                     )
                 } else {
@@ -243,29 +242,27 @@ internal fun ChatMessageList(
 
             // Shared placement and entrance spec for items.
             // Project design decision: critically-damped spatial spring
-            // (damping 1.0 / stiffness 1500) so existing bubbles slide into
-            // their new positions without any visible bounce or overshoot.
-            // Using damping 1.0 instead of M3's standard 0.9 because the
-            // underdamped bounce was perceptible in a reverse-layout chat
-            // list and looked glitchy rather than expressive.
+            // (damping 1.0 / stiffness 3000) so existing bubbles slide into
+            // their new positions quickly (~80 ms) without overshoot.
+            // Optimised for rapid-fire sending: stiffness 3000 ensures
+            // each animation settles before the next message lands.
             val placementModifier = if (!reducedMotion) {
                 Modifier.animateItem(
-                    // From M3 tokens: "fast effects" spring — damping 1.0
-                    // (no overshoot), stiffness 3800 (fast settle). Effects
-                    // springs are for color/opacity and must never overshoot.
-                    // Only active on first appearance; null on all subsequent
+                    // Effects spring for opacity — damping 1.0 (no overshoot),
+                    // stiffness 5000 (near-instant ~60 ms settle).
+                    // Only active on first appearance; null on subsequent
                     // recompositions to prevent flicker on item recycling.
                     fadeInSpec = if (isFirstAppearance) spring(
                         dampingRatio = 1.0f,
-                        stiffness = 3800f
+                        stiffness = 5000f
                     ) else null,
                     fadeOutSpec = spring(
                         dampingRatio = 1.0f,
-                        stiffness = 3800f
+                        stiffness = 5000f
                     ),
                     placementSpec = spring(
                         dampingRatio = 1.0f,
-                        stiffness = 1500f
+                        stiffness = 3000f
                     )
                 )
             } else {

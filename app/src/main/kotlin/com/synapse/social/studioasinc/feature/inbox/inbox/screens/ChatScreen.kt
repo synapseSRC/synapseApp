@@ -262,11 +262,10 @@ import java.io.File
                 val isNearBottom = listState.firstVisibleItemIndex <= 1
 
                 if (isFromMe) {
-                    if (listState.firstVisibleItemIndex > 3) {
-                        listState.scrollToItem(0)
-                    } else if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
-                        listState.animateScrollToItem(0)
-                    }
+                    // Always snap-scroll for own messages — instant snap feels
+                    // intentional and prevents animated scroll from fighting
+                    // the placement spring during rapid-fire sending.
+                    listState.scrollToItem(0)
                 } else if (isNearBottom) {
                     if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
                         listState.animateScrollToItem(0)
