@@ -101,7 +101,16 @@ class ProfileRepositoryImpl(
             name = data.getNullableString(KEY_DISPLAY_NAME),
             nickname = data.getNullableString(KEY_NICKNAME),
             bio = data.getNullableString(KEY_BIO),
-            avatar = data.getNullableString(KEY_AVATAR)?.let { constructAvatarUrl(it) },
+            avatar = data.getNullableString(KEY_AVATAR)?.takeIf { it.isNotBlank() }?.let { avatarReference ->
+                try {
+                    SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarReference)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    android.util.Log.w("ProfileRepository", "Avatar image unavailable; loading profile without it", error)
+                    null
+                }
+            },
             coverImageUrl = data.getNullableString(KEY_COVER_IMAGE)?.takeIf { it.isNotBlank() }?.let { coverReference ->
                 // A missing or inaccessible cover should not prevent the profile from loading.
                 try {

@@ -286,6 +286,8 @@ class ProfileMediaViewModel @Inject constructor(
                         }
                     }
                 )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(coverUploadState = UploadState.Error("Failed to process cover: ${e.message}"))

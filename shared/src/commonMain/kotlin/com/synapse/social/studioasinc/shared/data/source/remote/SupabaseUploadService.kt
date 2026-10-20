@@ -14,7 +14,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlin.time.Duration.Companion.minutes
 
 class SupabaseUploadService(private val supabase: SupabaseClient) : UploadService {
-    private val protectedMediaBuckets = setOf("posts", "covers", "story-media", "story-thumbnails", "reels")
+    private val protectedMediaBuckets = setOf("posts", "covers", "avatars", "story-media", "story-thumbnails", "reels")
 
     override suspend fun upload(
         fileProvider: suspend (Long) -> ByteReadChannel,

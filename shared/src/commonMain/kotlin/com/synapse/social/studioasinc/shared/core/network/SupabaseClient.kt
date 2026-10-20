@@ -27,7 +27,7 @@ object SupabaseClient {
     const val BUCKET_USER_AVATARS = "avatars"
     const val BUCKET_USER_COVERS = "covers"
 
-    private val protectedMediaBuckets = setOf("posts", "covers", "story-media", "story-thumbnails", "reels")
+    private val protectedMediaBuckets = setOf("posts", "covers", "avatars", "story-media", "story-thumbnails", "reels")
 
     @OptIn(SupabaseInternal::class)
     val client by lazy {
