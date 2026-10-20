@@ -301,7 +301,13 @@ private fun ChatInfoScreenContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 uiState.errorMessageRes?.let { messageRes ->
-                    item(key = "error") { ErrorBanner(message = stringResource(messageRes)) }
+                    item(key = "error") {
+                        ErrorBanner(
+                            message = stringResource(messageRes),
+                            canRetry = uiState.canRetryLoad,
+                            onRetry = { viewModel.retryLoadChatInfo(chatId, userId) }
+                        )
+                    }
                 }
                 item(key = "contact-header") {
                     ContactHeader(
@@ -831,18 +837,29 @@ private fun SectionHeading(text: String) {
 }
 
 @Composable
-private fun ErrorBanner(message: String) {
+private fun ErrorBanner(message: String, canRetry: Boolean, onRetry: () -> Unit) {
     androidx.compose.material3.Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(ChatInfoMetrics.cardCorner),
         color = MaterialTheme.colorScheme.errorContainer
     ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(Spacing.space16)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Spacing.space8),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.weight(1f)
+            )
+            if (canRetry) {
+                PressScaleTextButton(onClick = onRetry) {
+                    Text(stringResource(R.string.chat_info_retry))
+                }
+            }
+        }
     }
 }
 
