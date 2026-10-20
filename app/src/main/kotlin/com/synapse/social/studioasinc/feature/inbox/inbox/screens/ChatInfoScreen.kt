@@ -46,23 +46,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -79,8 +74,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.material3.Typography
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatInfoViewModel
@@ -92,67 +85,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 
-private val ChatInfoLightColors = lightColorScheme(
-    primary = Color(0xFF0B57D0),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD3E3FD),
-    onPrimaryContainer = Color(0xFF041E49),
-    secondary = Color(0xFF5A5C7C),
-    secondaryContainer = Color(0xFFDCE2F9),
-    onSecondaryContainer = Color(0xFF131C2B),
-    tertiaryContainer = Color(0xFFFFD8EE),
-    onTertiaryContainer = Color(0xFF2E1125),
-    error = Color(0xFFB3261E),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFF9DEDC),
-    onErrorContainer = Color(0xFF410E0B),
-    background = Color(0xFFFAF9FD),
-    onBackground = Color(0xFF1B1B1F),
-    surface = Color(0xFFFAF9FD),
-    onSurface = Color(0xFF1B1B1F),
-    onSurfaceVariant = Color(0xFF44474E),
-    outline = Color(0xFF74777F),
-    outlineVariant = Color(0xFFC4C6D0),
-    inverseSurface = Color(0xFF303034),
-    inverseOnSurface = Color(0xFFF2F0F4),
-    inversePrimary = Color(0xFFA8C7FA),
-    surfaceContainerLow = Color(0xFFF3F3FA),
-    surfaceContainer = Color(0xFFEEEDF3),
-    surfaceContainerHigh = Color(0xFFE9E8EF),
-    surfaceContainerHighest = Color(0xFFE3E2E6)
-)
-
-private val ChatInfoDarkColors = darkColorScheme(
-    primary = Color(0xFFC0C2FD),
-    onPrimary = Color(0xFF042C71),
-    primaryContainer = Color(0xFF04409F),
-    onPrimaryContainer = Color(0xFFE0E0FC),
-    secondary = Color(0xFFC3C3E9),
-    secondaryContainer = Color(0xFF424463),
-    onSecondaryContainer = Color(0xFFE0E0FE),
-    tertiaryContainer = Color(0xFF6E334E),
-    onTertiaryContainer = Color(0xFFFFD8E7),
-    error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC),
-    background = Color(0xFF131317),
-    onBackground = Color(0xFFE2E2E8),
-    surface = Color(0xFF131317),
-    onSurface = Color(0xFFE2E2E8),
-    onSurfaceVariant = Color(0xFFC6C5D2),
-    outline = Color(0xFF90909C),
-    outlineVariant = Color(0xFF464651),
-    inverseSurface = Color(0xFFE2E2E8),
-    inverseOnSurface = Color(0xFF303034),
-    inversePrimary = Color(0xFF3757BA),
-    surfaceContainerLow = Color(0xFF1B1B1F),
-    surfaceContainer = Color(0xFF1F1F23),
-    surfaceContainerHigh = Color(0xFF2A2A2E),
-    surfaceContainerHighest = Color(0xFF343439)
-)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatInfoScreen(
     chatId: String,
@@ -165,27 +98,21 @@ fun ChatInfoScreen(
     onNavigateToChatPrivacy: (String) -> Unit = {},
     viewModel: ChatInfoViewModel = hiltViewModel()
 ) {
-    val colorScheme = if (isSystemInDarkTheme()) ChatInfoDarkColors else ChatInfoLightColors
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        motionScheme = MotionScheme.expressive(),
-        typography = Typography()
-    ) {
-        ChatInfoScreenContent(
-            chatId = chatId,
-            userId = userId,
-            onNavigateBack = onNavigateBack,
-            onNavigateToProfile = onNavigateToProfile,
-            onNavigateToCreateGroup = onNavigateToCreateGroup,
-            onNavigateToDisappearingMessages = onNavigateToDisappearingMessages,
-            onNavigateToSharedContent = onNavigateToSharedContent,
-            onNavigateToChatPrivacy = onNavigateToChatPrivacy,
-            viewModel = viewModel
-        )
-    }
+    // Inherit the activity SynapseTheme so appearance settings and dynamic colors apply.
+    ChatInfoScreenContent(
+        chatId = chatId,
+        userId = userId,
+        onNavigateBack = onNavigateBack,
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToCreateGroup = onNavigateToCreateGroup,
+        onNavigateToDisappearingMessages = onNavigateToDisappearingMessages,
+        onNavigateToSharedContent = onNavigateToSharedContent,
+        onNavigateToChatPrivacy = onNavigateToChatPrivacy,
+        viewModel = viewModel
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChatInfoScreenContent(
     chatId: String,
