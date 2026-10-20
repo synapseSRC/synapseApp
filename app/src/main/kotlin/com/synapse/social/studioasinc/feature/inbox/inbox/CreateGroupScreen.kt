@@ -6,6 +6,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -155,7 +157,6 @@ fun CreateGroupScreen(
     }
 
     GroupCreationTheme {
-        val motionScheme = MaterialTheme.motionScheme
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -210,14 +211,14 @@ fun CreateGroupScreen(
                 modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
                 transitionSpec = {
                     if (targetState == FLOW_HUB || initialState == FLOW_HUB) {
-                        fadeIn(animationSpec = motionScheme.defaultEffectsSpec()) togetherWith
-                            fadeOut(animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec())
+                        fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) togetherWith
+                            fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
                     } else {
                         val movingForward = targetState > initialState
-                        (slideInHorizontally(animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec()) { width -> if (movingForward) width else -width } +
-                            fadeIn(animationSpec = MaterialTheme.motionScheme.fastEffectsSpec())) togetherWith
-                            (slideOutHorizontally(animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec()) { width -> if (movingForward) -width else width } +
-                                fadeOut(animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()))
+                        (slideInHorizontally(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) { width -> if (movingForward) width else -width } +
+                            fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) { width -> if (movingForward) -width else width } +
+                                fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)))
                     }
                 },
                 label = "groupCreationStage"
