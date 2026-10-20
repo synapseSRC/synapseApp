@@ -10,5 +10,8 @@ data class ChatInfo(
     val onlyAdminsCanMessage: Boolean,
     val createdAt: String?,
     val updatedAt: String?,
-    val disappearingMode: DisappearingMode = DisappearingMode.OFF
+    val disappearingMode: DisappearingMode = DisappearingMode.OFF,
+    val allowMemberSettingsEdits: Boolean = false,
+    val requireJoinApproval: Boolean = true,
+    val allowMemberInvites: Boolean = false
 )

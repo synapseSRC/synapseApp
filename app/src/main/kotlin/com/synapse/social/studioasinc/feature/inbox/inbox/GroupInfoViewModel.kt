@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+import com.synapse.social.studioasinc.shared.domain.repository.GroupCreationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GroupInfoViewModel @Inject constructor(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val groupCreationRepository: GroupCreationRepository
 ) : ViewModel() {
 
     private val _members = MutableStateFlow<List<Pair<User, Boolean>>>(emptyList())
@@ -27,6 +29,15 @@ class GroupInfoViewModel @Inject constructor(
 
     private val _onlyAdminsCanMessage = MutableStateFlow(false)
     val onlyAdminsCanMessage: StateFlow<Boolean> = _onlyAdminsCanMessage.asStateFlow()
+
+    private val _allowMemberSettingsEdits = MutableStateFlow(false)
+    val allowMemberSettingsEdits: StateFlow<Boolean> = _allowMemberSettingsEdits.asStateFlow()
+
+    private val _allowMemberInvites = MutableStateFlow(false)
+    val allowMemberInvites: StateFlow<Boolean> = _allowMemberInvites.asStateFlow()
+
+    private val _inviteCode = MutableStateFlow<String?>(null)
+    val inviteCode: StateFlow<String?> = _inviteCode.asStateFlow()
 
 
     private var currentChatId: String? = null
@@ -47,12 +58,23 @@ class GroupInfoViewModel @Inject constructor(
             }
             chatRepository.getChatInfo(chatId).onSuccess { info ->
                 _onlyAdminsCanMessage.value = info?.onlyAdminsCanMessage ?: false
+                _allowMemberSettingsEdits.value = info?.allowMemberSettingsEdits ?: false
+                _allowMemberInvites.value = info?.allowMemberInvites ?: false
             }
+            groupCreationRepository.getGroupInviteCode(chatId).onSuccess { _inviteCode.value = it }
 
             _isLoading.value = false
         }
     }
 
+
+    fun rotateInviteCode() {
+        val chatId = currentChatId ?: return
+        viewModelScope.launch {
+            groupCreationRepository.rotateGroupInviteCode(chatId).onSuccess { _inviteCode.value = it }
+                .onFailure { _error.value = "Failed to regenerate invite link" }
+        }
+    }
 
     fun addMember(userId: String) {
         val chatId = currentChatId ?: return

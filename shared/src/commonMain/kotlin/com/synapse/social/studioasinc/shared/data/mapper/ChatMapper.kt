@@ -57,6 +57,9 @@ object ChatMapper {
         onlyAdminsCanMessage = onlyAdminsCanMessage,
         createdAt = normalizeTimestamp(createdAt),
         updatedAt = normalizeTimestamp(updatedAt),
+        allowMemberSettingsEdits = allowMemberSettingsEdits,
+        requireJoinApproval = requireJoinApproval,
+        allowMemberInvites = allowMemberInvites,
         disappearingMode = try {
             disappearingMode?.let { com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.valueOf(it) }
                 ?: com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
