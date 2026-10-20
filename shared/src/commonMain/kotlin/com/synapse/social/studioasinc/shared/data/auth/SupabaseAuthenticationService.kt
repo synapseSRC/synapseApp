@@ -95,10 +95,10 @@ class SupabaseAuthenticationService(
     override suspend fun ensureProfileExists(userId: String, email: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
-                val count = client.from("users").select(columns = Columns.list("id")) {
+                val count = client.from("users").select(columns = Columns.list("uid")) {
                     count(Count.EXACT)
                     filter {
-                        eq("id", userId)
+                        eq("uid", userId)
                     }
                 }.countOrNull()
 

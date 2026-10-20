@@ -120,34 +120,39 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         return try {
             withContext(AppDispatchers.IO) {
                 Napier.d("Checking if user profile exists for userId: $userId", tag = TAG)
-                val count = client.from("users").select(columns = Columns.list("id")) {
+                val count = client.from("users").select(columns = Columns.list("uid")) {
                     count(Count.EXACT)
                     filter {
-                        eq("id", userId)
+                        eq("uid", userId)
                     }
                 }.countOrNull()
                 Napier.d("User profile count for $userId: $count", tag = TAG)
 
+                val actualUsername = username ?: email.substringBefore("@")
                 if (count == null || count == 0L) {
                     Napier.d("Profile does not exist for $userId, creating new profile...", tag = TAG)
-                    val actualUsername = username ?: email.substringBefore("@")
-
                     // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
                     val profileInsert = UserProfileInsert(
-                        uid = userId, // Ensure ID is passed if model requires it
+                        uid = userId,
                         username = actualUsername
                     )
                     Napier.d("Inserting user profile for $userId into users table...", tag = TAG)
                     client.from("users").insert(profileInsert)
                     Napier.d("Successfully inserted user profile for $userId.", tag = TAG)
-
-                    // Note: user_settings and user_presence are automatically created by database trigger
-                    // when the user signs up via Supabase Auth (see handle_new_auth_user trigger)
-                    // No need to manually insert them here
-
-                    Napier.d("User profile created: $userId", tag = TAG)
                 } else {
                     Napier.d("Profile already exists for $userId.", tag = TAG)
+                    // If a custom username was provided during sign up, ensure it is synchronized on the existing profile
+                    if (!username.isNullOrBlank()) {
+                        try {
+                            client.from("users").update(mapOf("username" to actualUsername)) {
+                                filter {
+                                    eq("uid", userId)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Napier.w("Failed to update username for existing profile $userId", e, tag = TAG)
+                        }
+                    }
                 }
                 Result.success(Unit)
             }
