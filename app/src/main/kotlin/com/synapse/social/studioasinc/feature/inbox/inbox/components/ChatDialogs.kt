@@ -27,7 +27,8 @@ fun DisappearingModeDialog(
                 val options = listOf(
                     DisappearingMode.OFF to stringResource(R.string.disappearing_mode_off),
                     DisappearingMode.TWENTY_FOUR_HOURS to stringResource(R.string.disappearing_mode_24_hours),
-                    DisappearingMode.SEVEN_DAYS to stringResource(R.string.disappearing_mode_7_days)
+                    DisappearingMode.SEVEN_DAYS to stringResource(R.string.disappearing_mode_7_days),
+                    DisappearingMode.NINETY_DAYS to stringResource(R.string.disappearing_mode_90_days)
                 )
                 options.forEach { (mode, label) ->
                     Row(
