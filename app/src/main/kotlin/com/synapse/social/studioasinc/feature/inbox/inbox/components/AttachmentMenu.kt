@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
@@ -190,12 +192,26 @@ fun MediaPreviewDialog(
                             VoiceMessagePlayer(mediaUrl = activeFile.uri.toString(), tintColor = MaterialTheme.colorScheme.primary, isFromMe = true)
                         }
                         else -> {
-                            Icon(
-                                Icons.AutoMirrored.Filled.InsertDriveFile,
-                                contentDescription = "File",
-                                modifier = Modifier.size(Sizes.ShimmerWidthLarge),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Column(
+                                modifier = Modifier.padding(horizontal = Spacing.space16),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.InsertDriveFile,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(Sizes.ShimmerWidthLarge),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(Spacing.space8))
+                                Text(
+                                    text = activeFile.fileName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
