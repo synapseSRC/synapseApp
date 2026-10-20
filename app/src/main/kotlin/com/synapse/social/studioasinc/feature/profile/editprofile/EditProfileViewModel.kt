@@ -518,8 +518,7 @@ class EditProfileViewModel @Inject constructor(
                                 it.copy(
                                     avatarUrl = url,
                                     avatarUploadState = UploadState.Success,
-                                    pendingAvatarUri = null,
-                                    showShareToFeedDialog = true
+                                    pendingAvatarUri = null
                                 )
                             }
                             finalState = _uiState.value
@@ -677,11 +676,18 @@ class EditProfileViewModel @Inject constructor(
 
     private suspend fun handleSuccessfulSave(state: EditProfileUiState, userId: String) {
         val originalUsername = state.profile?.username
+        val profilePictureChanged = state.avatarUrl != state.profile?.avatar
         if (originalUsername != null && originalUsername != state.username) {
             val syncResult = repository.syncUsernameChange(originalUsername, state.username, userId)
             syncResult.fold(
                 onSuccess = {
-                    _uiState.update { it.copy(isSaving = false, hasChanges = false) }
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            hasChanges = false,
+                            showShareToFeedDialog = profilePictureChanged
+                        )
+                    }
                     _navigationEvents.emit(EditProfileNavigation.NavigateBack)
                 },
                 onFailure = { error ->
@@ -689,7 +695,13 @@ class EditProfileViewModel @Inject constructor(
                 }
             )
         } else {
-            _uiState.update { it.copy(isSaving = false, hasChanges = false) }
+            _uiState.update {
+                it.copy(
+                    isSaving = false,
+                    hasChanges = false,
+                    showShareToFeedDialog = profilePictureChanged
+                )
+            }
             _navigationEvents.emit(EditProfileNavigation.NavigateBack)
         }
     }
