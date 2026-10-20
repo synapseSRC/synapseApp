@@ -49,23 +49,21 @@ private const val CANCEL_SHIMMER_BAND_HALF_WIDTH = 0.10f
 private const val ACTIVE_MIC_SCALE = 1.08f
 private const val ACTIVE_MIC_GLOW_ALPHA = 0.42f
 private const val MIC_SCALE_DAMPING_RATIO = 0.6f
-private const val LOCK_ARROW_START_OFFSET_DP = 3f
-private const val LOCK_ARROW_END_OFFSET_DP = -3f
-private const val LOCK_ARROW_BOUNCE_DURATION_MILLIS = 1_800
-private const val LOCK_ARROW_GRADIENT_CLEAR_ALPHA = 0f
-private const val LOCK_ARROW_GRADIENT_CORE_ALPHA = 0.75f
+private const val LOCK_PILL_CHEVRON_START_OFFSET_DP = 2f
+private const val LOCK_PILL_CHEVRON_END_OFFSET_DP = -2f
+private const val LOCK_PILL_CHEVRON_BOUNCE_DURATION_MILLIS = 1_400
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
-private val LOCK_INDICATOR_GAP = Spacing.space8
-private val LOCK_INDICATOR_WIDTH = 144.dp
+private val LOCK_PILL_GAP = Spacing.space6
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.space4 + Spacing.space8
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
-private val LOCK_ARROW_WIDTH = 24.dp
-private val LOCK_ARROW_HEIGHT = 36.dp
-private val LOCK_ARROW_STEM_WIDTH = 2.dp
-private val LOCK_ARROW_STEM_HEIGHT = 22.dp
-private val LOCK_ARROW_ICON_SIZE = 20.dp
+// WhatsApp-style vertical lock pill capsule dimensions
+private val LOCK_PILL_WIDTH = 48.dp
+private val LOCK_PILL_HEIGHT = 120.dp
+private val LOCK_PILL_ICON_SIZE = 22.dp
+private val LOCK_PILL_CHEVRON_SIZE = 16.dp
+private val LOCK_PILL_CORNER_RADIUS = 24.dp
 
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
@@ -141,24 +139,9 @@ fun VoiceInputHost(
         }
     }
 
-    val lockLaneIsNeeded = voiceState is VoiceState.Recording || (isLocked && lastLockGestureOffsetYPx < 0f && !reducedMotion)
-    val lockLaneHeight = if (lockLaneIsNeeded) {
-        with(density) { lockIndicatorHeightPx.toDp() } +
-            LOCK_INDICATOR_GAP + VoiceGestureConfig().lockThresholdDp.dp
-    } else {
-        0.dp
-    }
-    val animatedLockLaneHeight = animateDpForMotion(
-        targetValue = lockLaneHeight,
-        reducedMotion = reducedMotion,
-        animationSpec = spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow),
-        label = "voiceLockHintHeadroom"
-    )
-
-    // Measured headroom follows the actual localized/font-scaled cue and the configured upward gesture travel.
-    // The pill stays at the bottom while the chat list can reserve the host's full measured height.
+    // The lock indicator is now an overlay (rendered outside the measured layout) to avoid
+    // pushing the chat message list upward when the mic is held — fixing the layout glitch.
     Column(modifier = modifier.fillMaxWidth()) {
-        Spacer(Modifier.height(animatedLockLaneHeight))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -421,30 +404,25 @@ private fun VoiceRecordingContentOverlay(
             if (recording != null) {
                 RecordingStatusOverlay(recording, reducedMotion, Modifier.align(Alignment.Center))
                 micBoundsInHost?.let { micBounds ->
-                    val safeWidth = (maxWidth - Spacing.space4 - Spacing.space4).coerceAtLeast(0.dp)
-                    val indicatorWidth = minOf(LOCK_INDICATOR_WIDTH, safeWidth)
+                    val pillWidthPx = with(density) { LOCK_PILL_WIDTH.toPx() }
+                    val pillHeightPx = with(density) { LOCK_PILL_HEIGHT.toPx() }
+                    val gapPx = with(density) { LOCK_PILL_GAP.toPx() }
                     val parentWidthPx = with(density) { maxWidth.toPx() }
-                    val indicatorWidthPx = with(density) { indicatorWidth.toPx() }
-                    val arrowWidthPx = with(density) { LOCK_ARROW_WIDTH.toPx() }
-                    val gapPx = with(density) { LOCK_INDICATOR_GAP.toPx() }
                     val micCenterX = (micBounds.left + micBounds.right) / 2f
-                    val micTop = micBounds.top + recording.dragOffsetYPx
-                    val leftPx = (micCenterX - indicatorWidthPx / 2f)
-                        .coerceIn(0f, (parentWidthPx - indicatorWidthPx).coerceAtLeast(0f))
-                    val arrowLeftPx = (micCenterX - leftPx - arrowWidthPx / 2f)
-                        .coerceIn(0f, (indicatorWidthPx - arrowWidthPx).coerceAtLeast(0f))
-                    val topPx = micTop - lockIndicatorHeightPx - gapPx
+                    val micTop = micBounds.top
+                    val leftPx = (micCenterX - pillWidthPx / 2f)
+                        .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
+                    val topPx = micTop - pillHeightPx - gapPx
 
-                    SlideToLockIndicator(
+                    LockPillCapsule(
                         progress = recording.lockProgress,
+                        cancelProgress = recording.cancelProgress,
                         reducedMotion = reducedMotion,
-                        columnWidth = indicatorWidth,
-                        arrowOffsetX = with(density) { arrowLeftPx.toDp() },
                         measuredHeightPx = lockIndicatorHeightPx,
                         onHeightChanged = onLockIndicatorHeightChanged,
                         modifier = Modifier
                             .absoluteOffset { IntOffset(leftPx.roundToInt(), topPx.roundToInt()) }
-                            .width(indicatorWidth)
+                            .width(LOCK_PILL_WIDTH)
                     )
                 }
             }
@@ -497,91 +475,102 @@ private fun ShimmerCancelHint(reducedMotion: Boolean) {
     )
 }
 
+/**
+ * WhatsApp-style vertical pill capsule lock indicator.
+ * Shows a lock icon at the top and a bouncing chevron arrow below it.
+ * Appears directly above the resting mic button during recording.
+ */
 @Composable
-private fun SlideToLockIndicator(
+private fun LockPillCapsule(
     progress: Float,
+    cancelProgress: Float,
     reducedMotion: Boolean,
-    columnWidth: androidx.compose.ui.unit.Dp,
-    arrowOffsetX: androidx.compose.ui.unit.Dp,
     measuredHeightPx: Int,
     onHeightChanged: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val arrowTravel = rememberLockArrowTravel(reducedMotion)
-    val alpha = when {
+    val chevronTravel = rememberLockPillChevronTravel(reducedMotion)
+    val cancelFade = (1f - cancelProgress * 2.5f).coerceIn(0f, 1f)
+    val baseAlpha = when {
         measuredHeightPx == 0 -> 0f
-        reducedMotion -> 0.72f
-        else -> 0.55f + 0.45f * progress.coerceIn(0f, 1f)
+        reducedMotion -> 0.85f
+        else -> 0.65f + 0.35f * progress.coerceIn(0f, 1f)
     }
+    val alpha = baseAlpha * cancelFade
+    // Interpolate lock icon color from onSurfaceVariant → primary as progress nears lock threshold.
+    val lockIconColor = lerp(
+        MaterialTheme.colorScheme.onSurfaceVariant,
+        MaterialTheme.colorScheme.primary,
+        progress.coerceIn(0f, 1f)
+    )
+    // Scale the pill slightly as progress increases for a tactile feel.
+    val pillScale = 1f + 0.05f * progress.coerceIn(0f, 1f)
 
-    Column(
+    Surface(
         modifier = modifier
-            .width(columnWidth)
+            .width(LOCK_PILL_WIDTH)
+            .height(LOCK_PILL_HEIGHT)
             .onSizeChanged { onHeightChanged(it.height) }
-            .graphicsLayer { this.alpha = alpha },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.space4)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().height(LOCK_ARROW_HEIGHT)) {
-            Box(
-                modifier = Modifier
-                    .absoluteOffset(x = arrowOffsetX)
-                    .size(width = LOCK_ARROW_WIDTH, height = LOCK_ARROW_HEIGHT)
-                    .testTag("voice-lock-arrow"),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .width(LOCK_ARROW_STEM_WIDTH)
-                        .height(LOCK_ARROW_STEM_HEIGHT)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = LOCK_ARROW_GRADIENT_CORE_ALPHA),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = LOCK_ARROW_GRADIENT_CLEAR_ALPHA)
-                                )
-                            ),
-                            shape = RoundedCornerShape(Sizes.CornerSmall)
-                        )
-                )
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .offset(y = if (reducedMotion) 0.dp else arrowTravel.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(LOCK_ARROW_ICON_SIZE))
-                }
+            .graphicsLayer {
+                this.alpha = alpha
+                scaleX = pillScale
+                scaleY = pillScale
             }
+            .testTag("voice-lock-pill"),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 4.dp,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = Spacing.space12, bottom = Spacing.space12),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            // Lock icon at the top (unlocked until near threshold, then locks)
+            Icon(
+                imageVector = if (progress > 0.85f) Icons.Default.Lock else Icons.Default.LockOpen,
+                contentDescription = stringResource(R.string.voice_recording_lock_hint),
+                tint = lockIconColor,
+                modifier = Modifier
+                    .size(LOCK_PILL_ICON_SIZE)
+                    .testTag("voice-lock-pill-icon")
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.space8))
+
+            // Bouncing chevron arrow below the lock
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                    alpha = 0.6f + 0.4f * progress.coerceIn(0f, 1f)
+                ),
+                modifier = Modifier
+                    .size(LOCK_PILL_CHEVRON_SIZE)
+                    .offset(y = if (reducedMotion) 0.dp else chevronTravel.dp)
+                    .testTag("voice-lock-pill-chevron")
+            )
         }
-        Text(
-            text = stringResource(R.string.voice_recording_lock_hint),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space4).testTag("voice-slide-lock-hint"),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            softWrap = true
-        )
     }
 }
 
 @Composable
-private fun rememberLockArrowTravel(reducedMotion: Boolean): Float {
+private fun rememberLockPillChevronTravel(reducedMotion: Boolean): Float {
     if (reducedMotion) return 0f
-    val transition = rememberInfiniteTransition(label = "voiceLockArrow")
-    val arrowTravel by transition.animateFloat(
-        initialValue = LOCK_ARROW_START_OFFSET_DP,
-        targetValue = LOCK_ARROW_END_OFFSET_DP,
+    val transition = rememberInfiniteTransition(label = "voiceLockPillChevron")
+    val chevronTravel by transition.animateFloat(
+        initialValue = LOCK_PILL_CHEVRON_START_OFFSET_DP,
+        targetValue = LOCK_PILL_CHEVRON_END_OFFSET_DP,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = LOCK_ARROW_BOUNCE_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = LOCK_PILL_CHEVRON_BOUNCE_DURATION_MILLIS, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "voiceLockArrowTravel"
+        label = "voiceLockPillChevronTravel"
     )
-    return arrowTravel
+    return chevronTravel
 }
 
 @Composable
