@@ -6,10 +6,12 @@ import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.domain.model.User
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOptions
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
@@ -179,13 +181,18 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): String? = withContext(AppDispatchers.IO) {
+    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions()): String? = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
 
             // Create chat entry
             val chatId = com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()
-            val newChat = NewChatDto(id = chatId, isGroup = true, name = name, avatarUrl = avatarUrl, createdBy = currentUserId)
+            val newChat = NewChatDto(
+                id = chatId, isGroup = true, name = name, description = options.description, avatarUrl = avatarUrl,
+                createdBy = currentUserId, onlyAdminsCanMessage = !options.sendMessagesByMembers,
+                allowMemberSettingsEdits = options.allowMemberSettingsEdits, requireJoinApproval = options.requireJoinApproval,
+                allowMemberInvites = options.allowMemberInvites, disappearingMode = options.disappearingMode.name
+            )
             client.postgrest.from("chats").insert(newChat)
 
             // Create participants
@@ -265,11 +272,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
 
     suspend fun setDisappearingMode(chatId: String, mode: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chats").update({
-                set("disappearing_mode", mode)
-            }) {
-                filter { eq("id", chatId) }
-            }
+            client.postgrest.rpc("update_group_disappearing_mode", mapOf("p_chat_id" to chatId, "p_disappearing_mode" to mode))
         } catch (e: Exception) {
             Napier.e("Error setting disappearing mode", e)
             throw e
