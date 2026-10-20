@@ -145,9 +145,9 @@ fun NotificationSettingsContent(
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
         ) {
             item {
-                GlobalSettingsSection(
+                GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
-                    onToggle = onToggleGlobal
+                    onToggleGlobal = onToggleGlobal
                 )
             }
 
@@ -181,22 +181,6 @@ fun NotificationSettingsContent(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun GlobalSettingsSection(
-    notificationPreferences: NotificationPreferences,
-    onToggle: (Boolean) -> Unit
-) {
-    SettingsSection(title = stringResource(R.string.settings_global_settings_title)) {
-        SettingsToggleItem(
-            imageVector = Icons.Default.Notifications,
-            title = stringResource(R.string.settings_enable_notifications_title),
-            subtitle = if (notificationPreferences.globalEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-            checked = notificationPreferences.globalEnabled,
-            onCheckedChange = onToggle
-        )
     }
 }
 

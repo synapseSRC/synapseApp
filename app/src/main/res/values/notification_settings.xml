@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification preferences screen -->
+    <string name="settings_general_section_title">General</string>
+    <string name="settings_conversation_tones_title">Conversation tones</string>
+    <string name="settings_reminders_title">Reminders</string>
+    <string name="settings_messages_section_title">Messages</string>
+    <string name="settings_groups_section_title">Groups</string>
+    <string name="settings_calls_section_title">Calls</string>
+    <string name="settings_status_section_title">Status</string>
+    <string name="settings_notification_tone_title">Notification tone</string>
+    <string name="settings_vibrate_title">Vibrate</string>
+    <string name="settings_popup_notification_title">Popup notification</string>
+    <string name="settings_light_title">Light</string>
+    <string name="settings_high_priority_notifications_title">Use high priority notifications</string>
+    <string name="settings_reaction_notifications_title">Reaction notifications</string>
+    <string name="settings_ringtone_title">Ringtone</string>
+    <string name="settings_status_reactions_title">Reactions</string>
+    <string name="settings_app_icon_badge_title">App icon badge</string>
+    <string name="settings_notification_not_available">Not available</string>
+    <string name="settings_high_priority_messages_subtitle">Show message notifications at the top of the notification list.</string>
+    <string name="settings_message_reactions_subtitle">Get notified when someone reacts to your messages.</string>
+    <string name="settings_status_reactions_subtitle">Get notified when someone reacts to your status updates.</string>
+    <string name="settings_notification_value_default">Default</string>
+    <string name="settings_notification_value_chime">Chime</string>
+    <string name="settings_notification_value_soft_tone">Soft tone</string>
+    <string name="settings_notification_value_silent">Silent</string>
+    <string name="settings_notification_value_short">Short</string>
+    <string name="settings_notification_value_long">Long</string>
+    <string name="settings_notification_value_white">White</string>
+    <string name="settings_notification_value_red">Red</string>
+    <string name="settings_notification_value_green">Green</string>
+    <string name="settings_notification_value_blue">Blue</string>
+    <string name="settings_notification_value_none">None</string>
+    <string name="settings_notification_value_classic">Classic</string>
+    <string name="settings_notification_value_tone_one">Tone 1</string>
+    <string name="settings_notification_popup_always">Always show</string>
+    <string name="settings_notification_popup_never">Never show</string>
+</resources>
