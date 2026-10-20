@@ -119,10 +119,18 @@ class EditProfileRepositoryImpl @Inject constructor(
     suspend fun updateProfile(userId: String, updateData: Map<String, Any?>): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                client.from("users").update(updateData.toJsonObject()) {
+                val updatedRows = client.from("users").update(updateData.toJsonObject()) {
+                    select(Columns.raw("uid"))
                     filter { eq("uid", userId) }
+                }.decodeList<JsonObject>()
+
+                if (updatedRows.isEmpty()) {
+                    Result.failure(IllegalStateException(
+                        "No profile row was updated for the signed-in account. Your changes were not saved; refresh your session and try again."
+                    ))
+                } else {
+                    Result.success(Unit)
                 }
-                Result.success(Unit)
             } catch (e: Exception) {
                 SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to update profile: $userId")
             }
