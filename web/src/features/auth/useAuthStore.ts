@@ -5,6 +5,11 @@ import type { UserProfile } from '@/types';
 
 type AuthLoadingAction = 'session' | 'google' | 'login' | 'signup' | 'reset' | 'recovery' | 'logout' | null;
 
+const diceBearInitialsAvatarUrl = (name: string): string => {
+  const seed = name.trim().toLowerCase() || 'member';
+  return 'https://api.dicebear.com/9.x/initials/svg?seed=' + encodeURIComponent(seed);
+};
+
 interface AuthState {
   user: UserProfile | null;
   isAuthenticated: boolean;
@@ -111,10 +116,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   signUp: async (email, password, username) => {
     set({ isLoading: true, loadingAction: 'signup', error: null, notice: null });
     try {
+      const normalizedUsername = username.trim().toLowerCase();
+      const avatarUrl = diceBearInitialsAvatarUrl(normalizedUsername);
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { username: username.trim().toLowerCase() }, emailRedirectTo: window.location.origin },
+        options: {
+          data: { username: normalizedUsername, avatar_url: avatarUrl },
+          emailRedirectTo: window.location.origin,
+        },
       });
       if (error) throw error;
       if (data.session && data.user) {
