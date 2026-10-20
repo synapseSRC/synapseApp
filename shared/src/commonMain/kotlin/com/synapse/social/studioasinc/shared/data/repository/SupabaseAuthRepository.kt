@@ -31,6 +31,8 @@ import io.github.jan.supabase.postgrest.query.Count
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import io.github.aakira.napier.Napier
@@ -39,6 +41,13 @@ import kotlin.time.ExperimentalTime
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
+
+private fun diceBearInitialsAvatarUrl(name: String): String {
+    val seed = name.trim().lowercase().ifBlank { "member" }
+    return URLBuilder("https://api.dicebear.com/9.x/initials/svg").apply {
+        parameters.append("seed", seed)
+    }.buildString()
+}
 
 /**
  * Implementation of [AuthRepository] that utilizes Supabase Auth for session management
@@ -65,12 +74,23 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
      *
      * @return A [Result] containing the new user's ID if successful.
      */
-    override suspend fun signUp(email: String, password: String): Result<String> {
+    override suspend fun signUp(email: String, password: String): Result<String> =
+        createAuthUser(email, password, username = null)
+
+    private suspend fun createAuthUser(email: String, password: String, username: String?): Result<String> {
+        val normalizedUsername = username?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        val avatarSeed = normalizedUsername
+            ?: email.substringBefore("@").trim().lowercase().ifBlank { "member" }
+
         return try {
             withContext(AppDispatchers.IO) {
                 val user = client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
+                    data = buildJsonObject {
+                        normalizedUsername?.let { put("username", it) }
+                        put("avatar_url", diceBearInitialsAvatarUrl(avatarSeed))
+                    }
                 }
                 val userId = user?.id ?: client.auth.currentUserOrNull()?.id
                     ?: throw Exception("User ID not found")
@@ -92,7 +112,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
      */
     override suspend fun signUpWithProfile(email: String, password: String, username: String): Result<String> {
         return try {
-            val signUpResult = signUp(email, password)
+            val signUpResult = createAuthUser(email, password, username)
             if (signUpResult.isSuccess) {
                 val userId = signUpResult.getOrThrow()
                 ensureProfileExists(userId, email, username).map { userId }
