@@ -102,13 +102,17 @@ class ProfileRepositoryImpl(
             nickname = data.getNullableString(KEY_NICKNAME),
             bio = data.getNullableString(KEY_BIO),
             avatar = data.getNullableString(KEY_AVATAR)?.takeIf { it.isNotBlank() }?.let { avatarReference ->
-                try {
-                    SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarReference)
-                } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    android.util.Log.w("ProfileRepository", "Avatar image unavailable; loading profile without it", error)
-                    null
+                if (!avatarReference.startsWith("private-media://")) {
+                    constructAvatarUrl(avatarReference)
+                } else {
+                    try {
+                        SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarReference)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        android.util.Log.w("ProfileRepository", "Avatar image unavailable; loading profile without it", error)
+                        null
+                    }
                 }
             },
             coverImageUrl = data.getNullableString(KEY_COVER_IMAGE)?.takeIf { it.isNotBlank() }?.let { coverReference ->

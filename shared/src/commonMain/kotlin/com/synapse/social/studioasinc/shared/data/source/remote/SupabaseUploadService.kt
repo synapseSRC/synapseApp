@@ -6,6 +6,7 @@ import com.synapse.social.studioasinc.shared.domain.model.UploadResult
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.auth.auth
 import io.github.aakira.napier.Napier
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.readBytes
@@ -14,7 +15,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlin.time.Duration.Companion.minutes
 
 class SupabaseUploadService(private val supabase: SupabaseClient) : UploadService {
-    private val protectedMediaBuckets = setOf("posts", "covers", "avatars", "story-media", "story-thumbnails", "reels")
+    private val protectedMediaBuckets = setOf("posts", "covers", "story-media", "story-thumbnails", "reels")
+    private val userScopedBuckets = protectedMediaBuckets + com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_USER_AVATARS
 
     override suspend fun upload(
         fileProvider: suspend (Long) -> ByteReadChannel,
@@ -32,7 +34,14 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
 
         try {
             val bucket = supabase.storage.from(targetBucket)
-            val path = "${TimeProvider.nowMillis()}_$fileName"
+            val objectName = "${TimeProvider.nowMillis()}_$fileName"
+            val path = if (targetBucket in userScopedBuckets) {
+                val userId = supabase.auth.currentUserOrNull()?.id
+                    ?: throw UploadError.SupabaseError("An authenticated user is required to upload profile media")
+                "$userId/$objectName"
+            } else {
+                objectName
+            }
 
             coroutineScope {
                 val channel = fileProvider(0L)
@@ -40,15 +49,16 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 bucket.upload(path, bytes) {
                     this.upsert = false
                 }
-                // Verify protected uploads can be signed before returning a reference for persistence.
-                if (targetBucket in protectedMediaBuckets) {
+                // Covers can be signed before persistence when owner-scoped paths are used.
+                // Post/story/reel policies require a linked content row, which is created after upload.
+                if (targetBucket == com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_USER_COVERS) {
                     try {
                         bucket.createSignedUrl(path = path, expiresIn = 15.minutes)
                     } catch (cancelled: kotlinx.coroutines.CancellationException) {
                         throw cancelled
                     } catch (verificationError: Exception) {
                         throw UploadError.StorageVerificationError(
-                            "Upload succeeded, but signing verification failed for $targetBucket/$path: ${verificationError.message ?: "unknown error"}"
+                            "Upload succeeded, but cover signing verification failed: ${verificationError.message ?: "unknown error"}"
                         )
                     }
                 }
@@ -69,7 +79,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
             throw e
         } catch (e: Exception) {
             Napier.e("Supabase upload failed to bucket: $targetBucket", e, tag = "SupabaseUpload")
-            val fallbackBucket = if (targetBucket in protectedMediaBuckets) {
+            val fallbackBucket = if (targetBucket in userScopedBuckets) {
                 null // Protected profile media must never fall back into a public/configurable bucket.
             } else {
                 config.supabaseBucket.ifBlank {
@@ -81,7 +91,14 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 try {
                     Napier.d("Retrying Supabase upload to fallback bucket: $fallbackBucket", tag = "SupabaseUpload")
                     val bucket = supabase.storage.from(fallbackBucket)
-                    val path = "${TimeProvider.nowMillis()}_$fileName"
+                    val fallbackObjectName = "${TimeProvider.nowMillis()}_$fileName"
+                    val path = if (fallbackBucket in protectedMediaBuckets) {
+                        val userId = supabase.auth.currentUserOrNull()?.id
+                            ?: throw UploadError.SupabaseError("An authenticated user is required to upload protected media")
+                        "$userId/$fallbackObjectName"
+                    } else {
+                        fallbackObjectName
+                    }
 
                     coroutineScope {
                         val channel = fileProvider(0L)
