@@ -65,4 +65,8 @@ interface ChatRepository {
     suspend fun voteInPoll(messageId: String, optionId: String, pollId: String): Result<Unit>
     suspend fun markViewOnceConsumed(messageId: String): Result<Unit>
 
+    /** Reads whether the authenticated participant has muted notifications for this chat. */
+    suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
+    /** Persists the authenticated participant's notification mute setting for this chat. */
+    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit>
 }

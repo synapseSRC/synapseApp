@@ -361,6 +361,38 @@ object ChatModule {
     }
     @Provides
     @Singleton
+    fun provideClearChatHistoryUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistoryUseCase {
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistoryUseCase(chatRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetConversationMuteStatusUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase {
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase(chatRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSetConversationMuteStatusUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase {
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase(chatRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetCommonGroupsUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCommonGroupsUseCase {
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCommonGroupsUseCase(chatRepository)
+    }
+
+    @Provides
+    @Singleton
     fun provideGetSharedContentSummaryUseCase(
         chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
     ): com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase {

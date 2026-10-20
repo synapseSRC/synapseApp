@@ -169,4 +169,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     fun subscribeToMessageReactions(chatId: String): Flow<MessageReactionDto> =
         realtime.subscribeToMessageReactions(chatId)
+    suspend fun getConversationMuteStatus(chatId: String): Boolean =
+        conversations.getConversationMuteStatus(chatId)
+
+    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean) =
+        conversations.setConversationMuteStatus(chatId, isMuted)
 }
