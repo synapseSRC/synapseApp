@@ -186,24 +186,36 @@ internal fun MembersStage(
         } else {
             items(users, key = { it.uid }) { user ->
                 val selected = selectedUsers.any { it.uid == user.uid }
-                ListItem(
-                    headlineContent = { Text(userDisplayName(user), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = {
-                        Text(userContactContext(user), maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    },
-                    leadingContent = {
-                        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
-                            avatarUrl = user.avatar,
-                            displayName = userDisplayName(user),
-                            size = Sizes.AvatarDefault
-                        )
-                    },
-                    trailingContent = {
-                        Checkbox(checked = selected, onCheckedChange = { onToggleUser(user) })
-                    },
-                    modifier = Modifier.fillMaxWidth().clickable { onToggleUser(user) }
-                )
+                val rowColor = MaterialTheme.colorScheme.surfaceContainer
+                Card(
+                    shape = MaterialTheme.shapes.large,
+                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = rowColor),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text(userDisplayName(user), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        supportingContent = {
+                            Text(
+                                userContactContext(user),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        leadingContent = {
+                            com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+                                avatarUrl = user.avatar,
+                                displayName = userDisplayName(user),
+                                size = Sizes.AvatarDefault
+                            )
+                        },
+                        trailingContent = { Checkbox(checked = selected, onCheckedChange = { onToggleUser(user) }) },
+                        modifier = Modifier.fillMaxWidth().clickable { onToggleUser(user) },
+                        colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = rowColor)
+                    )
+                }
             }
+
         }
         item { Spacer(Modifier.height(Spacing.space64)) }
     }

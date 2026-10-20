@@ -204,7 +204,7 @@ fun CreateGroupScreen(
                     }
                 }
             },
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ) { scaffoldPadding ->
             AnimatedContent(
                 targetState = stage,
