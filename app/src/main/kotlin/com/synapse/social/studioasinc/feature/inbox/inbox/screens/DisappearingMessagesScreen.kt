@@ -103,6 +103,12 @@ fun DisappearingMessagesScreen(
                         isSelected = selectedMode == DisappearingMode.SEVEN_DAYS,
                         onClick = { selectedMode = DisappearingMode.SEVEN_DAYS }
                     )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    DisappearingModeOptionRow(
+                        title = stringResource(R.string.disappearing_mode_90_days),
+                        isSelected = selectedMode == DisappearingMode.NINETY_DAYS,
+                        onClick = { selectedMode = DisappearingMode.NINETY_DAYS }
+                    )
                 }
             }
 
