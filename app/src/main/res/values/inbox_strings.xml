@@ -36,7 +36,7 @@
     <string name="inbox_search_contact_subtitle">Start a direct conversation</string>
     <string name="inbox_ai_screen_title">AI Inbox Briefing</string>
     <string name="inbox_ai_catchup_title">Executive Catch-up (%1$d chats)</string>
-    <string name="inbox_ai_catchup_empty_title">You\'re all caught up</string>
+    <string name="inbox_ai_catchup_empty_title">All caught up</string>
     <string name="inbox_ai_catchup_empty_body">Unread conversations will appear here when there is something to summarize.</string>
     <string name="inbox_ai_catchup_partial_error">Some unread conversations could not be summarized.</string>
     <string name="inbox_ai_quick_actions">Previewed Quick Actions</string>
