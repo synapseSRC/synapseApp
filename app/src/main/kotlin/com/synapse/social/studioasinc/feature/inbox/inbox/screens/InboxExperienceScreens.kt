@@ -364,8 +364,9 @@ private fun SearchPersonRow(person: User, onClick: () -> Unit) {
             Spacer(Modifier.width(Spacing.space12))
             Column(Modifier.weight(1f)) {
                 Text(person.displayName ?: person.username.orEmpty(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (!person.username.isNullOrBlank()) {
-                    Text(stringResource(R.string.inbox_username_format, person.username), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                val username = person.username
+                if (!username.isNullOrBlank()) {
+                    Text(stringResource(R.string.inbox_username_format, username), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
             }
             Icon(Icons.Rounded.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
