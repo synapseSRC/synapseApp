@@ -72,9 +72,9 @@ class SupabaseChatRepository(
         encryptionHelper.ensureSession(userId)
     }
 
-    private suspend fun fetchConversationsFromNetwork(): List<Conversation> = withContext(AppDispatchers.IO) {
+    private suspend fun fetchConversationsFromNetwork(archivedOnly: Boolean = false): List<Conversation> = withContext(AppDispatchers.IO) {
         val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
-        val conversationData = dataSource.getConversations()
+        val conversationData = if (archivedOnly) dataSource.getArchivedConversations() else dataSource.getConversations()
         
         coroutineScope {
             conversationData.map { (participation, user, chatInfo) ->
@@ -101,17 +101,27 @@ class SupabaseChatRepository(
                         lastMessageTime = lastMessage?.createdAt,
                         unreadCount = unreadCount,
                         isOnline = if (isGroup) false else (user?.status?.name == "ONLINE"),
-                        isGroup = isGroup
+                        isGroup = isGroup,
+                        isPinned = participation.isPinned,
+                        isMuted = participation.isMuted
                     )
                 }
             }.awaitAll()
         }.sortedByDescending { it.lastMessageTime ?: "" }
     }
 
-    override suspend fun getConversations(): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
+    override suspend fun getConversations(forceNetwork: Boolean): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
         try {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
-            if (cached.isNotEmpty()) {
+            if (forceNetwork) {
+                try {
+                    val fresh = fetchConversationsFromNetwork()
+                    cachedConversationDao?.upsertAll(fresh)
+                    Result.success(fresh)
+                } catch (throwable: Throwable) {
+                    if (cached.isNotEmpty()) Result.success(cached) else Result.failure(throwable)
+                }
+            } else if (cached.isNotEmpty()) {
                 externalScope.launch {
                     try {
                         val fresh = fetchConversationsFromNetwork()
@@ -126,13 +136,42 @@ class SupabaseChatRepository(
                 cachedConversationDao?.upsertAll(conversations)
                 Result.success(conversations)
             }
-        } catch (t: Throwable) {
+        } catch (throwable: Throwable) {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
             if (cached.isNotEmpty()) Result.success(cached)
             else {
-                Logger.e("Error getting conversations", throwable = t)
-                Result.failure(t)
+                Logger.e("Error getting conversations", throwable = throwable)
+                Result.failure(throwable)
             }
+        }
+    }
+
+    override suspend fun getArchivedConversations(): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
+        try {
+            Result.success(fetchConversationsFromNetwork(archivedOnly = true))
+        } catch (throwable: Throwable) {
+            Logger.e("Error getting archived conversations", throwable = throwable)
+            Result.failure(throwable)
+        }
+    }
+
+    override suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean): Result<Unit> = withContext(AppDispatchers.IO) {
+        try {
+            dataSource.updateConversationPinnedStatus(chatId, isPinned)
+            Result.success(Unit)
+        } catch (throwable: Throwable) {
+            Logger.e("Error updating conversation pin status", throwable = throwable)
+            Result.failure(throwable)
+        }
+    }
+
+    override suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean): Result<Unit> = withContext(AppDispatchers.IO) {
+        try {
+            dataSource.updateConversationMutedStatus(chatId, isMuted)
+            Result.success(Unit)
+        } catch (throwable: Throwable) {
+            Logger.e("Error updating conversation mute status", throwable = throwable)
+            Result.failure(throwable)
         }
     }
 

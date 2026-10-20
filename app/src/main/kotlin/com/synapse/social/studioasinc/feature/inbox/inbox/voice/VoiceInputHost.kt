@@ -3,8 +3,10 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +35,7 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp as lerpDp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -95,15 +98,10 @@ fun VoiceInputHost(
 ) {
     val reducedMotion = reducedMotionOverride
     val density = LocalDensity.current
-    var lockIndicatorHeightPx by remember { mutableIntStateOf(0) }
     var hostBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
     var micBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
     var lastMicBoundsInHost by remember { mutableStateOf<Rect?>(null) }
     var lastLockGestureOffsetYPx by remember { mutableFloatStateOf(0f) }
-    var lockReturnStarted by remember { mutableStateOf(false) }
-    var lockReturnStartYPx by remember { mutableFloatStateOf(0f) }
-    val lockReturnYPx = remember { Animatable(0f) }
-    val isLocked = voiceState is VoiceState.Locked
 
     val micBoundsInHost = remember(hostBoundsInRoot, micBoundsInRoot) {
         val host = hostBoundsInRoot
@@ -118,26 +116,7 @@ fun VoiceInputHost(
     SideEffect {
         micBoundsInHost?.let { lastMicBoundsInHost = it }
     }
-
-    // A lock changes the recording UI immediately, but the mic's displaced visual completes its spring return.
-    LaunchedEffect(isLocked, reducedMotion) {
-        if (isLocked && lastLockGestureOffsetYPx < 0f && !reducedMotion) {
-            lockReturnStartYPx = lastLockGestureOffsetYPx
-            lockReturnYPx.snapTo(lastLockGestureOffsetYPx)
-            lockReturnStarted = true
-            lockReturnYPx.animateTo(
-                targetValue = 0f,
-                animationSpec = spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMediumLow)
-            )
-            lastLockGestureOffsetYPx = 0f
-            lockReturnStarted = false
-        } else {
-            lockReturnStarted = false
-            lastLockGestureOffsetYPx = 0f
-            lockReturnStartYPx = 0f
-            lockReturnYPx.snapTo(0f)
-        }
-    }
+    val effectiveMicBounds = micBoundsInHost ?: lastMicBoundsInHost
 
     // The lock indicator is now an overlay (rendered outside the measured layout) to avoid
     // pushing the chat message list upward when the mic is held — fixing the layout glitch.
@@ -195,7 +174,11 @@ fun VoiceInputHost(
                             Box(modifier = Modifier.fillMaxWidth()) { normalContent() }
                         } else {
                             Box(modifier = Modifier.fillMaxWidth()) {
-                                VoiceInputBarContent(voiceState = animatedState, onVoiceAction = onVoiceAction)
+                                VoiceInputBarContent(
+                                    voiceState = animatedState,
+                                    onVoiceAction = onVoiceAction,
+                                    onSendBoundsChanged = { micBoundsInRoot = it }
+                                )
                             }
                         }
                     }
@@ -242,46 +225,9 @@ fun VoiceInputHost(
                 VoiceRecordingContentOverlay(
                     voiceState = voiceState,
                     reducedMotion = reducedMotion,
-                    micBoundsInHost = micBoundsInHost,
-                    lockIndicatorHeightPx = lockIndicatorHeightPx,
-                    onLockIndicatorHeightChanged = { lockIndicatorHeightPx = it }
+                    micBoundsInHost = effectiveMicBounds,
+                    onVoiceAction = onVoiceAction
                 )
-            }
-
-            if (lockReturnStarted) {
-                lastMicBoundsInHost?.let { micBounds ->
-                    val returnOffset = lockReturnYPx.value
-                    val returnAlpha = if (lockReturnStartYPx == 0f) 0f else
-                        (kotlin.math.abs(returnOffset / lockReturnStartYPx)).coerceIn(0f, 1f)
-                    Box(
-                        modifier = Modifier
-                            .absoluteOffset {
-                                IntOffset(
-                                    x = micBounds.left.roundToInt(),
-                                    y = (micBounds.top + returnOffset).roundToInt()
-                                )
-                            }
-                            .size(MIC_TOUCH_TARGET_SIZE)
-                            .graphicsLayer { alpha = returnAlpha }
-                            .testTag("voice-lock-returning-mic"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(MIC_VISUAL_SIZE)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                .testTag("voice-lock-returning-mic-visual"),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(Sizes.IconLarge)
-                            )
-                        }
-                    }
-                }
             }
         }
     }
@@ -290,7 +236,8 @@ fun VoiceInputHost(
 @Composable
 private fun VoiceInputBarContent(
     voiceState: VoiceState,
-    onVoiceAction: (VoiceAction) -> Unit
+    onVoiceAction: (VoiceAction) -> Unit,
+    onSendBoundsChanged: (Rect) -> Unit = {}
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         when (voiceState) {
@@ -338,8 +285,15 @@ private fun VoiceInputBarContent(
                         )
                     }
                     Spacer(Modifier.width(Spacing.space8))
-                    Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary, shadowElevation = 2.dp) {
+                    Surface(
+                        modifier = Modifier
+                            .size(Sizes.SendButton)
+                            .onGloballyPositioned { onSendBoundsChanged(it.boundsInRoot()) },
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shadowElevation = 2.dp
+                    ) {
                         IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize().testTag("voice-locked-finish")) {
                             Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.chat_action_send), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))
                         }
@@ -389,40 +343,103 @@ private fun VoiceRecordingContentOverlay(
     voiceState: VoiceState,
     reducedMotion: Boolean,
     micBoundsInHost: Rect?,
-    lockIndicatorHeightPx: Int,
-    onLockIndicatorHeightChanged: (Int) -> Unit
+    onVoiceAction: (VoiceAction) -> Unit
 ) {
-    AnimatedVisibility(
-        visible = voiceState is VoiceState.Recording,
-        modifier = Modifier.fillMaxSize(),
-        enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
-        exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
-    ) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            val density = LocalDensity.current
-            val recording = voiceState as? VoiceState.Recording
+    val isRecording = voiceState is VoiceState.Recording
+    val isLocked = voiceState is VoiceState.Locked
+    val showLockIndicator = isRecording || isLocked
+
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val density = LocalDensity.current
+        val recording = voiceState as? VoiceState.Recording
+
+        // Timer and slide-to-cancel shimmer shown in center during active holding/recording
+        AnimatedVisibility(
+            visible = isRecording,
+            modifier = Modifier.align(Alignment.Center),
+            enter = if (reducedMotion) EnterTransition.None else fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)),
+            exit = if (reducedMotion) ExitTransition.None else fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
+        ) {
             if (recording != null) {
-                RecordingStatusOverlay(recording, reducedMotion, Modifier.align(Alignment.Center))
-                micBoundsInHost?.let { micBounds ->
-                    val pillWidthPx = with(density) { LOCK_PILL_WIDTH.toPx() }
-                    val pillHeightPx = with(density) { LOCK_PILL_HEIGHT.toPx() }
-                    val gapPx = with(density) { LOCK_PILL_GAP.toPx() }
-                    val parentWidthPx = with(density) { maxWidth.toPx() }
-                    val micCenterX = (micBounds.left + micBounds.right) / 2f
-                    val micTop = micBounds.top
-                    val leftPx = (micCenterX - pillWidthPx / 2f)
-                        .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
-                    val topPx = micTop - pillHeightPx - gapPx
+                RecordingStatusOverlay(recording, reducedMotion)
+            }
+        }
+
+        // Lock indicator pill/circle overlay (visible in both Recording and Locked)
+        AnimatedVisibility(
+            visible = showLockIndicator,
+            enter = if (reducedMotion) EnterTransition.None else (
+                fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1200f)) +
+                scaleIn(initialScale = 0.82f, animationSpec = spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMedium))
+            ),
+            exit = if (reducedMotion) ExitTransition.None else (
+                fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1200f)) +
+                scaleOut(targetScale = 0.82f, animationSpec = spring(dampingRatio = 1f, stiffness = 1200f))
+            )
+        ) {
+            micBoundsInHost?.let { micBounds ->
+                val pillWidthPx = with(density) { LOCK_PILL_WIDTH.toPx() }
+                val initialPillHeightPx = with(density) { LOCK_PILL_HEIGHT.toPx() }
+                val gapPx = with(density) { LOCK_PILL_GAP.toPx() }
+                val parentWidthPx = with(density) { maxWidth.toPx() }
+                val micCenterX = (micBounds.left + micBounds.right) / 2f
+                val micTop = micBounds.top
+                val leftPx = (micCenterX - pillWidthPx / 2f)
+                    .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
+                val topPx = micTop - initialPillHeightPx - gapPx
+
+                val lockProgress = when {
+                    isLocked -> 1f
+                    recording != null -> recording.lockProgress
+                    else -> 0f
+                }
+                val cancelProgress = when {
+                    recording != null -> recording.cancelProgress
+                    else -> 0f
+                }
+
+                // Tooltip "Slide up to lock" bubble to the left of the pill (Image 4)
+                val tooltipVisible = !isLocked && lockProgress < 0.15f && cancelProgress == 0f
+                val tooltipAlpha = ((1f - lockProgress * 5f).coerceIn(0f, 1f) * (1f - cancelProgress * 3f).coerceIn(0f, 1f))
+                val endPaddingPx = (parentWidthPx - leftPx - pillWidthPx).coerceAtLeast(0f)
+                val endPaddingDp = with(density) { endPaddingPx.toDp() }
+
+                Row(
+                    modifier = Modifier
+                        .absoluteOffset { IntOffset(0, topPx.roundToInt()) }
+                        .fillMaxWidth()
+                        .padding(end = endPaddingDp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    if (tooltipVisible && tooltipAlpha > 0.05f) {
+                        Surface(
+                            modifier = Modifier
+                                .padding(end = Spacing.space8, top = Spacing.space6)
+                                .graphicsLayer { alpha = tooltipAlpha },
+                            shape = RoundedCornerShape(Spacing.space8),
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            shadowElevation = 2.dp,
+                            tonalElevation = 2.dp
+                        ) {
+                            Text(
+                                text = stringResource(R.string.voice_recording_lock_hint),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.inverseOnSurface,
+                                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
 
                     LockPillCapsule(
-                        progress = recording.lockProgress,
-                        cancelProgress = recording.cancelProgress,
+                        progress = lockProgress,
+                        cancelProgress = cancelProgress,
+                        isLocked = isLocked,
                         reducedMotion = reducedMotion,
-                        measuredHeightPx = lockIndicatorHeightPx,
-                        onHeightChanged = onLockIndicatorHeightChanged,
-                        modifier = Modifier
-                            .absoluteOffset { IntOffset(leftPx.roundToInt(), topPx.roundToInt()) }
-                            .width(LOCK_PILL_WIDTH)
+                        onLockClick = if (isLocked) { { onVoiceAction(VoiceAction.FinishRecording) } } else null,
+                        modifier = Modifier.width(LOCK_PILL_WIDTH)
                     )
                 }
             }
@@ -479,80 +496,128 @@ private fun ShimmerCancelHint(reducedMotion: Boolean) {
  * WhatsApp-style vertical pill capsule lock indicator.
  * Shows a lock icon at the top and a bouncing chevron arrow below it.
  * Appears directly above the resting mic button during recording.
+ * On drag up, collapses from 120dp capsule into a 48dp circle and turns green when locked.
  */
 @Composable
 private fun LockPillCapsule(
     progress: Float,
     cancelProgress: Float,
+    isLocked: Boolean,
     reducedMotion: Boolean,
-    measuredHeightPx: Int,
-    onHeightChanged: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLockClick: (() -> Unit)? = null
 ) {
     val chevronTravel = rememberLockPillChevronTravel(reducedMotion)
     val cancelFade = (1f - cancelProgress * 2.5f).coerceIn(0f, 1f)
-    val baseAlpha = when {
-        measuredHeightPx == 0 -> 0f
-        reducedMotion -> 0.85f
-        else -> 0.65f + 0.35f * progress.coerceIn(0f, 1f)
+    val baseAlpha = if (reducedMotion) 0.95f else (0.85f + 0.15f * progress.coerceIn(0f, 1f))
+    val alpha = (if (isLocked) 1f else baseAlpha) * cancelFade
+
+    val targetHeight = if (isLocked) LOCK_PILL_WIDTH else {
+        lerpDp(LOCK_PILL_HEIGHT, LOCK_PILL_WIDTH, progress.coerceIn(0f, 1f))
     }
-    val alpha = baseAlpha * cancelFade
-    // Interpolate lock icon color from onSurfaceVariant → primary as progress nears lock threshold.
-    val lockIconColor = lerp(
-        MaterialTheme.colorScheme.onSurfaceVariant,
-        MaterialTheme.colorScheme.primary,
-        progress.coerceIn(0f, 1f)
+    val animatedHeight = animateDpForMotion(
+        targetValue = targetHeight,
+        reducedMotion = reducedMotion,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "lockPillHeight"
     )
-    // Scale the pill slightly as progress increases for a tactile feel.
-    val pillScale = 1f + 0.05f * progress.coerceIn(0f, 1f)
+
+    val isClosed = isLocked || progress >= 0.85f
+    val iconVector = if (isClosed) Icons.Default.Lock else Icons.Default.LockOpen
+
+    val targetIconColor = if (isClosed) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        lerp(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            MaterialTheme.colorScheme.primary,
+            progress.coerceIn(0f, 1f)
+        )
+    }
+    val iconTint by animateColorAsState(
+        targetValue = targetIconColor,
+        animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 500f),
+        label = "lockIconColor"
+    )
+
+    val targetScale = if (isLocked) 1.04f else (1f + 0.04f * progress.coerceIn(0f, 1f))
+    val scale = animateFloatForMotion(
+        targetValue = targetScale,
+        reducedMotion = reducedMotion,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+        label = "lockPillScale"
+    )
+
+    val iconScale by animateFloatAsState(
+        targetValue = if (isClosed) 1.1f else 1f,
+        animationSpec = if (reducedMotion) snap() else spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium),
+        label = "lockIconScale"
+    )
+
+    val chevronDragOffset = -8.dp * progress.coerceIn(0f, 1f)
+    val chevronAlpha = if (isLocked) 0f else {
+        ((1f - progress * 2.2f).coerceIn(0f, 1f) * 0.7f)
+    }
 
     Surface(
         modifier = modifier
             .width(LOCK_PILL_WIDTH)
-            .height(LOCK_PILL_HEIGHT)
-            .onSizeChanged { onHeightChanged(it.height) }
+            .height(animatedHeight)
             .graphicsLayer {
                 this.alpha = alpha
-                scaleX = pillScale
-                scaleY = pillScale
+                scaleX = scale
+                scaleY = scale
             }
+            .then(
+                if (isLocked && onLockClick != null) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = true),
+                        onClick = onLockClick
+                    )
+                } else Modifier
+            )
             .testTag("voice-lock-pill"),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shadowElevation = 4.dp,
         tonalElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = Spacing.space12, bottom = Spacing.space12),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
         ) {
             // Lock icon at the top (unlocked until near threshold, then locks)
             Icon(
-                imageVector = if (progress > 0.85f) Icons.Default.Lock else Icons.Default.LockOpen,
-                contentDescription = stringResource(R.string.voice_recording_lock_hint),
-                tint = lockIconColor,
+                imageVector = iconVector,
+                contentDescription = stringResource(if (isClosed) R.string.voice_recording_locked_state else R.string.voice_recording_lock_hint),
+                tint = iconTint,
                 modifier = Modifier
+                    .padding(top = Spacing.space12 + 1.dp)
                     .size(LOCK_PILL_ICON_SIZE)
+                    .graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                    }
                     .testTag("voice-lock-pill-icon")
             )
 
-            Spacer(modifier = Modifier.height(Spacing.space8))
-
-            // Bouncing chevron arrow below the lock
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                    alpha = 0.6f + 0.4f * progress.coerceIn(0f, 1f)
-                ),
-                modifier = Modifier
-                    .size(LOCK_PILL_CHEVRON_SIZE)
-                    .offset(y = if (reducedMotion) 0.dp else chevronTravel.dp)
-                    .testTag("voice-lock-pill-chevron")
-            )
+            // Bouncing chevron arrow below the lock, fading out as pill shrinks
+            if (chevronAlpha > 0.01f) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = chevronAlpha),
+                    modifier = Modifier
+                        .padding(top = Spacing.space12 + 1.dp + LOCK_PILL_ICON_SIZE + Spacing.space6)
+                        .size(LOCK_PILL_CHEVRON_SIZE)
+                        .offset(y = if (reducedMotion) 0.dp else (chevronTravel.dp + chevronDragOffset))
+                        .testTag("voice-lock-pill-chevron")
+                )
+            }
         }
     }
 }

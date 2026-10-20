@@ -20,17 +20,17 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
 
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
-    suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(AppDispatchers.IO) {
+    suspend fun getConversations(archivedOnly: Boolean = false): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(AppDispatchers.IO) {
         val currentUserId = getCurrentUserId() ?: throw IllegalStateException("Not logged in: currentUserId is null")
 
         try {
             // 1. Get all my participations
             val myParticipations = client.postgrest.from("chat_participants")
-                .select(columns = Columns.list("chat_id", "user_id", "is_archived", "last_read_at")) {
+                .select(columns = Columns.list("chat_id", "user_id", "is_archived", "is_pinned", "is_muted", "last_read_at")) {
                     filter { eq("user_id", currentUserId) }
                 }.decodeList<ChatParticipantDto>()
 
-            val activeParticipations = myParticipations.filter { !it.isArchived }
+            val activeParticipations = myParticipations.filter { it.isArchived == archivedOnly }
             if (activeParticipations.isEmpty()) return@withContext emptyList()
 
             val chatIds = activeParticipations.map { it.chatId }
@@ -244,6 +244,24 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         } catch (e: Exception) {
             Napier.e("Error updating archive status", e)
             throw e
+        }
+    }
+
+    suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean) = withContext(AppDispatchers.IO) {
+        val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+        client.postgrest.from("chat_participants").update({
+            set("is_pinned", isPinned)
+        }) {
+            filter { eq("chat_id", chatId); eq("user_id", currentUserId) }
+        }
+    }
+
+    suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean) = withContext(AppDispatchers.IO) {
+        val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+        client.postgrest.from("chat_participants").update({
+            set("is_muted", isMuted)
+        }) {
+            filter { eq("chat_id", chatId); eq("user_id", currentUserId) }
         }
     }
 

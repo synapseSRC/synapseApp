@@ -4,22 +4,45 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.UserProfileManager
 import com.synapse.social.studioasinc.data.repository.SettingsRepository
+import com.synapse.social.studioasinc.domain.model.User
+import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxBriefingState
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxBriefingThread
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxFilter
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCategory
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchResult
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchState
+import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
+import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
+import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatListLayout
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture
-import com.synapse.social.studioasinc.domain.model.User
-import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
+import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.user.SearchUsersUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
-import com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.UUID
 import javax.inject.Inject
+
+private val InboxUrlPattern = Regex("https?://\\S+", RegexOption.IGNORE_CASE)
 
 @HiltViewModel
 class InboxViewModel @Inject constructor(
@@ -28,8 +51,11 @@ class InboxViewModel @Inject constructor(
     private val initializeE2EUseCase: InitializeE2EUseCase,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val settingsRepository: SettingsRepository,
-    private val chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository,
-    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+    private val chatRepository: ChatRepository,
+    private val authRepository: AuthRepository,
+    private val getMessagesUseCase: GetMessagesUseCase,
+    private val searchUsersUseCase: SearchUsersUseCase,
+    private val summarizeChatUseCase: SummarizeChatUseCase
 ) : ViewModel() {
 
     private val _currentUserProfile = MutableStateFlow<User?>(null)
@@ -44,13 +70,15 @@ class InboxViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _selectedFilter = MutableStateFlow(InboxFilter.ALL)
+    val selectedFilter: StateFlow<InboxFilter> = _selectedFilter.asStateFlow()
+
     val chatListLayout: StateFlow<ChatListLayout> = settingsRepository.chatListLayout
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ChatListLayout.DOUBLE_LINE)
 
     val chatSwipeGesture: StateFlow<ChatSwipeGesture> = settingsRepository.chatSwipeGesture
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ChatSwipeGesture.ARCHIVE)
 
-    // --- Folder state ---
     val chatFolders: StateFlow<List<ChatFolder>> = settingsRepository.chatFoldersJson
         .map { json ->
             if (json.isNullOrBlank()) emptyList()
@@ -61,80 +89,106 @@ class InboxViewModel @Inject constructor(
     private val _selectedFolderId = MutableStateFlow<String?>(null)
     val selectedFolderId: StateFlow<String?> = _selectedFolderId.asStateFlow()
 
-    val filteredConversations: StateFlow<List<Conversation>> =
-        combine(_conversations, _selectedFolderId, chatFolders) { convos, folderId, folders ->
-            if (folderId == null) convos
-            else folders.find { it.id == folderId }
-                ?.let { f -> convos.filter { it.chatId in f.includedChatIds } }
-                ?: convos
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    fun selectFolder(folderId: String?) { _selectedFolderId.value = folderId }
-
-    fun assignConversationToFolder(chatId: String, folderId: String) {
-        viewModelScope.launch {
-            val updated = chatFolders.value.map { folder ->
-                if (folder.id == folderId)
-                    folder.copy(includedChatIds = (folder.includedChatIds + chatId).distinct())
-                else
-                    folder.copy(includedChatIds = folder.includedChatIds - chatId)
-            }
-            settingsRepository.setChatFoldersJson(Json.encodeToString(updated))
+    val filteredConversations: StateFlow<List<Conversation>> = combine(
+        _conversations,
+        _selectedFolderId,
+        chatFolders,
+        _selectedFilter
+    ) { conversations, folderId, folders, filter ->
+        val inFolder = if (folderId == null) conversations else {
+            folders.find { it.id == folderId }?.let { folder ->
+                conversations.filter { it.chatId in folder.includedChatIds && it.chatId !in folder.excludedChatIds }
+            } ?: conversations
         }
-    }
+        inFolder.filter { conversation ->
+            when (filter) {
+                InboxFilter.ALL -> true
+                InboxFilter.UNREAD -> conversation.unreadCount > 0
+                // Supabase stores the pin flag but has no separate favorite field.
+                InboxFilter.FAVORITES -> conversation.isPinned
+                InboxFilter.GROUPS -> conversation.isGroup
+            }
+        }.sortedWith(compareByDescending<Conversation> { it.isPinned }.thenByDescending { it.lastMessageTime ?: "" })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _archivedConversations = MutableStateFlow<List<Conversation>>(emptyList())
+    val archivedConversations: StateFlow<List<Conversation>> = _archivedConversations.asStateFlow()
+
+    private val _isLoadingArchived = MutableStateFlow(false)
+    val isLoadingArchived: StateFlow<Boolean> = _isLoadingArchived.asStateFlow()
+
+    private val _searchState = MutableStateFlow(InboxSearchState())
+    val searchState: StateFlow<InboxSearchState> = _searchState.asStateFlow()
+
+    private val _briefingState = MutableStateFlow(InboxBriefingState())
+    val briefingState: StateFlow<InboxBriefingState> = _briefingState.asStateFlow()
+
+    private var inboxSubscriptionJob: Job? = null
+    private var subscribedChatIds: List<String> = emptyList()
+    private var searchJob: Job? = null
 
     init {
         observeAuthStatus()
         viewModelScope.launch {
-            initializeE2EUseCase().onFailure { e ->
-                _error.value = "Failed to initialize E2EE: ${e.message}"
+            initializeE2EUseCase().onFailure { throwable ->
+                _error.value = "Failed to initialize encrypted chat: ${throwable.message.orEmpty()}"
             }
             loadCurrentUserProfile()
-            loadConversations()
-            subscribeToInboxUpdates()
+            refreshConversations()
         }
     }
 
     private suspend fun loadCurrentUserProfile() {
-        try { _currentUserProfile.value = UserProfileManager.getCurrentUserProfile() } catch (_: Exception) { }
+        try {
+            _currentUserProfile.value = UserProfileManager.getCurrentUserProfile()
+        } catch (_: Exception) {
+            _currentUserProfile.value = null
+        }
     }
 
     fun loadConversations() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            getConversationsUseCase().onSuccess { conversationList ->
-                _conversations.value = conversationList.distinctBy { it.chatId }
-                _isLoading.value = false
+        viewModelScope.launch { refreshConversations() }
+    }
 
-            }.onFailure { e ->
-                _error.value = "Failed to load conversations: ${e.message}"
+    private suspend fun refreshConversations() {
+        _isLoading.value = true
+        _error.value = null
+        getConversationsUseCase(forceNetwork = true)
+            .onSuccess { conversationList ->
+                _conversations.value = conversationList.distinctBy { it.chatId }
+                    .sortedWith(compareByDescending<Conversation> { it.isPinned }.thenByDescending { it.lastMessageTime ?: "" })
+                _isLoading.value = false
+                subscribeToInboxUpdates()
+            }
+            .onFailure { throwable ->
+                _error.value = "Failed to load conversations: ${throwable.message.orEmpty()}"
                 _isLoading.value = false
             }
-        }
     }
 
     private fun observeAuthStatus() {
         viewModelScope.launch {
             authRepository.sessionStatus.collect { status ->
                 if (status == AuthSessionStatus.NOT_AUTHENTICATED) {
+                    inboxSubscriptionJob?.cancel()
+                    subscribedChatIds = emptyList()
                     _conversations.value = emptyList()
+                    _archivedConversations.value = emptyList()
                     _currentUserProfile.value = null
                 }
             }
         }
     }
 
-    private var inboxSubscriptionJob: kotlinx.coroutines.Job? = null
-
     private fun subscribeToInboxUpdates() {
-        if (inboxSubscriptionJob?.isActive == true) return
-        val chatIds = _conversations.value.map { it.chatId }
+        val chatIds = _conversations.value.map { it.chatId }.distinct()
+        if (chatIds == subscribedChatIds) return
+        inboxSubscriptionJob?.cancel()
+        subscribedChatIds = chatIds
+        if (chatIds.isEmpty()) return
         inboxSubscriptionJob = viewModelScope.launch {
             subscribeToInboxUpdatesUseCase(chatIds).collect {
-                // When an update comes, we just load conversations.
-                // loadConversations() no longer calls subscribeToInboxUpdates(), breaking the loop.
-                loadConversations()
+                refreshConversations()
             }
         }
     }
@@ -149,33 +203,250 @@ class InboxViewModel @Inject constructor(
 
     fun getFormattedTimestamp(timestamp: String?): String = TimestampFormatter.formatRelative(timestamp)
 
-    fun archiveConversation(chatId: String) {
+    fun selectFolder(folderId: String?) { _selectedFolderId.value = folderId }
+
+    fun selectFilter(filter: InboxFilter) { _selectedFilter.value = filter }
+
+    fun assignConversationToFolder(chatId: String, folderId: String) = assignConversationsToFolder(setOf(chatId), folderId)
+
+    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String) {
         viewModelScope.launch {
-            val currentConvos = _conversations.value
-            _conversations.value = currentConvos.filter { it.chatId != chatId }
-            chatRepository.updateConversationArchiveStatus(chatId, true).onFailure {
-                _conversations.value = currentConvos
-                _error.value = "Failed to archive conversation"
+            val updated = chatFolders.value.map { folder ->
+                if (folder.id == folderId) {
+                    folder.copy(
+                        includedChatIds = (folder.includedChatIds + chatIds).distinct(),
+                        excludedChatIds = folder.excludedChatIds - chatIds
+                    )
+                } else {
+                    folder.copy(
+                        includedChatIds = folder.includedChatIds - chatIds,
+                        excludedChatIds = (folder.excludedChatIds + chatIds).distinct()
+                    )
+                }
+            }
+            persistFolders(updated)
+        }
+    }
+
+    fun createFolderAndAssign(name: String, chatIds: Set<String>) {
+        val cleanName = name.trim()
+        if (cleanName.isBlank() || chatIds.isEmpty()) return
+        viewModelScope.launch {
+            val newFolder = ChatFolder(id = UUID.randomUUID().toString(), name = cleanName, includedChatIds = chatIds.toList())
+            persistFolders(chatFolders.value + newFolder)
+            _selectedFolderId.value = newFolder.id
+        }
+    }
+
+    private suspend fun persistFolders(folders: List<ChatFolder>) {
+        try {
+            settingsRepository.setChatFoldersJson(Json.encodeToString(folders))
+        } catch (throwable: Exception) {
+            _error.value = "Failed to save folder: ${throwable.message.orEmpty()}"
+        }
+    }
+
+    fun setConversationsPinned(chatIds: Set<String>, isPinned: Boolean) {
+        if (chatIds.isEmpty()) return
+        viewModelScope.launch {
+            var failures = 0
+            chatIds.forEach { chatId ->
+                chatRepository.updateConversationPinnedStatus(chatId, isPinned)
+                    .onSuccess {
+                        _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isPinned = isPinned) else it }
+                    }
+                    .onFailure { failures++ }
+            }
+            if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
+        }
+    }
+
+    fun setConversationsMuted(chatIds: Set<String>, isMuted: Boolean) {
+        if (chatIds.isEmpty()) return
+        viewModelScope.launch {
+            var failures = 0
+            chatIds.forEach { chatId ->
+                chatRepository.updateConversationMutedStatus(chatId, isMuted)
+                    .onSuccess {
+                        _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isMuted = isMuted) else it }
+                    }
+                    .onFailure { failures++ }
+            }
+            if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
+        }
+    }
+
+    fun archiveConversations(chatIds: Set<String>) {
+        if (chatIds.isEmpty()) return
+        viewModelScope.launch {
+            var failures = 0
+            chatIds.forEach { chatId ->
+                chatRepository.updateConversationArchiveStatus(chatId, true)
+                    .onSuccess { _conversations.value = _conversations.value.filterNot { it.chatId == chatId } }
+                    .onFailure { failures++ }
+            }
+            if (failures > 0) {
+                _error.value = "Failed to archive $failures conversation(s)."
+            } else {
+                loadArchivedConversations()
             }
         }
     }
 
-    fun deleteConversation(chatId: String) {
+    fun archiveConversation(chatId: String) = archiveConversations(setOf(chatId))
+
+    fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
+
+    fun deleteConversations(chatIds: Set<String>) {
+        if (chatIds.isEmpty()) return
         viewModelScope.launch {
-            val currentConvos = _conversations.value
-            _conversations.value = currentConvos.filter { it.chatId != chatId }
-            chatRepository.deleteConversation(chatId).onFailure {
-                _conversations.value = currentConvos
-                _error.value = "Failed to delete conversation"
+            var failures = 0
+            chatIds.forEach { chatId ->
+                chatRepository.deleteConversation(chatId)
+                    .onSuccess { _conversations.value = _conversations.value.filterNot { it.chatId == chatId } }
+                    .onFailure { failures++ }
+            }
+            if (failures > 0) {
+                _error.value = "Failed to delete $failures conversation(s)."
             }
         }
     }
 
-    fun undoArchiveConversation(chatId: String) {
+    fun loadArchivedConversations() {
+        viewModelScope.launch {
+            _isLoadingArchived.value = true
+            chatRepository.getArchivedConversations()
+                .onSuccess { _archivedConversations.value = it.sortedByDescending { item -> item.lastMessageTime ?: "" } }
+                .onFailure { _error.value = "Failed to load archived conversations: ${it.message.orEmpty()}" }
+            _isLoadingArchived.value = false
+        }
+    }
+
+    fun restoreArchivedConversation(chatId: String) {
         viewModelScope.launch {
             chatRepository.updateConversationArchiveStatus(chatId, false)
-            loadConversations()
+                .onSuccess {
+                    _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId == chatId }
+                    refreshConversations()
+                }
+                .onFailure { _error.value = "Failed to restore conversation: ${it.message.orEmpty()}" }
         }
     }
 
+    fun undoArchiveConversation(chatId: String) = restoreArchivedConversation(chatId)
+
+    fun clearError() { _error.value = null }
+
+    fun searchInbox(query: String, category: InboxSearchCategory = _searchState.value.category) {
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _searchState.value = InboxSearchState(query = query, category = category)
+            return
+        }
+        _searchState.value = InboxSearchState(query = query, category = category, isLoading = true)
+        searchJob = viewModelScope.launch {
+            delay(250)
+            val matches = mutableListOf<InboxSearchResult>()
+            var failedConversations = 0
+            val currentUserId = chatRepository.getCurrentUserId()
+            val searchTerm = query.trim()
+            _conversations.value.forEach { conversation ->
+                getMessagesUseCase(conversation.chatId, limit = 80)
+                    .onSuccess { messages ->
+                        messages.asSequence()
+                            .filterNot { it.isDeleted }
+                            .filter { message ->
+                                val searchableText = buildString {
+                                    append(message.content)
+                                    message.mediaUrl?.let { append(' ').append(it) }
+                                    message.attachments.forEach { append(' ').append(it.url).append(' ').append(it.type) }
+                                }
+                                searchableText.contains(searchTerm, ignoreCase = true) && matchesCategory(conversation, message, category, currentUserId)
+                            }
+                            .forEach { matches += InboxSearchResult(conversation, it) }
+                    }
+                    .onFailure { failedConversations++ }
+            }
+            val peopleResult = searchUsersUseCase(searchTerm)
+            _searchState.value = InboxSearchState(
+                query = query,
+                category = category,
+                isLoading = false,
+                messages = matches.sortedByDescending { it.message.createdAt },
+                people = peopleResult.getOrElse { emptyList() },
+                failedConversationCount = failedConversations,
+                contactsSearchFailed = peopleResult.isFailure
+            )
+        }
+    }
+
+    private fun matchesCategory(
+        conversation: Conversation,
+        message: Message,
+        category: InboxSearchCategory,
+        currentUserId: String?
+    ): Boolean = when (category) {
+        InboxSearchCategory.UNREAD -> conversation.unreadCount > 0 && (currentUserId == null || currentUserId !in message.readBy)
+        InboxSearchCategory.PHOTOS -> message.messageType.name.contains("IMAGE", true) || message.messageType.name.contains("PHOTO", true) || message.attachments.any { it.type.name.contains("IMAGE", ignoreCase = true) }
+        InboxSearchCategory.LINKS -> message.linkPreview != null || InboxUrlPattern.containsMatchIn(message.content)
+        InboxSearchCategory.DOCS -> message.messageType.name.contains("FILE", true) || message.messageType.name.contains("DOCUMENT", true) || message.attachments.any { it.type.name.contains("FILE", ignoreCase = true) }
+    }
+
+    fun generateCatchUp() {
+        val unreadThreads = _conversations.value
+            .filter { it.unreadCount > 0 }
+            .sortedWith(compareByDescending<Conversation> { it.unreadCount }.thenByDescending { it.lastMessageTime ?: "" })
+            .take(3)
+        if (unreadThreads.isEmpty()) {
+            _briefingState.value = InboxBriefingState()
+            return
+        }
+        _briefingState.value = InboxBriefingState(isLoading = true)
+        viewModelScope.launch {
+            val summaries = mutableListOf<InboxBriefingThread>()
+            var partialFailure = false
+            val currentUserId = chatRepository.getCurrentUserId()
+            unreadThreads.forEach { conversation ->
+                val messagesResult = getMessagesUseCase(conversation.chatId, limit = 50)
+                val messages = messagesResult.getOrElse {
+                    partialFailure = true
+                    emptyList()
+                }
+                val summaryInput = messages.filterNot { it.isDeleted }.takeLast(50).mapNotNull { message ->
+                    val body = message.content.trim()
+                    if (body.isBlank()) null
+                    else "${if (message.senderId == currentUserId) "You" else conversation.participantName}: $body"
+                }
+                if (summaryInput.isEmpty()) {
+                    partialFailure = true
+                    return@forEach
+                }
+                summarizeChatUseCase(summaryInput, conversation.chatId)
+                    .onSuccess { summaries += InboxBriefingThread(conversation, it) }
+                    .onFailure { partialFailure = true }
+            }
+            _briefingState.value = InboxBriefingState(isLoading = false, threads = summaries, partialFailure = partialFailure)
+        }
+    }
+
+    fun markSummarizedAsRead(chatIds: Set<String>, onComplete: () -> Unit) {
+        if (chatIds.isEmpty()) {
+            onComplete()
+            return
+        }
+        viewModelScope.launch {
+            var failures = 0
+            chatIds.forEach { chatId ->
+                chatRepository.markMessagesAsRead(chatId)
+                    .onSuccess {
+                        _conversations.value = _conversations.value.map { conversation ->
+                            if (conversation.chatId == chatId) conversation.copy(unreadCount = 0) else conversation
+                        }
+                    }
+                    .onFailure { failures++ }
+            }
+            if (failures > 0) _error.value = "Failed to mark $failures conversation(s) as read."
+            onComplete()
+        }
+    }
 }

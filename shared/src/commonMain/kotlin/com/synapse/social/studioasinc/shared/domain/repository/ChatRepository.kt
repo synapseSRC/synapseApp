@@ -7,7 +7,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
-    suspend fun getConversations(): Result<List<Conversation>>
+    suspend fun getConversations(forceNetwork: Boolean = false): Result<List<Conversation>>
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null, forceNetwork: Boolean = false): Result<List<Message>>
     suspend fun getMessageById(messageId: String): Result<Message?>
     suspend fun sendMessage(
@@ -24,6 +24,9 @@ interface ChatRepository {
     suspend fun getOrCreateChat(otherUserId: String): Result<String>
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean): Result<Unit>
+    suspend fun getArchivedConversations(): Result<List<Conversation>>
+    suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean): Result<Unit>
+    suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun deleteConversation(chatId: String): Result<Unit>
     suspend fun markMessagesAsRead(chatId: String): Result<Unit>
     suspend fun markMessagesAsDelivered(chatId: String): Result<Unit>
