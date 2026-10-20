@@ -70,6 +70,8 @@ object Sizes {
     // My design decision (not in M3): Layout & Container component sizing
     val ButtonHeight = SynapseSizes.ButtonHeight.dp
     val ButtonHeightLarge = SynapseSizes.ButtonHeightLarge.dp
+    // From M3 Expressive ButtonMedium ContainerHeight.
+    val ButtonHeightM3Medium = 56.dp
     val NavBarHeight = SynapseSizes.NavBarHeight.dp
     val HeightSmall = SynapseSizes.HeightSmall.dp
     val HeightButtonSmall = SynapseSizes.HeightButtonSmall.dp

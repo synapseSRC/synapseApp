@@ -165,7 +165,8 @@ fun ChatTopAppBar(
                             val nextMode = when (disappearingMode) {
                                 DisappearingMode.OFF -> DisappearingMode.TWENTY_FOUR_HOURS
                                 DisappearingMode.TWENTY_FOUR_HOURS -> DisappearingMode.SEVEN_DAYS
-                                DisappearingMode.SEVEN_DAYS -> DisappearingMode.OFF
+                                DisappearingMode.SEVEN_DAYS -> DisappearingMode.NINETY_DAYS
+                                DisappearingMode.NINETY_DAYS -> DisappearingMode.OFF
                                 else -> DisappearingMode.OFF
                             }
                             onSetDisappearingMode(nextMode)

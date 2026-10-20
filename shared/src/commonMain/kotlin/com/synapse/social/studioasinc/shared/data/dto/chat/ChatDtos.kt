@@ -93,7 +93,11 @@ data class ChatDto(
     @EncodeDefault @SerialName("only_admins_can_message") val onlyAdminsCanMessage: Boolean = false,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
-    @SerialName("disappearing_mode") val disappearingMode: String? = null
+    @SerialName("disappearing_mode") val disappearingMode: String? = null,
+    @SerialName("allow_member_settings_edits") val allowMemberSettingsEdits: Boolean = false,
+    @SerialName("require_join_approval") val requireJoinApproval: Boolean = true,
+    @SerialName("allow_member_invites") val allowMemberInvites: Boolean = false,
+    @SerialName("invite_code") val inviteCode: String? = null
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -104,5 +108,35 @@ data class NewChatDto(
     val name: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
     @SerialName("created_by") val createdBy: String? = null,
-    @EncodeDefault @SerialName("only_admins_can_message") val onlyAdminsCanMessage: Boolean = false
+    @EncodeDefault @SerialName("only_admins_can_message") val onlyAdminsCanMessage: Boolean = false,
+    @SerialName("description") val description: String? = null,
+    @EncodeDefault @SerialName("allow_member_settings_edits") val allowMemberSettingsEdits: Boolean = false,
+    @EncodeDefault @SerialName("require_join_approval") val requireJoinApproval: Boolean = true,
+    @EncodeDefault @SerialName("allow_member_invites") val allowMemberInvites: Boolean = false,
+    @EncodeDefault @SerialName("disappearing_mode") val disappearingMode: String = "OFF"
+)
+
+
+@Serializable
+data class GroupJoinRequestDto(
+    val id: String,
+    @SerialName("chat_id") val chatId: String,
+    @SerialName("user_id") val userId: String,
+    val status: String = "pending",
+    @SerialName("created_at") val createdAt: String? = null
+)
+
+@Serializable
+data class GroupInviteCodeDto(
+    @SerialName("invite_code") val inviteCode: String? = null
+)
+
+@Serializable
+data class GroupInvitePreviewDto(
+    @SerialName("chat_id") val chatId: String,
+    val name: String,
+    val description: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("require_join_approval") val requireJoinApproval: Boolean = true,
+    @SerialName("member_count") val memberCount: Long = 0
 )
