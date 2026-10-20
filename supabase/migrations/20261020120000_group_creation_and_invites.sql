@@ -42,7 +42,7 @@ BEGIN
        SET invite_code = replace(gen_random_uuid()::text, '-', ''), updated_at = now()
      WHERE c.id = p_chat_id
        AND c.is_group = true
-       AND (private.is_chat_admin(c.id, current_uid) OR c.allow_member_invites = true)
+       AND (private.is_chat_admin(c.id, current_uid) OR (c.allow_member_invites = true AND EXISTS (SELECT 1 FROM public.chat_participants cp WHERE cp.chat_id = c.id AND cp.user_id = current_uid)))
     RETURNING c.invite_code INTO next_code;
     IF next_code IS NULL THEN RAISE EXCEPTION 'Group not found or invite permission denied'; END IF;
     RETURN next_code;
@@ -91,8 +91,7 @@ BEGIN
         INSERT INTO public.group_join_requests (chat_id, user_id, status, updated_at)
         VALUES (target_chat.id, current_uid, 'pending', now())
         ON CONFLICT (chat_id, user_id) DO UPDATE
-            SET status = 'pending', updated_at = now()
-            WHERE public.group_join_requests.status <> 'approved';
+            SET status = 'pending', updated_at = now();
         RETURN 'pending';
     END IF;
     INSERT INTO public.chat_participants (chat_id, user_id, is_admin)
@@ -162,10 +161,13 @@ AS $$
 DECLARE current_uid text := get_current_user_uid();
 BEGIN
     IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.chats c WHERE c.id = p_chat_id AND c.is_group = true) THEN
+        RAISE EXCEPTION 'Group not found';
+    END IF;
     IF NOT private.is_chat_admin(p_chat_id, current_uid) AND NOT EXISTS (
         SELECT 1 FROM public.chats c
         JOIN public.chat_participants cp ON cp.chat_id = c.id
-        WHERE c.id = p_chat_id AND c.allow_member_settings_edits = true AND cp.user_id = current_uid
+        WHERE c.id = p_chat_id AND c.is_group = true AND c.allow_member_settings_edits = true AND cp.user_id = current_uid
     ) THEN RAISE EXCEPTION 'Group settings permission required'; END IF;
     UPDATE public.chats SET only_admins_can_message = p_only_admins_can_message, updated_at = now()
      WHERE id = p_chat_id AND is_group = true;
@@ -185,13 +187,16 @@ BEGIN
     IF p_disappearing_mode NOT IN ('OFF', 'TWENTY_FOUR_HOURS', 'SEVEN_DAYS', 'NINETY_DAYS') THEN
         RAISE EXCEPTION 'Unsupported disappearing message mode';
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.chats c WHERE c.id = p_chat_id AND c.is_group = true) THEN
+        RAISE EXCEPTION 'Group not found';
+    END IF;
     IF NOT private.is_chat_admin(p_chat_id, current_uid) AND NOT EXISTS (
         SELECT 1 FROM public.chats c
         JOIN public.chat_participants cp ON cp.chat_id = c.id
         WHERE c.id = p_chat_id AND c.is_group = true AND c.allow_member_settings_edits = true AND cp.user_id = current_uid
     ) THEN RAISE EXCEPTION 'Group settings permission required'; END IF;
     UPDATE public.chats SET disappearing_mode = p_disappearing_mode, updated_at = now()
-     WHERE id = p_chat_id;
+     WHERE id = p_chat_id AND is_group = true;
     IF NOT FOUND THEN RAISE EXCEPTION 'Group not found'; END IF;
 END;
 $$;
@@ -200,3 +205,74 @@ REVOKE ALL ON FUNCTION public.update_group_message_permission(uuid, boolean) FRO
 REVOKE ALL ON FUNCTION public.update_group_disappearing_mode(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.update_group_message_permission(uuid, boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_group_disappearing_mode(uuid, text) TO authenticated;
+
+-- Admin-only RPCs keep group moderation and role changes behind server-side authorization.
+CREATE OR REPLACE FUNCTION private.guard_chat_participant_admin_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, pg_temp
+AS $$
+BEGIN
+    IF NEW.is_admin IS DISTINCT FROM OLD.is_admin
+       AND NOT private.is_chat_admin(OLD.chat_id, get_current_user_uid()) THEN
+        RAISE EXCEPTION 'Admin permission required to change participant roles';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS guard_chat_participant_admin_change ON public.chat_participants;
+CREATE TRIGGER guard_chat_participant_admin_change
+    BEFORE UPDATE OF is_admin ON public.chat_participants
+    FOR EACH ROW EXECUTE FUNCTION private.guard_chat_participant_admin_change();
+
+CREATE OR REPLACE FUNCTION public.remove_group_member(p_chat_id uuid, p_user_id text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, pg_temp
+AS $$
+DECLARE current_uid text := get_current_user_uid();
+DECLARE creator_uid text;
+BEGIN
+    IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+    IF NOT private.is_chat_admin(p_chat_id, current_uid) THEN RAISE EXCEPTION 'Admin permission required'; END IF;
+    SELECT c.created_by INTO creator_uid FROM public.chats c WHERE c.id = p_chat_id AND c.is_group = true;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Group not found'; END IF;
+    IF p_user_id = creator_uid THEN RAISE EXCEPTION 'The group creator cannot be removed'; END IF;
+    DELETE FROM public.chat_participants cp WHERE cp.chat_id = p_chat_id AND cp.user_id = p_user_id;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Group member not found'; END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_group_member_admin(p_chat_id uuid, p_user_id text, p_is_admin boolean)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, pg_temp
+AS $$
+DECLARE current_uid text := get_current_user_uid();
+DECLARE creator_uid text;
+DECLARE target_is_admin boolean;
+DECLARE admin_count bigint;
+BEGIN
+    IF current_uid IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+    IF NOT private.is_chat_admin(p_chat_id, current_uid) THEN RAISE EXCEPTION 'Admin permission required'; END IF;
+    SELECT c.created_by INTO creator_uid FROM public.chats c WHERE c.id = p_chat_id AND c.is_group = true;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Group not found'; END IF;
+    SELECT cp.is_admin INTO target_is_admin FROM public.chat_participants cp WHERE cp.chat_id = p_chat_id AND cp.user_id = p_user_id;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Group member not found'; END IF;
+    IF NOT p_is_admin AND p_user_id = creator_uid THEN RAISE EXCEPTION 'The group creator cannot be demoted'; END IF;
+    IF NOT p_is_admin AND target_is_admin THEN
+        SELECT count(*) INTO admin_count FROM public.chat_participants cp WHERE cp.chat_id = p_chat_id AND cp.is_admin = true;
+        IF admin_count <= 1 THEN RAISE EXCEPTION 'A group must retain at least one admin'; END IF;
+    END IF;
+    UPDATE public.chat_participants cp SET is_admin = p_is_admin WHERE cp.chat_id = p_chat_id AND cp.user_id = p_user_id;
+END;
+$$;
+REVOKE ALL ON FUNCTION private.guard_chat_participant_admin_change() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.remove_group_member(uuid, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.set_group_member_admin(uuid, text, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.remove_group_member(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_group_member_admin(uuid, text, boolean) TO authenticated;
