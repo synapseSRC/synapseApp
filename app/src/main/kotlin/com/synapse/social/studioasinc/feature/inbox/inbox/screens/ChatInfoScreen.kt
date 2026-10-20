@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.NotificationsOff
@@ -258,7 +259,7 @@ private fun ChatInfoScreenContent(
                             DropdownMenuItem(
                                 modifier = Modifier.pressScale(shareInteraction),
                                 interactionSource = shareInteraction,
-                                return text = { Text(stringResource(R.string.chat_info_share_contact)) },
+                                text = { Text(stringResource(R.string.chat_info_share_contact)) },
                                 leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) },
                                 onClick = {
                                     moreMenuExpanded = false
@@ -323,7 +324,7 @@ private fun ChatInfoScreenContent(
                     val total = uiState.mediaCount + uiState.linkCount + uiState.fileCount
                     val summary = when {
                         uiState.isLoadingSharedContent -> stringResource(R.string.chat_info_media_loading)
-                        uiState.sharedContentErrorRes != null -> stringResource(uiState.sharedContentErrorRes)
+                        sharedContentErrorRes != null -> stringResource(sharedContentErrorRes)
                         total == 0 -> stringResource(R.string.chat_info_media_empty)
                         uiState.isSharedContentSample -> stringResource(R.string.chat_info_media_partial_summary, total)
                         else -> stringResource(
@@ -345,11 +346,11 @@ private fun ChatInfoScreenContent(
                     SectionHeading(stringResource(R.string.chat_info_privacy_section_title))
                 }
                 item(key = "privacy-settings") {
-                    Column(verticalArrangement = Arrangement.spacedBy(ChatInfoMetrics.connectedActionGap)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(ChatInfoMetrics.listItemGap)) {
                         SettingsItem(
                             icon = Icons.Rounded.Lock,
                             title = stringResource(R.string.chat_info_encryption_title),
-                            supportingText = stringResource(R.string.chat_info_encryption_title_secure_summary),
+                            supportingText = stringResource(R.string.chat_info_encryption_secure_summary),
                             trailingIcon = Icons.Rounded.VerifiedUser,
                             position = ItemPosition.FIRST,
                             onClick = { showEncryptionSheet = true }
@@ -380,13 +381,13 @@ private fun ChatInfoScreenContent(
                                     interactionSource = lockInteraction,
                                     modifier = Modifier.pressScale(lockInteraction)
                                 )
-                            return },
+                        },
                             onClick = { viewModel.toggleChatLock(chatId) }
                         )
                         SettingsItem(
                             icon = Icons.Rounded.Security,
                             title = stringResource(R.string.chat_info_advanced_privacy_title),
-                            supportingText = stringResource(R.string.chat_info_advanced_privacy_title_summary),
+                            supportingText = stringResource(R.string.chat_info_advanced_privacy_summary),
                             trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                             position = ItemPosition.LAST,
                             onClick = { onNavigateToChatPrivacy(chatId) }
@@ -395,7 +396,7 @@ private fun ChatInfoScreenContent(
                 }
                 item(key = "groups") {
                     val groupSummary = when {
-                        uiState.commonGroupsErrorRes != null -> stringResource(uiState.commonGroupsErrorRes)
+                        commonGroupsErrorRes != null -> stringResource(commonGroupsErrorRes)
                         uiState.isLoadingCommonGroups -> stringResource(R.string.chat_info_groups_loading)
                         uiState.commonGroups.isEmpty() -> stringResource(R.string.chat_info_no_groups_in_common)
                         uiState.commonGroups.size == 1 -> stringResource(
@@ -465,7 +466,7 @@ private fun ChatInfoScreenContent(
         AlertDialog(
             onDismissRequest = { showClearChatDialog = false },
             title = { Text(stringResource(R.string.chat_info_clear_history_title)) },
-            text = { Text(stringResource(R.string.chat_info_clear_history_title_confirm)) },
+            text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
             confirmButton = {
                 PressScaleTextButton(onClick = {
                     showClearChatDialog = false
@@ -542,7 +543,7 @@ private fun ChatInfoScreenContent(
                         modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space16),
                         contentAlignment = Alignment.Center
                     ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
-                    uiState.commonGroupsErrorRes != null -> Text(stringResource(uiState.commonGroupsErrorRes))
+                    commonGroupsErrorRes != null -> Text(stringResource(commonGroupsErrorRes))
                     uiState.commonGroups.isEmpty() -> Text(stringResource(R.string.chat_info_groups_dialog_empty))
                     else -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                         uiState.commonGroups.forEach { group ->
@@ -551,7 +552,7 @@ private fun ChatInfoScreenContent(
                                 leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
                                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                             )
-                        return }
+                        }
                     }
                 }
             },
@@ -858,4 +859,3 @@ private fun settingsItemShape(position: ItemPosition): Shape = when (position) {
     ItemPosition.LAST -> RoundedCornerShape(topStart = ChatInfoMetrics.listInnerCorner, topEnd = ChatInfoMetrics.listInnerCorner, bottomStart = ChatInfoMetrics.listOuterCorner, bottomEnd = ChatInfoMetrics.listOuterCorner)
     ItemPosition.SINGLE -> RoundedCornerShape(ChatInfoMetrics.listOuterCorner)
 }
-return 
