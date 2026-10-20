@@ -245,24 +245,34 @@ import java.io.File
     var listReady by remember { mutableStateOf(false) }
     var showDisappearingModeDialog by remember { mutableStateOf(false) }
 
-    var lastScrolledMessageId by remember { mutableStateOf<String?>(null) }
-    val newestMessage = remember(messages) { messages.lastOrNull() }
-    val newestMessageId = newestMessage?.id
+    var lastScrolledMessageClientId by remember { mutableStateOf<String?>(null) }
+    val newestMessage = remember(chatItems) {
+        chatItems.filterIsInstance<ChatListItem.MessageItem>().lastOrNull()?.message
+    }
+    val newestMessageClientId = newestMessage?.clientId
 
-    LaunchedEffect(newestMessageId) {
-        if (newestMessageId != null) {
+    LaunchedEffect(newestMessageClientId) {
+        if (newestMessageClientId != null) {
             if (!listReady) {
                 listState.scrollToItem(0)
                 listReady = true
-                lastScrolledMessageId = newestMessageId
-            } else if (newestMessageId != lastScrolledMessageId) {
+                lastScrolledMessageClientId = newestMessageClientId
+            } else if (newestMessageClientId != lastScrolledMessageClientId) {
                 val isFromMe = newestMessage.senderId == currentUserId
-                val isNearBottom = listState.firstVisibleItemIndex <= 3
+                val isNearBottom = listState.firstVisibleItemIndex <= 1
 
-                if (isFromMe || isNearBottom) {
-                    listState.animateScrollToItem(0)
+                if (isFromMe) {
+                    if (listState.firstVisibleItemIndex > 3) {
+                        listState.scrollToItem(0)
+                    } else if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
+                        listState.animateScrollToItem(0)
+                    }
+                } else if (isNearBottom) {
+                    if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
+                        listState.animateScrollToItem(0)
+                    }
                 }
-                lastScrolledMessageId = newestMessageId
+                lastScrolledMessageClientId = newestMessageClientId
             }
         }
     }
@@ -403,21 +413,6 @@ import java.io.File
                 isSummarizingMessage = isSummarizingMessage,
                 messageSummary = messageSummary,
                 onDismissRequest = viewModel::clearMessageSummary
-            )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(Sizes.HeightMedium)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    )
             )
 
             if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {

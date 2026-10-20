@@ -184,7 +184,7 @@ fun VoiceInputHost(
                     .fillMaxWidth()
                     .heightIn(min = 52.dp)
                     .padding(horizontal = Spacing.space8, vertical = Spacing.space4),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Morphing left/middle composer content area

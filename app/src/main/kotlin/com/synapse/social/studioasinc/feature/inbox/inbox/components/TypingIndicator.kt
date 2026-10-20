@@ -55,7 +55,6 @@ fun TypingIndicator(
 
     Box(
         modifier = modifier
-            .padding(vertical = Spacing.space8)
             .clip(RoundedCornerShape(
                 topStart = Sizes.CornerMassive,
                 topEnd = Sizes.CornerMassive,

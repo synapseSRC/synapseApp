@@ -24,16 +24,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -222,9 +217,11 @@ fun ChatInputBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.space4),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Bottom
             ) {
-                Box {
+                Box(
+                    modifier = Modifier.padding(bottom = (Sizes.SendButton - 38.dp) / 2)
+                ) {
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -281,34 +278,7 @@ fun ChatInputBar(
                         .padding(horizontal = Spacing.space4)
                         .padding(vertical = Spacing.space4)
                         .focusRequester(focusRequester)
-                        .onFocusChanged { isFocused = it.isFocused }
-                        .graphicsLayer {
-                            compositingStrategy = if (size.height > Sizes.HeartSize.toPx()) {
-                                CompositingStrategy.Offscreen
-                            } else {
-                                CompositingStrategy.Auto
-                            }
-                        }
-                        .drawWithContent {
-                            drawContent()
-                            if (size.height > Sizes.HeartSize.toPx()) {
-                                val fadeSize = Sizes.ChatInputFadeSize.toPx()
-                                drawRect(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, Color.Black),
-                                        startY = 0f, endY = fadeSize
-                                    ),
-                                    blendMode = BlendMode.DstIn
-                                )
-                                drawRect(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(Color.Black, Color.Transparent),
-                                        startY = size.height - fadeSize, endY = size.height
-                                    ),
-                                    blendMode = BlendMode.DstIn
-                                )
-                            }
-                        },
+                        .onFocusChanged { isFocused = it.isFocused },
                     enabled = canSendMessage,
                     maxLines = 4,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(

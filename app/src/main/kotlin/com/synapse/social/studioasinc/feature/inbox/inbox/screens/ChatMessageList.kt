@@ -1,5 +1,4 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
-import com.synapse.social.studioasinc.feature.inbox.inbox.components.TypingIndicator
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,7 +27,6 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.components.isWithinTim
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.quotedSenderDisplayName
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.TypingIndicator
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -97,6 +95,25 @@ internal fun ChatMessageList(
     }
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
+    val initialKeysCaptured = remember { mutableStateOf(false) }
+    val initialItemKeys = remember { mutableSetOf<String>() }
+    val oldestInitialCreatedAt = remember { mutableStateOf<String?>(null) }
+    // Tracks every item key ever composed so fadeInSpec fires exactly once per item.
+    // Seeded with initialItemKeys so items present at first load never fade in.
+    val seenItemKeys = remember { mutableSetOf<String>() }
+    if (!initialKeysCaptured.value && chatItems.isNotEmpty()) {
+        chatItems.forEach { item ->
+            when (item) {
+                is ChatListItem.DateDivider -> initialItemKeys.add("date_${item.label}")
+                is ChatListItem.UnreadDivider -> initialItemKeys.add("unread_divider")
+                is ChatListItem.MessageItem -> initialItemKeys.add(item.message.clientId)
+            }
+        }
+        seenItemKeys.addAll(initialItemKeys)
+        oldestInitialCreatedAt.value = messages.minByOrNull { it.createdAt }?.createdAt
+        initialKeysCaptured.value = true
+    }
+
     val reversedItems = remember(chatItems) { chatItems.reversed() }
     val groupPositions = remember(reversedItems) {
         val messageEntries = reversedItems.mapIndexedNotNull { index, item ->
@@ -170,7 +187,30 @@ internal fun ChatMessageList(
     ) {
         if (typingStatus != null && typingStatus.isTyping) {
             item(key = "typing_indicator") {
-                TypingIndicator(modifier = Modifier.padding(bottom = Spacing.space8))
+                val typingModifier = if (!reducedMotion) {
+                    Modifier.animateItem(
+                        // M3 fast effects spring: damping 1.0 (no overshoot), stiffness 3800
+                        fadeInSpec = spring(
+                            dampingRatio = 1.0f,
+                            stiffness = 3800f
+                        ),
+                        fadeOutSpec = spring(
+                            dampingRatio = 1.0f,
+                            stiffness = 3800f
+                        ),
+                        // Critically-damped spatial spring: no overshoot, fast settle.
+                        // Project design decision: damping 1.0 / stiffness 1500 to
+                        // prevent visible bounce when the typing indicator pushes
+                        // messages upward.
+                        placementSpec = spring(
+                            dampingRatio = 1.0f,
+                            stiffness = 1500f
+                        )
+                    )
+                } else {
+                    Modifier
+                }
+                TypingIndicator(modifier = typingModifier.padding(bottom = Spacing.space8))
             }
         }
 
@@ -181,9 +221,70 @@ internal fun ChatMessageList(
                  is ChatListItem.MessageItem -> item.message.clientId
              }
          }) { index, item ->
+            val itemKey = when (item) {
+                is ChatListItem.DateDivider -> "date_${item.label}"
+                is ChatListItem.UnreadDivider -> "unread_divider"
+                is ChatListItem.MessageItem -> item.message.clientId
+            }
+            val oldestCreatedAt = oldestInitialCreatedAt.value
+            val isHistorical = itemKey in initialItemKeys || (
+                item is ChatListItem.MessageItem &&
+                oldestCreatedAt != null &&
+                item.message.createdAt < oldestCreatedAt
+            )
+
+            // Track whether this is the very first time this item is composed.
+            // Once an item is added to seenItemKeys, fadeInSpec will be null
+            // for all future recompositions — preventing flicker when the
+            // LazyColumn recycles items (e.g. composer height changes on typing).
+            val isFirstAppearance = if (!isHistorical && itemKey !in seenItemKeys) {
+                seenItemKeys.add(itemKey)
+                true
+            } else {
+                seenItemKeys.add(itemKey) // still track it
+                false
+            }
+
+            // Shared placement and entrance spec for items.
+            // Project design decision: critically-damped spatial spring
+            // (damping 1.0 / stiffness 1500) so existing bubbles slide into
+            // their new positions without any visible bounce or overshoot.
+            // Using damping 1.0 instead of M3's standard 0.9 because the
+            // underdamped bounce was perceptible in a reverse-layout chat
+            // list and looked glitchy rather than expressive.
+            val placementModifier = if (!reducedMotion) {
+                Modifier.animateItem(
+                    // From M3 tokens: "fast effects" spring — damping 1.0
+                    // (no overshoot), stiffness 3800 (fast settle). Effects
+                    // springs are for color/opacity and must never overshoot.
+                    // Only active on first appearance; null on all subsequent
+                    // recompositions to prevent flicker on item recycling.
+                    fadeInSpec = if (isFirstAppearance) spring(
+                        dampingRatio = 1.0f,
+                        stiffness = 3800f
+                    ) else null,
+                    fadeOutSpec = spring(
+                        dampingRatio = 1.0f,
+                        stiffness = 3800f
+                    ),
+                    placementSpec = spring(
+                        dampingRatio = 1.0f,
+                        stiffness = 1500f
+                    )
+                )
+            } else {
+                Modifier
+            }
+
             when (item) {
-                is ChatListItem.DateDivider -> DateDividerChip(label = item.label)
-                is ChatListItem.UnreadDivider -> UnreadDividerRow(count = item.count)
+                is ChatListItem.DateDivider -> DateDividerChip(
+                    label = item.label,
+                    modifier = placementModifier
+                )
+                is ChatListItem.UnreadDivider -> UnreadDividerRow(
+                    count = item.count,
+                    modifier = placementModifier
+                )
                 is ChatListItem.MessageItem -> {
                     val message = item.message
                     val position = groupPositions.getOrNull(index) ?: GroupPosition.SINGLE
@@ -193,17 +294,9 @@ internal fun ChatMessageList(
                         val targetId = message.replyToId?.takeIf { it.isNotBlank() && quotedOriginal == null }
                         targetId?.let(onLocateMessage)
                     }
-                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space8 else Spacing.space2
-                    val animateModifier = if (!reducedMotion) {
-                        Modifier.animateItem(
-                            fadeInSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                            placementSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
-                        )
-                    } else {
-                        Modifier
-                    }
+                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space2
                     MessageBubble(
-                        modifier = animateModifier.padding(bottom = bottomGap),
+                        modifier = placementModifier.padding(bottom = bottomGap),
                         message = message,
                         isFromMe = message.isFromMe(currentUserId),
                         position = position,

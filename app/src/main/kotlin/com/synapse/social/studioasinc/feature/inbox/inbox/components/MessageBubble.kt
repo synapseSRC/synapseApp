@@ -31,6 +31,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -148,9 +149,12 @@ fun SenderHeaderRow(
 }
 
 @Composable
-fun DateDividerChip(label: String) {
+fun DateDividerChip(
+    label: String,
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = Spacing.space8),
         contentAlignment = Alignment.Center
@@ -200,9 +204,12 @@ private fun WavyDivider(modifier: Modifier, color: Color) {
 }
 
 @Composable
-fun UnreadDividerRow(count: Int) {
+fun UnreadDividerRow(
+    count: Int,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
@@ -413,10 +420,6 @@ fun MessageBubble(
                 onClick = onClick,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            )
-            .padding(
-                top = if (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) Spacing.space8 else Spacing.space0,
-                bottom = Spacing.space2
             )
             .offset { IntOffset(offsetX.value.toInt(), 0) }
             .pointerInput(Unit) {
@@ -691,11 +694,10 @@ fun MessageBubble(
                                 shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
                                 tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
                             ) {
-                                Column(modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space8)) {
-                                    Column(
-                                        modifier = Modifier.padding(horizontal = Spacing.space8),
-                                        horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
-                                    ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+                                    horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
+                                ) {
                                         when (message.messageType) {
                                             MessageType.VOICE, MessageType.AUDIO -> {
                                                 Column {
@@ -711,9 +713,7 @@ fun MessageBubble(
                                                     } else {
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier
-                                                                .height(Sizes.AudioFallbackRowHeight)
-                                                                .padding(horizontal = Spacing.space8)
+                                                            modifier = Modifier.height(Sizes.AudioFallbackRowHeight)
                                                         ) {
                                                             CircularProgressIndicator(
                                                                 modifier = Modifier.size(Sizes.IconSemiMedium),
@@ -955,39 +955,54 @@ fun MessageBubble(
                             }
                         }
                     }
-                    }
 
-                    @OptIn(ExperimentalLayoutApi::class)
-                    FlowRow(
-                        modifier = Modifier
-                            .padding(top = Spacing.space2)
-                            .padding(horizontal = Spacing.space4),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.space2, if (isFromMe) Alignment.End else Alignment.Start),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.space2)
-                    ) {
-                        reactions.forEach { (emoji, count) ->
-                            val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
-                            Surface(
-                                shape = CircleShape,
-                                color = if (message.userReaction == type)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                tonalElevation = Sizes.ElevationLow,
-                                modifier = Modifier.clickable { onReactionSelected(type) }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(Spacing.space2)
-                                ) {
-                                    Text(text = emoji, fontSize = FontSizes.Small)
-                                    if (count > 1) {
-                                        Text(
-                                            text = count.toString(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontSize = FontSizes.Small
+                    if (reactions.isNotEmpty()) {
+                        @OptIn(ExperimentalLayoutApi::class)
+                        FlowRow(
+                            modifier = Modifier
+                                .padding(top = Spacing.space4)
+                                .padding(horizontal = Spacing.space4),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.space4, if (isFromMe) Alignment.End else Alignment.Start),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.space4)
+                        ) {
+                            reactions.forEach { (emoji, count) ->
+                                val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
+                                Box(
+                                    modifier = Modifier
+                                        .sizeIn(
+                                            minWidth = AccessibilitySizes.minimumTouchTarget,
+                                            minHeight = AccessibilitySizes.minimumTouchTarget
                                         )
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ripple(bounded = false, radius = 24.dp),
+                                            role = Role.Button,
+                                            onClick = { onReactionSelected(type) }
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (message.userReaction == type)
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.surfaceVariant,
+                                        tonalElevation = Sizes.ElevationLow
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
+                                        ) {
+                                            Text(text = emoji, fontSize = FontSizes.Small)
+                                            if (count > 1) {
+                                                Text(
+                                                    text = count.toString(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontSize = FontSizes.Small
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

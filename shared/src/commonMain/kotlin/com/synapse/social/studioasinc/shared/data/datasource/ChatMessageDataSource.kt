@@ -218,28 +218,15 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     }
 
     suspend fun markMessagesAsDelivered(chatId: String) = withContext(AppDispatchers.IO) {
-        val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
-        val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
-
         try {
-            // Keep the write scoped to messages received by this account. A chat-wide RPC
-            // can otherwise acknowledge our own outgoing messages during an inbox refresh.
-            client.postgrest.from("messages").update({
-                set("delivery_status", "delivered")
-                set("message_state", "delivered")
-                set("delivered_at", now)
-                set("updated_at", now)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    neq("sender_id", currentUserId)
-                    eq("delivery_status", "sent")
-                    filter("delivered_at", FilterOperator.IS, "null")
-                }
-            }
+            client.postgrest.rpc(
+                function = "mark_messages_as_delivered",
+                parameters = mapOf(
+                    "p_chat_id" to chatId
+                )
+            )
         } catch (e: Exception) {
             Napier.e("Error marking received messages as delivered", e)
-            throw e
         }
     }
 }

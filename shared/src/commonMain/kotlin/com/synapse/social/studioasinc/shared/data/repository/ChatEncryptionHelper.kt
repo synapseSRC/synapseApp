@@ -7,6 +7,8 @@ import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSou
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.util.Logger
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -35,6 +37,7 @@ internal class ChatEncryptionHelper(
      * be decrypted once by the protocol's state machine.
      */
     val decryptedMessageCache = mutableMapOf<String, String>()
+    private val decryptionMutex = Mutex()
 
     private val placeholders = setOf(
         "Message is encrypted",
@@ -74,63 +77,65 @@ internal class ChatEncryptionHelper(
     suspend fun MessageDto.decryptIfNecessary(currentUserId: String): MessageDto {
         val messageId = this.id ?: return this
 
-        // 1) Check in-memory cache first (fastest)
-        decryptedMessageCache[messageId]?.let { cached ->
-            Logger.d("E2EE_DECRYPT: Found message $messageId in memory cache", tag = "E2EE")
-            val (content, mediaUrl, metadata) = extractContent(cached)
-            return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
-        }
+        return decryptionMutex.withLock {
+            // 1) Check in-memory cache first (fastest)
+            decryptedMessageCache[messageId]?.let { cached ->
+                Logger.d("E2EE_DECRYPT: Found message $messageId in memory cache", tag = "E2EE")
+                val (content, mediaUrl, metadata) = extractContent(cached)
+                return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
+            }
 
-        // 2) Check local DB for previously-decrypted content (survives app restart)
-        val dbCached = try {
-            cachedMessageDao?.getMessages(chatId ?: "", 200)?.find { it.id == messageId }
-        } catch (_: Exception) { null }
-        if (dbCached != null && dbCached.content !in placeholders && dbCached.content.isNotBlank()) {
-            Logger.d("E2EE_DECRYPT: Found message $messageId in local DB cache", tag = "E2EE")
-            decryptedMessageCache[messageId] = dbCached.content
-            return this.copy(content = dbCached.content, mediaUrl = dbCached.mediaUrl ?: this.mediaUrl, metadata = dbCached.metadataContainer?.let {
-                try { Json.encodeToString(com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer.serializer(), it) } catch (_: Exception) { null }
-            } ?: this.metadata)
-        }
+            // 2) Check local DB for previously-decrypted content (survives app restart)
+            val dbCached = try {
+                cachedMessageDao?.getMessages(chatId ?: "", 200)?.find { it.id == messageId }
+            } catch (_: Exception) { null }
+            if (dbCached != null && dbCached.content !in placeholders && dbCached.content.isNotBlank()) {
+                Logger.d("E2EE_DECRYPT: Found message $messageId in local DB cache", tag = "E2EE")
+                decryptedMessageCache[messageId] = dbCached.content
+                return@withLock this.copy(content = dbCached.content, mediaUrl = dbCached.mediaUrl ?: this.mediaUrl, metadata = dbCached.metadataContainer?.let {
+                    try { Json.encodeToString(com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer.serializer(), it) } catch (_: Exception) { null }
+                } ?: this.metadata)
+            }
 
-        try {
-            val jsonElement = Json.parseToJsonElement(this.content).jsonObject
+            try {
+                val jsonElement = Json.parseToJsonElement(this.content).jsonObject
 
-            // Check if this looks like an encrypted payload map (values have "type" and "body")
-            val looksLikeEncryptedPayload = jsonElement.values.firstOrNull()?.let {
-                it is kotlinx.serialization.json.JsonObject &&
-                it.containsKey("type") &&
-                it.containsKey("body")
-            } == true
+                // Check if this looks like an encrypted payload map (values have "type" and "body")
+                val looksLikeEncryptedPayload = jsonElement.values.firstOrNull()?.let {
+                    it is kotlinx.serialization.json.JsonObject &&
+                    it.containsKey("type") &&
+                    it.containsKey("body")
+                } == true
 
-            if (looksLikeEncryptedPayload) {
-                if (signalProtocolManager != null) {
-                    val myPayloadElement = jsonElement[currentUserId]
-                    if (myPayloadElement != null) {
-                        val senderId = this.senderId
-                        val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
-                        try {
-                            val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
-                            val decryptedContent = decryptedBytes.decodeToString()
-                            Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
-                            decryptedMessageCache[messageId] = decryptedContent
-                            val (content, mediaUrl, metadata) = extractContent(decryptedContent)
-                            try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
-                            return this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
-                        } catch (decryptError: Exception) {
-                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
+                if (looksLikeEncryptedPayload) {
+                    if (signalProtocolManager != null) {
+                        val myPayloadElement = jsonElement[currentUserId]
+                        if (myPayloadElement != null) {
+                            val senderId = this.senderId
+                            val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
+                            try {
+                                val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
+                                val decryptedContent = decryptedBytes.decodeToString()
+                                Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
+                                decryptedMessageCache[messageId] = decryptedContent
+                                val (content, mediaUrl, metadata) = extractContent(decryptedContent)
+                                try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
+                                return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
+                            } catch (decryptError: Exception) {
+                                Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
+                            }
                         }
                     }
+                    // Return placeholder instead of leaking raw encrypted JSON map
+                    val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
+                    return@withLock this.copy(content = fallbackContent)
                 }
-                // Return placeholder instead of leaking raw encrypted JSON map
-                val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
-                return this.copy(content = fallbackContent)
+            } catch (_: Exception) {
+                // Not a JSON object — plaintext message
             }
-        } catch (_: Exception) {
-            // Not a JSON object — plaintext message
-        }
 
-        return this
+            this
+        }
     }
 
     /**

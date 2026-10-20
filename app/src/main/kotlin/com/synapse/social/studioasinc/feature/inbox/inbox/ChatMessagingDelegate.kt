@@ -113,7 +113,22 @@ class ChatMessagingDelegate(
             val tempId = UUID.randomUUID().toString()
             pendingTempIds.update { it + tempId }
 
-            val nowStr = TimeProvider.nowInstant().toString()
+            val latestTimestamp = _messages.value.maxOfOrNull { it.createdAt }
+            val now = TimeProvider.nowInstant()
+            val nowInstant = if (latestTimestamp != null) {
+                try {
+                    val parsedLatest = kotlinx.datetime.Instant.parse(latestTimestamp)
+                    if (now <= parsedLatest) {
+                        kotlinx.datetime.Instant.fromEpochMilliseconds(parsedLatest.toEpochMilliseconds() + 1)
+                    } else {
+                        now
+                    }
+                } catch (_: Exception) { now }
+            } else {
+                now
+            }
+            val nowStr = nowInstant.toString()
+
             val newMessage = Message(
                 id = tempId,
                 chatId = chatId,
@@ -125,7 +140,8 @@ class ChatMessagingDelegate(
                 createdAt = nowStr,
                 sentAt = nowStr,
                 expiresAt = expiresAt,
-                replyToId = replyToId
+                replyToId = replyToId,
+                clientId = tempId
             )
             _messages.update { current ->
                 (current + newMessage).distinctBy { it.id }.sortedBy { msg -> msg.createdAt }
@@ -168,31 +184,46 @@ class ChatMessagingDelegate(
     fun completeOptimisticSend(tempId: String, actualMessage: Message) {
         pendingTempIds.update { it - tempId }
         _messages.update { current ->
-            val optimisticMessage = current.firstOrNull { it.id == tempId } ?: return@update current
+            val optimisticMessage = current.firstOrNull { it.id == tempId }
+            val existingServerMsg = current.firstOrNull { it.id == actualMessage.id }
+
+            if (optimisticMessage == null && existingServerMsg == null) {
+                return@update current
+            }
+
+            val stableClientId = optimisticMessage?.clientId ?: existingServerMsg?.clientId ?: tempId
 
             when {
-                actualMessage.id == tempId -> {
-                    current.updateById(tempId) { temp ->
-                        temp.mergeMonotonic(actualMessage.copy(clientId = temp.clientId))
-                    }.sortedBy { it.createdAt }
-                }
-                current.any { it.id == actualMessage.id } -> {
+                optimisticMessage != null && existingServerMsg != null && optimisticMessage.id != existingServerMsg.id -> {
+                    // Both the optimistic placeholder and the server message exist in the list.
+                    // Merge into the server message with the stable client ID and remove the temporary placeholder.
                     current
-                        .map { message ->
-                            if (message.id == actualMessage.id) {
-                                message.copy(clientId = optimisticMessage.clientId)
+                        .filterNot { it.id == tempId }
+                        .map { msg ->
+                            if (msg.id == actualMessage.id) {
+                                optimisticMessage.mergeMonotonic(
+                                    actualMessage.copy(clientId = stableClientId)
+                                )
                             } else {
-                                message
+                                msg
                             }
                         }
-                        .filterNot { it.id == tempId }
                         .sortedBy { it.createdAt }
                 }
-                else -> {
+                optimisticMessage != null -> {
+                    // Optimistic placeholder is in the list, server message not yet present.
+                    // Replace optimistic placeholder with confirmed server message.
                     current.updateById(tempId) { temp ->
-                        temp.mergeMonotonic(actualMessage.copy(clientId = temp.clientId))
+                        temp.mergeMonotonic(actualMessage.copy(clientId = stableClientId))
                     }.sortedBy { it.createdAt }
                 }
+                existingServerMsg != null -> {
+                    // Server message was already inserted (e.g. via realtime). Update in place.
+                    current.updateById(actualMessage.id) { existing ->
+                        existing.mergeMonotonic(actualMessage.copy(clientId = stableClientId))
+                    }.sortedBy { it.createdAt }
+                }
+                else -> current
             }
         }
     }

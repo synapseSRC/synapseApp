@@ -93,7 +93,7 @@ fun ContactsTabScreen(
                             ContactItem(
                                 contact = contact,
                                 onContactClick = { user ->
-                                    onNavigateToChat(user.uid, user.uid, user.displayName ?: user.username, user.avatar)
+                                    onNavigateToChat("new", user.uid, user.displayName ?: user.username, user.avatar)
                                 },
                                 onContactLongClick = { user ->
                                     // Placeholder for options

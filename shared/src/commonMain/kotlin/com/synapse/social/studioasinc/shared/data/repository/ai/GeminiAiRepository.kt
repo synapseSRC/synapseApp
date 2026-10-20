@@ -13,35 +13,31 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 class GeminiAiRepository(private val httpClient: HttpClient) : AiRepository {
-    private val apiKey = SynapseConfig.GEMINI_API_KEY
     override suspend fun generateSmartReplies(recentMessages: List<String>, conversationId: String?): Result<List<String>> {
-        if (apiKey.isBlank()) return Result.failure(IllegalStateException("Gemini API Key is not configured"))
         val prompt = "Suggest three short context-aware replies; output one reply per line without numbering.\n\nRecent messages:\n" + recentMessages.joinToString("\n")
         return traceAiChat(provider = "google", model = MODEL, conversationId = conversationId) {
             try {
-                val response: GeminiResponse = httpClient.post(BASE_URL) {
+                val functionUrl = "${SynapseConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/ai-generate"
+                val response: AiGenerateResponse = httpClient.post(functionUrl) {
                     contentType(ContentType.Application.Json)
-                    header("x-goog-api-key", apiKey)
-                    setBody(GeminiRequest(contents = listOf(Content(parts = listOf(Part(text = prompt))))))
+                    header("apikey", SynapseConfig.SUPABASE_ANON_KEY)
+                    header("Authorization", "Bearer ${SynapseConfig.SUPABASE_ANON_KEY}")
+                    setBody(AiGenerateRequest(prompt = prompt, model = MODEL))
                 }.body()
-                val text = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    ?: return@traceAiChat Result.failure(Exception("Empty response from Gemini"))
+                val text = response.text
+                    ?: return@traceAiChat Result.failure(Exception(response.error ?: "Empty response from Gemini AI service"))
                 val replies = text.lines().map { it.replace(Regex("^[\\s\\d.*-]+\\s*"), "").trim() }
                     .filter { it.isNotBlank() }.take(3)
                 Result.success(replies)
             } catch (error: Exception) {
-                Napier.e("Error generating smart replies from Gemini", error)
+                Napier.e("Error generating smart replies from Gemini AI service", error)
                 Result.failure(error)
             }
         }
     }
-    @Serializable private data class GeminiRequest(val contents: List<Content>)
-    @Serializable private data class Content(val parts: List<Part>)
-    @Serializable private data class Part(val text: String)
-    @Serializable private data class GeminiResponse(val candidates: List<Candidate>)
-    @Serializable private data class Candidate(val content: Content)
+    @Serializable private data class AiGenerateRequest(val prompt: String, val model: String)
+    @Serializable private data class AiGenerateResponse(val text: String? = null, val error: String? = null)
     companion object {
-        private val BASE_URL = SynapseConfig.GEMINI_API_ENDPOINT
-        private val MODEL = BASE_URL.substringAfter("/models/").substringBefore(":")
+        private const val MODEL = "gemini-1.5-flash"
     }
 }

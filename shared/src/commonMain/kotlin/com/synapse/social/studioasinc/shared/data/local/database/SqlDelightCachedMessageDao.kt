@@ -136,14 +136,16 @@ class SqlDelightCachedMessageDao(
             val allMessages = db.cachedMessageQueries.selectByChatId(chatId, 500).executeAsList()
             db.transaction {
                 allMessages.forEach { cached ->
-                    val readBy = cached.read_by?.split(",")?.toMutableSet() ?: mutableSetOf()
-                    if (userId !in readBy) {
-                        readBy.add(userId)
-                        db.cachedMessageQueries.updateReadBy(
-                            read_by = readBy.joinToString(","),
-                            readAt = nowStr,
-                            id = cached.id
-                        )
+                    if (cached.sender_id != userId) {
+                        val readBy = cached.read_by?.split(",")?.toMutableSet() ?: mutableSetOf()
+                        if (userId !in readBy) {
+                            readBy.add(userId)
+                            db.cachedMessageQueries.updateReadBy(
+                                read_by = readBy.joinToString(","),
+                                readAt = nowStr,
+                                id = cached.id
+                            )
+                        }
                     }
                 }
             }
@@ -206,10 +208,14 @@ class SqlDelightCachedMessageDao(
             MessageType.TEXT
         }
 
-        val deliveryStatus = try {
-            DeliveryStatus.valueOf(cached.delivery_status)
-        } catch (e: Exception) {
-            DeliveryStatus.SENT
+        val rawDeliveryStatus = cached.delivery_status
+        val readByList = cached.read_by?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+        val deliveryStatus = when {
+            rawDeliveryStatus.equals("FAILED", ignoreCase = true) -> DeliveryStatus.FAILED
+            cached.read_at != null || readByList.any { it != cached.sender_id } || rawDeliveryStatus.equals("READ", ignoreCase = true) -> DeliveryStatus.READ
+            cached.delivered_at != null || rawDeliveryStatus.equals("DELIVERED", ignoreCase = true) -> DeliveryStatus.DELIVERED
+            rawDeliveryStatus.equals("SENDING", ignoreCase = true) -> DeliveryStatus.SENDING
+            else -> DeliveryStatus.SENT
         }
 
         val contentStatus = try {

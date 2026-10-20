@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlin.math.cos
@@ -269,12 +270,14 @@ fun VoiceRecordingGlowSurface(
     }
 
     Box(modifier = modifier.clip(shape)) {
+        val density = LocalDensity.current
         Canvas(Modifier.matchParentSize()) {
             val width = size.width
             val height = size.height
             if (width <= 0f || height <= 0f) return@Canvas
 
-            val corner = CornerRadius(height / 2f)
+            val maxCornerPx = with(density) { Sizes.CornerMassive.toPx() }
+            val corner = CornerRadius(minOf(maxCornerPx, height / 2f))
 
             // Translucent glass base surface
             drawRoundRect(
@@ -329,6 +332,8 @@ fun VoiceRecordingGlowSurface(
             // Glass Specular Rim Border & Refraction Highlight
             val borderAlpha = activeAlpha * (0.35f + intensity * 0.25f)
             val strokePx = 1.8.dp.toPx()
+            val strokeCornerRadiusPx = with(density) { (Sizes.CornerMassive - (strokePx / 2f).toDp()).toPx() }
+            val strokeCorner = CornerRadius(minOf(strokeCornerRadiusPx, (height - strokePx) / 2f).coerceAtLeast(0f))
             drawRoundRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -339,7 +344,7 @@ fun VoiceRecordingGlowSurface(
                 ),
                 topLeft = Offset(strokePx / 2f, strokePx / 2f),
                 size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
-                cornerRadius = CornerRadius(((height - strokePx) / 2f).coerceAtLeast(0f)),
+                cornerRadius = strokeCorner,
                 style = Stroke(width = strokePx)
             )
         }

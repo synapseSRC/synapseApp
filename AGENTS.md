@@ -44,6 +44,18 @@ Presentation  →  ViewModel  →  Domain (UseCases / Interfaces)  →  Data (Re
 
 ---
 
+## Backend Independence & Migration Isolation
+
+To ensure Synapse can be seamlessly migrated from Supabase to any alternative or custom backend:
+
+- **Provider-Neutral Domain:** Domain models, UseCases, and repository/service interfaces must remain 100% agnostic of backend vendors. No Supabase (or any provider) types, schemas, or semantics in Domain.
+- **Data-Layer Encapsulation:** All Supabase SDKs, PostgREST queries, GoTrue auth, realtime channels, and Supabase Storage calls must be encapsulated entirely inside `:shared` data-layer implementations.
+- **Provider-Neutral Capabilities:** Abstract authentication, file storage, and realtime messaging behind generic domain interfaces (e.g., `AuthRepository`, `FileStorageService`, `RealtimeStreamService`).
+- **No Direct Frontend/UI Access:** UI components, ViewModels, and platform apps (Android `:app`, iOS `:iosApp`, web) must consume feature UseCases or domain interfaces exclusively. Direct backend SDK calls or provider imports in UI/ViewModels are strictly prohibited.
+- **Strict Dependency Injection:** All backend-specific data sources and adapters must be injected via DI (Koin / Hilt). Never instantiate concrete backend implementations or provider singletons outside the data layer.
+
+---
+
 ## Android (`:app`)
 
 - 100% Jetpack Compose. No XML.
@@ -67,6 +79,10 @@ Presentation  →  ViewModel  →  Domain (UseCases / Interfaces)  →  Data (Re
 - UseCases always return `Result<T>` or a sealed `Either` — never raw exceptions.
 - No `android.*` or `java.*` imports in `shared/commonMain`.
 - Business logic lives in UseCases, not ViewModels or Views.
+
+### Testing Policy — STRICT REQUIREMENT
+- **Do NOT write tests**: Agents must not write, generate, or add new unit tests, UI tests, or test suites unless explicitly requested by the user.
+- **Do NOT run tests**: Agents must not run test tasks (e.g. `./gradlew test`, `testDebugUnitTest`) unless explicitly requested by the user. Verify work via compilation and build tasks (`./gradlew compileDebugKotlin` / `./gradlew assembleDebug`).
 
 **Naming**
 
@@ -132,7 +148,8 @@ This is a mandatory engineering requirement, not an optional design preference.
 
 ## Pre-Commit Checklist
 
-- [ ] `./gradlew build` passes
+- [ ] Compilation passes (`./gradlew compileDebugKotlin`)
+- [ ] No tests written or executed
 - [ ] No framework imports in `shared/commonMain`
 - [ ] No hardcoded strings, colors, or dimensions in `:app`
 - [ ] Business logic is in a UseCase

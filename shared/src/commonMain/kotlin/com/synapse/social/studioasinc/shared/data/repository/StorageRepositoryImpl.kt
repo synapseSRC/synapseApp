@@ -67,6 +67,7 @@ class StorageRepositoryImpl(
         val supabaseKeyDeferred = async(AppDispatchers.IO) {
             secureStorage.getString(KEY_SUPABASE)?.takeIf { it.isNotBlank() }
                 ?: row.supabase_key.takeIf { it.isNotBlank() }
+                ?: SynapseConfig.SUPABASE_ANON_KEY.takeIf { it.isNotBlank() }
                 ?: ""
         }
 
@@ -85,7 +86,7 @@ class StorageRepositoryImpl(
         val cloudinaryCloudName = row.cloudinary_cloud_name
         val cloudinaryUploadPreset = row.cloudinary_upload_preset
 
-        val supabaseUrl = row.supabase_url
+        val supabaseUrl = row.supabase_url.takeIf { it.isNotBlank() } ?: SynapseConfig.SUPABASE_URL
 
         val r2AccountId = row.r2_account_id
         val r2BucketName = row.r2_bucket_name

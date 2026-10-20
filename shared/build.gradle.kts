@@ -200,15 +200,7 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"${System.getenv("SUPABASE_URL") ?: project.findProperty("SUPABASE_URL") ?: ""}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${System.getenv("SUPABASE_ANON_KEY") ?: project.findProperty("SUPABASE_ANON_KEY") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_SYNAPSE_S3_ENDPOINT_URL", "\"${System.getenv("SUPABASE_SYNAPSE_S3_ENDPOINT_URL") ?: project.findProperty("SUPABASE_SYNAPSE_S3_ENDPOINT_URL") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_SYNAPSE_S3_ENDPOINT_REGION", "\"${System.getenv("SUPABASE_SYNAPSE_S3_ENDPOINT_REGION") ?: project.findProperty("SUPABASE_SYNAPSE_S3_ENDPOINT_REGION") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID", "\"${System.getenv("SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID") ?: project.findProperty("SUPABASE_SYNAPSE_S3_ACCESS_KEY_ID") ?: ""}\"")
-        buildConfigField("String", "IMGBB_API_KEY", "\"${System.getenv("IMGBB_API_KEY") ?: project.findProperty("IMGBB_API_KEY") ?: ""}\"")
         buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"${System.getenv("CLOUDINARY_CLOUD_NAME") ?: project.findProperty("CLOUDINARY_CLOUD_NAME") ?: ""}\"")
-        buildConfigField("String", "CLOUDINARY_API_KEY", "\"${System.getenv("CLOUDINARY_API_KEY") ?: project.findProperty("CLOUDINARY_API_KEY") ?: ""}\"")
-        buildConfigField("String", "CLOUDINARY_API_SECRET", "\"${System.getenv("CLOUDINARY_API_SECRET") ?: project.findProperty("CLOUDINARY_API_SECRET") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_SYNAPSE_S3_ACCESS_KEY", "\"${System.getenv("SUPABASE_SYNAPSE_S3_ACCESS_KEY") ?: project.findProperty("SUPABASE_SYNAPSE_S3_ACCESS_KEY") ?: ""}\"")
-        buildConfigField("String", "GEMINI_API_KEY", "\"${System.getenv("GEMINI_API_KEY") ?: project.findProperty("GEMINI_API_KEY") ?: ""}\"")
         buildConfigField("double", "SENTRY_AGENT_TRACE_SAMPLE_RATE", sentryAgentTraceSampleRate)
 
         buildConfigField("String", "OPENAI_API_ENDPOINT", "\"${System.getenv("OPENAI_API_ENDPOINT") ?: project.findProperty("OPENAI_API_ENDPOINT") ?: "https://api.openai.com/v1/chat/completions"}\"")

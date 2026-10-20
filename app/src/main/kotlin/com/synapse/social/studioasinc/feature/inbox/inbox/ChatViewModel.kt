@@ -286,7 +286,6 @@ class ChatViewModel @Inject constructor(
         getGroupMembersUseCase = getGroupMembersUseCase,
         observeUserActiveStatusUseCase = observeUserActiveStatusUseCase,
         markMessagesAsReadUseCase = markMessagesAsReadUseCase,
-        markMessagesAsDeliveredUseCase = markMessagesAsDeliveredUseCase,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId },
         messagingDelegate = messagingDelegate,
@@ -346,9 +345,6 @@ class ChatViewModel @Inject constructor(
             currentChatId?.let { chatId ->
                 viewModelScope.launch {
                     markMessagesAsReadUseCase(chatId)
-                    // The visible chat has now received its history; acknowledge only
-                    // peer messages (the data source enforces sender scoping).
-                    markMessagesAsDeliveredUseCase(chatId)
                 }
             }
         }
@@ -489,7 +485,12 @@ class ChatViewModel @Inject constructor(
 
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
         val currentSnapshot = messagingDelegate._messages.value
-        val matchingOptimisticMessage = if (newMessage.senderId == currentUserId) {
+        val existing = currentSnapshot.firstOrNull { it.id == newMessage.id }
+
+        // Only pair with a pending optimistic message if this incoming server message is NOT already present in the list.
+        // If the server message is already present (e.g. completeOptimisticSend already reconciled it),
+        // matching a pendingTempId would incorrectly grab and delete a SUBSEQUENT pending message.
+        val matchingOptimisticMessage = if (newMessage.senderId == currentUserId && existing == null) {
             val pendingIds = messagingDelegate.pendingTempIds.value
             currentSnapshot.asSequence()
                 .filter { it.id in pendingIds && it.id != newMessage.id }
@@ -506,23 +507,23 @@ class ChatViewModel @Inject constructor(
         }
 
         messagingDelegate._messages.update { current ->
-            val existing = current.firstOrNull { it.id == newMessage.id }
+            val existingInUpdate = current.firstOrNull { it.id == newMessage.id }
             val stableClientId = matchingOptimisticMessage?.clientId
-                ?: existing?.clientId
+                ?: existingInUpdate?.clientId
                 ?: newMessage.clientId
             val displayContent = when {
-                existing != null && existing.content !in encryptedPlaceholders &&
-                    newMessage.content in encryptedPlaceholders -> existing.content
+                existingInUpdate != null && existingInUpdate.content !in encryptedPlaceholders &&
+                    newMessage.content in encryptedPlaceholders -> existingInUpdate.content
                 matchingOptimisticMessage != null && matchingOptimisticMessage.content !in encryptedPlaceholders &&
                     newMessage.content in encryptedPlaceholders -> matchingOptimisticMessage.content
                 else -> newMessage.content
             }
 
             val mergedMessage = if (
-                existing != null && existing.content !in encryptedPlaceholders &&
+                existingInUpdate != null && existingInUpdate.content !in encryptedPlaceholders &&
                 newMessage.content in encryptedPlaceholders
             ) {
-                existing.copy(
+                existingInUpdate.copy(
                     deliveryStatus = newMessage.deliveryStatus,
                     readBy = newMessage.readBy,
                     updatedAt = newMessage.updatedAt,
@@ -532,29 +533,29 @@ class ChatViewModel @Inject constructor(
                 newMessage.copy(
                     content = displayContent,
                     clientId = stableClientId,
-                    isEdited = if (existing != null && existing.content != newMessage.content) {
+                    isEdited = if (existingInUpdate != null && existingInUpdate.content != newMessage.content) {
                         newMessage.isEdited
                     } else {
-                        existing?.isEdited ?: newMessage.isEdited
+                        existingInUpdate?.isEdited ?: newMessage.isEdited
                     },
                     reactions = if (newMessage.reactions.isEmpty()) {
-                        existing?.reactions ?: newMessage.reactions
+                        existingInUpdate?.reactions ?: newMessage.reactions
                     } else {
                         newMessage.reactions
                     },
                     userReaction = if (newMessage.reactions.isEmpty()) {
-                        existing?.userReaction ?: newMessage.userReaction
+                        existingInUpdate?.userReaction ?: newMessage.userReaction
                     } else {
                         newMessage.userReaction
                     }
                 )
             }
 
-            val reconciledMessage = (existing ?: matchingOptimisticMessage)
+            val reconciledMessage = (existingInUpdate ?: matchingOptimisticMessage)
                 ?.mergeMonotonic(mergedMessage)
                 ?: mergedMessage
             val replaced = when {
-                existing != null -> with(messagingDelegate) { current.replaceById(newMessage.id, reconciledMessage) }
+                existingInUpdate != null -> with(messagingDelegate) { current.replaceById(newMessage.id, reconciledMessage) }
                 matchingOptimisticMessage != null -> with(messagingDelegate) {
                     current.replaceById(matchingOptimisticMessage.id, reconciledMessage)
                 }

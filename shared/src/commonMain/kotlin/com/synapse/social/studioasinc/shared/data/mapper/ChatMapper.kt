@@ -16,6 +16,37 @@ import kotlinx.serialization.json.Json
 object ChatMapper {
     private val json = Json { ignoreUnknownKeys = true }
 
+    /**
+     * Normalizes Supabase timestamps (which in Postgres CDC may have space separators
+     * like "YYYY-MM-DD HH:mm:ss.SSSSSS+00" or short offsets "+00") into canonical ISO-8601 strings.
+     */
+    fun normalizeTimestamp(raw: String?): String? {
+        if (raw.isNullOrBlank()) return raw
+        val trimmed = raw.trim()
+        if (trimmed.length < 19) return trimmed
+
+        val withT = if (trimmed.length > 10 && trimmed[10] == ' ') {
+            trimmed.substring(0, 10) + 'T' + trimmed.substring(11)
+        } else {
+            trimmed
+        }
+
+        val len = withT.length
+        if (len >= 3) {
+            val sign = withT[len - 3]
+            val d1 = withT[len - 2]
+            val d2 = withT[len - 1]
+            if ((sign == '+' || sign == '-') && d1.isDigit() && d2.isDigit()) {
+                return if (d1 == '0' && d2 == '0') {
+                    withT.substring(0, len - 3) + "Z"
+                } else {
+                    withT + ":00"
+                }
+            }
+        }
+        return withT
+    }
+
     fun ChatDto.toDomain(): ChatInfo = ChatInfo(
         id = id,
         name = name,
@@ -24,8 +55,8 @@ object ChatMapper {
         isGroup = isGroup,
         createdBy = createdBy,
         onlyAdminsCanMessage = onlyAdminsCanMessage,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
+        createdAt = normalizeTimestamp(createdAt),
+        updatedAt = normalizeTimestamp(updatedAt),
         disappearingMode = try {
             disappearingMode?.let { com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.valueOf(it) }
                 ?: com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
@@ -132,16 +163,16 @@ object ChatMapper {
             isForwarded = isForwarded,
             replyToId = replyToId,
             forwardedFromMessageId = forwardedFromMessageId,
-            sentAt = sentAt ?: createdAt,
-            deliveredAt = deliveredAt,
-            readAt = readAt,
-            editedAt = editedAt,
-            deletedAt = deletedAt,
+            sentAt = normalizeTimestamp(sentAt ?: createdAt),
+            deliveredAt = normalizeTimestamp(deliveredAt),
+            readAt = normalizeTimestamp(readAt),
+            editedAt = normalizeTimestamp(editedAt),
+            deletedAt = normalizeTimestamp(deletedAt),
             failureReason = failureReason,
-            createdAt = createdAt ?: "",
-            updatedAt = updatedAt,
+            createdAt = normalizeTimestamp(createdAt) ?: "",
+            updatedAt = normalizeTimestamp(updatedAt),
             readBy = readBy ?: emptyList(),
-            expiresAt = expiresAt,
+            expiresAt = normalizeTimestamp(expiresAt),
             encryptionFailureReason = encryptionFailureReason,
             attachments = domainAttachments,
             mediaGroupId = derivedGroupId,
@@ -169,8 +200,11 @@ object ChatMapper {
             else -> ContentStatus.ACTIVE
         }
 
+        val stableCreatedAt = if (this.createdAt.isNotBlank()) this.createdAt else newer.createdAt
+
         return newer.copy(
             clientId = this.clientId,
+            createdAt = stableCreatedAt,
             deliveryStatus = mergedDelivery,
             contentStatus = mergedContentStatus,
             isDeleted = mergedContentStatus == ContentStatus.DELETED,

@@ -23,10 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 
 class EditProfileRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -135,18 +132,13 @@ class EditProfileRepositoryImpl @Inject constructor(
     suspend fun syncUsernameChange(oldUsername: String, newUsername: String, userId: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                client.from("usernames").delete {
-                    filter { eq("username", oldUsername) }
+                val usernameData = buildJsonObject {
+                    put("uid", userId)
+                    put("username", newUsername)
                 }
-
-                val email = client.auth.currentUserOrNull()?.email
-
-                val usernameData = mapOf(
-                    "uid" to userId,
-                    "email" to email,
-                    "username" to newUsername
-                )
-                client.from("usernames").upsert(usernameData)
+                client.from("usernames").upsert(usernameData) {
+                    onConflict = "uid"
+                }
                 Result.success(Unit)
             } catch (e: Exception) {
                 SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to sync username: $newUsername")
