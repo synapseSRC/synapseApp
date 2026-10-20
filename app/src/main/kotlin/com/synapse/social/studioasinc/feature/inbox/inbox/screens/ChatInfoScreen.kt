@@ -88,6 +88,7 @@ import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithSt
 import com.synapse.social.studioasinc.feature.shared.components.pressScale
 import com.synapse.social.studioasinc.feature.shared.theme.ChatInfoMetrics
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 
@@ -347,6 +348,13 @@ private fun ChatInfoScreenContent(
                         title = stringResource(R.string.chat_info_media_links_docs),
                         supportingText = summary,
                         shape = RoundedCornerShape(ChatInfoMetrics.cardCorner),
+                        trailingContent = if (uiState.sharedContentErrorRes != null) {
+                            {
+                                PressScaleTextButton(onClick = { viewModel.retrySharedContent(chatId) }) {
+                                    Text(stringResource(R.string.chat_info_retry))
+                                }
+                            }
+                        } else null,
                         onClick = { onNavigateToSharedContent(chatId, 0) }
                     )
                 }
@@ -551,32 +559,25 @@ private fun ChatInfoScreenContent(
                         modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space16),
                         contentAlignment = Alignment.Center
                     ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
-                    commonGroupsErrorRes != null -> Column(
-                        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
-                    ) {
-                        Text(stringResource(commonGroupsErrorRes))
-                        uiState.commonGroups.forEach { group ->
-                            ListItem(
-                                headlineContent = { Text(group.participantName) },
-                                leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
-                                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                            )
+                    else -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
+                        uiState.commonGroupsErrorRes?.let { errorRes ->
+                            Text(stringResource(errorRes))
+                            PressScaleTextButton(onClick = { viewModel.retryCommonGroups(userId) }) {
+                                Text(stringResource(R.string.chat_info_retry))
+                            }
                         }
-                    }
-                    uiState.commonGroups.isEmpty() -> Text(stringResource(R.string.chat_info_groups_dialog_empty))
-                    else -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
-                        uiState.commonGroups.forEach { group ->
-                            ListItem(
-                                headlineContent = { Text(group.participantName) },
-                                leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
-                                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                            )
+                        if (uiState.commonGroups.isEmpty()) {
+                            if (uiState.commonGroupsErrorRes == null) {
+                                Text(stringResource(R.string.chat_info_groups_dialog_empty))
+                            }
+                        } else {
+                            CommonGroupList(uiState.commonGroups)
                         }
                     }
                 }
             },
             confirmButton = {
-                if (uiState.commonGroups.isEmpty() && !uiState.isLoadingCommonGroups) {
+                if (uiState.commonGroups.isEmpty() && !uiState.isLoadingCommonGroups && uiState.commonGroupsErrorRes == null) {
                     PressScaleTextButton(onClick = {
                         showGroupsDialog = false
                         onNavigateToCreateGroup()
@@ -845,6 +846,19 @@ private fun SectionHeading(text: String) {
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space2)
     )
+}
+
+@Composable
+private fun CommonGroupList(groups: List<Conversation>) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
+        groups.forEach { group ->
+            ListItem(
+                headlineContent = { Text(group.participantName) },
+                leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
+                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+            )
+        }
+    }
 }
 
 @Composable

@@ -27,6 +27,7 @@
     <string name="chat_info_error_load_disappearing_mode">Could not load disappearing message settings</string>
     <string name="chat_info_error_load_shared_content">Could not load shared content</string>
     <string name="chat_info_error_load_groups">Could not load groups in common</string>
+    <string name="chat_info_error_load_groups_partial">Some groups could not be loaded</string>
     <string name="chat_info_error_report_user">Could not submit the report. Please try again.</string>
     <string name="chat_info_privacy_section_title">Privacy and security</string>
     <string name="chat_info_encryption_title">End-to-end encryption</string>
