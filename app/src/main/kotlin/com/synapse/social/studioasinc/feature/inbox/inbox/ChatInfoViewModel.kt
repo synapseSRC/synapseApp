@@ -140,9 +140,23 @@ class ChatInfoViewModel @Inject constructor(
                 }
 
                 getCommonGroupsUseCase(userId)
-                    .onSuccess { groups ->
+                    .onSuccess { groupResult ->
+                        if (groupResult.hasIncompleteResults) markLoadFailure()
                         _uiState.update {
-                            it.copy(commonGroups = groups, isLoadingCommonGroups = false, commonGroupsErrorRes = null)
+                            it.copy(
+                                commonGroups = groupResult.groups,
+                                isLoadingCommonGroups = false,
+                                commonGroupsErrorRes = if (groupResult.hasIncompleteResults) {
+                                    R.string.chat_info_error_load_groups
+                                } else {
+                                    null
+                                },
+                                errorMessageRes = if (groupResult.hasIncompleteResults) {
+                                    R.string.chat_info_error_load_groups
+                                } else {
+                                    it.errorMessageRes
+                                }
+                            )
                         }
                     }
                     .onFailure {
