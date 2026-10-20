@@ -239,16 +239,28 @@ class ProfileMediaViewModel @Inject constructor(
 
                 result.fold(
                     onSuccess = { url ->
-                        _uiState.update {
-                            it.copy(
-                                coverUrl = url,
-                                coverUploadState = UploadState.Success,
-                                pendingCoverUri = null
-                            )
-                        }
                         val updateData = mapOf("profile_cover_image" to url)
-                        repository.updateProfile(userId, updateData)
-                        repository.addToCoverHistory(userId, url)
+                        repository.updateProfile(userId, updateData).fold(
+                            onSuccess = {
+                                repository.addToCoverHistory(userId, url)
+                                _uiState.update {
+                                    it.copy(
+                                        coverUrl = url,
+                                        coverUploadState = UploadState.Success,
+                                        pendingCoverUri = null
+                                    )
+                                }
+                            },
+                            onFailure = { saveError ->
+                                _uiState.update {
+                                    it.copy(
+                                        coverUploadState = UploadState.Error(
+                                            "Cover uploaded but profile save failed: ${saveError.message ?: "unknown error"}"
+                                        )
+                                    )
+                                }
+                            }
+                        )
                     },
                     onFailure = { error ->
                         _uiState.update {

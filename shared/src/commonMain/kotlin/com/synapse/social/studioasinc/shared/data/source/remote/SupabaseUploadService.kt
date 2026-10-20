@@ -11,6 +11,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.coroutineScope
+import kotlin.time.Duration.Companion.minutes
 
 class SupabaseUploadService(private val supabase: SupabaseClient) : UploadService {
     private val protectedMediaBuckets = setOf("posts", "covers", "story-media", "story-thumbnails", "reels")
@@ -38,6 +39,10 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 val bytes = channel.readRemaining().readBytes()
                 bucket.upload(path, bytes) {
                     this.upsert = false
+                }
+                // Verify protected uploads can be signed before returning a reference for persistence.
+                if (targetBucket in protectedMediaBuckets) {
+                    bucket.createSignedUrl(path = path, expiresIn = 15.minutes)
                 }
                 onProgress(1.0f)
             }
