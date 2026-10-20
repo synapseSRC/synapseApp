@@ -551,7 +551,18 @@ private fun ChatInfoScreenContent(
                         modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space16),
                         contentAlignment = Alignment.Center
                     ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
-                    commonGroupsErrorRes != null -> Text(stringResource(commonGroupsErrorRes))
+                    commonGroupsErrorRes != null -> Column(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
+                    ) {
+                        Text(stringResource(commonGroupsErrorRes))
+                        uiState.commonGroups.forEach { group ->
+                            ListItem(
+                                headlineContent = { Text(group.participantName) },
+                                leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
+                                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                            )
+                        }
+                    }
                     uiState.commonGroups.isEmpty() -> Text(stringResource(R.string.chat_info_groups_dialog_empty))
                     else -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                         uiState.commonGroups.forEach { group ->
