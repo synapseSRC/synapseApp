@@ -13,6 +13,43 @@ function json(body: Record<string, unknown>, status = 200) {
   })
 }
 
+async function getAiAccountProfile() {
+  // Support common names for the UID secret so the UID itself is never hardcoded.
+  const uid = Deno.env.get("AI_ACCOUNT_UID")
+    || Deno.env.get("AI_USER_UID")
+    || Deno.env.get("SYRA_UID")
+    || Deno.env.get("AI_UID")
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+
+  if (!uid || !supabaseUrl || !serviceRoleKey) return null
+
+  const url = new URL("/rest/v1/users", supabaseUrl)
+  url.searchParams.set("uid", `eq.${uid}`)
+  url.searchParams.set("select", "uid,username,display_name")
+  url.searchParams.set("limit", "1")
+
+  const response = await fetch(url, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Could not resolve AI account profile (HTTP ${response.status})`)
+  }
+
+  const users = await response.json()
+  const user = Array.isArray(users) ? users[0] : null
+  if (!user) return null
+
+  return {
+    username: typeof user.username === "string" ? user.username : "",
+    displayName: typeof user.display_name === "string" ? user.display_name : "",
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -38,12 +75,26 @@ serve(async (req: Request) => {
       return json({ error: "Prompt is required" }, 400)
     }
 
+    const profile = await getAiAccountProfile()
+    const identityContext = profile
+      ? [
+          "AI account profile resolved from its configured UID in the users database:",
+          profile.username ? `Username: @${profile.username}` : "",
+          profile.displayName ? `Display name: ${profile.displayName}` : "",
+          "Use this current profile information when the request asks you to identify or refer to the app's AI account. Do not invent a different username.",
+        ].filter(Boolean).join("\n")
+      : ""
+
+    const fullPrompt = identityContext
+      ? `${identityContext}\n\nUser request:\n${prompt}`
+      : prompt
+
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`
     const response = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+        contents: [{ parts: [{ text: fullPrompt }] }],
       }),
     })
 
