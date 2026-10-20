@@ -387,9 +387,9 @@ class InboxViewModel @Inject constructor(
         currentUserId: String?
     ): Boolean = when (category) {
         InboxSearchCategory.UNREAD -> conversation.unreadCount > 0 && (currentUserId == null || currentUserId !in message.readBy)
-        InboxSearchCategory.PHOTOS -> message.messageType.name.contains("IMAGE", true) || message.messageType.name.contains("PHOTO", true) || message.attachments.any { it.type.contains("image", true) }
+        InboxSearchCategory.PHOTOS -> message.messageType.name.contains("IMAGE", true) || message.messageType.name.contains("PHOTO", true) || message.attachments.any { it.type.name.contains("IMAGE", ignoreCase = true) }
         InboxSearchCategory.LINKS -> message.linkPreview != null || InboxUrlPattern.containsMatchIn(message.content)
-        InboxSearchCategory.DOCS -> message.messageType.name.contains("FILE", true) || message.messageType.name.contains("DOCUMENT", true) || message.attachments.any { it.type.contains("application", true) || it.type.contains("pdf", true) }
+        InboxSearchCategory.DOCS -> message.messageType.name.contains("FILE", true) || message.messageType.name.contains("DOCUMENT", true) || message.attachments.any { it.type.name.contains("FILE", ignoreCase = true) }
     }
 
     fun generateCatchUp() {
