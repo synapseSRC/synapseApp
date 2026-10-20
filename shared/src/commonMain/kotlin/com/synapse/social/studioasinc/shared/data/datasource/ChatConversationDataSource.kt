@@ -272,38 +272,6 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getConversationMuteStatus(chatId: String): Boolean = withContext(AppDispatchers.IO) {
-        val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
-        val participant = client.postgrest.from("chat_participants")
-            .select(columns = Columns.list("chat_id", "user_id", "is_muted")) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", currentUserId)
-                }
-            }
-            .decodeList<ChatParticipantDto>()
-            .firstOrNull()
-            ?: throw IllegalStateException("Chat participant settings were not found")
-        participant.isMuted
-    }
-
-    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean) = withContext(AppDispatchers.IO) {
-        try {
-            val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
-            client.postgrest.from("chat_participants").update({
-                set("is_muted", isMuted)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", currentUserId)
-                }
-            }
-        } catch (e: Exception) {
-            Napier.e("Error updating conversation mute status", e)
-            throw e
-        }
-    }
-
     suspend fun deleteConversation(chatId: String) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
@@ -339,6 +307,37 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         } catch (e: Exception) {
             Napier.e("Error getting disappearing mode", e)
             null
+        }
+    }
+    suspend fun getConversationMuteStatus(chatId: String): Boolean = withContext(AppDispatchers.IO) {
+        val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+        val participant = client.postgrest.from("chat_participants")
+            .select(columns = Columns.list("chat_id", "user_id", "is_muted")) {
+                filter {
+                    eq("chat_id", chatId)
+                    eq("user_id", currentUserId)
+                }
+            }
+            .decodeList<ChatParticipantDto>()
+            .firstOrNull()
+            ?: throw IllegalStateException("Chat participant settings were not found")
+        participant.isMuted
+    }
+
+    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean) = withContext(AppDispatchers.IO) {
+        try {
+            val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+            client.postgrest.from("chat_participants").update({
+                set("is_muted", isMuted)
+            }) {
+                filter {
+                    eq("chat_id", chatId)
+                    eq("user_id", currentUserId)
+                }
+            }
+        } catch (e: Exception) {
+            Napier.e("Error updating conversation mute status", e)
+            throw e
         }
     }
 }

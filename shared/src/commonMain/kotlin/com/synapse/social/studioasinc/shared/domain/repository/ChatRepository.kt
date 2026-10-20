@@ -26,10 +26,6 @@ interface ChatRepository {
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean): Result<Unit>
     suspend fun getArchivedConversations(): Result<List<Conversation>>
     suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean): Result<Unit>
-    /** Reads whether the authenticated participant has muted notifications for this chat. */
-    suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
-    /** Persists the authenticated participant's notification mute setting for this chat. */
-    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun deleteConversation(chatId: String): Result<Unit>
     suspend fun markMessagesAsRead(chatId: String): Result<Unit>
@@ -69,4 +65,8 @@ interface ChatRepository {
     suspend fun voteInPoll(messageId: String, optionId: String, pollId: String): Result<Unit>
     suspend fun markViewOnceConsumed(messageId: String): Result<Unit>
 
+    /** Reads whether the authenticated participant has muted notifications for this chat. */
+    suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
+    /** Persists the authenticated participant's notification mute setting for this chat. */
+    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit>
 }
