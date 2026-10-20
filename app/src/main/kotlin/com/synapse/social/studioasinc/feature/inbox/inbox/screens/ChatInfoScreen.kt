@@ -1,49 +1,156 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
+import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.GroupAdd
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.NotificationsOff
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.PermMedia
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Chat
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.NotificationsOff
+import androidx.compose.material.icons.rounded.PermMedia
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.ReportProblem
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.VerifiedUser
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.Typography
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatInfoViewModel
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.components.pressScale
+import com.synapse.social.studioasinc.feature.shared.theme.ChatInfoMetrics
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val ChatInfoLightColors = lightColorScheme(
+    primary = Color(0xFF0B57D0),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFD3E3FD),
+    onPrimaryContainer = Color(0xFF041E49),
+    secondary = Color(0xFF5A5C7C),
+    secondaryContainer = Color(0xFFDCE2F9),
+    onSecondaryContainer = Color(0xFF131C2B),
+    tertiaryContainer = Color(0xFFFFD8EE),
+    onTertiaryContainer = Color(0xFF2E1125),
+    error = Color(0xFFB3261E),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFFF9DEDC),
+    onErrorContainer = Color(0xFF410E0B),
+    background = Color(0xFFFAF9FD),
+    onBackground = Color(0xFF1B1B1F),
+    surface = Color(0xFFFAF9FD),
+    onSurface = Color(0xFF1B1B1F),
+    onSurfaceVariant = Color(0xFF44474E),
+    outline = Color(0xFF74777F),
+    outlineVariant = Color(0xFFC4C6D0),
+    inverseSurface = Color(0xFF303034),
+    inverseOnSurface = Color(0xFFF2F0F4),
+    inversePrimary = Color(0xFFA8C7FA),
+    surfaceContainerLow = Color(0xFFF3F3FA),
+    surfaceContainer = Color(0xFFEEEDF3),
+    surfaceContainerHigh = Color(0xFFE9E8EF),
+    surfaceContainerHighest = Color(0xFFE3E2E6)
+)
+
+private val ChatInfoDarkColors = darkColorScheme(
+    primary = Color(0xFFC0C2FD),
+    onPrimary = Color(0xFF042C71),
+    primaryContainer = Color(0xFF04409F),
+    onPrimaryContainer = Color(0xFFE0E0FC),
+    secondary = Color(0xFFC3C3E9),
+    secondaryContainer = Color(0xFF424463),
+    onSecondaryContainer = Color(0xFFE0E0FE),
+    tertiaryContainer = Color(0xFF6E334E),
+    onTertiaryContainer = Color(0xFFFFD8E7),
+    error = Color(0xFFF2B8B5),
+    onError = Color(0xFF601410),
+    errorContainer = Color(0xFF8C1D18),
+    onErrorContainer = Color(0xFFF9DEDC),
+    background = Color(0xFF131317),
+    onBackground = Color(0xFFE2E2E8),
+    surface = Color(0xFF131317),
+    onSurface = Color(0xFFE2E2E8),
+    onSurfaceVariant = Color(0xFFC6C5D2),
+    outline = Color(0xFF90909C),
+    outlineVariant = Color(0xFF464651),
+    inverseSurface = Color(0xFFE2E2E8),
+    inverseOnSurface = Color(0xFF303034),
+    inversePrimary = Color(0xFF3757BA),
+    surfaceContainerLow = Color(0xFF1B1B1F),
+    surfaceContainer = Color(0xFF1F1F23),
+    surfaceContainerHigh = Color(0xFF2A2A2E),
+    surfaceContainerHighest = Color(0xFF343439)
+)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ChatInfoScreen(
     chatId: String,
@@ -56,349 +163,319 @@ fun ChatInfoScreen(
     onNavigateToChatPrivacy: (String) -> Unit = {},
     viewModel: ChatInfoViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(chatId, userId) {
-        viewModel.loadChatInfo(chatId, userId)
+    val colorScheme = if (isSystemInDarkTheme()) ChatInfoDarkColors else ChatInfoLightColors
+    MaterialExpressiveTheme(
+        colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
+        typography = Typography()
+    ) {
+        ChatInfoScreenContent(
+            chatId = chatId,
+            userId = userId,
+            onNavigateBack = onNavigateBack,
+            onNavigateToProfile = onNavigateToProfile,
+            onNavigateToCreateGroup = onNavigateToCreateGroup,
+            onNavigateToDisappearingMessages = onNavigateToDisappearingMessages,
+            onNavigateToSharedContent = onNavigateToSharedContent,
+            onNavigateToChatPrivacy = onNavigateToChatPrivacy,
+            viewModel = viewModel
+        )
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ChatInfoScreenContent(
+    chatId: String,
+    userId: String,
+    onNavigateBack: () -> Unit,
+    onNavigateToProfile: (String) -> Unit,
+    onNavigateToCreateGroup: () -> Unit,
+    onNavigateToDisappearingMessages: (String) -> Unit,
+    onNavigateToSharedContent: (String, Int) -> Unit,
+    onNavigateToChatPrivacy: (String) -> Unit,
+    viewModel: ChatInfoViewModel
+) {
+    LaunchedEffect(chatId, userId) { viewModel.loadChatInfo(chatId, userId) }
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
     var showClearChatDialog by remember { mutableStateOf(false) }
     var showBlockConfirmDialog by remember { mutableStateOf(false) }
     var showReportConfirmDialog by remember { mutableStateOf(false) }
+    var showGroupsDialog by remember { mutableStateOf(false) }
+    var showEncryptionSheet by remember { mutableStateOf(false) }
+    var moreMenuExpanded by remember { mutableStateOf(false) }
+
+    val profile = uiState.userProfile
+    val displayName = profile?.displayName?.takeIf { it.isNotBlank() && it != "null" }
+        ?: profile?.username?.takeIf { it.isNotBlank() && it != "null" }
+        ?: stringResource(R.string.user)
+    val username = profile?.username?.takeIf { it.isNotBlank() && it != "null" }
 
     LaunchedEffect(uiState.userMessageRes) {
-        uiState.userMessageRes?.let { msgRes ->
-            Toast.makeText(context, context.getString(msgRes), Toast.LENGTH_SHORT).show()
+        uiState.userMessageRes?.let { messageRes ->
+            Toast.makeText(context, context.getString(messageRes), Toast.LENGTH_SHORT).show()
             viewModel.clearUserMessage()
         }
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.chat_info_title)) },
+                title = { Text(stringResource(R.string.contact_info_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    val interaction = remember { MutableInteractionSource() }
+                    IconButton(
+                        onClick = onNavigateBack,
+                        interactionSource = interaction,
+                        modifier = Modifier.pressScale(interaction)
+                    ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
+                actions = {
+                    Box {
+                        val interaction = remember { MutableInteractionSource() }
+                        IconButton(
+                            onClick = { moreMenuExpanded = true },
+                            interactionSource = interaction,
+                            modifier = Modifier.pressScale(interaction)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.MoreVert,
+                                contentDescription = stringResource(R.string.chat_info_more_options)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = moreMenuExpanded,
+                            onDismissRequest = { moreMenuExpanded = false }
+                        ) {
+                            val shareInteraction = remember { MutableInteractionSource() }
+                            DropdownMenuItem(
+                                modifier = Modifier.pressScale(shareInteraction),
+                                interactionSource = shareInteraction,
+                                return text = { Text(stringResource(R.string.chat_info_share_contact)) },
+                                leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) },
+                                onClick = {
+                                    moreMenuExpanded = false
+                                    val contactText = buildString {
+                                        append(displayName)
+                                        username?.let { append(" (@").append(it).append(')') }
+                                    }
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, contactText)
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, null))
+                                }
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        if (uiState.isLoading && uiState.userProfile == null) {
+        }
+    ) { innerPadding ->
+        if (uiState.isLoading && profile == null) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space16),
                 verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
-                // Error banner if present
-                uiState.errorMessageRes?.let { errorRes ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            text = stringResource(errorRes),
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(Spacing.space16)
-                        )
-                    }
+                uiState.errorMessageRes?.let { messageRes ->
+                    item(key = "error") { ErrorBanner(message = stringResource(messageRes)) }
                 }
-
-                // Compact Identity Header Section
-                val profile = uiState.userProfile
-                val displayName = profile?.displayName?.takeIf { it.isNotBlank() && it != "null" }
-                    ?: profile?.username?.takeIf { it.isNotBlank() && it != "null" }
-                    ?: stringResource(R.string.user)
-                val username = profile?.username?.takeIf { it.isNotBlank() && it != "null" }
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(vertical = Spacing.space4)
-                ) {
-                    UserAvatarWithStatus(
+                item(key = "contact-header") {
+                    ContactHeader(
                         userId = userId,
                         avatarUrl = profile?.avatar,
-                        size = Sizes.AvatarLargeProfile,
-                        showActiveStatus = true,
-                        displayName = displayName
-                    )
-
-                    Spacer(modifier = Modifier.height(Spacing.space8))
-
-                    Text(
-                        text = displayName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-
-                    if (username != null && username != displayName) {
-                        Text(
-                            text = "@$username",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    val statusText = when {
-                        uiState.isOnline -> stringResource(R.string.chat_info_user_online)
-                        profile?.lastSeen != null -> stringResource(
-                            R.string.chat_info_user_last_seen,
-                            TimestampFormatter.formatRelative(profile.lastSeen)
-                        )
-                        else -> stringResource(R.string.chat_info_user_offline)
-                    }
-
-                    Text(
-                        text = statusText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (uiState.isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        displayName = displayName,
+                        username = username,
+                        isOnline = uiState.isOnline,
+                        lastSeen = profile?.lastSeen
                     )
                 }
-
-                // Compact Circular Quick Actions Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = Spacing.space4),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularQuickAction(
-                        icon = Icons.Default.Chat,
-                        label = stringResource(R.string.chat_info_action_message),
-                        onClick = onNavigateBack
-                    )
-                    CircularQuickAction(
-                        icon = Icons.Default.Person,
-                        label = stringResource(R.string.chat_info_action_profile),
-                        onClick = { if (userId.isNotBlank()) onNavigateToProfile(userId) }
-                    )
-                    CircularQuickAction(
-                        icon = if (uiState.isMuted) Icons.Default.NotificationsOff else Icons.Default.NotificationsActive,
-                        label = if (uiState.isMuted) stringResource(R.string.unmuted) else stringResource(R.string.chat_info_action_mute),
-                        onClick = { viewModel.toggleMuteNotifications() }
+                item(key = "actions") {
+                    QuickActions(
+                        isMuted = uiState.isMuted,
+                        isMuteUpdating = uiState.isMuteUpdating,
+                        onMessage = onNavigateBack,
+                        onProfile = { if (userId.isNotBlank()) onNavigateToProfile(userId) },
+                        onMute = { viewModel.toggleMuteNotifications(chatId) }
                     )
                 }
-
-                // Media, links, and docs Navigation Row
-                val totalSharedCount = uiState.mediaCount + uiState.linkCount + uiState.fileCount
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onNavigateToSharedContent(chatId, 0) },
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Row(
-                        modifier = Modifier.padding(Spacing.space16),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.PermMedia,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.space16))
-                            Text(
-                                text = stringResource(R.string.chat_info_media_links_docs),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                item(key = "shared-media") {
+                    val total = uiState.mediaCount + uiState.linkCount + uiState.fileCount
+                    val summary = when {
+                        uiState.isLoadingSharedContent -> stringResource(R.string.chat_info_media_loading)
+                        uiState.sharedContentErrorRes != null -> stringResource(uiState.sharedContentErrorRes)
+                        total == 0 -> stringResource(R.string.chat_info_media_empty)
+                        uiState.isSharedContentSample -> stringResource(R.string.chat_info_media_partial_summary, total)
+                        else -> stringResource(
+                            R.string.chat_info_media_summary,
+                            uiState.mediaCount,
+                            uiState.linkCount,
+                            uiState.fileCount
+                        )
+                    }
+                    SettingsItem(
+                        icon = Icons.Rounded.PermMedia,
+                        title = stringResource(R.string.chat_info_media_links_docs),
+                        supportingText = summary,
+                        shape = RoundedCornerShape(ChatInfoMetrics.cardCorner),
+                        onClick = { onNavigateToSharedContent(chatId, 0) }
+                    )
+                }
+                item(key = "privacy-heading") {
+                    SectionHeading(stringResource(R.string.chat_info_privacy_section_title))
+                }
+                item(key = "privacy-settings") {
+                    Column(verticalArrangement = Arrangement.spacedBy(ChatInfoMetrics.connectedActionGap)) {
+                        SettingsItem(
+                            icon = Icons.Rounded.Lock,
+                            title = stringResource(R.string.chat_info_encryption_title),
+                            supportingText = stringResource(R.string.chat_info_encryption_title_secure_summary),
+                            trailingIcon = Icons.Rounded.VerifiedUser,
+                            position = ItemPosition.FIRST,
+                            onClick = { showEncryptionSheet = true }
+                        )
+                        val disappearingLabel = when (uiState.disappearingMode) {
+                            DisappearingMode.OFF -> stringResource(R.string.disappearing_mode_off)
+                            DisappearingMode.TWENTY_FOUR_HOURS -> stringResource(R.string.disappearing_mode_24_hours)
+                            DisappearingMode.SEVEN_DAYS -> stringResource(R.string.disappearing_mode_7_days)
+                            else -> stringResource(R.string.disappearing_mode_off)
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (totalSharedCount > 0) {
-                                Text(
-                                    text = totalSharedCount.toString(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        SettingsItem(
+                            icon = Icons.Rounded.Timer,
+                            title = stringResource(R.string.chat_info_disappearing_messages),
+                            supportingText = disappearingLabel,
+                            position = ItemPosition.MIDDLE,
+                            onClick = { onNavigateToDisappearingMessages(chatId) }
+                        )
+                        SettingsItem(
+                            icon = Icons.Rounded.Fingerprint,
+                            title = stringResource(R.string.chat_info_chat_lock),
+                            supportingText = stringResource(R.string.chat_info_chat_lock_biometric_summary),
+                            position = ItemPosition.MIDDLE,
+                            trailingContent = {
+                                val lockInteraction = remember { MutableInteractionSource() }
+                                Switch(
+                                    checked = uiState.isLocked,
+                                    onCheckedChange = { viewModel.toggleChatLock(chatId) },
+                                    interactionSource = lockInteraction,
+                                    modifier = Modifier.pressScale(lockInteraction)
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.space4))
-                            }
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                            return },
+                            onClick = { viewModel.toggleChatLock(chatId) }
+                        )
+                        SettingsItem(
+                            icon = Icons.Rounded.Security,
+                            title = stringResource(R.string.chat_info_advanced_privacy_title),
+                            supportingText = stringResource(R.string.chat_info_advanced_privacy_title_summary),
+                            trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            position = ItemPosition.LAST,
+                            onClick = { onNavigateToChatPrivacy(chatId) }
+                        )
                     }
                 }
-
-                // Chat Settings Grouped Section
-                SettingsSectionGroup(title = stringResource(R.string.chat_info_settings_title)) {
-                    // Encryption
-                    SettingsClickableItem(
-                        icon = Icons.Default.Security,
-                        title = stringResource(R.string.chat_info_encryption),
-                        subtitle = stringResource(R.string.chat_info_encryption_subtitle),
-                        onClick = { onNavigateToChatPrivacy(chatId) }
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    // Disappearing Messages
-                    val disappearingLabel = when (uiState.disappearingMode) {
-                        DisappearingMode.OFF -> stringResource(R.string.disappearing_mode_off)
-                        DisappearingMode.TWENTY_FOUR_HOURS -> stringResource(R.string.disappearing_mode_24_hours)
-                        DisappearingMode.SEVEN_DAYS -> stringResource(R.string.disappearing_mode_7_days)
-                        else -> stringResource(R.string.disappearing_mode_off)
+                item(key = "groups") {
+                    val groupSummary = when {
+                        uiState.commonGroupsErrorRes != null -> stringResource(uiState.commonGroupsErrorRes)
+                        uiState.isLoadingCommonGroups -> stringResource(R.string.chat_info_groups_loading)
+                        uiState.commonGroups.isEmpty() -> stringResource(R.string.chat_info_no_groups_in_common)
+                        uiState.commonGroups.size == 1 -> stringResource(
+                            R.string.chat_info_common_groups_one,
+                            uiState.commonGroups.first().participantName
+                        )
+                        else -> stringResource(
+                            R.string.chat_info_common_groups_many,
+                            uiState.commonGroups.size,
+                            uiState.commonGroups.joinToString { it.participantName }
+                        )
                     }
-
-                    SettingsClickableItem(
-                        icon = Icons.Default.Timer,
-                        title = stringResource(R.string.chat_info_disappearing_messages),
-                        subtitle = disappearingLabel,
-                        onClick = { onNavigateToDisappearingMessages(chatId) }
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    // Chat Lock
-                    SettingsSwitchItem(
-                        icon = Icons.Default.Lock,
-                        title = stringResource(R.string.chat_info_chat_lock),
-                        subtitle = stringResource(R.string.chat_info_chat_lock_subtitle),
-                        checked = uiState.isLocked,
-                        onCheckedChange = { viewModel.toggleChatLock(chatId) }
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    // Advanced Chat Privacy
-                    SettingsClickableItem(
-                        icon = Icons.Default.Shield,
-                        title = stringResource(R.string.chat_info_advanced_privacy),
-                        subtitle = stringResource(R.string.chat_info_advanced_privacy_off),
-                        onClick = { onNavigateToChatPrivacy(chatId) }
+                    SettingsItem(
+                        icon = Icons.Rounded.Group,
+                        title = stringResource(R.string.chat_info_groups_in_common),
+                        supportingText = groupSummary,
+                        trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        onClick = { showGroupsDialog = true }
                     )
                 }
-
-                // Contact Actions Grouped Section
-                SettingsSectionGroup(title = null) {
-                    SettingsInfoItem(
-                        icon = Icons.Default.Group,
-                        title = stringResource(R.string.chat_info_no_groups_in_common),
-                        subtitle = null
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    SettingsClickableItem(
-                        icon = Icons.Default.GroupAdd,
-                        title = stringResource(R.string.chat_info_create_group_with, displayName),
-                        subtitle = null,
-                        onClick = onNavigateToCreateGroup
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                    SettingsClickableItem(
-                        icon = Icons.Default.GroupAdd,
-                        title = stringResource(R.string.chat_info_add_to_groups),
-                        subtitle = stringResource(R.string.chat_info_add_to_groups_subtitle),
-                        onClick = onNavigateToCreateGroup
-                    )
+                item(key = "contact-actions-heading") {
+                    SectionHeading(stringResource(R.string.chat_info_contact_actions_title))
                 }
-
-                // Danger Zone Grouped Section
-                SettingsSectionGroup(
-                    title = null,
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
-                ) {
-                    SettingsClickableItem(
-                        icon = Icons.Default.DeleteForever,
-                        title = stringResource(R.string.chat_info_clear_chat),
-                        subtitle = null,
-                        iconTint = MaterialTheme.colorScheme.error,
-                        textColor = MaterialTheme.colorScheme.error,
-                        onClick = { showClearChatDialog = true }
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
-
-                    val blockTitle = if (uiState.isBlocked) {
-                        stringResource(R.string.chat_info_unblock_user, displayName)
-                    } else {
-                        stringResource(R.string.chat_info_block_user, displayName)
+                item(key = "contact-actions") {
+                    Column(verticalArrangement = Arrangement.spacedBy(ChatInfoMetrics.listItemGap)) {
+                        SettingsItem(
+                            icon = Icons.Rounded.DeleteOutline,
+                            title = stringResource(R.string.chat_info_clear_history_title),
+                            supportingText = stringResource(R.string.chat_info_clear_history_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                            iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                            textColor = MaterialTheme.colorScheme.error,
+                            position = ItemPosition.FIRST,
+                            onClick = { showClearChatDialog = true }
+                        )
+                        SettingsItem(
+                            icon = Icons.Rounded.Block,
+                            title = if (uiState.isBlocked) {
+                                stringResource(R.string.chat_info_unblock_user, displayName)
+                            } else {
+                                stringResource(R.string.chat_info_block_user, displayName)
+                            },
+                            supportingText = stringResource(R.string.chat_info_block_user_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                            iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                            textColor = MaterialTheme.colorScheme.error,
+                            position = ItemPosition.MIDDLE,
+                            onClick = { showBlockConfirmDialog = true }
+                        )
+                        SettingsItem(
+                            icon = Icons.Rounded.ReportProblem,
+                            title = stringResource(R.string.chat_info_report_contact),
+                            supportingText = stringResource(R.string.chat_info_report_contact_subtitle),
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                            iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                            textColor = MaterialTheme.colorScheme.error,
+                            position = ItemPosition.LAST,
+                            onClick = { showReportConfirmDialog = true }
+                        )
                     }
-
-                    SettingsClickableItem(
-                        icon = Icons.Default.Block,
-                        title = blockTitle,
-                        subtitle = null,
-                        iconTint = MaterialTheme.colorScheme.error,
-                        textColor = MaterialTheme.colorScheme.error,
-                        onClick = { showBlockConfirmDialog = true }
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
-
-                    SettingsClickableItem(
-                        icon = Icons.Default.Flag,
-                        title = stringResource(R.string.chat_info_report_user, displayName),
-                        subtitle = null,
-                        iconTint = MaterialTheme.colorScheme.error,
-                        textColor = MaterialTheme.colorScheme.error,
-                        onClick = { showReportConfirmDialog = true }
-                    )
                 }
-
-                Spacer(modifier = Modifier.height(Spacing.space16))
             }
         }
     }
 
-    // Confirmation Dialogs (Reserved for small, focused decisions only)
     if (showClearChatDialog) {
         AlertDialog(
             onDismissRequest = { showClearChatDialog = false },
-            title = { Text(stringResource(R.string.chat_info_clear_chat)) },
-            text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
+            title = { Text(stringResource(R.string.chat_info_clear_history_title)) },
+            text = { Text(stringResource(R.string.chat_info_clear_history_title_confirm)) },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showClearChatDialog = false
-                        viewModel.clearChat(chatId) {
-                            onNavigateBack()
-                        }
-                    }
-                ) {
-                    Text(
-                        stringResource(R.string.action_delete),
-                        color = MaterialTheme.colorScheme.error
-                    )
+                PressScaleTextButton(onClick = {
+                    showClearChatDialog = false
+                    viewModel.clearChat(chatId) { onNavigateBack() }
+                }) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearChatDialog = false }) {
+                PressScaleTextButton(onClick = { showClearChatDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -406,37 +483,28 @@ fun ChatInfoScreen(
     }
 
     if (showBlockConfirmDialog) {
-        val targetName = uiState.userProfile?.displayName ?: stringResource(R.string.user)
-        val confirmTitle = if (uiState.isBlocked) {
-            stringResource(R.string.chat_info_unblock_user, targetName)
+        val title = if (uiState.isBlocked) {
+            stringResource(R.string.chat_info_unblock_user, displayName)
         } else {
-            stringResource(R.string.chat_info_block_user, targetName)
+            stringResource(R.string.chat_info_block_user, displayName)
         }
-        val confirmText = if (uiState.isBlocked) {
-            stringResource(R.string.chat_info_unblock_user_confirm, targetName)
+        val message = if (uiState.isBlocked) {
+            stringResource(R.string.chat_info_unblock_user_confirm, displayName)
         } else {
-            stringResource(R.string.chat_info_block_user_confirm, targetName)
+            stringResource(R.string.chat_info_block_user_confirm, displayName)
         }
-
         AlertDialog(
             onDismissRequest = { showBlockConfirmDialog = false },
-            title = { Text(confirmTitle) },
-            text = { Text(confirmText) },
+            title = { Text(title) },
+            text = { Text(message) },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showBlockConfirmDialog = false
-                        viewModel.toggleBlockUser(userId)
-                    }
-                ) {
-                    Text(
-                        confirmTitle,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                PressScaleTextButton(onClick = {
+                    showBlockConfirmDialog = false
+                    viewModel.toggleBlockUser(userId)
+                }) { Text(title, color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showBlockConfirmDialog = false }) {
+                PressScaleTextButton(onClick = { showBlockConfirmDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -444,214 +512,350 @@ fun ChatInfoScreen(
     }
 
     if (showReportConfirmDialog) {
-        val targetName = uiState.userProfile?.displayName ?: stringResource(R.string.user)
         AlertDialog(
             onDismissRequest = { showReportConfirmDialog = false },
-            title = { Text(stringResource(R.string.chat_info_report_user, targetName)) },
-            text = { Text(stringResource(R.string.chat_info_report_user_confirm, targetName)) },
+            title = { Text(stringResource(R.string.chat_info_report_contact)) },
+            text = { Text(stringResource(R.string.chat_info_report_user_confirm, displayName)) },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showReportConfirmDialog = false
-                        Toast.makeText(context, context.getString(R.string.chat_info_msg_reported), Toast.LENGTH_SHORT).show()
-                    }
-                ) {
-                    Text(
-                        stringResource(R.string.chat_info_report_user, targetName),
-                        color = MaterialTheme.colorScheme.error
-                    )
+                PressScaleTextButton(onClick = {
+                    showReportConfirmDialog = false
+                    viewModel.reportUser(userId, context.getString(R.string.chat_info_report_reason))
+                }) {
+                    Text(stringResource(R.string.chat_info_report_contact), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showReportConfirmDialog = false }) {
+                PressScaleTextButton(onClick = { showReportConfirmDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
+
+    if (showGroupsDialog) {
+        AlertDialog(
+            onDismissRequest = { showGroupsDialog = false },
+            title = { Text(stringResource(R.string.chat_info_groups_dialog_title)) },
+            text = {
+                when {
+                    uiState.isLoadingCommonGroups -> Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space16),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+                    uiState.commonGroupsErrorRes != null -> Text(stringResource(uiState.commonGroupsErrorRes))
+                    uiState.commonGroups.isEmpty() -> Text(stringResource(R.string.chat_info_groups_dialog_empty))
+                    else -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
+                        uiState.commonGroups.forEach { group ->
+                            ListItem(
+                                headlineContent = { Text(group.participantName) },
+                                leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
+                                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                            )
+                        return }
+                    }
+                }
+            },
+            confirmButton = {
+                if (uiState.commonGroups.isEmpty() && !uiState.isLoadingCommonGroups) {
+                    PressScaleTextButton(onClick = {
+                        showGroupsDialog = false
+                        onNavigateToCreateGroup()
+                    }) { Text(stringResource(R.string.chat_info_action_create_group)) }
+                } else {
+                    PressScaleTextButton(onClick = { showGroupsDialog = false }) {
+                        Text(stringResource(R.string.action_done))
+                    }
+                }
+            },
+            dismissButton = {
+                PressScaleTextButton(onClick = { showGroupsDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showEncryptionSheet) {
+        ChatEncryptionSheet(
+            chatId = chatId,
+            participantName = displayName,
+            onDismiss = { showEncryptionSheet = false }
+        )
+    }
 }
 
 @Composable
-private fun CircularQuickAction(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit
+private fun ContactHeader(
+    userId: String,
+    avatarUrl: String?,
+    displayName: String,
+    username: String?,
+    isOnline: Boolean,
+    lastSeen: String?
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space8),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .size(Sizes.AvatarMedium)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(Sizes.IconDefault)
+        UserAvatarWithStatus(
+            userId = userId,
+            avatarUrl = avatarUrl,
+            size = ChatInfoMetrics.contactAvatarSize,
+            showActiveStatus = true,
+            displayName = displayName
+        )
+        Spacer(Modifier.height(Spacing.space8))
+        Text(
+            text = displayName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        if (!username.isNullOrBlank() && username != displayName) {
+            Text(
+                text = "@$username",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Spacer(modifier = Modifier.height(Spacing.space4))
+        val status = when {
+            isOnline -> stringResource(R.string.chat_info_user_online)
+            lastSeen != null -> stringResource(
+                R.string.chat_info_user_last_seen,
+                TimestampFormatter.formatRelative(lastSeen)
+            )
+            else -> stringResource(R.string.chat_info_user_offline)
+        }
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium
+            text = status,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
-private fun SettingsSectionGroup(
-    title: String?,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
-            )
-        }
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = containerColor
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                content()
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsClickableItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String?,
-    iconTint: Color = MaterialTheme.colorScheme.primary,
-    textColor: Color = MaterialTheme.colorScheme.onSurface,
-    onClick: () -> Unit
+private fun QuickActions(
+    isMuted: Boolean,
+    isMuteUpdating: Boolean,
+    onMessage: () -> Unit,
+    onProfile: () -> Unit,
+    onMute: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(Spacing.space16),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ChatInfoMetrics.connectedActionGap),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = iconTint
+        QuickActionButton(
+            label = stringResource(R.string.chat_info_action_message),
+            icon = Icons.Rounded.Chat,
+            position = ItemPosition.FIRST,
+            onClick = onMessage,
+            modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier.width(Spacing.space16))
-        Column(modifier = Modifier.weight(1f)) {
+        QuickActionButton(
+            label = stringResource(R.string.chat_info_action_profile),
+            icon = Icons.Rounded.Person,
+            position = ItemPosition.MIDDLE,
+            onClick = onProfile,
+            modifier = Modifier.weight(1f)
+        )
+        QuickActionButton(
+            label = stringResource(if (isMuted) R.string.chat_info_action_muted else R.string.chat_info_action_mute),
+            icon = if (isMuted) Icons.Rounded.NotificationsActive else Icons.Rounded.NotificationsOff,
+            position = ItemPosition.LAST,
+            checked = isMuted,
+            enabled = !isMuteUpdating,
+            onClick = onMute,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    label: String,
+    icon: ImageVector,
+    position: ItemPosition,
+    modifier: Modifier = Modifier,
+    checked: Boolean = false,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val buttonModifier = modifier.height(ChatInfoMetrics.actionHeight).pressScale(interaction)
+    val content: @Composable RowScope.() -> Unit = {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(ChatInfoMetrics.actionIconSize))
+        Spacer(Modifier.size(Spacing.space8))
+        Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+    }
+    if (checked) {
+        Button(
+            onClick = onClick,
+            modifier = buttonModifier,
+            enabled = enabled,
+            shape = connectedButtonShape(position),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            contentPadding = PaddingValues(horizontal = Spacing.space8),
+            interactionSource = interaction,
+            content = content
+        )
+    } else {
+        FilledTonalButton(
+            onClick = onClick,
+            modifier = buttonModifier,
+            enabled = enabled,
+            shape = connectedButtonShape(position),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ),
+            contentPadding = PaddingValues(horizontal = Spacing.space8),
+            interactionSource = interaction,
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun SettingsItem(
+    icon: ImageVector,
+    title: String,
+    supportingText: String,
+    position: ItemPosition = ItemPosition.SINGLE,
+    shape: Shape = settingsItemShape(position),
+    iconContainerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    iconTint: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    textColor: Color = MaterialTheme.colorScheme.onSurface,
+    trailingIcon: ImageVector? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val rowModifier = Modifier
+        .fillMaxWidth()
+        .clip(shape)
+        .then(
+            if (onClick != null) {
+                Modifier.clickable(interactionSource = interaction, onClick = onClick)
+            } else {
+                Modifier
+            }
+        )
+        .pressScale(interaction)
+        .heightIn(min = ChatInfoMetrics.listItemMinHeight)
+
+    ListItem(
+        modifier = rowModifier,
+        headlineContent = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = textColor
             )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        supportingContent = {
+            Text(
+                text = supportingText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        leadingContent = {
+            Box(
+                modifier = Modifier.size(ChatInfoMetrics.iconContainerSize),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = CircleShape,
+                    color = iconContainerColor
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(ChatInfoMetrics.listIconSize)
+                        )
+                    }
+                }
+            }
+        },
+        trailingContent = {
+            if (trailingContent != null) {
+                trailingContent()
+            } else if (trailingIcon != null) {
+                Icon(
+                    imageVector = trailingIcon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    )
+}
+
+@Composable
+private fun PressScaleTextButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    val interaction = remember { MutableInteractionSource() }
+    TextButton(
+        onClick = onClick,
+        modifier = modifier.pressScale(interaction),
+        interactionSource = interaction,
+        content = content
+    )
+}
+
+@Composable
+private fun SectionHeading(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space2)
+    )
+}
+
+@Composable
+private fun ErrorBanner(message: String) {
+    androidx.compose.material3.Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(ChatInfoMetrics.cardCorner),
+        color = MaterialTheme.colorScheme.errorContainer
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(Spacing.space16)
         )
     }
 }
 
-@Composable
-private fun SettingsInfoItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String?
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(Spacing.space16),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.width(Spacing.space16))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
+private enum class ItemPosition { SINGLE, FIRST, MIDDLE, LAST }
+
+private fun connectedButtonShape(position: ItemPosition): Shape = when (position) {
+    ItemPosition.FIRST -> RoundedCornerShape(topStart = ChatInfoMetrics.listOuterCorner, bottomStart = ChatInfoMetrics.listOuterCorner, topEnd = ChatInfoMetrics.listInnerCorner, bottomEnd = ChatInfoMetrics.listInnerCorner)
+    ItemPosition.MIDDLE -> RoundedCornerShape(ChatInfoMetrics.listInnerCorner)
+    ItemPosition.LAST -> RoundedCornerShape(topStart = ChatInfoMetrics.listInnerCorner, bottomStart = ChatInfoMetrics.listInnerCorner, topEnd = ChatInfoMetrics.listOuterCorner, bottomEnd = ChatInfoMetrics.listOuterCorner)
+    ItemPosition.SINGLE -> RoundedCornerShape(ChatInfoMetrics.listOuterCorner)
 }
 
-@Composable
-private fun SettingsSwitchItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(Spacing.space16),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(Spacing.space16))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-    }
+private fun settingsItemShape(position: ItemPosition): Shape = when (position) {
+    ItemPosition.FIRST -> RoundedCornerShape(topStart = ChatInfoMetrics.listOuterCorner, topEnd = ChatInfoMetrics.listOuterCorner, bottomStart = ChatInfoMetrics.listInnerCorner, bottomEnd = ChatInfoMetrics.listInnerCorner)
+    ItemPosition.MIDDLE -> RoundedCornerShape(ChatInfoMetrics.listInnerCorner)
+    ItemPosition.LAST -> RoundedCornerShape(topStart = ChatInfoMetrics.listInnerCorner, topEnd = ChatInfoMetrics.listInnerCorner, bottomStart = ChatInfoMetrics.listOuterCorner, bottomEnd = ChatInfoMetrics.listOuterCorner)
+    ItemPosition.SINGLE -> RoundedCornerShape(ChatInfoMetrics.listOuterCorner)
 }
+return 
