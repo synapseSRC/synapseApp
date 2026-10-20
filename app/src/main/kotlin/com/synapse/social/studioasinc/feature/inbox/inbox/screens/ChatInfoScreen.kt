@@ -212,6 +212,8 @@ private fun ChatInfoScreenContent(
         ?: profile?.username?.takeIf { it.isNotBlank() && it != "null" }
         ?: stringResource(R.string.user)
     val username = profile?.username?.takeIf { it.isNotBlank() && it != "null" }
+    val sharedContentErrorRes = uiState.sharedContentErrorRes
+    val commonGroupsErrorRes = uiState.commonGroupsErrorRes
 
     LaunchedEffect(uiState.userMessageRes) {
         uiState.userMessageRes?.let { messageRes ->
