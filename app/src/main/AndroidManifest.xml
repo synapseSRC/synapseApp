@@ -289,5 +289,11 @@
 				android:name="autoStoreLocales"
 				android:value="true" />
 		</service>
+			<activity
+			android:name=".feature.inbox.inbox.GroupInviteActivity"
+			android:screenOrientation="portrait"
+			android:windowSoftInputMode="adjustResize"
+			android:exported="true">
+		</activity>
 	</application>
 </manifest>
