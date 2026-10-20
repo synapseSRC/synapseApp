@@ -11,8 +11,13 @@ class ClearChatHistoryUseCase(private val repository: ChatRepository) {
         val processedIds = mutableSetOf<String>()
         var before: String? = null
         var beforeId: String? = null
+        var pagesFetched = 0
 
         while (true) {
+            if (pagesFetched >= MAX_PAGES) {
+                return Result.failure(IllegalStateException("Chat history pagination exceeded the maximum page count"))
+            }
+            pagesFetched++
             val pageResult = repository.getMessages(
                 chatId = chatId,
                 limit = PAGE_SIZE,
@@ -53,5 +58,6 @@ class ClearChatHistoryUseCase(private val repository: ChatRepository) {
 
     private companion object {
         const val PAGE_SIZE = 100
+        const val MAX_PAGES = 1_000
     }
 }

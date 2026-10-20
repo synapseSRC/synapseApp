@@ -51,6 +51,7 @@ data class ChatInfoUiState(
     val isLoadingCommonGroups: Boolean = false,
     @StringRes val commonGroupsErrorRes: Int? = null,
     @StringRes val errorMessageRes: Int? = null,
+    val canRetryLoad: Boolean = false,
     @StringRes val userMessageRes: Int? = null
 )
 
@@ -80,6 +81,12 @@ class ChatInfoViewModel @Inject constructor(
     private var initializedChatId: String? = null
     private var initializedUserId: String? = null
 
+    fun retryLoadChatInfo(chatId: String, userId: String) {
+        initializedChatId = null
+        initializedUserId = null
+        loadChatInfo(chatId, userId)
+    }
+
     fun loadChatInfo(chatId: String, userId: String) {
         if (initializedChatId == chatId && initializedUserId == userId) return
         initializedChatId = chatId
@@ -105,6 +112,7 @@ class ChatInfoViewModel @Inject constructor(
                 isLoadingCommonGroups = userId.isNotBlank(),
                 commonGroupsErrorRes = null,
                 errorMessageRes = null,
+                canRetryLoad = false,
                 userMessageRes = null
             )
         }
@@ -113,11 +121,17 @@ class ChatInfoViewModel @Inject constructor(
             if (userId.isNotBlank()) {
                 getUserProfileUseCase(userId)
                     .onSuccess { user -> _uiState.update { it.copy(userProfile = user) } }
-                    .onFailure { _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_profile) } }
+                    .onFailure {
+                        markLoadFailure()
+                        _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_profile) }
+                    }
 
                 isUserBlockedUseCase(userId)
                     .onSuccess { blocked -> _uiState.update { it.copy(isBlocked = blocked) } }
-                    .onFailure { _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_block_status) } }
+                    .onFailure {
+                        markLoadFailure()
+                        _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_block_status) }
+                    }
 
                 presenceJob = viewModelScope.launch {
                     observeUserPresenceUseCase(userId).collect { active ->
@@ -132,8 +146,13 @@ class ChatInfoViewModel @Inject constructor(
                         }
                     }
                     .onFailure {
+                        markLoadFailure()
                         _uiState.update {
-                            it.copy(isLoadingCommonGroups = false, commonGroupsErrorRes = R.string.chat_info_error_load_groups)
+                            it.copy(
+                                isLoadingCommonGroups = false,
+                                commonGroupsErrorRes = R.string.chat_info_error_load_groups,
+                                errorMessageRes = R.string.chat_info_error_load_groups
+                            )
                         }
                     }
             }
@@ -143,11 +162,17 @@ class ChatInfoViewModel @Inject constructor(
 
                 getConversationMuteStatusUseCase(chatId)
                     .onSuccess { muted -> _uiState.update { it.copy(isMuted = muted) } }
-                    .onFailure { _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_mute) } }
+                    .onFailure {
+                        markLoadFailure()
+                        _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_mute) }
+                    }
 
                 getDisappearingModeUseCase(chatId)
                     .onSuccess { mode -> _uiState.update { it.copy(disappearingMode = mode) } }
-                    .onFailure { _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_disappearing_mode) } }
+                    .onFailure {
+                        markLoadFailure()
+                        _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_load_disappearing_mode) }
+                    }
 
                 getSharedContentSummaryUseCase(chatId)
                     .onSuccess { summary ->
@@ -163,12 +188,25 @@ class ChatInfoViewModel @Inject constructor(
                         }
                     }
                     .onFailure {
-                        _uiState.update { it.copy(isLoadingSharedContent = false, sharedContentErrorRes = R.string.chat_info_error_load_shared_content) }
+                        markLoadFailure()
+                        _uiState.update {
+                            it.copy(
+                                isLoadingSharedContent = false,
+                                sharedContentErrorRes = R.string.chat_info_error_load_shared_content,
+                                errorMessageRes = R.string.chat_info_error_load_shared_content
+                            )
+                        }
                     }
             }
 
             _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    private fun markLoadFailure() {
+        initializedChatId = null
+        initializedUserId = null
+        _uiState.update { it.copy(canRetryLoad = true) }
     }
 
     fun setDisappearingMode(chatId: String, mode: DisappearingMode) {
