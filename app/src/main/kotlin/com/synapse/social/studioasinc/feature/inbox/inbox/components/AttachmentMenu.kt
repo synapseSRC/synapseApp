@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -205,7 +206,7 @@ fun MediaPreviewDialog(
                                 Spacer(modifier = Modifier.height(Spacing.space8))
                                 Text(
                                     text = activeFile.fileName,
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Default),
                                     color = MaterialTheme.colorScheme.onSurface,
                                     textAlign = TextAlign.Center,
                                     maxLines = 2,
