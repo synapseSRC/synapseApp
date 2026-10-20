@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.synapse.social.studioasinc.feature.shared.main.MainActivity
+import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
 import org.json.JSONObject
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,7 +27,8 @@ class GroupInviteActivity : ComponentActivity() {
             }
             .orEmpty()
         setContent {
-            GroupInviteScreen(
+            SynapseTheme {
+                GroupInviteScreen(
                 inviteCode = inviteCode,
                 onNavigateBack = { finish() },
                 onGroupOpened = { chatId ->
@@ -38,7 +40,8 @@ class GroupInviteActivity : ComponentActivity() {
                     startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
                     finish()
                 }
-            )
+                )
+            }
         }
     }
 }
