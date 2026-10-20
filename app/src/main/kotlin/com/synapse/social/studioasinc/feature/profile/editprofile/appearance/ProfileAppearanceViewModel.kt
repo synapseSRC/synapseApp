@@ -171,18 +171,30 @@ class ProfileAppearanceViewModel @Inject constructor(
                 result.fold(
                     onSuccess = { url ->
                         val updateData = mapOf("profile_cover_image" to url)
-                        repository.updateProfile(userId, updateData)
-                        repository.addToCoverHistory(userId, url)
-
-                        _uiState.update {
-                            it.copy(
-                                isSaving = false,
-                                coverUrl = url,
-                                pendingCoverUri = null,
-                                hasPendingChanges = false,
-                                uploadState = UploadState.Success
-                            )
-                        }
+                        repository.updateProfile(userId, updateData).fold(
+                            onSuccess = {
+                                repository.addToCoverHistory(userId, url)
+                                _uiState.update {
+                                    it.copy(
+                                        isSaving = false,
+                                        coverUrl = url,
+                                        pendingCoverUri = null,
+                                        hasPendingChanges = false,
+                                        uploadState = UploadState.Success
+                                    )
+                                }
+                            },
+                            onFailure = { saveError ->
+                                _uiState.update {
+                                    it.copy(
+                                        isSaving = false,
+                                        uploadState = UploadState.Error(
+                                            "Cover uploaded but profile save failed: ${saveError.message ?: "unknown error"}"
+                                        )
+                                    )
+                                }
+                            }
+                        )
                     },
                     onFailure = { error ->
                         _uiState.update {
@@ -193,6 +205,8 @@ class ProfileAppearanceViewModel @Inject constructor(
                         }
                     }
                 )
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(

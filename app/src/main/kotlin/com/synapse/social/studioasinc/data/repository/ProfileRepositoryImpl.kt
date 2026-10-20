@@ -101,8 +101,31 @@ class ProfileRepositoryImpl(
             name = data.getNullableString(KEY_DISPLAY_NAME),
             nickname = data.getNullableString(KEY_NICKNAME),
             bio = data.getNullableString(KEY_BIO),
-            avatar = data.getNullableString(KEY_AVATAR)?.let { constructAvatarUrl(it) },
-            coverImageUrl = data.getNullableString(KEY_COVER_IMAGE)?.let { SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_COVERS, it) },
+            avatar = data.getNullableString(KEY_AVATAR)?.takeIf { it.isNotBlank() }?.let { avatarReference ->
+                if (!avatarReference.startsWith("private-media://")) {
+                    constructAvatarUrl(avatarReference)
+                } else {
+                    try {
+                        SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarReference)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        android.util.Log.w("ProfileRepository", "Avatar image unavailable; loading profile without it", error)
+                        null
+                    }
+                }
+            },
+            coverImageUrl = data.getNullableString(KEY_COVER_IMAGE)?.takeIf { it.isNotBlank() }?.let { coverReference ->
+                // A missing or inaccessible cover should not prevent the profile from loading.
+                try {
+                    SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_COVERS, coverReference)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    android.util.Log.w("ProfileRepository", "Cover image unavailable; loading profile without it", error)
+                    null
+                }
+            },
             isVerified = data.getBoolean(KEY_VERIFY),
             status = UserStatus.fromString(data.getNullableString(KEY_STATUS)),
             isPrivate = data.getBoolean(KEY_IS_PRIVATE),
@@ -195,6 +218,8 @@ class ProfileRepositoryImpl(
                             return@flow
                         }
                     }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
                 } catch (createError: Exception) {
                     android.util.Log.e("ProfileRepository", "Failed to create missing profile", createError)
                 }
@@ -218,6 +243,8 @@ class ProfileRepositoryImpl(
             val profile = parseUserProfile(response, postCount.toInt())
             android.util.Log.d("ProfileRepository", "Profile loaded successfully for userId: $actualUserId")
             emit(Result.success(profile))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             android.util.Log.e("ProfileRepository", "Failed to load profile for userId: $actualUserId", e)
             emit(Result.failure(Exception("Failed to load profile: ${e.message}", e)))
