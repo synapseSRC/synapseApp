@@ -92,6 +92,12 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) =
         conversations.updateConversationArchiveStatus(chatId, isArchived)
 
+    suspend fun getConversationMuteStatus(chatId: String): Boolean =
+        conversations.getConversationMuteStatus(chatId)
+
+    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean) =
+        conversations.setConversationMuteStatus(chatId, isMuted)
+
     suspend fun deleteConversation(chatId: String) =
         conversations.deleteConversation(chatId)
 

@@ -24,6 +24,10 @@ interface ChatRepository {
     suspend fun getOrCreateChat(otherUserId: String): Result<String>
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean): Result<Unit>
+    /** Reads whether the authenticated participant has muted notifications for this chat. */
+    suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
+    /** Persists the authenticated participant's notification mute setting for this chat. */
+    suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun deleteConversation(chatId: String): Result<Unit>
     suspend fun markMessagesAsRead(chatId: String): Result<Unit>
     suspend fun markMessagesAsDelivered(chatId: String): Result<Unit>

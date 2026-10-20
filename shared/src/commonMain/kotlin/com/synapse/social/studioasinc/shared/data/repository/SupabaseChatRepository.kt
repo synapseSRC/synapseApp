@@ -376,6 +376,25 @@ class SupabaseChatRepository(
         }
     }
 
+    override suspend fun getConversationMuteStatus(chatId: String): Result<Boolean> = withContext(AppDispatchers.IO) {
+        try {
+            Result.success(dataSource.getConversationMuteStatus(chatId))
+        } catch (e: Exception) {
+            Logger.e("Error reading conversation mute status", throwable = e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit> = withContext(AppDispatchers.IO) {
+        try {
+            dataSource.setConversationMuteStatus(chatId, isMuted)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Logger.e("Error updating conversation mute status", throwable = e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun deleteConversation(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) {
         try {
             dataSource.deleteConversation(chatId)
