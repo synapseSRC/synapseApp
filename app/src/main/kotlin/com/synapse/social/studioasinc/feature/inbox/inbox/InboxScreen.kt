@@ -257,7 +257,7 @@ private fun InboxScreenContent(
                 )
                 InboxDestination.ARCHIVED -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_archive_screen_title)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } }
+                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
                     colors = barColors
                 )
                 InboxDestination.SELECTION -> TopAppBar(
