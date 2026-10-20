@@ -43,6 +43,11 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
+/**
+ * Legacy custom picker bottom sheet retained for existing callers.
+ * New attachment flows should use Android system pickers.
+ */
+@Deprecated("Use Android system pickers for new sharing flows.")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SynapseFilePicker(
