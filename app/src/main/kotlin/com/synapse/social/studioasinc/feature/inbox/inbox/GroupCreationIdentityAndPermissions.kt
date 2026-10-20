@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -280,13 +281,28 @@ internal fun PermissionsStage(
             verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+                ) {
                     listOf(
                         "collaborative" to stringResource(R.string.group_preset_collaborative),
                         "announcement" to stringResource(R.string.group_preset_announcement),
                         "private" to stringResource(R.string.group_preset_private)
                     ).forEach { (id, label) ->
-                        FilterChip(selected = preset == id, onClick = { onSelectPreset(id) }, label = { Text(label) })
+                        FilterChip(
+                            selected = preset == id,
+                            onClick = { onSelectPreset(id) },
+                            modifier = Modifier.weight(1f).heightIn(min = 40.dp),
+                            label = {
+                                Text(
+                                    label,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -329,7 +345,7 @@ internal fun PermissionsStage(
             if (error != null) item { GroupErrorMessage(error, onClearError) }
             item { Spacer(Modifier.height(Spacing.space8)) }
         }
-        Button(onClick = onSave, modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space16, vertical = Spacing.space12).height(Sizes.ButtonHeightM3Medium)) {
+        Button(onClick = onSave, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space16, vertical = Spacing.space12).height(Sizes.ButtonHeightM3Medium)) {
             Icon(Icons.Filled.Check, contentDescription = null)
             Spacer(Modifier.width(Spacing.space8))
             Text(stringResource(R.string.group_save_permissions))
@@ -345,12 +361,41 @@ private fun PermissionRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-        leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
-        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }
-    )
+    val rowColor = MaterialTheme.colorScheme.surfaceContainer
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = rowColor)
+    ) {
+        ListItem(
+            headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall) },
+            supportingContent = {
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            },
+            leadingContent = {
+                androidx.compose.material3.Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                    }
+                }
+            },
+            trailingContent = {
+                Switch(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange,
+                    colors = androidx.compose.material3.SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+            },
+            modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) },
+            colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = rowColor)
+        )
+    }
 }
-
