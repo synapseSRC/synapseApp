@@ -178,7 +178,7 @@ fun GroupInfoScreen(
                 }
             }
             if (currentIsAdmin || allowMemberSettingsEdits) {
-                return Row(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
