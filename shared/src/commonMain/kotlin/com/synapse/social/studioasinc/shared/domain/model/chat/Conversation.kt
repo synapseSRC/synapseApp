@@ -10,5 +10,7 @@ data class Conversation(
     val unreadCount: Int = 0,
     val isOnline: Boolean = false,
     val isGroup: Boolean = false,
-    val groupMembers: List<String> = emptyList()
+    val groupMembers: List<String> = emptyList(),
+    val isPinned: Boolean = false,
+    val isMuted: Boolean = false
 )

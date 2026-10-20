@@ -24,6 +24,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> =
         conversations.getConversations()
 
+    suspend fun getArchivedConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> =
+        conversations.getConversations(archivedOnly = true)
+
     suspend fun getLastMessage(chatId: String): MessageDto? =
         conversations.getLastMessage(chatId)
 
@@ -91,6 +94,12 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) =
         conversations.updateConversationArchiveStatus(chatId, isArchived)
+
+    suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean) =
+        conversations.updateConversationPinnedStatus(chatId, isPinned)
+
+    suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean) =
+        conversations.updateConversationMutedStatus(chatId, isMuted)
 
     suspend fun deleteConversation(chatId: String) =
         conversations.deleteConversation(chatId)
