@@ -155,6 +155,7 @@ fun CreateGroupScreen(
     }
 
     GroupCreationTheme {
+        val motionScheme = MaterialTheme.motionScheme
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -209,7 +210,7 @@ fun CreateGroupScreen(
                 modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
                 transitionSpec = {
                     if (targetState == FLOW_HUB || initialState == FLOW_HUB) {
-                        fadeIn(animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()) togetherWith
+                        fadeIn(animationSpec = motionScheme.defaultEffectsSpec()) togetherWith
                             fadeOut(animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec())
                     } else {
                         val movingForward = targetState > initialState
