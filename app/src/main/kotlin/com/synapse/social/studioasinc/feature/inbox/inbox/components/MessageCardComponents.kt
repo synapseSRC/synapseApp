@@ -1,6 +1,11 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.PhoneMissed
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,18 +24,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.layout.Arrangement
 import coil3.compose.AsyncImage
-import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.*
 
+/**
+ * M3 Expressive card component for Contact sharing.
+ * Uses inner radius = outer - padding (12dp) and tertiaryContainer for avatar.
+ */
 @Composable
 fun ContactCardBubble(
     metadata: ContactMetadata?,
@@ -37,7 +46,7 @@ fun ContactCardBubble(
     onContactAction: (String) -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -47,13 +56,13 @@ fun ContactCardBubble(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!metadata?.avatarUrl.isNullOrBlank()) {
                     AsyncImage(
-                        model = metadata?.avatarUrl,
+                        model = metadata.avatarUrl,
                         contentDescription = "Contact Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .background(MaterialTheme.colorScheme.tertiaryContainer)
                     )
                 } else {
                     val initials = metadata?.name?.split(" ")
@@ -64,16 +73,16 @@ fun ContactCardBubble(
                         ?.ifBlank { "C" } ?: "C"
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = initials,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 }
@@ -81,21 +90,25 @@ fun ContactCardBubble(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = metadata?.name ?: "Contact",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     metadata?.phoneNumber?.let {
                         Text(
                             text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.bodySmall,
+                            color = contentColor.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
             Spacer(modifier = Modifier.height(Spacing.space10))
-            OutlinedButton(
+            FilledTonalButton(
                 onClick = { metadata?.phoneNumber?.let { onContactAction(it) } },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
@@ -108,14 +121,18 @@ fun ContactCardBubble(
                 Spacer(modifier = Modifier.width(Spacing.space6))
                 Text(
                     text = "Add Contact",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
     }
 }
 
+/**
+ * M3 Expressive Map location card.
+ * Uses extraLarge corners (28dp) for outer media frame, and inner 16dp radius.
+ */
 @Composable
 fun MapCardBubble(
     metadata: MapMetadata?,
@@ -123,8 +140,8 @@ fun MapCardBubble(
     onOpenMap: (Double, Double) -> Unit = { _, _ -> }
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = Spacing.space4)
@@ -132,34 +149,46 @@ fun MapCardBubble(
                 metadata?.let { onOpenMap(it.latitude, it.longitude) }
             }
     ) {
-        Column(modifier = Modifier.padding(Spacing.space12)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+                    .background(MaterialTheme.colorScheme.tertiaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = Icons.Default.Map,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(Spacing.space8))
-                Text(
-                    text = metadata?.locationName ?: "Map Location",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    contentDescription = "Map Icon",
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.size(40.dp)
                 )
             }
-            if (metadata != null) {
-                Spacer(modifier = Modifier.height(Spacing.space4))
+            Column(modifier = Modifier.padding(Spacing.space10)) {
                 Text(
-                    text = "Lat: ${metadata.latitude}, Lon: ${metadata.longitude} (Zoom: ${metadata.zoomLevel.toInt()})",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = metadata?.locationName ?: "Map Location",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                if (metadata != null) {
+                    Spacer(modifier = Modifier.height(Spacing.space2))
+                    Text(
+                        text = "Lat: ${metadata.latitude}, Lon: ${metadata.longitude}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.7f)
+                    )
+                }
             }
         }
     }
 }
 
+/**
+ * M3 Expressive Location card.
+ */
 @Composable
 fun LocationCardBubble(
     metadata: LocationMetadata?,
@@ -167,25 +196,28 @@ fun LocationCardBubble(
     onOpenMap: (Double, Double) -> Unit = { _, _ -> }
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
-            metadata?.let { onOpenMap(it.latitude, it.longitude) }
-        }
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable {
+                metadata?.let { onOpenMap(it.latitude, it.longitude) }
+            }
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(110.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    .background(MaterialTheme.colorScheme.tertiaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = "Location Pin",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.size(44.dp)
                 )
             }
             Column(modifier = Modifier.padding(Spacing.space10)) {
@@ -193,13 +225,16 @@ fun LocationCardBubble(
                     text = metadata?.title ?: "Location Share",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 metadata?.address?.let {
+                    Spacer(modifier = Modifier.height(Spacing.space2))
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = contentColor.copy(alpha = 0.7f),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -209,16 +244,34 @@ fun LocationCardBubble(
     }
 }
 
+/**
+ * M3 Expressive Live Location card with pulsing dot animation.
+ */
 @Composable
 fun LiveLocationCardBubble(
     metadata: LiveLocationMetadata?,
     contentColor: Color,
     onOpenLiveMap: () -> Unit = {}
 ) {
+    val isLive = metadata?.isLive == true
+    val infiniteTransition = rememberInfiniteTransition(label = "liveLocationPulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable { onOpenLiveMap() }
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable { onOpenLiveMap() }
     ) {
         Row(
             modifier = Modifier.padding(Spacing.space12),
@@ -228,13 +281,16 @@ fun LiveLocationCardBubble(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.errorContainer),
+                    .background(
+                        if (isLive) MaterialTheme.colorScheme.errorContainer.copy(alpha = pulseAlpha)
+                        else MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.MyLocation,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
+                    contentDescription = "Live Location Indicator",
+                    tint = if (isLive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -244,18 +300,22 @@ fun LiveLocationCardBubble(
                     text = "Live Location",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor
                 )
                 Text(
-                    text = if (metadata?.isLive == true) "Live updating..." else "Live location ended",
+                    text = if (isLive) "Live updating..." else "Live location ended",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (metadata?.isLive == true) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isLive) MaterialTheme.colorScheme.error else contentColor.copy(alpha = 0.7f)
                 )
             }
         }
     }
 }
 
+/**
+ * M3 Expressive Poll card bubble.
+ * Uses surfaceContainerHigh for unselected rows, secondaryContainer for selected rows.
+ */
 @Composable
 fun PollCardBubble(
     metadata: PollMetadata?,
@@ -264,9 +324,11 @@ fun PollCardBubble(
     onVoteOption: (messageId: String, optionId: String) -> Unit = { _, _ -> }
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
     ) {
         Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -276,22 +338,26 @@ fun PollCardBubble(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(Spacing.space6))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = metadata?.question ?: "Poll",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor
                 )
             }
             Spacer(modifier = Modifier.height(Spacing.space8))
             metadata?.options?.forEach { option ->
                 val totalVotes = metadata.options.sumOf { it.voteCount }.coerceAtLeast(1)
                 val percentage = (option.voteCount.toFloat() / totalVotes)
+                val isSelected = option.voterUserIds.isNotEmpty()
+
+                val rowBg = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+                val rowText = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface,
+                    color = rowBg,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = Spacing.space4)
@@ -302,7 +368,7 @@ fun PollCardBubble(
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(percentage)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                         )
                         Row(
                             modifier = Modifier.padding(horizontal = Spacing.space10, vertical = Spacing.space8),
@@ -312,14 +378,15 @@ fun PollCardBubble(
                             Text(
                                 text = option.text,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = rowText,
                                 modifier = Modifier.weight(1f)
                             )
                             Text(
                                 text = "${option.voteCount}",
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = rowText
                             )
                         }
                     }
@@ -329,6 +396,10 @@ fun PollCardBubble(
     }
 }
 
+/**
+ * M3 Expressive Music track card.
+ * Uses 48dp album art with extraSmall (4dp) corner radius.
+ */
 @Composable
 fun MusicCardBubble(
     metadata: MusicMetadata?,
@@ -336,9 +407,11 @@ fun MusicCardBubble(
     onPlayAudio: (String) -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
     ) {
         Row(
             modifier = Modifier.padding(Spacing.space10),
@@ -350,8 +423,8 @@ fun MusicCardBubble(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             )
             Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
@@ -359,14 +432,14 @@ fun MusicCardBubble(
                     text = metadata?.title ?: "Audio Track",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = contentColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = metadata?.artist ?: "Artist",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = contentColor.copy(alpha = 0.7f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -382,6 +455,10 @@ fun MusicCardBubble(
     }
 }
 
+/**
+ * M3 Expressive Shared Post Card.
+ * Outer shape: largeIncreased (24dp) or 16dp with outlineVariant border.
+ */
 @Composable
 fun SharedPostCardBubble(
     metadata: SharedPostMetadata?,
@@ -389,25 +466,29 @@ fun SharedPostCardBubble(
     onOpenPost: (String) -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
-            metadata?.postId?.let { onOpenPost(it) }
-        }
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable { metadata?.postId?.let { onOpenPost(it) } }
     ) {
         Column(modifier = Modifier.padding(Spacing.space10)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
                     model = metadata?.authorAvatarUrl,
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp).clip(CircleShape)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
                 )
                 Spacer(modifier = Modifier.width(Spacing.space6))
                 Text(
                     text = metadata?.authorName ?: "User Post",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor
                 )
             }
             metadata?.mediaUrl?.let { url ->
@@ -418,7 +499,7 @@ fun SharedPostCardBubble(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(140.dp)
+                        .height(130.dp)
                         .clip(RoundedCornerShape(8.dp))
                 )
             }
@@ -427,7 +508,7 @@ fun SharedPostCardBubble(
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = contentColor.copy(alpha = 0.8f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -436,6 +517,9 @@ fun SharedPostCardBubble(
     }
 }
 
+/**
+ * M3 Expressive Shared Story Card.
+ */
 @Composable
 fun SharedStoryCardBubble(
     metadata: SharedStoryMetadata?,
@@ -443,11 +527,13 @@ fun SharedStoryCardBubble(
     onOpenStory: (String) -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
-            metadata?.storyId?.let { onOpenStory(it) }
-        }
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable { metadata?.storyId?.let { onOpenStory(it) } }
     ) {
         Row(
             modifier = Modifier.padding(Spacing.space10),
@@ -455,7 +541,7 @@ fun SharedStoryCardBubble(
         ) {
             Box(
                 modifier = Modifier
-                    .size(54.dp)
+                    .size(52.dp)
                     .clip(CircleShape)
                     .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
                 contentAlignment = Alignment.Center
@@ -464,7 +550,9 @@ fun SharedStoryCardBubble(
                     model = metadata?.mediaUrl ?: metadata?.authorAvatarUrl,
                     contentDescription = "Story Preview",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(48.dp).clip(CircleShape)
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
                 )
             }
             Spacer(modifier = Modifier.width(Spacing.space10))
@@ -473,11 +561,11 @@ fun SharedStoryCardBubble(
                     text = "${metadata?.authorName ?: "User"}'s Story",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor
                 )
                 Text(
                     text = "Tap to view story",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -485,6 +573,10 @@ fun SharedStoryCardBubble(
     }
 }
 
+/**
+ * M3 Expressive Event Card.
+ * Uses largeIncreased (24dp) shape or 16dp inner shape.
+ */
 @Composable
 fun EventCardBubble(
     metadata: EventMetadata?,
@@ -492,11 +584,12 @@ fun EventCardBubble(
     onOpenEvent: (String) -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
-            metadata?.eventId?.let { onOpenEvent(it) }
-        }
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable { metadata?.eventId?.let { onOpenEvent(it) } }
     ) {
         Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -509,9 +602,9 @@ fun EventCardBubble(
                 Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = metadata?.title ?: "Event",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor
                 )
             }
             Spacer(modifier = Modifier.height(Spacing.space4))
@@ -519,20 +612,23 @@ fun EventCardBubble(
                 Text(
                     text = "📅 $it",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = contentColor.copy(alpha = 0.7f)
                 )
             }
             metadata?.location?.let {
                 Text(
                     text = "📍 $it",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = contentColor.copy(alpha = 0.7f)
                 )
             }
         }
     }
 }
 
+/**
+ * M3 Expressive Product Item Card.
+ */
 @Composable
 fun ProductCardBubble(
     metadata: ProductMetadata?,
@@ -540,18 +636,25 @@ fun ProductCardBubble(
     onOpenProduct: (String) -> Unit = {}
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
-            metadata?.productId?.let { onOpenProduct(it) }
-        }
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable { metadata?.productId?.let { onOpenProduct(it) } }
     ) {
-        Row(modifier = Modifier.padding(Spacing.space10), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(Spacing.space10),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             AsyncImage(
                 model = metadata?.imageUrl,
                 contentDescription = "Product Image",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface)
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             )
             Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
@@ -559,7 +662,7 @@ fun ProductCardBubble(
                     text = metadata?.title ?: "Product",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = contentColor
                 )
                 Text(
                     text = "${metadata?.currency ?: "$"} ${metadata?.price ?: "0.00"}",
@@ -572,51 +675,67 @@ fun ProductCardBubble(
     }
 }
 
+/**
+ * M3 Expressive Payment transaction card.
+ * Uses tertiaryContainer fill with onTertiaryContainer content, and headlineMediumEmphasized amount.
+ */
 @Composable
 fun PaymentCardBubble(
     metadata: PaymentMetadata?,
     contentColor: Color
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
     ) {
-        Row(modifier = Modifier.padding(Spacing.space12), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(Spacing.space12),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
                 imageVector = Icons.Default.Payments,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.size(32.dp)
             )
             Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Payment ${metadata?.status ?: "COMPLETED"}",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Text(
                     text = "${metadata?.currency ?: "$"} ${metadata?.amount ?: "0.00"}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
             }
         }
     }
 }
 
+/**
+ * M3 Expressive Code Snippet block.
+ * Uses surfaceContainerHighest background, onSurface text, thin outlineVariant border, monospace typography, and top-right language chip.
+ */
 @Composable
 fun CodeSnippetCardBubble(
     metadata: CodeSnippetMetadata?,
     contentColor: Color
 ) {
     Surface(
-        color = Color(0xFF1E1E1E),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
     ) {
         Column(modifier = Modifier.padding(Spacing.space10)) {
             Row(
@@ -624,17 +743,23 @@ fun CodeSnippetCardBubble(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = metadata?.language?.uppercase() ?: "CODE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.LightGray,
-                    fontWeight = FontWeight.Bold
-                )
                 metadata?.filename?.let {
                     Text(
                         text = it,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } ?: Spacer(modifier = Modifier.weight(1f))
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = metadata?.language?.uppercase() ?: "CODE",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2)
                     )
                 }
             }
@@ -643,47 +768,66 @@ fun CodeSnippetCardBubble(
                 text = metadata?.code ?: "",
                 fontFamily = FontFamily.Monospace,
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                color = Color(0xFFDCDCDC)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
 
+/**
+ * M3 Expressive Call log message.
+ * Uses full (pill) shape and tertiaryContainer / errorContainer roles.
+ */
 @Composable
 fun CallLogCardBubble(
     metadata: CallMetadata?,
     contentColor: Color
 ) {
+    val isMissed = metadata?.callStatus == "MISSED"
+    val isVideo = metadata?.isVideo == true
+
+    val containerColor = if (isMissed) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer
+    val textColor = if (isMissed) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onTertiaryContainer
+
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
+        color = containerColor,
+        shape = CircleShape,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
     ) {
-        Row(modifier = Modifier.padding(Spacing.space10), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
-                imageVector = if (metadata?.isVideo == true) Icons.Default.Videocam else Icons.Default.Phone,
+                imageVector = if (isMissed) Icons.AutoMirrored.Filled.PhoneMissed else if (isVideo) Icons.Default.Videocam else Icons.Default.Phone,
                 contentDescription = null,
-                tint = if (metadata?.callStatus == "MISSED") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+                tint = textColor,
+                modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (metadata?.isVideo == true) "Video Call" else "Voice Call",
+                    text = if (isVideo) "Video Call" else "Voice Call",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = textColor
                 )
                 Text(
                     text = metadata?.callStatus ?: "COMPLETED",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (metadata?.callStatus == "MISSED") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelSmall,
+                    color = textColor.copy(alpha = 0.8f)
                 )
             }
         }
     }
 }
 
+/**
+ * M3 Expressive View Once / Ephemeral Media card.
+ * Expired / consumed state uses errorContainer background, crossed-eye / timer icon, and "Media expired" label.
+ */
 @Composable
 fun ViewOnceCardBubble(
     metadata: ViewOnceMetadata?,
@@ -691,40 +835,55 @@ fun ViewOnceCardBubble(
     contentColor: Color,
     onOpenEphemeralMedia: (String) -> Unit = {}
 ) {
+    val isConsumed = metadata?.isConsumed == true
+
+    val cardBg = if (isConsumed) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
+    val cardContentColor = if (isConsumed) MaterialTheme.colorScheme.onErrorContainer else contentColor
+
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        color = cardBg,
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4).clickable {
-            if (metadata?.isConsumed != true && mediaUrl != null) {
-                onOpenEphemeralMedia(mediaUrl)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
+            .clickable {
+                if (!isConsumed && mediaUrl != null) {
+                    onOpenEphemeralMedia(mediaUrl)
+                }
             }
-        }
     ) {
-        Row(modifier = Modifier.padding(Spacing.space12), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(Spacing.space12),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
-                imageVector = Icons.Default.Timer,
+                imageVector = if (isConsumed) Icons.Default.VisibilityOff else Icons.Default.Timer,
                 contentDescription = null,
-                tint = if (metadata?.isConsumed == true) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                tint = if (isConsumed) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(Spacing.space10))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (metadata?.mode == "VIEW_TWICE") "View Twice Media" else "View Once Media",
+                    text = if (isConsumed) "Media expired" else if (metadata?.mode == "VIEW_TWICE") "View Twice Media" else "View Once Media",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = cardContentColor
                 )
                 Text(
-                    text = if (metadata?.isConsumed == true) "Opened" else "Tap to view",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (metadata?.isConsumed == true) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
+                    text = if (isConsumed) "Opened" else "Tap to view",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isConsumed) cardContentColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary
                 )
             }
         }
     }
 }
 
+/**
+ * M3 Expressive File / Document attachment card.
+ * Uses inner radius = outer - padding (12dp) and file-type icons.
+ */
 @Composable
 fun FileMessageBubble(
     message: Message,
@@ -745,13 +904,14 @@ fun FileMessageBubble(
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space4)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.space4)
     ) {
         Box(
-            modifier = Modifier
-                .clickable { url?.let { openUrl(it) } }
+            modifier = Modifier.clickable { url?.let { openUrl(it) } }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -760,7 +920,7 @@ fun FileMessageBubble(
                 val icon = fileIconForExtension(fileExt)
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
@@ -769,7 +929,7 @@ fun FileMessageBubble(
                         imageVector = icon,
                         contentDescription = stringResource(R.string.chat_cd_file),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(Spacing.space8))
@@ -787,7 +947,7 @@ fun FileMessageBubble(
                     )
                     Text(
                         text = listOfNotNull(fileSizeStr, fileMimeType.takeIf { it.isNotBlank() }).joinToString(" · "),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = contentColor.copy(alpha = 0.7f)
                     )
                 }
