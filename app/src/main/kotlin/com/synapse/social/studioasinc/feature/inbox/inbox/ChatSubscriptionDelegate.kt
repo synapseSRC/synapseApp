@@ -28,7 +28,8 @@ class ChatSubscriptionDelegate(
     private val currentUserIdProvider: () -> String?,
     private val isScreenVisibleProvider: () -> Boolean,
     private val onNewMessage: (Message) -> Unit,
-    private val onReactionEvent: (MessageReaction) -> Unit
+    private val onReactionEvent: (MessageReaction) -> Unit,
+    private val onSyncRequired: (suspend () -> Unit)? = null
 ) {
 
     private var messageSubscriptionJob: Job? = null
@@ -45,9 +46,21 @@ class ChatSubscriptionDelegate(
     }
 
     fun startSubscriptions(chatId: String) {
+        cleanup()
         messageSubscriptionJob = viewModelScope.launch {
+            var isInitial = true
             while (isActive) {
                 try {
+                    if (!isInitial) {
+                        io.github.aakira.napier.Napier.d("Subscription reconnected for chat $chatId, syncing missed messages", tag = "ChatSubscription")
+                        try {
+                            onSyncRequired?.invoke()
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            io.github.aakira.napier.Napier.w("Error syncing missed messages on reconnect", e, tag = "ChatSubscription")
+                        }
+                    }
+                    isInitial = false
                     subscribeToMessagesUseCase(chatId).collect { newMessage ->
                         try {
                             onNewMessage(newMessage)

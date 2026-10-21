@@ -17,6 +17,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -298,13 +299,25 @@ import kotlinx.coroutines.withContext
     var listReady by remember { mutableStateOf(false) }
     var showDisappearingModeDialog by remember { mutableStateOf(false) }
 
+    var isUserDragging by remember { mutableStateOf(false) }
+    LaunchedEffect(listState.interactionSource) {
+        listState.interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is DragInteraction.Start -> isUserDragging = true
+                is DragInteraction.Stop,
+                is DragInteraction.Cancel -> isUserDragging = false
+            }
+        }
+    }
+
     var lastScrolledMessageClientId by remember { mutableStateOf<String?>(null) }
     val newestMessage = remember(chatItems) {
         chatItems.filterIsInstance<ChatListItem.MessageItem>().lastOrNull()?.message
     }
     val newestMessageClientId = newestMessage?.clientId
+    val totalMessageCount = chatItems.size
 
-    LaunchedEffect(newestMessageClientId) {
+    LaunchedEffect(newestMessageClientId, totalMessageCount) {
         if (newestMessageClientId != null) {
             if (!listReady) {
                 listState.scrollToItem(0)
@@ -312,17 +325,16 @@ import kotlinx.coroutines.withContext
                 lastScrolledMessageClientId = newestMessageClientId
             } else if (newestMessageClientId != lastScrolledMessageClientId) {
                 val isFromMe = newestMessage.senderId == currentUserId
-                val isNearBottom = listState.firstVisibleItemIndex <= 1
+                val bottomThreshold = if (typingStatus?.isTyping == true) 3 else 2
+                val isNearBottom = listState.firstVisibleItemIndex <= bottomThreshold
 
                 if (isFromMe) {
                     // Always snap-scroll for own messages — instant snap feels
                     // intentional and prevents animated scroll from fighting
                     // the placement spring during rapid-fire sending.
                     listState.scrollToItem(0)
-                } else if (isNearBottom) {
-                    if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
-                        listState.animateScrollToItem(0)
-                    }
+                } else if (isNearBottom && !isUserDragging) {
+                    listState.animateScrollToItem(0)
                 }
                 lastScrolledMessageClientId = newestMessageClientId
             }

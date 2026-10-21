@@ -11,6 +11,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUs
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.mergeMonotonic
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import kotlinx.coroutines.CoroutineScope
@@ -59,7 +60,7 @@ class ChatMessagingDelegate(
 
     /** Atomically records the earliest message returned by a normal history-page fetch. */
     fun recordFetchedPage(page: List<Message>) {
-        val ordering = compareBy<Message>({ it.createdAt }, { it.id })
+        val ordering = ChatMapper.MessageChronologicalComparator
         val candidate = page.minWithOrNull(ordering) ?: return
         synchronized(paginationCursorLock) {
             val current = _oldestLoadedPageMessage
@@ -73,7 +74,7 @@ class ChatMessagingDelegate(
     fun addQuotedMessageToTimeline(message: Message) {
         _messages.update { current ->
             if (current.any { it.id == message.id }) current
-            else (current + message).sortedBy { it.createdAt }
+            else (current + message).sortedWith(ChatMapper.MessageChronologicalComparator)
         }
     }
 
@@ -86,7 +87,7 @@ class ChatMessagingDelegate(
                 val merged = if (existing != null) existing.mergeMonotonic(freshMsg) else freshMsg
                 messageMap[freshMsg.id] = merged
             }
-            messageMap.values.sortedBy { it.createdAt }
+            messageMap.values.sortedWith(ChatMapper.MessageChronologicalComparator)
         }
         recordFetchedPage(messages)
     }
@@ -144,7 +145,7 @@ class ChatMessagingDelegate(
                 clientId = tempId
             )
             _messages.update { current ->
-                (current + newMessage).distinctBy { it.id }.sortedBy { msg -> msg.createdAt }
+                (current + newMessage).distinctBy { it.id }.sortedWith(ChatMapper.MessageChronologicalComparator)
             }
 
             val sendMutex = sendMutexes.computeIfAbsent(chatId) { Mutex() }
@@ -208,20 +209,20 @@ class ChatMessagingDelegate(
                                 msg
                             }
                         }
-                        .sortedBy { it.createdAt }
+                        .sortedWith(ChatMapper.MessageChronologicalComparator)
                 }
                 optimisticMessage != null -> {
                     // Optimistic placeholder is in the list, server message not yet present.
                     // Replace optimistic placeholder with confirmed server message.
                     current.updateById(tempId) { temp ->
                         temp.mergeMonotonic(actualMessage.copy(clientId = stableClientId))
-                    }.sortedBy { it.createdAt }
+                    }.sortedWith(ChatMapper.MessageChronologicalComparator)
                 }
                 existingServerMsg != null -> {
                     // Server message was already inserted (e.g. via realtime). Update in place.
                     current.updateById(actualMessage.id) { existing ->
                         existing.mergeMonotonic(actualMessage.copy(clientId = stableClientId))
-                    }.sortedBy { it.createdAt }
+                    }.sortedWith(ChatMapper.MessageChronologicalComparator)
                 }
                 else -> current
             }

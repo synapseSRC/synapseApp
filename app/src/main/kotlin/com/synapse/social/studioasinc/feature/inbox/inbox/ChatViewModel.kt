@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.core.util.UploadProgressManager
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.mergeMonotonic
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ToggleMessageReactionUseCase
@@ -199,6 +200,15 @@ class ChatViewModel @Inject constructor(
         },
         onReactionEvent = { reaction ->
             handleIncomingReaction(reaction)
+        },
+        onSyncRequired = {
+            currentChatId?.let { chatId ->
+                getMessagesUseCase(chatId, forceNetwork = true).onSuccess { fresh ->
+                    messagingDelegate.setMessages(fresh)
+                }.onFailure { e ->
+                    Napier.w("Network sync failed on reconnect for chatId=$chatId: ${e.message}", tag = "ChatViewModel")
+                }
+            }
         }
     )
 
@@ -213,7 +223,7 @@ class ChatViewModel @Inject constructor(
         onOptimisticMessageAdded = { msg, tempId ->
             messagingDelegate.pendingTempIds.update { it + tempId }
             messagingDelegate._messages.update { current ->
-                (current + msg).distinctBy { it.id }.sortedBy { it.createdAt }
+                (current + msg).distinctBy { it.id }.sortedWith(ChatMapper.MessageChronologicalComparator)
             }
         },
         onOptimisticMessageUpdated = { tempId, content ->
@@ -468,7 +478,7 @@ class ChatViewModel @Inject constructor(
                     } else {
                         messagingDelegate.recordFetchedPage(older)
                         messagingDelegate._messages.update { current ->
-                            (older + current).distinctBy { it.id }.sortedBy { it.createdAt }
+                            (older + current).distinctBy { it.id }.sortedWith(ChatMapper.MessageChronologicalComparator)
                         }
                     }
                 }.onFailure { e ->
@@ -482,6 +492,11 @@ class ChatViewModel @Inject constructor(
     }
     private fun handleIncomingMessage(newMessage: Message) {
         Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
+
+        if (currentChatId != null && newMessage.chatId != currentChatId) {
+            Napier.d("Ignoring message for chat ${newMessage.chatId} while viewing $currentChatId", tag = "ChatViewModel")
+            return
+        }
 
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
         val currentSnapshot = messagingDelegate._messages.value
@@ -568,18 +583,21 @@ class ChatViewModel @Inject constructor(
                         it.id != newMessage.id
                 }
                 .distinctBy { it.id }
-                .sortedBy { it.createdAt }
+                .sortedWith(ChatMapper.MessageChronologicalComparator)
         }
         aiDelegate.generateSmartReplies(messages.value)
 
         if (newMessage.senderId != currentUserId && newMessage.content in encryptedPlaceholders) {
             viewModelScope.launch {
-                delay(2.seconds)
-                getMessageByIdUseCase(newMessage.id).onSuccess { refreshed ->
+                for (retryDelay in listOf(500L, 1500L)) {
+                    delay(retryDelay)
+                    val result = getMessageByIdUseCase(newMessage.id)
+                    val refreshed = result.getOrNull()
                     if (refreshed != null && refreshed.content !in encryptedPlaceholders) {
                         messagingDelegate._messages.update { current ->
                             with(messagingDelegate) { current.replaceById(newMessage.id, refreshed) }
                         }
+                        break
                     }
                 }
             }
