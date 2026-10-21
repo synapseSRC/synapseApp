@@ -4,6 +4,7 @@ import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewChatDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.NewDirectChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOptions
@@ -164,7 +165,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
 
             // 4. If no existing direct chat, create a new one in the 'chats' table first
             val chatId = com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()
-            val newChat = NewChatDto(id = chatId, isGroup = false, createdBy = currentUserId)
+            val newChat = NewDirectChatDto(id = chatId, isGroup = false, createdBy = currentUserId)
             client.postgrest.from("chats").insert(newChat)
 
             // 5. Then add both participants to 'chat_participants'
