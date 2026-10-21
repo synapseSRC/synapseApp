@@ -114,6 +114,13 @@ internal class ChatEncryptionHelper(
                             val senderId = this.senderId
                             val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
                             try {
+                                if (!signalProtocolManager.hasSession(senderId)) {
+                                    try {
+                                        ensureSession(senderId)
+                                    } catch (sessionErr: Exception) {
+                                        Logger.w("E2EE_DECRYPT: Session not pre-established with $senderId, attempting direct decrypt", tag = "E2EE")
+                                    }
+                                }
                                 val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
                                 val decryptedContent = decryptedBytes.decodeToString()
                                 Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")

@@ -47,6 +47,34 @@ object ChatMapper {
         return withT
     }
 
+    fun parseEpochMillis(raw: String?): Long? {
+        if (raw.isNullOrBlank()) return null
+        return try {
+            val normalized = normalizeTimestamp(raw) ?: raw
+            kotlinx.datetime.Instant.parse(normalized).toEpochMilliseconds()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Canonical chronological comparator for chat messages.
+     * Compares parsed epoch milliseconds first, then canonical ISO string, then clientId/id.
+     * Guarantees consistent ordering between ViewModels, delegates, and UI item mappers.
+     */
+    val MessageChronologicalComparator: Comparator<Message> = Comparator { a, b ->
+        val epochA = parseEpochMillis(a.createdAt)
+        val epochB = parseEpochMillis(b.createdAt)
+        if (epochA != null && epochB != null && epochA != epochB) {
+            return@Comparator epochA.compareTo(epochB)
+        }
+        val strCompare = a.createdAt.compareTo(b.createdAt)
+        if (strCompare != 0) {
+            return@Comparator strCompare
+        }
+        a.clientId.compareTo(b.clientId)
+    }
+
     fun ChatDto.toDomain(): ChatInfo = ChatInfo(
         id = id,
         name = name,
@@ -203,7 +231,8 @@ object ChatMapper {
             else -> ContentStatus.ACTIVE
         }
 
-        val stableCreatedAt = if (this.createdAt.isNotBlank()) this.createdAt else newer.createdAt
+        // Authoritative server timestamp from newer takes priority over temporary optimistic timestamp.
+        val stableCreatedAt = if (newer.createdAt.isNotBlank()) newer.createdAt else this.createdAt
 
         return newer.copy(
             clientId = this.clientId,
