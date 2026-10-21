@@ -197,7 +197,12 @@ class SqlDelightCachedMessageDao(
             is_deleted = if (domain.isDeleted || domain.contentStatus == ContentStatus.DELETED) 1L else 0L,
             is_edited = if (domain.isEdited || domain.contentStatus == ContentStatus.EDITED) 1L else 0L,
             cached_at = cachedAt,
-            metadata = metadataString
+            metadata = metadataString,
+            // Sync metadata — populated with current time so reconciliation can use it
+            updated_at = cachedAt,
+            is_locally_deleted = 0L,
+            last_synced_at = null,
+            sync_version = 1L
         )
     }
 

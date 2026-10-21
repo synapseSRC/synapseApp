@@ -20,7 +20,12 @@ CREATE TABLE CachedMessage (
     is_deleted INTEGER NOT NULL DEFAULT 0,
     is_edited INTEGER NOT NULL DEFAULT 0,
     cached_at INTEGER NOT NULL,
-    metadata TEXT
+    metadata TEXT,
+    -- Sync metadata
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    is_locally_deleted INTEGER NOT NULL DEFAULT 0,
+    last_synced_at INTEGER DEFAULT 0,
+    sync_version INTEGER NOT NULL DEFAULT 1
 );
 
 upsertMessage:
@@ -58,3 +63,36 @@ UPDATE CachedMessage SET delivery_status = :deliveryStatus, delivered_at = :deli
 
 deleteAll:
 DELETE FROM CachedMessage;
+-- Soft delete queries - exclude locally deleted items
+selectActiveByChatId:
+SELECT * FROM CachedMessage
+WHERE chat_id = :chatId AND is_locally_deleted = 0
+ORDER BY created_at ASC
+LIMIT :limit;
+
+selectActiveById:
+SELECT * FROM CachedMessage
+WHERE id = :id AND is_locally_deleted = 0;
+
+-- Mark as locally deleted (soft delete to prevent reappearance from stale cache)
+markLocallyDeleted:
+UPDATE CachedMessage SET is_locally_deleted = 1, updated_at = :updatedAt WHERE id = :id;
+
+markMultipleLocallyDeleted:
+UPDATE CachedMessage SET is_locally_deleted = 1, updated_at = :updatedAt WHERE id IN :ids;
+
+-- Sync queries
+selectForSync:
+SELECT * FROM CachedMessage
+WHERE updated_at > :sinceTimestamp AND chat_id = :chatId
+ORDER BY created_at ASC;
+
+-- Clear all messages for account switch
+deleteAllByChatId:
+DELETE FROM CachedMessage WHERE chat_id = :chatId;
+
+-- Get pending local changes for push sync
+selectPendingMessages:
+SELECT * FROM CachedMessage
+WHERE updated_at > last_synced_at
+AND delivery_status = 'SENDING';

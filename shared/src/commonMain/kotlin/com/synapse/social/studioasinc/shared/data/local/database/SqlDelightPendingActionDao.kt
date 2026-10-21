@@ -64,7 +64,21 @@ class SqlDelightPendingActionDao(
             payload = action.payload,
             createdAt = action.createdAt,
             retryCount = action.retryCount,
-            lastAttemptAt = action.lastAttemptAt
+            lastAttemptAt = action.lastAttemptAt,
+            // New sync metadata columns — derive entityType from actionType
+            entityType = action.actionType.toEntityType(),
+            localVersion = 1,
+            status = "PENDING"
         )
+    }
+
+    private fun PendingAction.ActionType.toEntityType(): String = when (this) {
+        PendingAction.ActionType.SEND_MESSAGE,
+        PendingAction.ActionType.EDIT,
+        PendingAction.ActionType.DELETE,
+        PendingAction.ActionType.FORWARD -> "message"
+        PendingAction.ActionType.LIKE,
+        PendingAction.ActionType.BOOKMARK,
+        PendingAction.ActionType.POLL_VOTE -> "post"
     }
 }

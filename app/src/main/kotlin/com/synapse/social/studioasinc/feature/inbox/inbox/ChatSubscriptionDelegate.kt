@@ -99,13 +99,14 @@ class ChatSubscriptionDelegate(
             while (isActive) {
                 try {
                     subscribeToTypingStatusUseCase(chatId).collect { status ->
-                        if (status.userId != currentUserIdProvider()) {
+                        val myUserId = currentUserIdProvider()
+                        if (status.userId.isNotBlank() && (myUserId == null || status.userId != myUserId)) {
                             _typingStatus.value = if (status.isTyping) status else null
 
                             if (status.isTyping) {
                                 typingTimeoutJob?.cancel()
                                 typingTimeoutJob = viewModelScope.launch {
-                                    delay(3000)
+                                    delay(4000)
                                     _typingStatus.value = null
                                 }
                             } else {

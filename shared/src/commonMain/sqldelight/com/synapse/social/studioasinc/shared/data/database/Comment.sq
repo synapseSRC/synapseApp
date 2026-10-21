@@ -15,7 +15,12 @@ CREATE TABLE Comment (
     username TEXT,
     avatarUrl TEXT,
     linkPreview TEXT AS LinkPreview,
-    viewsCount INTEGER AS Int NOT NULL DEFAULT 0
+    viewsCount INTEGER AS Int NOT NULL DEFAULT 0,
+    -- Sync metadata
+    updatedAt INTEGER NOT NULL DEFAULT 0,
+    isLocallyDeleted INTEGER AS Boolean DEFAULT 0,
+    lastSyncedAt INTEGER DEFAULT 0,
+    syncVersion INTEGER AS Int NOT NULL DEFAULT 1
 );
 
 insertComment:

@@ -20,9 +20,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.User
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,10 +97,12 @@ fun ChatTopAppBar(
                             fontWeight = FontWeight.Bold
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
                             val statusText = when {
                                 typingStatus?.isTyping == true -> "Typing..."
                                 isParticipantActive -> "Online"
-                                else -> participantProfile?.lastSeen?.let { "Last seen ${formatChatTimestamp(it)}" } ?: "Offline"
+                                formattedLastSeen != null -> "Last seen $formattedLastSeen"
+                                else -> "Offline"
                             }
                             val statusColor = when {
                                 typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
@@ -197,14 +197,11 @@ fun ChatTopAppBar(
 }
 
 /**
- * Formats an ISO timestamp for "last seen" display.
+ * Formats an ISO or DB timestamp for "last seen" display.
  */
 private fun formatChatTimestamp(isoTimestamp: String): String {
-    return try {
-        val instant = Instant.parse(isoTimestamp)
-        val formatter = DateTimeFormatter.ofPattern("MMM d, h:mm a").withZone(ZoneId.systemDefault())
-        formatter.format(instant)
-    } catch (e: Exception) {
-        ""
+    val formatted = TimestampFormatter.formatLastSeen(isoTimestamp)
+    return formatted.ifBlank {
+        TimestampFormatter.formatRelative(isoTimestamp)
     }
 }

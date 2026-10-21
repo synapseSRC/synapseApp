@@ -29,6 +29,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepo
 import com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
 import com.synapse.social.studioasinc.shared.util.Logger
 import com.synapse.social.studioasinc.shared.util.TimeProvider
+import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 import com.synapse.social.studioasinc.shared.util.UUIDUtils
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import kotlinx.coroutines.CoroutineScope
@@ -100,7 +101,10 @@ class SupabaseChatRepository(
                         lastMessage = lastMessageText,
                         lastMessageTime = lastMessage?.createdAt,
                         unreadCount = unreadCount,
-                        isOnline = if (isGroup) false else (user?.status?.name == "ONLINE"),
+                        isOnline = if (isGroup) false else {
+                            val isStatusOnline = user?.status?.name == "ONLINE"
+                            isStatusOnline && TimestampFormatter.isWithinActiveWindow(user?.lastSeen, windowMinutes = 2)
+                        },
                         isGroup = isGroup,
                         isPinned = participation.isPinned,
                         isMuted = participation.isMuted

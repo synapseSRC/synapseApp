@@ -21,6 +21,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedConten
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -59,6 +60,7 @@ data class ChatInfoUiState(
 class ChatInfoViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val observeUserPresenceUseCase: ObserveUserPresenceUseCase,
+    private val observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase,
     private val getDisappearingModeUseCase: GetDisappearingModeUseCase,
     private val setDisappearingModeUseCase: SetDisappearingModeUseCase,
     private val blockUserUseCase: BlockUserUseCase,

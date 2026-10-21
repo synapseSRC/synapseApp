@@ -9,10 +9,12 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChat
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsReadUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ChatInitializationDelegate(
@@ -23,6 +25,7 @@ class ChatInitializationDelegate(
     private val getChatInfoUseCase: GetChatInfoUseCase,
     private val getGroupMembersUseCase: GetGroupMembersUseCase,
     private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase,
+    private val observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase,
     private val markMessagesAsReadUseCase: MarkMessagesAsReadUseCase,
     private val viewModelScope: CoroutineScope,
     private val currentUserIdProvider: () -> String?,
@@ -65,6 +68,18 @@ class ChatInitializationDelegate(
                     Napier.w("Network refresh failed on re-entry for chatId=$resolvedId: ${e.message}", tag = "ChatInit")
                 }
                 markMessagesAsReadUseCase(resolvedId)
+            }
+            if (participantId != null) {
+                viewModelScope.launch {
+                    observeUserPresenceDetailUseCase(participantId).collect { presence ->
+                        _isParticipantActive.value = presence.isOnline
+                        if (!presence.lastSeen.isNullOrBlank()) {
+                            _participantProfile.update { current ->
+                                current?.copy(lastSeen = presence.lastSeen)
+                            }
+                        }
+                    }
+                }
             }
             return
         }
@@ -159,8 +174,13 @@ class ChatInitializationDelegate(
 
             if (participantId != null) {
                 launch {
-                    observeUserActiveStatusUseCase(participantId).collect { isActive ->
-                        _isParticipantActive.value = isActive
+                    observeUserPresenceDetailUseCase(participantId).collect { presence ->
+                        _isParticipantActive.value = presence.isOnline
+                        if (!presence.lastSeen.isNullOrBlank()) {
+                            _participantProfile.update { current ->
+                                current?.copy(lastSeen = presence.lastSeen)
+                            }
+                        }
                     }
                 }
             }

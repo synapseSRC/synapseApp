@@ -71,10 +71,20 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                         Napier.e("Error subscribing to typing broadcast channel", e)
                     }
                 }
-                channel.track(buildJsonObject {
+                val payload = buildJsonObject {
                     put("user_id", currentUserId)
                     put("is_typing", isTyping)
-                })
+                }
+                try {
+                    channel.broadcast(event = "typing", message = payload)
+                } catch (e: Exception) {
+                    Napier.w("Broadcast typing failed: ${e.message}", e, tag = "Realtime")
+                }
+                try {
+                    channel.track(payload)
+                } catch (e: Exception) {
+                    Napier.w("Presence track typing failed: ${e.message}", e, tag = "Realtime")
+                }
             } catch (e: Exception) {
                 Napier.e("Error broadcasting typing status", e)
             }
@@ -343,10 +353,29 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val presenceFlow = channel.presenceChangeFlow()
 
         val subscriptionReady = CompletableDeferred<Unit>()
+
+        val broadcastCollector = launch(AppDispatchers.IO) {
+            try {
+                channel.broadcastFlow<kotlinx.serialization.json.JsonObject>("typing").collect { json ->
+                    val userId = json["user_id"]?.jsonPrimitive?.contentOrNull
+                    val isTyping = json["is_typing"]?.jsonPrimitive?.booleanOrNull
+
+                    if (userId != null && isTyping != null) {
+                        send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                    }
+                }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.w("Broadcast typing flow ended: ${e.message}", e, tag = "Realtime")
+                }
+            }
+        }
+
         val collector = launch(AppDispatchers.IO) {
             presenceFlow
                 .onStart { subscriptionReady.complete(Unit) }
                 .collect { presenceChange ->
+                    val joinedUserIds = mutableSetOf<String>()
                     presenceChange.joins.values.forEach { presence ->
                         try {
                             val state = presence.state
@@ -354,6 +383,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                             val isTyping = state["is_typing"]?.jsonPrimitive?.booleanOrNull
 
                             if (userId != null && isTyping != null) {
+                                joinedUserIds.add(userId)
                                 send(mapOf("user_id" to userId, "is_typing" to isTyping))
                             }
                         } catch (e: Exception) {
@@ -366,7 +396,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                             val state = presence.state
                             val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
 
-                            if (userId != null) {
+                            // Only emit is_typing = false if the user is NOT in joins.
+                            // In Phoenix Presence, updating state emits both leaves (old state) and joins (new state).
+                            if (userId != null && userId !in joinedUserIds) {
                                 send(mapOf("user_id" to userId, "is_typing" to false))
                             }
                         } catch (e: Exception) {
@@ -390,6 +422,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         }
 
         awaitClose {
+            broadcastCollector.cancel()
             collector.cancel()
             CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
                 try {

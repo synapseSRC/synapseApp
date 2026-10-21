@@ -7,12 +7,16 @@ CREATE TABLE PendingAction (
     payload TEXT,
     createdAt INTEGER NOT NULL,
     retryCount INTEGER AS Int NOT NULL DEFAULT 0,
-    lastAttemptAt INTEGER
+    lastAttemptAt INTEGER,
+    -- Sync metadata
+    entityType TEXT NOT NULL,
+    localVersion INTEGER AS Int NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'PENDING' -- PENDING, IN_PROGRESS, COMPLETED, FAILED
 );
 
 insertAction:
 INSERT OR REPLACE INTO PendingAction(
-    id, actionType, targetId, payload, createdAt, retryCount, lastAttemptAt
+    id, actionType, targetId, payload, createdAt, retryCount, lastAttemptAt, entityType, localVersion, status
 ) VALUES ?;
 
 deleteAction:

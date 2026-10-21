@@ -95,22 +95,26 @@ object DatabaseModule {
                 viewsCountAdapter = intAdapter,
                 resharesCountAdapter = intAdapter,
                 userPollVoteAdapter = intAdapter,
-                encryptedContentAdapter = stringMapAdapter
+                encryptedContentAdapter = stringMapAdapter,
+                syncVersionAdapter = intAdapter
             ),
             CommentAdapter = Comment.Adapter(
                 likesCountAdapter = intAdapter,
                 repliesCountAdapter = intAdapter,
                 linkPreviewAdapter = com.synapse.social.studioasinc.shared.data.database.linkPreviewAdapter,
-                viewsCountAdapter = intAdapter
+                viewsCountAdapter = intAdapter,
+                syncVersionAdapter = intAdapter
             ),
             UserAdapter = User.Adapter(
                 emailAdapter = EncryptedStringAdapter(securityCipher),
                 followersCountAdapter = intAdapter,
                 followingCountAdapter = intAdapter,
-                postsCountAdapter = intAdapter
+                postsCountAdapter = intAdapter,
+                syncVersionAdapter = intAdapter
             ),
             PendingActionAdapter = com.synapse.social.studioasinc.shared.data.database.PendingAction.Adapter(
-                retryCountAdapter = intAdapter
+                retryCountAdapter = intAdapter,
+                localVersionAdapter = intAdapter
             )
         )
     }

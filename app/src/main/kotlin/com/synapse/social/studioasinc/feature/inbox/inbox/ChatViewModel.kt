@@ -17,6 +17,8 @@ import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.UpdateCurrentChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.GetStorageConfigUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
@@ -66,6 +68,8 @@ class ChatViewModel @Inject constructor(
     private val subscribeToMessageReactionsUseCase: SubscribeToMessageReactionsUseCase,
     private val getChatSettingsUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase,
     private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase,
+    private val observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase,
+    private val updateCurrentChatUseCase: UpdateCurrentChatUseCase,
     private val setDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase,
     private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
     private val voiceUploadService: VoiceUploadService,
@@ -295,6 +299,7 @@ class ChatViewModel @Inject constructor(
         getChatInfoUseCase = getChatInfoUseCase,
         getGroupMembersUseCase = getGroupMembersUseCase,
         observeUserActiveStatusUseCase = observeUserActiveStatusUseCase,
+        observeUserPresenceDetailUseCase = observeUserPresenceDetailUseCase,
         markMessagesAsReadUseCase = markMessagesAsReadUseCase,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId },
@@ -355,11 +360,16 @@ class ChatViewModel @Inject constructor(
             currentChatId?.let { chatId ->
                 viewModelScope.launch {
                     markMessagesAsReadUseCase(chatId)
+                    updateCurrentChatUseCase(chatId)
                 }
             }
             val uid = currentUserId
             if (!uid.isNullOrBlank()) {
                 messagingDelegate.markAllIncomingAsRead(uid)
+            }
+        } else {
+            viewModelScope.launch {
+                updateCurrentChatUseCase(null)
             }
         }
     }
@@ -796,6 +806,9 @@ class ChatViewModel @Inject constructor(
         messagingDelegate.pendingTempIds.value = emptySet()
         messagingDelegate.clearMessages()
         _hasMoreMessages.value = true
+        viewModelScope.launch {
+            updateCurrentChatUseCase(null)
+        }
     }
 
     override fun onCleared() {

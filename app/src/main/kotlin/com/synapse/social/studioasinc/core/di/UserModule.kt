@@ -48,8 +48,10 @@ import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
 import com.synapse.social.studioasinc.shared.domain.repository.LinkPreviewRepository
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
-import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
+import com.synapse.social.studioasinc.shared.data.local.InMemorySyncStateStorage
+import com.synapse.social.studioasinc.shared.data.sync.SyncManager
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PlatformInfoProvider
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
@@ -98,10 +100,36 @@ object UserModule {
     @Provides
     @Singleton
     fun provideSharedAuthRepository(
-        client: SupabaseClientType
+        client: SupabaseClientType,
+        cachedMessageDao: com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao,
+        cachedConversationDao: com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao,
+        postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao,
+        storyDao: com.synapse.social.studioasinc.shared.data.local.database.StoryDao,
+        offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository,
+        syncManager: com.synapse.social.studioasinc.shared.data.sync.SyncManager
     ): AuthRepository {
-        return SupabaseAuthRepository(client)
+        return SupabaseAuthRepository(
+            client = client,
+            cachedMessageDao = cachedMessageDao,
+            cachedConversationDao = cachedConversationDao,
+            postDao = postDao,
+            storyDao = storyDao,
+            offlineActionRepository = offlineActionRepository,
+            syncManager = syncManager
+        )
     }
+    @Provides
+    @Singleton
+    fun provideSyncManager(
+        offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+    ): com.synapse.social.studioasinc.shared.data.sync.SyncManager {
+        return com.synapse.social.studioasinc.shared.data.sync.SyncManager(
+            supabaseClient = SupabaseClient.client,
+            syncStateStorage = InMemorySyncStateStorage(),
+            offlineActionRepository = offlineActionRepository
+        )
+    }
+
     @Provides
     @Singleton
     fun provideAccountRepository(

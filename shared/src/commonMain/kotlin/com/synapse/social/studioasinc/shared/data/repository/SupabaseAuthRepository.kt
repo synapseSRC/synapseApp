@@ -58,7 +58,15 @@ private fun diceBearInitialsAvatarUrl(name: String): String {
  *
  * @property client The [SupabaseClientLib] instance used for authentication and database operations.
  */
-class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseClient.client) : AuthRepository {
+class SupabaseAuthRepository(
+    private val client: SupabaseClientLib = SupabaseClient.client,
+    private val cachedMessageDao: com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao? = null,
+    private val cachedConversationDao: com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao? = null,
+    private val postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao? = null,
+    private val storyDao: com.synapse.social.studioasinc.shared.data.local.database.StoryDao? = null,
+    private val offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository? = null,
+    private val syncManager: com.synapse.social.studioasinc.shared.data.sync.SyncManager? = null
+) : AuthRepository {
     override val sessionStatus: Flow<AuthSessionStatus> get() = client.auth.sessionStatus.map {
         when (it) {
             is SessionStatus.Authenticated -> AuthSessionStatus.AUTHENTICATED
@@ -208,11 +216,21 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
 
     /**
-     * Terminates the current user session and clears local authentication state.
+     * Terminates the current user session and clears all local data so no
+     * account-scoped data leaks into the next session.
      */
     override suspend fun signOut(): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
+                // Clear all local data first so it doesn't appear briefly after sign-out
+                com.synapse.social.studioasinc.shared.data.sync.AccountSyncManager.clearAllLocalData(
+                    cachedMessageDao = cachedMessageDao,
+                    cachedConversationDao = cachedConversationDao,
+                    postDao = postDao,
+                    storyDao = storyDao,
+                    offlineActionRepository = offlineActionRepository,
+                    syncManager = syncManager
+                )
                 client.auth.signOut()
                 Napier.d("User signed out", tag = TAG)
                 Result.success(Unit)

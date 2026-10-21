@@ -39,6 +39,18 @@ class ChatInputDelegate(
 
         val chatId = currentChatIdProvider() ?: return
 
+        if (newText.isBlank()) {
+            typingDebounceJob?.cancel()
+            typingDebounceJob = null
+            if (isCurrentlyTyping) {
+                isCurrentlyTyping = false
+                viewModelScope.launch {
+                    broadcastTypingStatusUseCase(chatId, false)
+                }
+            }
+            return
+        }
+
         if (!isCurrentlyTyping) {
             isCurrentlyTyping = true
             viewModelScope.launch {
@@ -58,6 +70,16 @@ class ChatInputDelegate(
         val text = _inputText.value.trim()
         val chatId = currentChatIdProvider() ?: return
         if (text.isEmpty()) return
+
+        // Immediately clear typing status when sending
+        typingDebounceJob?.cancel()
+        typingDebounceJob = null
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false
+            viewModelScope.launch {
+                broadcastTypingStatusUseCase(chatId, false)
+            }
+        }
 
         val editingMsg = _editingMessage.value
         if (editingMsg != null) {
@@ -174,5 +196,14 @@ class ChatInputDelegate(
     fun cleanup() {
         typingDebounceJob?.cancel()
         typingDebounceJob = null
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false
+            val chatId = currentChatIdProvider()
+            if (chatId != null) {
+                viewModelScope.launch {
+                    broadcastTypingStatusUseCase(chatId, false)
+                }
+            }
+        }
     }
 }

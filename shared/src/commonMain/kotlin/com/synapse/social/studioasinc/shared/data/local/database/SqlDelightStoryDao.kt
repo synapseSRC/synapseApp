@@ -58,7 +58,12 @@ class SqlDelightStoryDao(
             isReported = story.isReported,
             moderationStatus = story.moderationStatus,
             createdAt = story.createdAt,
-            expiresAt = story.expiresAt
+            expiresAt = story.expiresAt,
+            // Sync metadata
+            updatedAt = 0L,
+            isLocallyDeleted = false,
+            lastSyncedAt = null,
+            syncVersion = 1
         )
     }
 

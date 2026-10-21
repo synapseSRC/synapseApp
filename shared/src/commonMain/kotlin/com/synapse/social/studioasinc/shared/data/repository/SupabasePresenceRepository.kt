@@ -2,7 +2,9 @@ package com.synapse.social.studioasinc.shared.data.repository
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
+import com.synapse.social.studioasinc.shared.domain.model.presence.UserPresence
 import com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
+import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
@@ -14,6 +16,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,11 +74,15 @@ class SupabasePresenceRepository(
                     buildJsonObject {
                         put("user_id", userId)
                         put("status", statusStr)
+                        put("is_online", isOnline)
+                        put("activity_status", statusStr)
                         put("last_seen", now)
                         put("updated_at", now)
                         put("current_chat_id", chatIdToSave)
                     }
-                )
+                ) {
+                    onConflict = "user_id"
+                }
                 Napier.d("✅ Presence updated: userId=$userId, isOnline=$isOnline, status=$statusStr, currentChatId=$chatIdToSave")
             }
             Result.success(Unit)
@@ -149,31 +157,53 @@ class SupabasePresenceRepository(
         }
     }
 
-    override fun observeUserPresence(userId: String): Flow<Boolean> {
-        return kotlinx.coroutines.flow.flow {
-            while (true) {
-                val response = try {
-                    client.postgrest.from("user_presence")
+    override fun observeUserPresence(userId: String): Flow<Boolean> =
+        observeUserPresenceDetail(userId).map { it.isOnline }.distinctUntilChanged()
+
+    override fun observeUserPresenceDetail(userId: String): Flow<UserPresence> = kotlinx.coroutines.flow.flow {
+        suspend fun fetchPresence(): UserPresence {
+            var response = try {
+                client.postgrest.from("user_presence")
+                    .select {
+                        filter {
+                            eq("user_id", userId)
+                        }
+                    }
+                    .decodeSingleOrNull<UserPresenceDto>()
+            } catch (e: Exception) {
+                Napier.w("⚠️ Error fetching presence for user $userId: ${e.message}", e)
+                null
+            }
+
+            if (response == null) {
+                response = try {
+                    client.postgrest.from("users")
                         .select {
                             filter {
-                                eq("user_id", userId)
+                                eq("uid", userId)
                             }
                         }
                         .decodeSingleOrNull<UserPresenceDto>()
                 } catch (e: Exception) {
-                    Napier.w("⚠️ Error fetching presence for user $userId: ${e.message}", e)
                     null
                 }
-
-                val isActive = if (response == null) {
-                    false
-                } else {
-                    val isStatusOnline = response.status == null || response.status.lowercase() == "online"
-                    isStatusOnline && isWithinActiveWindow(response.lastSeen, windowMinutes = 2)
-                }
-                emit(isActive)
-                delay(10_000)
             }
+
+            val lastSeen = response?.lastSeen
+            val isStatusOnline = response?.status == null || response.status.lowercase() == "online" || response.isOnline == true
+            val isActive = response != null && isStatusOnline && isWithinActiveWindow(lastSeen, windowMinutes = 2)
+
+            return UserPresence(
+                userId = userId,
+                isOnline = isActive,
+                lastSeen = lastSeen,
+                status = response?.status
+            )
+        }
+
+        while (true) {
+            emit(fetchPresence())
+            delay(5_000)
         }
     }
 
@@ -193,22 +223,13 @@ class SupabasePresenceRepository(
 
         if (response == null) return false
 
-        val isStatusOnline = response.status == null || response.status.lowercase() == "online"
+        val isStatusOnline = response.status == null || response.status.lowercase() == "online" || response.isOnline == true
         val isOnline = isStatusOnline && isWithinActiveWindow(response.lastSeen, windowMinutes = 2)
         return response.currentChatId == chatId && isOnline
     }
 
-    fun isWithinActiveWindow(lastSeen: String?, windowMinutes: Long = 5): Boolean {
-        if (lastSeen == null) return false
-        return try {
-            val lastSeenInstant = kotlinx.datetime.Instant.parse(lastSeen)
-            val now = Clock.System.now()
-            val diffSeconds = now.epochSeconds - lastSeenInstant.epochSeconds
-            (diffSeconds / 60) < windowMinutes
-        } catch (e: Exception) {
-            Napier.w("⚠️ Failed to parse last_seen timestamp: $lastSeen", e)
-            false
-        }
+    override fun isWithinActiveWindow(lastSeen: String?, windowMinutes: Long): Boolean {
+        return TimestampFormatter.isWithinActiveWindow(lastSeen, windowMinutes)
     }
 }
 
@@ -218,5 +239,7 @@ data class UserPresenceDto(
     @SerialName("status") val status: String? = null,
     @SerialName("last_seen") val lastSeen: String? = null,
     @SerialName("current_chat_id") val currentChatId: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null
+    @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("is_online") val isOnline: Boolean? = null,
+    @SerialName("activity_status") val activityStatus: String? = null
 )
