@@ -228,18 +228,6 @@ internal fun ChatMessageList(
                 item.message.createdAt < oldestCreatedAt
             )
 
-            // Track whether this is the very first time this item is composed.
-            //
-            // Using remember(itemKey) instead of a shared MutableSet mutation in the
-            // body prevents flicker when the LazyColumn recomposes due to unrelated
-            // state changes (e.g. composerHeightPx changing on every keystroke).
-            //
-            // remember(itemKey) { true } returns true on the very first composition
-            // for a given key and false on all subsequent recompositions — which is
-            // exactly the "fire once per new item" semantic we need, with no mutable
-            // shared state mutated in the body.
-            val isFirstAppearance = !isHistorical && remember(itemKey) { true }
-
             // Shared placement and exit spec for items.
             // Appear animation is removed as requested; items appear instantly.
             val placementModifier = if (!reducedMotion) {
@@ -286,7 +274,7 @@ internal fun ChatMessageList(
                         reactions = message.reactions.map { it.key.emoji to it.value },
                         onClick = {
                             if (selectedMessageIds.isNotEmpty()) {
-                                message.id?.let { onToggleSelection(it) }
+                                message.id.let { onToggleSelection(it) }
                             } else {
                                 onSingleTap(message)
                             }
@@ -307,12 +295,12 @@ internal fun ChatMessageList(
                         currentUserId = currentUserId,
                         onLongClick = {
                             if (selectedMessageIds.isNotEmpty()) {
-                                message.id?.let { onToggleSelection(it) }
+                                message.id.let { onToggleSelection(it) }
                             } else {
-                                message.id?.let { onToggleSelection(it) }
+                                message.id.let { onToggleSelection(it) }
                             }
                         },
-                        onReactionSelected = { reaction -> message.id?.let { onReactionSelected(it, reaction) } },
+                        onReactionSelected = { reaction ->                         message.id.let { onReactionSelected(it, reaction) } },
                         onOpenBatchGallery = onOpenBatchGallery,
                         onQuoteClick = ::navigateToQuote,
                         fontScale = chatFontScale,

@@ -336,9 +336,15 @@ import kotlinx.coroutines.withContext
                     lastScrolledMessageClientId = newestMessageClientId
                 } else if (isNearBottom) {
                     if (!isUserDragging) {
-                        listState.animateScrollToItem(0)
+                        // Snap-scroll for incoming messages too. The bubble entrance is already
+                        // animated by the animateItem placement spring in ChatMessageList, so an
+                        // animated scroll here would run alongside it and make the incoming bubble
+                        // appear to animate twice (slide-in + list scroll).
+                        listState.scrollToItem(0)
                         lastScrolledMessageClientId = newestMessageClientId
                     }
+                    // While the user is dragging, keep lastScrolledMessageClientId untouched so the
+                    // pending catch-up scroll still runs when the drag ends.
                 } else {
                     // User has scrolled up to view older messages. Do not disrupt them.
                     lastScrolledMessageClientId = newestMessageClientId

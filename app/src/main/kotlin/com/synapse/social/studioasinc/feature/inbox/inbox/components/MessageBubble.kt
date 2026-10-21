@@ -475,15 +475,7 @@ fun MessageBubble(
             Column(
                 horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
             ) {
-                if (!isFromMe && (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) && senderName != null) {
-                    SenderHeaderRow(
-                        avatarUrl = senderAvatarUrl,
-                        displayName = senderName,
-                        timestamp = formatMessageTime(message.sentAt ?: message.createdAt),
-                        isStarred = false,
-                        showAvatar = false
-                    )
-                }
+
 
                 Column(
                     horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start

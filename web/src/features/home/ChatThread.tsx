@@ -219,7 +219,7 @@ const VoiceMessagePlayer: React.FC<VoiceMessagePlayerProps> = ({ src, durationSe
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [actualDuration, setActualDuration] = useState(durationSeconds || 0);
+  const [actualDuration, setActualDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [playbackError, setPlaybackError] = useState(false);
   const duration = actualDuration || durationSeconds || 0;
@@ -228,7 +228,7 @@ const VoiceMessagePlayer: React.FC<VoiceMessagePlayerProps> = ({ src, durationSe
 
   useEffect(() => {
     setCurrentTime(0);
-    setActualDuration(durationSeconds || 0);
+    setActualDuration(0);
     setIsPlaying(false);
     setPlaybackError(false);
   }, [src, durationSeconds]);
@@ -279,12 +279,25 @@ const VoiceMessagePlayer: React.FC<VoiceMessagePlayerProps> = ({ src, durationSe
         preload="metadata"
         aria-hidden="true"
         className="sr-only"
-        onLoadedMetadata={event => setActualDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : durationSeconds || 0)}
-        onDurationChange={event => setActualDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : durationSeconds || 0)}
+                onLoadedMetadata={event => {
+          const audioDuration = event.currentTarget.duration;
+          if (Number.isFinite(audioDuration) && audioDuration > 0) {
+            setActualDuration(audioDuration);
+          } else {
+            setActualDuration(durationSeconds || 0);
+          }
+        }}
+        onDurationChange={event => {
+          const audioDuration = event.currentTarget.duration;
+          if (Number.isFinite(audioDuration) && audioDuration > 0) {
+            setActualDuration(audioDuration);
+          }
+        }}
         onTimeUpdate={event => setCurrentTime(event.currentTarget.currentTime)}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onEnded={event => { setIsPlaying(false); setCurrentTime(event.currentTarget.duration || duration); }}
+        onEnded={event => { setIsPlaying(false); setCurrentTime(event.currentTarget.duration || actualDuration || durationSeconds || 0); }}
+        onError={onError}
         onError={onError}
       />
       <div className="flex min-w-0 items-center gap-3">

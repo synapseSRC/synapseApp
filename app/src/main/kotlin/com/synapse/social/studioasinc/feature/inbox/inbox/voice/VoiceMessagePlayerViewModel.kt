@@ -24,6 +24,7 @@ data class VoicePlayerUiState(
     val localPath: String? = null,
     val currentPositionMs: Long = 0L,
     val durationMs: Long = 0L,
+    val isDurationAuthoritative: Boolean = false,
     val playbackSpeed: Float = 1.0f,
     val waveformAmplitudes: List<Float> = emptyList()
 )
@@ -56,11 +57,14 @@ class VoiceMessagePlayerViewModel @Inject constructor(
         val localFile = File(mediaUrl)
         val isLocalFile = localFile.exists() && localFile.isFile
 
+        // Set initial state synchronously with fallback duration; duration will be
+        // refined asynchronously once extractDuration (suspend) completes.
         _uiState.update {
             VoicePlayerUiState(
                 mediaUrl = mediaUrl,
                 localPath = if (isLocalFile) mediaUrl else null,
                 durationMs = initialDurationMs,
+                isDurationAuthoritative = false,
                 waveformAmplitudes = VoiceWaveformExtractor.generateFallbackAmplitudes(mediaUrl)
             )
         }
@@ -83,7 +87,13 @@ class VoiceMessagePlayerViewModel @Inject constructor(
                             isPlaying = playback.isPlaying,
                             isBuffering = playback.isBuffering,
                             playbackSpeed = playback.playbackSpeed,
-                            durationMs = if (playback.durationMs > 0) playback.durationMs else state.durationMs,
+                            durationMs = if (state.isDurationAuthoritative) {
+                                state.durationMs
+                            } else if (playback.durationMs > 0) {
+                                playback.durationMs
+                            } else {
+                                state.durationMs
+                            },
                             currentPositionMs = if (playback.isPlaying || playback.currentPositionMs > 0) {
                                 playback.currentPositionMs
                             } else if (playback.isCompleted) {
@@ -110,11 +120,14 @@ class VoiceMessagePlayerViewModel @Inject constructor(
     private fun loadWaveformForLocalPath(filePath: String) {
         viewModelScope.launch(ioDispatcher) {
             val amplitudes = VoiceWaveformExtractor.extractAmplitudes(filePath, dispatcher = ioDispatcher)
+            val actualDurationMs = VoiceWaveformExtractor.extractDuration(filePath, dispatcher = ioDispatcher)
             _uiState.update { state ->
                 state.copy(
                     isDownloading = false,
                     downloadError = null,
-                    waveformAmplitudes = amplitudes
+                    waveformAmplitudes = amplitudes,
+                    durationMs = if (actualDurationMs > 0) actualDurationMs else state.durationMs,
+                    isDurationAuthoritative = actualDurationMs > 0
                 )
             }
         }
@@ -127,12 +140,15 @@ class VoiceMessagePlayerViewModel @Inject constructor(
             result.fold(
                 onSuccess = { path ->
                     val amplitudes = VoiceWaveformExtractor.extractAmplitudes(path, dispatcher = ioDispatcher)
+                    val actualDurationMs = VoiceWaveformExtractor.extractDuration(path, dispatcher = ioDispatcher)
                     _uiState.update { state ->
                         state.copy(
                             localPath = path,
                             isDownloading = false,
                             downloadError = null,
-                            waveformAmplitudes = amplitudes
+                            waveformAmplitudes = amplitudes,
+                            durationMs = if (actualDurationMs > 0) actualDurationMs else state.durationMs,
+                            isDurationAuthoritative = actualDurationMs > 0
                         )
                     }
                 },
@@ -201,7 +217,19 @@ class VoiceMessagePlayerViewModel @Inject constructor(
         val url = _uiState.value.mediaUrl
         if (url.isNotBlank()) {
             if (File(url).exists()) {
-                loadWaveformForLocalPath(url)
+                viewModelScope.launch(ioDispatcher) {
+                    val amplitudes = VoiceWaveformExtractor.extractAmplitudes(url, dispatcher = ioDispatcher)
+                    val actualDurationMs = VoiceWaveformExtractor.extractDuration(url, dispatcher = ioDispatcher)
+                    _uiState.update { state ->
+                        state.copy(
+                            isDownloading = false,
+                            downloadError = null,
+                            waveformAmplitudes = amplitudes,
+                            durationMs = if (actualDurationMs > 0) actualDurationMs else state.durationMs,
+                            isDurationAuthoritative = actualDurationMs > 0
+                        )
+                    }
+                }
             } else {
                 loadLocalPathAndWaveform(url)
             }

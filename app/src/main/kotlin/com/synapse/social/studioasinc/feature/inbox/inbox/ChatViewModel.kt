@@ -621,7 +621,9 @@ class ChatViewModel @Inject constructor(
                     val refreshed = result.getOrNull()
                     if (refreshed != null && refreshed.content !in encryptedPlaceholders) {
                         messagingDelegate._messages.update { current ->
-                            with(messagingDelegate) { current.replaceById(newMessage.id, refreshed) }
+                            val stableClientId = current.firstOrNull { it.id == newMessage.id }?.clientId
+                            val toWrite = if (stableClientId != null) refreshed.copy(clientId = stableClientId) else refreshed
+                            with(messagingDelegate) { current.replaceById(newMessage.id, toWrite) }
                         }
                         break
                     }
