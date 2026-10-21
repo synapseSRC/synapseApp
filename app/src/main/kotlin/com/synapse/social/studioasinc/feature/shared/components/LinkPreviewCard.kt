@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -75,8 +74,8 @@ fun LinkPreviewCard(
             modifier = modifier
                 .fillMaxWidth()
                 .height(Sizes.Height100)
-                .clip(RoundedCornerShape(Sizes.CornerMedium))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(modifier = Modifier.size(Sizes.IconLarge))
@@ -84,9 +83,9 @@ fun LinkPreviewCard(
     } else if (linkPreview != null) {
         val preview = linkPreview ?: return
         Card(
-            shape = RoundedCornerShape(Sizes.CornerMedium),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
             ),
             modifier = modifier
                 .fillMaxWidth()
@@ -115,7 +114,7 @@ fun LinkPreviewCard(
                             Text(
                                 text = preview.domain ?: "",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.outline,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -125,7 +124,7 @@ fun LinkPreviewCard(
                             Text(
                                 text = preview.title ?: "",
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
