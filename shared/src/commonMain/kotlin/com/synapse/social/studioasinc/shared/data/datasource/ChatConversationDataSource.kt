@@ -165,7 +165,6 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
 
             // 4. If no existing direct chat, create a new one in the 'chats' table first
             val chatId = com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()
-            // Keep this payload compatible with deployments missing optional group-settings columns.
             val newChat = NewDirectChatDto(id = chatId, isGroup = false, createdBy = currentUserId)
             client.postgrest.from("chats").insert(newChat)
 
