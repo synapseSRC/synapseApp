@@ -63,7 +63,7 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun uploadUserPublicKey(publicKey: String) =
         keys.uploadUserPublicKey(publicKey)
 
-    suspend fun getOrCreateChat(otherUserId: String): String? =
+    suspend fun getOrCreateChat(otherUserId: String): String =
         conversations.getOrCreateChat(otherUserId)
 
     suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions()): String? =

@@ -123,7 +123,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun getOrCreateChat(otherUserId: String): String? = withContext(AppDispatchers.IO) {
+    suspend fun getOrCreateChat(otherUserId: String): String = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw IllegalStateException("Not logged in")
 
