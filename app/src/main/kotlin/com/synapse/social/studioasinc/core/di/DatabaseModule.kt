@@ -25,6 +25,8 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDa
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedMessageDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedConversationDao
+import com.synapse.social.studioasinc.shared.data.local.database.StoryDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightStoryDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDaoImpl
 import com.synapse.social.studioasinc.shared.security.SecurityCipher
@@ -69,6 +71,11 @@ object DatabaseModule {
     @Provides
     fun provideCachedConversationDao(db: StorageDatabase): CachedConversationDao {
         return SqlDelightCachedConversationDao(db)
+    }
+
+    @Provides
+    fun provideStoryDao(db: StorageDatabase): StoryDao {
+        return SqlDelightStoryDao(db)
     }
 
     @Provides
