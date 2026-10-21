@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_attachment_share_content">কনটেন্ট শেয়ার করুন</string>
+    <string name="chat_attachment_close">অ্যাটাচমেন্ট অপশন বন্ধ করুন</string>
+    <string name="chat_attachment_open_action">অ্যাটাচমেন্ট অপশন খুলুন</string>
+    <string name="chat_attachment_photos_videos">ছবি ও ভিডিও</string>
+    <string name="chat_attachment_photos_videos_supporting">গ্যালারি থেকে ছবি ও ভিডিও নির্বাচন করুন</string>
+    <string name="chat_attachment_documents">ডকুমেন্ট</string>
+    <string name="chat_attachment_documents_supporting">PDF, স্প্রেডশিট ও প্রেজেন্টেশন বেছে নিন</string>
+    <string name="chat_attachment_audio">অডিও</string>
+    <string name="chat_attachment_audio_supporting">অডিও ট্র্যাক ও ভয়েস রেকর্ডিং শেয়ার করুন</string>
+    <string name="chat_attachment_files">ফাইল</string>
+    <string name="chat_attachment_files_supporting">ডিভাইস স্টোরেজ ও ডাউনলোড ব্রাউজ করুন</string>
+    <string name="chat_attachment_contacts">কন্ট্যাক্ট</string>
+    <string name="chat_attachment_contacts_supporting">vCard কন্ট্যাক্টের তথ্য শেয়ার করুন</string>
+    <string name="chat_attachment_default_file_name">অ্যাটাচমেন্ট</string>
+    <string name="chat_attachment_read_failed">নির্বাচিত আইটেমটি পড়া যায়নি। আবার নির্বাচন করুন।</string>
+    <string name="chat_attachment_contact_failed">এই কন্ট্যাক্ট কার্ড তৈরি করা যায়নি। আবার কন্ট্যাক্ট নির্বাচন করুন।</string>
+</resources>

@@ -9,6 +9,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +31,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,14 +41,13 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceInputHost
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
-import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
-import com.synapse.social.studioasinc.feature.shared.components.picker.SynapseFilePicker
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ChatInputBar(
     replyingToMessage: Message?,
@@ -64,13 +66,20 @@ fun ChatInputBar(
     onSendMessage: () -> Unit,
     onCancelReply: () -> Unit,
     onCancelEditing: () -> Unit,
-    onUploadAndSendMedia: (filePath: String, fileName: String, contentType: String, messageType: String, caption: String?) -> Unit,
-    onFilesSelected: ((List<PickedFile>) -> Unit)? = null,
+    onAttachmentSelected: (ChatAttachmentCategory) -> Unit,
     replyingToSenderName: String? = null,
     fontScale: Float = 1f
 ) {
     var dismissedPreviewUrl by remember { mutableStateOf<String?>(null) }
     var showAttachmentMenu by remember { mutableStateOf(false) }
+    val attachmentInteraction = remember { MutableInteractionSource() }
+    val attachmentPressed by attachmentInteraction.collectIsPressedAsState()
+    // My design decision (not in M3): subtle press scale on the composer attachment action.
+    val attachmentScale by animateFloatAsState(
+        targetValue = if (attachmentPressed) 0.98f else 1f,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "chatAttachmentButtonPress"
+    )
     val focusRequester = remember { FocusRequester() }
 
     var isFocused by remember { mutableStateOf(false) }
@@ -225,44 +234,28 @@ fun ChatInputBar(
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(38.dp).graphicsLayer { scaleX = attachmentScale; scaleY = attachmentScale }
                     ) {
                         IconButton(
                             onClick = { showAttachmentMenu = true },
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            interactionSource = attachmentInteraction
                         ) {
                             Icon(
                                 Icons.Default.Add,
-                                contentDescription = "Attach file",
+                                contentDescription = stringResource(R.string.chat_attachment_open_action),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                     if (showAttachmentMenu) {
-                        SynapseFilePicker(
+                        ChatAttachmentSheet(
                             onDismissRequest = { showAttachmentMenu = false },
-                            onFilesSelected = { files ->
+                            onCategorySelected = { category ->
                                 showAttachmentMenu = false
-                                if (onFilesSelected != null) {
-                                    onFilesSelected(files)
-                                } else {
-                                    files.forEach { pickedFile ->
-                                        val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
-                                        if (filePath != null) {
-                                            val type = if (pickedFile.mimeType.startsWith("video/")) "video" else if (pickedFile.mimeType.startsWith("image/")) "image" else if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
-                                            onUploadAndSendMedia(
-                                                filePath,
-                                                pickedFile.fileName,
-                                                pickedFile.mimeType,
-                                                type,
-                                                null
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            maxSelection = 10
+                                onAttachmentSelected(category)
+                            }
                         )
                     }
                 }

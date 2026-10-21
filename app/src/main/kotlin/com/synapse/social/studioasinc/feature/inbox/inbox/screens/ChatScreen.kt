@@ -4,10 +4,13 @@ import androidx.compose.ui.platform.LocalUriHandler
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.ContactsContract
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -52,6 +55,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -194,6 +201,52 @@ import java.io.File
     val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.space8)
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
+    fun acceptSelectedUris(uris: List<Uri>) {
+        if (uris.isNotEmpty()) {
+            uris.forEach { uri ->
+                try {
+                    context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: Exception) {
+                    // Some system photo providers provide a temporary grant instead.
+                }
+            }
+            coroutineScope.launch {
+                val results = withContext(Dispatchers.IO) {
+                    uris.map { uri -> runCatching { context.toPickedFile(uri) } }
+                }
+                val files = results.mapNotNull { it.getOrNull() }
+                if (files.size != uris.size) {
+                    android.widget.Toast.makeText(context, R.string.chat_attachment_read_failed, android.widget.Toast.LENGTH_SHORT).show()
+                }
+                if (files.isNotEmpty()) selectedMediaFiles = files
+            }
+        }
+    }
+
+
+    val photoVideoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10),
+        onResult = { uris -> acceptSelectedUris(uris) }
+    )
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri -> uri?.let { acceptSelectedUris(listOf(it)) } }
+    )
+    val contactPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact(),
+        onResult = { uri ->
+            uri?.let { contactUri ->
+                coroutineScope.launch {
+                    try {
+                        val contactFile = withContext(Dispatchers.IO) { context.toContactVCard(contactUri) }
+                        selectedMediaFiles = listOf(contactFile)
+                    } catch (_: Exception) {
+                        android.widget.Toast.makeText(context, R.string.chat_attachment_contact_failed, android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    )
 
     LaunchedEffect(cancelThresholdPx, lockThresholdPx, directionSlopPx) {
         voiceController.updateThresholds(cancelThresholdPx, lockThresholdPx, directionSlopPx)
@@ -471,8 +524,18 @@ import java.io.File
                     onSendMessage = viewModel::sendMessage,
                     onCancelReply = viewModel::cancelReply,
                     onCancelEditing = viewModel::cancelEditing,
-                    onUploadAndSendMedia = viewModel::uploadAndSendMedia,
-                    onFilesSelected = { files -> selectedMediaFiles = files }
+                    onAttachmentSelected = { category ->
+                        focusManager.clearFocus()
+                        when (category) {
+                            ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                            )
+                            ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
+                            ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
+                            ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
+                            ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                        }
+                    }
                 )
             }
 
@@ -526,8 +589,28 @@ import java.io.File
                     val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
                     if (filePath != null) filePath to pickedFile else null
                 }
+                if (validFiles.size != finalFiles.size) {
+                    android.widget.Toast.makeText(context, R.string.chat_attachment_read_failed, android.widget.Toast.LENGTH_SHORT).show()
+                }
                 if (validFiles.isNotEmpty()) {
-                    viewModel.uploadAndSendMultipleMedia(validFiles, caption, quality)
+                    val allVisualMedia = validFiles.all { (_, pickedFile) ->
+                        pickedFile.mimeType.startsWith("image/") || pickedFile.mimeType.startsWith("video/")
+                    }
+                    if (allVisualMedia) {
+                        viewModel.uploadAndSendMultipleMedia(validFiles, caption, quality)
+                    } else {
+                        validFiles.forEach { (filePath, pickedFile) ->
+                            val messageType = if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
+                            viewModel.uploadAndSendMedia(
+                                filePath = filePath,
+                                fileName = pickedFile.fileName,
+                                contentType = pickedFile.mimeType,
+                                messageType = messageType,
+                                caption = caption,
+                                quality = quality
+                            )
+                        }
+                    }
                 }
                 selectedMediaFiles = null
             }
@@ -551,4 +634,79 @@ import java.io.File
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 interface VoiceUploadServiceEntryPoint {
     fun getVoiceUploadService(): VoiceUploadService
+}
+
+private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.presentation",
+    "application/rtf",
+    "text/csv",
+    "text/plain"
+)
+
+private fun Context.toPickedFile(uri: Uri): PickedFile {
+    val projection = arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
+    var fileName = getString(R.string.chat_attachment_default_file_name)
+    var fileSize = 0L
+    contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (nameIndex >= 0 && !cursor.isNull(nameIndex)) {
+                cursor.getString(nameIndex)?.takeIf { it.isNotBlank() }?.let { fileName = it }
+            }
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) fileSize = cursor.getLong(sizeIndex).coerceAtLeast(0L)
+        }
+    }
+    val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
+    return PickedFile(uri = uri, mimeType = mimeType, fileName = fileName, size = fileSize)
+}
+
+private fun Context.toContactVCard(contactUri: Uri): PickedFile {
+    val contact = contentResolver.query(
+        contactUri,
+        arrayOf(ContactsContract.Contacts.LOOKUP_KEY, ContactsContract.Contacts.DISPLAY_NAME),
+        null,
+        null,
+        null
+    )?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            val lookupIndex = cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY)
+            val nameIndex = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+            if (lookupIndex >= 0 && !cursor.isNull(lookupIndex)) {
+                cursor.getString(lookupIndex) to if (nameIndex >= 0 && !cursor.isNull(nameIndex)) cursor.getString(nameIndex) else ""
+            } else null
+        } else null
+    } ?: throw IOException(getString(R.string.chat_attachment_contact_failed))
+
+    val lookupKey = contact.first.takeIf { it.isNotBlank() }
+        ?: throw IOException(getString(R.string.chat_attachment_contact_failed))
+    val outputFile = File.createTempFile("synapse-contact-", ".vcf", cacheDir)
+    try {
+        val vCardUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_VCARD_URI, lookupKey)
+        val input = contentResolver.openInputStream(vCardUri)
+            ?: throw IOException(getString(R.string.chat_attachment_contact_failed))
+        input.use { source -> outputFile.outputStream().use { destination -> source.copyTo(destination) } }
+        if (outputFile.length() == 0L) throw IOException(getString(R.string.chat_attachment_contact_failed))
+    } catch (exception: Exception) {
+        outputFile.delete()
+        throw exception
+    }
+
+    val safeName = contact.second.orEmpty().trim().replace("/", "_").take(80)
+        .ifBlank { getString(R.string.chat_attachment_default_file_name) }
+    return PickedFile(
+        uri = Uri.fromFile(outputFile),
+        mimeType = "text/vcard",
+        fileName = safeName + ".vcf",
+        size = outputFile.length()
+    )
 }
