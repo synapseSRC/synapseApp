@@ -117,6 +117,21 @@ data class NewChatDto(
 )
 
 
+/**
+ * Minimal payload for opening a direct conversation.
+ *
+ * Keep group-only settings out of this insert because deployments may not yet
+ * have the optional group-settings migration applied.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class NewDirectChatDto(
+    val id: String,
+    @EncodeDefault @SerialName("is_group") val isGroup: Boolean = false,
+    @SerialName("created_by") val createdBy: String
+)
+
+
 @Serializable
 data class GroupJoinRequestDto(
     val id: String,
