@@ -52,18 +52,15 @@ object ChatItemsMapper {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
 
-        val sorted = messages.sortedWith(
-            compareBy<Message> { safeParseInstant(it.createdAt)?.toEpochMilli() ?: 0L }
-                .thenBy { it.createdAt }
-                .thenBy { it.clientId }
-        )
+        val sorted = messages.sortedWith(com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.MessageChronologicalComparator)
         val result = mutableListOf<ChatListItem>()
         var lastDate: LocalDate? = null
 
-        // Find first unread index
-        val firstUnreadIndex = sorted.indexOfFirst { currentUserId !in it.readBy && it.senderId != currentUserId }
+        // Find first unread incoming message
+        val unreadIncomingMessages = sorted.filter { currentUserId.isNotBlank() && currentUserId !in it.readBy && it.senderId != currentUserId }
+        val firstUnreadIndex = if (unreadIncomingMessages.isNotEmpty()) sorted.indexOf(unreadIncomingMessages.first()) else -1
         val hasReadBefore = firstUnreadIndex > 0
-        val unreadCount = if (firstUnreadIndex >= 0) sorted.size - firstUnreadIndex else 0
+        val unreadCount = unreadIncomingMessages.size
 
         sorted.forEachIndexed { index, message ->
             val msgDate = safeParseDate(message.createdAt, zone, lastDate ?: today)
@@ -77,7 +74,7 @@ object ChatItemsMapper {
                 result.add(ChatListItem.DateDivider(label))
                 lastDate = msgDate
             }
-            if (index == firstUnreadIndex && hasReadBefore) {
+            if (index == firstUnreadIndex && hasReadBefore && unreadCount > 0) {
                 result.add(ChatListItem.UnreadDivider(unreadCount))
             }
             result.add(ChatListItem.MessageItem(message))

@@ -19,7 +19,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -119,12 +121,12 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                                 is PostgresAction.Insert -> {
                                     val record = action.decodeRecord<MessageDto>()
                                     Napier.d("Realtime message INSERT received in channel $channelId: ${record.id} for chat $normalizedChatId", tag = "Realtime")
-                                    trySend(record)
+                                    send(record)
                                 }
                                 is PostgresAction.Update -> {
                                     val record = action.decodeRecord<MessageDto>()
                                     Napier.d("Realtime message UPDATE received in channel $channelId: ${record.id} for chat $normalizedChatId, status=${record.deliveryStatus}", tag = "Realtime")
-                                    trySend(record)
+                                    send(record)
                                 }
                                 else -> {}
                             }
@@ -144,12 +146,29 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val statusMonitor = launch(AppDispatchers.IO) {
             try {
                 var wasSubscribed = false
-                channel.status.collect { status ->
-                    if (status == RealtimeChannel.Status.SUBSCRIBED) {
-                        wasSubscribed = true
-                    } else if (wasSubscribed && status == RealtimeChannel.Status.UNSUBSCRIBED) {
-                        Napier.w("Channel $channelId unsubscribed unexpectedly, closing flow to trigger re-subscription", tag = "Realtime")
-                        close(IllegalStateException("Realtime channel unsubscribed"))
+                launch {
+                    channel.status.collect { status ->
+                        if (status == RealtimeChannel.Status.SUBSCRIBED) {
+                            wasSubscribed = true
+                        } else if (wasSubscribed && status != RealtimeChannel.Status.SUBSCRIBED) {
+                            Napier.w("Channel $channelId lost subscription (status=$status), closing flow to trigger re-subscription", tag = "Realtime")
+                            close(IllegalStateException("Realtime channel unsubscribed"))
+                        }
+                    }
+                }
+                launch {
+                    var wasConnected = false
+                    client.realtime.status.collect { rStatus ->
+                        if (rStatus == io.github.jan.supabase.realtime.Realtime.Status.CONNECTED) {
+                            if (wasConnected && wasSubscribed) {
+                                Napier.w("Realtime socket reconnected, refreshing subscription for channel $channelId", tag = "Realtime")
+                                close(IllegalStateException("Realtime socket reconnected"))
+                            }
+                            wasConnected = true
+                        } else if (rStatus == io.github.jan.supabase.realtime.Realtime.Status.DISCONNECTED && wasConnected) {
+                            Napier.w("Realtime socket disconnected for channel $channelId", tag = "Realtime")
+                            close(IllegalStateException("Realtime socket disconnected"))
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -208,7 +227,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                 }
             }
         }
-    }
+    }.buffer(Channel.BUFFERED)
 
     /**
      * Monitors for any new messages across the entire 'messages' table to update the user's inbox.

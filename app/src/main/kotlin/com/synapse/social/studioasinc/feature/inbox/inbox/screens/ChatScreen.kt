@@ -317,7 +317,7 @@ import kotlinx.coroutines.withContext
     val newestMessageClientId = newestMessage?.clientId
     val totalMessageCount = chatItems.size
 
-    LaunchedEffect(newestMessageClientId, totalMessageCount) {
+    LaunchedEffect(newestMessageClientId, totalMessageCount, isUserDragging) {
         if (newestMessageClientId != null) {
             if (!listReady) {
                 listState.scrollToItem(0)
@@ -325,7 +325,7 @@ import kotlinx.coroutines.withContext
                 lastScrolledMessageClientId = newestMessageClientId
             } else if (newestMessageClientId != lastScrolledMessageClientId) {
                 val isFromMe = newestMessage.senderId == currentUserId
-                val bottomThreshold = if (typingStatus?.isTyping == true) 3 else 2
+                val bottomThreshold = if (typingStatus?.isTyping == true) 4 else 3
                 val isNearBottom = listState.firstVisibleItemIndex <= bottomThreshold
 
                 if (isFromMe) {
@@ -333,10 +333,16 @@ import kotlinx.coroutines.withContext
                     // intentional and prevents animated scroll from fighting
                     // the placement spring during rapid-fire sending.
                     listState.scrollToItem(0)
-                } else if (isNearBottom && !isUserDragging) {
-                    listState.animateScrollToItem(0)
+                    lastScrolledMessageClientId = newestMessageClientId
+                } else if (isNearBottom) {
+                    if (!isUserDragging) {
+                        listState.animateScrollToItem(0)
+                        lastScrolledMessageClientId = newestMessageClientId
+                    }
+                } else {
+                    // User has scrolled up to view older messages. Do not disrupt them.
+                    lastScrolledMessageClientId = newestMessageClientId
                 }
-                lastScrolledMessageClientId = newestMessageClientId
             }
         }
     }

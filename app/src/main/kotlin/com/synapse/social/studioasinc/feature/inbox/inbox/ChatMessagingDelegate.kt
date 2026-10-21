@@ -98,6 +98,21 @@ class ChatMessagingDelegate(
         synchronized(paginationCursorLock) { _oldestLoadedPageMessage = null }
     }
 
+    fun markAllIncomingAsRead(currentUserId: String) {
+        _messages.update { current ->
+            var changed = false
+            val updated = current.map { msg ->
+                if (msg.senderId != currentUserId && currentUserId !in msg.readBy) {
+                    changed = true
+                    msg.copy(readBy = (msg.readBy + currentUserId).distinct())
+                } else {
+                    msg
+                }
+            }
+            if (changed) updated else current
+        }
+    }
+
     fun splitIntoChunks(text: String, chunkSize: Int): List<String> {
         if (text.length <= chunkSize) return listOf(text)
         return text.chunked(chunkSize)
@@ -150,14 +165,16 @@ class ChatMessagingDelegate(
 
             val sendMutex = sendMutexes.computeIfAbsent(chatId) { Mutex() }
             val sendResult: Result<Message> = try {
-                sendMutex.withLock {
-                    sendMessageUseCase(
-                        chatId = chatId,
-                        content = text,
-                        messageType = "text",
-                        expiresAt = expiresAt,
-                        replyToId = replyToId
-                    )
+                kotlinx.coroutines.withTimeout(30_000L) {
+                    sendMutex.withLock {
+                        sendMessageUseCase(
+                            chatId = chatId,
+                            content = text,
+                            messageType = "text",
+                            expiresAt = expiresAt,
+                            replyToId = replyToId
+                        )
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -184,9 +201,15 @@ class ChatMessagingDelegate(
 
     fun completeOptimisticSend(tempId: String, actualMessage: Message) {
         pendingTempIds.update { it - tempId }
+        val confirmedMessage = if (actualMessage.deliveryStatus == DeliveryStatus.SENDING) {
+            actualMessage.copy(deliveryStatus = DeliveryStatus.SENT)
+        } else {
+            actualMessage
+        }
+
         _messages.update { current ->
             val optimisticMessage = current.firstOrNull { it.id == tempId }
-            val existingServerMsg = current.firstOrNull { it.id == actualMessage.id }
+            val existingServerMsg = current.firstOrNull { it.id == confirmedMessage.id }
 
             if (optimisticMessage == null && existingServerMsg == null) {
                 return@update current
@@ -201,28 +224,35 @@ class ChatMessagingDelegate(
                     current
                         .filterNot { it.id == tempId }
                         .map { msg ->
-                            if (msg.id == actualMessage.id) {
+                            if (msg.id == confirmedMessage.id) {
                                 optimisticMessage.mergeMonotonic(
-                                    actualMessage.copy(clientId = stableClientId)
+                                    confirmedMessage.copy(clientId = stableClientId)
                                 )
                             } else {
                                 msg
                             }
                         }
+                        .distinctBy { it.id }
                         .sortedWith(ChatMapper.MessageChronologicalComparator)
                 }
                 optimisticMessage != null -> {
                     // Optimistic placeholder is in the list, server message not yet present.
                     // Replace optimistic placeholder with confirmed server message.
                     current.updateById(tempId) { temp ->
-                        temp.mergeMonotonic(actualMessage.copy(clientId = stableClientId))
-                    }.sortedWith(ChatMapper.MessageChronologicalComparator)
+                        temp.mergeMonotonic(confirmedMessage.copy(clientId = stableClientId))
+                    }
+                    .distinctBy { it.id }
+                    .sortedWith(ChatMapper.MessageChronologicalComparator)
                 }
                 existingServerMsg != null -> {
-                    // Server message was already inserted (e.g. via realtime). Update in place.
-                    current.updateById(actualMessage.id) { existing ->
-                        existing.mergeMonotonic(actualMessage.copy(clientId = stableClientId))
-                    }.sortedWith(ChatMapper.MessageChronologicalComparator)
+                    // Server message was already inserted (e.g. via realtime). Update in place and ensure tempId is gone.
+                    current
+                        .filterNot { it.id == tempId }
+                        .updateById(confirmedMessage.id) { existing ->
+                            existing.mergeMonotonic(confirmedMessage.copy(clientId = stableClientId))
+                        }
+                        .distinctBy { it.id }
+                        .sortedWith(ChatMapper.MessageChronologicalComparator)
                 }
                 else -> current
             }

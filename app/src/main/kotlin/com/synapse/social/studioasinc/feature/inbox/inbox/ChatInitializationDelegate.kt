@@ -46,11 +46,12 @@ class ChatInitializationDelegate(
     fun initialize(chatId: String, participantId: String?, currentChatId: String?) {
         // If re-entering the same chat, restart subscriptions and reload messages
         // (cleanup() clears messages before this runs, so they must be reloaded).
-        if (chatId != "new" && chatId == currentChatId) {
-            subscriptionDelegate.startSubscriptions(chatId)
+        if (chatId != "new" && (chatId.equals(currentChatId, ignoreCase = true) || (participantId != null && currentChatId != null))) {
+            val resolvedId = currentChatId ?: chatId
+            subscriptionDelegate.startSubscriptions(resolvedId)
             viewModelScope.launch {
                 // Fast path: show cached messages immediately
-                getMessagesUseCase(chatId).onSuccess { messages ->
+                getMessagesUseCase(resolvedId).onSuccess { messages ->
                     messagingDelegate.setMessages(messages)
                     _isLoading.value = false
                 }.onFailure { e ->
@@ -58,12 +59,12 @@ class ChatInitializationDelegate(
                     _isLoading.value = false
                 }
                 // Network refresh: always fetch fresh to catch any messages missed while away
-                getMessagesUseCase(chatId, forceNetwork = true).onSuccess { fresh ->
+                getMessagesUseCase(resolvedId, forceNetwork = true).onSuccess { fresh ->
                     messagingDelegate.setMessages(fresh)
                 }.onFailure { e ->
-                    Napier.w("Network refresh failed on re-entry for chatId=$chatId: ${e.message}", tag = "ChatInit")
+                    Napier.w("Network refresh failed on re-entry for chatId=$resolvedId: ${e.message}", tag = "ChatInit")
                 }
-                markMessagesAsReadUseCase(chatId)
+                markMessagesAsReadUseCase(resolvedId)
             }
             return
         }

@@ -36,6 +36,7 @@ class ChatSubscriptionDelegate(
     private var typingSubscriptionJob: Job? = null
     private var reactionSubscriptionJob: Job? = null
     private var typingTimeoutJob: Job? = null
+    private var periodicSyncJob: Job? = null
 
     val _typingStatus = MutableStateFlow<TypingStatus?>(null)
     val typingStatus: StateFlow<TypingStatus?> = _typingStatus.asStateFlow()
@@ -133,6 +134,19 @@ class ChatSubscriptionDelegate(
                 delay(1000)
             }
         }
+
+        periodicSyncJob = viewModelScope.launch {
+            while (isActive) {
+                delay(15_000)
+                if (isScreenVisibleProvider()) {
+                    try {
+                        onSyncRequired?.invoke()
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                    }
+                }
+            }
+        }
     }
 
     fun cleanup() {
@@ -140,10 +154,12 @@ class ChatSubscriptionDelegate(
         typingSubscriptionJob?.cancel()
         reactionSubscriptionJob?.cancel()
         typingTimeoutJob?.cancel()
+        periodicSyncJob?.cancel()
         messageSubscriptionJob = null
         typingSubscriptionJob = null
         reactionSubscriptionJob = null
         typingTimeoutJob = null
+        periodicSyncJob = null
         _typingStatus.value = null
     }
 }

@@ -357,6 +357,10 @@ class ChatViewModel @Inject constructor(
                     markMessagesAsReadUseCase(chatId)
                 }
             }
+            val uid = currentUserId
+            if (!uid.isNullOrBlank()) {
+                messagingDelegate.markAllIncomingAsRead(uid)
+            }
         }
     }
 
@@ -493,7 +497,7 @@ class ChatViewModel @Inject constructor(
     private fun handleIncomingMessage(newMessage: Message) {
         Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
 
-        if (currentChatId != null && newMessage.chatId != currentChatId) {
+        if (currentChatId != null && !newMessage.chatId.equals(currentChatId, ignoreCase = true)) {
             Napier.d("Ignoring message for chat ${newMessage.chatId} while viewing $currentChatId", tag = "ChatViewModel")
             return
         }
@@ -509,9 +513,13 @@ class ChatViewModel @Inject constructor(
             val pendingIds = messagingDelegate.pendingTempIds.value
             currentSnapshot.asSequence()
                 .filter { it.id in pendingIds && it.id != newMessage.id }
-                .filter { it.chatId == newMessage.chatId && it.senderId == newMessage.senderId }
+                .filter { it.chatId.equals(newMessage.chatId, ignoreCase = true) && it.senderId == newMessage.senderId }
                 .filter { it.messageType == newMessage.messageType && it.replyToId == newMessage.replyToId }
-                .filter { it.content == newMessage.content || newMessage.content in encryptedPlaceholders }
+                .filter {
+                    it.content.trim() == newMessage.content.trim() ||
+                    newMessage.content in encryptedPlaceholders ||
+                    it.content in encryptedPlaceholders
+                }
                 .minByOrNull { it.createdAt }
         } else {
             null
@@ -519,6 +527,13 @@ class ChatViewModel @Inject constructor(
 
         matchingOptimisticMessage?.let { optimistic ->
             messagingDelegate.pendingTempIds.update { it - optimistic.id }
+        }
+
+        val effectiveReadBy = if (newMessage.senderId != currentUserId && _isScreenVisible.value) {
+            val uid = currentUserId ?: ""
+            if (uid.isNotBlank() && uid !in newMessage.readBy) newMessage.readBy + uid else newMessage.readBy
+        } else {
+            newMessage.readBy
         }
 
         messagingDelegate._messages.update { current ->
@@ -540,13 +555,14 @@ class ChatViewModel @Inject constructor(
             ) {
                 existingInUpdate.copy(
                     deliveryStatus = newMessage.deliveryStatus,
-                    readBy = newMessage.readBy,
+                    readBy = effectiveReadBy,
                     updatedAt = newMessage.updatedAt,
                     clientId = stableClientId
                 )
             } else {
                 newMessage.copy(
                     content = displayContent,
+                    readBy = effectiveReadBy,
                     clientId = stableClientId,
                     isEdited = if (existingInUpdate != null && existingInUpdate.content != newMessage.content) {
                         newMessage.isEdited

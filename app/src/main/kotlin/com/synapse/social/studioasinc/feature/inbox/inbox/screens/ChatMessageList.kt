@@ -240,22 +240,11 @@ internal fun ChatMessageList(
             // shared state mutated in the body.
             val isFirstAppearance = !isHistorical && remember(itemKey) { true }
 
-            // Shared placement and entrance spec for items.
-            // Project design decision: critically-damped spatial spring
-            // (damping 1.0 / stiffness 3000) so existing bubbles slide into
-            // their new positions quickly (~80 ms) without overshoot.
-            // Optimised for rapid-fire sending: stiffness 3000 ensures
-            // each animation settles before the next message lands.
+            // Shared placement and exit spec for items.
+            // Appear animation is removed as requested; items appear instantly.
             val placementModifier = if (!reducedMotion) {
                 Modifier.animateItem(
-                    // Effects spring for opacity — damping 1.0 (no overshoot),
-                    // stiffness 5000 (near-instant ~60 ms settle).
-                    // Only active on first appearance; null on subsequent
-                    // recompositions to prevent flicker on item recycling.
-                    fadeInSpec = if (isFirstAppearance) spring(
-                        dampingRatio = 1.0f,
-                        stiffness = 5000f
-                    ) else null,
+                    fadeInSpec = null,
                     fadeOutSpec = spring(
                         dampingRatio = 1.0f,
                         stiffness = 5000f
