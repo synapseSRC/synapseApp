@@ -385,7 +385,7 @@ private fun ProfileActionButtons(
                         text = {
                             Text(
                                 text = when {
-                                    isFollowing -> stringResource(R.string.following)
+                                    isFollowing -> stringResource(R.string.unfollow)
                                     isFollowRequested -> stringResource(R.string.follow_requested)
                                     isPrivate -> stringResource(R.string.request_to_follow)
                                     else -> stringResource(R.string.follow)
@@ -502,7 +502,7 @@ fun AnimatedFollowButton(
                  ) { (following, requested, privateProfile) ->
                     Text(
                         text = when {
-                            following -> stringResource(R.string.following)
+                            following -> stringResource(R.string.unfollow)
                             requested -> stringResource(R.string.follow_requested)
                             privateProfile -> stringResource(R.string.request_to_follow)
                             else -> stringResource(R.string.follow)

@@ -125,7 +125,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
 
     suspend fun getOrCreateChat(otherUserId: String): String? = withContext(AppDispatchers.IO) {
         try {
-            val currentUserId = getCurrentUserId() ?: return@withContext null
+            val currentUserId = getCurrentUserId() ?: throw IllegalStateException("Not logged in")
 
             // 1. Get all chats the current user is in
             val myChats = client.postgrest.from("chat_participants")
@@ -178,7 +178,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
             chatId
         } catch (e: Exception) {
             Napier.e("Error creating chat", e)
-            null
+            throw e
         }
     }
 
