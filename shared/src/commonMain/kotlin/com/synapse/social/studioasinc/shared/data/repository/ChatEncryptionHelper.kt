@@ -7,6 +7,7 @@ import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSou
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.util.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
@@ -128,8 +129,12 @@ internal class ChatEncryptionHelper(
                                 val (content, mediaUrl, metadata) = extractContent(decryptedContent)
                                 try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
                                 return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
-                            } catch (decryptError: Exception) {
+                            } catch (decryptError: Throwable) {
+                                if (decryptError is CancellationException) throw decryptError
                                 Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
+                                try {
+                                    signalProtocolManager.deleteSession(senderId)
+                                } catch (_: Throwable) {}
                             }
                         }
                     }

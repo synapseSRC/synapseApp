@@ -11,6 +11,7 @@ import androidx.security.crypto.MasterKey
 // IdentityKey(ByteArray) — the 'offset' second parameter was removed in new API.
 import org.signal.libsignal.protocol.IdentityKey
 import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.InvalidKeyIdException
 import org.signal.libsignal.protocol.SignalProtocolAddress
 import org.signal.libsignal.protocol.state.IdentityKeyStore
 import org.signal.libsignal.protocol.state.PreKeyRecord
@@ -107,7 +108,7 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
 
     override fun loadPreKey(preKeyId: Int): PreKeyRecord {
         val serialized = prefs.getString("prekey_$preKeyId", null)
-            ?: throw IllegalStateException("No prekey found")
+            ?: throw InvalidKeyIdException("No prekey found: $preKeyId")
         return PreKeyRecord(Base64.decode(serialized, Base64.DEFAULT))
     }
 
@@ -161,7 +162,7 @@ class AndroidSignalProtocolStore(context: Context) : SignalProtocolStore {
 
     override fun loadSignedPreKey(signedPreKeyId: Int): SignedPreKeyRecord {
         val serialized = prefs.getString("signedprekey_$signedPreKeyId", null)
-            ?: throw IllegalStateException("No signed prekey")
+            ?: throw InvalidKeyIdException("No signed prekey: $signedPreKeyId")
         return SignedPreKeyRecord(Base64.decode(serialized, Base64.DEFAULT))
     }
 

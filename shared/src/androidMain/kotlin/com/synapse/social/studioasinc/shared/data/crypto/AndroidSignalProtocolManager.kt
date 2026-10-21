@@ -8,6 +8,7 @@ import com.synapse.social.studioasinc.shared.data.crypto.models.SignalIdentityKe
 import com.synapse.social.studioasinc.shared.data.crypto.models.SignalOneTimePreKey
 import com.synapse.social.studioasinc.shared.data.crypto.store.AndroidSignalStore
 import com.synapse.social.studioasinc.shared.util.Logger
+import kotlinx.coroutines.CancellationException
 
 // ── libsignal-android (org.signal:libsignal-android) ─────────────────────────
 // Replaces the archived org.whispersystems:signal-protocol-android:2.8.x.
@@ -166,7 +167,8 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
         val decrypted = if (message.type == CiphertextMessage.PREKEY_TYPE) {
             try {
                 sessionCipher.decrypt(PreKeySignalMessage(decodedBody))
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
                 if (store.containsSession(address)) {
                     Logger.w(
                         "E2EE_DECRYPT: PreKey decrypt failed, trying standard SignalMessage decrypt",

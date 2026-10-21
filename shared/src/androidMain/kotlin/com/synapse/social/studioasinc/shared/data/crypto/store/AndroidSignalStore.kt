@@ -21,7 +21,7 @@ import org.signal.libsignal.protocol.state.SignedPreKeyRecord
 import org.signal.libsignal.protocol.state.SignedPreKeyStore
 import org.signal.libsignal.protocol.state.SignalProtocolStore
 
-import java.io.IOException
+import org.signal.libsignal.protocol.InvalidKeyIdException
 
 class AndroidSignalStore(context: Context, private val sharedPreferences: SharedPreferences? = null) : SignalProtocolStore {
 
@@ -45,14 +45,14 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
 
     private fun SharedPreferences.Editor.commitOrThrow(errorMessage: String) {
         if (!this.commit()) {
-            throw IOException(errorMessage)
+            throw IllegalStateException(errorMessage)
         }
     }
 
     // ─── IdentityKeyStore ────────────────────────────────────────────────────
 
     override fun getIdentityKeyPair(): IdentityKeyPair {
-        val encoded = prefs.getString("identity_key_pair", null) ?: throw IOException("No identity key pair")
+        val encoded = prefs.getString("identity_key_pair", null) ?: throw IllegalStateException("No identity key pair")
         return IdentityKeyPair(Base64.decode(encoded, Base64.NO_WRAP))
     }
 
@@ -118,7 +118,7 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     // ─── PreKeyStore ─────────────────────────────────────────────────────────
 
     override fun loadPreKey(preKeyId: Int): PreKeyRecord {
-        val encoded = prefs.getString("prekey_$preKeyId", null) ?: throw IOException("No such prekey")
+        val encoded = prefs.getString("prekey_$preKeyId", null) ?: throw InvalidKeyIdException("No such prekey: $preKeyId")
         return PreKeyRecord(Base64.decode(encoded, Base64.NO_WRAP))
     }
 
@@ -144,7 +144,7 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
 
     override fun loadSignedPreKey(signedPreKeyId: Int): SignedPreKeyRecord {
         val encoded = prefs.getString("signed_prekey_$signedPreKeyId", null)
-            ?: throw IOException("No such signed prekey")
+            ?: throw InvalidKeyIdException("No such signed prekey: $signedPreKeyId")
         return SignedPreKeyRecord(Base64.decode(encoded, Base64.NO_WRAP))
     }
 
