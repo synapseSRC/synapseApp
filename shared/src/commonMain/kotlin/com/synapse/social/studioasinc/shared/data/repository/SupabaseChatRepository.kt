@@ -401,7 +401,7 @@ class SupabaseChatRepository(
 
     override suspend fun getOrCreateChat(otherUserId: String): Result<String> = withContext(AppDispatchers.IO) {
         try {
-            val chatId = dataSource.getOrCreateChat(otherUserId) ?: throw Exception("Failed to create chat")
+            val chatId = dataSource.getOrCreateChat(otherUserId)
             Result.success(chatId)
         } catch (e: Exception) {
             Logger.e("Error creating chat", throwable = e)
