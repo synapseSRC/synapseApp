@@ -32,6 +32,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
@@ -112,16 +113,24 @@ internal fun ChatMessageList(
 
     val reversedItems = remember(chatItems) { chatItems.reversed() }
     val groupPositions = remember(reversedItems) {
+        // Build lookup of all messages (including non-text) for index mapping
         val messageEntries = reversedItems.mapIndexedNotNull { index, item ->
             (item as? ChatListItem.MessageItem)?.let { index to it.message }
         }
+        
+        // Extract only text messages for grouping purposes (non-text messages excluded from group count)
+        val textMessageEntries = messageEntries.filter { (_, message) ->
+            message.messageType == MessageType.TEXT
+        }
+        
         val positions = MutableList<GroupPosition?>(reversedItems.size) { null }
 
-        messageEntries.forEachIndexed { messageIndex, entry ->
+        // Compute group positions only for text messages; non-text messages are always SINGLE
+        textMessageEntries.forEachIndexed { textMessageIndex, entry ->
             val itemIndex = entry.first
             val message = entry.second
-            val olderMessage = messageEntries.getOrNull(messageIndex + 1)?.second
-            val newerMessage = messageEntries.getOrNull(messageIndex - 1)?.second
+            val olderMessage = textMessageEntries.getOrNull(textMessageIndex + 1)?.second
+            val newerMessage = textMessageEntries.getOrNull(textMessageIndex - 1)?.second
             val hasOlder = olderMessage != null &&
                 olderMessage.senderId == message.senderId &&
                 isWithinTimeThreshold(olderMessage.createdAt, message.createdAt)

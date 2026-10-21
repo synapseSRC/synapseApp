@@ -527,14 +527,14 @@ fun MessageBubble(
                         GroupPosition.SINGLE -> RoundedCornerShape(topStart = radius, topEnd = tailRadius, bottomEnd = radius, bottomStart = radius)
                         GroupPosition.FIRST -> RoundedCornerShape(topStart = radius, topEnd = tailRadius, bottomEnd = sharpCorner, bottomStart = radius)
                         GroupPosition.MIDDLE -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = sharpCorner, bottomStart = radius)
-                        GroupPosition.LAST -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = tailRadius, bottomStart = radius)
+                        GroupPosition.LAST -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = radius, bottomStart = radius)
                     }
                 } else {
                     when (position) {
                         GroupPosition.SINGLE -> RoundedCornerShape(topStart = tailRadius, topEnd = radius, bottomEnd = radius, bottomStart = radius)
                         GroupPosition.FIRST -> RoundedCornerShape(topStart = tailRadius, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
                         GroupPosition.MIDDLE -> RoundedCornerShape(topStart = sharpCorner, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
-                        GroupPosition.LAST -> RoundedCornerShape(topStart = tailRadius, topEnd = radius, bottomEnd = radius, bottomStart = radius)
+                        GroupPosition.LAST -> RoundedCornerShape(topStart = sharpCorner, topEnd = radius, bottomEnd = radius, bottomStart = radius)
                     }
                 }
                 return delegate.createOutline(size, layoutDirection, density)
