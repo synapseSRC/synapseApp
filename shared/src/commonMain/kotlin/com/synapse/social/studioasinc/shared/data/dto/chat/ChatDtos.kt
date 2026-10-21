@@ -2,8 +2,47 @@ package com.synapse.social.studioasinc.shared.data.dto.chat
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+
+/**
+ * Handles decoding metadata whether it arrives from Postgres as a JSONB object,
+ * an escaped string, a JSON null, or null. Prevents deserialization crashes in CDC events.
+ */
+object AnyMetadataStringSerializer : KSerializer<String?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("AnyMetadataStringSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: String?) {
+        if (value == null) {
+            encoder.encodeNull()
+        } else {
+            encoder.encodeString(value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): String? {
+        val jsonDecoder = decoder as? JsonDecoder ?: return try {
+            decoder.decodeString()
+        } catch (_: Exception) {
+            null
+        }
+        return when (val element = jsonDecoder.decodeJsonElement()) {
+            is JsonNull -> null
+            is JsonPrimitive -> element.content
+            else -> element.toString()
+        }
+    }
+}
 
 @Serializable
 data class MessageAttachmentDto(
@@ -41,6 +80,7 @@ data class MessageDto(
     @SerialName("failure_reason") val failureReason: String? = null,
     val encryptionFailureReason: String? = null,
     val attachments: List<MessageAttachmentDto>? = null,
+    @Serializable(with = AnyMetadataStringSerializer::class)
     @SerialName("metadata") val metadata: String? = null
 )
 
@@ -69,6 +109,7 @@ data class NewMessageDto(
     @SerialName("reply_to_id") val replyToId: String? = null,
     @SerialName("delivery_status") val deliveryStatus: String = "sent",
     val attachments: List<MessageAttachmentDto>? = null,
+    @Serializable(with = AnyMetadataStringSerializer::class)
     @SerialName("metadata") val metadata: String? = null
 )
 
@@ -116,10 +157,8 @@ data class NewChatDto(
     @EncodeDefault @SerialName("disappearing_mode") val disappearingMode: String = "OFF"
 )
 
-
 /**
  * Minimal payload for opening a direct conversation.
- *
  * Keep group-only settings out of this insert because deployments may not yet
  * have the optional group-settings migration applied.
  */
@@ -130,7 +169,6 @@ data class NewDirectChatDto(
     @EncodeDefault @SerialName("is_group") val isGroup: Boolean = false,
     @SerialName("created_by") val createdBy: String
 )
-
 
 @Serializable
 data class GroupJoinRequestDto(
