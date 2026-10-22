@@ -43,6 +43,17 @@ class MediaUploadHandler @Inject constructor(
                             return@async null
                         }
 
+                        // Reject oversized videos before attempting upload (Supabase storage limit)
+                        if (mediaItem.type == MediaType.VIDEO) {
+                            val sizeBytes = runCatching {
+                                application.contentResolver.openFileDescriptor(android.net.Uri.parse(filePath), "r")?.use { it.statSize } ?: -1L
+                            }.getOrDefault(-1L)
+                            val maxBytes = 50L * 1024 * 1024
+                            if (sizeBytes > 0 && sizeBytes > maxBytes) {
+                                throw Exception("Video exceeds the maximum allowed size of 50 MB")
+                            }
+                        }
+
                         val sharedMediaType = when (mediaItem.type) {
                             MediaType.IMAGE -> com.synapse.social.studioasinc.shared.domain.model.MediaType.PHOTO
                             MediaType.VIDEO -> com.synapse.social.studioasinc.shared.domain.model.MediaType.VIDEO

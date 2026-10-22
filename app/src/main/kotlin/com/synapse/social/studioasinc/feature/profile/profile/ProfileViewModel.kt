@@ -169,13 +169,14 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val currentUserUid = getCurrentUserIdUseCase().orEmpty()
             val isOwnProfile = currentUserUid == userId
+            val followOpInProgress = isFollowOperationInProgress.get()
             _state.update {
                 it.copy(
                     profileState = ProfileUiState.Loading,
                     currentUserId = currentUserUid,
                     isOwnProfile = isOwnProfile,
-                    isFollowing = false,
-                    isFollowRequested = false,
+                    isFollowing = if (followOpInProgress) it.isFollowing else false,
+                    isFollowRequested = if (followOpInProgress) it.isFollowRequested else false,
                     followStatusError = null,
                     hasStory = false,
                     posts = emptyList(),
@@ -235,6 +236,7 @@ class ProfileViewModel @Inject constructor(
         if (!isFollowOperationInProgress.compareAndSet(false, true)) return
 
         val previousState = _state.value
+        android.util.Log.d("ProfileViewModel", "followUser: userId=$userId currentUserId=$currentUserId previousIsFollowing=${previousState.isFollowing}")
         val isPrivate = (previousState.profileState as? ProfileUiState.Success)?.profile?.isPrivate == true
         val targetFollowing = !isPrivate
         val targetRequested = isPrivate
@@ -257,6 +259,7 @@ class ProfileViewModel @Inject constructor(
             try {
                 followUserUseCase(currentUserId, userId).fold(
                     onSuccess = {
+                        android.util.Log.d("ProfileViewModel", "followUser: success userId=$userId")
                         // Optimistic update already applied — trust it.
                         // For public profiles (targetFollowing=true), load content immediately.
                         // For private profiles (targetRequested=true), no content to load yet.
@@ -266,6 +269,7 @@ class ProfileViewModel @Inject constructor(
                         }
                     },
                     onFailure = { error ->
+                        android.util.Log.e("ProfileViewModel", "followUser: failure userId=$userId error=${error.message}", error)
                         // Revert optimistic update on failure
                         _state.value = previousState.copy(
                             isFollowLoading = false,
