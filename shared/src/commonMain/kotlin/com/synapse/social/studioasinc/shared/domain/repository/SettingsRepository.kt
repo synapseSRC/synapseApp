@@ -135,4 +135,6 @@ interface SettingsRepository {
     suspend fun setReduceAnimationsEnabled(enabled: Boolean)
     val autoplayAnimationsEnabled: Flow<Boolean>
     suspend fun setAutoplayAnimationsEnabled(enabled: Boolean)
+    val typingIndicatorsEnabled: Flow<Boolean>
+    suspend fun setTypingIndicatorsEnabled(enabled: Boolean)
 }

@@ -398,6 +398,14 @@ object ChatModule {
     ): com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase {
         return com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase(chatRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideReconcileRealtimeMessageUseCase(
+        chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
+    ): com.synapse.social.studioasinc.shared.domain.usecase.chat.ReconcileRealtimeMessageUseCase {
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.ReconcileRealtimeMessageUseCase(chatRepository)
+    }
     @Provides
     @Singleton
     fun provideVoiceUploadService(

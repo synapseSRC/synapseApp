@@ -1,10 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -16,68 +12,111 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxAnimations
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxColors
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
+/**
+ * Incoming-style typing bubble: asymmetric rounded shape (massive on the sender's
+ * side, small on the bottom-left tail), accent-colored dots, and a subtle shadow
+ * so it reads as a floating, transient element rather than part of the background.
+ *
+ * @param reducedMotion Honors the system reduced-motion setting — when true the
+ *   dots are rendered statically and no animation is started.
+ * @param displayName When set (group chats), renders the sender's name above the
+ *   dots so the indicator is attributable to a specific participant.
+ */
 @Composable
 fun TypingIndicator(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    reducedMotion: Boolean = false,
+    displayName: String? = null,
 ) {
-    val dots = listOf(
-        remember { Animatable(0f) },
-        remember { Animatable(0f) },
-        remember { Animatable(0f) }
-    )
-
-    LaunchedEffect(Unit) {
-        dots.forEachIndexed { index, animatable ->
-            launch {
-                delay(index * 150L)
-                animatable.animateTo(
-                    targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 600, easing = FastOutLinearInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    )
-                )
-            }
-        }
+    val shape = remember {
+        RoundedCornerShape(
+            topStart = Sizes.CornerMassive,
+            topEnd = Sizes.CornerMassive,
+            bottomStart = Sizes.CornerSmall,
+            bottomEnd = Sizes.CornerMassive,
+        )
     }
 
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(
-                topStart = Sizes.CornerMassive,
-                topEnd = Sizes.CornerMassive,
-                bottomStart = Sizes.CornerSmall,
-                bottomEnd = Sizes.CornerMassive
-            ))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
+    Surface(
+        modifier = modifier,
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = Sizes.ElevationNone,
+        shadowElevation = Sizes.ElevationLow,
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(
+                horizontal = Spacing.space16,
+                vertical = Spacing.space6,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            dots.forEachIndexed { index, animatable ->
-                Box(
-                    modifier = Modifier
-                        .offset(y = (-Sizes.TypingIndicatorBounceOffset.value * animatable.value).dp)
-                        .size(Sizes.TypingIndicatorDot)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+            if (!displayName.isNullOrBlank()) {
+                Text(
+                    text = displayName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (index < dots.size - 1) {
-                    Spacer(modifier = Modifier.width(Spacing.space4))
-                }
+                Spacer(modifier = Modifier.width(Spacing.space8))
             }
+            TypingDots(reducedMotion = reducedMotion)
         }
     }
 }
+
+@Composable
+private fun TypingDots(reducedMotion: Boolean) {
+    if (reducedMotion) {
+        // Static fallback — no motion under reduced-motion settings.
+        repeat(3) { index ->
+            Dot()
+            if (index < 2) Spacer(modifier = Modifier.width(Spacing.space4))
+        }
+        return
+    }
+
+    // Single InfiniteTransition drives all three dots. The stagger is baked into
+    // the keyframe spec, so the motion is stable across recompositions (no
+    // re-delaying) and is gated by the reduced-motion flag above.
+    val transition = rememberInfiniteTransition(label = "typingDots")
+    val offsets = List(3) { index ->
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 0f,
+            animationSpec = InboxAnimations.typingBounceSpec(index),
+            label = "dot$index",
+        )
+    }
+
+    offsets.forEachIndexed { index, offset ->
+        Box(
+            modifier = Modifier
+                .offset(y = (-Sizes.TypingIndicatorBounceOffset.value * offset.value).dp)
+                .size(Sizes.TypingIndicatorDot)
+                .background(InboxColors.TypingDot, CircleShape),
+        )
+        if (index < offsets.size - 1) {
+            Spacer(modifier = Modifier.width(Spacing.space4))
+        }
+    }
+}
+
+@Composable
+private fun Dot() =
+    Box(
+        modifier = Modifier
+            .size(Sizes.TypingIndicatorDot)
+            .background(InboxColors.TypingDot, CircleShape),
+    )

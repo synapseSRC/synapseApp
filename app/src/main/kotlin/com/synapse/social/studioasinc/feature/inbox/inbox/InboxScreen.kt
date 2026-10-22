@@ -595,7 +595,7 @@ private fun HomeMessages(
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24),
-                verticalArrangement = Arrangement.spacedBy(Spacing.space8)
+verticalArrangement = Arrangement.spacedBy(Spacing.space0)
             ) {
                 items(conversations, key = { it.chatId }) { conversation ->
                     InboxConversationRow(

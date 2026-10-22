@@ -448,7 +448,10 @@ import kotlinx.coroutines.withContext
                         initialMessageId = initialMessageId,
                         isLoadingMore = isLoadingMore,
                         isInitialSyncing = isLoading,
-                        typingStatus = typingStatus,
+typingStatus = typingStatus,
+                        typingStatusDisplayName = if (isGroupChat) {
+                            typingStatus?.userId?.let { groupMemberNames[it] }
+                        } else null,
                         onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
                         onSingleTap = { selectedMessageForMenu = it },
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },

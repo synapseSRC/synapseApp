@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -208,9 +209,11 @@ class InboxViewModel @Inject constructor(
         subscribedChatIds = chatIds
         if (chatIds.isEmpty()) return
         inboxSubscriptionJob = viewModelScope.launch {
-            subscribeToInboxUpdatesUseCase(chatIds).collect {
-                refreshConversations()
-            }
+            subscribeToInboxUpdatesUseCase(chatIds)
+                .debounce(300L)
+                .collect {
+                    refreshConversations()
+                }
         }
     }
 

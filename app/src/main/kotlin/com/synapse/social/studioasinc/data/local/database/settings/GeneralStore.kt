@@ -23,6 +23,7 @@ interface GeneralStore {
     val highContrastTextEnabled: Flow<Boolean>
     val reduceAnimationsEnabled: Flow<Boolean>
     val autoplayAnimationsEnabled: Flow<Boolean>
+    val typingIndicatorsEnabled: Flow<Boolean>
 
     suspend fun setLanguage(languageCode: String)
     suspend fun setNavigationPlacement(placement: NavigationPlacement)
@@ -44,6 +45,7 @@ interface GeneralStore {
     suspend fun setHighContrastTextEnabled(enabled: Boolean)
     suspend fun setReduceAnimationsEnabled(enabled: Boolean)
     suspend fun setAutoplayAnimationsEnabled(enabled: Boolean)
+    suspend fun setTypingIndicatorsEnabled(enabled: Boolean)
 }
 
 class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralStore {
@@ -191,6 +193,10 @@ class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralS
         preferences[SettingsConstants.KEY_AUTOPLAY_ANIMATIONS_ENABLED] ?: SettingsConstants.DEFAULT_AUTOPLAY_ANIMATIONS_ENABLED
     }
 
+    override val typingIndicatorsEnabled: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_TYPING_INDICATORS_ENABLED] ?: SettingsConstants.DEFAULT_TYPING_INDICATORS_ENABLED
+    }
+
     override suspend fun setIncreaseContrastEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_INCREASE_CONTRAST_ENABLED] = enabled
@@ -212,6 +218,12 @@ class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralS
     override suspend fun setAutoplayAnimationsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_AUTOPLAY_ANIMATIONS_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun setTypingIndicatorsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_TYPING_INDICATORS_ENABLED] = enabled
         }
     }
 }
