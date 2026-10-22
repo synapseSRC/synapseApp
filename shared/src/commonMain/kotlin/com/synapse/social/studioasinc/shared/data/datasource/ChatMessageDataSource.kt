@@ -23,38 +23,80 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     }.getOrNull()
 
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null): List<MessageDto> =
-        withContext(AppDispatchers.IO) {
-            try {
-                val currentUserId = getCurrentUserId()
-                    ?: throw NotAuthenticatedException("User not authenticated")
-                val serverMessages = client.postgrest.from("messages").select {
-                    filter {
-                        eq("chat_id", chatId)
-                        eq("is_deleted", false)
+        getMessagesPage(chatId, limit, before, beforeId, null, null)
+
+    suspend fun getMessagesAfter(chatId: String, limit: Int = 50, after: String, afterId: String): List<MessageDto> =
+        getMessagesPage(chatId, limit, null, null, after, afterId)
+
+    private suspend fun getMessagesPage(
+        chatId: String,
+        limit: Int = 50,
+        before: String? = null,
+        beforeId: String? = null,
+        after: String? = null,
+        afterId: String? = null
+    ): List<MessageDto> = withContext(AppDispatchers.IO) {
+        try {
+            val currentUserId = getCurrentUserId()
+                ?: throw NotAuthenticatedException("User not authenticated")
+            require(before == null || after == null) { "before and after cursors are mutually exclusive" }
+
+            val expiresAt = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
+            val serverMessages = client.postgrest.from("messages").select {
+                filter {
+                    eq("chat_id", chatId)
+                    eq("is_deleted", false)
+                    if (before != null || after != null) {
+                        and {
+                            or {
+                                filter("expires_at", FilterOperator.IS, "null")
+                                gt("expires_at", expiresAt)
+                            }
+                            when {
+                                before != null && beforeId != null -> or {
+                                    lt("created_at", before)
+                                    and {
+                                        eq("created_at", before)
+                                        lt("id", beforeId)
+                                    }
+                                }
+                                before != null -> lt("created_at", before)
+                                after != null && afterId != null -> or {
+                                    gt("created_at", after)
+                                    and {
+                                        eq("created_at", after)
+                                        gt("id", afterId)
+                                    }
+                                }
+                                after != null -> gt("created_at", after)
+                            }
+                        }
+                    } else {
                         or {
                             filter("expires_at", FilterOperator.IS, "null")
-                            gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
-                        }
-                        if (before != null && beforeId != null) {
-                            lte("created_at", before)
-                            neq("id", beforeId)
-                        } else if (before != null) {
-                            lt("created_at", before)
+                            gt("expires_at", expiresAt)
                         }
                     }
+                }
+                if (after != null) {
+                    order("created_at", Order.ASCENDING)
+                    order("id", Order.ASCENDING)
+                } else {
                     order("created_at", Order.DESCENDING)
                     order("id", Order.DESCENDING)
-                    limit(limit.toLong())
-                }.decodeList<MessageDto>()
+                }
+                limit(limit.toLong())
+            }.decodeList<MessageDto>()
 
-                val fetchedIds = serverMessages.mapNotNull { it.id }.distinct()
-                val hiddenIds = getUserDeletedMessageIds(fetchedIds)
-                filterOutUserDeletedMessages(serverMessages, hiddenIds).reversed()
-            } catch (e: Exception) {
-                Napier.e("Error loading messages for $chatId", e)
-                throw e
-            }
+            val fetchedIds = serverMessages.mapNotNull { it.id }.distinct()
+            val hiddenIds = getUserDeletedMessageIds(fetchedIds)
+            val visibleMessages = filterOutUserDeletedMessages(serverMessages, hiddenIds)
+            if (after != null) visibleMessages else visibleMessages.reversed()
+        } catch (e: Exception) {
+            Napier.e("Error loading messages for $chatId", e)
+            throw e
         }
+    }
 
     suspend fun getUserDeletedMessageIds(messageIds: List<String>): Set<String> =
         withContext(AppDispatchers.IO) {
