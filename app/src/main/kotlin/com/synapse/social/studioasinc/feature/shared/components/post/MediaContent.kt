@@ -90,7 +90,8 @@ fun MediaContent(
                         extractedColors[0] = colors
                         atmosphereState.updateColors(colors)
                     }
-                }
+                },
+                onError = { state -> android.util.Log.e("MediaDebug", "Coil single fail url=$url err=${state.result.throwable}") }
             )
             if (isVideo) {
                 Icon(
@@ -145,7 +146,8 @@ fun MediaContent(
                                     atmosphereState.updateColors(colors)
                                 }
                             }
-                        }
+                        },
+                        onError = { state -> android.util.Log.e("MediaDebug", "Coil pager fail url=${mediaUrls[page]} err=${state.result.throwable}") }
                     )
                 }
             }
@@ -256,6 +258,7 @@ fun MediaGridItem(
         modifier = modifier
             .clip(RoundedCornerShape(Sizes.CornerMedium))
             .clickable(onClick = onClick),
-        contentScale = ContentScale.Crop
+        contentScale = ContentScale.Crop,
+        onError = { state -> android.util.Log.e("MediaDebug", "Coil grid fail url=$url err=${state.result.throwable}") }
     )
 }
