@@ -273,14 +273,6 @@ import kotlinx.coroutines.withContext
         }
     )
 
-    LaunchedEffect(listState.interactionSource) {
-        listState.interactionSource.interactions.collect { interaction ->
-            if (interaction is androidx.compose.foundation.interaction.DragInteraction.Start) {
-                focusManager.clearFocus()
-            }
-        }
-    }
-
     // Show toast for E2EE errors
     LaunchedEffect(toastMessage) {
         toastMessage?.let {
@@ -304,7 +296,10 @@ import kotlinx.coroutines.withContext
     LaunchedEffect(listState.interactionSource) {
         listState.interactionSource.interactions.collect { interaction ->
             when (interaction) {
-                is DragInteraction.Start -> isUserDragging = true
+                is DragInteraction.Start -> {
+                    focusManager.clearFocus()
+                    isUserDragging = true
+                }
                 is DragInteraction.Stop,
                 is DragInteraction.Cancel -> isUserDragging = false
             }
@@ -428,6 +423,7 @@ import kotlinx.coroutines.withContext
                 else -> {
                     ChatMessageList(
                         modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
+                        chatId = chatId,
                         chatItems = chatItems,
                         messages = messages,
                         bottomContentPadding = messageListBottomPadding,

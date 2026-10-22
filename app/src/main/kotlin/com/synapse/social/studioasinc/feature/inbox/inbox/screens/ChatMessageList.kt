@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +40,7 @@ import com.synapse.social.studioasinc.shared.domain.model.ReactionType as Shared
 
 @Composable
 internal fun ChatMessageList(
+    chatId: String,
     chatItems: List<ChatListItem>,
     messages: List<Message>,
     currentUserId: String,
@@ -95,30 +95,25 @@ internal fun ChatMessageList(
     }
     // A short list can have its oldest item visible on the very first layout. Do not
     // fetch another page until the user explicitly starts dragging toward history.
-    var userDragGeneration by remember(listState) { mutableIntStateOf(0) }
-    var lastPaginationDragGeneration by remember(listState) { mutableIntStateOf(0) }
+    var hasDraggedSinceLastPage by remember(listState) { mutableStateOf(false) }
     LaunchedEffect(listState.interactionSource) {
         listState.interactionSource.interactions.collect { interaction ->
-            if (interaction is DragInteraction.Start) userDragGeneration++
+            if (interaction is DragInteraction.Start) hasDraggedSinceLastPage = true
         }
     }
-    LaunchedEffect(shouldLoadMore.value, isLoadingMore, userDragGeneration) {
-        if (
-            shouldLoadMore.value &&
-            !isLoadingMore &&
-            userDragGeneration > lastPaginationDragGeneration
-        ) {
+    LaunchedEffect(shouldLoadMore.value, isLoadingMore, hasDraggedSinceLastPage) {
+        if (shouldLoadMore.value && !isLoadingMore && hasDraggedSinceLastPage) {
             // Consume at most one page request per user drag. A still-underfilled
             // viewport must not cascade through history as each page arrives.
-            lastPaginationDragGeneration = userDragGeneration
+            hasDraggedSinceLastPage = false
             onLoadMore()
         }
     }
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
-    val initialKeysCaptured = remember { mutableStateOf(false) }
-    val initialItemKeys = remember { mutableSetOf<String>() }
-    val oldestInitialCreatedAt = remember { mutableStateOf<String?>(null) }
+    val initialKeysCaptured = remember(chatId) { mutableStateOf(false) }
+    val initialItemKeys = remember(chatId) { mutableSetOf<String>() }
+    val oldestInitialCreatedAt = remember(chatId) { mutableStateOf<String?>(null) }
     if (!initialKeysCaptured.value && chatItems.isNotEmpty()) {
         chatItems.forEach { item ->
             when (item) {
@@ -167,7 +162,7 @@ internal fun ChatMessageList(
         }
         positions
     }
-    val pendingQuoteTargetId = remember { mutableStateOf<String?>(null) }
+    val pendingQuoteTargetId = remember(chatId) { mutableStateOf<String?>(null) }
     LaunchedEffect(initialMessageId) {
         initialMessageId?.takeIf { it.isNotBlank() }?.let { messageId ->
             pendingQuoteTargetId.value = messageId
@@ -259,7 +254,7 @@ internal fun ChatMessageList(
 
             // Shared placement and exit spec for items.
             // Appear animation is removed as requested; items appear instantly.
-            val placementModifier = if (!reducedMotion) {
+            val placementModifier = if (!reducedMotion && !isHistorical) {
                 Modifier.animateItem(
                     fadeInSpec = null,
                     fadeOutSpec = spring(
