@@ -306,17 +306,20 @@ class SearchViewModel @Inject constructor(
         val wasFollowing = account.isFollowing
         val delta = if (wasFollowing) -1 else 1
 
-        // Optimistic update: change follow state and followers count immediately
+        // Optimistic update: change follow state and followers count immediately,
+        // and sync cache so tab switches don't revert the button.
         updateState { state ->
+            val updatedAccounts = state.accounts.map { acc ->
+                if (acc.id == accountId) {
+                    acc.copy(
+                        isFollowing = !wasFollowing,
+                        followersCount = maxOf(0, acc.followersCount + delta)
+                    )
+                } else acc
+            }
             state.copy(
-                accounts = state.accounts.map { acc ->
-                    if (acc.id == accountId) {
-                        acc.copy(
-                            isFollowing = !wasFollowing,
-                            followersCount = maxOf(0, acc.followersCount + delta)
-                        )
-                    } else acc
-                }
+                accounts = updatedAccounts,
+                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
             )
         }
 
@@ -328,18 +331,20 @@ class SearchViewModel @Inject constructor(
             }
 
             result.onFailure { err ->
-                // Revert optimistic update on failure
+                // Revert optimistic update on failure, including cache.
                 updateState { state ->
+                    val revertedAccounts = state.accounts.map { acc ->
+                        if (acc.id == accountId) {
+                            acc.copy(
+                                isFollowing = wasFollowing,
+                                followersCount = maxOf(0, acc.followersCount - delta)
+                            )
+                        } else acc
+                    }
                     state.copy(
                         error = err.message,
-                        accounts = state.accounts.map { acc ->
-                            if (acc.id == accountId) {
-                                acc.copy(
-                                    isFollowing = wasFollowing,
-                                    followersCount = maxOf(0, acc.followersCount - delta)
-                                )
-                            } else acc
-                        }
+                        accounts = revertedAccounts,
+                        cachedData = state.cachedData + (SearchTab.PEOPLE to revertedAccounts)
                     )
                 }
             }
