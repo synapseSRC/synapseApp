@@ -798,6 +798,9 @@ fun MessageBubble(
                                         shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
                                         tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
                                     ) {
+                                        if (isUndecryptableSignalEnvelope(message.content)) {
+                                            UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
+                                        } else {
                                         Text(
                                             text = message.content,
                                             style = MaterialTheme.typography.bodyMedium.copy(
@@ -806,6 +809,7 @@ fun MessageBubble(
                                             ),
                                             modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                                         )
+                                        }
                                     }
                                 }
                                 MessageMetadataRow(
@@ -983,6 +987,15 @@ fun MessageBubble(
 
                                             else -> {
                                                 Column {
+                                                    if (isUndecryptableSignalEnvelope(message.content)) {
+                                                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
+                                                        MessageMetadataRow(
+                                                            message = message,
+                                                            isFromMe = isFromMe,
+                                                            contentColor = contentColor,
+                                                            onRetryClick = onRetryClick
+                                                        )
+                                                    } else {
                                                     val firstUrl = UrlUtils.extractFirstUrl(message.content)
                                                     if (firstUrl != null && getLinkMetadataUseCase != null) {
                                                         LinkPreviewCard(
@@ -1049,6 +1062,7 @@ fun MessageBubble(
                                                         contentColor = contentColor,
                                                         onRetryClick = onRetryClick
                                                     )
+                                                    }
                                                 }
                                             }
                                         }
