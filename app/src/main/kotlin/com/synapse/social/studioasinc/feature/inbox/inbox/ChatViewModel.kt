@@ -22,12 +22,16 @@ import com.synapse.social.studioasinc.shared.domain.usecase.presence.UpdateCurre
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.GetStorageConfigUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import com.synapse.social.studioasinc.shared.util.TimeProvider
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -35,6 +39,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+
+private const val MESSAGE_SYNC_PAGE_SIZE = 50
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -162,6 +168,8 @@ class ChatViewModel @Inject constructor(
     private var currentChatId: String? = null
     private val loadingQuotedMessageIds = ConcurrentHashMap<String, Unit>()
     private val historyPaginationMutex = Mutex()
+    private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
+    private val emptyChatSyncCursors = ConcurrentHashMap<String, Pair<String, String>>()
 
     val currentUserId: String?
         get() = getCurrentUserIdUseCase()
@@ -206,13 +214,7 @@ class ChatViewModel @Inject constructor(
             handleIncomingReaction(reaction)
         },
         onSyncRequired = {
-            currentChatId?.let { chatId ->
-                getMessagesUseCase(chatId, forceNetwork = true).onSuccess { fresh ->
-                    messagingDelegate.setMessages(fresh)
-                }.onFailure { e ->
-                    Napier.w("Network sync failed on reconnect for chatId=$chatId: ${e.message}", tag = "ChatViewModel")
-                }
-            }
+            currentChatId?.let { chatId -> synchronizeMissedMessages(chatId) }
         }
     )
 
@@ -227,7 +229,7 @@ class ChatViewModel @Inject constructor(
         onOptimisticMessageAdded = { msg, tempId ->
             messagingDelegate.pendingTempIds.update { it + tempId }
             messagingDelegate._messages.update { current ->
-                (current + msg).distinctBy { it.id }.sortedWith(ChatMapper.MessageChronologicalComparator)
+                messagingDelegate.insertChronologically(current, msg)
             }
         },
         onOptimisticMessageUpdated = { tempId, content ->
@@ -358,10 +360,8 @@ class ChatViewModel @Inject constructor(
         _isScreenVisible.value = visible
         if (visible) {
             currentChatId?.let { chatId ->
-                viewModelScope.launch {
-                    markMessagesAsReadUseCase(chatId)
-                    updateCurrentChatUseCase(chatId)
-                }
+                subscriptionDelegate.queueReadReceipt(chatId)
+                viewModelScope.launch { updateCurrentChatUseCase(chatId) }
             }
             val uid = currentUserId
             if (!uid.isNullOrBlank()) {
@@ -381,12 +381,88 @@ class ChatViewModel @Inject constructor(
 
     fun refreshMessages() {
         val chatId = currentChatId ?: return
-        _hasMoreMessages.value = true
-        viewModelScope.launch {
-            getMessagesUseCase(chatId, forceNetwork = true).onSuccess { messages ->
-                messagingDelegate.setMessages(messages)
-            }
+        viewModelScope.launch { synchronizeMissedMessages(chatId) }
+    }
+
+    private suspend fun synchronizeMissedMessages(chatId: String) {
+        val candidate = viewModelScope.async(start = CoroutineStart.LAZY) {
+            fetchMissedMessages(chatId)
         }
+        val existing = activeMessageSyncs.putIfAbsent(chatId, candidate)
+        val sync = existing ?: candidate
+        if (existing == null) {
+            sync.invokeOnCompletion { activeMessageSyncs.remove(chatId, sync) }
+        } else {
+            candidate.cancel()
+        }
+        sync.start()
+        sync.await()
+    }
+
+    private suspend fun fetchMissedMessages(chatId: String) {
+        if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
+        val latestConfirmed = messagingDelegate.messages.value.lastOrNull {
+            it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING &&
+                it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.FAILED
+        }
+        var cursorCreatedAt: String
+        var cursorId: String
+        if (latestConfirmed != null) {
+            emptyChatSyncCursors.remove(chatId)
+            cursorCreatedAt = latestConfirmed.createdAt
+            cursorId = latestConfirmed.id
+        } else {
+            val emptyCursor = emptyChatSyncCursors[chatId]
+            if (emptyCursor == null) {
+                // Start the empty-chat watermark before the fetch so messages that arrive
+                // during the request remain inside the next reconciliation window.
+                val syncStartedAt = TimeProvider.nowInstant().toString()
+                val initialResult = getMessagesUseCase(chatId, forceNetwork = true)
+                val initialMessages = initialResult.getOrNull()
+                if (initialMessages == null) {
+                    Napier.w("Initial delta sync failed: " + initialResult.exceptionOrNull()?.message, tag = "ChatViewModel")
+                    return
+                }
+                messagingDelegate.setMessages(initialMessages)
+                val recoveredLatest = messagingDelegate.messages.value.lastOrNull {
+                    it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING &&
+                        it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.FAILED
+                }
+                if (recoveredLatest == null) {
+                    emptyChatSyncCursors[chatId] = syncStartedAt to "00000000-0000-0000-0000-000000000000"
+                }
+                return
+            }
+            cursorCreatedAt = emptyCursor.first
+            cursorId = emptyCursor.second
+        }
+
+        while (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+            val pageResult = getMessagesUseCase.after(chatId, cursorCreatedAt, cursorId, MESSAGE_SYNC_PAGE_SIZE)
+            val page = pageResult.getOrNull()
+            if (pageResult.isFailure) {
+                Napier.w("Incremental message sync failed: " + pageResult.exceptionOrNull()?.message, tag = "ChatViewModel")
+                return
+            }
+            if (page.isNullOrEmpty()) return
+            val nextCursor = page.last()
+            if (compareSyncCursor(nextCursor, cursorCreatedAt, cursorId) <= 0) {
+                Napier.w("Incremental message cursor did not advance", tag = "ChatViewModel")
+                return
+            }
+            messagingDelegate.setMessages(page)
+            cursorCreatedAt = nextCursor.createdAt
+            cursorId = nextCursor.id
+        }
+    }
+
+    private fun compareSyncCursor(message: Message, createdAt: String, id: String): Int {
+        val timestampComparison = try {
+            kotlinx.datetime.Instant.parse(message.createdAt).compareTo(kotlinx.datetime.Instant.parse(createdAt))
+        } catch (_: Exception) {
+            message.createdAt.compareTo(createdAt)
+        }
+        return if (timestampComparison != 0) timestampComparison else message.id.compareTo(id)
     }
 
     fun loadQuotedMessage(messageId: String) {
@@ -492,7 +568,7 @@ class ChatViewModel @Inject constructor(
                     } else {
                         messagingDelegate.recordFetchedPage(older)
                         messagingDelegate._messages.update { current ->
-                            (older + current).distinctBy { it.id }.sortedWith(ChatMapper.MessageChronologicalComparator)
+                            messagingDelegate.mergeChronologically(current, older)
                         }
                     }
                 }.onFailure { e ->
@@ -595,21 +671,16 @@ class ChatViewModel @Inject constructor(
             val reconciledMessage = (existingInUpdate ?: matchingOptimisticMessage)
                 ?.mergeMonotonic(mergedMessage)
                 ?: mergedMessage
-            val replaced = when {
-                existingInUpdate != null -> with(messagingDelegate) { current.replaceById(newMessage.id, reconciledMessage) }
-                matchingOptimisticMessage != null -> with(messagingDelegate) {
-                    current.replaceById(matchingOptimisticMessage.id, reconciledMessage)
-                }
-                else -> current + reconciledMessage
+            val currentWithoutOptimistic = if (matchingOptimisticMessage != null && matchingOptimisticMessage.id != newMessage.id) {
+                current.filterNot { it.id == matchingOptimisticMessage.id }
+            } else {
+                current
             }
-            replaced
-                .filterNot {
-                    matchingOptimisticMessage != null &&
-                        it.id == matchingOptimisticMessage.id &&
-                        it.id != newMessage.id
-                }
-                .distinctBy { it.id }
-                .sortedWith(ChatMapper.MessageChronologicalComparator)
+            when {
+                existingInUpdate != null -> messagingDelegate.replaceChronologically(currentWithoutOptimistic, newMessage.id, reconciledMessage)
+                matchingOptimisticMessage != null -> messagingDelegate.replaceChronologically(currentWithoutOptimistic, matchingOptimisticMessage.id, reconciledMessage)
+                else -> messagingDelegate.insertChronologically(currentWithoutOptimistic, reconciledMessage)
+            return }
         }
         aiDelegate.generateSmartReplies(messages.value)
 
@@ -804,6 +875,7 @@ class ChatViewModel @Inject constructor(
 
     private fun cleanup() {
         subscriptionDelegate.cleanup()
+        aiDelegate.cancelPendingSmartReplies()
         inputDelegate.cleanup()
         messagingDelegate.pendingTempIds.value = emptySet()
         messagingDelegate.clearMessages()

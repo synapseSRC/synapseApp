@@ -52,7 +52,8 @@ object ChatItemsMapper {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
 
-        val sorted = messages.sortedWith(com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.MessageChronologicalComparator)
+        // ChatMessagingDelegate maintains chronological ordering for every timeline mutation.
+        val sorted = messages
         val result = mutableListOf<ChatListItem>()
         var lastDate: LocalDate? = null
 

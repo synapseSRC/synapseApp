@@ -41,6 +41,64 @@ class ChatSubscriptionDelegate(
     val _typingStatus = MutableStateFlow<TypingStatus?>(null)
     val typingStatus: StateFlow<TypingStatus?> = _typingStatus.asStateFlow()
 
+    private enum class ReceiptLevel { DELIVERED, READ }
+
+    private val receiptLock = Any()
+    private val pendingReceiptLevels = mutableMapOf<String, ReceiptLevel>()
+    private val receiptFlushJobs = mutableMapOf<String, Job>()
+
+    fun queueReadReceipt(chatId: String) {
+        enqueueReceipt(chatId, ReceiptLevel.READ)
+    }
+
+    private fun enqueueIncomingReceipt(chatId: String) {
+        enqueueReceipt(chatId, if (isScreenVisibleProvider()) ReceiptLevel.READ else ReceiptLevel.DELIVERED)
+    }
+
+    private fun enqueueReceipt(chatId: String, requested: ReceiptLevel) {
+        synchronized(receiptLock) {
+            val current = pendingReceiptLevels[chatId]
+            if (current != ReceiptLevel.READ) {
+                pendingReceiptLevels[chatId] = if (requested == ReceiptLevel.READ) ReceiptLevel.READ else current ?: requested
+            }
+            if (receiptFlushJobs[chatId]?.isActive != true) {
+                receiptFlushJobs[chatId] = viewModelScope.launch { flushReceiptBatch(chatId) }
+            }
+        }
+    }
+
+    private suspend fun flushReceiptBatch(chatId: String) {
+        while (true) {
+            delay(RECEIPT_BATCH_WINDOW_MS)
+            val level = synchronized(receiptLock) {
+                val pending = pendingReceiptLevels.remove(chatId)
+                if (pending == null) receiptFlushJobs.remove(chatId)
+                pending
+            } ?: return
+
+            try {
+                // READ wins if messages crossed the coalescing window with mixed visibility.
+                if (level == ReceiptLevel.READ || isScreenVisibleProvider()) {
+                    markMessagesAsReadUseCase(chatId).onFailure {
+                        io.github.aakira.napier.Napier.e("Failed to mark messages as read", it)
+                    }
+                } else {
+                    markMessagesAsDeliveredUseCase(chatId).onFailure {
+                        io.github.aakira.napier.Napier.e("Failed to mark messages as delivered", it)
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                io.github.aakira.napier.Napier.e("Failed to update message receipts", e)
+            }
+        }
+    }
+
+    private companion object {
+        const val RECEIPT_BATCH_WINDOW_MS = 200L
+        const val INCREMENTAL_RECOVERY_INTERVAL_MS = 60_000L
+    }
+
     fun restartSubscriptions(chatId: String) {
         cleanup()
         startSubscriptions(chatId)
@@ -73,17 +131,7 @@ class ChatSubscriptionDelegate(
                         // We also check if the screen is currently visible to the user.
                         val currentUserId = currentUserIdProvider()
                         if (currentUserId != null && newMessage.senderId != currentUserId) {
-                            viewModelScope.launch {
-                                try {
-                                    if (isScreenVisibleProvider()) {
-                                        markMessagesAsReadUseCase(chatId)
-                                    } else {
-                                        markMessagesAsDeliveredUseCase(chatId)
-                                    }
-                                } catch (e: Exception) {
-                                    io.github.aakira.napier.Napier.e("Failed to mark messages as read/delivered", e)
-                                }
-                            }
+                            enqueueIncomingReceipt(chatId)
                         }
                     }
                 } catch (e: Exception) {
@@ -138,12 +186,13 @@ class ChatSubscriptionDelegate(
 
         periodicSyncJob = viewModelScope.launch {
             while (isActive) {
-                delay(15_000)
+                delay(INCREMENTAL_RECOVERY_INTERVAL_MS)
                 if (isScreenVisibleProvider()) {
                     try {
                         onSyncRequired?.invoke()
                     } catch (e: Exception) {
                         if (e is CancellationException) throw e
+                        io.github.aakira.napier.Napier.w("Incremental recovery sync failed", e, tag = "ChatSubscription")
                     }
                 }
             }
