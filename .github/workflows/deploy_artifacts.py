@@ -56,6 +56,7 @@ async def send_file(client, group_id, topic_id, file_path, commit_info, github_a
         author_display = author_name
 
     message = (
+        f"**Branch:** `{branch_name}`\n"
         f"**Commit by:** {author_display}\n"
         f"**Commit message:** {commit_message}\n"
         f"**Commit hash:** #{commit_hash_short}"
@@ -97,6 +98,7 @@ async def main():
     topic_id_str = os.getenv("TOPIC_ID")
     apk_path = os.getenv("APK_PATH")
     github_actor = os.getenv("GITHUB_ACTOR")
+    branch_name = os.getenv("BRANCH_NAME") or os.getenv("GITHUB_REF_NAME", "unknown")
 
     if not all([api_id_str, api_hash, bot_token, group_id_str, apk_path]):
         logger.error("Missing required environment variables.")

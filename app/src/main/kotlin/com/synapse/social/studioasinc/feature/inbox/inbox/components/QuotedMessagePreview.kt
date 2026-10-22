@@ -94,7 +94,13 @@ internal fun QuotedMessagePreview(
         unavailableLabel = stringResource(R.string.chat_reply_unavailable_title)
     )
     val label = quotedKindLabel(preview.kind)
-    val detail = preview.excerpt?.takeIf(String::isNotBlank)
+    val detail = preview.excerpt?.takeIf(String::isNotBlank)?.let { excerpt ->
+        if (isUndecryptableMessageContent(excerpt)) {
+            stringResource(R.string.chat_message_decryption_failed)
+        } else {
+            excerpt
+        }
+    }
     val duration = preview.durationSeconds?.let { seconds ->
         stringResource(R.string.chat_reply_duration, seconds / 60, seconds % 60)
     }

@@ -792,20 +792,28 @@ fun MessageBubble(
 
                                 if (message.content.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(Spacing.space4))
-                                    Surface(
-                                        color = if (hasReplyPreview) Color.Transparent else containerColor,
-                                        contentColor = contentColor,
-                                        shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
-                                        tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
-                                    ) {
-                                        Text(
-                                            text = message.content,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                color = contentColor,
-                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
-                                            ),
-                                            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
+                                    if (isUndecryptableMessageContent(message.content)) {
+                                        UndecryptableMessageNotice(
+                                            fontScale = fontScale,
+                                            contentColor = contentColor,
+                                            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4)
                                         )
+                                    } else {
+                                        Surface(
+                                            color = if (hasReplyPreview) Color.Transparent else containerColor,
+                                            contentColor = contentColor,
+                                            shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
+                                            tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
+                                        ) {
+                                            Text(
+                                                text = message.content,
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    color = contentColor,
+                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+                                                ),
+                                                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
+                                            )
+                                        }
                                     }
                                 }
                                 MessageMetadataRow(
@@ -837,6 +845,8 @@ fun MessageBubble(
                                                             isFromMe = isFromMe,
                                                             initialDurationMs = attachmentDuration
                                                         )
+                                                    } else if (isUndecryptableMessageContent(message.content)) {
+                                                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
                                                     } else {
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
@@ -983,72 +993,82 @@ fun MessageBubble(
 
                                             else -> {
                                                 Column {
-                                                    val firstUrl = UrlUtils.extractFirstUrl(message.content)
-                                                    if (firstUrl != null && getLinkMetadataUseCase != null) {
-                                                        LinkPreviewCard(
-                                                            url = firstUrl,
-                                                            useCase = getLinkMetadataUseCase,
-                                                            modifier = Modifier.padding(bottom = Spacing.space8)
+                                                    if (isUndecryptableMessageContent(message.content)) {
+                                                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
+                                                        MessageMetadataRow(
+                                                            message = message,
+                                                            isFromMe = isFromMe,
+                                                            contentColor = contentColor,
+                                                            onRetryClick = onRetryClick
                                                         )
-                                                    }
-
-                                                    val annotatedString = buildAnnotatedString {
-                                                        val urlRegex = Regex("(https?://[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)|(www\\.[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)")
-                                                        var lastIndex = 0
-
-                                                        urlRegex.findAll(message.content).forEach { matchResult ->
-                                                            append(message.content.substring(lastIndex, matchResult.range.first))
-
-                                                            val url = matchResult.value
-                                                            val fullUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                                                                "https://$url"
-                                                            } else {
-                                                                url
-                                                            }
-
-                                                            pushStringAnnotation(tag = "URL", annotation = fullUrl)
-                                                            withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-                                                                append(url)
-                                                            }
-                                                            pop()
-
-                                                            lastIndex = matchResult.range.last + 1
-                                                        }
-                                                        append(message.content.substring(lastIndex))
-                                                    }
-
-                                                    var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-                                                    Text(
-                                                        text = annotatedString,
-                                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                                            color = contentColor,
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
-                                                        ),
-                                                        onTextLayout = { layoutResult = it },
-                                                        modifier = Modifier.pointerInput(Unit) {
-                                                            detectTapGestures(
-                                                                onLongPress = { onLongClick() },
-                                                                onTap = { pos ->
-                                                                    var urlHandled = false
-                                                                    layoutResult?.let { lResult ->
-                                                                        val offset = lResult.getOffsetForPosition(pos)
-                                                                        annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                                                                            .firstOrNull()?.let { annotation ->
-                                                                                IntentUtils.openUrl(context, annotation.item)
-                                                                                urlHandled = true
-                                                                            }
-                                                                    }
-                                                                    if (!urlHandled) onClick()
-                                                                }
+                                                    } else {
+                                                        val firstUrl = UrlUtils.extractFirstUrl(message.content)
+                                                        if (firstUrl != null && getLinkMetadataUseCase != null) {
+                                                            LinkPreviewCard(
+                                                                url = firstUrl,
+                                                                useCase = getLinkMetadataUseCase,
+                                                                modifier = Modifier.padding(bottom = Spacing.space8)
                                                             )
                                                         }
-                                                    )
-                                                    MessageMetadataRow(
-                                                        message = message,
-                                                        isFromMe = isFromMe,
-                                                        contentColor = contentColor,
-                                                        onRetryClick = onRetryClick
-                                                    )
+
+                                                        val annotatedString = buildAnnotatedString {
+                                                            val urlRegex = Regex("(https?://[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)|(www\\.[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)")
+                                                            var lastIndex = 0
+
+                                                            urlRegex.findAll(message.content).forEach { matchResult ->
+                                                                append(message.content.substring(lastIndex, matchResult.range.first))
+
+                                                                val url = matchResult.value
+                                                                val fullUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                                                                    "https://$url"
+                                                                } else {
+                                                                    url
+                                                                }
+
+                                                                pushStringAnnotation(tag = "URL", annotation = fullUrl)
+                                                                withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
+                                                                    append(url)
+                                                                }
+                                                                pop()
+
+                                                                lastIndex = matchResult.range.last + 1
+                                                            }
+                                                            append(message.content.substring(lastIndex))
+                                                        }
+
+                                                        var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                                                        Text(
+                                                            text = annotatedString,
+                                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                                color = contentColor,
+                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
+                                                            ),
+                                                            onTextLayout = { layoutResult = it },
+                                                            modifier = Modifier.pointerInput(Unit) {
+                                                                detectTapGestures(
+                                                                    onLongPress = { onLongClick() },
+                                                                    onTap = { pos ->
+                                                                        var urlHandled = false
+                                                                        layoutResult?.let { lResult ->
+                                                                            val offset = lResult.getOffsetForPosition(pos)
+                                                                            annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                                                                                .firstOrNull()?.let { annotation ->
+                                                                                    IntentUtils.openUrl(context, annotation.item)
+                                                                                    urlHandled = true
+                                                                                }
+                                                                        }
+                                                                        if (!urlHandled) onClick()
+                                                                    }
+                                                                )
+                                                            }
+                                                        )
+                                                        MessageMetadataRow(
+                                                            message = message,
+                                                            isFromMe = isFromMe,
+                                                            contentColor = contentColor,
+                                                            onRetryClick = onRetryClick
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

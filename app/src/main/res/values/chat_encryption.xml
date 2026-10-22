@@ -51,4 +51,9 @@
     <string name="chat_security_share_title">Share safety number</string>
     <string name="chat_security_share_text">Synapse safety number for %1$s: %2$s</string>
     <string name="chat_security_share_error">Unable to open the sharing menu.</string>
+    <string name="chat_message_decryption_failed">Couldn’t decrypt this message.</string>
+    <string name="chat_message_decryption_learn_more">Learn more</string>
+    <string name="chat_message_decryption_details_title">Couldn’t decrypt this message</string>
+    <string name="chat_message_decryption_details_body">Synapse couldn’t open this encrypted message on this device. Check that your app is up to date, reopen the chat, or ask the sender to resend it.</string>
+    <string name="chat_message_decryption_details_dismiss">Got it</string>
 </resources>
