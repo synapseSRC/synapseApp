@@ -680,7 +680,7 @@ class ChatViewModel @Inject constructor(
                 existingInUpdate != null -> messagingDelegate.replaceChronologically(currentWithoutOptimistic, newMessage.id, reconciledMessage)
                 matchingOptimisticMessage != null -> messagingDelegate.replaceChronologically(currentWithoutOptimistic, matchingOptimisticMessage.id, reconciledMessage)
                 else -> messagingDelegate.insertChronologically(currentWithoutOptimistic, reconciledMessage)
-            return }
+            }
         }
         aiDelegate.generateSmartReplies(messages.value)
 

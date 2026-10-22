@@ -147,7 +147,7 @@ class ChatInitializationDelegate(
                     }.onFailure { error ->
                         if (messagingDelegate.messages.value.isEmpty()) _error.value = error.message
                         Napier.w("Network refresh failed on init for chatId=" + actualChatId + ": " + error.message, tag = "ChatInit")
-                    return }
+                    }
                 } finally {
                     _isLoading.value = false
                 }
