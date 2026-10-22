@@ -135,7 +135,7 @@ object SynapseColors {
         inversePrimary = 0xFF9ECAFF,
         surfaceTint = 0xFF0061A4,
         surfaceContainerLowest = 0xFFFFFFFF,
-        surfaceContainerLow = 0xFFF2F3FA,
+        surfaceContainerLow = 0xFFE8EAF6,
         surfaceContainer = 0xFFECEEF6,
         surfaceContainerHigh = 0xFFE6E8F0,
         surfaceContainerHighest = 0xFFE0E2EC
@@ -186,7 +186,7 @@ object SynapseColors {
         inverseOnSurface = 0xFF2E3036,
         inversePrimary = 0xFF0061A4,
         surfaceTint = 0xFF9ECAFF,
-        surfaceContainerLowest = 0xFF0C0E13,
+        surfaceContainerLowest = 0xFF0E0F13,
         surfaceContainerLow = 0xFF191C20,
         surfaceContainer = 0xFF1D2024,
         surfaceContainerHigh = 0xFF282A2F,
