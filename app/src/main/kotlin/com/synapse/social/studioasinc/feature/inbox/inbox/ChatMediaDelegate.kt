@@ -57,6 +57,14 @@ class ChatMediaDelegate(
             return
         }
 
+        val encryptionResult = sendMessageUseCase.ensureE2EEReadyForChat(chatId)
+        if (encryptionResult.isFailure) {
+            val err = encryptionResult.exceptionOrNull()?.message ?: "End-to-end encryption is unavailable."
+            onError(err)
+            onResult?.invoke(false, err)
+            return
+        }
+
         val selectedReplyToId = replyToId
         val durationSeconds = (durationMs / 1000).toInt().coerceAtLeast(1)
         val tempId = UUID.randomUUID().toString()
@@ -88,16 +96,18 @@ class ChatMediaDelegate(
                 config = storageConfig
             )
 
-            uploadResult.onSuccess { mediaUrl ->
+            uploadResult.onSuccess { uploadedVoice ->
                 sendMessageUseCase(
                     chatId = chatId,
                     content = "",
-                    mediaUrl = mediaUrl,
+                    mediaUrl = uploadedVoice.mediaReference,
                     messageType = MessageType.AUDIO.name.lowercase(),
-                    attachments = listOf(audioAttachment.copy(url = mediaUrl, uploadProgress = 1.0f)),
-                    replyToId = selectedReplyToId
+                    attachments = null,
+                    replyToId = selectedReplyToId,
+                    requireE2EE = true
                 ).onSuccess { actualMessage ->
                     onOptimisticMessageSuccess(tempId, actualMessage)
+                    audioFile.delete()
                     if (clearReplySelection) onReplyConsumed(selectedReplyToId)
                     onResult?.invoke(true, null)
                 }.onFailure { e ->

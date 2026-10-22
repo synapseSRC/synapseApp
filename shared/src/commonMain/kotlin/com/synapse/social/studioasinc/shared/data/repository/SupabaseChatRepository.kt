@@ -333,7 +333,14 @@ class SupabaseChatRepository(
                     Json.parseToJsonElement(senderPlaintext).jsonObject["content"]?.jsonPrimitive?.content ?: senderPlaintext
                 } catch (_: Exception) { senderPlaintext }
 
-                val cachedMsg = domainMessage.copy(content = displayContent, metadataContainer = metadataContainer)
+                val decryptedMediaUrl = try {
+                    Json.parseToJsonElement(senderPlaintext).jsonObject["mediaUrl"]?.jsonPrimitive?.content
+                } catch (_: Exception) { null }
+                val cachedMsg = domainMessage.copy(
+                    content = displayContent,
+                    mediaUrl = decryptedMediaUrl ?: domainMessage.mediaUrl,
+                    metadataContainer = metadataContainer
+                )
                 cachedMessageDao?.upsert(cachedMsg)
                 encryptionHelper.decryptedMessageCache[messageDto.id ?: ""] = senderPlaintext
                 cachedMsg
