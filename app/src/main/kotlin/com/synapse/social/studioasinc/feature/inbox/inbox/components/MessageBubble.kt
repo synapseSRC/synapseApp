@@ -792,15 +792,19 @@ fun MessageBubble(
 
                                 if (message.content.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(Spacing.space4))
-                                    Surface(
-                                        color = if (hasReplyPreview) Color.Transparent else containerColor,
-                                        contentColor = contentColor,
-                                        shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
-                                        tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
-                                    ) {
-                                        if (isUndecryptableSignalEnvelope(message.content)) {
-                                            UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
-                                        } else {
+                                    if (isUndecryptableSignalEnvelope(message.content)) {
+                                        UndecryptableMessageNotice(
+                                            fontScale = fontScale,
+                                            contentColor = contentColor,
+                                            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4)
+                                        )
+                                    } else {
+                                        Surface(
+                                            color = if (hasReplyPreview) Color.Transparent else containerColor,
+                                            contentColor = contentColor,
+                                            shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
+                                            tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
+                                        ) {
                                             Text(
                                                 text = message.content,
                                                 style = MaterialTheme.typography.bodyMedium.copy(
