@@ -129,5 +129,6 @@ jobs:
           TOPIC_ID: ${{ secrets.TELEGRAM_TOPIC_ID }}
           APK_PATH: ./downloaded-artifact/app-release-${{ needs.build.outputs.short_sha }}.apk
           GITHUB_ACTOR: ${{ github.actor }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: python ./.github/workflows/deploy_artifacts.py
         continue-on-error: true
