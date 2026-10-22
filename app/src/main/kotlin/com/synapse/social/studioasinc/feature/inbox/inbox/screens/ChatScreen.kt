@@ -18,7 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.interaction.DragInteraction
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -136,7 +136,8 @@ import kotlinx.coroutines.withContext
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
 
-    val listState = rememberLazyListState()
+    // Each chat opens at the newest-message anchor instead of restoring a stale history offset.
+    val listState = remember(chatId) { LazyListState() }
     var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -296,10 +297,10 @@ import kotlinx.coroutines.withContext
         }
     }
 
-    var listReady by remember { mutableStateOf(false) }
+    var listReady by remember(chatId) { mutableStateOf(false) }
     var showDisappearingModeDialog by remember { mutableStateOf(false) }
 
-    var isUserDragging by remember { mutableStateOf(false) }
+    var isUserDragging by remember(listState) { mutableStateOf(false) }
     LaunchedEffect(listState.interactionSource) {
         listState.interactionSource.interactions.collect { interaction ->
             when (interaction) {
@@ -310,7 +311,7 @@ import kotlinx.coroutines.withContext
         }
     }
 
-    var lastScrolledMessageClientId by remember { mutableStateOf<String?>(null) }
+    var lastScrolledMessageClientId by remember(chatId) { mutableStateOf<String?>(null) }
     val newestMessage = remember(chatItems) {
         chatItems.filterIsInstance<ChatListItem.MessageItem>().lastOrNull()?.message
     }

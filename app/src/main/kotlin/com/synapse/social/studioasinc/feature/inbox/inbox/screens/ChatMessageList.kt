@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
@@ -91,8 +93,26 @@ internal fun ChatMessageList(
             highestVisibleIndex >= total - 3
         }
     }
-    LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value && !isLoadingMore) onLoadMore()
+    // A short list can have its oldest item visible on the very first layout. Do not
+    // fetch another page until the user explicitly starts dragging toward history.
+    var userDragGeneration by remember(listState) { mutableIntStateOf(0) }
+    var lastPaginationDragGeneration by remember(listState) { mutableIntStateOf(0) }
+    LaunchedEffect(listState.interactionSource) {
+        listState.interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) userDragGeneration++
+        }
+    }
+    LaunchedEffect(shouldLoadMore.value, isLoadingMore, userDragGeneration) {
+        if (
+            shouldLoadMore.value &&
+            !isLoadingMore &&
+            userDragGeneration > lastPaginationDragGeneration
+        ) {
+            // Consume at most one page request per user drag. A still-underfilled
+            // viewport must not cascade through history as each page arrives.
+            lastPaginationDragGeneration = userDragGeneration
+            onLoadMore()
+        }
     }
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
