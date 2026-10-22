@@ -1004,32 +1004,32 @@ fun MessageBubble(
                                                                 modifier = Modifier.padding(bottom = Spacing.space8)
                                                             )
                                                         }
-    
+
                                                         val annotatedString = buildAnnotatedString {
                                                             val urlRegex = Regex("(https?://[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)|(www\\.[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)")
                                                             var lastIndex = 0
-    
+
                                                             urlRegex.findAll(message.content).forEach { matchResult ->
                                                                 append(message.content.substring(lastIndex, matchResult.range.first))
-    
+
                                                                 val url = matchResult.value
                                                                 val fullUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
                                                                     "https://$url"
                                                                 } else {
                                                                     url
                                                                 }
-    
+
                                                                 pushStringAnnotation(tag = "URL", annotation = fullUrl)
                                                                 withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
                                                                     append(url)
                                                                 }
                                                                 pop()
-    
+
                                                                 lastIndex = matchResult.range.last + 1
                                                             }
                                                             append(message.content.substring(lastIndex))
                                                         }
-    
+
                                                         var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                                                         Text(
                                                             text = annotatedString,
