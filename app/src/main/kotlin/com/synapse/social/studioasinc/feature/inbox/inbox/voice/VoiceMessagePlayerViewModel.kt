@@ -188,13 +188,29 @@ class VoiceMessagePlayerViewModel @Inject constructor(
     fun onSeek(fraction: Float) {
         val state = _uiState.value
         val duration = state.durationMs
-        if (duration <= 0) return
-
+        
+        // Critical: Validate duration before seeking
+        if (duration <= 0) {
+            println("ERROR: Cannot seek - invalid duration: $duration")
+            return
+        }
+        
         val targetPosition = (fraction.coerceIn(0f, 1f) * duration).toLong()
+        
+        // Safety check: Ensure target is within valid range
+        if (targetPosition > duration) {
+            println("WARNING: Target position (${targetPosition}ms) exceeds duration ($duration). Clamping.")
+        }
+        
         _uiState.update { it.copy(currentPositionMs = targetPosition) }
-
+        
         if (voicePlayerManager.playbackState.value.activeUrl == state.mediaUrl) {
-            voicePlayerManager.seekTo(targetPosition)
+            // Double-check before seeking
+            if (targetPosition <= state.durationMs) {
+                voicePlayerManager.seekTo(targetPosition)
+            } else {
+                println("ERROR: Attempted to seek beyond duration bounds")
+            }
         }
     }
 
