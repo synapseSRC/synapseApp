@@ -39,7 +39,7 @@ async def progress_callback(current, total):
     sys.stdout.write(f"\r{progress_percentage:.2f}% uploaded - {uploaded_size}/{total_size}")
     sys.stdout.flush()
 
-async def send_file(client, group_id, topic_id, file_path, commit_info, github_actor):
+async def send_file(client, group_id, topic_id, file_path, commit_info, github_actor, branch_name):
     """Sends the file to Telegram with the formatted caption."""
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
