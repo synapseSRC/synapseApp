@@ -95,7 +95,7 @@ internal fun QuotedMessagePreview(
     )
     val label = quotedKindLabel(preview.kind)
     val detail = preview.excerpt?.takeIf(String::isNotBlank)?.let { excerpt ->
-        if (isUndecryptableSignalEnvelope(excerpt)) {
+        if (isUndecryptableMessageContent(excerpt)) {
             stringResource(R.string.chat_message_decryption_failed)
         } else {
             excerpt
