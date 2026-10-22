@@ -13,6 +13,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import com.synapse.social.studioasinc.R
 import org.json.JSONObject
 
@@ -44,26 +50,35 @@ internal fun UndecryptableMessageNotice(
     modifier: Modifier = Modifier
 ) {
     var showLearnMore by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.chat_message_decryption_failed),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = contentColor,
-                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+    val linkColor = MaterialTheme.colorScheme.primary
+    val notice = buildAnnotatedString {
+        append(stringResource(R.string.chat_message_decryption_failed))
+        append(" ")
+        pushLink(
+            LinkAnnotation.Clickable(
+                tag = "decryption-help",
+                styles = TextLinkStyles(
+                    style = SpanStyle(
+                        color = linkColor,
+                        fontWeight = FontWeight.Medium,
+                        textDecoration = TextDecoration.Underline
+                    )
+                ),
+                linkInteractionListener = { showLearnMore = true }
             )
         )
-        TextButton(
-            onClick = { showLearnMore = true },
-        ) {
-            Text(
-                text = stringResource(R.string.chat_message_decryption_learn_more),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = MaterialTheme.typography.labelLarge.fontSize * fontScale
-                )
-            )
-        }
+        append(stringResource(R.string.chat_message_decryption_learn_more))
+        pop()
     }
+
+    Text(
+        text = notice,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            color = contentColor,
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+        ),
+        modifier = modifier
+    )
 
     if (showLearnMore) {
         AlertDialog(
