@@ -95,17 +95,17 @@ internal fun ChatMessageList(
     }
     // A short list can have its oldest item visible on the very first layout. Do not
     // fetch another page until the user explicitly starts dragging toward history.
-    var hasDraggedSinceLastPage by remember(listState) { mutableStateOf(false) }
+    val hasDraggedSinceLastPage = remember(listState) { mutableStateOf(false) }
     LaunchedEffect(listState.interactionSource) {
         listState.interactionSource.interactions.collect { interaction ->
-            if (interaction is DragInteraction.Start) hasDraggedSinceLastPage = true
+            if (interaction is DragInteraction.Start) hasDraggedSinceLastPage.value = true
         }
     }
-    LaunchedEffect(shouldLoadMore.value, isLoadingMore, hasDraggedSinceLastPage) {
-        if (shouldLoadMore.value && !isLoadingMore && hasDraggedSinceLastPage) {
+    LaunchedEffect(shouldLoadMore.value, isLoadingMore, hasDraggedSinceLastPage.value) {
+        if (shouldLoadMore.value && !isLoadingMore && hasDraggedSinceLastPage.value) {
             // Consume at most one page request per user drag. A still-underfilled
             // viewport must not cascade through history as each page arrives.
-            hasDraggedSinceLastPage = false
+            hasDraggedSinceLastPage.value = false
             onLoadMore()
         }
     }
