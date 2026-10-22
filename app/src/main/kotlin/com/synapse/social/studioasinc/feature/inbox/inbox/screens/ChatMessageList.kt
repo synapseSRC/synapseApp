@@ -239,7 +239,8 @@ internal fun ChatMessageList(
 
             // Shared placement and exit spec for items.
             // Appear animation is removed as requested; items appear instantly.
-            val placementModifier = if (!reducedMotion) {
+            // Disable placement animation for initial/historical items to prevent automatic scrolling/shifts on open.
+            val placementModifier = if (!reducedMotion && !isHistorical) {
                 Modifier.animateItem(
                     fadeInSpec = null,
                     fadeOutSpec = spring(

@@ -321,8 +321,8 @@ import kotlinx.coroutines.withContext
         if (newestMessageClientId != null) {
             if (!listReady) {
                 listState.scrollToItem(0)
-                listReady = true
                 lastScrolledMessageClientId = newestMessageClientId
+                listReady = true
             } else if (newestMessageClientId != lastScrolledMessageClientId) {
                 val isFromMe = newestMessage.senderId == currentUserId
                 val bottomThreshold = if (typingStatus?.isTyping == true) 4 else 3
