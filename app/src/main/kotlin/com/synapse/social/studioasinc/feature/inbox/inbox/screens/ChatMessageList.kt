@@ -56,6 +56,7 @@ internal fun ChatMessageList(
     isGroupChat: Boolean,
     listState: LazyListState,
     isLoadingMore: Boolean,
+    isInitialSyncing: Boolean,
     typingStatus: TypingStatus?,
     onLoadMore: () -> Unit,
     onSingleTap: (Message) -> Unit,
@@ -254,7 +255,7 @@ internal fun ChatMessageList(
 
             // Shared placement and exit spec for items.
             // Appear animation is removed as requested; items appear instantly.
-            val placementModifier = if (!reducedMotion && !isHistorical) {
+            val placementModifier = if (!reducedMotion && !isInitialSyncing && !isHistorical) {
                 Modifier.animateItem(
                     fadeInSpec = null,
                     fadeOutSpec = spring(

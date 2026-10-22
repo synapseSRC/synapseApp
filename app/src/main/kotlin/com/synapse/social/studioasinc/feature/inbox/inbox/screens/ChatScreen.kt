@@ -442,6 +442,7 @@ import kotlinx.coroutines.withContext
                         listState = listState,
                         initialMessageId = initialMessageId,
                         isLoadingMore = isLoadingMore,
+                        isInitialSyncing = isLoading,
                         typingStatus = typingStatus,
                         onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
                         onSingleTap = { selectedMessageForMenu = it },
