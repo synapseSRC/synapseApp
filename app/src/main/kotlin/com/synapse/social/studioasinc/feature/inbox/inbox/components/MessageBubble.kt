@@ -792,7 +792,7 @@ fun MessageBubble(
 
                                 if (message.content.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(Spacing.space4))
-                                    if (isUndecryptableSignalEnvelope(message.content)) {
+                                    if (isUndecryptableMessageContent(message.content)) {
                                         UndecryptableMessageNotice(
                                             fontScale = fontScale,
                                             contentColor = contentColor,
@@ -845,6 +845,8 @@ fun MessageBubble(
                                                             isFromMe = isFromMe,
                                                             initialDurationMs = attachmentDuration
                                                         )
+                                                    } else if (isUndecryptableMessageContent(message.content)) {
+                                                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
                                                     } else {
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
@@ -991,7 +993,7 @@ fun MessageBubble(
 
                                             else -> {
                                                 Column {
-                                                    if (isUndecryptableSignalEnvelope(message.content)) {
+                                                    if (isUndecryptableMessageContent(message.content)) {
                                                         UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
                                                         MessageMetadataRow(
                                                             message = message,
