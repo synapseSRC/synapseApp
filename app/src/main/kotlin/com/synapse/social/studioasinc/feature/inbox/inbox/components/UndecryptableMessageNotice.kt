@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import org.json.JSONObject
 
@@ -57,7 +55,6 @@ internal fun UndecryptableMessageNotice(
         )
         TextButton(
             onClick = { showLearnMore = true },
-            contentPadding = PaddingValues(0.dp)
         ) {
             Text(
                 text = stringResource(R.string.chat_message_decryption_learn_more),
