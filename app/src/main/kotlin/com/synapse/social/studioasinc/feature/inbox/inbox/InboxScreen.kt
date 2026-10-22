@@ -153,6 +153,7 @@ private fun InboxScreenContent(
     val filteredConversations by viewModel.filteredConversations.collectAsState()
     val archivedConversations by viewModel.archivedConversations.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLoadingArchived by viewModel.isLoadingArchived.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -356,6 +357,7 @@ private fun InboxScreenContent(
                         0 -> HomeMessages(
                             conversations = filteredConversations,
                             isLoading = isLoading,
+                            isRefreshing = isRefreshing,
                             error = error,
                             selectedFilter = selectedFilter,
                             unreadThreadCount = unreadThreadCount,
@@ -515,6 +517,7 @@ private fun InboxScreenContent(
 private fun HomeMessages(
     conversations: List<Conversation>,
     isLoading: Boolean,
+    isRefreshing: Boolean,
     error: String?,
     selectedFilter: InboxFilter,
     unreadThreadCount: Int,

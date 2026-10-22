@@ -279,8 +279,10 @@ class FeedPagingSource(
                 postDao.insertAll(postsToCache)
             }
 
+            val sortedFeedItems = feedItems.sortedByDescending { it.timestamp }
+
             LoadResult.Page(
-                data = feedItems,
+                data = sortedFeedItems,
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (timelineResponse.size < pageSize) null else position + pageSize
             )
