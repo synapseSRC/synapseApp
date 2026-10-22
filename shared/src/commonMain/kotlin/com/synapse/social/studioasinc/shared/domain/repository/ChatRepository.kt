@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 interface ChatRepository {
     suspend fun getConversations(forceNetwork: Boolean = false): Result<List<Conversation>>
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null, forceNetwork: Boolean = false): Result<List<Message>>
+    suspend fun getMessagesAfter(chatId: String, after: String, afterId: String, limit: Int = 50): Result<List<Message>>
+    suspend fun getMessagesCacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false): Result<List<Message>>
     suspend fun getMessageById(messageId: String): Result<Message?>
     suspend fun sendMessage(
         chatId: String,

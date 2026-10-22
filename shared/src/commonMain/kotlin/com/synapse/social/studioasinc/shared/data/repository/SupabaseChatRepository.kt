@@ -75,43 +75,30 @@ class SupabaseChatRepository(
 
     private suspend fun fetchConversationsFromNetwork(archivedOnly: Boolean = false): List<Conversation> = withContext(AppDispatchers.IO) {
         val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
-        val conversationData = if (archivedOnly) dataSource.getArchivedConversations() else dataSource.getConversations()
-        
-        coroutineScope {
-            conversationData.map { (participation, user, chatInfo) ->
-                async {
-                    val lastMessage = dataSource.getLastMessage(participation.chatId)
-                    val lastMessageText = lastMessage?.let {
-                        try {
-                            encryptionHelper.run { it.decryptIfNecessary(currentUserId).content }
-                        } catch (e: Exception) {
-                            "🔒 Encrypted message"
-                        }
-                    } ?: "No messages yet"
-                    
-                    val unreadCount = dataSource.getUnreadCount(participation.chatId, participation.lastReadAt)
-                    
-                    val isGroup = chatInfo?.isGroup ?: false
-
-                    Conversation(
-                        chatId = participation.chatId,
-                        participantId = user?.uid ?: participation.userId,
-                        participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else (user?.displayName ?: user?.username ?: "Unknown"),
-                        participantAvatar = if (isGroup) chatInfo?.avatarUrl else user?.avatar,
-                        lastMessage = lastMessageText,
-                        lastMessageTime = lastMessage?.createdAt,
-                        unreadCount = unreadCount,
-                        isOnline = if (isGroup) false else {
-                            val isStatusOnline = user?.status?.name == "ONLINE"
-                            isStatusOnline && TimestampFormatter.isWithinActiveWindow(user?.lastSeen, windowMinutes = 2)
-                        },
-                        isGroup = isGroup,
-                        isPinned = participation.isPinned,
-                        isMuted = participation.isMuted
-                    )
+        dataSource.getInboxSummaries(archivedOnly).map { summary ->
+            val lastMessageText = summary.lastMessage?.let { last ->
+                try {
+                    encryptionHelper.run { last.decryptIfNecessary(currentUserId).content }
+                } catch (_: Exception) {
+                    "🔒 Encrypted message"
                 }
-            }.awaitAll()
-        }.sortedByDescending { it.lastMessageTime ?: "" }
+            } ?: "No messages yet"
+            val isOnline = summary.participantStatus?.equals("ONLINE", ignoreCase = true) == true &&
+                TimestampFormatter.isWithinActiveWindow(summary.participantLastSeen, windowMinutes = 2)
+            Conversation(
+                chatId = summary.chatId,
+                participantId = summary.participantId,
+                participantName = summary.participantName,
+                participantAvatar = summary.participantAvatar,
+                lastMessage = lastMessageText,
+                lastMessageTime = summary.lastMessage?.createdAt,
+                unreadCount = summary.unreadCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                isOnline = isOnline,
+                isGroup = summary.isGroup,
+                isPinned = summary.isPinned,
+                isMuted = summary.isMuted
+            )
+        }
     }
 
     override suspend fun getConversations(forceNetwork: Boolean): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
@@ -219,6 +206,40 @@ class SupabaseChatRepository(
                 Logger.e("Error getting messages", throwable = t)
                 Result.failure(t)
             }
+        }
+    }
+
+    override suspend fun getMessagesAfter(chatId: String, after: String, afterId: String, limit: Int): Result<List<Message>> = withContext(AppDispatchers.IO) {
+        try {
+            val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+            val messageDtos = dataSource.getMessagesAfter(chatId, after, afterId, limit)
+            val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
+            val cacheable = decrypted.filterNot { encryptionHelper.isPlaceholder(it.content) }
+            if (cacheable.isNotEmpty()) {
+                cachedMessageDao?.upsertAll(cacheable)
+                cachedMessageDao?.trimToLimit(chatId, limit)
+            }
+            Result.success(decrypted)
+        } catch (t: Throwable) {
+            Logger.e("Error syncing messages after cursor", throwable = t)
+            Result.failure(t)
+        }
+    }
+
+    override suspend fun getMessagesCacheFirst(chatId: String, limit: Int, refreshInBackground: Boolean): Result<List<Message>> = withContext(AppDispatchers.IO) {
+        try {
+            val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+            val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
+            val userDeletedIds = if (cached.isEmpty()) emptySet() else dataSource.getUserDeletedMessageIds(cached.map { it.id })
+            if (userDeletedIds.isNotEmpty()) cachedMessageDao?.delete(userDeletedIds.toList())
+            val visibleCached = cached.filterNot { it.id in userDeletedIds }
+            if (refreshInBackground && visibleCached.isNotEmpty() && visibleCached.none { encryptionHelper.isPlaceholder(it.content) }) {
+                syncMessagesInBackground(chatId, limit, currentUserId, visibleCached)
+            }
+            Result.success(visibleCached)
+        } catch (t: Throwable) {
+            val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
+            if (cached.isNotEmpty()) Result.success(cached) else Result.failure(t)
         }
     }
 

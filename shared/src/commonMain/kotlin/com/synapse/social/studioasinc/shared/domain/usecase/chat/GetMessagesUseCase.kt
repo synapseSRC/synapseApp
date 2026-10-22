@@ -12,4 +12,10 @@ class GetMessagesUseCase(
         // so a second decryption attempt would fail and leave messages showing "Message is encrypted".
         return repository.getMessages(chatId, limit, before, beforeId, forceNetwork)
     }
+
+    suspend fun after(chatId: String, createdAt: String, id: String, limit: Int = 50): Result<List<Message>> =
+        repository.getMessagesAfter(chatId, createdAt, id, limit)
+
+    suspend fun cacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false): Result<List<Message>> =
+        repository.getMessagesCacheFirst(chatId, limit, refreshInBackground)
 }

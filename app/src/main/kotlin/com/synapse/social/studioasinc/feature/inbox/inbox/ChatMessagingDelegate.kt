@@ -70,25 +70,82 @@ class ChatMessagingDelegate(
         }
     }
 
+    fun insertChronologically(current: List<Message>, message: Message): List<Message> {
+        val ordering = ChatMapper.MessageChronologicalComparator
+        val last = current.lastOrNull()
+        if (last == null || ordering.compare(last, message) <= 0) return current + message
+
+        var low = 0
+        var high = current.size
+        while (low < high) {
+            val middle = (low + high) ushr 1
+            if (ordering.compare(current[middle], message) <= 0) low = middle + 1 else high = middle
+        }
+        return current.toMutableList().apply { add(low, message) }
+    }
+
+    fun replaceChronologically(current: List<Message>, targetId: String, message: Message): List<Message> {
+        val index = current.indexOfFirst { it.id == targetId }
+        if (index < 0) return insertChronologically(current, message)
+        val ordering = ChatMapper.MessageChronologicalComparator
+        val previous = current.getOrNull(index - 1)
+        val next = current.getOrNull(index + 1)
+        if ((previous == null || ordering.compare(previous, message) <= 0) &&
+            (next == null || ordering.compare(message, next) <= 0)
+        ) {
+            return current.toMutableList().apply { set(index, message) }
+        }
+        return insertChronologically(current.toMutableList().apply { removeAt(index) }, message)
+    }
+
+    fun mergeChronologically(current: List<Message>, incoming: List<Message>): List<Message> {
+        if (incoming.isEmpty()) return current
+        val ordering = ChatMapper.MessageChronologicalComparator
+        val currentById = current.associateBy { it.id }
+        val incomingById = LinkedHashMap<String, Message>()
+        incoming.forEach { fresh ->
+            val duplicate = incomingById[fresh.id]
+            incomingById[fresh.id] = duplicate?.mergeMonotonic(fresh) ?: fresh
+        }
+        val sortedIncoming = incomingById.values
+            .map { fresh -> currentById[fresh.id]?.mergeMonotonic(fresh) ?: fresh }
+            .sortedWith(ordering)
+        val incomingIds = sortedIncoming.mapTo(HashSet()) { it.id }
+        val currentOnly = current.filterNot { it.id in incomingIds }
+        val merged = ArrayList<Message>(currentOnly.size + sortedIncoming.size)
+        var currentIndex = 0
+        var incomingIndex = 0
+        while (currentIndex < currentOnly.size && incomingIndex < sortedIncoming.size) {
+            val existing = currentOnly[currentIndex]
+            val fresh = sortedIncoming[incomingIndex]
+            if (existing.id == fresh.id) {
+                merged += existing.mergeMonotonic(fresh)
+                currentIndex++
+                incomingIndex++
+            } else if (ordering.compare(existing, fresh) <= 0) {
+                merged += existing
+                currentIndex++
+            } else {
+                merged += fresh
+                incomingIndex++
+            }
+        }
+        while (currentIndex < currentOnly.size) merged += currentOnly[currentIndex++]
+        while (incomingIndex < sortedIncoming.size) merged += sortedIncoming[incomingIndex++]
+        return merged
+    }
+
     /** Adds a fetched reply target to the timeline without moving the regular-page cursor. */
     fun addQuotedMessageToTimeline(message: Message) {
         _messages.update { current ->
             if (current.any { it.id == message.id }) current
-            else (current + message).sortedWith(ChatMapper.MessageChronologicalComparator)
+            else insertChronologically(current, message)
         }
     }
 
     suspend fun setMessages(messages: List<Message>) {
         val populated = populateMessageReactionsUseCase(messages)
-        _messages.update { current ->
-            val messageMap = current.associateBy { it.id }.toMutableMap()
-            populated.forEach { freshMsg ->
-                val existing = messageMap[freshMsg.id]
-                val merged = if (existing != null) existing.mergeMonotonic(freshMsg) else freshMsg
-                messageMap[freshMsg.id] = merged
-            }
-            messageMap.values.sortedWith(ChatMapper.MessageChronologicalComparator)
-        }
+        _messages.update { current -> mergeChronologically(current, populated) }
         recordFetchedPage(messages)
     }
 
@@ -129,7 +186,7 @@ class ChatMessagingDelegate(
             val tempId = UUID.randomUUID().toString()
             pendingTempIds.update { it + tempId }
 
-            val latestTimestamp = _messages.value.maxOfOrNull { it.createdAt }
+            val latestTimestamp = _messages.value.lastOrNull()?.createdAt
             val now = TimeProvider.nowInstant()
             val nowInstant = if (latestTimestamp != null) {
                 try {
@@ -160,7 +217,7 @@ class ChatMessagingDelegate(
                 clientId = tempId
             )
             _messages.update { current ->
-                (current + newMessage).distinctBy { it.id }.sortedWith(ChatMapper.MessageChronologicalComparator)
+                insertChronologically(current, newMessage)
             }
 
             val sendMutex = sendMutexes.computeIfAbsent(chatId) { Mutex() }
@@ -209,53 +266,17 @@ class ChatMessagingDelegate(
 
         _messages.update { current ->
             val optimisticMessage = current.firstOrNull { it.id == tempId }
-            val existingServerMsg = current.firstOrNull { it.id == confirmedMessage.id }
-
-            if (optimisticMessage == null && existingServerMsg == null) {
-                return@update current
+            val existingServerMessage = current.firstOrNull { it.id == confirmedMessage.id }
+            val sourceMessage = optimisticMessage ?: existingServerMessage ?: return@update current
+            val stableClientId = sourceMessage.clientId
+            val merged = sourceMessage.mergeMonotonic(confirmedMessage.copy(clientId = stableClientId))
+            val base = if (optimisticMessage != null && existingServerMessage != null && optimisticMessage.id != existingServerMessage.id) {
+                current.filterNot { it.id == tempId }
+            } else {
+                current
             }
-
-            val stableClientId = optimisticMessage?.clientId ?: existingServerMsg?.clientId ?: tempId
-
-            when {
-                optimisticMessage != null && existingServerMsg != null && optimisticMessage.id != existingServerMsg.id -> {
-                    // Both the optimistic placeholder and the server message exist in the list.
-                    // Merge into the server message with the stable client ID and remove the temporary placeholder.
-                    current
-                        .filterNot { it.id == tempId }
-                        .map { msg ->
-                            if (msg.id == confirmedMessage.id) {
-                                optimisticMessage.mergeMonotonic(
-                                    confirmedMessage.copy(clientId = stableClientId)
-                                )
-                            } else {
-                                msg
-                            }
-                        }
-                        .distinctBy { it.id }
-                        .sortedWith(ChatMapper.MessageChronologicalComparator)
-                }
-                optimisticMessage != null -> {
-                    // Optimistic placeholder is in the list, server message not yet present.
-                    // Replace optimistic placeholder with confirmed server message.
-                    current.updateById(tempId) { temp ->
-                        temp.mergeMonotonic(confirmedMessage.copy(clientId = stableClientId))
-                    }
-                    .distinctBy { it.id }
-                    .sortedWith(ChatMapper.MessageChronologicalComparator)
-                }
-                existingServerMsg != null -> {
-                    // Server message was already inserted (e.g. via realtime). Update in place and ensure tempId is gone.
-                    current
-                        .filterNot { it.id == tempId }
-                        .updateById(confirmedMessage.id) { existing ->
-                            existing.mergeMonotonic(confirmedMessage.copy(clientId = stableClientId))
-                        }
-                        .distinctBy { it.id }
-                        .sortedWith(ChatMapper.MessageChronologicalComparator)
-                }
-                else -> current
-            }
+            val targetId = existingServerMessage?.id ?: optimisticMessage?.id ?: confirmedMessage.id
+            replaceChronologically(base, targetId, merged)
         }
     }
 

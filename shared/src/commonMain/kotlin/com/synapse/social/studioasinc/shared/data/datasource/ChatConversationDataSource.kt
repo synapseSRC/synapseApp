@@ -5,7 +5,7 @@ import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewDirectChatDto
-import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.ChatInboxSummaryDto
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOptions
 import io.github.aakira.napier.Napier
@@ -22,6 +22,12 @@ import kotlinx.coroutines.withContext
 internal class ChatConversationDataSource(private val client: SupabaseClientLib) {
 
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
+
+    suspend fun getInboxSummaries(archivedOnly: Boolean = false): List<ChatInboxSummaryDto> = withContext(AppDispatchers.IO) {
+        if (getCurrentUserId() == null) throw IllegalStateException("Not logged in: currentUserId is null")
+        client.postgrest.rpc("get_chat_inbox_summaries", mapOf("p_archived_only" to archivedOnly))
+            .decodeList<ChatInboxSummaryDto>()
+    }
 
     suspend fun getConversations(archivedOnly: Boolean = false): List<Triple<ChatParticipantDto, User?, ChatDto?>> = withContext(AppDispatchers.IO) {
         val currentUserId = getCurrentUserId() ?: throw IllegalStateException("Not logged in: currentUserId is null")
@@ -79,47 +85,6 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         } catch (e: Exception) {
             Napier.e("Error loading conversations", e)
             throw e
-        }
-    }
-
-    suspend fun getLastMessage(chatId: String): MessageDto? = withContext(AppDispatchers.IO) {
-        try {
-            client.postgrest.from("messages").select {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("is_deleted", false)
-                    or {
-                        filter("expires_at", FilterOperator.IS, "null")
-                        gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
-                    }
-                }
-                order("created_at", Order.DESCENDING)
-                limit(1)
-            }.decodeList<MessageDto>().firstOrNull()
-        } catch (t: Throwable) {
-            Napier.e("Error loading last message for $chatId", t)
-            null
-        }
-    }
-
-    suspend fun getUnreadCount(chatId: String, lastReadAt: String?): Int = withContext(AppDispatchers.IO) {
-        if (lastReadAt == null) return@withContext 0
-        try {
-            val messages = client.postgrest.from("messages").select {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("is_deleted", false)
-                    or {
-                        filter("expires_at", FilterOperator.IS, "null")
-                        gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
-                    }
-                    gt("created_at", lastReadAt)
-                }
-            }.decodeList<MessageDto>()
-            messages.size
-        } catch (t: Throwable) {
-            Napier.e("Error counting unread messages", t)
-            0
         }
     }
 

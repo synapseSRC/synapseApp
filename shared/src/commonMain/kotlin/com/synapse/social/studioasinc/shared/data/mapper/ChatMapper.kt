@@ -59,7 +59,7 @@ object ChatMapper {
 
     /**
      * Canonical chronological comparator for chat messages.
-     * Compares parsed epoch milliseconds first, then canonical ISO string, then clientId/id.
+     * Compares parsed epoch milliseconds first, then canonical ISO string, server id, and finally clientId.
      * Guarantees consistent ordering between ViewModels, delegates, and UI item mappers.
      */
     val MessageChronologicalComparator: Comparator<Message> = Comparator { a, b ->
@@ -72,7 +72,8 @@ object ChatMapper {
         if (strCompare != 0) {
             return@Comparator strCompare
         }
-        a.clientId.compareTo(b.clientId)
+        val idCompare = a.id.compareTo(b.id)
+        if (idCompare != 0) idCompare else a.clientId.compareTo(b.clientId)
     }
 
     fun ChatDto.toDomain(): ChatInfo = ChatInfo(

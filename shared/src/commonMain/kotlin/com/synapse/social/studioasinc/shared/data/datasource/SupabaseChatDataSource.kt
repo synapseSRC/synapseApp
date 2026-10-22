@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.shared.data.datasource
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.ChatInboxSummaryDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageReactionDto
@@ -25,20 +26,20 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
+    suspend fun getInboxSummaries(archivedOnly: Boolean = false): List<ChatInboxSummaryDto> =
+        conversations.getInboxSummaries(archivedOnly)
+
     suspend fun getConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> =
         conversations.getConversations()
 
     suspend fun getArchivedConversations(): List<Triple<ChatParticipantDto, User?, ChatDto?>> =
         conversations.getConversations(archivedOnly = true)
 
-    suspend fun getLastMessage(chatId: String): MessageDto? =
-        conversations.getLastMessage(chatId)
-
-    suspend fun getUnreadCount(chatId: String, lastReadAt: String?): Int =
-        conversations.getUnreadCount(chatId, lastReadAt)
-
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null): List<MessageDto> =
         messages.getMessages(chatId, limit, before, beforeId)
+
+    suspend fun getMessagesAfter(chatId: String, after: String, afterId: String, limit: Int = 50): List<MessageDto> =
+        messages.getMessagesAfter(chatId, limit, after, afterId)
 
     suspend fun getUserDeletedMessageIds(messageIds: List<String>): Set<String> =
         messages.getUserDeletedMessageIds(messageIds)

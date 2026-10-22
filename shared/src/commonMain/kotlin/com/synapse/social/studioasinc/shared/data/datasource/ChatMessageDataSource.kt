@@ -23,38 +23,116 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     }.getOrNull()
 
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null): List<MessageDto> =
-        withContext(AppDispatchers.IO) {
-            try {
-                val currentUserId = getCurrentUserId()
-                    ?: throw NotAuthenticatedException("User not authenticated")
+        getMessagesPage(chatId, limit, before, beforeId, null, null)
+
+    suspend fun getMessagesAfter(chatId: String, limit: Int = 50, after: String, afterId: String): List<MessageDto> =
+        getMessagesPage(chatId, limit, null, null, after, afterId)
+
+    private suspend fun getMessagesPage(
+        chatId: String,
+        limit: Int = 50,
+        before: String? = null,
+        beforeId: String? = null,
+        after: String? = null,
+        afterId: String? = null
+    ): List<MessageDto> = withContext(AppDispatchers.IO) {
+        try {
+            val currentUserId = getCurrentUserId()
+                ?: throw NotAuthenticatedException("User not authenticated")
+            require(before == null || after == null) { "before and after cursors are mutually exclusive" }
+
+            val expiresAt = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
+            val visibleMessages = mutableListOf<MessageDto>()
+            var cursorBefore = before
+            var cursorBeforeId = beforeId
+            var cursorAfter = after
+            var cursorAfterId = afterId
+
+            while (visibleMessages.size < limit) {
+                val remaining = limit - visibleMessages.size
                 val serverMessages = client.postgrest.from("messages").select {
                     filter {
                         eq("chat_id", chatId)
                         eq("is_deleted", false)
-                        or {
-                            filter("expires_at", FilterOperator.IS, "null")
-                            gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
-                        }
-                        if (before != null && beforeId != null) {
-                            lte("created_at", before)
-                            neq("id", beforeId)
-                        } else if (before != null) {
-                            lt("created_at", before)
+                        if (cursorBefore != null || cursorAfter != null) {
+                            and {
+                                or {
+                                    filter("expires_at", FilterOperator.IS, "null")
+                                    gt("expires_at", expiresAt)
+                                }
+                                when {
+                                    cursorBefore != null && cursorBeforeId != null -> or {
+                                        lt("created_at", cursorBefore)
+                                        and {
+                                            eq("created_at", cursorBefore)
+                                            lt("id", cursorBeforeId)
+                                        }
+                                    }
+                                    cursorBefore != null -> lt("created_at", cursorBefore)
+                                    cursorAfter != null && cursorAfterId != null -> or {
+                                        gt("created_at", cursorAfter)
+                                        and {
+                                            eq("created_at", cursorAfter)
+                                            gt("id", cursorAfterId)
+                                        }
+                                    }
+                                    cursorAfter != null -> gt("created_at", cursorAfter)
+                                }
+                            }
+                        } else {
+                            or {
+                                filter("expires_at", FilterOperator.IS, "null")
+                                gt("expires_at", expiresAt)
+                            }
                         }
                     }
-                    order("created_at", Order.DESCENDING)
-                    order("id", Order.DESCENDING)
-                    limit(limit.toLong())
+                    if (cursorAfter != null) {
+                        order("created_at", Order.ASCENDING)
+                        order("id", Order.ASCENDING)
+                    } else {
+                        order("created_at", Order.DESCENDING)
+                        order("id", Order.DESCENDING)
+                    }
+                    limit(remaining.toLong())
                 }.decodeList<MessageDto>()
 
+                if (serverMessages.isEmpty()) break
                 val fetchedIds = serverMessages.mapNotNull { it.id }.distinct()
                 val hiddenIds = getUserDeletedMessageIds(fetchedIds)
-                filterOutUserDeletedMessages(serverMessages, hiddenIds).reversed()
-            } catch (e: Exception) {
-                Napier.e("Error loading messages for $chatId", e)
-                throw e
+                visibleMessages.addAll(filterOutUserDeletedMessages(serverMessages, hiddenIds))
+                if (visibleMessages.size >= limit || serverMessages.size < remaining) break
+
+                val lastRawMessage = serverMessages.last()
+                val nextAt = lastRawMessage.createdAt ?: break
+                val nextId = lastRawMessage.id ?: break
+                if (cursorAfter != null) {
+                    val progressed = if (cursorAfterId != null) {
+                        compareMessageCursor(nextAt, nextId, cursorAfter, cursorAfterId) > 0
+                    } else {
+                        nextAt > cursorAfter
+                    }
+                    if (!progressed) break
+                    cursorAfter = nextAt
+                    cursorAfterId = nextId
+                } else {
+                    val progressed = if (cursorBefore != null && cursorBeforeId != null) {
+                        compareMessageCursor(nextAt, nextId, cursorBefore, cursorBeforeId) < 0
+                    } else if (cursorBefore != null) {
+                        nextAt < cursorBefore
+                    } else {
+                        true
+                    }
+                    if (!progressed) break
+                    cursorBefore = nextAt
+                    cursorBeforeId = nextId
+                }
             }
+            if (after != null) visibleMessages.take(limit) else visibleMessages.take(limit).reversed()
+        } catch (e: Exception) {
+            Napier.e("Error loading messages for $chatId", e)
+            throw e
         }
+    }
 
     suspend fun getUserDeletedMessageIds(messageIds: List<String>): Set<String> =
         withContext(AppDispatchers.IO) {
@@ -229,6 +307,16 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             Napier.e("Error marking received messages as delivered", e)
         }
     }
+}
+
+
+private fun compareMessageCursor(leftCreatedAt: String, leftId: String, rightCreatedAt: String, rightId: String): Int {
+    val timeComparison = try {
+        kotlinx.datetime.Instant.parse(leftCreatedAt).compareTo(kotlinx.datetime.Instant.parse(rightCreatedAt))
+    } catch (_: Exception) {
+        leftCreatedAt.compareTo(rightCreatedAt)
+    }
+    return if (timeComparison != 0) timeComparison else leftId.compareTo(rightId)
 }
 
 internal fun filterOutUserDeletedMessages(

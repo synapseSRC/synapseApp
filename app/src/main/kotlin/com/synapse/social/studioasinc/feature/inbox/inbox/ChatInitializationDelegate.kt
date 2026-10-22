@@ -51,21 +51,25 @@ class ChatInitializationDelegate(
         // (cleanup() clears messages before this runs, so they must be reloaded).
         if (chatId != "new" && (chatId.equals(currentChatId, ignoreCase = true) || (participantId != null && currentChatId != null))) {
             val resolvedId = currentChatId ?: chatId
+            _isLoading.value = true
             subscriptionDelegate.startSubscriptions(resolvedId)
             viewModelScope.launch {
-                // Fast path: show cached messages immediately
-                getMessagesUseCase(resolvedId).onSuccess { messages ->
-                    messagingDelegate.setMessages(messages)
+                try {
+                    // Cache first for instant display; the caller's explicit network refresh
+                    // is the only full-page synchronization during this initialization.
+                    getMessagesUseCase.cacheFirst(resolvedId, refreshInBackground = false).onSuccess { messages ->
+                        messagingDelegate.setMessages(messages)
+                    }.onFailure { e ->
+                        _error.value = e.message
+                    }
+                    getMessagesUseCase(resolvedId, forceNetwork = true).onSuccess { fresh ->
+                        messagingDelegate.setMessages(fresh)
+                    }.onFailure { e ->
+                        if (messagingDelegate.messages.value.isEmpty()) _error.value = e.message
+                        Napier.w("Network refresh failed on re-entry for chatId=" + resolvedId + ": " + e.message, tag = "ChatInit")
+                    }
+                } finally {
                     _isLoading.value = false
-                }.onFailure { e ->
-                    _error.value = e.message
-                    _isLoading.value = false
-                }
-                // Network refresh: always fetch fresh to catch any messages missed while away
-                getMessagesUseCase(resolvedId, forceNetwork = true).onSuccess { fresh ->
-                    messagingDelegate.setMessages(fresh)
-                }.onFailure { e ->
-                    Napier.w("Network refresh failed on re-entry for chatId=$resolvedId: ${e.message}", tag = "ChatInit")
                 }
                 markMessagesAsReadUseCase(resolvedId)
             }
@@ -130,19 +134,22 @@ class ChatInitializationDelegate(
             }
 
             launch {
-                // Fast path: cache-first for instant display
-                getMessagesUseCase(actualChatId).onSuccess { messages ->
-                    messagingDelegate.setMessages(messages)
+                try {
+                    // Cache first for instant display; keep loading active through the
+                    // one explicit network reconciliation so rows settle before live updates.
+                    getMessagesUseCase.cacheFirst(actualChatId, refreshInBackground = false).onSuccess { messages ->
+                        messagingDelegate.setMessages(messages)
+                    }.onFailure { error ->
+                        _error.value = error.message
+                    }
+                    getMessagesUseCase(actualChatId, forceNetwork = true).onSuccess { fresh ->
+                        messagingDelegate.setMessages(fresh)
+                    }.onFailure { error ->
+                        if (messagingDelegate.messages.value.isEmpty()) _error.value = error.message
+                        Napier.w("Network refresh failed on init for chatId=" + actualChatId + ": " + error.message, tag = "ChatInit")
+                    }
+                } finally {
                     _isLoading.value = false
-                }.onFailure { e ->
-                    _error.value = e.message
-                    _isLoading.value = false
-                }
-                // Network refresh: always fetch fresh to catch any messages missed while away
-                getMessagesUseCase(actualChatId, forceNetwork = true).onSuccess { fresh ->
-                    messagingDelegate.setMessages(fresh)
-                }.onFailure { e ->
-                    Napier.w("Network refresh failed on init for chatId=$actualChatId: ${e.message}", tag = "ChatInit")
                 }
                 aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
                 markMessagesAsReadUseCase(actualChatId)

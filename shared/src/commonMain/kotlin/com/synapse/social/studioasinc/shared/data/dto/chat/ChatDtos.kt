@@ -193,3 +193,19 @@ data class GroupInvitePreviewDto(
     @SerialName("require_join_approval") val requireJoinApproval: Boolean = true,
     @SerialName("member_count") val memberCount: Long = 0
 )
+
+
+@Serializable
+data class ChatInboxSummaryDto(
+    @SerialName("chat_id") val chatId: String,
+    @SerialName("participant_id") val participantId: String,
+    @SerialName("participant_name") val participantName: String,
+    @SerialName("participant_avatar") val participantAvatar: String? = null,
+    @SerialName("participant_status") val participantStatus: String? = null,
+    @SerialName("participant_last_seen") val participantLastSeen: String? = null,
+    @SerialName("is_group") val isGroup: Boolean = false,
+    @SerialName("is_pinned") val isPinned: Boolean = false,
+    @SerialName("is_muted") val isMuted: Boolean = false,
+    @SerialName("last_message") val lastMessage: MessageDto? = null,
+    @SerialName("unread_count") val unreadCount: Long = 0
+)
