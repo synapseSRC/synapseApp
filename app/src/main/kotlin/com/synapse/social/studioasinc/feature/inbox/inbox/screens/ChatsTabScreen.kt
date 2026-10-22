@@ -47,7 +47,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyState
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxShimmer
-import com.synapse.social.studioasinc.feature.inbox.inbox.components.isUndecryptableSignalEnvelope
+import com.synapse.social.studioasinc.feature.inbox.inbox.components.isUndecryptableMessageContent
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -363,7 +363,7 @@ private fun ConversationItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isUndecryptableSignalEnvelope(conversation.lastMessage)) {
+                        text = if (isUndecryptableMessageContent(conversation.lastMessage)) {
                             stringResource(R.string.chat_message_decryption_failed)
                         } else {
                             conversation.lastMessage
@@ -402,7 +402,7 @@ private fun ConversationItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isUndecryptableSignalEnvelope(conversation.lastMessage)) {
+                        text = if (isUndecryptableMessageContent(conversation.lastMessage)) {
                             stringResource(R.string.chat_message_decryption_failed)
                         } else {
                             conversation.lastMessage
