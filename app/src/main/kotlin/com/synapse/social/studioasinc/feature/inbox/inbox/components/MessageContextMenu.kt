@@ -48,8 +48,8 @@ fun MessageContextMenu(
     onDismissRequest: () -> Unit,
     onReactionSelected: (String, ReactionType) -> Unit,
     onStartEditing: (Message) -> Unit,
-    onDeleteMessageForMe: (String) -> Unit,
-    onDeleteMessageForEveryone: (String) -> Unit,
+    onDeleteMessageForMe: (Message) -> Unit,
+    onDeleteMessageForEveryone: (Message) -> Unit,
     onSummarizeMessage: (String) -> Unit,
     onForwardMessage: () -> Unit = {},
     onMarkAsUnread: () -> Unit = {},
@@ -173,15 +173,36 @@ fun MessageContextMenu(
 
             HorizontalDivider()
 
-            ActionRow(
-                icon = Icons.Default.Delete,
-                text = stringResource(R.string.inbox_context_menu_delete),
-                tint = MaterialTheme.colorScheme.error,
-                onClick = {
-                    selectedMessage.id?.let { onDeleteMessageForMe(it) }
-                    onDismissRequest()
-                }
-            )
+            if (isFromMe) {
+                ActionRow(
+                    icon = Icons.Default.DeleteForever,
+                    text = stringResource(R.string.delete_for_everyone),
+                    tint = MaterialTheme.colorScheme.error,
+                    onClick = {
+                        onDeleteMessageForEveryone(selectedMessage)
+                        onDismissRequest()
+                    }
+                )
+                ActionRow(
+                    icon = Icons.Default.Delete,
+                    text = stringResource(R.string.delete_for_me),
+                    tint = MaterialTheme.colorScheme.error,
+                    onClick = {
+                        onDeleteMessageForMe(selectedMessage)
+                        onDismissRequest()
+                    }
+                )
+            } else {
+                ActionRow(
+                    icon = Icons.Default.Delete,
+                    text = stringResource(R.string.inbox_context_menu_delete),
+                    tint = MaterialTheme.colorScheme.error,
+                    onClick = {
+                        onDeleteMessageForMe(selectedMessage)
+                        onDismissRequest()
+                    }
+                )
+            }
         }
     }
 }

@@ -218,7 +218,7 @@ object VoiceWaveformExtractor {
 
                     if (trackIndex >= 0) {
                         val format = extractor.getTrackFormat(trackIndex)
-                        val durationUs = format.getLong(MediaFormat.KEY_DURATION, -1L)
+                        val durationUs = format.getLong(MediaFormat.KEY_DURATION) ?: -1L
                         
                         if (durationUs > 0) {
                             durationMs = durationUs / 1000

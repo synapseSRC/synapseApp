@@ -135,6 +135,7 @@ import kotlinx.coroutines.withContext
     var batchGalleryMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
+    var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
 
     val listState = rememberLazyListState()
     var composerHeightPx by remember { mutableIntStateOf(0) }
@@ -479,8 +480,14 @@ import kotlinx.coroutines.withContext
                             onDismissRequest = { selectedMessageForMenu = null },
                             onReactionSelected = viewModel::toggleMessageReaction,
                             onStartEditing = viewModel::startEditing,
-                            onDeleteMessageForMe = viewModel::deleteMessageForMe,
-                            onDeleteMessageForEveryone = viewModel::deleteMessage,
+                            onDeleteMessageForMe = { message ->
+                                selectedMessageForMenu = null
+                                showDeleteMessageDialog = message
+                            },
+                            onDeleteMessageForEveryone = { message ->
+                                selectedMessageForMenu = null
+                                showDeleteMessageDialog = message
+                            },
                             onSummarizeMessage = viewModel::summarizeMessage
                         )
                     }
@@ -491,6 +498,19 @@ import kotlinx.coroutines.withContext
                 isSummarizingMessage = isSummarizingMessage,
                 messageSummary = messageSummary,
                 onDismissRequest = viewModel::clearMessageSummary
+            )
+
+            DeleteMessageDialog(
+                message = showDeleteMessageDialog,
+                onDismissRequest = { showDeleteMessageDialog = null },
+                onDeleteForMe = { message ->
+                    showDeleteMessageDialog = null
+                    viewModel.deleteMessageForMe(message)
+                },
+                onDeleteForEveryone = { message ->
+                    showDeleteMessageDialog = null
+                    viewModel.deleteMessage(message)
+                }
             )
 
             if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {

@@ -91,6 +91,9 @@ class ChatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
 
@@ -309,6 +312,7 @@ class ChatViewModel @Inject constructor(
         subscriptionDelegate = subscriptionDelegate,
         aiDelegate = aiDelegate,
         _isLoading = _isLoading,
+        _isRefreshing = _isRefreshing,
         _error = _error,
         _participantProfile = _participantProfile,
         _isE2EEReady = _isE2EEReady,
@@ -385,6 +389,12 @@ class ChatViewModel @Inject constructor(
     }
 
     private suspend fun synchronizeMissedMessages(chatId: String) {
+        val hasCachedMessages = !messagingDelegate.messages.value.isEmpty()
+        if (hasCachedMessages) {
+            _isRefreshing.value = true
+        } else {
+            _isLoading.value = true
+        }
         val candidate = viewModelScope.async(start = CoroutineStart.LAZY) {
             fetchMissedMessages(chatId)
         }
@@ -397,6 +407,8 @@ class ChatViewModel @Inject constructor(
         }
         sync.start()
         sync.await()
+        _isLoading.value = false
+        _isRefreshing.value = false
     }
 
     private suspend fun fetchMissedMessages(chatId: String) {
@@ -791,8 +803,16 @@ class ChatViewModel @Inject constructor(
         messagingDelegate.deleteMessage(messageId)
     }
 
+    fun deleteMessage(message: Message) {
+        messagingDelegate.deleteMessage(message.id)
+    }
+
     fun deleteMessageForMe(messageId: String) {
         messagingDelegate.deleteMessageForMe(messageId)
+    }
+
+    fun deleteMessageForMe(message: Message) {
+        messagingDelegate.deleteMessageForMe(message.id)
     }
 
     fun retrySendMessage(message: Message) {
