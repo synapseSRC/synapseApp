@@ -39,6 +39,7 @@ import com.synapse.social.studioasinc.shared.domain.model.ReactionType as Shared
 
 @Composable
 internal fun ChatMessageList(
+    chatId: String,
     chatItems: List<ChatListItem>,
     messages: List<Message>,
     currentUserId: String,
@@ -54,6 +55,7 @@ internal fun ChatMessageList(
     isGroupChat: Boolean,
     listState: LazyListState,
     isLoadingMore: Boolean,
+    isInitialSyncing: Boolean,
     typingStatus: TypingStatus?,
     onLoadMore: () -> Unit,
     onSingleTap: (Message) -> Unit,
@@ -96,9 +98,9 @@ internal fun ChatMessageList(
     }
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
-    val initialKeysCaptured = remember { mutableStateOf(false) }
-    val initialItemKeys = remember { mutableSetOf<String>() }
-    val oldestInitialCreatedAt = remember { mutableStateOf<String?>(null) }
+    val initialKeysCaptured = remember(chatId) { mutableStateOf(false) }
+    val initialItemKeys = remember(chatId) { mutableSetOf<String>() }
+    val oldestInitialCreatedAt = remember(chatId) { mutableStateOf<String?>(null) }
     if (!initialKeysCaptured.value && chatItems.isNotEmpty()) {
         chatItems.forEach { item ->
             when (item) {
@@ -112,7 +114,16 @@ internal fun ChatMessageList(
     }
 
     val reversedItems = remember(chatItems) { chatItems.reversed() }
-    val groupPositions = remember(reversedItems) {
+    val groupingStructure = remember(reversedItems) {
+        reversedItems.map { item ->
+            when (item) {
+                is ChatListItem.DateDivider -> Pair("date", item.label)
+                is ChatListItem.UnreadDivider -> "unread"
+                is ChatListItem.MessageItem -> listOf("message", item.message.clientId, item.message.senderId, item.message.createdAt, item.message.messageType.name)
+            }
+        }
+    }
+    val groupPositions = remember(groupingStructure) {
         // Build lookup of all messages (including non-text) for index mapping
         val messageEntries = reversedItems.mapIndexedNotNull { index, item ->
             (item as? ChatListItem.MessageItem)?.let { index to it.message }
@@ -147,8 +158,8 @@ internal fun ChatMessageList(
         }
         positions
     }
-    val pendingQuoteTargetId = remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(initialMessageId) {
+    val pendingQuoteTargetId = remember(chatId) { mutableStateOf<String?>(null) }
+    LaunchedEffect(chatId, initialMessageId) {
         initialMessageId?.takeIf { it.isNotBlank() }?.let { messageId ->
             pendingQuoteTargetId.value = messageId
             onLocateMessage(messageId)
@@ -191,7 +202,7 @@ internal fun ChatMessageList(
         reverseLayout = true
     ) {
         if (typingStatus != null && typingStatus.isTyping) {
-            item(key = "typing_indicator") {
+            item(key = "typing_indicator", contentType = "typing_indicator") {
                 val typingModifier = if (!reducedMotion) {
                     Modifier.animateItem(
                         // M3 fast effects spring — damping 1.0 (no overshoot).
@@ -224,6 +235,12 @@ internal fun ChatMessageList(
                  is ChatListItem.UnreadDivider -> "unread_divider"
                  is ChatListItem.MessageItem -> item.message.clientId
              }
+         }, contentType = { _, item ->
+             when (item) {
+                 is ChatListItem.DateDivider -> "date_divider"
+                 is ChatListItem.UnreadDivider -> "unread_divider"
+                 is ChatListItem.MessageItem -> "message"
+             }
          }) { index, item ->
             val itemKey = when (item) {
                 is ChatListItem.DateDivider -> "date_${item.label}"
@@ -239,7 +256,7 @@ internal fun ChatMessageList(
 
             // Shared placement and exit spec for items.
             // Appear animation is removed as requested; items appear instantly.
-            val placementModifier = if (!reducedMotion) {
+            val placementModifier = if (!reducedMotion && !isInitialSyncing && !isHistorical) {
                 Modifier.animateItem(
                     fadeInSpec = null,
                     fadeOutSpec = spring(

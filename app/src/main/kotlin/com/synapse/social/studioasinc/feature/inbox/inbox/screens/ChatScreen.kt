@@ -426,6 +426,7 @@ import kotlinx.coroutines.withContext
                 }
                 else -> {
                     ChatMessageList(
+                        chatId = chatId,
                         modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
@@ -445,6 +446,7 @@ import kotlinx.coroutines.withContext
                         listState = listState,
                         initialMessageId = initialMessageId,
                         isLoadingMore = isLoadingMore,
+                        isInitialSyncing = isLoading,
                         typingStatus = typingStatus,
                         onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
                         onSingleTap = { selectedMessageForMenu = it },
