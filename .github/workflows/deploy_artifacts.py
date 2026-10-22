@@ -125,14 +125,14 @@ async def main():
     client = TelegramClient('bot_session', api_id, api_hash)
     try:
         await client.start(bot_token=bot_token)
-        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor)
+        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor, branch_name)
     except FloodWaitError as e:
         wait_time = e.seconds
         logger.warning(f"Rate limited during client start. Waiting {wait_time} seconds...")
         time.sleep(wait_time)
         # Retry client start after waiting
         await client.start(bot_token=bot_token)
-        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor)
+        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor, branch_name)
     finally:
         await client.disconnect()
 
