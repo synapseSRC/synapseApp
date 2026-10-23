@@ -164,7 +164,8 @@ class SupabaseChatRepository(
             Conversation(
                 chatId = summary.chatId,
                 participantId = summary.participantId,
-                participantName = summary.participantName,
+                participantName = summary.participantName?.takeIf { it.isNotBlank() }
+                    ?: if (summary.isGroup) "Group Chat" else "Unknown User",
                 participantAvatar = summary.participantAvatar,
                 lastMessage = lastMessageText,
                 lastMessageTime = summary.lastMessage?.createdAt,

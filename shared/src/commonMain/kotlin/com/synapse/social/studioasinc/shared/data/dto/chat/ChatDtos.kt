@@ -199,7 +199,7 @@ data class GroupInvitePreviewDto(
 data class ChatInboxSummaryDto(
     @SerialName("chat_id") val chatId: String,
     @SerialName("participant_id") val participantId: String,
-    @SerialName("participant_name") val participantName: String,
+    @SerialName("participant_name") val participantName: String? = null,
     @SerialName("participant_avatar") val participantAvatar: String? = null,
     @SerialName("participant_status") val participantStatus: String? = null,
     @SerialName("participant_last_seen") val participantLastSeen: String? = null,
