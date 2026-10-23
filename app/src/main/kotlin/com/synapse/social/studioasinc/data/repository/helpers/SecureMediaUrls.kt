@@ -29,6 +29,6 @@ internal suspend fun Post.withSignedStorageMediaUrls(): Post {
 }
 
 internal suspend fun Story.withSignedStorageMediaUrls(defaultBucket: String = "story-media"): Story = copy(
-    mediaUrl = mediaUrl?.let { SupabaseClient.createSignedStorageUrl(defaultBucket, it) },
-    thumbnailUrl = thumbnailUrl?.let { SupabaseClient.createSignedStorageUrl(defaultBucket, it) }
+    mediaUrl = mediaUrl?.let { SupabaseClient.createSignedStorageUrlOrNull(defaultBucket, it) },
+    thumbnailUrl = thumbnailUrl?.let { SupabaseClient.createSignedStorageUrlOrNull(defaultBucket, it) }
 )

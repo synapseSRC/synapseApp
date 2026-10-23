@@ -120,6 +120,8 @@ internal class PostCrudHelper(
             android.util.Log.d(PostRepositoryUtils.TAG, "Batch posts created successfully")
             val renderablePosts = enrichedPosts.map { it.withSignedStorageMediaUrls() }
             Result.success(renderablePosts)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             android.util.Log.e(PostRepositoryUtils.TAG, "Failed to create posts in batch", e)
             Result.failure(Exception(PostRepositoryUtils.mapSupabaseError(e)))
