@@ -154,8 +154,8 @@ class FeedPagingSource(
                     } catch (e: Exception) {
                         null
                     }
-                }.toMap()
-            } else emptyMap()
+                }.toMap().toMutableMap()
+            } else mutableMapOf()
 
             // Sign media URLs for protected storage so Coil can load images/videos in the feed.
             // Without this, mediaItems[].url and postImage remain raw storage paths that Coil cannot load.
