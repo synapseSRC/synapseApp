@@ -38,7 +38,12 @@ internal class ChatEncryptionHelper(
      * be decrypted once by the protocol's state machine.
      */
     val decryptedMessageCache = mutableMapOf<String, String>()
-    private val decryptionMutex = Mutex()
+    private val decryptionMutexes = mutableMapOf<String, Mutex>()
+    private val mutexLock = Any()
+
+    private fun mutexFor(senderId: String): Mutex = synchronized(mutexLock) {
+        decryptionMutexes.getOrPut(senderId.ifBlank { "__global__" }) { Mutex() }
+    }
 
     private val placeholders = setOf(
         "Message is encrypted",
@@ -78,7 +83,7 @@ internal class ChatEncryptionHelper(
     suspend fun MessageDto.decryptIfNecessary(currentUserId: String): MessageDto {
         val messageId = this.id ?: return this
 
-        return decryptionMutex.withLock {
+        return mutexFor(this.senderId).withLock {
             // 1) Check in-memory cache first (fastest)
             decryptedMessageCache[messageId]?.let { cached ->
                 Logger.d("E2EE_DECRYPT: Found message $messageId in memory cache", tag = "E2EE")
@@ -135,17 +140,18 @@ internal class ChatEncryptionHelper(
                                 try {
                                     signalProtocolManager.deleteSession(senderId)
                                 } catch (_: Throwable) {}
-                            }
-                        }
-                    }
+                }
+                this
+            }
+        }
                     // Return placeholder instead of leaking raw encrypted JSON map
                     val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
                     return@withLock this.copy(content = fallbackContent)
                 }
             } catch (_: Exception) {
-                // Not a JSON object — plaintext message
+                // Not a JSON object — if content looks like an encrypted blob, don't leak it
+                this
             }
-
             this
         }
     }

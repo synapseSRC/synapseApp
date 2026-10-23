@@ -267,10 +267,10 @@ class VoiceRecordingController(
         if (currentState is VoiceState.Pressing) {
             holdJob?.cancel()
             holdJob = null
-            // Single tap only if pointer was not moved significantly
+            // Single tap only if pointer was not moved significantly.
+            // Locking is exclusively a drag-up gesture handled in handleDrag(); do not lock here.
             if (abs(cumulativeX) < 15f && abs(cumulativeY) < 15f) {
                 startActualRecording()
-                lockRecording()
             } else {
                 _state.value = VoiceState.Normal
             }

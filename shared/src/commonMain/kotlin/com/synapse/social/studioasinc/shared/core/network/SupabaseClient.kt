@@ -108,8 +108,21 @@ object SupabaseClient {
 
     fun constructStorageUrl(bucket: String, path: String): String {
         if (path.isBlank()) return ""
-        if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("private-media://")) {
+        if (path.startsWith("http://") || path.startsWith("https://")) {
             return path
+        }
+
+        // Convert private-media://bucket/object path to a public HTTPS storage URL
+        if (path.startsWith("private-media://")) {
+            val route = path.removePrefix("private-media://")
+            val segments = route.split('/', limit = 2)
+            if (segments.size == 2) {
+                val urlBucket = segments[0]
+                val objectPath = segments[1]
+                val cleanPath = if (objectPath.startsWith("/")) objectPath.substring(1) else objectPath
+                val cleanBaseUrl = if (validatedSupabaseUrl.endsWith("/")) validatedSupabaseUrl.dropLast(1) else validatedSupabaseUrl
+                return "$cleanBaseUrl/storage/v1/object/public/$urlBucket/$cleanPath"
+            }
         }
 
         // Remove leading slash if present to avoid double slashes

@@ -57,7 +57,7 @@ struct ChatInputView: View {
                             inputText = ""
                         }
                     }) {
-                        Image(systemName: "paperplane.fill")
+                        Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
                             .foregroundColor(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
                     }

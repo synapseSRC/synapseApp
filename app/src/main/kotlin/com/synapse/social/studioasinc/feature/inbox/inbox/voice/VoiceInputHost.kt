@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -208,7 +207,6 @@ fun VoiceInputHost(
                         }
                     }
                 } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
-                    Spacer(modifier = Modifier.width(Spacing.space0))
                 } else {
                     CanonicalMicButton(
                         voiceState = voiceState,
@@ -295,27 +293,53 @@ private fun VoiceInputBarContent(
                         shadowElevation = 2.dp
                     ) {
                         IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize().testTag("voice-locked-finish")) {
-                            Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.chat_action_send), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))
+                            Icon(Icons.Default.ArrowUpward, stringResource(R.string.chat_action_send), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))
                         }
                     }
                 }
             }
             is VoiceState.VoiceDraft -> {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    IconButton(onClick = { onVoiceAction(VoiceAction.DiscardDraft) }, modifier = Modifier.size(40.dp)) {
-                        Icon(Icons.Default.Delete, stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.space8),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+                ) {
+                    IconButton(
+                        onClick = { onVoiceAction(VoiceAction.DiscardDraft) },
+                        modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.action_delete),
+                            tint = MaterialTheme.colorScheme.error
+                        )
                     }
-                    IconButton(onClick = { onVoiceAction(VoiceAction.TogglePlayDraft) }, modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape)) {
-                        Icon(imageVector = if (voiceState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = stringResource(if (voiceState.isPlaying) R.string.cd_pause_audio else R.string.cd_play_audio), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    IconButton(
+                        onClick = { onVoiceAction(VoiceAction.TogglePlayDraft) },
+                        modifier = Modifier
+                            .size(MIC_TOUCH_TARGET_SIZE)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = if (voiceState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = stringResource(if (voiceState.isPlaying) R.string.cd_pause_audio else R.string.cd_play_audio),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
                     val progress = if (voiceState.durationMs > 0) voiceState.playbackPositionMs.toFloat() / voiceState.durationMs else 0f
                     LiveWaveformView(amplitudeHistory = voiceState.amplitudeHistory, progressFraction = progress, isDraftPlayback = true,
                         onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) }, modifier = Modifier.weight(1f).height(32.dp), activeColor = MaterialTheme.colorScheme.primary)
                     OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
-                    Surface(modifier = Modifier.size(Sizes.SendButton), shape = CircleShape, color = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                    Surface(
+                        modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ) {
                         IconButton(onClick = { onVoiceAction(VoiceAction.SendDraft) }, modifier = Modifier.fillMaxSize()) {
-                            Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.chat_action_send), modifier = Modifier.size(Sizes.IconLarge))
+                            Icon(Icons.Default.ArrowUpward, stringResource(R.string.chat_action_send), modifier = Modifier.size(Sizes.IconLarge))
                         }
                     }
                 }
@@ -347,11 +371,11 @@ private fun VoiceRecordingContentOverlay(
 ) {
     val isRecording = voiceState is VoiceState.Recording
     val isLocked = voiceState is VoiceState.Locked
-    val showLockIndicator = isRecording || isLocked
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val density = LocalDensity.current
         val recording = voiceState as? VoiceState.Recording
+        val showLockIndicator = isLocked || (recording?.lockProgress?.let { it > 0f } ?: false)
 
         // Timer and slide-to-cancel shimmer shown in center during active holding/recording
         AnimatedVisibility(
@@ -386,7 +410,6 @@ private fun VoiceRecordingContentOverlay(
                 val micTop = micBounds.top
                 val leftPx = (micCenterX - pillWidthPx / 2f)
                     .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
-                val topPx = micTop - initialPillHeightPx - gapPx
 
                 val lockProgress = when {
                     isLocked -> 1f
@@ -397,6 +420,14 @@ private fun VoiceRecordingContentOverlay(
                     recording != null -> recording.cancelProgress
                     else -> 0f
                 }
+                val dragOffsetY = recording?.dragOffsetYPx ?: 0f
+
+                // Dynamic morphing: the pill rises with the finger (dragOffsetY is negative
+                // upward) while its height shrinks proportionally to lockProgress. The base
+                // anchor is the mic top minus the pill height minus the gap; dragging up
+                // subtracts the upward offset so the capsule both lifts and compresses.
+                val pillHeightPx = initialPillHeightPx + (pillWidthPx - initialPillHeightPx) * lockProgress.coerceIn(0f, 1f)
+                val topPx = (micTop + dragOffsetY) - pillHeightPx - gapPx
 
                 // Tooltip "Slide up to lock" bubble to the left of the pill (Image 4)
                 val tooltipVisible = !isLocked && lockProgress < 0.15f && cancelProgress == 0f
@@ -512,19 +543,9 @@ private fun LockPillCapsule(
     val baseAlpha = if (reducedMotion) 0.95f else (0.85f + 0.15f * progress.coerceIn(0f, 1f))
     val alpha = (if (isLocked) 1f else baseAlpha) * cancelFade
 
-    val targetHeight = if (isLocked) LOCK_PILL_WIDTH else {
-        lerpDp(LOCK_PILL_HEIGHT, LOCK_PILL_WIDTH, progress.coerceIn(0f, 1f))
-    }
-    val animatedHeight = animateDpForMotion(
-        targetValue = targetHeight,
-        reducedMotion = reducedMotion,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "lockPillHeight"
-    )
-
+    // Direct-drive fluidity: during a drag the pill height, tint, and scale track the
+    // finger's lockProgress exactly. Springs are reserved for the commit (Recording -> Locked)
+    // and the release return (Locked -> return) transitions so the motion stays responsive.
     val isClosed = isLocked || progress >= 0.85f
     val iconVector = if (isClosed) Icons.Default.Lock else Icons.Default.LockOpen
 
@@ -544,12 +565,12 @@ private fun LockPillCapsule(
     )
 
     val targetScale = if (isLocked) 1.04f else (1f + 0.04f * progress.coerceIn(0f, 1f))
-    val scale = animateFloatForMotion(
-        targetValue = targetScale,
-        reducedMotion = reducedMotion,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
-        label = "lockPillScale"
-    )
+    val scaleSpec: AnimationSpec<Float> = if (isLocked) {
+        spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)
+    } else {
+        snap()
+    }
+    val scale = animateFloatAsState(targetValue = targetScale, animationSpec = scaleSpec, label = "lockPillScale").value
 
     val iconScale by animateFloatAsState(
         targetValue = if (isClosed) 1.1f else 1f,
@@ -561,6 +582,20 @@ private fun LockPillCapsule(
     val chevronAlpha = if (isLocked) 0f else {
         ((1f - progress * 2.2f).coerceIn(0f, 1f) * 0.7f)
     }
+
+    // Height morphs proportionally with the drag: full capsule (120dp) -> circle (48dp).
+    // Direct-drive fluidity: while dragging (not locked) the height snaps to progress so the
+    // capsule tracks the finger exactly. The spring only smooths the commit to Locked and the
+    // release return, keeping the drag itself finger-following and responsive.
+    val targetHeight = if (isLocked) LOCK_PILL_WIDTH else {
+        lerpDp(LOCK_PILL_HEIGHT, LOCK_PILL_WIDTH, progress.coerceIn(0f, 1f))
+    }
+    val heightSpec: AnimationSpec<androidx.compose.ui.unit.Dp> = if (isLocked) {
+        spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+    } else {
+        snap()
+    }
+    val animatedHeight = animateDpAsState(targetValue = targetHeight, animationSpec = heightSpec, label = "lockPillHeight").value
 
     Surface(
         modifier = modifier
