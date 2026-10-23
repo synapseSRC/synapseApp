@@ -85,7 +85,7 @@ class PostPagingSource(
             LoadResult.Page(
                 data = renderablePosts,
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
-                nextKey = if (postsWithReactions.isEmpty()) null else position + pageSize
+                nextKey = if (response.size < pageSize) null else position + pageSize
             )
         } catch (e: Exception) {
             Log.e("PostPagingSource", "Error loading posts", e)

@@ -72,9 +72,8 @@ class SearchRepositoryImpl(
 
         val columns = Columns.raw("id, post_text, post_image, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, author:users!posts_author_uid_fkey(display_name, username, avatar)")
 
-        // For Full Text Search, we do not escape % and _ as they are not wildcards in FTS.
-        // We trim and limit to prevent excessively long query strings that might strain the backend.
-        val sanitizedQuery = query.trim().take(100)
+        // Escape PostgREST ilike wildcard characters and bound the query length.
+        val sanitizedQuery = sanitizeSearchQuery(query)
 
         val result = client.postgrest["posts"].select(columns = columns) {
             if (sanitizedQuery.isNotBlank()) {
