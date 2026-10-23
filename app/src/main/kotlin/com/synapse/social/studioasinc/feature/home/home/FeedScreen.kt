@@ -68,7 +68,7 @@ fun FeedScreen(
     onUserClick: (String) -> Unit,
     onCommentClick: (Post) -> Unit,
     onQuoteClick: (String) -> Unit,
-    onMediaClick: (Int) -> Unit,
+    onMediaClick: (Post, Int) -> Unit,
     onEditPost: (String) -> Unit,
     onStoryClick: (String, List<String>) -> Unit = { _, _ -> },
     onAddStoryClick: () -> Unit = {},
@@ -136,7 +136,7 @@ fun FeedScreen(
             onQuote = { post -> onQuoteClick(post.id) },
             onUserClick = { userId -> currentOnUserClick(userId) },
             onOptionClick = { post -> selectedPost = post },
-            onMediaClick = { index -> currentOnMediaClick(index) }
+            onMediaClick = { post, index -> currentOnMediaClick(post, index) }
         )
     }
 
@@ -347,7 +347,7 @@ private fun FeedCommentItem(
     viewModel: FeedViewModel,
     onCommentClick: (Post) -> Unit,
     onUserClick: (String) -> Unit,
-    onMediaClick: (Int) -> Unit,
+    onMediaClick: (Post, Int) -> Unit,
     onOptionsClick: (Post) -> Unit
 ) {
     // Memoize mapped state to prevent re-mapping on every scroll frame
@@ -364,7 +364,7 @@ private fun FeedCommentItem(
     val onBookmarkClick = remember(commentState.post) { { viewModel.bookmarkPost(commentState.post) } }
     val onUserClickAction = remember(feedItem.userId) { { onUserClick(feedItem.userId) } }
     val onPostClick = onCommentClickAction
-    val onMediaClickAction = remember(feedItem.id) { { index: Int -> onMediaClick(index) } }
+    val onMediaClickAction = remember(feedItem.id) { { post: Post, index: Int -> onMediaClick(post, index) } }
     val onOptionsClickAction = remember(commentState.post) { { onOptionsClick(commentState.post) } }
     val onPollVote = remember(feedItem.id) { { _: String -> } }
     val onReactionSelected = remember(feedItem.id) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }

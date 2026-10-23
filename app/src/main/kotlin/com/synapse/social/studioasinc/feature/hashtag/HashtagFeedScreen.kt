@@ -66,7 +66,7 @@ fun HashtagFeedScreen(
                                 onOptionClick = { },
                                 onPollVote = viewModel::votePoll,
                                 onUserClick = { userId -> onNavigateToProfile(userId) },
-                                onMediaClick = { _ -> onNavigateToPost(post.id, null) },
+                                onMediaClick = { post, _ -> onNavigateToPost(post.id, null) },
                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                             )
                         }

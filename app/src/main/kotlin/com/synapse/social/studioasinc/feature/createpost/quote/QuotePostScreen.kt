@@ -99,7 +99,7 @@ fun QuotePostScreen(
                         onBookmarkClick = {},
                         onUserClick = {},
                         onPostClick = {},
-                        onMediaClick = { _ -> },
+                        onMediaClick = { _, _ -> },
                         onOptionsClick = {},
                         onPollVote = {},
                         onQuoteClick = {},
