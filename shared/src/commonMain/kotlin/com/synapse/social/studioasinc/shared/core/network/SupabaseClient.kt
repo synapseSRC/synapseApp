@@ -10,6 +10,7 @@ import io.github.jan.supabase.storage.storage
 import kotlin.time.Duration.Companion.minutes
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.annotations.SupabaseInternal
+import kotlinx.coroutines.CancellationException
 import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.http.Url
@@ -138,6 +139,25 @@ object SupabaseClient {
             path = reference.second,
             expiresIn = 15.minutes
         )
+    }
+
+    /** Returns a renderable URL, or null when protected media is unavailable to this viewer. */
+    suspend fun createSignedStorageUrlOrNull(defaultBucket: String, pathOrUrl: String): String? {
+        if (pathOrUrl.isBlank()) return null
+        if (pathOrUrl.startsWith("content://") || pathOrUrl.startsWith("file://") || pathOrUrl.startsWith("data:")) {
+            return pathOrUrl
+        }
+
+        return try {
+            createSignedStorageUrl(defaultBucket, pathOrUrl).takeIf {
+                it.startsWith("http://") || it.startsWith("https://")
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // A media permission or transient Storage error must not discard its owning post.
+            null
+        }
     }
 
     private fun resolveProtectedStorageObject(defaultBucket: String, pathOrUrl: String): Pair<String, String>? {
