@@ -15,6 +15,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
@@ -69,6 +70,8 @@ class FeedPagingSource(
 
             // Fallback to Network if cache has gaps, is empty, or if we are refreshing the top of the feed (position == 0)
             return syncNetworkData(position, pageSize)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error loading feed items", e)
             LoadResult.Error(e)
@@ -154,6 +157,8 @@ class FeedPagingSource(
                             post.replyToUsernames = storedReplyUsernames
                         }
                         post.id to post
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         null
                     }
@@ -181,6 +186,8 @@ class FeedPagingSource(
                         val username = obj["users"]?.jsonObject?.get("username")?.let { if (it is JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                         id to username
                     }.toMap()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) { emptyMap() }
             } else emptyMap()
 
@@ -293,6 +300,8 @@ class FeedPagingSource(
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (timelineResponse.size < pageSize) null else position + pageSize
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error syncing feed items", e)
             // If offline/network fails, return whatever is in cache even if it's incomplete
@@ -381,6 +390,8 @@ class FeedPagingSource(
                     isReshared = resharedPostIds.contains(post.id)
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error fetching user interactions", e)
             posts
