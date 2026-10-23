@@ -36,11 +36,11 @@ fun SharedPostItem(
     val onUserClick = remember(post.authorUid, actions) { { actions.onUserClick(post.authorUid) } }
     val onPostClick = remember(post.id, actions) { { actions.onComment(post) } }
     val onMediaClick = remember(post.id, actions, postViewStyle) {
-        { index: Int ->
+        { post: Post, index: Int ->
             if (postViewStyle == PostViewStyle.GRID) {
                 actions.onComment(post)
             } else {
-                actions.onMediaClick(index)
+                actions.onMediaClick(post, index)
             }
         }
     }
