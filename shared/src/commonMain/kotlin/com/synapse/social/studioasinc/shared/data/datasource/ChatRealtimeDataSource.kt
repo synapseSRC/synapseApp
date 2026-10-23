@@ -53,6 +53,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     /**
      * Sends an ephemeral typing status update to other participants in a specific chat.
      * Uses Supabase Broadcast to ensure low-latency delivery without persisting to the database.
+     *
+     * The broadcast channel is subscribed before sending. If subscription fails after retries,
+     * the broadcast is aborted rather than silently failing on an unsubscribed channel.
      */
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) =
         withContext(AppDispatchers.IO) {
@@ -62,30 +65,50 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                 val channelId = "broadcast-typing-$normalizedChatId"
                 val channel = client.realtime.channel(channelId)
 
+                // Ensure the realtime socket is connected before subscribing.
+                try {
+                    client.realtime.connect()
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Napier.w("Realtime connect failed before broadcast: ${e.message}", e, tag = "Realtime")
+                    return@withContext
+                }
+
+                // Subscribe to the channel before broadcasting. If subscription fails,
+                // abort rather than silently-failing broadcasts on an unsubscribed channel.
                 if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
-                    try {
-                        client.realtime.connect()
-                        yield()
-                        channel.subscribe(blockUntilSubscribed = true)
-                    } catch (e: Exception) {
-                        Napier.e("Error subscribing to typing broadcast channel", e)
+                    var subscribed = false
+                    var attempts = 0
+                    while (!subscribed && attempts < 3) {
+                        try {
+                            channel.subscribe(blockUntilSubscribed = true)
+                            subscribed = true
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            attempts++
+                            Napier.w("Attempt $attempts failed to subscribe to typing channel: ${e.message}", e, tag = "Realtime")
+                            if (attempts < 3) delay(500L * attempts)
+                        }
+                    }
+                    if (!subscribed) {
+                        Napier.e("Aborting typing broadcast: could not subscribe to channel $channelId", tag = "Realtime")
+                        return@withContext
                     }
                 }
+
                 val payload = buildJsonObject {
                     put("user_id", currentUserId)
                     put("is_typing", isTyping)
                 }
                 try {
                     channel.broadcast(event = "typing", message = payload)
+                    Napier.d("Broadcast typing status for chat $normalizedChatId: isTyping=$isTyping", tag = "Realtime")
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Napier.w("Broadcast typing failed: ${e.message}", e, tag = "Realtime")
                 }
-                try {
-                    channel.track(payload)
-                } catch (e: Exception) {
-                    Napier.w("Presence track typing failed: ${e.message}", e, tag = "Realtime")
-                }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Napier.e("Error broadcasting typing status", e)
             }
         }
@@ -335,100 +358,97 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     }
 
     /**
-     * Subscribes to typing indicators from all participants in a chat using Presence.
-     * Presence provides a shared state that tracks who is currently 'online' or 'typing' in a channel.
+     * Subscribes to typing indicators from all participants in a chat using Supabase Broadcast.
+     *
+     * Broadcast-only implementation: presence was previously used alongside broadcast on the
+     * same channel, which can conflict in supabase-kt realtime-kt. Broadcast messages are
+     * delivered to every subscriber of the channel, so presence is unnecessary.
+     *
+     * The collector is registered and signals readiness via [CompletableDeferred] before the
+     * WebSocket subscription is finalized, preventing a race where typing events sent
+     * immediately after entering a chat are missed.
      */
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> = callbackFlow {
-        // Must match the channel ID used by broadcastTypingStatus() so both
-        // sides share the same Supabase Presence channel.
         val normalizedChatId = chatId.trim().lowercase()
         val channelId = "broadcast-typing-$normalizedChatId"
-        Napier.d("Subscribing to typing presence channel: $channelId", tag = "Realtime")
+        Napier.d("Subscribing to typing broadcast channel: $channelId", tag = "Realtime")
 
         try {
             client.realtime.connect()
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
 
         val channel = client.realtime.channel(channelId)
-        val presenceFlow = channel.presenceChangeFlow()
 
         val subscriptionReady = CompletableDeferred<Unit>()
 
-        val broadcastCollector = launch(AppDispatchers.IO) {
+        val collector = launch(AppDispatchers.IO) {
             try {
-                channel.broadcastFlow<kotlinx.serialization.json.JsonObject>("typing").collect { json ->
-                    val userId = json["user_id"]?.jsonPrimitive?.contentOrNull
-                    val isTyping = json["is_typing"]?.jsonPrimitive?.booleanOrNull
+                channel.broadcastFlow<kotlinx.serialization.json.JsonObject>("typing")
+                    .onStart { subscriptionReady.complete(Unit) }
+                    .collect { json ->
+                        val userId = json["user_id"]?.jsonPrimitive?.contentOrNull
+                        val isTyping = json["is_typing"]?.jsonPrimitive?.booleanOrNull
 
-                    if (userId != null && isTyping != null) {
-                        send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                        if (userId != null && isTyping != null) {
+                            trySend(mapOf("user_id" to userId, "is_typing" to isTyping))
+                        }
                     }
-                }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
-                    Napier.w("Broadcast typing flow ended: ${e.message}", e, tag = "Realtime")
+                    Napier.w("Typing broadcast flow ended: ${e.message}", e, tag = "Realtime")
                 }
             }
-        }
-
-        val collector = launch(AppDispatchers.IO) {
-            presenceFlow
-                .onStart { subscriptionReady.complete(Unit) }
-                .collect { presenceChange ->
-                    val joinedUserIds = mutableSetOf<String>()
-                    presenceChange.joins.values.forEach { presence ->
-                        try {
-                            val state = presence.state
-                            val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
-                            val isTyping = state["is_typing"]?.jsonPrimitive?.booleanOrNull
-
-                            if (userId != null && isTyping != null) {
-                                joinedUserIds.add(userId)
-                                send(mapOf("user_id" to userId, "is_typing" to isTyping))
-                            }
-                        } catch (e: Exception) {
-                            Napier.e("Error decoding presence state", e, tag = "Realtime")
-                        }
-                    }
-
-                    presenceChange.leaves.values.forEach { presence ->
-                        try {
-                            val state = presence.state
-                            val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
-
-                            // Only emit is_typing = false if the user is NOT in joins.
-                            // In Phoenix Presence, updating state emits both leaves (old state) and joins (new state).
-                            if (userId != null && userId !in joinedUserIds) {
-                                send(mapOf("user_id" to userId, "is_typing" to false))
-                            }
-                        } catch (e: Exception) {
-                            Napier.e("Error decoding presence leave state", e, tag = "Realtime")
-                        }
-                    }
-                }
         }
 
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
                 yield()
-                channel.subscribe(blockUntilSubscribed = true)
+                var subscribed = false
+                var attempts = 0
+                while (!subscribed && attempts < 3 && isActive) {
+                    try {
+                        channel.subscribe(blockUntilSubscribed = true)
+                        subscribed = true
+                        Napier.d("Successfully subscribed to typing channel: $channelId", tag = "Realtime")
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        attempts++
+                        Napier.w("Attempt $attempts failed to subscribe to typing channel: ${e.message}", e, tag = "Realtime")
+                        if (attempts < 3) delay(500L * attempts)
+                    }
+                }
+                if (!subscribed && isActive) {
+                    try {
+                        channel.subscribe(blockUntilSubscribed = false)
+                        Napier.d("Subscribed to typing channel non-blocking: $channelId", tag = "Realtime")
+                    } catch (e: Exception) {
+                        if (e !is CancellationException) {
+                            Napier.e("Failed to subscribe to typing channel after retries: $channelId", e, tag = "Realtime")
+                            close(e)
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
-                    Napier.e("Failed to subscribe to chat presence", e, tag = "Realtime")
+                    Napier.e("Failed to subscribe to typing channel: $channelId", e, tag = "Realtime")
                     close(e)
                 }
             }
         }
 
         awaitClose {
-            broadcastCollector.cancel()
+            Napier.d("Closing typing broadcast channel: $channelId", tag = "Realtime")
             collector.cancel()
             CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                    Napier.w("Error during typing channel cleanup: ${e.message}", tag = "Realtime")
+                }
             }
         }
     }

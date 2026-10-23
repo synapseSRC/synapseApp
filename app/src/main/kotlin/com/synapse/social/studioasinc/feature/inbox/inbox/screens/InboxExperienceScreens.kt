@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -389,7 +390,7 @@ fun InboxBriefingScreen(
     ) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-            shape = MaterialTheme.shapes.medium,
+shape = RoundedCornerShape(0.dp),
             modifier = Modifier.fillMaxWidth().animateContentSize(spring(dampingRatio = 0.8f, stiffness = 380f))
         ) {
             Column(Modifier.padding(Spacing.space16), verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {

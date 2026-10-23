@@ -71,4 +71,23 @@ interface ChatRepository {
     suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
     /** Persists the authenticated participant's notification mute setting for this chat. */
     suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit>
+
+    /**
+     * Registers the currently active chat screen by its chat ID.
+     * Pass `null` when no chat screen is open (e.g. on back-navigation or screen destruction).
+     * Used by the inbox refresh mechanism to avoid overwriting the active chat's real-time cache.
+     */
+    fun setActiveChatId(chatId: String?)
+
+    /**
+     * Returns the chat ID of the currently active chat screen, or `null` if no chat is open.
+     */
+    fun getActiveChatId(): String?
+
+    /**
+     * Reconciles a real-time WebSocket-delivered message into the local cache with real-time priority.
+     * The message is upserted into the cache using a merge strategy that preserves optimistic pending messages.
+     * Returns the message that should be displayed in the UI (may be an enriched version from cache).
+     */
+    suspend fun reconcileRealtimeMessage(chatId: String, message: com.synapse.social.studioasinc.shared.domain.model.chat.Message): com.synapse.social.studioasinc.shared.domain.model.chat.Message
 }

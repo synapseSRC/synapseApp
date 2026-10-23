@@ -169,13 +169,14 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val currentUserUid = getCurrentUserIdUseCase().orEmpty()
             val isOwnProfile = currentUserUid == userId
+            val followOpInProgress = isFollowOperationInProgress.get()
             _state.update {
                 it.copy(
                     profileState = ProfileUiState.Loading,
                     currentUserId = currentUserUid,
                     isOwnProfile = isOwnProfile,
-                    isFollowing = false,
-                    isFollowRequested = false,
+                    isFollowing = if (followOpInProgress) it.isFollowing else false,
+                    isFollowRequested = if (followOpInProgress) it.isFollowRequested else false,
                     followStatusError = null,
                     hasStory = false,
                     posts = emptyList(),
@@ -235,6 +236,7 @@ class ProfileViewModel @Inject constructor(
         if (!isFollowOperationInProgress.compareAndSet(false, true)) return
 
         val previousState = _state.value
+        android.util.Log.d("ProfileViewModel", "followUser: userId=$userId currentUserId=$currentUserId previousIsFollowing=${previousState.isFollowing}")
         val isPrivate = (previousState.profileState as? ProfileUiState.Success)?.profile?.isPrivate == true
         val targetFollowing = !isPrivate
         val targetRequested = isPrivate
@@ -257,30 +259,17 @@ class ProfileViewModel @Inject constructor(
             try {
                 followUserUseCase(currentUserId, userId).fold(
                     onSuccess = {
-                        getProfileFollowStatusUseCase(userId).onSuccess { status ->
-                            _state.update { state ->
-                                val oldFollowing = state.isFollowing
-                                state.copy(
-                                    isFollowing = status == ProfileFollowStatus.FOLLOWING,
-                                    isFollowRequested = status == ProfileFollowStatus.REQUESTED,
-                                    isFollowLoading = false,
-                                    profileState = (state.profileState as? ProfileUiState.Success)?.let { success ->
-                                        val actualDelta = when {
-                                            !oldFollowing && status == ProfileFollowStatus.FOLLOWING -> 1
-                                            oldFollowing && status != ProfileFollowStatus.FOLLOWING -> -1
-                                            else -> 0
-                                        }
-                                        success.copy(profile = success.profile.copy(followerCount = maxOf(0, success.profile.followerCount + actualDelta)))
-                                    } ?: state.profileState
-                                )
-                            }
-                            if (status == ProfileFollowStatus.FOLLOWING) {
-                                checkStory(userId)
-                                loadContent(userId, _state.value.contentFilter)
-                            }
+                        android.util.Log.d("ProfileViewModel", "followUser: success userId=$userId")
+                        // Optimistic update already applied — trust it.
+                        // For public profiles (targetFollowing=true), load content immediately.
+                        // For private profiles (targetRequested=true), no content to load yet.
+                        if (targetFollowing) {
+                            checkStory(userId)
+                            loadContent(userId, _state.value.contentFilter)
                         }
                     },
                     onFailure = { error ->
+                        android.util.Log.e("ProfileViewModel", "followUser: failure userId=$userId error=${error.message}", error)
                         // Revert optimistic update on failure
                         _state.value = previousState.copy(
                             isFollowLoading = false,

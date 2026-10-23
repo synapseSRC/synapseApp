@@ -69,6 +69,82 @@ class SupabaseChatRepository(
     private val reactionDataSource = ChatReactionDataSource(client)
     private val conversationMutex = Mutex()
 
+    // Per-chat mutexes — serializes concurrent cache writes for the same chat ID.
+    // Prevents race conditions when real-time WebSocket delivery and inbox refresh
+    // both attempt to write to the same chat's message cache simultaneously.
+    // chatCacheMutexLock guards the map itself so new entries are created atomically.
+    private val chatCacheMutexLock = Mutex()
+    private val chatCacheMutexes = mutableMapOf<String, Mutex>()
+
+    private suspend fun getCacheMutexForChat(chatId: String): Mutex =
+        chatCacheMutexLock.withLock {
+            chatCacheMutexes.getOrPut(chatId) { Mutex() }
+        }
+
+    // In-memory last-sync timestamps per chat — avoids redundant network fetches for
+    // the active chat when messages were just written via a real-time event.
+    // Uses epoch milliseconds; entries absent from the map mean "never synced".
+    private val chatLastSyncedAt = mutableMapOf<String, Long>()
+    private val chatLastSyncedAtLock = Mutex()
+
+    private suspend fun recordCacheSyncTime(chatId: String) {
+        chatLastSyncedAtLock.withLock {
+            chatLastSyncedAt[chatId] = TimeProvider.nowMillis()
+        }
+    }
+
+    private suspend fun isCacheFresh(chatId: String, maxAgeMs: Long = 30_000L): Boolean =
+        chatLastSyncedAtLock.withLock {
+            val lastSync = chatLastSyncedAt[chatId] ?: return@withLock false
+            (TimeProvider.nowMillis() - lastSync) < maxAgeMs
+        }
+
+    // Active chat registry — tracks which chat screen is currently open.
+    // Used by inbox refresh to avoid overwriting an active chat's real-time message cache.
+    private val _activeChatId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+
+    override fun setActiveChatId(chatId: String?) {
+        _activeChatId.value = chatId
+    }
+
+    override fun getActiveChatId(): String? = _activeChatId.value
+
+    override suspend fun reconcileRealtimeMessage(
+        chatId: String,
+        message: Message
+    ): Message = withContext(AppDispatchers.IO) {
+        try {
+            // Serialize this write against the concurrent inbox-refresh path that also
+            // writes to the same chat's cache (getMessages active-chat branch).
+            getCacheMutexForChat(chatId).withLock {
+                // Upsert the real-time message directly — it is the authoritative source.
+                // Skip placeholder content (encrypted messages not yet decryptable).
+                if (!encryptionHelper.isPlaceholder(message.content)) {
+                    cachedMessageDao?.upsert(message)
+                    recordCacheSyncTime(chatId)
+                }
+            }
+            // Read outside the lock — only the write needs serialization.
+            // If the cache already holds a decrypted version of this message (e.g. from
+            // background sync or a prior decryption pass), prefer that content over an
+            // encrypted placeholder that may have arrived via the real-time channel.
+            val cached = cachedMessageDao
+                ?.getMessages(chatId, 1)
+                ?.firstOrNull { it.id == message.id }
+            if (cached != null &&
+                !encryptionHelper.isPlaceholder(cached.content) &&
+                cached.content.isNotBlank()
+            ) {
+                cached
+            } else {
+                message
+            }
+        } catch (e: Exception) {
+            Logger.e("Failed to reconcile real-time message ${message.id}", throwable = e)
+            message
+        }
+    }
+
     override suspend fun ensureSession(userId: String) = withContext(AppDispatchers.IO) {
         encryptionHelper.ensureSession(userId)
     }
@@ -192,9 +268,31 @@ class SupabaseChatRepository(
             val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
 
             if (before == null) {
-                val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
-                if (decryptableForCache.isNotEmpty()) {
-                    cachedMessageDao?.upsertAll(decryptableForCache)
+                val activeChatId = getActiveChatId()
+                if (activeChatId != null && activeChatId.equals(chatId, ignoreCase = true)) {
+                    // Active chat: use merge strategy to preserve any real-time messages not yet
+                    // reflected in the server response. This prevents inbox refresh (forceNetwork=true)
+                    // from overwriting messages delivered via WebSocket before they propagate server-side.
+                    // Mutex ensures this write is serialized against concurrent real-time upserts.
+                    getCacheMutexForChat(chatId).withLock {
+                        val existingCached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
+                        val toDelete = reconcileServerMessagesWithCache(existingCached, decrypted, isRealTimeSource = false)
+                        if (toDelete.isNotEmpty()) {
+                            cachedMessageDao?.markDeleted(toDelete)
+                        }
+                        val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                        if (decryptableForCache.isNotEmpty()) {
+                            cachedMessageDao?.upsertAll(decryptableForCache)
+                            recordCacheSyncTime(chatId)
+                        }
+                    }
+                } else {
+                    // Inactive chat: standard overwrite is safe — no active real-time subscription
+                    // is writing to this chat's cache concurrently.
+                    val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                    if (decryptableForCache.isNotEmpty()) {
+                        cachedMessageDao?.upsertAll(decryptableForCache)
+                    }
                 }
                 cachedMessageDao?.trimToLimit(chatId, limit)
             }
@@ -254,8 +352,12 @@ class SupabaseChatRepository(
 
     internal fun reconcileServerMessagesWithCache(
         cached: List<Message>,
-        fresh: List<Message>
+        fresh: List<Message>,
+        isRealTimeSource: Boolean = false
     ): List<String> {
+        // When isRealTimeSource=true, the caller is a WebSocket event handler that has higher authority
+        // over delivery/read status than background sync. Deletion detection logic is the same regardless
+        // of source — both paths correctly detect server-side deletes.
         val deletedIds = mutableListOf<String>()
 
         fresh.filter { it.isDeleted || it.contentStatus == com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus.DELETED }
@@ -285,7 +387,7 @@ class SupabaseChatRepository(
                 val fresh = dataSource.getMessages(chatId, limit, null, null)
                 val decrypted = fresh.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
 
-                val toDelete = reconcileServerMessagesWithCache(cached, decrypted)
+                val toDelete = reconcileServerMessagesWithCache(cached, decrypted, isRealTimeSource = false)
                 if (toDelete.isNotEmpty()) {
                     cachedMessageDao?.markDeleted(toDelete)
                 }

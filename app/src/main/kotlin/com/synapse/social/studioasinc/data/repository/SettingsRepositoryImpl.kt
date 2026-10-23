@@ -525,4 +525,10 @@ class SettingsRepositoryImpl private constructor(
     override suspend fun setAutoplayAnimationsEnabled(enabled: Boolean) {
         settingsDataStore.setAutoplayAnimationsEnabled(enabled)
     }
+
+    override val typingIndicatorsEnabled: Flow<Boolean> = settingsDataStore.typingIndicatorsEnabled
+
+    override suspend fun setTypingIndicatorsEnabled(enabled: Boolean) {
+        settingsDataStore.setTypingIndicatorsEnabled(enabled)
+    }
 }

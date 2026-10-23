@@ -27,6 +27,7 @@ class ChatSubscriptionDelegate(
     private val viewModelScope: CoroutineScope,
     private val currentUserIdProvider: () -> String?,
     private val isScreenVisibleProvider: () -> Boolean,
+    private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
     private val onNewMessage: (Message) -> Unit,
     private val onReactionEvent: (MessageReaction) -> Unit,
     private val onSyncRequired: (suspend () -> Unit)? = null
@@ -146,6 +147,10 @@ class ChatSubscriptionDelegate(
         typingSubscriptionJob = viewModelScope.launch {
             while (isActive) {
                 try {
+                    if (!typingIndicatorsEnabledProvider()) {
+                        delay(1000)
+                        continue
+                    }
                     subscribeToTypingStatusUseCase(chatId).collect { status ->
                         val myUserId = currentUserIdProvider()
                         if (status.userId.isNotBlank() && (myUserId == null || status.userId != myUserId)) {

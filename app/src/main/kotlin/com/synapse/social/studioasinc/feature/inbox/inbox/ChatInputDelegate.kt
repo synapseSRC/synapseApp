@@ -28,6 +28,7 @@ class ChatInputDelegate(
     private val currentChatIdProvider: () -> String?,
     private val isE2EEReadyProvider: () -> Boolean,
     private val disappearingModeProvider: () -> DisappearingMode,
+    private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
     private val onChatRefreshRequired: () -> Unit
 ) {
     private var typingDebounceJob: Job? = null
@@ -38,14 +39,17 @@ class ChatInputDelegate(
         _inputText.value = newText
 
         val chatId = currentChatIdProvider() ?: return
+        val typingEnabled = typingIndicatorsEnabledProvider()
 
         if (newText.isBlank()) {
             typingDebounceJob?.cancel()
             typingDebounceJob = null
             if (isCurrentlyTyping) {
                 isCurrentlyTyping = false
-                viewModelScope.launch {
-                    broadcastTypingStatusUseCase(chatId, false)
+                if (typingEnabled) {
+                    viewModelScope.launch {
+                        broadcastTypingStatusUseCase(chatId, false)
+                    }
                 }
             }
             return
@@ -53,8 +57,10 @@ class ChatInputDelegate(
 
         if (!isCurrentlyTyping) {
             isCurrentlyTyping = true
-            viewModelScope.launch {
-                broadcastTypingStatusUseCase(chatId, true)
+            if (typingEnabled) {
+                viewModelScope.launch {
+                    broadcastTypingStatusUseCase(chatId, true)
+                }
             }
         }
 

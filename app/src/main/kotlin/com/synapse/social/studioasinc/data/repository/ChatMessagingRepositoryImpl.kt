@@ -38,6 +38,21 @@ class ChatMessagingRepositoryImpl @Inject constructor(
 ) {
     companion object {
         private const val TAG = "ChatMessagingRepositoryImpl"
+        private const val TABLE_MESSAGES = "messages"
+        private const val TABLE_CHAT_PARTICIPANTS = "chat_participants"
+        private const val TABLE_USERS = "users"
+        private const val COL_CHAT_ID = "chat_id"
+        private const val COL_USER_ID = "user_id"
+        private const val COL_UID = "uid"
+        private const val COL_IS_DELETED = "is_deleted"
+        private const val COL_CREATED_AT = "created_at"
+        private const val STATUS_ONLINE = "ONLINE"
+        private const val NO_MESSAGES_YET = "No messages yet"
+        private const val MSG_TYPE_TEXT = "text"
+        private const val COL_IS_ARCHIVED = "is_archived"
+        private const val SCHEMA_PUBLIC = "public"
+        private const val ERROR_NOT_AUTHENTICATED = "User not authenticated"
+        private const val CHANNEL_PREFIX = "chat-messages-"
     }
 
     /**
@@ -53,12 +68,12 @@ class ChatMessagingRepositoryImpl @Inject constructor(
     suspend fun getConversations(): Result<List<Conversation>> = withContext(Dispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId()
-                ?: return@withContext Result.failure(Exception("Not authenticated"))
+                ?: return@withContext Result.failure(Exception(ERROR_NOT_AUTHENTICATED))
 
             // 1. Get all chat IDs the user participates in
-            val myParticipations = client.from("chat_participants")
-                .select(columns = Columns.list("chat_id", "user_id", "is_archived")) {
-                    filter { eq("user_id", currentUserId) }
+            val myParticipations = client.from(TABLE_CHAT_PARTICIPANTS)
+                .select(columns = Columns.list(COL_CHAT_ID, COL_USER_ID, COL_IS_ARCHIVED)) {
+                    filter { eq(COL_USER_ID, currentUserId) }
                 }.decodeList<ChatParticipantDto>()
 
             val chatIds = myParticipations
@@ -68,11 +83,11 @@ class ChatMessagingRepositoryImpl @Inject constructor(
             if (chatIds.isEmpty()) return@withContext Result.success(emptyList())
 
             // 2. Batch fetch all other participants for these chats
-            val otherParticipantsList = client.from("chat_participants")
-                .select(columns = Columns.list("chat_id", "user_id")) {
+            val otherParticipantsList = client.from(TABLE_CHAT_PARTICIPANTS)
+                .select(columns = Columns.list(COL_CHAT_ID, COL_USER_ID)) {
                     filter {
-                        isIn("chat_id", chatIds)
-                        neq("user_id", currentUserId)
+                        isIn(COL_CHAT_ID, chatIds)
+                        neq(COL_USER_ID, currentUserId)
                     }
                 }.decodeList<ChatParticipantDto>()
 
@@ -81,9 +96,9 @@ class ChatMessagingRepositoryImpl @Inject constructor(
 
             // 3. Batch fetch all other user profiles
             val otherUsers = if (otherUserIds.isNotEmpty()) {
-                client.from("users")
+                client.from(TABLE_USERS)
                     .select {
-                        filter { isIn("uid", otherUserIds) }
+                        filter { isIn(COL_UID, otherUserIds) }
                     }.decodeList<User>().associateBy { it.uid }
             } else {
                 emptyMap()
@@ -96,13 +111,13 @@ class ChatMessagingRepositoryImpl @Inject constructor(
                 chatIds.associateWith { chatId ->
                     async {
                         try {
-                            client.from("messages")
+                            client.from(TABLE_MESSAGES)
                                 .select {
                                     filter {
-                                        eq("chat_id", chatId)
-                                        eq("is_deleted", false)
+                                        eq(COL_CHAT_ID, chatId)
+                                        eq(COL_IS_DELETED, false)
                                     }
-                                    order("created_at", Order.DESCENDING)
+                                    order(COL_CREATED_AT, Order.DESCENDING)
                                     limit(1)
                                 }.decodeList<ChatMessage>().firstOrNull()
                         } catch (e: Exception) {
@@ -125,10 +140,10 @@ class ChatMessagingRepositoryImpl @Inject constructor(
                     participantId = otherUserId,
                     participantName = otherUser?.displayName ?: otherUser?.username ?: otherUserId,
                     participantAvatar = otherUser?.avatar,
-                    lastMessage = lastMsg?.content ?: "No messages yet",
+                    lastMessage = lastMsg?.content ?: NO_MESSAGES_YET,
                     lastMessageTime = lastMsg?.createdAt,
                     unreadCount = 0,
-                    isOnline = otherUser?.status?.name == "ONLINE"
+                    isOnline = otherUser?.status?.name == STATUS_ONLINE
                 )
             }
 
@@ -144,13 +159,13 @@ class ChatMessagingRepositoryImpl @Inject constructor(
      */
     suspend fun getMessages(chatId: String, limit: Int = 50): Result<List<ChatMessage>> = withContext(Dispatchers.IO) {
         try {
-            val messages = client.from("messages")
+            val messages = client.from(TABLE_MESSAGES)
                 .select {
                     filter {
-                        eq("chat_id", chatId)
-                        eq("is_deleted", false)
+                        eq(COL_CHAT_ID, chatId)
+                        eq(COL_IS_DELETED, false)
                     }
-                    order("created_at", Order.ASCENDING)
+                    order(COL_CREATED_AT, Order.ASCENDING)
                     limit(limit.toLong())
                 }.decodeList<ChatMessage>()
 
@@ -164,10 +179,10 @@ class ChatMessagingRepositoryImpl @Inject constructor(
     /**
      * Send a text message.
      */
-    suspend fun sendMessage(chatId: String, content: String, mediaUrl: String? = null, messageType: String = "text"): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    suspend fun sendMessage(chatId: String, content: String, mediaUrl: String? = null, messageType: String = MSG_TYPE_TEXT): Result<ChatMessage> = withContext(Dispatchers.IO) {
         try {
             val senderId = getCurrentUserId()
-                ?: return@withContext Result.failure(Exception("Not authenticated"))
+                ?: return@withContext Result.failure(Exception(ERROR_NOT_AUTHENTICATED))
 
             val newMessage = NewMessageDto(
                 chatId = chatId,
@@ -177,7 +192,7 @@ class ChatMessagingRepositoryImpl @Inject constructor(
                 messageType = messageType
             )
 
-            val inserted = client.from("messages")
+            val inserted = client.from(TABLE_MESSAGES)
                 .insert(newMessage) {
                     select()
                 }.decodeSingle<ChatMessage>()
@@ -196,22 +211,22 @@ class ChatMessagingRepositoryImpl @Inject constructor(
     suspend fun getOrCreateChat(otherUserId: String): Result<String> = withContext(Dispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId()
-                ?: return@withContext Result.failure(Exception("Not authenticated"))
+                ?: return@withContext Result.failure(Exception(ERROR_NOT_AUTHENTICATED))
 
             // Check if a chat already exists between these two users
-            val myChats = client.from("chat_participants")
-                .select(columns = Columns.list("chat_id")) {
-                    filter { eq("user_id", currentUserId) }
+            val myChats = client.from(TABLE_CHAT_PARTICIPANTS)
+                .select(columns = Columns.list(COL_CHAT_ID)) {
+                    filter { eq(COL_USER_ID, currentUserId) }
                 }.decodeList<ChatParticipantDto>()
 
             val chatIds = myChats.map { it.chatId }
 
             if (chatIds.isNotEmpty()) {
-                val commonChat = client.from("chat_participants")
-                    .select(columns = Columns.list("chat_id")) {
+                val commonChat = client.from(TABLE_CHAT_PARTICIPANTS)
+                    .select(columns = Columns.list(COL_CHAT_ID)) {
                         filter {
-                            isIn("chat_id", chatIds)
-                            eq("user_id", otherUserId)
+                            isIn(COL_CHAT_ID, chatIds)
+                            eq(COL_USER_ID, otherUserId)
                         }
                     }.decodeList<ChatParticipantDto>().firstOrNull()
 
@@ -228,7 +243,7 @@ class ChatMessagingRepositoryImpl @Inject constructor(
                 ChatParticipantDto(chatId = chatId, userId = currentUserId, isAdmin = true),
                 ChatParticipantDto(chatId = chatId, userId = otherUserId)
             )
-            client.from("chat_participants").insert(participants)
+            client.from(TABLE_CHAT_PARTICIPANTS).insert(participants)
 
             Result.success(chatId)
         } catch (e: Exception) {
@@ -258,13 +273,13 @@ class ChatMessagingRepositoryImpl @Inject constructor(
                 Napier.e("Failed to connect to Realtime WebSocket", e, tag = TAG)
             }
 
-            val channel = client.channel("chat-messages-$chatId-${java.util.UUID.randomUUID()}") {}
+            val channel = client.channel("$CHANNEL_PREFIX$chatId-${java.util.UUID.randomUUID()}") {}
 
             // 2. Register the change filter BEFORE subscribing.
             //    postgresChangeFlow only attaches a filter — it does NOT open the socket.
-            val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
-                table = "messages"
-                filter("chat_id", FilterOperator.EQ, chatId)
+            val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = SCHEMA_PUBLIC) {
+                table = TABLE_MESSAGES
+                filter(COL_CHAT_ID, FilterOperator.EQ, chatId)
             }
 
             // 3. Start the collector and signal readiness via CompletableDeferred.
@@ -319,19 +334,19 @@ class ChatMessagingRepositoryImpl @Inject constructor(
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
 
-            val otherParticipants = client.from("chat_participants")
-                .select(columns = Columns.list("user_id")) {
+            val otherParticipants = client.from(TABLE_CHAT_PARTICIPANTS)
+                .select(columns = Columns.list(COL_USER_ID)) {
                     filter {
-                        eq("chat_id", chatId)
-                        neq("user_id", currentUserId)
+                        eq(COL_CHAT_ID, chatId)
+                        neq(COL_USER_ID, currentUserId)
                     }
                 }.decodeList<ChatParticipantDto>()
 
             val otherUserId = otherParticipants.firstOrNull()?.userId ?: return@withContext null
 
-            client.from("users")
+            client.from(TABLE_USERS)
                 .select {
-                    filter { eq("uid", otherUserId) }
+                    filter { eq(COL_UID, otherUserId) }
                     limit(1)
                 }.decodeSingleOrNull<User>()
         } catch (e: Exception) {

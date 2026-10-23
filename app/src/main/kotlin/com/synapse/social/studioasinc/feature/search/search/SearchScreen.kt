@@ -302,9 +302,7 @@ fun SearchScreen(
                                         )
                                     } else {
                                         LazyColumn(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space4),
-                                            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
+                                            modifier = Modifier.fillMaxSize()
                                         ) {
                                             items(uiState.hashtags) { hashtag ->
                                                 Card(
@@ -347,16 +345,10 @@ fun SearchScreen(
                                                         onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                     )
                                                 }
-                                                Card(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    shape = RoundedCornerShape(Sizes.CornerLarge),
-                                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                                                ) {
-                                                    SharedPostItem(
-                                                        post = post,
-                                                        actions = actions
-                                                    )
-                                                }
+                                                SharedPostItem(
+                                                    post = post,
+                                                    actions = actions
+                                                )
                                             }
                                         }
                                     }
@@ -364,8 +356,6 @@ fun SearchScreen(
                                 else -> {
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize(),
-                                        contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space4),
-                                        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                                     ) {
                                         when (tab) {
                                             SearchTab.FOR_YOU -> {}

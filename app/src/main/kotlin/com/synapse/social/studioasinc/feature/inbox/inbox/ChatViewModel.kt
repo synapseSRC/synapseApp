@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
+import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
@@ -82,7 +83,9 @@ class ChatViewModel @Inject constructor(
     private val getStorageConfigUseCase: GetStorageConfigUseCase,
     private val voteInPollUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.VoteInPollUseCase,
     private val markViewOnceConsumedUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkViewOnceConsumedUseCase,
-    private val mediaCompressor: com.synapse.social.studioasinc.shared.domain.service.MediaCompressor? = null
+    private val mediaCompressor: com.synapse.social.studioasinc.shared.domain.service.MediaCompressor? = null,
+    private val reconcileRealtimeMessageUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ReconcileRealtimeMessageUseCase,
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     private val _inputText = MutableStateFlow("")
@@ -90,6 +93,9 @@ class ChatViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
@@ -146,6 +152,9 @@ class ChatViewModel @Inject constructor(
 
     val chatAvatarDisabled = getChatSettingsUseCase.chatAvatarDisabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val typingIndicatorsEnabled = getChatSettingsUseCase.typingIndicatorsEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     private val _selectedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedMessageIds: StateFlow<Set<String>> = _selectedMessageIds.asStateFlow()
@@ -207,6 +216,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId },
         isScreenVisibleProvider = { _isScreenVisible.value },
+        typingIndicatorsEnabledProvider = { typingIndicatorsEnabled.value },
         onNewMessage = { newMessage ->
             handleIncomingMessage(newMessage)
         },
@@ -309,6 +319,7 @@ class ChatViewModel @Inject constructor(
         subscriptionDelegate = subscriptionDelegate,
         aiDelegate = aiDelegate,
         _isLoading = _isLoading,
+        _isRefreshing = _isRefreshing,
         _error = _error,
         _participantProfile = _participantProfile,
         _isE2EEReady = _isE2EEReady,
@@ -336,6 +347,7 @@ class ChatViewModel @Inject constructor(
         currentChatIdProvider = { currentChatId },
         isE2EEReadyProvider = { _isE2EEReady.value },
         disappearingModeProvider = { _disappearingMode.value },
+        typingIndicatorsEnabledProvider = { typingIndicatorsEnabled.value },
         onChatRefreshRequired = { currentChatId?.let { initialize(it) } }
     )
 
@@ -376,6 +388,7 @@ class ChatViewModel @Inject constructor(
 
     fun initialize(chatId: String, participantId: String? = null) {
         cleanup()
+        chatRepository.setActiveChatId(chatId)
         initializationDelegate.initialize(chatId, participantId, currentChatId)
     }
 
@@ -385,6 +398,12 @@ class ChatViewModel @Inject constructor(
     }
 
     private suspend fun synchronizeMissedMessages(chatId: String) {
+        val hasCachedMessages = !messagingDelegate.messages.value.isEmpty()
+        if (hasCachedMessages) {
+            _isRefreshing.value = true
+        } else {
+            _isLoading.value = true
+        }
         val candidate = viewModelScope.async(start = CoroutineStart.LAZY) {
             fetchMissedMessages(chatId)
         }
@@ -397,6 +416,8 @@ class ChatViewModel @Inject constructor(
         }
         sync.start()
         sync.await()
+        _isLoading.value = false
+        _isRefreshing.value = false
     }
 
     private suspend fun fetchMissedMessages(chatId: String) {
@@ -588,6 +609,10 @@ class ChatViewModel @Inject constructor(
             return
         }
 
+        // Capture empty state BEFORE any updates — used below to trigger a full sync
+        // when the first real-time message arrives in a chat with no loaded messages.
+        val wasEmpty = messagingDelegate.messages.value.isEmpty()
+
         val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
         val currentSnapshot = messagingDelegate._messages.value
         val existing = currentSnapshot.firstOrNull { it.id == newMessage.id }
@@ -684,6 +709,38 @@ class ChatViewModel @Inject constructor(
         }
         aiDelegate.generateSmartReplies(messages.value)
 
+        // If the chat was empty before this message arrived, trigger a full sync to establish
+        // the synchronization cursor and fetch any history missed before the subscription started.
+        // Fire-and-forget: message is already visible in the UI while the sync runs in the background.
+        if (wasEmpty) {
+            val chatId = currentChatId ?: newMessage.chatId
+            viewModelScope.launch {
+                try {
+                    synchronizeMissedMessages(chatId)
+                } catch (e: Exception) {
+                    Napier.w("Initial sync on first empty-chat message failed: ${e.message}", tag = "ChatViewModel")
+                }
+            }
+        }
+
+        // Persist to cache with real-time priority so inbox refresh cannot overwrite this message.
+        // Skip if content is still an encrypted placeholder — the retry block below will reconcile
+        // once the decrypted version is available.
+        val isPlaceholder = newMessage.content in encryptedPlaceholders
+        if (!isPlaceholder) {
+            val messageForReconciliation = messagingDelegate._messages.value.firstOrNull { it.id == newMessage.id }
+            if (messageForReconciliation != null) {
+                val chatIdToReconcile = currentChatId ?: newMessage.chatId
+                viewModelScope.launch {
+                    try {
+                        reconcileRealtimeMessageUseCase(chatIdToReconcile, messageForReconciliation)
+                    } catch (e: Exception) {
+                        Napier.w("Cache reconciliation failed for realtime message ${newMessage.id}: ${e.message}", tag = "ChatViewModel")
+                    }
+                }
+            }
+        }
+
         if (newMessage.senderId != currentUserId && newMessage.content in encryptedPlaceholders) {
             viewModelScope.launch {
                 for (retryDelay in listOf(500L, 1500L)) {
@@ -695,6 +752,16 @@ class ChatViewModel @Inject constructor(
                             val stableClientId = current.firstOrNull { it.id == newMessage.id }?.clientId
                             val toWrite = if (stableClientId != null) refreshed.copy(clientId = stableClientId) else refreshed
                             with(messagingDelegate) { current.replaceById(newMessage.id, toWrite) }
+                        }
+                        // Reconcile the decrypted message into cache now that content is available.
+                        val decryptedForReconciliation = messagingDelegate._messages.value.firstOrNull { it.id == newMessage.id }
+                        if (decryptedForReconciliation != null) {
+                            val chatIdToReconcile = currentChatId ?: newMessage.chatId
+                            try {
+                                reconcileRealtimeMessageUseCase(chatIdToReconcile, decryptedForReconciliation)
+                            } catch (e: Exception) {
+                                Napier.w("Cache reconciliation failed for decrypted message ${newMessage.id}: ${e.message}", tag = "ChatViewModel")
+                            }
                         }
                         break
                     }
@@ -791,8 +858,16 @@ class ChatViewModel @Inject constructor(
         messagingDelegate.deleteMessage(messageId)
     }
 
+    fun deleteMessage(message: Message) {
+        messagingDelegate.deleteMessage(message.id)
+    }
+
     fun deleteMessageForMe(messageId: String) {
         messagingDelegate.deleteMessageForMe(messageId)
+    }
+
+    fun deleteMessageForMe(message: Message) {
+        messagingDelegate.deleteMessageForMe(message.id)
     }
 
     fun retrySendMessage(message: Message) {
@@ -880,6 +955,7 @@ class ChatViewModel @Inject constructor(
         messagingDelegate.pendingTempIds.value = emptySet()
         messagingDelegate.clearMessages()
         _hasMoreMessages.value = true
+        chatRepository.setActiveChatId(null)
         viewModelScope.launch {
             updateCurrentChatUseCase(null)
         }
