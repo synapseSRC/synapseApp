@@ -52,7 +52,6 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 import com.synapse.social.studioasinc.ui.settings.PostViewStyle
-import com.synapse.social.studioasinc.domain.model.Post
 
 @Composable
 fun PostContent(
@@ -63,7 +62,7 @@ fun PostContent(
     pollQuestion: String?,
     pollOptions: List<PollOption>? = null,
     userPollVote: Int? = null,
-    onMediaClick: (Post, Int) -> Unit = {},
+    onMediaClick: (Post, Int) -> Unit = { _, _ -> },
     onPollVote: (String) -> Unit,
     quotedPost: Post? = null,
     linkPreviews: List<LinkPreview>? = null,

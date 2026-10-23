@@ -341,7 +341,7 @@ fun SearchScreen(
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
                                                         onUserClick = { userId -> onNavigateToProfile(userId) },
-                                                        onMediaClick = { _ -> onNavigateToPost(post.id) },
+                                                        onMediaClick = { _, _ -> onNavigateToPost(post.id) },
                                                         onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                     )
                                                 }

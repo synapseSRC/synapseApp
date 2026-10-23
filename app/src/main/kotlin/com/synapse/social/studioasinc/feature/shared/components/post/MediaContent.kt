@@ -27,6 +27,7 @@ import coil3.asDrawable
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import com.synapse.social.studioasinc.core.ui.util.AmbientColorExtractor
+import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -251,10 +252,8 @@ fun PostMediaGrid(
 fun MediaGridItem(
     url: String,
     modifier: Modifier = Modifier,
-    onClick: (Post, Int) -> Unit,
-    post: Post? = null
+    onClick: () -> Unit
 ) {
-    val safePost = post!!
     val context = androidx.compose.ui.platform.LocalContext.current
     AsyncImage(
         model = coil3.request.ImageRequest.Builder(context)
@@ -265,7 +264,7 @@ fun MediaGridItem(
         contentDescription = "Post Image",
         modifier = modifier
             .clip(RoundedCornerShape(Sizes.CornerMedium))
-            .clickable(onClick = { onClick(safePost, 0) }),
+            .clickable(onClick = onClick),
         contentScale = ContentScale.Crop,
         onError = { state -> android.util.Log.e("MediaDebug", "Coil grid fail url=$url err=${state.result.throwable}") }
     )
