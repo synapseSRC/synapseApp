@@ -169,9 +169,17 @@ internal class ProfilePostsRepositoryImpl(
                 } else emptyList()
             }
         }
-        Result.success(mediaItems.map { item ->
-            item.copy(url = SynapseSupabaseClient.createSignedStorageUrl(SynapseSupabaseClient.BUCKET_POST_MEDIA, item.url))
-        })
+        val signedItems = mediaItems.mapNotNull { item ->
+            val url = SynapseSupabaseClient.createSignedStorageUrlOrNull(SynapseSupabaseClient.BUCKET_POST_MEDIA, item.url)
+                ?: return@mapNotNull null
+            item.copy(
+                url = url,
+                thumbnailUrl = item.thumbnailUrl?.let {
+                    SynapseSupabaseClient.createSignedStorageUrlOrNull(SynapseSupabaseClient.BUCKET_POST_MEDIA, it)
+                }
+            )
+        }
+        Result.success(signedItems)
     } catch (e: Exception) {
         Result.failure(e)
     }

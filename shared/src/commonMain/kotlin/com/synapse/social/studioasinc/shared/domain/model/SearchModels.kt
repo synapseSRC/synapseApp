@@ -47,5 +47,6 @@ data class SearchAccount(
     @SerialName("verify") val isVerified: Boolean = false,
     @SerialName("avatar") val avatarUrl: String? = null,
     @SerialName("bio") val bio: String? = null,
-    val isFollowing: Boolean = false
+    val isFollowing: Boolean = false,
+    val isFollowLoading: Boolean = false
 )
