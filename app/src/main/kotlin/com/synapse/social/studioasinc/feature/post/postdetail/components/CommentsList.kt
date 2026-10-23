@@ -108,7 +108,7 @@ fun CommentsList(
                     onBookmarkClick = { /* Not applicable for comments */ },
                     onUserClick = { comment.userId?.let { onUserClick(it) } },
                     onPostClick = { onCommentClick(comment.id) },
-                    onMediaClick = { /* No media in comments */ },
+                    onMediaClick = { _, _ -> /* No media in comments */ },
                     onOptionsClick = { onShowOptions(comment) },
                     onPollVote = { /* No polls in comments */ },
                     onReactionSelected = { reaction -> onShowReactions(comment) },

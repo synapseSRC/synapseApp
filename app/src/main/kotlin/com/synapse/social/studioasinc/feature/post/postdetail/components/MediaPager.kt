@@ -8,13 +8,15 @@ import com.synapse.social.studioasinc.feature.shared.components.post.MediaConten
 fun MediaPager(
     mediaUrls: List<String>,
     isVideo: Boolean,
-    onMediaClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    onMediaClick: (Post, Int) -> Unit,
+    modifier: Modifier = Modifier,
+    post: Post? = null
 ) {
     MediaContent(
         mediaUrls = mediaUrls,
         isVideo = isVideo,
         onMediaClick = onMediaClick,
-        modifier = modifier
+        modifier = modifier,
+        post = post
     )
 }
