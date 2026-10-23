@@ -59,8 +59,11 @@ internal class PostFeedHelper(
     fun getPosts(): Flow<Result<List<Post>>> = flow {
         // Observe local DB
         val dbFlow = postDao.getAllPostsAsFlow().map { entities ->
-            val posts = entities.map { PostMapper.toModel(it) }
-            Result.success(posts)
+            val posts = mutableListOf<Post>()
+            for (entity in entities) {
+                posts += PostMapper.toModel(entity).withSignedStorageMediaUrls()
+            }
+            Result.success(posts.toList())
         }
 
         // Trigger refresh and emit DB flow
