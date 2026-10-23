@@ -20,6 +20,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 import com.synapse.social.studioasinc.data.repository.PostMapper
+import com.synapse.social.studioasinc.data.repository.helpers.withSignedStorageMediaUrls
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -107,7 +108,7 @@ class FeedPagingSource(
             val commentIds = timelineResponse.filter { it["item_type"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { it["id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
 
             // 1. Fetch full Posts
-            val postsMap = if (postIds.isNotEmpty()) {
+            var postsMap = if (postIds.isNotEmpty()) {
                 withContext(Dispatchers.IO) {
                     client.from("posts")
                         .select(
@@ -155,6 +156,12 @@ class FeedPagingSource(
                     }
                 }.toMap()
             } else emptyMap()
+
+            // Sign media URLs for protected storage so Coil can load images/videos in the feed.
+            // Without this, mediaItems[].url and postImage remain raw storage paths that Coil cannot load.
+            for ((id, post) in postsMap.entries.toList()) {
+                postsMap[id] = post.withSignedStorageMediaUrls()
+            }
 
             // For reply posts that don't already have reply_to_usernames stored, fall back
             // to looking up the single parent author username
