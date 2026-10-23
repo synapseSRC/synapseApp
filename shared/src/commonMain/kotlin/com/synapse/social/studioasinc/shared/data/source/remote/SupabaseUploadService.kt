@@ -65,11 +65,13 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 onProgress(1.0f)
             }
 
-            // Keep the main-branch public URL path while returning private references for protected buckets.
-            val url = createPublicStorageUrl(supabase, targetBucket, path)
-                .let { publicUrl ->
-                    if (targetBucket in protectedMediaBuckets) "private-media://$targetBucket/$path" else publicUrl
-                }
+            // Persist a stable object key for post media; sign it per viewer when reading.
+            // Other protected buckets retain their bucket-qualified internal reference.
+            val url = when {
+                targetBucket == com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_POST_MEDIA -> path
+                targetBucket in protectedMediaBuckets -> "private-media://$targetBucket/$path"
+                else -> createPublicStorageUrl(supabase, targetBucket, path)
+            }
             Napier.d("Supabase upload successful to $targetBucket", tag = "SupabaseUpload")
             return UploadResult(url = url, deleteUrl = null)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -109,10 +111,11 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                         onProgress(1.0f)
                     }
 
-                    val url = createPublicStorageUrl(supabase, fallbackBucket, path)
-                        .let { publicUrl ->
-                            if (fallbackBucket in protectedMediaBuckets) "private-media://$fallbackBucket/$path" else publicUrl
-                        }
+                    val url = when {
+                        fallbackBucket == com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_POST_MEDIA -> path
+                        fallbackBucket in protectedMediaBuckets -> "private-media://$fallbackBucket/$path"
+                        else -> createPublicStorageUrl(supabase, fallbackBucket, path)
+                    }
                     Napier.d("Supabase fallback upload successful to $fallbackBucket", tag = "SupabaseUpload")
                     return UploadResult(url = url, deleteUrl = null)
                 } catch (fallbackEx: Exception) {

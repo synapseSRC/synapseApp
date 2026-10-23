@@ -107,18 +107,28 @@ fun AccountCard(
         if (account.isFollowing) {
              OutlinedButton(
                  onClick = onFollowClick,
+                 enabled = !account.isFollowLoading,
                  modifier = Modifier.height(Sizes.AvatarSmall),
                  contentPadding = PaddingValues(horizontal = Spacing.space16)
              ) {
-                 Text(stringResource(R.string.action_following))
+                 if (account.isFollowLoading) {
+                     CircularProgressIndicator(modifier = Modifier.size(Sizes.IconSemiMedium))
+                 } else {
+                     Text(stringResource(R.string.action_following))
+                 }
              }
         } else {
             Button(
                 onClick = onFollowClick,
+                enabled = !account.isFollowLoading,
                 modifier = Modifier.height(Sizes.AvatarSmall),
                 contentPadding = PaddingValues(horizontal = Spacing.space16)
             ) {
-                Text(stringResource(R.string.action_follow))
+                if (account.isFollowLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(Sizes.IconSemiMedium))
+                } else {
+                    Text(stringResource(R.string.action_follow))
+                }
             }
         }
         }

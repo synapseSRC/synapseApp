@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.data.repository.ReactionRepositoryImpl
+import com.synapse.social.studioasinc.data.repository.helpers.withSignedStorageMediaUrls
 import com.synapse.social.studioasinc.domain.model.Post
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
@@ -76,11 +77,15 @@ class PostPagingSource(
 
             val postsWithReactions = reactionRepository.populatePostReactions(parsedPosts)
             val postsWithPolls = populatePostPolls(postsWithReactions)
+            val renderablePosts = mutableListOf<Post>()
+            for (post in postsWithPolls) {
+                renderablePosts += post.withSignedStorageMediaUrls()
+            }
 
             LoadResult.Page(
-                data = postsWithPolls,
+                data = renderablePosts,
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
-                nextKey = if (postsWithReactions.isEmpty()) null else position + pageSize
+                nextKey = if (response.size < pageSize) null else position + pageSize
             )
         } catch (e: Exception) {
             Log.e("PostPagingSource", "Error loading posts", e)

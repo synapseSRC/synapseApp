@@ -15,6 +15,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
@@ -53,7 +54,10 @@ class FeedPagingSource(
                 // OR if we've reached the end of the cached data.
                 if (localPostsEntity.size == pageSize || (localPostsEntity.isNotEmpty() && position + localPostsEntity.size >= totalCached.toInt() && totalCached.toInt() > 0)) {
                 Log.d("FeedPagingSource", "Cache hit: Loaded ${localPostsEntity.size} feed items from local DB (offset: $position)")
-                val localPosts = localPostsEntity.map { PostMapper.toModel(it) }
+                val localPosts = mutableListOf<Post>()
+                for (entity in localPostsEntity) {
+                    localPosts += PostMapper.toModel(entity).withSignedStorageMediaUrls()
+                }
                 val feedItems = localPosts.map { FeedItem.PostItem(it) }
 
                 return LoadResult.Page(
@@ -66,6 +70,8 @@ class FeedPagingSource(
 
             // Fallback to Network if cache has gaps, is empty, or if we are refreshing the top of the feed (position == 0)
             return syncNetworkData(position, pageSize)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error loading feed items", e)
             LoadResult.Error(e)
@@ -151,17 +157,13 @@ class FeedPagingSource(
                             post.replyToUsernames = storedReplyUsernames
                         }
                         post.id to post
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         null
                     }
                 }.toMap().toMutableMap()
             } else mutableMapOf()
-
-            // Sign media URLs for protected storage so Coil can load images/videos in the feed.
-            // Without this, mediaItems[].url and postImage remain raw storage paths that Coil cannot load.
-            for ((id, post) in postsMap.entries.toList()) {
-                postsMap[id] = post.withSignedStorageMediaUrls()
-            }
 
             // For reply posts that don't already have reply_to_usernames stored, fall back
             // to looking up the single parent author username
@@ -184,6 +186,8 @@ class FeedPagingSource(
                         val username = obj["users"]?.jsonObject?.get("username")?.let { if (it is JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                         id to username
                     }.toMap()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) { emptyMap() }
             } else emptyMap()
 
@@ -199,7 +203,10 @@ class FeedPagingSource(
             val postsWithReactions = reactionRepository.populatePostReactions(postsList)
             val postsWithPolls = populatePostPolls(postsWithReactions)
             val postsWithInteractions = populateUserInteractions(postsWithPolls)
-            val enrichedPostsMap = postsWithInteractions.associateBy { it.id }
+            val enrichedPostsMap = mutableMapOf<String, Post>()
+            for (post in postsWithInteractions) {
+                enrichedPostsMap[post.id] = post.withSignedStorageMediaUrls()
+            }
 
             // 2. Map Comments from timeline response
             val commentsMap = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
@@ -293,12 +300,17 @@ class FeedPagingSource(
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (timelineResponse.size < pageSize) null else position + pageSize
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error syncing feed items", e)
             // If offline/network fails, return whatever is in cache even if it's incomplete
             val fallbackCache = postDao.getPostsPaged(pageSize.toLong(), position.toLong())
             if (fallbackCache.isNotEmpty()) {
-                val fallbackPosts = fallbackCache.map { PostMapper.toModel(it) }
+                val fallbackPosts = mutableListOf<Post>()
+                for (entity in fallbackCache) {
+                    fallbackPosts += PostMapper.toModel(entity).withSignedStorageMediaUrls()
+                }
                 val fallbackItems = fallbackPosts.map { FeedItem.PostItem(it) }
                 return LoadResult.Page(
                     data = fallbackItems,
@@ -378,6 +390,8 @@ class FeedPagingSource(
                     isReshared = resharedPostIds.contains(post.id)
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error fetching user interactions", e)
             posts

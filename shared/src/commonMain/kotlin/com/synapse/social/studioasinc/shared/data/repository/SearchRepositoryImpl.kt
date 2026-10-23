@@ -10,6 +10,7 @@ import com.synapse.social.studioasinc.shared.domain.model.MediaItem
 import com.synapse.social.studioasinc.shared.domain.repository.ISearchRepository
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
+import io.github.jan.supabase.auth.auth
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
@@ -23,6 +24,7 @@ import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 private data class PostDto(
     val id: String,
     val post_text: String? = null,
+    val post_image: String? = null,
     val author_uid: String,
     val likes_count: Int = 0,
     val comments_count: Int = 0,
@@ -68,11 +70,10 @@ class SearchRepositoryImpl(
      */
     override suspend fun searchPosts(query: String): Result<List<SearchPost>> = runCatching {
 
-        val columns = Columns.raw("id, post_text, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, author:users!posts_author_uid_fkey(display_name, username, avatar)")
+        val columns = Columns.raw("id, post_text, post_image, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, author:users!posts_author_uid_fkey(display_name, username, avatar)")
 
-        // For Full Text Search, we do not escape % and _ as they are not wildcards in FTS.
-        // We trim and limit to prevent excessively long query strings that might strain the backend.
-        val sanitizedQuery = query.trim().take(100)
+        // Escape PostgREST ilike wildcard characters and bound the query length.
+        val sanitizedQuery = sanitizeSearchQuery(query)
 
         val result = client.postgrest["posts"].select(columns = columns) {
             if (sanitizedQuery.isNotBlank()) {
@@ -93,9 +94,7 @@ class SearchRepositoryImpl(
                 commentsCount = dto.comments_count,
                 boostCount = dto.reshares_count,
                 createdAt = dto.created_at,
-                mediaUrls = dto.media_items?.map { item ->
-                    SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_POST_MEDIA, item.url)
-                },
+                mediaUrls = resolvePostMediaUrls(dto),
                 authorName = dto.author?.display_name,
                 authorHandle = dto.author?.username,
                 authorAvatar = dto.author?.avatar?.let { path ->
@@ -180,7 +179,7 @@ class SearchRepositoryImpl(
                 commentsCount = dto.comments_count,
                 boostCount = dto.reshares_count,
                 createdAt = dto.created_at,
-                mediaUrls = dto.media_items?.map { item -> SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_POST_MEDIA, item.url) },
+                mediaUrls = resolvePostMediaUrls(dto),
                 authorName = dto.author?.display_name,
                 authorHandle = dto.author?.username,
                 authorAvatar = dto.author?.avatar?.let { path ->
@@ -198,10 +197,17 @@ class SearchRepositoryImpl(
      * Searches for users based on username, display name, or bio.
      * If no query is provided, it falls back to suggesting accounts with the highest follower counts.
      */
+    private suspend fun resolvePostMediaUrls(dto: PostDto): List<String> {
+        val references = dto.media_items.orEmpty().map { it.url }.ifEmpty { listOfNotNull(dto.post_image) }
+        return references.mapNotNull { reference ->
+            SupabaseClient.createSignedStorageUrlOrNull(SupabaseClient.BUCKET_POST_MEDIA, reference)
+        }
+    }
+
     override suspend fun getSuggestedAccounts(query: String): Result<List<SearchAccount>> = runCatching {
         val sanitizedQuery = sanitizeSearchQuery(query)
 
-        client.postgrest["public_profiles"].select {
+        val accounts = client.postgrest["public_profiles"].select {
             if (sanitizedQuery.isNotBlank()) {
                 filter {
                     or {
@@ -215,6 +221,23 @@ class SearchRepositoryImpl(
                  order("followers_count", Order.DESCENDING)
             }
             limit(20)
-        }.decodeList()
+        }.decodeList<SearchAccount>()
+
+        val currentUserId = client.auth.currentUserOrNull()?.id ?: return@runCatching accounts
+        if (accounts.isEmpty()) return@runCatching accounts
+
+        val followingIds = client.postgrest["follows"].select(columns = Columns.raw("following_id")) {
+            filter {
+                eq("follower_id", currentUserId)
+                isIn("following_id", accounts.map { it.id })
+            }
+        }.decodeList<FollowingIdDto>().map { it.followingId }.toSet()
+
+        accounts.map { account -> account.copy(isFollowing = account.id in followingIds) }
     }
 }
+
+@Serializable
+private data class FollowingIdDto(
+    @SerialName("following_id") val followingId: String
+)

@@ -115,10 +115,10 @@ class SupabaseStorageService @Inject constructor() {
                     }
                 }
 
-                val mediaReference = if (bucket in setOf("posts", "covers", "story-media", "story-thumbnails", "reels")) {
-                    "private-media://$bucket/$path"
-                } else {
-                    storage.from(bucket).publicUrl(path)
+                val mediaReference = when {
+                    bucket == SupabaseClient.BUCKET_POST_MEDIA -> path
+                    bucket in setOf("covers", "story-media", "story-thumbnails", "reels") -> "private-media://$bucket/$path"
+                    else -> storage.from(bucket).publicUrl(path)
                 }
 
                 if (mediaReference.isBlank()) {

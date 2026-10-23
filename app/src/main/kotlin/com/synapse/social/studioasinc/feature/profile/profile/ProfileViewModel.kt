@@ -51,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import com.synapse.social.studioasinc.core.util.NotificationHelper
 
 data class ProfileScreenState(
@@ -128,6 +129,9 @@ class ProfileViewModel @Inject constructor(
     private var contentJob: Job? = null
     private var storyJob: Job? = null
     private val isFollowOperationInProgress = AtomicBoolean(false)
+    private val followStateVersion = AtomicInteger(0)
+    private var followMutationProfileId: String? = null
+    private var activeProfileId: String? = null
 
     init {
         viewModelScope.launch {
@@ -164,19 +168,24 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun loadProfile(userId: String, refresh: Boolean = false) {
+        activeProfileId = userId
+        val followVersionAtStart = followStateVersion.get()
+        val previousProfileId = (_state.value.profileState as? ProfileUiState.Success)?.profile?.id
+        val preserveFollowState = previousProfileId == userId ||
+            (isFollowOperationInProgress.get() && followMutationProfileId == userId)
         contentJob?.cancel()
         storyJob?.cancel()
         viewModelScope.launch {
             val currentUserUid = getCurrentUserIdUseCase().orEmpty()
             val isOwnProfile = currentUserUid == userId
-            val followOpInProgress = isFollowOperationInProgress.get()
             _state.update {
                 it.copy(
                     profileState = ProfileUiState.Loading,
                     currentUserId = currentUserUid,
                     isOwnProfile = isOwnProfile,
-                    isFollowing = if (followOpInProgress) it.isFollowing else false,
-                    isFollowRequested = if (followOpInProgress) it.isFollowRequested else false,
+                    isFollowing = if (preserveFollowState) it.isFollowing else false,
+                    isFollowRequested = if (preserveFollowState) it.isFollowRequested else false,
+                    isFollowLoading = if (preserveFollowState) it.isFollowLoading else false,
                     followStatusError = null,
                     hasStory = false,
                     posts = emptyList(),
@@ -199,20 +208,29 @@ class ProfileViewModel @Inject constructor(
                     } else {
                         getProfileFollowStatusUseCase(profileUid)
                     }
-                    val followStatus = followStatusResult.getOrElse { ProfileFollowStatus.NONE }
+                    val fetchedFollowStatus = followStatusResult.getOrElse { ProfileFollowStatus.NONE }
+                    _state.update { state ->
+                        val followStatusIsStale = (followStateVersion.get() != followVersionAtStart && followMutationProfileId == userId) ||
+                            (isFollowOperationInProgress.get() && followMutationProfileId == userId)
+                        val effectiveStatus = if (followStatusIsStale) {
+                            when {
+                                state.isFollowing -> ProfileFollowStatus.FOLLOWING
+                                state.isFollowRequested -> ProfileFollowStatus.REQUESTED
+                                else -> ProfileFollowStatus.NONE
+                            }
+                        } else fetchedFollowStatus
+                        state.copy(
+                            profileState = ProfileUiState.Success(profile.toData()),
+                            isFollowing = effectiveStatus == ProfileFollowStatus.FOLLOWING,
+                            isFollowRequested = effectiveStatus == ProfileFollowStatus.REQUESTED,
+                            followStatusError = if (followStatusIsStale) state.followStatusError else followStatusResult.exceptionOrNull()?.message
+                        )
+                    }
                     val canViewProtectedContent = canViewProfileContent(
                         isPrivate = profile.isPrivate,
                         isOwnProfile = isOwnProfile,
-                        isFollowing = followStatus == ProfileFollowStatus.FOLLOWING
+                        isFollowing = _state.value.isFollowing
                     )
-                    _state.update {
-                        it.copy(
-                            profileState = ProfileUiState.Success(profile.toData()),
-                            isFollowing = followStatus == ProfileFollowStatus.FOLLOWING,
-                            isFollowRequested = followStatus == ProfileFollowStatus.REQUESTED,
-                            followStatusError = followStatusResult.exceptionOrNull()?.message
-                        )
-                    }
                     if (canViewProtectedContent) {
                         checkStory(profileUid)
                         loadContent(profileUid, _state.value.contentFilter)
@@ -230,88 +248,66 @@ class ProfileViewModel @Inject constructor(
         loadProfile(userId, refresh = true)
     }
 
-    fun followUser(userId: String) {
+    fun followUser(userId: String) = changeFollowState(userId, shouldFollow = true)
+
+    fun unfollowUser(userId: String) = changeFollowState(userId, shouldFollow = false)
+
+    private fun changeFollowState(userId: String, shouldFollow: Boolean) {
         val currentUserId = _state.value.currentUserId
-        if (currentUserId.isBlank() || currentUserId == userId) return
+        if (currentUserId.isBlank() || currentUserId == userId || activeProfileId != userId) return
         if (!isFollowOperationInProgress.compareAndSet(false, true)) return
 
+        followMutationProfileId = userId
+        followStateVersion.incrementAndGet()
         val previousState = _state.value
-        android.util.Log.d("ProfileViewModel", "followUser: userId=$userId currentUserId=$currentUserId previousIsFollowing=${previousState.isFollowing}")
         val isPrivate = (previousState.profileState as? ProfileUiState.Success)?.profile?.isPrivate == true
-        val targetFollowing = !isPrivate
-        val targetRequested = isPrivate
-        val delta = if (targetFollowing && !previousState.isFollowing) 1 else 0
-
-        // Optimistic update: immediately update following state and follower count
-        _state.update { state ->
-            state.copy(
-                isFollowing = targetFollowing,
-                isFollowRequested = targetRequested,
-                isFollowLoading = false,
-                followStatusError = null,
-                profileState = (state.profileState as? ProfileUiState.Success)?.let { success ->
-                    success.copy(profile = success.profile.copy(followerCount = maxOf(0, success.profile.followerCount + delta)))
-                } ?: state.profileState
-            )
-        }
+        _state.update { it.copy(isFollowLoading = true, followStatusError = null) }
 
         viewModelScope.launch {
             try {
-                followUserUseCase(currentUserId, userId).fold(
+                val result = if (shouldFollow) {
+                    followUserUseCase(currentUserId, userId)
+                } else {
+                    unfollowUserUseCase(currentUserId, userId)
+                }
+                result.fold(
                     onSuccess = {
-                        android.util.Log.d("ProfileViewModel", "followUser: success userId=$userId")
-                        // Optimistic update already applied — trust it.
-                        // For public profiles (targetFollowing=true), load content immediately.
-                        // For private profiles (targetRequested=true), no content to load yet.
-                        if (targetFollowing) {
+                        val statusResult = getProfileFollowStatusUseCase(userId)
+                        val status = statusResult.getOrElse {
+                            when {
+                                !shouldFollow -> ProfileFollowStatus.NONE
+                                isPrivate -> ProfileFollowStatus.REQUESTED
+                                else -> ProfileFollowStatus.FOLLOWING
+                            }
+                        }
+                        _state.update { state ->
+                            if (activeProfileId != userId) return@update state
+                            val isFollowing = status == ProfileFollowStatus.FOLLOWING
+                            val followerDelta = when {
+                                !state.isFollowing && isFollowing -> 1
+                                state.isFollowing && !isFollowing -> -1
+                                else -> 0
+                            }
+                            val success = state.profileState as? ProfileUiState.Success
+                            val updatedProfileState = if (success != null && success.profile.id == userId) {
+                                success.copy(profile = success.profile.copy(
+                                    followerCount = maxOf(0, success.profile.followerCount + followerDelta)
+                                ))
+                            } else state.profileState
+                            state.copy(
+                                isFollowing = isFollowing,
+                                isFollowRequested = status == ProfileFollowStatus.REQUESTED,
+                                isFollowLoading = false,
+                                followStatusError = statusResult.exceptionOrNull()?.message,
+                                profileState = updatedProfileState
+                            )
+                        }
+                        if (activeProfileId == userId && status == ProfileFollowStatus.FOLLOWING) {
                             checkStory(userId)
                             loadContent(userId, _state.value.contentFilter)
-                        }
-                    },
-                    onFailure = { error ->
-                        android.util.Log.e("ProfileViewModel", "followUser: failure userId=$userId error=${error.message}", error)
-                        // Revert optimistic update on failure
-                        _state.value = previousState.copy(
-                            isFollowLoading = false,
-                            followStatusError = error.message
-                        )
-                    }
-                )
-            } finally {
-                isFollowOperationInProgress.set(false)
-            }
-        }
-    }
-
-    fun unfollowUser(userId: String) {
-        val currentUserId = _state.value.currentUserId
-        if (currentUserId.isBlank() || currentUserId == userId) return
-        if (!isFollowOperationInProgress.compareAndSet(false, true)) return
-
-        val previousState = _state.value
-        val wasFollowing = previousState.isFollowing
-
-        // Optimistic update: immediately clear following/requested and decrement count
-        _state.update { state ->
-            state.copy(
-                isFollowing = false,
-                isFollowRequested = false,
-                isFollowLoading = false,
-                followStatusError = null,
-                profileState = (state.profileState as? ProfileUiState.Success)?.let { success ->
-                    success.copy(profile = success.profile.copy(followerCount = if (wasFollowing) maxOf(0, success.profile.followerCount - 1) else success.profile.followerCount))
-                } ?: state.profileState
-            )
-        }
-
-        viewModelScope.launch {
-            try {
-                unfollowUserUseCase(currentUserId, userId).fold(
-                    onSuccess = {
-                        contentJob?.cancel()
-                        storyJob?.cancel()
-                        val isPrivate = (previousState.profileState as? ProfileUiState.Success)?.profile?.isPrivate == true
-                        if (isPrivate) {
+                        } else if (activeProfileId == userId && !shouldFollow && isPrivate) {
+                            contentJob?.cancel()
+                            storyJob?.cancel()
                             _state.update { state ->
                                 state.copy(
                                     hasStory = false,
@@ -322,11 +318,10 @@ class ProfileViewModel @Inject constructor(
                         }
                     },
                     onFailure = { error ->
-                        // Revert optimistic update on failure
-                        _state.value = previousState.copy(
-                            isFollowLoading = false,
-                            followStatusError = error.message
-                        )
+                        _state.update { state ->
+                            if (activeProfileId != userId) state
+                            else state.copy(isFollowLoading = false, followStatusError = error.message)
+                        }
                     }
                 )
             } finally {

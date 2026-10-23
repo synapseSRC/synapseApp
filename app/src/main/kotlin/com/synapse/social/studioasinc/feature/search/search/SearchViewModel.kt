@@ -79,6 +79,7 @@ class SearchViewModel @Inject constructor(
     private val summarizePostUseCase: SummarizePostUseCase
 ) : BaseViewModel<SearchUiState>(SearchUiState()) {
     private var searchJob: Job? = null
+    private var searchRequestVersion = 0L
     init {
         loadHistory()
         loadTrendingHashtags()
@@ -168,6 +169,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun refreshCurrentTab(query: String = currentState.query) {
+        val requestVersion = ++searchRequestVersion
         val currentTab = currentState.selectedTab
         val cached = currentState.cachedData[currentTab]
         
@@ -187,9 +189,13 @@ class SearchViewModel @Inject constructor(
                 when (currentTab) {
                     SearchTab.PEOPLE -> {
                         val result = getSuggestedAccountsUseCase(query)
+                        if (requestVersion != searchRequestVersion) return@launch
                         val currentUserId = authRepository.getCurrentUserId()
                         result.onSuccess { data ->
-                            val filtered = data.filter { it.id != currentUserId }
+                            val currentAccounts = currentState.accounts.associateBy { it.id }
+                            val filtered = data.filter { it.id != currentUserId }.map { account ->
+                                currentAccounts[account.id]?.takeIf { it.isFollowLoading } ?: account
+                            }
                             updateState {
                                 it.copy(
                                     accounts = filtered, 
@@ -303,23 +309,27 @@ class SearchViewModel @Inject constructor(
     fun toggleFollow(accountId: String) {
         val currentUserId = authRepository.getCurrentUserId() ?: return
         val account = currentState.accounts.find { it.id == accountId } ?: return
-        val wasFollowing = account.isFollowing
-        val delta = if (wasFollowing) -1 else 1
+        if (account.isFollowLoading) return
 
-        // Optimistic update: change follow state and followers count immediately,
-        // and sync cache so tab switches don't revert the button.
+        val wasFollowing = account.isFollowing
+        val shouldFollow = !wasFollowing
+        val optimisticFollowersCount = maxOf(0, account.followersCount + (if (wasFollowing) -1 else 1))
+        // Invalidate any in-flight search response that could replace the follow state with stale data.
+        searchRequestVersion++
         updateState { state ->
-            val updatedAccounts = state.accounts.map { acc ->
-                if (acc.id == accountId) {
-                    acc.copy(
-                        isFollowing = !wasFollowing,
-                        followersCount = maxOf(0, acc.followersCount + delta)
-                    )
-                } else acc
+            fun updateAccountList(accounts: List<SearchAccount>) = accounts.map { current ->
+                if (current.id == accountId) current.copy(
+                    isFollowing = shouldFollow,
+                    isFollowLoading = true,
+                    followersCount = optimisticFollowersCount
+                ) else current
             }
+            val updatedAccounts = updateAccountList(state.accounts)
+            val cachedPeople = state.cachedData[SearchTab.PEOPLE] as? List<SearchAccount>
+            val updatedCache = updateAccountList(cachedPeople ?: state.accounts)
             state.copy(
                 accounts = updatedAccounts,
-                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
+                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedCache)
             )
         }
 
@@ -330,21 +340,40 @@ class SearchViewModel @Inject constructor(
                 followUserUseCase(currentUserId, accountId)
             }
 
-            result.onFailure { err ->
-                // Revert optimistic update on failure, including cache.
+            result.onSuccess {
+                // Supersede searches that may have started while the request was pending.
+                searchRequestVersion++
                 updateState { state ->
-                    val revertedAccounts = state.accounts.map { acc ->
-                        if (acc.id == accountId) {
-                            acc.copy(
-                                isFollowing = wasFollowing,
-                                followersCount = maxOf(0, acc.followersCount - delta)
-                            )
-                        } else acc
+                    fun finishAccountList(accounts: List<SearchAccount>) = accounts.map { current ->
+                        if (current.id == accountId) current.copy(
+                            isFollowing = shouldFollow,
+                            isFollowLoading = false
+                        ) else current
                     }
+                    val updatedAccounts = finishAccountList(state.accounts)
+                    val cachedPeople = state.cachedData[SearchTab.PEOPLE] as? List<SearchAccount>
+                    val updatedCache = finishAccountList(cachedPeople ?: state.accounts)
+                    state.copy(
+                        accounts = updatedAccounts,
+                        cachedData = state.cachedData + (SearchTab.PEOPLE to updatedCache)
+                    )
+                }
+            }.onFailure { err ->
+                updateState { state ->
+                    fun revertAccountList(accounts: List<SearchAccount>) = accounts.map { current ->
+                        if (current.id == accountId) current.copy(
+                            isFollowing = wasFollowing,
+                            isFollowLoading = false,
+                            followersCount = account.followersCount
+                        ) else current
+                    }
+                    val revertedAccounts = revertAccountList(state.accounts)
+                    val cachedPeople = state.cachedData[SearchTab.PEOPLE] as? List<SearchAccount>
+                    val revertedCache = revertAccountList(cachedPeople ?: state.accounts)
                     state.copy(
                         error = err.message,
                         accounts = revertedAccounts,
-                        cachedData = state.cachedData + (SearchTab.PEOPLE to revertedAccounts)
+                        cachedData = state.cachedData + (SearchTab.PEOPLE to revertedCache)
                     )
                 }
             }

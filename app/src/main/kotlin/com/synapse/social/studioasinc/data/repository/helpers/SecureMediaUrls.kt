@@ -4,21 +4,22 @@ import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.Story
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 
-/** Converts stored Storage keys and legacy URL strings to short-lived, RLS-authorized URLs. */
+/** Converts stored Storage keys to viewer-authorized URLs without letting inaccessible media
+ * suppress the post that owns it. */
 internal suspend fun Post.withSignedStorageMediaUrls(): Post {
-    android.util.Log.d("MediaDebug", "signing post=${id} postImage=$postImage mediaCount=${mediaItems?.size}")
-    val signedItems = mediaItems?.map { media ->
-        val signed = SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_POST_MEDIA, media.url)
-        android.util.Log.d("MediaDebug", "  item in=${media.url} out=$signed")
+    val signedItems = mediaItems?.mapNotNull { media ->
+        val signedUrl = SupabaseClient.createSignedStorageUrlOrNull(SupabaseClient.BUCKET_POST_MEDIA, media.url)
+            ?: return@mapNotNull null
         media.copy(
-            url = signed,
+            url = signedUrl,
             thumbnailUrl = media.thumbnailUrl?.let {
-                SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_POST_MEDIA, it)
+                SupabaseClient.createSignedStorageUrlOrNull(SupabaseClient.BUCKET_POST_MEDIA, it)
             }
         )
     }?.toMutableList()
-    val signedPostImage = postImage?.let { SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_POST_MEDIA, it) }
-    android.util.Log.d("MediaDebug", "  postImage out=$signedPostImage")
+    val signedPostImage = postImage?.let {
+        SupabaseClient.createSignedStorageUrlOrNull(SupabaseClient.BUCKET_POST_MEDIA, it)
+    }
     return copy(
         postImage = signedPostImage,
         mediaItems = signedItems,
@@ -28,6 +29,6 @@ internal suspend fun Post.withSignedStorageMediaUrls(): Post {
 }
 
 internal suspend fun Story.withSignedStorageMediaUrls(defaultBucket: String = "story-media"): Story = copy(
-    mediaUrl = mediaUrl?.let { SupabaseClient.createSignedStorageUrl(defaultBucket, it) },
-    thumbnailUrl = thumbnailUrl?.let { SupabaseClient.createSignedStorageUrl(defaultBucket, it) }
+    mediaUrl = mediaUrl?.let { SupabaseClient.createSignedStorageUrlOrNull(defaultBucket, it) },
+    thumbnailUrl = thumbnailUrl?.let { SupabaseClient.createSignedStorageUrlOrNull(defaultBucket, it) }
 )
