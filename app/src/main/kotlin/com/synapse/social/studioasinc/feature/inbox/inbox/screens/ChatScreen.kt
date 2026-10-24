@@ -483,11 +483,7 @@ typingStatus = typingStatus,
                             onDismissRequest = { selectedMessageForMenu = null },
                             onReactionSelected = viewModel::toggleMessageReaction,
                             onStartEditing = viewModel::startEditing,
-                            onDeleteMessageForMe = { message ->
-                                selectedMessageForMenu = null
-                                showDeleteMessageDialog = message
-                            },
-                            onDeleteMessageForEveryone = { message ->
+                            onDeleteMessage = { message ->
                                 selectedMessageForMenu = null
                                 showDeleteMessageDialog = message
                             },

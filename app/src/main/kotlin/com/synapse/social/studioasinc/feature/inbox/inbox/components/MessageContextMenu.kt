@@ -48,8 +48,7 @@ fun MessageContextMenu(
     onDismissRequest: () -> Unit,
     onReactionSelected: (String, ReactionType) -> Unit,
     onStartEditing: (Message) -> Unit,
-    onDeleteMessageForMe: (Message) -> Unit,
-    onDeleteMessageForEveryone: (Message) -> Unit,
+    onDeleteMessage: (Message) -> Unit,
     onSummarizeMessage: (String) -> Unit,
     onForwardMessage: () -> Unit = {},
     onMarkAsUnread: () -> Unit = {},
@@ -175,20 +174,11 @@ fun MessageContextMenu(
 
             if (isFromMe) {
                 ActionRow(
-                    icon = Icons.Default.DeleteForever,
-                    text = stringResource(R.string.delete_for_everyone),
-                    tint = MaterialTheme.colorScheme.error,
-                    onClick = {
-                        onDeleteMessageForEveryone(selectedMessage)
-                        onDismissRequest()
-                    }
-                )
-                ActionRow(
                     icon = Icons.Default.Delete,
-                    text = stringResource(R.string.delete_for_me),
+                    text = stringResource(R.string.inbox_context_menu_delete),
                     tint = MaterialTheme.colorScheme.error,
                     onClick = {
-                        onDeleteMessageForMe(selectedMessage)
+                        onDeleteMessage(selectedMessage)
                         onDismissRequest()
                     }
                 )
@@ -198,7 +188,7 @@ fun MessageContextMenu(
                     text = stringResource(R.string.inbox_context_menu_delete),
                     tint = MaterialTheme.colorScheme.error,
                     onClick = {
-                        onDeleteMessageForMe(selectedMessage)
+                        onDeleteMessage(selectedMessage)
                         onDismissRequest()
                     }
                 )

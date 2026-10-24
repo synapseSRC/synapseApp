@@ -318,9 +318,7 @@ private fun VoiceInputBarContent(
                     }
                     IconButton(
                         onClick = { onVoiceAction(VoiceAction.TogglePlayDraft) },
-                        modifier = Modifier
-                            .size(MIC_TOUCH_TARGET_SIZE)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                        modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE)
                     ) {
                         Icon(
                             imageVector = if (voiceState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
