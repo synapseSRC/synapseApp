@@ -115,7 +115,8 @@ import kotlinx.coroutines.withContext
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
 
-    val currentUserId = viewModel.currentUserId ?: ""
+    val currentUserIdState by viewModel.currentUserId.collectAsState()
+val currentUserId = currentUserIdState ?: ""
 
     val chatWallpaperType by viewModel.chatWallpaperType.collectAsState()
     val chatWallpaperValue by viewModel.chatWallpaperValue.collectAsState()

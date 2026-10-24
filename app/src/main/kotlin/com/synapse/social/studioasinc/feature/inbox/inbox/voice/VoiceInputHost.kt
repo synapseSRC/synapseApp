@@ -60,12 +60,26 @@ private val LOCK_PILL_GAP = Spacing.space6
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.space4 + Spacing.space8
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
-// WhatsApp-style vertical lock pill capsule dimensions
+// WhatsApp-style vertical lock pill capsule dimensions.
+// The pill rides a FIXED track above the mic: it starts just above the mic button and
+// slides up to a lock target as the user drags. Its height is NON-MONOTONIC — it grows
+// slightly as the drag begins (the pill "inflates" toward the user's finger), then shrinks
+// toward a circle as it approaches the lock target. Width stays constant until the lock
+// commit, where it settles into a circle.
 private val LOCK_PILL_WIDTH = 48.dp
-private val LOCK_PILL_HEIGHT = 120.dp
+private val LOCK_PILL_BASE_HEIGHT = 120.dp
 private val LOCK_PILL_ICON_SIZE = 22.dp
 private val LOCK_PILL_CHEVRON_SIZE = 16.dp
 private val LOCK_PILL_CORNER_RADIUS = 24.dp
+// Fixed track: the pill's resting top sits this far above the mic button's top.
+private val LOCK_PILL_TRACK_GAP = Spacing.space6
+// Travel distance the pill slides up from rest to the lock target (≈ lockThreshold).
+private val LOCK_PILL_TRACK_TRAVEL = 110.dp
+// Non-monotonic height curve: height grows to this peak (relative to base) mid-drag, then
+// shrinks to a circle at the lock target.
+private val LOCK_PILL_HEIGHT_GROWTH = 0.12f
+// At the lock target the pill settles into a circle of this diameter.
+private val LOCK_PILL_LOCK_DIAMETER = 48.dp
 
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
@@ -400,14 +414,9 @@ private fun VoiceRecordingContentOverlay(
             )
         ) {
             micBoundsInHost?.let { micBounds ->
-                val pillWidthPx = with(density) { LOCK_PILL_WIDTH.toPx() }
-                val initialPillHeightPx = with(density) { LOCK_PILL_HEIGHT.toPx() }
-                val gapPx = with(density) { LOCK_PILL_GAP.toPx() }
                 val parentWidthPx = with(density) { maxWidth.toPx() }
                 val micCenterX = (micBounds.left + micBounds.right) / 2f
-                val micTop = micBounds.top
-                val leftPx = (micCenterX - pillWidthPx / 2f)
-                    .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
+                val micCenterY = (micBounds.top + micBounds.bottom) / 2f
 
                 val lockProgress = when {
                     isLocked -> 1f
@@ -418,24 +427,37 @@ private fun VoiceRecordingContentOverlay(
                     recording != null -> recording.cancelProgress
                     else -> 0f
                 }
-                val dragOffsetY = recording?.dragOffsetYPx ?: 0f
+                val p = lockProgress.coerceIn(0f, 1f)
 
-                // Dynamic morphing: the pill rises with the finger (dragOffsetY is negative
-                // upward) while its height shrinks proportionally to lockProgress. The base
-                // anchor is the mic top minus the pill height minus the gap; dragging up
-                // subtracts the upward offset so the capsule both lifts and compresses.
-                val pillHeightPx = initialPillHeightPx + (pillWidthPx - initialPillHeightPx) * lockProgress.coerceIn(0f, 1f)
-                val topPx = (micTop + dragOffsetY) - pillHeightPx - gapPx
+                // Fixed-track slide: pill rides upward from just above the mic to the lock target.
+                // Its center moves linearly with lockProgress; height morphs around the center so
+                // the capsule inflates mid-drag then deflates into a circle at lock.
+                val gapPx = with(density) { LOCK_PILL_TRACK_GAP.toPx() }
+                val travelPx = with(density) { LOCK_PILL_TRACK_TRAVEL.toPx() }
+                val pillCenterY = micCenterY - gapPx - travelPx * p
+
+                val baseHeightPx = with(density) { LOCK_PILL_BASE_HEIGHT.toPx() }
+                val lockDiameterPx = with(density) { LOCK_PILL_LOCK_DIAMETER.toPx() }
+                // Height is non-monotonic: grows toward base+(base*growth) at p=0.5, then
+                // shrinks toward lockDiameter at p=1. Growth curve peaks at the middle of the drag.
+                val growthCurve = 4f * p * (1f - p) // 0 at p=0, 1 at p=0.5, 0 at p=1
+                val growFactor = 1f + LOCK_PILL_HEIGHT_GROWTH * growthCurve
+                val pillHeightPx = baseHeightPx * growFactor * (1f - p) + lockDiameterPx * p
+
+                val pillWidthPx = with(density) { LOCK_PILL_WIDTH.toPx() }
+                val pillLeftPx = (micCenterX - pillWidthPx / 2f)
+                    .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
+                val pillTopPx = pillCenterY - pillHeightPx / 2f
 
                 // Tooltip "Slide up to lock" bubble to the left of the pill (Image 4)
-                val tooltipVisible = !isLocked && lockProgress < 0.15f && cancelProgress == 0f
-                val tooltipAlpha = ((1f - lockProgress * 5f).coerceIn(0f, 1f) * (1f - cancelProgress * 3f).coerceIn(0f, 1f))
-                val endPaddingPx = (parentWidthPx - leftPx - pillWidthPx).coerceAtLeast(0f)
+                val tooltipVisible = !isLocked && p < 0.15f && cancelProgress == 0f
+                val tooltipAlpha = ((1f - p * 5f).coerceIn(0f, 1f) * (1f - cancelProgress * 3f).coerceIn(0f, 1f))
+                val endPaddingPx = (parentWidthPx - pillLeftPx - pillWidthPx).coerceAtLeast(0f)
                 val endPaddingDp = with(density) { endPaddingPx.toDp() }
 
                 Row(
                     modifier = Modifier
-                        .absoluteOffset { IntOffset(0, topPx.roundToInt()) }
+                        .absoluteOffset { IntOffset(pillLeftPx.roundToInt(), pillTopPx.roundToInt()) }
                         .fillMaxWidth()
                         .padding(end = endPaddingDp),
                     horizontalArrangement = Arrangement.End,
@@ -524,8 +546,10 @@ private fun ShimmerCancelHint(reducedMotion: Boolean) {
 /**
  * WhatsApp-style vertical pill capsule lock indicator.
  * Shows a lock icon at the top and a bouncing chevron arrow below it.
- * Appears directly above the resting mic button during recording.
- * On drag up, collapses from 120dp capsule into a 48dp circle and turns green when locked.
+ * Appears above the resting mic button during recording.
+ * Rides a FIXED track: slides up as the user drags up, with a NON-MONOTONIC
+ * height (grows mid-drag, shrinks to a circle at the lock target) and a small
+ * width growth at the lock commit. Lock icon centers in the locked circle.
  */
 @Composable
 private fun LockPillCapsule(
@@ -564,7 +588,8 @@ private fun LockPillCapsule(
 
     val targetScale = if (isLocked) 1.04f else (1f + 0.04f * progress.coerceIn(0f, 1f))
     val scaleSpec: AnimationSpec<Float> = if (isLocked) {
-        spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)
+        // Low damping gives an overshoot-and-settle tactile "click" when locking commits.
+        spring(dampingRatio = 0.2f, stiffness = Spring.StiffnessHigh)
     } else {
         snap()
     }
@@ -581,12 +606,21 @@ private fun LockPillCapsule(
         ((1f - progress * 2.2f).coerceIn(0f, 1f) * 0.7f)
     }
 
-    // Height morphs proportionally with the drag: full capsule (120dp) -> circle (48dp).
-    // Direct-drive fluidity: while dragging (not locked) the height snaps to progress so the
-    // capsule tracks the finger exactly. The spring only smooths the commit to Locked and the
+    // Height is NON-MONOTONIC and tracks the fixed-track slide (WhatsApp behavior):
+    //  - At rest (p=0): full capsule height.
+    //  - Mid-drag (~p=0.5): the capsule "inflates" toward the finger (peak height).
+    //  - Near lock (p→1): shrinks into a circle at the lock target.
+    // Width stays LOCK_PILL_WIDTH until the lock commit, where height==width makes a circle.
+    // Direct-drive fluidity: while dragging the height snaps to progress so the capsule
+    // tracks the finger exactly. The spring only smooths the commit to Locked and the
     // release return, keeping the drag itself finger-following and responsive.
-    val targetHeight = if (isLocked) LOCK_PILL_WIDTH else {
-        lerpDp(LOCK_PILL_HEIGHT, LOCK_PILL_WIDTH, progress.coerceIn(0f, 1f))
+    val p = progress.coerceIn(0f, 1f)
+    val growthCurve = 4f * p * (1f - p) // 0 at p=0/1, 1 at p=0.5
+    val growFactor = 1f + LOCK_PILL_HEIGHT_GROWTH * growthCurve
+    val targetHeight = if (isLocked) {
+        LOCK_PILL_LOCK_DIAMETER
+    } else {
+        lerpDp(LOCK_PILL_BASE_HEIGHT * growFactor, LOCK_PILL_LOCK_DIAMETER, p)
     }
     val heightSpec: AnimationSpec<androidx.compose.ui.unit.Dp> = if (isLocked) {
         spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
@@ -595,9 +629,22 @@ private fun LockPillCapsule(
     }
     val animatedHeight = animateDpAsState(targetValue = targetHeight, animationSpec = heightSpec, label = "lockPillHeight").value
 
+    // Width grows toward the lock diameter as the drag progresses, settling into a circle at lock.
+    val targetWidth = if (isLocked) {
+        LOCK_PILL_LOCK_DIAMETER
+    } else {
+        lerpDp(LOCK_PILL_WIDTH, LOCK_PILL_LOCK_DIAMETER, ((p - 0.7f) / 0.3f).coerceIn(0f, 1f))
+    }
+    val widthSpec: AnimationSpec<androidx.compose.ui.unit.Dp> = if (isLocked) {
+        spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)
+    } else {
+        snap()
+    }
+    val animatedWidth by animateDpAsState(targetValue = targetWidth, animationSpec = widthSpec, label = "lockPillWidth")
+
     Surface(
         modifier = modifier
-            .width(LOCK_PILL_WIDTH)
+            .width(animatedWidth)
             .height(animatedHeight)
             .graphicsLayer {
                 this.alpha = alpha
@@ -621,15 +668,15 @@ private fun LockPillCapsule(
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = if (isLocked) Alignment.Center else Alignment.TopCenter
         ) {
-            // Lock icon at the top (unlocked until near threshold, then locks)
+            // Lock icon: centered in the locked circle, top of the capsule while dragging.
             Icon(
                 imageVector = iconVector,
                 contentDescription = stringResource(if (isClosed) R.string.voice_recording_locked_state else R.string.voice_recording_lock_hint),
                 tint = iconTint,
                 modifier = Modifier
-                    .padding(top = Spacing.space12 + 1.dp)
+                    .then(if (isLocked) Modifier else Modifier.padding(top = Spacing.space12 + 1.dp))
                     .size(LOCK_PILL_ICON_SIZE)
                     .graphicsLayer {
                         scaleX = iconScale
@@ -742,6 +789,15 @@ fun CanonicalMicButton(
         animationSpec = spring(dampingRatio = MIC_SCALE_DAMPING_RATIO, stiffness = Spring.StiffnessMedium),
         label = "canonicalMicScale"
     )
+    // Mic fades out as the user drags up toward the lock target (WhatsApp behavior).
+    val lockProgress = recordingState?.lockProgress?.coerceIn(0f, 1f) ?: 0f
+    val targetMicAlpha = (1f - lockProgress).coerceIn(0f, 1f)
+    val micAlpha = animateFloatForMotion(
+        targetValue = targetMicAlpha,
+        reducedMotion = reducedMotion,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+        label = "canonicalMicAlpha"
+    )
     val targetTint = voiceCancelTint(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.error, cancelProgress)
     val micTint by animateColorAsState(
         targetValue = targetTint,
@@ -831,6 +887,7 @@ fun CanonicalMicButton(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
+                    alpha = micAlpha
                     translationX = if (isReturning) returnX.value else dragOffsetX
                     translationY = if (isReturning) returnY.value else dragOffsetY
                 }
