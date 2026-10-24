@@ -77,13 +77,14 @@ class FeedPagingSource(
         return try {
             Log.d("FeedPagingSource", "Loading feed timeline at position: $position, pageSize: $pageSize")
 
-            val currentUserId = client.auth.currentUserOrNull()?.id ?: ""
             val rpcResult = withContext(Dispatchers.IO) {
-                // Use the personalized feed RPC to get ranked post IDs
+                // Use the personalized feed RPC to get ranked post IDs.
+                // Pass requesting_user_id as null so the RPC uses get_current_user_uid()
+                // internally to resolve the correct uid from the users table.
                 client.postgrest.rpc(
                     function = "get_ranked_post_ids",
                     parameters = buildJsonObject {
-                        put("requesting_user_id", currentUserId)
+                        put("requesting_user_id", JsonNull)
                         put("limit_val", pageSize)
                         put("offset_val", position)
                     }

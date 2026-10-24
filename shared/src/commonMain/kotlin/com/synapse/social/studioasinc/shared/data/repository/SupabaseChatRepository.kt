@@ -166,7 +166,10 @@ class SupabaseChatRepository(
                 chatId = summary.chatId,
                 participantId = summary.participantId,
                 participantName = summary.participantName?.takeIf { it.isNotBlank() }
-                    ?: if (summary.isGroup) "Group Chat" else "Unknown User",
+                    ?: if (summary.isGroup) "Group Chat" else {
+                        val userDataSource = SupabaseUserDataSource(client)
+                        userDataSource.getUserProfile(summary.participantId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username }?.takeIf { it.isNotBlank() } ?: "Unknown User"
+                    },
                 participantAvatar = summary.participantAvatar,
                 lastMessage = lastMessageText,
                 lastMessageTime = summary.lastMessage?.createdAt,
