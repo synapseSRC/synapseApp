@@ -11,6 +11,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -33,7 +34,7 @@ class SupabaseFollowService @Inject constructor() {
         try {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
-            client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<String>()
+            client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
             return@withContext Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SupabaseFollowService", "Failed to request follow", e)
@@ -46,7 +47,7 @@ class SupabaseFollowService @Inject constructor() {
         try {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
-            client.postgrest.rpc("unfollow_user", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<Boolean>()
+            client.postgrest.rpc("unfollow_user", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SupabaseFollowService", "Failed to unfollow user", e)

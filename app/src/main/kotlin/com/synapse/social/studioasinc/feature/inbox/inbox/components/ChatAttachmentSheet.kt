@@ -47,14 +47,6 @@ fun ChatAttachmentSheet(
     // Keep all five choices visible in the requested compact-phone sheet.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    val closeInteraction = remember { MutableInteractionSource() }
-    val closePressed by closeInteraction.collectIsPressedAsState()
-    // My design decision (not in M3): a subtle press scale is requested for tappable controls.
-    val closeScale by animateFloatAsState(
-        targetValue = if (closePressed) 0.98f else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-        label = "attachmentSheetClosePress"
-    )
 
     fun dismissThen(action: () -> Unit) {
         scope.launch {
@@ -88,21 +80,6 @@ fun ChatAttachmentSheet(
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.width(Spacing.space8))
-                FilledTonalIconButton(
-                    onClick = { dismissThen(onDismissRequest) },
-                    modifier = Modifier.size(Sizes.HeightDefault).graphicsLayer {
-                        scaleX = closeScale
-                        scaleY = closeScale
-                    },
-                    interactionSource = closeInteraction
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.chat_attachment_close),
-                        modifier = Modifier.size(Sizes.IconLarge)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(Spacing.space12))

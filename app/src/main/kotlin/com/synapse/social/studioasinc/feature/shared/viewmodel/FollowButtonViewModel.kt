@@ -59,24 +59,23 @@ class FollowButtonViewModel @Inject constructor(
         val currentUid = currentUserId ?: return
         val targetUid = targetUserId ?: return
 
-        _uiState.value = _uiState.value.copy(isLoading = true)
-
         val privateResult = followService.isPrivateProfile(targetUid)
         val statusResult = followService.getFollowStatus(targetUid)
         if (this.targetUserId != targetUid) return
+
+        val previous = _uiState.value
         if (statusResult.isSuccess) {
             val status = statusResult.getOrThrow()
-            _uiState.value = _uiState.value.copy(
+            _uiState.value = previous.copy(
                 isFollowing = status == ProfileFollowStatus.FOLLOWING,
                 isFollowRequested = status == ProfileFollowStatus.REQUESTED,
                 isPrivate = privateResult.getOrDefault(true),
                 isLoading = false
             )
         } else {
-            _uiState.value = _uiState.value.copy(
-                isFollowing = false,
-                isFollowRequested = false,
-                isPrivate = privateResult.getOrDefault(true),
+            // Preserve last-known state on read failure instead of defaulting to "not following".
+            _uiState.value = previous.copy(
+                isPrivate = privateResult.getOrDefault(previous.isPrivate),
                 isLoading = false
             )
         }
