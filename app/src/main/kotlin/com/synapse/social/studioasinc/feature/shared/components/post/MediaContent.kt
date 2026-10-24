@@ -63,7 +63,7 @@ fun MediaContent(
     post: Post? = null
 ) {
     val safePost = post
-    if (safePost == null && mediaUrls.isNotEmpty()) {
+    if (mediaUrls.isEmpty()) {
         return
     }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -76,7 +76,7 @@ fun MediaContent(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(vertical = Spacing.space8)
-                .clickable { onMediaClick(safePost!!, 0) }
+                .clickable { safePost?.let { onMediaClick(it, 0) } }
         ) {
             AsyncImage(
                 model = coil3.request.ImageRequest.Builder(context)
