@@ -5,18 +5,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
 /**
- * M3 dialog that asks the user to choose between deleting a message for themselves only
- * or for everyone in the conversation.
+ * Simple confirmation dialog that asks the user to choose between deleting a message
+ * for themselves only or for everyone in the conversation.
  *
  * Only shown when the message belongs to the current user.
  *
@@ -47,61 +45,29 @@ fun DeleteMessageDialog(
                 Text(
                     text = stringResource(R.string.delete_message_confirmation),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             },
             text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = Spacing.space8),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.space8)
-                ) {
-                    Text(
-                        text = it.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    HorizontalDivider()
-
-                    // Delete for me option
-                    Text(
-                        text = stringResource(R.string.delete_for_me),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.delete_for_me_explanation),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.space4))
-
-                    // Delete for everyone option
+                Text(
+                    text = it.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { onDeleteForEveryone(it) }) {
                     Text(
                         text = stringResource(R.string.delete_for_everyone),
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.error
-                    )
-                    Text(
-                        text = stringResource(R.string.delete_for_everyone_explanation),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             },
-            confirmButton = {
+            dismissButton = {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = Spacing.space8),
-                    horizontalArrangement = Arrangement.End
+                    modifier = Modifier.padding(end = Spacing.space8),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
                     TextButton(onClick = onDismissRequest) {
                         Text(
@@ -110,28 +76,13 @@ fun DeleteMessageDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(modifier = Modifier.width(Spacing.space8))
-                    TextButton(
-                        onClick = { onDeleteForEveryone(it) }
-                    ) {
+                    TextButton(onClick = { onDeleteForMe(it) }) {
                         Text(
-                            text = stringResource(R.string.delete_for_everyone),
+                            text = stringResource(R.string.delete_for_me),
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { onDeleteForMe(it) },
-                    modifier = Modifier.padding(start = Spacing.space8)
-                ) {
-                    Text(
-                        text = stringResource(R.string.delete_for_me),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
                 }
             },
             shape = MaterialTheme.shapes.extraLarge,

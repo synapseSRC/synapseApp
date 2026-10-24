@@ -6,6 +6,7 @@ import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import com.synapse.social.studioasinc.shared.data.datasource.ChatReactionDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
+import com.synapse.social.studioasinc.shared.data.datasource.SupabaseUserDataSource
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
@@ -178,35 +179,44 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getConversations(forceNetwork: Boolean): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
+    override suspend fun getConversations(forceNetwork: Boolean, limit: Int, before: String?, beforeId: String?): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
         try {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
-            if (forceNetwork) {
-                try {
-                    val fresh = fetchConversationsFromNetwork()
-                    cachedConversationDao?.upsertAll(fresh)
-                    Result.success(fresh)
-                } catch (throwable: Throwable) {
-                    if (cached.isNotEmpty()) Result.success(cached) else Result.failure(throwable)
-                }
-            } else if (cached.isNotEmpty()) {
-                externalScope.launch {
+            if (before == null && beforeId == null) {
+                if (forceNetwork) {
                     try {
                         val fresh = fetchConversationsFromNetwork()
                         cachedConversationDao?.upsertAll(fresh)
-                    } catch (e: Exception) {
-                        Logger.e("Failed to sync fresh conversations", throwable = e)
+                        Result.success(fresh.take(limit))
+                    } catch (throwable: Throwable) {
+                        if (cached.isNotEmpty()) Result.success(cached.take(limit)) else Result.failure(throwable)
                     }
+                } else if (cached.isNotEmpty()) {
+                    externalScope.launch {
+                        try {
+                            val fresh = fetchConversationsFromNetwork()
+                            cachedConversationDao?.upsertAll(fresh)
+                        } catch (e: Exception) {
+                            Logger.e("Failed to sync fresh conversations", throwable = e)
+                        }
+                    }
+                    Result.success(cached.take(limit))
+                } else {
+                    val conversations = fetchConversationsFromNetwork()
+                    cachedConversationDao?.upsertAll(conversations)
+                    Result.success(conversations.take(limit))
                 }
-                Result.success(cached)
             } else {
-                val conversations = fetchConversationsFromNetwork()
-                cachedConversationDao?.upsertAll(conversations)
-                Result.success(conversations)
+                try {
+                    val fresh = fetchConversationsFromNetwork()
+                    Result.success(fresh.take(limit))
+                } catch (throwable: Throwable) {
+                    if (cached.isNotEmpty()) Result.success(cached.take(limit)) else Result.failure(throwable)
+                }
             }
         } catch (throwable: Throwable) {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
-            if (cached.isNotEmpty()) Result.success(cached)
+            if (cached.isNotEmpty()) Result.success(cached.take(limit))
             else {
                 Logger.e("Error getting conversations", throwable = throwable)
                 Result.failure(throwable)
@@ -214,9 +224,9 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getArchivedConversations(): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
+    override suspend fun getArchivedConversations(limit: Int, before: String?, beforeId: String?): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
         try {
-            Result.success(fetchConversationsFromNetwork(archivedOnly = true))
+            Result.success(fetchConversationsFromNetwork(archivedOnly = true).take(limit))
         } catch (throwable: Throwable) {
             Logger.e("Error getting archived conversations", throwable = throwable)
             Result.failure(throwable)
@@ -246,6 +256,20 @@ class SupabaseChatRepository(
     override suspend fun getMessages(chatId: String, limit: Int, before: String?, beforeId: String?, forceNetwork: Boolean): Result<List<Message>> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+
+            if (before != null && beforeId != null && !forceNetwork) {
+                val cachedBefore = cachedMessageDao?.getMessagesBefore(chatId, before, beforeId, limit) ?: emptyList()
+                if (cachedBefore.isNotEmpty()) {
+                    val userDeletedIds = dataSource.getUserDeletedMessageIds(cachedBefore.map { it.id })
+                    if (userDeletedIds.isNotEmpty()) {
+                        cachedMessageDao?.delete(userDeletedIds.toList())
+                    }
+                    val visibleCached = cachedBefore.filterNot { it.id in userDeletedIds }
+                    if (visibleCached.isNotEmpty()) {
+                        return@withContext Result.success(visibleCached)
+                    }
+                }
+            }
 
             if (before == null && !forceNetwork) {
                 val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
@@ -325,9 +349,18 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getMessagesCacheFirst(chatId: String, limit: Int, refreshInBackground: Boolean): Result<List<Message>> = withContext(AppDispatchers.IO) {
+    override suspend fun getMessagesCacheFirst(chatId: String, limit: Int, refreshInBackground: Boolean, before: String?, beforeId: String?): Result<List<Message>> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+            if (before != null && beforeId != null) {
+                val cachedBefore = cachedMessageDao?.getMessagesBefore(chatId, before, beforeId, limit) ?: emptyList()
+                if (cachedBefore.isNotEmpty()) {
+                    val userDeletedIds = dataSource.getUserDeletedMessageIds(cachedBefore.map { it.id })
+                    if (userDeletedIds.isNotEmpty()) cachedMessageDao?.delete(userDeletedIds.toList())
+                    val visibleCached = cachedBefore.filterNot { it.id in userDeletedIds }
+                    if (visibleCached.isNotEmpty()) return@withContext Result.success(visibleCached)
+                }
+            }
             val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
             val userDeletedIds = if (cached.isEmpty()) emptySet() else dataSource.getUserDeletedMessageIds(cached.map { it.id })
             if (userDeletedIds.isNotEmpty()) cachedMessageDao?.delete(userDeletedIds.toList())
@@ -588,8 +621,12 @@ class SupabaseChatRepository(
                 cachedMessageDao?.markRead(chatId, currentUserId)
             }
             conversationMutex.withLock {
-                cachedConversationDao?.getAll()?.find { it.chatId == chatId }?.let { existing ->
-                    cachedConversationDao?.upsertAll(listOf(existing.copy(unreadCount = 0)))
+                val dao = cachedConversationDao
+                if (dao != null) {
+                    val existing = dao.getAll().find { it.chatId == chatId }
+                    if (existing != null) {
+                        dao.upsertAll(listOf(existing.copy(unreadCount = 0)))
+                    }
                 }
             }
             Result.success(Unit)
@@ -818,12 +855,16 @@ class SupabaseChatRepository(
                     cachedMessageDao?.upsert(domainMessage)
                 }
                 conversationMutex.withLock {
-                    cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
-                        cachedConversationDao?.upsertAll(listOf(existing.copy(
-                            lastMessage = domainMessage.content,
-                            lastMessageTime = domainMessage.createdAt,
-                            unreadCount = 0
-                        )))
+                    val dao = cachedConversationDao
+                    if (dao != null) {
+                        val existing = dao.getAll().find { it.chatId == domainMessage.chatId }
+                        if (existing != null) {
+                            dao.upsertAll(listOf(existing.copy(
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt,
+                                unreadCount = 0
+                            )))
+                        }
                     }
                 }
             }
@@ -855,7 +896,7 @@ class SupabaseChatRepository(
                         Conversation(
                             chatId = domainMessage.chatId,
                             participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
-                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else "Unknown User",
+                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else try { SupabaseUserDataSource(io.github.jan.supabase.SupabaseClient as SupabaseClientLib).getUserProfile(domainMessage.senderId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username } ?: "Unknown User" } catch (_: Exception) { "Unknown User" },
                             participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
                             lastMessage = domainMessage.content,
                             lastMessageTime = domainMessage.createdAt,

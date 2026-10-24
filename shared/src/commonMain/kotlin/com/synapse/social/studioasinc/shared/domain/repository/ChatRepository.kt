@@ -7,10 +7,10 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
-    suspend fun getConversations(forceNetwork: Boolean = false): Result<List<Conversation>>
+    suspend fun getConversations(forceNetwork: Boolean = false, limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Conversation>>
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null, forceNetwork: Boolean = false): Result<List<Message>>
     suspend fun getMessagesAfter(chatId: String, after: String, afterId: String, limit: Int = 50): Result<List<Message>>
-    suspend fun getMessagesCacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false): Result<List<Message>>
+    suspend fun getMessagesCacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false, before: String? = null, beforeId: String? = null): Result<List<Message>>
     suspend fun getMessageById(messageId: String): Result<Message?>
     suspend fun sendMessage(
         chatId: String,
@@ -26,7 +26,7 @@ interface ChatRepository {
     suspend fun getOrCreateChat(otherUserId: String): Result<String>
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean): Result<Unit>
-    suspend fun getArchivedConversations(): Result<List<Conversation>>
+    suspend fun getArchivedConversations(limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Conversation>>
     suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean): Result<Unit>
     suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun deleteConversation(chatId: String): Result<Unit>

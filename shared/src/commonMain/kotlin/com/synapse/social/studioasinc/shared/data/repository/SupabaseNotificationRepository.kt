@@ -40,7 +40,7 @@ class SupabaseNotificationRepository(
     private val externalScope: CoroutineScope
 ) : NotificationRepository {
 
-    override suspend fun fetchNotifications(userId: String, limit: Long): List<Notification> {
+    override suspend fun fetchNotifications(userId: String, limit: Long, before: String?, beforeId: String?): List<Notification> {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId) {
             Napier.e("IDOR attempt: User $currentUserId tried to fetch notifications for $userId")
@@ -51,8 +51,22 @@ class SupabaseNotificationRepository(
                 .select(Columns.raw("*, actor:sender_id(display_name, username, avatar)")) {
                     filter {
                         eq("recipient_id", userId)
+                        if (before != null && beforeId != null) {
+                            and {
+                                or {
+                                    lt("created_at", before)
+                                    and {
+                                        eq("created_at", before)
+                                        lt("id", beforeId)
+                                    }
+                                }
+                            }
+                        } else if (before != null) {
+                            lt("created_at", before)
+                        }
                     }
                     order("created_at", Order.DESCENDING)
+                    order("id", Order.DESCENDING)
                     limit(limit)
                 }
                 .decodeList<NotificationDto>()

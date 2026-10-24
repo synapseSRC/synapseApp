@@ -16,6 +16,6 @@ class GetMessagesUseCase(
     suspend fun after(chatId: String, createdAt: String, id: String, limit: Int = 50): Result<List<Message>> =
         repository.getMessagesAfter(chatId, createdAt, id, limit)
 
-    suspend fun cacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false): Result<List<Message>> =
-        repository.getMessagesCacheFirst(chatId, limit, refreshInBackground)
+    suspend fun cacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false, before: String? = null, beforeId: String? = null): Result<List<Message>> =
+        repository.getMessagesCacheFirst(chatId, limit, refreshInBackground, before, beforeId)
 }

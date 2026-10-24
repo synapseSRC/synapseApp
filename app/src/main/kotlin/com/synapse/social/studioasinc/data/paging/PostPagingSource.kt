@@ -77,8 +77,8 @@ class PostPagingSource(
             val postsWithReactions = reactionRepository.populatePostReactions(parsedPosts)
             val postsWithPolls = populatePostPolls(postsWithReactions)
 
-            // Sign media URLs for protected storage so Coil can load images/videos.
-            // Without this, mediaItems[].url and postImage remain private-media:// URLs that Coil cannot load.
+            // Posts bucket is public, so media URLs are already resolvable HTTPS URLs.
+            // This is a no-op for posts but kept for safety if buckets change in the future.
             val signedPosts = postsWithPolls.map { post ->
                 post.withSignedStorageMediaUrls()
             }

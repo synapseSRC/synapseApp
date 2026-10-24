@@ -1,6 +1,7 @@
 # ---------------------------------------------------
 # General and Operating System Exclusions
 # ---------------------------------------------------
+.kilo
 .playwright-mcp
 .kiro
 .DS_Store

@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * Handles decoding metadata whether it arrives from Postgres as a JSONB object,
  * an escaped string, a JSON null, or null. Prevents deserialization crashes in CDC events.
  */
+@OptIn(ExperimentalSerializationApi::class)
 object AnyMetadataStringSerializer : KSerializer<String?> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("AnyMetadataStringSerializer", PrimitiveKind.STRING)

@@ -42,7 +42,7 @@ class SupabasePresenceRepository(
     private suspend fun currentSessionUserId(): String? {
         return try {
             val session = client.auth.currentSessionOrNull()
-            session?.user?.id?.toString()
+            session?.user?.id
         } catch (e: Exception) {
             Napier.w("⚠️ Unable to read auth session: ${e.message}", e)
             null
