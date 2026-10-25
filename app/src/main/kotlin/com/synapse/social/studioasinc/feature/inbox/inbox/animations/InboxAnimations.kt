@@ -111,65 +111,6 @@ fun BadgePopAnimation(
 
 
 
-@Composable
-fun TypingDotsAnimation(): Triple<Float, Float, Float> {
-    val infiniteTransition = rememberInfiniteTransition(label = "typingDots")
-
-    val dot1Offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 800
-                0f at 0
-                -6f at 150
-                0f at 300
-                0f at 800
-            },
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "dot1"
-    )
-
-    val dot2Offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 800
-                0f at 0
-                0f at 150
-                -6f at 300
-                0f at 450
-                0f at 800
-            },
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "dot2"
-    )
-
-    val dot3Offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = 800
-                0f at 0
-                0f at 300
-                -6f at 450
-                0f at 600
-                0f at 800
-            },
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "dot3"
-    )
-
-    return Triple(dot1Offset, dot2Offset, dot3Offset)
-}
-
-
-
 fun Modifier.pressScale(
     pressed: Boolean,
     pressedScale: Float = 0.98f

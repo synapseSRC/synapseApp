@@ -79,7 +79,7 @@ fun ContactItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = contact.displayName ?: contact.username ?: "Unknown User",
+                text = contact.displayName?.takeIf { it.isNotBlank() } ?: contact.name?.takeIf { it.isNotBlank() } ?: contact.nickname?.takeIf { it.isNotBlank() } ?: contact.username?.takeIf { it.isNotBlank() } ?: "Unknown User",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

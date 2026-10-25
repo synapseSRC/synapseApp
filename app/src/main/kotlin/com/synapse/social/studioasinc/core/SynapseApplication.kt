@@ -58,10 +58,6 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
     @Inject lateinit var notificationRepository: NotificationRepository
 
     override fun newImageLoader(context: Context): ImageLoader {
-        val placeholder = BitmapDrawable(
-            resources,
-            BitmapFactory.decodeResource(resources, R.raw.placeholder)
-        )
         val okHttpClient = okhttp3.OkHttpClient.Builder()
             .addInterceptor(
                 SupabaseStorageImageInterceptor(
@@ -84,7 +80,6 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                 add(VideoFrameDecoder.Factory())
                 add(SvgDecoder.Factory())
             }
-            .placeholder(placeholder.asImage())
             .build()
     }
 
@@ -146,6 +141,18 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
             override fun onStart(owner: LifecycleOwner) {
                 isAppInForeground = true
                 managePresenceTracking()
+                // Reconnect Realtime on foreground resume (e.g. after screen-off/Doze)
+                if (isAuthenticated) {
+                    applicationScope.launch(Dispatchers.IO) {
+                        try {
+                            val rt = io.github.jan.supabase.realtime.Realtime
+                            SupabaseClient.client.pluginManager.getPlugin(rt).connect()
+                            Napier.d("✅ Supabase Realtime reconnected on foreground resume", tag = "SynapseApplication")
+                        } catch (e: Exception) {
+                            Napier.e("❌ Failed to reconnect Supabase Realtime on resume", e, tag = "SynapseApplication")
+                        }
+                    }
+                }
             }
 
             override fun onStop(owner: LifecycleOwner) {

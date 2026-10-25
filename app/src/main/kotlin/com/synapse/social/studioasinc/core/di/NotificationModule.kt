@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -94,14 +94,6 @@ import kotlinx.serialization.json.Json
 @InstallIn(SingletonComponent::class)
 object NotificationModule {
 
-    @Provides
-    @Singleton
-    fun provideNotificationRepository(
-        client: SupabaseClientType,
-        @Named("ApplicationScope") externalScope: CoroutineScope
-    ): NotificationRepository {
-        return SupabaseNotificationRepository(client, externalScope)
-    }
     @Provides
     @Singleton
     fun provideGetNotificationsUseCase(

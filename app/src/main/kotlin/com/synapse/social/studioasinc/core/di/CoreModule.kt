@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -139,3 +139,4 @@ object CoreModule {
     }
 
 }
+

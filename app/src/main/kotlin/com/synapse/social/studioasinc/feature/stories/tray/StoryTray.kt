@@ -208,7 +208,7 @@ private fun StoryCard(
                                     Modifier
                                 }
                             )
-                            .padding(Spacing.space2)
+                            .padding(Spacing.space4)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surface)
                     ) {
@@ -258,11 +258,11 @@ private fun StoryCard(
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                             shape = RoundedCornerShape(Sizes.CornerSharp),
-                            modifier = Modifier.padding(bottom = Spacing.space2)
+                            modifier = Modifier.padding(bottom = Spacing.space4)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space2)
+                                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space4)
                             ) {
                                 Text(
                                     text = when (privacy) {
@@ -273,7 +273,7 @@ private fun StoryCard(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.space2))
+                                Spacer(modifier = Modifier.width(Spacing.space4))
                                 Icon(
                                     imageVector = when (privacy) {
                                         StoryPrivacy.PUBLIC -> Icons.Default.Public

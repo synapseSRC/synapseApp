@@ -5,6 +5,7 @@ import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewDirectChatDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.NewMinimalGroupChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatInboxSummaryDto
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOptions
@@ -159,7 +160,14 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
                 allowMemberSettingsEdits = options.allowMemberSettingsEdits, requireJoinApproval = options.requireJoinApproval,
                 allowMemberInvites = options.allowMemberInvites, disappearingMode = options.disappearingMode.name
             )
-            client.postgrest.from("chats").insert(newChat)
+            try {
+                client.postgrest.from("chats").insert(newChat)
+            } catch (e: Exception) {
+                // Fallback: insert minimal chat if optional group-settings columns are missing
+                Napier.w("Full group chat insert failed, retrying minimal insert", e)
+                val minimalChat = NewMinimalGroupChatDto(id = chatId, name = name, createdBy = currentUserId)
+                client.postgrest.from("chats").insert(minimalChat)
+            }
 
             // Create participants
             val participants = buildList(participantIds.size + 1) {

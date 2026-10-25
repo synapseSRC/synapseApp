@@ -295,7 +295,7 @@ private fun BackendCapabilityNoticeCard(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .size(24.dp)
-                    .padding(top = Spacing.space2)
+                    .padding(top = Spacing.space4)
             )
             Spacer(modifier = Modifier.width(Spacing.space12))
             Column(modifier = Modifier.weight(1f)) {
@@ -422,7 +422,7 @@ private fun FeaturedContentPreviewCard(
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.width(Spacing.space10))
+                                Spacer(modifier = Modifier.width(Spacing.space8))
                                 Text(
                                     text = post.postText?.takeIf { it.isNotBlank() } ?: stringResource(R.string.post_media_attachment_label),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -471,7 +471,7 @@ private fun FeaturedContentPreviewCard(
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2)
+                                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                         )
                                     }
                                 }
@@ -760,7 +760,7 @@ private fun CandidateMediaGrid(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
                                         .size(20.dp)
-                                        .padding(Spacing.space2)
+                                        .padding(Spacing.space4)
                                 )
                             }
                         }

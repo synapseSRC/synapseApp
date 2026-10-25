@@ -387,7 +387,7 @@ fun InterestsSkillsScreen(
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
-                                            .padding(top = Spacing.space2, end = Spacing.space12)
+                                            .padding(top = Spacing.space4, end = Spacing.space12)
                                             .size(24.dp)
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
@@ -425,7 +425,7 @@ fun InterestsSkillsScreen(
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
-                                            .padding(top = Spacing.space2, end = Spacing.space12)
+                                            .padding(top = Spacing.space4, end = Spacing.space12)
                                             .size(24.dp)
                                     )
                                     Column(modifier = Modifier.weight(1f)) {

@@ -111,9 +111,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateSupabaseConfig(url: String, apiKey: String, bucketName: String) {
+    fun updatePrimaryConfig(url: String, apiKey: String, bucketName: String) {
         viewModelScope.launch {
-            storageRepository.updateSupabaseConfig(url, apiKey, bucketName)
+            storageRepository.updatePrimaryConfig(url, apiKey, bucketName)
         }
     }
 
@@ -134,7 +134,7 @@ class SettingsViewModel @Inject constructor(
         return when (this) {
             "ImgBB" -> StorageProvider.IMGBB
             "Cloudinary" -> StorageProvider.CLOUDINARY
-            "Supabase" -> StorageProvider.SUPABASE
+            "Supabase" -> StorageProvider.PRIMARY
             "Cloudflare R2" -> StorageProvider.CLOUDFLARE_R2
             else -> StorageProvider.DEFAULT
         }

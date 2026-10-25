@@ -270,7 +270,7 @@ fun FeelingSelectScreen(
             ) {
                  if (filteredFeelings.isEmpty()) {
                      item {
-                         Box(modifier = Modifier.fillMaxWidth().padding(top = Spacing.space40), contentAlignment = Alignment.Center) {
+                         Box(modifier = Modifier.fillMaxWidth().padding(top = Spacing.space48), contentAlignment = Alignment.Center) {
                              Text(stringResource(R.string.no_results_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                          }
                      }

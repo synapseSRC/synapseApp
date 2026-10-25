@@ -115,7 +115,8 @@ import kotlinx.coroutines.withContext
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
 
-    val currentUserId = viewModel.currentUserId ?: ""
+    val currentUserIdState by viewModel.currentUserId.collectAsState()
+val currentUserId = currentUserIdState ?: ""
 
     val chatWallpaperType by viewModel.chatWallpaperType.collectAsState()
     val chatWallpaperValue by viewModel.chatWallpaperValue.collectAsState()
@@ -135,6 +136,7 @@ import kotlinx.coroutines.withContext
     var batchGalleryMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
+    var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
 
     val listState = rememberLazyListState()
     var composerHeightPx by remember { mutableIntStateOf(0) }
@@ -447,7 +449,10 @@ import kotlinx.coroutines.withContext
                         initialMessageId = initialMessageId,
                         isLoadingMore = isLoadingMore,
                         isInitialSyncing = isLoading,
-                        typingStatus = typingStatus,
+typingStatus = typingStatus,
+                        typingStatusDisplayName = if (isGroupChat) {
+                            typingStatus?.userId?.let { groupMemberNames[it] }
+                        } else null,
                         onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
                         onSingleTap = { selectedMessageForMenu = it },
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },
@@ -479,8 +484,10 @@ import kotlinx.coroutines.withContext
                             onDismissRequest = { selectedMessageForMenu = null },
                             onReactionSelected = viewModel::toggleMessageReaction,
                             onStartEditing = viewModel::startEditing,
-                            onDeleteMessageForMe = viewModel::deleteMessageForMe,
-                            onDeleteMessageForEveryone = viewModel::deleteMessage,
+                            onDeleteMessage = { message ->
+                                selectedMessageForMenu = null
+                                showDeleteMessageDialog = message
+                            },
                             onSummarizeMessage = viewModel::summarizeMessage
                         )
                     }
@@ -491,6 +498,19 @@ import kotlinx.coroutines.withContext
                 isSummarizingMessage = isSummarizingMessage,
                 messageSummary = messageSummary,
                 onDismissRequest = viewModel::clearMessageSummary
+            )
+
+            DeleteMessageDialog(
+                message = showDeleteMessageDialog,
+                onDismissRequest = { showDeleteMessageDialog = null },
+                onDeleteForMe = { message ->
+                    showDeleteMessageDialog = null
+                    viewModel.deleteMessageForMe(message)
+                },
+                onDeleteForEveryone = { message ->
+                    showDeleteMessageDialog = null
+                    viewModel.deleteMessage(message)
+                }
             )
 
             if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {

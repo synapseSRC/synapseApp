@@ -298,7 +298,6 @@ const VoiceMessagePlayer: React.FC<VoiceMessagePlayerProps> = ({ src, durationSe
         onPause={() => setIsPlaying(false)}
         onEnded={event => { setIsPlaying(false); setCurrentTime(event.currentTarget.duration || actualDuration || durationSeconds || 0); }}
         onError={onError}
-        onError={onError}
       />
       <div className="flex min-w-0 items-center gap-3">
         <button

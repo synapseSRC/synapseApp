@@ -72,7 +72,7 @@ fun RegionItem(
         color = containerColor,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.space2)
+            .padding(vertical = Spacing.space4)
             .clickable { onRegionSelected(region) }
     ) {
         ListItem(

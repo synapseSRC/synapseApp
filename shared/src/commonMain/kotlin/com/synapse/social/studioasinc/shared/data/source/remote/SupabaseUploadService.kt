@@ -15,7 +15,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlin.time.Duration.Companion.minutes
 
 class SupabaseUploadService(private val supabase: SupabaseClient) : UploadService {
-    private val protectedMediaBuckets = setOf("posts", "covers", "story-media", "story-thumbnails", "reels")
+    private val protectedMediaBuckets = setOf("covers", "story-media", "story-thumbnails", "reels")
     private val userScopedBuckets = protectedMediaBuckets + com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_USER_AVATARS
 
     override suspend fun upload(
@@ -27,7 +27,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
         onProgress: (Float) -> Unit
     ): UploadResult {
         val targetBucket = bucketName.orEmpty()
-            .ifBlank { config.supabaseBucket }
+            .ifBlank { config.primaryBucket }
             .ifBlank { com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_POST_MEDIA }
 
         Napier.d("Uploading to Supabase bucket: $targetBucket, file: $fileName", tag = "SupabaseUpload")
@@ -37,7 +37,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
             val objectName = "${TimeProvider.nowMillis()}_$fileName"
             val path = if (targetBucket in userScopedBuckets) {
                 val userId = supabase.auth.currentUserOrNull()?.id
-                    ?: throw UploadError.SupabaseError("An authenticated user is required to upload profile media")
+                    ?: throw UploadError.BackendError("An authenticated user is required to upload profile media")
                 "$userId/$objectName"
             } else {
                 objectName
@@ -82,7 +82,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
             val fallbackBucket = if (targetBucket in userScopedBuckets) {
                 null // Protected profile media must never fall back into a public/configurable bucket.
             } else {
-                config.supabaseBucket.ifBlank {
+                config.primaryBucket.ifBlank {
                     com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_POST_MEDIA
                 }
             }
@@ -94,7 +94,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                     val fallbackObjectName = "${TimeProvider.nowMillis()}_$fileName"
                     val path = if (fallbackBucket in protectedMediaBuckets) {
                         val userId = supabase.auth.currentUserOrNull()?.id
-                            ?: throw UploadError.SupabaseError("An authenticated user is required to upload protected media")
+                            ?: throw UploadError.BackendError("An authenticated user is required to upload protected media")
                         "$userId/$fallbackObjectName"
                     } else {
                         fallbackObjectName
@@ -120,7 +120,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 }
             }
 
-            throw UploadError.SupabaseError("Supabase upload failed: ${e.message ?: e.toString()}")
+            throw UploadError.BackendError("Supabase upload failed: ${e.message ?: e.toString()}")
         }
     }
 }

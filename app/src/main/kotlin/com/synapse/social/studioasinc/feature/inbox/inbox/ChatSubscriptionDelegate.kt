@@ -27,9 +27,11 @@ class ChatSubscriptionDelegate(
     private val viewModelScope: CoroutineScope,
     private val currentUserIdProvider: () -> String?,
     private val isScreenVisibleProvider: () -> Boolean,
+    private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
     private val onNewMessage: (Message) -> Unit,
     private val onReactionEvent: (MessageReaction) -> Unit,
-    private val onSyncRequired: (suspend () -> Unit)? = null
+    private val onSyncRequired: (suspend () -> Unit)? = null,
+    private val onCleanupTypingChannel: (suspend () -> Unit)? = null
 ) {
 
     private var messageSubscriptionJob: Job? = null
@@ -139,13 +141,17 @@ class ChatSubscriptionDelegate(
                     io.github.aakira.napier.Napier.w("Messages subscription failed or ended for chat $chatId, reconnecting in 2s...", e, tag = "ChatSubscription")
                     delay(2000)
                 }
-                delay(1000)
+                delay(100) // Reduced from 1 s — trims reconnect dead window
             }
         }
 
         typingSubscriptionJob = viewModelScope.launch {
             while (isActive) {
                 try {
+                    if (!typingIndicatorsEnabledProvider()) {
+                        delay(1000)
+                        continue
+                    }
                     subscribeToTypingStatusUseCase(chatId).collect { status ->
                         val myUserId = currentUserIdProvider()
                         if (status.userId.isNotBlank() && (myUserId == null || status.userId != myUserId)) {
@@ -166,7 +172,7 @@ class ChatSubscriptionDelegate(
                     if (e is CancellationException) throw e
                     delay(2000)
                 }
-                delay(1000)
+                delay(100) // Reduced from 1 s — trims reconnect dead window
             }
         }
 
@@ -180,7 +186,7 @@ class ChatSubscriptionDelegate(
                     if (e is CancellationException) throw e
                     delay(2000)
                 }
-                delay(1000)
+                delay(100) // Reduced from 1 s — trims reconnect dead window
             }
         }
 
@@ -211,5 +217,11 @@ class ChatSubscriptionDelegate(
         typingTimeoutJob = null
         periodicSyncJob = null
         _typingStatus.value = null
+        // Release the persistent typing broadcast channel to avoid leaking WebSocket channels
+        onCleanupTypingChannel?.let { cleanupFn ->
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                try { cleanupFn() } catch (_: Exception) {}
+            }
+        }
     }
 }

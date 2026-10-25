@@ -62,13 +62,14 @@ fun PostContent(
     pollQuestion: String?,
     pollOptions: List<PollOption>? = null,
     userPollVote: Int? = null,
-    onMediaClick: (Int) -> Unit = {},
+    onMediaClick: (Post, Int) -> Unit = { _, _ -> },
     onPollVote: (String) -> Unit,
     quotedPost: Post? = null,
     linkPreviews: List<LinkPreview>? = null,
     isExpanded: Boolean = false,
     modifier: Modifier = Modifier,
-    getLinkMetadataUseCase: com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase? = null
+    getLinkMetadataUseCase: com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase? = null,
+    post: Post? = null
 ) {
     Column(modifier = modifier) {
         if (!text.isNullOrBlank()) {
@@ -169,7 +170,8 @@ fun PostContent(
                 isVideo = isVideo,
                 postViewStyle = postViewStyle,
                 onMediaClick = onMediaClick,
-                modifier = Modifier
+                modifier = Modifier,
+                post = post
             )
         }
 

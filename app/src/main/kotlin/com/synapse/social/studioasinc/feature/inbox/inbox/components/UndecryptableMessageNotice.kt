@@ -20,6 +20,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import org.json.JSONObject
 
 private val recipientIdPattern = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
@@ -27,29 +28,13 @@ private val encryptedBodyPattern = Regex("^[A-Za-z0-9+/_-]+={0,2}$")
 
 /** Returns true only for the serialized Signal pre-key envelope currently leaking into chat text. */
 private val encryptedPlaceholderContents = setOf(
-    "Message is encrypted",
-    "🔒 Encrypted message",
-    "🔒 You sent an encrypted message",
-    "🔒 You sent an encrypted message (Copy)"
+    "Message is encrypted"
 )
 
 internal fun isUndecryptableMessageContent(content: String): Boolean {
     if (content.trim() in encryptedPlaceholderContents) return true
-
-    val root = runCatching { JSONObject(content) }.getOrNull() ?: return false
-    if (root.length() == 0) return false
-
-    val recipients = root.keys()
-    while (recipients.hasNext()) {
-        val recipientId = recipients.next()
-        if (!recipientIdPattern.matches(recipientId)) return false
-
-        val envelope = root.optJSONObject(recipientId) ?: return false
-        if (envelope.optInt("type", -1) != 2) return false
-        if (!encryptedBodyPattern.matches(envelope.optString("body"))) return false
-        if (envelope.optInt("registrationId", -1) <= 0) return false
-    }
-    return true
+    if (EncryptedPayloadDetector.isEncryptedPayload(content)) return true
+    return false
 }
 
 @Composable

@@ -166,8 +166,25 @@ class SendMessageUseCase(
                 )
             }
 
-            val encryptedPayload = JsonObject(payloadMap).toString()
-            Napier.d("E2EE_ENCRYPT: Message encrypted for ${payloadMap.size} recipients", tag = "E2EE")
+            // Multi-device support: also encrypt for the sender so their other logged-in
+            // devices can decrypt this message. Without this, Device B (same account as
+            // the sender) has no entry in the payload map and won't decrypt this message.
+            val finalPayloadMap: Map<String, JsonElement> = if (currentUserId !in payloadMap.keys) {
+                try {
+                    Napier.d("E2EE_ENCRYPT: Encrypting for sender ($currentUserId) for multi-device support", tag = "E2EE")
+                    repository.ensureSession(currentUserId)
+                    val encryptedForSelf = signalProtocolManager.encryptMessage(currentUserId, contentBytes)
+                    payloadMap + (currentUserId to Json.encodeToJsonElement(EncryptedMessage.serializer(), encryptedForSelf))
+                } catch (selfErr: Exception) {
+                    Napier.w("E2EE_ENCRYPT: Failed to encrypt for self — other devices won't decrypt: ${selfErr.message}", tag = "E2EE")
+                    payloadMap
+                }
+            } else {
+                payloadMap
+            }
+
+            val encryptedPayload = JsonObject(finalPayloadMap).toString()
+            Napier.d("E2EE_ENCRYPT: Message encrypted for ${finalPayloadMap.size} participants (incl. sender for multi-device)", tag = "E2EE")
 
             val sendResult = repository.sendMessage(
                 chatId = chatId,

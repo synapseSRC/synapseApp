@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -66,6 +67,9 @@ class InboxViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
@@ -134,7 +138,7 @@ class InboxViewModel @Inject constructor(
                 _error.value = "Failed to initialize encrypted chat: ${throwable.message.orEmpty()}"
             }
             loadCurrentUserProfile()
-            refreshConversations()
+            loadConversationsCacheFirst()
         }
     }
 
@@ -150,19 +154,37 @@ class InboxViewModel @Inject constructor(
         viewModelScope.launch { refreshConversations() }
     }
 
+    private suspend fun loadConversationsCacheFirst() {
+        val cached = chatRepository.getConversations(forceNetwork = false)
+            .getOrNull() ?: emptyList()
+        if (cached.isNotEmpty()) {
+            _conversations.value = cached.distinctBy { it.chatId }
+                .sortedWith(compareByDescending<Conversation> { it.isPinned }.thenByDescending { it.lastMessageTime ?: "" })
+            subscribeToInboxUpdates()
+        }
+        refreshConversations()
+    }
+
     private suspend fun refreshConversations() {
-        _isLoading.value = true
+        val hasCachedData = _conversations.value.isNotEmpty()
         _error.value = null
+        if (!hasCachedData) {
+            _isLoading.value = true
+        } else {
+            _isRefreshing.value = true
+        }
         getConversationsUseCase(forceNetwork = true)
             .onSuccess { conversationList ->
                 _conversations.value = conversationList.distinctBy { it.chatId }
                     .sortedWith(compareByDescending<Conversation> { it.isPinned }.thenByDescending { it.lastMessageTime ?: "" })
                 _isLoading.value = false
+                _isRefreshing.value = false
                 subscribeToInboxUpdates()
             }
             .onFailure { throwable ->
                 _error.value = "Failed to load conversations: ${throwable.message.orEmpty()}"
                 _isLoading.value = false
+                _isRefreshing.value = false
             }
     }
 
@@ -187,9 +209,11 @@ class InboxViewModel @Inject constructor(
         subscribedChatIds = chatIds
         if (chatIds.isEmpty()) return
         inboxSubscriptionJob = viewModelScope.launch {
-            subscribeToInboxUpdatesUseCase(chatIds).collect {
-                refreshConversations()
-            }
+            subscribeToInboxUpdatesUseCase(chatIds)
+                .debounce(300L)
+                .collect {
+                    refreshConversations()
+                }
         }
     }
 

@@ -233,7 +233,7 @@ fun ProfileImageSection(
                                             colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
                                                 contentColor = MaterialTheme.colorScheme.onPrimary
                                             ),
-                                            contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space2)
+                                            contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space4)
                                         ) {
                                             Text(stringResource(R.string.action_retry), style = MaterialTheme.typography.labelSmall)
                                         }

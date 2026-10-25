@@ -178,7 +178,7 @@ fun BatchMediaGalleryDialog(
                                             text = String.format("%02d:%02d", minutes, seconds),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = Color.White,
-                                            modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space2)
+                                            modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space4)
                                         )
                                     }
                                 }

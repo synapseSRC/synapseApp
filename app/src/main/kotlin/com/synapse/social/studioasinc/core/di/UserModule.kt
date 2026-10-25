@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -99,27 +99,6 @@ object UserModule {
 
     @Provides
     @Singleton
-    fun provideSharedAuthRepository(
-        client: SupabaseClientType,
-        cachedMessageDao: com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao,
-        cachedConversationDao: com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao,
-        postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao,
-        storyDao: com.synapse.social.studioasinc.shared.data.local.database.StoryDao,
-        offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository,
-        syncManager: com.synapse.social.studioasinc.shared.data.sync.SyncManager
-    ): AuthRepository {
-        return SupabaseAuthRepository(
-            client = client,
-            cachedMessageDao = cachedMessageDao,
-            cachedConversationDao = cachedConversationDao,
-            postDao = postDao,
-            storyDao = storyDao,
-            offlineActionRepository = offlineActionRepository,
-            syncManager = syncManager
-        )
-    }
-    @Provides
-    @Singleton
     fun provideSyncManager(
         offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
     ): com.synapse.social.studioasinc.shared.data.sync.SyncManager {
@@ -128,48 +107,6 @@ object UserModule {
             syncStateStorage = InMemorySyncStateStorage(),
             offlineActionRepository = offlineActionRepository
         )
-    }
-
-    @Provides
-    @Singleton
-    fun provideAccountRepository(
-        client: SupabaseClientType
-    ): AccountRepository {
-        return AccountRepository(client)
-    }
-    @Provides
-    @Singleton
-    fun provideUserRepository(userDao: UserDao, client: SupabaseClientType): com.synapse.social.studioasinc.data.repository.UserRepositoryImpl {
-        return UserRepositoryImpl(userDao, client)
-    }
-    @Provides
-    @Singleton
-    fun provideSharedUserRepository(
-        storageDatabase: StorageDatabase,
-        client: SupabaseClientType
-    ): com.synapse.social.studioasinc.shared.domain.repository.UserRepository {
-        val userDataSource = SupabaseUserDataSource(client)
-        return UserRepositoryImpl(storageDatabase, userDataSource)
-    }
-    @Provides
-    @Singleton
-    fun provideUsernameRepository(): UsernameRepositoryImpl {
-        return UsernameRepositoryImpl()
-    }
-    @Provides
-    @Singleton
-    fun provideProfileRepository(
-        client: SupabaseClientType,
-        commentRepository: CommentRepositoryImpl
-    ): ProfileRepository {
-        return ProfileRepositoryImpl(client, commentRepository)
-    }
-    @Provides
-    @Singleton
-    fun provideDomainProfileRepository(
-        profileRepository: ProfileRepository
-    ): com.synapse.social.studioasinc.domain.repository.ProfileRepository {
-        return DomainProfileRepositoryAdapter(profileRepository)
     }
     @Provides
     @Singleton
@@ -201,13 +138,6 @@ object UserModule {
     }
     @Provides
     @Singleton
-    fun provideFollowRepository(
-        client: SupabaseClientType
-    ): FollowRepository {
-        return FollowRepositoryImpl(client)
-    }
-    @Provides
-    @Singleton
     fun provideGetFollowersUseCase(
         followRepository: FollowRepository
     ): GetFollowersUseCase {
@@ -219,13 +149,6 @@ object UserModule {
         followRepository: FollowRepository
     ): GetFollowingUseCase {
         return GetFollowingUseCase(followRepository)
-    }
-    @Provides
-    @Singleton
-    fun provideUserPreferencesRepository(
-        client: io.github.jan.supabase.SupabaseClient
-    ): UserPreferencesRepository {
-        return UserPreferencesRepositoryImpl(client)
     }
 
 }

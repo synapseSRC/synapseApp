@@ -170,7 +170,7 @@ fun PostHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = Spacing.space2)
+                modifier = Modifier.padding(top = Spacing.space4)
             )
         }
 

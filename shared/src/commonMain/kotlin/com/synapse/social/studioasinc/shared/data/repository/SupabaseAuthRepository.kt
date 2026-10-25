@@ -482,9 +482,10 @@ class SupabaseAuthRepository(
                 
                 // Retrieve the user from the established session
                 val user = client.auth.currentUserOrNull()
-                val userId = user?.id
+                    ?: throw Exception("User not found after Google sign-in")
+                val userId = user.id
                     ?: throw Exception("User ID not found after Google sign-in")
-                val email = user?.email
+                val email = user.email
                     ?: throw Exception("Email not found after Google sign-in")
                 
                 ensureProfileExists(userId, email, null)

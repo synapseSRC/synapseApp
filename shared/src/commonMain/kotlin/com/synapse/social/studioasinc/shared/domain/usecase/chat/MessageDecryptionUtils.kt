@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.shared.domain.usecase.chat
 import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -31,13 +32,16 @@ internal suspend fun decryptMessageIfNecessary(
     currentUserId: String,
     signalProtocolManager: SignalProtocolManager?
 ): Message {
+    if (!EncryptedPayloadDetector.isEncryptedPayload(message.content)) {
+        return message.copy(encryptionFailureReason = null)
+    }
     if (signalProtocolManager == null) {
         Napier.e("E2EE_DECRYPT: SignalProtocolManager is null, cannot decrypt", tag = "E2EE")
-        return message
+        return message.copy(encryptionFailureReason = "decryption_failed")
     }
 
     try {
-        val jsonElement = Json.parseToJsonElement(message.content) as? JsonObject ?: return message
+        val jsonElement = Json.parseToJsonElement(message.content) as? JsonObject ?: return message.copy(encryptionFailureReason = "decryption_failed")
         val senderId = message.senderId
         val messageId = message.id
 
@@ -48,12 +52,12 @@ internal suspend fun decryptMessageIfNecessary(
                     val plainText = myPayloadElement.jsonPrimitive.content
                     val (content, mediaUrl) = extractFromJsonPayload(plainText)
                     Napier.d("E2EE_DECRYPT: Retrieved sender's plaintext copy for $messageId", tag = "E2EE")
-                    return message.copy(content = content, mediaUrl = mediaUrl ?: message.mediaUrl)
+                    return message.copy(content = content, mediaUrl = mediaUrl ?: message.mediaUrl, encryptionFailureReason = null)
                 } catch (_: Exception) {
                     Napier.w("E2EE_DECRYPT: Sender copy exists but not a primitive for $messageId", tag = "E2EE")
                 }
             }
-            return message
+            return message.copy(encryptionFailureReason = "decryption_failed")
         } else {
             val myPayloadElement = jsonElement[currentUserId]
             if (myPayloadElement != null) {
@@ -63,7 +67,7 @@ internal suspend fun decryptMessageIfNecessary(
                     val decryptedString = decryptedBytes.decodeToString()
                     Napier.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
                     val (content, mediaUrl) = extractFromJsonPayload(decryptedString)
-                    return message.copy(content = content, mediaUrl = mediaUrl ?: message.mediaUrl)
+                    return message.copy(content = content, mediaUrl = mediaUrl ?: message.mediaUrl, encryptionFailureReason = null)
                 } catch (e: Exception) {
                     Napier.e("E2EE_DECRYPT: Decryption failed for message $messageId.", tag = "E2EE", throwable = e)
                 }
@@ -75,5 +79,5 @@ internal suspend fun decryptMessageIfNecessary(
         Napier.e("E2EE_DECRYPT: Critical failure parsing payload for message ${message.id}: ${e.message}", tag = "E2EE", throwable = e)
     }
 
-    return message
+    return message.copy(encryptionFailureReason = "decryption_failed")
 }

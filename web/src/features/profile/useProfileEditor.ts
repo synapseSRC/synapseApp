@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { backend as supabase } from '@/lib/backend';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 import type { UserProfile } from '@/types';
 import { STORAGE_BUCKETS } from '@/config/storageBuckets';

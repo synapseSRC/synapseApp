@@ -33,6 +33,7 @@ class ChatInitializationDelegate(
     private val subscriptionDelegate: ChatSubscriptionDelegate,
     private val aiDelegate: ChatAiDelegate,
     private val _isLoading: MutableStateFlow<Boolean>,
+    private val _isRefreshing: MutableStateFlow<Boolean>,
     private val _error: MutableStateFlow<String?>,
     private val _participantProfile: MutableStateFlow<User?>,
     private val _isE2EEReady: MutableStateFlow<Boolean>,
@@ -51,16 +52,20 @@ class ChatInitializationDelegate(
         // (cleanup() clears messages before this runs, so they must be reloaded).
         if (chatId != "new" && (chatId.equals(currentChatId, ignoreCase = true) || (participantId != null && currentChatId != null))) {
             val resolvedId = currentChatId ?: chatId
-            _isLoading.value = true
             subscriptionDelegate.startSubscriptions(resolvedId)
             viewModelScope.launch {
                 try {
-                    // Cache first for instant display; the caller's explicit network refresh
-                    // is the only full-page synchronization during this initialization.
+                    // Cache first for instant display; background refresh follows when cache exists.
                     getMessagesUseCase.cacheFirst(resolvedId, refreshInBackground = false).onSuccess { messages ->
                         messagingDelegate.setMessages(messages)
+                        if (messages.isEmpty()) {
+                            _isLoading.value = true
+                        } else {
+                            _isRefreshing.value = true
+                        }
                     }.onFailure { e ->
                         _error.value = e.message
+                        _isLoading.value = true
                     }
                     getMessagesUseCase(resolvedId, forceNetwork = true).onSuccess { fresh ->
                         messagingDelegate.setMessages(fresh)
@@ -70,6 +75,7 @@ class ChatInitializationDelegate(
                     }
                 } finally {
                     _isLoading.value = false
+                    _isRefreshing.value = false
                 }
                 markMessagesAsReadUseCase(resolvedId)
             }
@@ -135,12 +141,17 @@ class ChatInitializationDelegate(
 
             launch {
                 try {
-                    // Cache first for instant display; keep loading active through the
-                    // one explicit network reconciliation so rows settle before live updates.
+                    // Cache first for instant display; background refresh follows when cache exists.
                     getMessagesUseCase.cacheFirst(actualChatId, refreshInBackground = false).onSuccess { messages ->
                         messagingDelegate.setMessages(messages)
+                        if (messages.isEmpty()) {
+                            _isLoading.value = true
+                        } else {
+                            _isRefreshing.value = true
+                        }
                     }.onFailure { error ->
                         _error.value = error.message
+                        _isLoading.value = true
                     }
                     getMessagesUseCase(actualChatId, forceNetwork = true).onSuccess { fresh ->
                         messagingDelegate.setMessages(fresh)
@@ -150,6 +161,7 @@ class ChatInitializationDelegate(
                     }
                 } finally {
                     _isLoading.value = false
+                    _isRefreshing.value = false
                 }
                 aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
                 markMessagesAsReadUseCase(actualChatId)

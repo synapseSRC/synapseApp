@@ -56,6 +56,48 @@ class SqlDelightCachedMessageDao(
         }
     }
 
+    override suspend fun getMessagesBefore(chatId: String, beforeCreatedAt: String, beforeId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
+        db.cachedMessageQueries.selectActiveByChatIdBefore(
+            chatId = chatId,
+            beforeCreatedAt = beforeCreatedAt,
+            beforeId = beforeId,
+            limit = limit.toLong()
+        ).executeAsList().reversed().map { cached ->
+            val domain = toDomainMessage(cached)
+            try {
+                val reactions = db.messageReactionQueries.selectByMessageId(domain.id).executeAsList()
+                val summary = reactions
+                    .groupBy { it.reaction_emoji }
+                    .mapKeys { ReactionType.values().find { rt -> rt.emoji == it.key } ?: ReactionType.LIKE }
+                    .mapValues { it.value.size }
+                domain.copy(reactions = summary)
+            } catch (e: Exception) {
+                domain
+            }
+        }
+    }
+
+    override suspend fun getMessagesAfter(chatId: String, afterCreatedAt: String, afterId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
+        db.cachedMessageQueries.selectActiveByChatIdAfter(
+            chatId = chatId,
+            afterCreatedAt = afterCreatedAt,
+            afterId = afterId,
+            limit = limit.toLong()
+        ).executeAsList().map { cached ->
+            val domain = toDomainMessage(cached)
+            try {
+                val reactions = db.messageReactionQueries.selectByMessageId(domain.id).executeAsList()
+                val summary = reactions
+                    .groupBy { it.reaction_emoji }
+                    .mapKeys { ReactionType.values().find { rt -> rt.emoji == it.key } ?: ReactionType.LIKE }
+                    .mapValues { it.value.size }
+                domain.copy(reactions = summary)
+            } catch (e: Exception) {
+                domain
+            }
+        }
+    }
+
     override suspend fun upsert(message: Message) {
         withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()

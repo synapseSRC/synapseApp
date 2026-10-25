@@ -128,12 +128,21 @@ object InboxAnimations {
         repeatMode = RepeatMode.Reverse
     )
 
-    val TypingBounceSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
+    /**
+     * Per-dot bounce spec for the typing indicator. The stagger is baked into
+     * the keyframe timings so a single InfiniteTransition can drive all three
+     * dots and the motion is stable across recompositions.
+     *
+     * @param dotIndex 0-based dot index; delays the movement phase by
+     *   [dotIndex] * 150 ms.
+     */
+    fun typingBounceSpec(dotIndex: Int): InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = keyframes {
             durationMillis = 600
+            val delayMs = dotIndex * 150
             0f at 0 using LinearEasing
-            -6f at 150 using FastOutSlowInEasing
-            0f at 300 using FastOutSlowInEasing
+            -5f at (150 + delayMs) using FastOutSlowInEasing
+            0f at (300 + delayMs) using FastOutSlowInEasing
             0f at 600 using LinearEasing
         },
         repeatMode = RepeatMode.Restart
@@ -162,7 +171,7 @@ object InboxDimens {
     val StoryRingWidth = Sizes.BorderSelected
     val ChatItemPadding = Spacing.space16
     val ChatItemVerticalSpacing = Spacing.space8
-    val GroupedItemGap = Spacing.space2
+    val GroupedItemGap = Spacing.space4
     val SectionHeaderHeight = Sizes.AvatarSmall
     val SwipeActionIconSize = Sizes.IconExtraLarge
     val FABSize = Sizes.AvatarLarge

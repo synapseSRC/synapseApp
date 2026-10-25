@@ -15,7 +15,7 @@ object PostActionsFactory {
         onQuote: (Post) -> Unit,
         onUserClick: (String) -> Unit,
         onOptionClick: (Post) -> Unit,
-        onMediaClick: (Int) -> Unit
+        onMediaClick: (Post, Int) -> Unit
     ): PostActions {
         return PostActions(
             onLike = viewModel::likePost,
@@ -39,7 +39,7 @@ object PostActionsFactory {
         onQuote: (Post) -> Unit,
         onUserClick: (String) -> Unit,
         onOptionClick: (Post) -> Unit,
-        onMediaClick: (Int) -> Unit
+        onMediaClick: (Post, Int) -> Unit
     ): PostActions {
         return PostActions(
             onLike = { post -> viewModel.reactToPost(post, ReactionType.LIKE) },
@@ -63,7 +63,7 @@ object PostActionsFactory {
         onQuote: (Post) -> Unit,
         onUserClick: (String) -> Unit,
         onOptionClick: (Post) -> Unit,
-        onMediaClick: (Int) -> Unit
+        onMediaClick: (Post, Int) -> Unit
     ): PostActions {
         return PostActions(
             onLike = { _ -> viewModel.toggleReaction(ReactionType.LIKE) },

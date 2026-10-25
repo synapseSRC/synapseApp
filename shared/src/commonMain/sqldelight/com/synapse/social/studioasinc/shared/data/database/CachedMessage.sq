@@ -74,6 +74,28 @@ selectActiveById:
 SELECT * FROM CachedMessage
 WHERE id = :id AND is_locally_deleted = 0;
 
+-- Cursor-based pagination (keyset) for older messages (before cursor)
+selectActiveByChatIdBefore:
+SELECT * FROM CachedMessage
+WHERE chat_id = :chatId AND is_locally_deleted = 0
+  AND (
+    created_at < :beforeCreatedAt
+    OR (created_at = :beforeCreatedAt AND id < :beforeId)
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT :limit;
+
+-- Cursor-based pagination (keyset) for newer messages (after cursor)
+selectActiveByChatIdAfter:
+SELECT * FROM CachedMessage
+WHERE chat_id = :chatId AND is_locally_deleted = 0
+  AND (
+    created_at > :afterCreatedAt
+    OR (created_at = :afterCreatedAt AND id > :afterId)
+  )
+ORDER BY created_at ASC, id ASC
+LIMIT :limit;
+
 -- Mark as locally deleted (soft delete to prevent reappearance from stale cache)
 markLocallyDeleted:
 UPDATE CachedMessage SET is_locally_deleted = 1, updated_at = :updatedAt WHERE id = :id;

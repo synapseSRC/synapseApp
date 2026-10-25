@@ -275,7 +275,7 @@ fun ProfileImageWithRing(
                     .size(size * 0.25f)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(Spacing.space2)
+                    .padding(Spacing.space4)
                     .clip(CircleShape)
                     .background(StatusOnline)
                     .semantics {

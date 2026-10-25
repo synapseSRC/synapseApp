@@ -276,12 +276,12 @@ fun PhotoGridSkeleton(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.space2)
+            .padding(Spacing.space4)
     ) {
         repeat(3) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.space2)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
             ) {
                 repeat(3) {
                     ShimmerBox(
@@ -292,7 +292,7 @@ fun PhotoGridSkeleton(modifier: Modifier = Modifier) {
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.space2))
+            Spacer(modifier = Modifier.height(Spacing.space4))
         }
     }
 }

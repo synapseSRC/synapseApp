@@ -68,7 +68,7 @@ fun MediaViewer(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = Spacing.space28)
+                    .padding(top = Spacing.space32)
             )
         }
     }

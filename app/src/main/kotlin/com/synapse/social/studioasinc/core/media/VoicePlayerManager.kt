@@ -188,17 +188,62 @@ class VoicePlayerManager @Inject constructor(
     private fun startProgressTracker() {
         progressJob?.cancel()
         progressJob = scope.launch {
+            var lastSyncTime = 0L
+            var syncFailures = 0
+            
             while (true) {
                 player?.let { p ->
                     if (p.isPlaying) {
-                        val current = p.currentPosition.coerceAtLeast(0L)
+                        val rawCurrent = p.currentPosition.coerceAtLeast(0L)
                         val duration = p.duration.coerceAtLeast(0L)
+                        
+                        // Detect and correct drift (sync every 2 seconds)
+                        val now = System.currentTimeMillis()
+                        if (now - lastSyncTime > 2000L) {
+                            _playbackState.update { state ->
+                                state.copy(currentPositionMs = rawCurrent.coerceAtLeast(0L))
+                            }
+                            lastSyncTime = now
+                            syncFailures = 0
+                        }
+                        
+                        // Cap exposed position at duration - 100ms to prevent
+                        // premature seekbar completion while preserving full accuracy for
+                        // completion detection
+                        val cappedCurrent = if (duration > 0 && rawCurrent >= duration) {
+                            duration - 100L
+                        } else {
+                            rawCurrent
+                        }
+                        
+                        // Only mark completed when player's own position reaches the end
+                        val shouldComplete = duration > 0 && rawCurrent >= duration
+                        
                         _playbackState.update { state ->
                             state.copy(
-                                currentPositionMs = current,
+                                currentPositionMs = cappedCurrent,
                                 durationMs = if (duration > 0) duration else state.durationMs,
-                                isCompleted = false
+                                isCompleted = shouldComplete || state.isCompleted
                             )
+                        }
+                        
+                        // Clear completion flag once playback catches up after overshoot
+                        if (shouldComplete && !_playbackState.value.isCompleted) {
+                            delay(300L) // Give ExoPlayer time to actually reach end
+                            player?.let { realPlayer ->
+                                val postDelayedRaw = realPlayer.currentPosition
+                                if (postDelayedRaw < duration && !_playbackState.value.isCompleted) {
+                                    _playbackState.update { it.copy(isCompleted = false) }
+                                }
+                            }
+                        }
+                        
+                        if (duration > 0 && rawCurrent >= duration) {
+                            syncFailures++
+                            if (syncFailures > 3) {
+                                println("Error: Player stuck at end of track")
+                                pause()
+                            }
                         }
                     }
                 }

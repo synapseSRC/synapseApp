@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -109,7 +110,7 @@ fun InboxConversationRow(
         label = "conversation-row-press"
     )
     Surface(
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
         contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.medium,
         modifier = modifier
@@ -161,7 +162,7 @@ fun InboxConversationRow(
                     val timestamp = conversation.lastMessageTime?.let { TimestampFormatter.formatRelative(it) }.orEmpty()
                     if (timestamp.isNotBlank()) {
                         Spacer(Modifier.width(Spacing.space8))
-                        Text(timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                        Text(timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, fontWeight = FontWeight.Medium)
                     }
                 }
                 Spacer(Modifier.height(Spacing.space4))
@@ -175,7 +176,6 @@ fun InboxConversationRow(
             }
             Spacer(Modifier.width(Spacing.space8))
             if (trailingContent != null) {
-                trailingContent()
             } else {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.space4)) {
@@ -188,7 +188,7 @@ fun InboxConversationRow(
                             Text(
                                 text = if (conversation.unreadCount > 99) "99+" else conversation.unreadCount.toString(),
                                 style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2)
+                                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                             )
                         }
                     }
@@ -337,7 +337,7 @@ private fun SearchMessageRow(result: InboxSearchResult, onClick: () -> Unit) {
     }
     Surface(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -349,7 +349,7 @@ private fun SearchMessageRow(result: InboxSearchResult, onClick: () -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(result.conversation.participantName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(message.content.ifBlank { message.mediaUrl.orEmpty() }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(stringResource(R.string.inbox_message_source_and_time, result.conversation.participantName, TimestampFormatter.formatRelative(message.createdAt)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                Text(stringResource(R.string.inbox_message_source_and_time, result.conversation.participantName, TimestampFormatter.formatRelative(message.createdAt)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, fontWeight = FontWeight.Medium)
             }
             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -358,7 +358,7 @@ private fun SearchMessageRow(result: InboxSearchResult, onClick: () -> Unit) {
 
 @Composable
 private fun SearchPersonRow(person: User, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.padding(Spacing.space16), verticalAlignment = Alignment.CenterVertically) {
             UserAvatar(avatarUrl = person.avatar, displayName = person.displayName ?: person.username, size = InboxExpressiveDimens.ConversationAvatarSize)
             Spacer(Modifier.width(Spacing.space12))
@@ -389,7 +389,7 @@ fun InboxBriefingScreen(
     ) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-            shape = MaterialTheme.shapes.medium,
+shape = RoundedCornerShape(0.dp),
             modifier = Modifier.fillMaxWidth().animateContentSize(spring(dampingRatio = 0.8f, stiffness = 380f))
         ) {
             Column(Modifier.padding(Spacing.space16), verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
@@ -423,7 +423,7 @@ fun InboxBriefingScreen(
             Text(stringResource(R.string.inbox_ai_quick_actions), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                 items(state.threads, key = { "briefing-${it.conversation.chatId}" }) { thread ->
-                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(Spacing.space12), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.Bolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(Spacing.space12))

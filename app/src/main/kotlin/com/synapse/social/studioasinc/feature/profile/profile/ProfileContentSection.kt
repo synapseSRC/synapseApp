@@ -106,7 +106,7 @@ internal fun ProfileContent(
             },
             onUserClick = { userId -> currentOnNavigateToUserProfile(userId) },
             onOptionClick = { post -> currentOnShowPostOptions(post) },
-            onMediaClick = { index -> }
+            onMediaClick = { _, _ -> }
         )
     }
 
@@ -429,7 +429,7 @@ internal fun ProfileContent(
 
                 val postActions = remember(actions, post.id) {
                     actions.copy(
-                        onMediaClick = { idx ->
+                        onMediaClick = { _, idx ->
                             val urls = post.mediaItems?.mapNotNull { it.url } ?: listOfNotNull(post.postImage)
                             if (urls.isNotEmpty()) {
                                 currentOnOpenMediaViewer(urls, idx)
@@ -473,7 +473,7 @@ internal fun ProfileContent(
                     onPostClick = {
                         PostDetailActivity.start(context, comment.postId, comment.userId)
                     },
-                    onMediaClick = { idx ->
+                    onMediaClick = { _, idx ->
                         val urls = listOfNotNull(comment.mediaUrl)
                         if (urls.isNotEmpty()) {
                             onOpenMediaViewer(urls, idx)

@@ -14,6 +14,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import io.github.jan.supabase.SupabaseClient as SupabaseClientType
@@ -84,7 +85,14 @@ class ProfileRepositoryImpl(
 
     internal fun resolveUserId(userId: String): String? {
         return if (userId == "me") {
-            client.auth.currentUserOrNull()?.id
+            val authId = client.auth.currentUserOrNull()?.id ?: return null
+            // Resolve auth id to the public users.uid used by posts.author_uid
+            runBlocking {
+                client.from("users").select(columns = Columns.list("uid")) {
+                    filter { eq("id", authId) }
+                }.decodeSingleOrNull<JsonObject>()
+                    ?.get("uid")?.let { if (it is JsonPrimitive) it.contentOrNull else null }
+            } ?: authId
         } else {
             userId
         }
@@ -292,7 +300,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("request_follow", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<String>()
+        }).decodeSingleOrNull<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -303,7 +311,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("unfollow_user", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<Boolean>()
+        }).decodeSingleOrNull<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)

@@ -395,10 +395,7 @@ class ChatMessagingDelegate(
 
     companion object {
         val ENCRYPTED_PLACEHOLDERS = setOf(
-            "Message is encrypted",
-            "🔒 Encrypted message",
-            "🔒 You sent an encrypted message",
-            "🔒 You sent an encrypted message (Copy)"
+            "Message is encrypted"
         )
     }
 }

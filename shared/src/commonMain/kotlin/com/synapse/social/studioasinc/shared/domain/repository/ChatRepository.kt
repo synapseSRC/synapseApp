@@ -7,10 +7,10 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
-    suspend fun getConversations(forceNetwork: Boolean = false): Result<List<Conversation>>
+    suspend fun getConversations(forceNetwork: Boolean = false, limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Conversation>>
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null, forceNetwork: Boolean = false): Result<List<Message>>
     suspend fun getMessagesAfter(chatId: String, after: String, afterId: String, limit: Int = 50): Result<List<Message>>
-    suspend fun getMessagesCacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false): Result<List<Message>>
+    suspend fun getMessagesCacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false, before: String? = null, beforeId: String? = null): Result<List<Message>>
     suspend fun getMessageById(messageId: String): Result<Message?>
     suspend fun sendMessage(
         chatId: String,
@@ -26,7 +26,7 @@ interface ChatRepository {
     suspend fun getOrCreateChat(otherUserId: String): Result<String>
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean): Result<Unit>
-    suspend fun getArchivedConversations(): Result<List<Conversation>>
+    suspend fun getArchivedConversations(limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Conversation>>
     suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean): Result<Unit>
     suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun deleteConversation(chatId: String): Result<Unit>
@@ -71,4 +71,30 @@ interface ChatRepository {
     suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
     /** Persists the authenticated participant's notification mute setting for this chat. */
     suspend fun setConversationMuteStatus(chatId: String, isMuted: Boolean): Result<Unit>
+
+    /**
+     * Registers the currently active chat screen by its chat ID.
+     * Pass `null` when no chat screen is open (e.g. on back-navigation or screen destruction).
+     * Used by the inbox refresh mechanism to avoid overwriting the active chat's real-time cache.
+     */
+    fun setActiveChatId(chatId: String?)
+
+    /**
+     * Returns the chat ID of the currently active chat screen, or `null` if no chat is open.
+     */
+    fun getActiveChatId(): String?
+
+    /**
+     * Reconciles a real-time WebSocket-delivered message into the local cache with real-time priority.
+     * The message is upserted into the cache using a merge strategy that preserves optimistic pending messages.
+     * Returns the message that should be displayed in the UI (may be an enriched version from cache).
+     */
+    suspend fun reconcileRealtimeMessage(chatId: String, message: com.synapse.social.studioasinc.shared.domain.model.chat.Message): com.synapse.social.studioasinc.shared.domain.model.chat.Message
+
+    /**
+     * Releases the cached typing broadcast channel for [chatId], if any.
+     * Called when a chat screen is closed to avoid leaking WebSocket channels.
+     * No-op if no channel is currently held for this chat.
+     */
+    suspend fun releaseTypingChannel(chatId: String)
 }

@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * Handles decoding metadata whether it arrives from Postgres as a JSONB object,
  * an escaped string, a JSON null, or null. Prevents deserialization crashes in CDC events.
  */
+@OptIn(ExperimentalSerializationApi::class)
 object AnyMetadataStringSerializer : KSerializer<String?> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("AnyMetadataStringSerializer", PrimitiveKind.STRING)
@@ -158,10 +159,17 @@ data class NewChatDto(
 )
 
 /**
- * Minimal payload for opening a direct conversation.
- * Keep group-only settings out of this insert because deployments may not yet
- * have the optional group-settings migration applied.
+ * Minimal payload for creating a group chat.
+ * Used as fallback when optional group-settings columns are not present in DB.
  */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class NewMinimalGroupChatDto(
+    val id: String,
+    @EncodeDefault @SerialName("is_group") val isGroup: Boolean = true,
+    val name: String? = null,
+    @SerialName("created_by") val createdBy: String
+)
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class NewDirectChatDto(
@@ -199,7 +207,7 @@ data class GroupInvitePreviewDto(
 data class ChatInboxSummaryDto(
     @SerialName("chat_id") val chatId: String,
     @SerialName("participant_id") val participantId: String,
-    @SerialName("participant_name") val participantName: String,
+    @SerialName("participant_name") val participantName: String? = null,
     @SerialName("participant_avatar") val participantAvatar: String? = null,
     @SerialName("participant_status") val participantStatus: String? = null,
     @SerialName("participant_last_seen") val participantLastSeen: String? = null,

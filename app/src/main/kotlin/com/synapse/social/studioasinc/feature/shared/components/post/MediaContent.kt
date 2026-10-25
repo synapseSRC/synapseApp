@@ -27,6 +27,7 @@ import coil3.asDrawable
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import com.synapse.social.studioasinc.core.ui.util.AmbientColorExtractor
+import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -56,11 +57,15 @@ fun calculateMediaDisplayHeight(
 fun MediaContent(
     mediaUrls: List<String>,
     isVideo: Boolean,
-    onMediaClick: (Int) -> Unit,
+    onMediaClick: (Post, Int) -> Unit,
     modifier: Modifier = Modifier,
-    postViewStyle: PostViewStyle = PostViewStyle.SWIPE
+    postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
+    post: Post? = null
 ) {
-    if (mediaUrls.isEmpty()) return
+    val safePost = post
+    if (mediaUrls.isEmpty()) {
+        return
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val atmosphereState = LocalUiAtmosphere.current
     val extractedColors = remember { mutableStateMapOf<Int, UiAtmosphereColors>() }
@@ -71,7 +76,7 @@ fun MediaContent(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(vertical = Spacing.space8)
-                .clickable { onMediaClick(0) }
+                .clickable { safePost?.let { onMediaClick(it, 0) } }
         ) {
             AsyncImage(
                 model = coil3.request.ImageRequest.Builder(context)
@@ -90,7 +95,8 @@ fun MediaContent(
                         extractedColors[0] = colors
                         atmosphereState.updateColors(colors)
                     }
-                }
+                },
+                onError = { state -> android.util.Log.e("MediaDebug", "Coil single fail url=$url err=${state.result.throwable}") }
             )
             if (isVideo) {
                 Icon(
@@ -105,7 +111,7 @@ fun MediaContent(
         }
     } else if (postViewStyle == PostViewStyle.GRID) {
 
-        PostMediaGrid(mediaUrls, onMediaClick, modifier)
+        PostMediaGrid(mediaUrls, onMediaClick, modifier, safePost)
     } else {
         val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { mediaUrls.size })
 
@@ -123,7 +129,7 @@ fun MediaContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onMediaClick(page) }
+                        .clickable { onMediaClick(safePost!!, page) }
                         .padding(vertical = Spacing.space8)
                 ) {
                     AsyncImage(
@@ -145,7 +151,8 @@ fun MediaContent(
                                     atmosphereState.updateColors(colors)
                                 }
                             }
-                        }
+                        },
+                        onError = { state -> android.util.Log.e("MediaDebug", "Coil pager fail url=${mediaUrls[page]} err=${state.result.throwable}") }
                     )
                 }
             }
@@ -173,11 +180,13 @@ fun MediaContent(
 @Composable
 fun PostMediaGrid(
     mediaUrls: List<String>,
-    onMediaClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    onMediaClick: (Post, Int) -> Unit,
+    modifier: Modifier = Modifier,
+    post: Post? = null
 ) {
     val count = mediaUrls.size
     val spacing = Sizes.BorderDefault
+    val safePost = post!!
 
     Column(
         modifier = modifier
@@ -188,41 +197,41 @@ fun PostMediaGrid(
         when (count) {
             2 -> {
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid2)) {
-                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(0) })
+                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 0) })
                     Spacer(modifier = Modifier.width(spacing))
-                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(1) })
+                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 1) })
                 }
             }
             3 -> {
 
-                MediaGridItem(url = mediaUrls[0], modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid3Top), onClick = { onMediaClick(0) })
+                MediaGridItem(url = mediaUrls[0], modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid3Top), onClick = { onMediaClick(safePost, 0) })
                 Spacer(modifier = Modifier.height(spacing))
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridMedium)) {
-                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(1) })
+                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 1) })
                     Spacer(modifier = Modifier.width(spacing))
-                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(2) })
+                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 2) })
                 }
             }
             else -> {
 
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridLarge)) {
-                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(0) })
+                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 0) })
                     Spacer(modifier = Modifier.width(spacing))
-                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(1) })
+                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 1) })
                 }
                 Spacer(modifier = Modifier.height(spacing))
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridLarge)) {
-                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(2) })
+                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 2) })
                     Spacer(modifier = Modifier.width(spacing))
 
                     Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                        MediaGridItem(url = mediaUrls[3], modifier = Modifier.fillMaxSize(), onClick = { onMediaClick(3) })
+                        MediaGridItem(url = mediaUrls[3], modifier = Modifier.fillMaxSize(), onClick = { onMediaClick(safePost, 3) })
                         if (count > 4) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
-                                    .clickable { onMediaClick(3) },
+                                    .clickable { onMediaClick(safePost, 3) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -256,6 +265,7 @@ fun MediaGridItem(
         modifier = modifier
             .clip(RoundedCornerShape(Sizes.CornerMedium))
             .clickable(onClick = onClick),
-        contentScale = ContentScale.Crop
+        contentScale = ContentScale.Crop,
+        onError = { state -> android.util.Log.e("MediaDebug", "Coil grid fail url=$url err=${state.result.throwable}") }
     )
 }

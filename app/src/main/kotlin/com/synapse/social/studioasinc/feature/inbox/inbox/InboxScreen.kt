@@ -53,8 +53,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -125,7 +127,7 @@ fun InboxScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun InboxScreenContent(
     onNavigateToProfile: (String) -> Unit,
@@ -153,6 +155,7 @@ private fun InboxScreenContent(
     val filteredConversations by viewModel.filteredConversations.collectAsState()
     val archivedConversations by viewModel.archivedConversations.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLoadingArchived by viewModel.isLoadingArchived.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -317,7 +320,8 @@ private fun InboxScreenContent(
                 FloatingActionButton(
                     onClick = { showNewMessageSheet = true },
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = FloatingActionButtonDefaults.shape
                 ) {
                     Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.inbox_new_message_title))
                 }
@@ -356,6 +360,7 @@ private fun InboxScreenContent(
                         0 -> HomeMessages(
                             conversations = filteredConversations,
                             isLoading = isLoading,
+                            isRefreshing = isRefreshing,
                             error = error,
                             selectedFilter = selectedFilter,
                             unreadThreadCount = unreadThreadCount,
@@ -515,6 +520,7 @@ private fun InboxScreenContent(
 private fun HomeMessages(
     conversations: List<Conversation>,
     isLoading: Boolean,
+    isRefreshing: Boolean,
     error: String?,
     selectedFilter: InboxFilter,
     unreadThreadCount: Int,
@@ -582,7 +588,7 @@ private fun HomeMessages(
                 Button(onClick = onRetry) { Text(stringResource(R.string.inbox_retry)) }
             }
             conversations.isEmpty() -> Column(Modifier.fillMaxSize().padding(Spacing.space24), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Spacing.space40))
+                Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Spacing.space48))
                 Spacer(Modifier.height(Spacing.space12))
                 Text(stringResource(R.string.inbox_empty_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.inbox_empty_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -592,7 +598,7 @@ private fun HomeMessages(
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24),
-                verticalArrangement = Arrangement.spacedBy(Spacing.space8)
+verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 items(conversations, key = { it.chatId }) { conversation ->
                     InboxConversationRow(
@@ -604,7 +610,7 @@ private fun HomeMessages(
                 item(key = "archived-conversations") {
                     Card(
                         onClick = onOpenArchive,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
                     ) {

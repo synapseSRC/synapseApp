@@ -57,6 +57,7 @@ internal fun ChatMessageList(
     isLoadingMore: Boolean,
     isInitialSyncing: Boolean,
     typingStatus: TypingStatus?,
+    typingStatusDisplayName: String? = null,
     onLoadMore: () -> Unit,
     onSingleTap: (Message) -> Unit,
     onToggleSelection: (String) -> Unit,
@@ -98,6 +99,11 @@ internal fun ChatMessageList(
     }
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
+    // Incoming messages render with an avatar lane on the left (AvatarSmall + space8),
+    // so the typing bubble is inset to sit under the sender's text column — the same
+    // visual column the next incoming message will occupy, which keeps the
+    // indicator→message transition free of layout jumps.
+    val typingLaneInset = Sizes.AvatarSmall + Spacing.space8
     val initialKeysCaptured = remember(chatId) { mutableStateOf(false) }
     val initialItemKeys = remember(chatId) { mutableSetOf<String>() }
     val oldestInitialCreatedAt = remember(chatId) { mutableStateOf<String?>(null) }
@@ -225,7 +231,12 @@ internal fun ChatMessageList(
                 } else {
                     Modifier
                 }
-                TypingIndicator(modifier = typingModifier.padding(bottom = Spacing.space8))
+                TypingIndicator(
+                    modifier = typingModifier
+                        .padding(start = typingLaneInset, bottom = Spacing.space8),
+                    reducedMotion = reducedMotion,
+                    displayName = typingStatusDisplayName
+                )
             }
         }
 
@@ -256,9 +267,15 @@ internal fun ChatMessageList(
 
             // Shared placement and exit spec for items.
             // Appear animation is removed as requested; items appear instantly.
+            // Incoming messages get a short spring fade-in so they cross-fade with
+            // the typing indicator's exit instead of popping in while the bubble is
+            // still shrinking — this eliminates the visible layout jump.
             val placementModifier = if (!reducedMotion && !isInitialSyncing && !isHistorical) {
                 Modifier.animateItem(
-                    fadeInSpec = null,
+                    fadeInSpec = spring(
+                        dampingRatio = 1.0f,
+                        stiffness = 5000f
+                    ),
                     fadeOutSpec = spring(
                         dampingRatio = 1.0f,
                         stiffness = 5000f
@@ -290,7 +307,7 @@ internal fun ChatMessageList(
                         val targetId = message.replyToId?.takeIf { it.isNotBlank() && quotedOriginal == null }
                         targetId?.let(onLocateMessage)
                     }
-                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space2
+                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space4
                     MessageBubble(
                         modifier = placementModifier.padding(bottom = bottomGap),
                         message = message,

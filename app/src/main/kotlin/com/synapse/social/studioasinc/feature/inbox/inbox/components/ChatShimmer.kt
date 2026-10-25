@@ -71,7 +71,7 @@ private fun MessageBubbleShimmer(
                 )
             )
             
-            Spacer(modifier = Modifier.height(Spacing.space2))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             
             ShimmerBox(
                 modifier = Modifier

@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.data.repository.SearchRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.ISearchRepository
@@ -17,12 +17,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SearchModule {
-
-    @Provides
-    @Singleton
-    fun provideSearchRepository(): ISearchRepository {
-        return SearchRepositoryImpl()
-    }
 
     @Provides
     @Singleton
@@ -60,3 +54,4 @@ object SearchModule {
         return GetPostsByHashtagUseCase(repository)
     }
 }
+

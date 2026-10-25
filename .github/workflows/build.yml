@@ -2,15 +2,17 @@ name: 🔧 Build
 
 on:
   push:
-    paths-ignore:
-      - 'web/**'
-      - '**.md'
-      - '**.txt'
-      - '**.pdf'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
-      - 'app/src/test/**'
+    branches: [ main, develop ]
+    paths:
+      - 'app/**'
+      - 'shared/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'gradle.properties'
+      - 'local.properties'
   workflow_dispatch:
 
 jobs:

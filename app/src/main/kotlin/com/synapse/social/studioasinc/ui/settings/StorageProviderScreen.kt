@@ -274,14 +274,14 @@ private fun ProviderSelectionList(
             StorageProvider.DEFAULT,
             StorageProvider.IMGBB,
             StorageProvider.CLOUDINARY,
-            StorageProvider.SUPABASE,
+            StorageProvider.PRIMARY,
             StorageProvider.CLOUDFLARE_R2
         )
     } else {
         listOf(
             StorageProvider.DEFAULT,
             StorageProvider.CLOUDINARY,
-            StorageProvider.SUPABASE,
+            StorageProvider.PRIMARY,
             StorageProvider.CLOUDFLARE_R2
         )
     }
@@ -336,7 +336,7 @@ private fun ProviderSetupTab(
     val providers = listOf(
         StorageProvider.IMGBB,
         StorageProvider.CLOUDINARY,
-        StorageProvider.SUPABASE,
+        StorageProvider.PRIMARY,
         StorageProvider.CLOUDFLARE_R2
     )
 
@@ -432,7 +432,7 @@ private fun ProviderRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isConfigured) MaterialTheme.colorScheme.onPrimaryContainer
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space2)
+                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                     )
                 }
             }
@@ -462,7 +462,7 @@ private fun ProviderRow(
             sheetState = sheetState,
             containerColor = SettingsColors.cardBackgroundElevated
         ) {
-            Box(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space24)) {
+            Box(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space48)) {
                 when (provider) {
                     StorageProvider.IMGBB -> ImgBBConfigContent(
                         apiKey = storageConfig.imgBBKey,
@@ -481,12 +481,12 @@ private fun ProviderRow(
                             showSheet = false
                         }
                     )
-                    StorageProvider.SUPABASE -> SupabaseConfigContent(
-                        url = storageConfig.supabaseUrl,
-                        apiKey = storageConfig.supabaseKey,
-                        bucketName = storageConfig.supabaseBucket,
+                    StorageProvider.PRIMARY -> SupabaseConfigContent(
+                        url = storageConfig.primaryUrl,
+                        apiKey = storageConfig.primaryKey,
+                        bucketName = storageConfig.primaryBucket,
                         onConfigChange = { u, k, b ->
-                            viewModel.updateSupabaseConfig(u, k, b)
+                            viewModel.updatePrimaryConfig(u, k, b)
                             showSheet = false
                         }
                     )
@@ -513,7 +513,7 @@ private fun StorageProvider.toDisplayNameRes(): Int {
         StorageProvider.DEFAULT -> R.string.storage_provider_default
         StorageProvider.IMGBB -> R.string.storage_provider_imgbb
         StorageProvider.CLOUDINARY -> R.string.storage_provider_cloudinary
-        StorageProvider.SUPABASE -> R.string.storage_provider_supabase
+        StorageProvider.PRIMARY -> R.string.storage_provider_supabase
         StorageProvider.CLOUDFLARE_R2 -> R.string.storage_provider_cloudflare_r2
     }
 }

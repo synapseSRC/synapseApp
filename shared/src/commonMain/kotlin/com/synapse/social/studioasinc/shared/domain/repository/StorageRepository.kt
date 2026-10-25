@@ -14,7 +14,7 @@ interface StorageRepository {
 
     suspend fun updateImgBBConfig(key: String)
     suspend fun updateCloudinaryConfig(cloudName: String, apiKey: String, apiSecret: String, uploadPreset: String = "")
-    suspend fun updateSupabaseConfig(url: String, key: String, bucket: String)
+    suspend fun updatePrimaryConfig(url: String, key: String, bucket: String)
     suspend fun updateR2Config(accountId: String, accessKeyId: String, secretAccessKey: String, bucketName: String)
 
     suspend fun updateCompression(enabled: Boolean)

@@ -13,7 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material3.*
@@ -131,7 +131,7 @@ fun MediaPreviewDialog(
                             Surface(
                                 shape = RoundedCornerShape(Sizes.CornerSmall),
                                 color = if (quality == MediaUploadQuality.HD) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.padding(Spacing.space2)
+                                modifier = Modifier.padding(Spacing.space4)
                             ) {
                                 Text(
                                     text = if (quality == MediaUploadQuality.HD) stringResource(R.string.media_quality_hd) else stringResource(R.string.media_quality_standard),
@@ -248,7 +248,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
-                                        .padding(Spacing.space2)
+                                        .padding(Spacing.space4)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape),
                                     contentAlignment = Alignment.Center
@@ -263,7 +263,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(Spacing.space2)
+                                        .padding(Spacing.space4)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.error, CircleShape)
                                         .clickable {
@@ -328,7 +328,7 @@ fun MediaPreviewDialog(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                            Icon(Icons.Default.ArrowUpward, contentDescription = "Send")
                         }
                     }
                 }

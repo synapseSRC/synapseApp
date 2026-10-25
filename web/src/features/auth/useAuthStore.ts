@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import type { BackendUser as User } from '@/lib/backend';
+import { backend as supabase } from '@/lib/backend';
 import type { UserProfile } from '@/types';
 
 type AuthLoadingAction = 'session' | 'google' | 'login' | 'signup' | 'reset' | 'recovery' | 'logout' | null;

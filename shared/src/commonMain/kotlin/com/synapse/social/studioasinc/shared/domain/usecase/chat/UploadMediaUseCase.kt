@@ -101,7 +101,7 @@ class UploadMediaUseCase(
         return buildList {
             if (config.isProviderConfigured(StorageProvider.CLOUDFLARE_R2)) add(StorageProvider.CLOUDFLARE_R2)
             if (config.isProviderConfigured(StorageProvider.CLOUDINARY)) add(StorageProvider.CLOUDINARY)
-            if (config.isProviderConfigured(StorageProvider.SUPABASE)) add(StorageProvider.SUPABASE)
+            if (config.isProviderConfigured(StorageProvider.PRIMARY)) add(StorageProvider.PRIMARY)
 
             if (isImage && config.isProviderConfigured(StorageProvider.IMGBB)) {
                 add(StorageProvider.IMGBB)

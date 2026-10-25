@@ -308,7 +308,7 @@ fun VoiceMessagePlayer(
                             text = formatSpeed(speed),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space2)
+                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                         )
                     }
                 }
@@ -457,7 +457,7 @@ fun VideoPlayerBox(
                         text = formatDuration(state.duration),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space2)
+                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                     )
                 }
             }

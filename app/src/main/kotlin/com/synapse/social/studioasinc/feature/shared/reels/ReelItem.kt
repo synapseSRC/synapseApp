@@ -206,7 +206,7 @@ fun ReelItem(
             onUserClick = onUserClick,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(bottom = Spacing.space10)
+                .padding(bottom = Spacing.space8)
         )
         if (showHeartAnimation) {
             HeartAnimation(
@@ -395,7 +395,7 @@ private fun ReelUserInfo(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(start = Spacing.space16, end = Sizes.WidthLarge, bottom = Spacing.space10)
+                    .padding(start = Spacing.space16, end = Sizes.WidthLarge, bottom = Spacing.space8)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularAvatar(

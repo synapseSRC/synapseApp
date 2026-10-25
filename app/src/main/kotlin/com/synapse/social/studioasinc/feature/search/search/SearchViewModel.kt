@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileFollowStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.shared.domain.model.SearchAccount
 import com.synapse.social.studioasinc.shared.domain.model.SearchHashtag
@@ -15,6 +16,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchHashtag
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchNewsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchPostsUseCase
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
+import com.synapse.social.studioasinc.domain.model.ProfileFollowStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -64,6 +66,7 @@ class SearchViewModel @Inject constructor(
     private val getTrendingHashtagsUseCase: GetTrendingHashtagsUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
+    private val getProfileFollowStatusUseCase: GetProfileFollowStatusUseCase,
     private val blockUserUseCase: BlockUserUseCase,
     private val authRepository: AuthRepository,
     private val settingsDataStore: com.synapse.social.studioasinc.data.local.database.SettingsDataStore,
@@ -306,17 +309,20 @@ class SearchViewModel @Inject constructor(
         val wasFollowing = account.isFollowing
         val delta = if (wasFollowing) -1 else 1
 
-        // Optimistic update: change follow state and followers count immediately
+        // Optimistic update: change follow state and followers count immediately,
+        // and sync cache so tab switches don't revert the button.
         updateState { state ->
+            val updatedAccounts = state.accounts.map { acc ->
+                if (acc.id == accountId) {
+                    acc.copy(
+                        isFollowing = !wasFollowing,
+                        followersCount = maxOf(0, acc.followersCount + delta)
+                    )
+                } else acc
+            }
             state.copy(
-                accounts = state.accounts.map { acc ->
-                    if (acc.id == accountId) {
-                        acc.copy(
-                            isFollowing = !wasFollowing,
-                            followersCount = maxOf(0, acc.followersCount + delta)
-                        )
-                    } else acc
-                }
+                accounts = updatedAccounts,
+                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
             )
         }
 
@@ -327,12 +333,35 @@ class SearchViewModel @Inject constructor(
                 followUserUseCase(currentUserId, accountId)
             }
 
-            result.onFailure { err ->
-                // Revert optimistic update on failure
-                updateState { state ->
-                    state.copy(
-                        error = err.message,
-                        accounts = state.accounts.map { acc ->
+            result.fold(
+                onSuccess = {
+                    // Verify follow status with server to ensure UI reflects actual backend state
+                    getProfileFollowStatusUseCase(accountId).fold(
+                        onSuccess = { followStatus ->
+                            updateState { state ->
+                                val updatedAccounts = state.accounts.map { acc ->
+                                    if (acc.id == accountId) {
+                                        acc.copy(
+                                            isFollowing = followStatus == ProfileFollowStatus.FOLLOWING
+                                        )
+                                    } else acc
+                                }
+                                state.copy(
+                                    accounts = updatedAccounts,
+                                    cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
+                                )
+                            }
+                        },
+                        onFailure = { error ->
+                            android.util.Log.w("SearchViewModel", "Failed to verify follow status: ${error.message}")
+                            // Keep optimistic state on verification failure
+                        }
+                    )
+                },
+                onFailure = { err ->
+                    // Revert optimistic update on failure, including cache.
+                    updateState { state ->
+                        val revertedAccounts = state.accounts.map { acc ->
                             if (acc.id == accountId) {
                                 acc.copy(
                                     isFollowing = wasFollowing,
@@ -340,9 +369,14 @@ class SearchViewModel @Inject constructor(
                                 )
                             } else acc
                         }
-                    )
+                        state.copy(
+                            error = err.message,
+                            accounts = revertedAccounts,
+                            cachedData = state.cachedData + (SearchTab.PEOPLE to revertedAccounts)
+                        )
+                    }
                 }
-            }
+            )
         }
     }
 

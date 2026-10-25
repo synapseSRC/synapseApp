@@ -20,6 +20,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 import com.synapse.social.studioasinc.data.repository.PostMapper
+import com.synapse.social.studioasinc.data.repository.helpers.withSignedStorageMediaUrls
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -76,13 +77,14 @@ class FeedPagingSource(
         return try {
             Log.d("FeedPagingSource", "Loading feed timeline at position: $position, pageSize: $pageSize")
 
-            val currentUserId = client.auth.currentUserOrNull()?.id ?: ""
             val rpcResult = withContext(Dispatchers.IO) {
-                // Use the personalized feed RPC to get ranked post IDs
+                // Use the personalized feed RPC to get ranked post IDs.
+                // Pass requesting_user_id as null so the RPC uses get_current_user_uid()
+                // internally to resolve the correct uid from the users table.
                 client.postgrest.rpc(
                     function = "get_ranked_post_ids",
                     parameters = buildJsonObject {
-                        put("requesting_user_id", currentUserId)
+                        put("requesting_user_id", JsonNull)
                         put("limit_val", pageSize)
                         put("offset_val", position)
                     }
@@ -107,7 +109,7 @@ class FeedPagingSource(
             val commentIds = timelineResponse.filter { it["item_type"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { it["id"]?.let { if (it is JsonPrimitive) it else null }?.contentOrNull }
 
             // 1. Fetch full Posts
-            val postsMap = if (postIds.isNotEmpty()) {
+            var postsMap = if (postIds.isNotEmpty()) {
                 withContext(Dispatchers.IO) {
                     client.from("posts")
                         .select(
@@ -153,8 +155,14 @@ class FeedPagingSource(
                     } catch (e: Exception) {
                         null
                     }
-                }.toMap()
-            } else emptyMap()
+                }.toMap().toMutableMap()
+            } else mutableMapOf()
+
+            // Sign media URLs for protected storage so Coil can load images/videos in the feed.
+            // Without this, mediaItems[].url and postImage remain raw storage paths that Coil cannot load.
+            for ((id, post) in postsMap.entries.toList()) {
+                postsMap[id] = post.withSignedStorageMediaUrls()
+            }
 
             // For reply posts that don't already have reply_to_usernames stored, fall back
             // to looking up the single parent author username
@@ -279,8 +287,10 @@ class FeedPagingSource(
                 postDao.insertAll(postsToCache)
             }
 
+            val sortedFeedItems = feedItems.sortedByDescending { it.timestamp }
+
             LoadResult.Page(
-                data = feedItems,
+                data = sortedFeedItems,
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (timelineResponse.size < pageSize) null else position + pageSize
             )

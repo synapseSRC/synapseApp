@@ -6,6 +6,7 @@ import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import com.synapse.social.studioasinc.shared.data.datasource.ChatReactionDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
+import com.synapse.social.studioasinc.shared.data.datasource.SupabaseUserDataSource
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
@@ -19,6 +20,7 @@ import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
@@ -69,6 +71,82 @@ class SupabaseChatRepository(
     private val reactionDataSource = ChatReactionDataSource(client)
     private val conversationMutex = Mutex()
 
+    // Per-chat mutexes — serializes concurrent cache writes for the same chat ID.
+    // Prevents race conditions when real-time WebSocket delivery and inbox refresh
+    // both attempt to write to the same chat's message cache simultaneously.
+    // chatCacheMutexLock guards the map itself so new entries are created atomically.
+    private val chatCacheMutexLock = Mutex()
+    private val chatCacheMutexes = mutableMapOf<String, Mutex>()
+
+    private suspend fun getCacheMutexForChat(chatId: String): Mutex =
+        chatCacheMutexLock.withLock {
+            chatCacheMutexes.getOrPut(chatId) { Mutex() }
+        }
+
+    // In-memory last-sync timestamps per chat — avoids redundant network fetches for
+    // the active chat when messages were just written via a real-time event.
+    // Uses epoch milliseconds; entries absent from the map mean "never synced".
+    private val chatLastSyncedAt = mutableMapOf<String, Long>()
+    private val chatLastSyncedAtLock = Mutex()
+
+    private suspend fun recordCacheSyncTime(chatId: String) {
+        chatLastSyncedAtLock.withLock {
+            chatLastSyncedAt[chatId] = TimeProvider.nowMillis()
+        }
+    }
+
+    private suspend fun isCacheFresh(chatId: String, maxAgeMs: Long = 30_000L): Boolean =
+        chatLastSyncedAtLock.withLock {
+            val lastSync = chatLastSyncedAt[chatId] ?: return@withLock false
+            (TimeProvider.nowMillis() - lastSync) < maxAgeMs
+        }
+
+    // Active chat registry — tracks which chat screen is currently open.
+    // Used by inbox refresh to avoid overwriting an active chat's real-time message cache.
+    private val _activeChatId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+
+    override fun setActiveChatId(chatId: String?) {
+        _activeChatId.value = chatId
+    }
+
+    override fun getActiveChatId(): String? = _activeChatId.value
+
+    override suspend fun reconcileRealtimeMessage(
+        chatId: String,
+        message: Message
+    ): Message = withContext(AppDispatchers.IO) {
+        try {
+            // Serialize this write against the concurrent inbox-refresh path that also
+            // writes to the same chat's cache (getMessages active-chat branch).
+            getCacheMutexForChat(chatId).withLock {
+                // Upsert the real-time message directly — it is the authoritative source.
+                // Skip placeholder content (encrypted messages not yet decryptable).
+                if (!encryptionHelper.isPlaceholder(message.content)) {
+                    cachedMessageDao?.upsert(message)
+                    recordCacheSyncTime(chatId)
+                }
+            }
+            // Read outside the lock — only the write needs serialization.
+            // If the cache already holds a decrypted version of this message (e.g. from
+            // background sync or a prior decryption pass), prefer that content over an
+            // encrypted placeholder that may have arrived via the real-time channel.
+            val cached = cachedMessageDao
+                ?.getMessages(chatId, 1)
+                ?.firstOrNull { it.id == message.id }
+            if (cached != null &&
+                !encryptionHelper.isPlaceholder(cached.content) &&
+                cached.content.isNotBlank()
+            ) {
+                cached
+            } else {
+                message
+            }
+        } catch (e: Exception) {
+            Logger.e("Failed to reconcile real-time message ${message.id}", throwable = e)
+            message
+        }
+    }
+
     override suspend fun ensureSession(userId: String) = withContext(AppDispatchers.IO) {
         encryptionHelper.ensureSession(userId)
     }
@@ -80,7 +158,7 @@ class SupabaseChatRepository(
                 try {
                     encryptionHelper.run { last.decryptIfNecessary(currentUserId).content }
                 } catch (_: Exception) {
-                    "🔒 Encrypted message"
+                    ""
                 }
             } ?: "No messages yet"
             val isOnline = summary.participantStatus?.equals("ONLINE", ignoreCase = true) == true &&
@@ -88,7 +166,11 @@ class SupabaseChatRepository(
             Conversation(
                 chatId = summary.chatId,
                 participantId = summary.participantId,
-                participantName = summary.participantName,
+                participantName = summary.participantName?.takeIf { it.isNotBlank() }
+                    ?: if (summary.isGroup) "Group Chat" else {
+                        val userDataSource = SupabaseUserDataSource(client)
+                        userDataSource.getUserProfile(summary.participantId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username }?.takeIf { it.isNotBlank() } ?: "Unknown User"
+                    },
                 participantAvatar = summary.participantAvatar,
                 lastMessage = lastMessageText,
                 lastMessageTime = summary.lastMessage?.createdAt,
@@ -101,35 +183,44 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getConversations(forceNetwork: Boolean): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
+    override suspend fun getConversations(forceNetwork: Boolean, limit: Int, before: String?, beforeId: String?): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
         try {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
-            if (forceNetwork) {
-                try {
-                    val fresh = fetchConversationsFromNetwork()
-                    cachedConversationDao?.upsertAll(fresh)
-                    Result.success(fresh)
-                } catch (throwable: Throwable) {
-                    if (cached.isNotEmpty()) Result.success(cached) else Result.failure(throwable)
-                }
-            } else if (cached.isNotEmpty()) {
-                externalScope.launch {
+            if (before == null && beforeId == null) {
+                if (forceNetwork) {
                     try {
                         val fresh = fetchConversationsFromNetwork()
                         cachedConversationDao?.upsertAll(fresh)
-                    } catch (e: Exception) {
-                        Logger.e("Failed to sync fresh conversations", throwable = e)
+                        Result.success(fresh.take(limit))
+                    } catch (throwable: Throwable) {
+                        if (cached.isNotEmpty()) Result.success(cached.take(limit)) else Result.failure(throwable)
                     }
+                } else if (cached.isNotEmpty()) {
+                    externalScope.launch {
+                        try {
+                            val fresh = fetchConversationsFromNetwork()
+                            cachedConversationDao?.upsertAll(fresh)
+                        } catch (e: Exception) {
+                            Logger.e("Failed to sync fresh conversations", throwable = e)
+                        }
+                    }
+                    Result.success(cached.take(limit))
+                } else {
+                    val conversations = fetchConversationsFromNetwork()
+                    cachedConversationDao?.upsertAll(conversations)
+                    Result.success(conversations.take(limit))
                 }
-                Result.success(cached)
             } else {
-                val conversations = fetchConversationsFromNetwork()
-                cachedConversationDao?.upsertAll(conversations)
-                Result.success(conversations)
+                try {
+                    val fresh = fetchConversationsFromNetwork()
+                    Result.success(fresh.take(limit))
+                } catch (throwable: Throwable) {
+                    if (cached.isNotEmpty()) Result.success(cached.take(limit)) else Result.failure(throwable)
+                }
             }
         } catch (throwable: Throwable) {
             val cached = cachedConversationDao?.getAll() ?: emptyList()
-            if (cached.isNotEmpty()) Result.success(cached)
+            if (cached.isNotEmpty()) Result.success(cached.take(limit))
             else {
                 Logger.e("Error getting conversations", throwable = throwable)
                 Result.failure(throwable)
@@ -137,9 +228,9 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getArchivedConversations(): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
+    override suspend fun getArchivedConversations(limit: Int, before: String?, beforeId: String?): Result<List<Conversation>> = withContext(AppDispatchers.IO) {
         try {
-            Result.success(fetchConversationsFromNetwork(archivedOnly = true))
+            Result.success(fetchConversationsFromNetwork(archivedOnly = true).take(limit))
         } catch (throwable: Throwable) {
             Logger.e("Error getting archived conversations", throwable = throwable)
             Result.failure(throwable)
@@ -170,6 +261,20 @@ class SupabaseChatRepository(
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
 
+            if (before != null && beforeId != null && !forceNetwork) {
+                val cachedBefore = cachedMessageDao?.getMessagesBefore(chatId, before, beforeId, limit) ?: emptyList()
+                if (cachedBefore.isNotEmpty()) {
+                    val userDeletedIds = dataSource.getUserDeletedMessageIds(cachedBefore.map { it.id })
+                    if (userDeletedIds.isNotEmpty()) {
+                        cachedMessageDao?.delete(userDeletedIds.toList())
+                    }
+                    val visibleCached = cachedBefore.filterNot { it.id in userDeletedIds }
+                    if (visibleCached.isNotEmpty()) {
+                        return@withContext Result.success(visibleCached)
+                    }
+                }
+            }
+
             if (before == null && !forceNetwork) {
                 val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
                 val userDeletedIds = if (cached.isEmpty()) {
@@ -192,9 +297,31 @@ class SupabaseChatRepository(
             val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
 
             if (before == null) {
-                val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
-                if (decryptableForCache.isNotEmpty()) {
-                    cachedMessageDao?.upsertAll(decryptableForCache)
+                val activeChatId = getActiveChatId()
+                if (activeChatId != null && activeChatId.equals(chatId, ignoreCase = true)) {
+                    // Active chat: use merge strategy to preserve any real-time messages not yet
+                    // reflected in the server response. This prevents inbox refresh (forceNetwork=true)
+                    // from overwriting messages delivered via WebSocket before they propagate server-side.
+                    // Mutex ensures this write is serialized against concurrent real-time upserts.
+                    getCacheMutexForChat(chatId).withLock {
+                        val existingCached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
+                        val toDelete = reconcileServerMessagesWithCache(existingCached, decrypted, isRealTimeSource = false)
+                        if (toDelete.isNotEmpty()) {
+                            cachedMessageDao?.markDeleted(toDelete)
+                        }
+                        val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                        if (decryptableForCache.isNotEmpty()) {
+                            cachedMessageDao?.upsertAll(decryptableForCache)
+                            recordCacheSyncTime(chatId)
+                        }
+                    }
+                } else {
+                    // Inactive chat: standard overwrite is safe — no active real-time subscription
+                    // is writing to this chat's cache concurrently.
+                    val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                    if (decryptableForCache.isNotEmpty()) {
+                        cachedMessageDao?.upsertAll(decryptableForCache)
+                    }
                 }
                 cachedMessageDao?.trimToLimit(chatId, limit)
             }
@@ -226,9 +353,18 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun getMessagesCacheFirst(chatId: String, limit: Int, refreshInBackground: Boolean): Result<List<Message>> = withContext(AppDispatchers.IO) {
+    override suspend fun getMessagesCacheFirst(chatId: String, limit: Int, refreshInBackground: Boolean, before: String?, beforeId: String?): Result<List<Message>> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+            if (before != null && beforeId != null) {
+                val cachedBefore = cachedMessageDao?.getMessagesBefore(chatId, before, beforeId, limit) ?: emptyList()
+                if (cachedBefore.isNotEmpty()) {
+                    val userDeletedIds = dataSource.getUserDeletedMessageIds(cachedBefore.map { it.id })
+                    if (userDeletedIds.isNotEmpty()) cachedMessageDao?.delete(userDeletedIds.toList())
+                    val visibleCached = cachedBefore.filterNot { it.id in userDeletedIds }
+                    if (visibleCached.isNotEmpty()) return@withContext Result.success(visibleCached)
+                }
+            }
             val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
             val userDeletedIds = if (cached.isEmpty()) emptySet() else dataSource.getUserDeletedMessageIds(cached.map { it.id })
             if (userDeletedIds.isNotEmpty()) cachedMessageDao?.delete(userDeletedIds.toList())
@@ -254,8 +390,12 @@ class SupabaseChatRepository(
 
     internal fun reconcileServerMessagesWithCache(
         cached: List<Message>,
-        fresh: List<Message>
+        fresh: List<Message>,
+        isRealTimeSource: Boolean = false
     ): List<String> {
+        // When isRealTimeSource=true, the caller is a WebSocket event handler that has higher authority
+        // over delivery/read status than background sync. Deletion detection logic is the same regardless
+        // of source — both paths correctly detect server-side deletes.
         val deletedIds = mutableListOf<String>()
 
         fresh.filter { it.isDeleted || it.contentStatus == com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus.DELETED }
@@ -285,7 +425,7 @@ class SupabaseChatRepository(
                 val fresh = dataSource.getMessages(chatId, limit, null, null)
                 val decrypted = fresh.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
 
-                val toDelete = reconcileServerMessagesWithCache(cached, decrypted)
+                val toDelete = reconcileServerMessagesWithCache(cached, decrypted, isRealTimeSource = false)
                 if (toDelete.isNotEmpty()) {
                     cachedMessageDao?.markDeleted(toDelete)
                 }
@@ -363,7 +503,7 @@ class SupabaseChatRepository(
                     metadataContainer = metadataContainer
                 )
                 cachedMessageDao?.upsert(cachedMsg)
-                encryptionHelper.decryptedMessageCache[messageDto.id ?: ""] = senderPlaintext
+                encryptionHelper.cacheDecrypted(messageDto.id ?: "", senderPlaintext)
                 cachedMsg
             } else {
                 val cachedMsg = domainMessage.copy(metadataContainer = metadataContainer)
@@ -485,8 +625,12 @@ class SupabaseChatRepository(
                 cachedMessageDao?.markRead(chatId, currentUserId)
             }
             conversationMutex.withLock {
-                cachedConversationDao?.getAll()?.find { it.chatId == chatId }?.let { existing ->
-                    cachedConversationDao?.upsertAll(listOf(existing.copy(unreadCount = 0)))
+                val dao = cachedConversationDao
+                if (dao != null) {
+                    val existing = dao.getAll().find { it.chatId == chatId }
+                    if (existing != null) {
+                        dao.upsertAll(listOf(existing.copy(unreadCount = 0)))
+                    }
                 }
             }
             Result.success(Unit)
@@ -688,7 +832,7 @@ class SupabaseChatRepository(
     override suspend fun uploadMedia(chatId: String, filePath: String, fileName: String, contentType: String, provider: StorageProvider?, config: StorageConfig?, onProgress: ((Int) -> Unit)?): Result<String> = withContext(AppDispatchers.IO) {
         mediaUploadRepository.upload(
             filePath = filePath,
-            provider = provider ?: StorageProvider.SUPABASE,
+            provider = provider ?: StorageProvider.PRIMARY,
             config = config ?: StorageConfig(),
             bucketName = "chat-attachments",
             onProgress = { floatProgress -> onProgress?.invoke((floatProgress * 100).toInt()) }
@@ -711,16 +855,20 @@ class SupabaseChatRepository(
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
             externalScope.launch {
-                if (!encryptionHelper.isPlaceholder(domainMessage.content)) {
+                if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
                     cachedMessageDao?.upsert(domainMessage)
                 }
                 conversationMutex.withLock {
-                    cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }?.let { existing ->
-                        cachedConversationDao?.upsertAll(listOf(existing.copy(
-                            lastMessage = domainMessage.content,
-                            lastMessageTime = domainMessage.createdAt,
-                            unreadCount = 0
-                        )))
+                    val dao = cachedConversationDao
+                    if (dao != null) {
+                        val existing = dao.getAll().find { it.chatId == domainMessage.chatId }
+                        if (existing != null) {
+                            dao.upsertAll(listOf(existing.copy(
+                                lastMessage = domainMessage.content,
+                                lastMessageTime = domainMessage.createdAt,
+                                unreadCount = 0
+                            )))
+                        }
                     }
                 }
             }
@@ -733,7 +881,7 @@ class SupabaseChatRepository(
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
             externalScope.launch {
-                if (!encryptionHelper.isPlaceholder(domainMessage.content)) {
+                if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
                     cachedMessageDao?.upsert(domainMessage)
                 }
                 val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
@@ -752,7 +900,7 @@ class SupabaseChatRepository(
                         Conversation(
                             chatId = domainMessage.chatId,
                             participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
-                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else "Unknown User",
+                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else try { SupabaseUserDataSource(io.github.jan.supabase.SupabaseClient as SupabaseClientLib).getUserProfile(domainMessage.senderId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username } ?: "Unknown User" } catch (_: Exception) { "Unknown User" },
                             participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
                             lastMessage = domainMessage.content,
                             lastMessageTime = domainMessage.createdAt,
@@ -859,4 +1007,8 @@ class SupabaseChatRepository(
             }
             reaction
         }
+
+    override suspend fun releaseTypingChannel(chatId: String) {
+        dataSource.releaseTypingChannel(chatId)
+    }
 }

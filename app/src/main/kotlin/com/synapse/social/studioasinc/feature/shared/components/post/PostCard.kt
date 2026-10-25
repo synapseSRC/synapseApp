@@ -91,7 +91,7 @@ fun PostCard(
     onBookmarkClick: () -> Unit,
     onUserClick: () -> Unit,
     onPostClick: () -> Unit,
-    onMediaClick: (Int) -> Unit,
+    onMediaClick: (Post, Int) -> Unit,
     onOptionsClick: () -> Unit,
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,

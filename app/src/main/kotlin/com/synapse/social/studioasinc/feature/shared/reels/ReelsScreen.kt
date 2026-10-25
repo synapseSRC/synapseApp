@@ -180,7 +180,7 @@ fun ReelShimmerItem() {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(bottom = Spacing.space40, start = Spacing.space16, end = Spacing.space16)
+                .padding(bottom = Spacing.space48, start = Spacing.space16, end = Spacing.space16)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ShimmerBox(modifier = Modifier.size(Sizes.AvatarCompact), shape = androidx.compose.foundation.shape.CircleShape)

@@ -107,7 +107,7 @@ fun ContactCardBubble(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.space10))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             FilledTonalButton(
                 onClick = { metadata?.phoneNumber?.let { onContactAction(it) } },
                 modifier = Modifier.fillMaxWidth(),
@@ -118,7 +118,7 @@ fun ContactCardBubble(
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(Spacing.space6))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = "Add Contact",
                     style = MaterialTheme.typography.labelMedium,
@@ -164,7 +164,7 @@ fun MapCardBubble(
                     modifier = Modifier.size(40.dp)
                 )
             }
-            Column(modifier = Modifier.padding(Spacing.space10)) {
+            Column(modifier = Modifier.padding(Spacing.space8)) {
                 Text(
                     text = metadata?.locationName ?: "Map Location",
                     style = MaterialTheme.typography.titleSmall,
@@ -174,7 +174,7 @@ fun MapCardBubble(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (metadata != null) {
-                    Spacer(modifier = Modifier.height(Spacing.space2))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = "Lat: ${metadata.latitude}, Lon: ${metadata.longitude}",
                         style = MaterialTheme.typography.labelSmall,
@@ -220,7 +220,7 @@ fun LocationCardBubble(
                     modifier = Modifier.size(44.dp)
                 )
             }
-            Column(modifier = Modifier.padding(Spacing.space10)) {
+            Column(modifier = Modifier.padding(Spacing.space8)) {
                 Text(
                     text = metadata?.title ?: "Location Share",
                     style = MaterialTheme.typography.titleSmall,
@@ -230,7 +230,7 @@ fun LocationCardBubble(
                     overflow = TextOverflow.Ellipsis
                 )
                 metadata?.address?.let {
-                    Spacer(modifier = Modifier.height(Spacing.space2))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodySmall,
@@ -294,7 +294,7 @@ fun LiveLocationCardBubble(
                     modifier = Modifier.size(22.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Live Location",
@@ -371,7 +371,7 @@ fun PollCardBubble(
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                         )
                         Row(
-                            modifier = Modifier.padding(horizontal = Spacing.space10, vertical = Spacing.space8),
+                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space8),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -414,7 +414,7 @@ fun MusicCardBubble(
             .padding(vertical = Spacing.space4)
     ) {
         Row(
-            modifier = Modifier.padding(Spacing.space10),
+            modifier = Modifier.padding(Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
@@ -426,7 +426,7 @@ fun MusicCardBubble(
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             )
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = metadata?.title ?: "Audio Track",
@@ -474,7 +474,7 @@ fun SharedPostCardBubble(
             .padding(vertical = Spacing.space4)
             .clickable { metadata?.postId?.let { onOpenPost(it) } }
     ) {
-        Column(modifier = Modifier.padding(Spacing.space10)) {
+        Column(modifier = Modifier.padding(Spacing.space8)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
                     model = metadata?.authorAvatarUrl,
@@ -483,7 +483,7 @@ fun SharedPostCardBubble(
                         .size(24.dp)
                         .clip(CircleShape)
                 )
-                Spacer(modifier = Modifier.width(Spacing.space6))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = metadata?.authorName ?: "User Post",
                     style = MaterialTheme.typography.labelMedium,
@@ -492,7 +492,7 @@ fun SharedPostCardBubble(
                 )
             }
             metadata?.mediaUrl?.let { url ->
-                Spacer(modifier = Modifier.height(Spacing.space6))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 AsyncImage(
                     model = url,
                     contentDescription = "Post Media",
@@ -536,7 +536,7 @@ fun SharedStoryCardBubble(
             .clickable { metadata?.storyId?.let { onOpenStory(it) } }
     ) {
         Row(
-            modifier = Modifier.padding(Spacing.space10),
+            modifier = Modifier.padding(Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -555,7 +555,7 @@ fun SharedStoryCardBubble(
                         .clip(CircleShape)
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${metadata?.authorName ?: "User"}'s Story",
@@ -644,7 +644,7 @@ fun ProductCardBubble(
             .clickable { metadata?.productId?.let { onOpenProduct(it) } }
     ) {
         Row(
-            modifier = Modifier.padding(Spacing.space10),
+            modifier = Modifier.padding(Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
@@ -656,7 +656,7 @@ fun ProductCardBubble(
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             )
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = metadata?.title ?: "Product",
@@ -701,7 +701,7 @@ fun PaymentCardBubble(
                 tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.size(32.dp)
             )
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Payment ${metadata?.status ?: "COMPLETED"}",
@@ -737,7 +737,7 @@ fun CodeSnippetCardBubble(
             .fillMaxWidth()
             .padding(vertical = Spacing.space4)
     ) {
-        Column(modifier = Modifier.padding(Spacing.space10)) {
+        Column(modifier = Modifier.padding(Spacing.space8)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -759,11 +759,11 @@ fun CodeSnippetCardBubble(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2)
+                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.space6))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             Text(
                 text = metadata?.code ?: "",
                 fontFamily = FontFamily.Monospace,
@@ -806,7 +806,7 @@ fun CallLogCardBubble(
                 tint = textColor,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (isVideo) "Video Call" else "Voice Call",
@@ -862,7 +862,7 @@ fun ViewOnceCardBubble(
                 tint = if (isConsumed) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(Spacing.space10))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (isConsumed) "Media expired" else if (metadata?.mode == "VIEW_TWICE") "View Twice Media" else "View Once Media",

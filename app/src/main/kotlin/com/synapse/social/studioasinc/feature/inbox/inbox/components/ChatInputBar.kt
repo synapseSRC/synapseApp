@@ -202,7 +202,7 @@ fun ChatInputBar(
                 url = firstUrl,
                 useCase = getLinkMetadataUseCase,
                 onRemove = { dismissedPreviewUrl = firstUrl },
-                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space6).fillMaxWidth()
+                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space8).fillMaxWidth()
             )
         }
 

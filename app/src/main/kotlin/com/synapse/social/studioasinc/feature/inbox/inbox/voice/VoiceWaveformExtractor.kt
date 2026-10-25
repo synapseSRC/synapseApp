@@ -218,9 +218,18 @@ object VoiceWaveformExtractor {
 
                     if (trackIndex >= 0) {
                         val format = extractor.getTrackFormat(trackIndex)
-                        val durationUs = format.getLong(MediaFormat.KEY_DURATION, -1L)
+                        val durationUs = format.getLong(MediaFormat.KEY_DURATION) ?: -1L
+                        
                         if (durationUs > 0) {
                             durationMs = durationUs / 1000
+                        } else {
+                            // Fallback: estimate duration from file size for compressed audio
+                            // Typical voice message bitrate: ~32kbps = ~4KB/s
+                            val bytesPerSecond = 4096L
+                            val estimatedMs = if (file.length() > 0) {
+                                (file.length() * 1000L / bytesPerSecond).coerceIn(1000L, 300000L)
+                            } else 0L
+                            durationMs = estimatedMs
                         }
                     }
 
@@ -228,6 +237,7 @@ object VoiceWaveformExtractor {
                     durationMs
                 }
             } catch (e: Exception) {
+                println("Duration extraction error for $filePath: ${e.message}")
                 0L
             }
         }

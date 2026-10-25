@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import com.synapse.social.studioasinc.feature.home.home.components.QuickPostArea
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
@@ -53,6 +54,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostOptions
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
+import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.feature.stories.tray.StoryTray
@@ -68,7 +70,6 @@ fun FeedScreen(
     onUserClick: (String) -> Unit,
     onCommentClick: (Post) -> Unit,
     onQuoteClick: (String) -> Unit,
-    onMediaClick: (Int) -> Unit,
     onEditPost: (String) -> Unit,
     onStoryClick: (String, List<String>) -> Unit = { _, _ -> },
     onAddStoryClick: () -> Unit = {},
@@ -82,6 +83,10 @@ fun FeedScreen(
     var showSummarySheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+
+    var showMediaViewer by remember { mutableStateOf(false) }
+    var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedMediaIndex by remember { mutableIntStateOf(0) }
 
     val storyTrayState by storyTrayViewModel.storyTrayState.collectAsStateWithLifecycle()
     val currentUser by storyTrayViewModel.currentUser.collectAsStateWithLifecycle()
@@ -117,7 +122,6 @@ fun FeedScreen(
 
     val currentOnCommentClick by rememberUpdatedState(onCommentClick)
     val currentOnUserClick by rememberUpdatedState(onUserClick)
-    val currentOnMediaClick by rememberUpdatedState(onMediaClick)
     val currentOnStoryClick by rememberUpdatedState(onStoryClick)
 
     DisposableEffect(Unit) {
@@ -128,7 +132,7 @@ fun FeedScreen(
 
 
 
-    val actions = remember(viewModel, context, currentOnCommentClick, currentOnUserClick, currentOnMediaClick) {
+    val actions = remember(viewModel, context, currentOnCommentClick, currentOnUserClick) {
         PostActionsFactory.create(
             viewModel = viewModel,
             onComment = { post -> currentOnCommentClick(post) },
@@ -136,7 +140,14 @@ fun FeedScreen(
             onQuote = { post -> onQuoteClick(post.id) },
             onUserClick = { userId -> currentOnUserClick(userId) },
             onOptionClick = { post -> selectedPost = post },
-            onMediaClick = { index -> currentOnMediaClick(index) }
+            onMediaClick = { post, index ->
+                val urls = post.mediaItems?.mapNotNull { it.url } ?: listOfNotNull(post.postImage)
+                if (urls.isNotEmpty()) {
+                    selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                    selectedMediaUrls = urls
+                    showMediaViewer = true
+                }
+            }
         )
     }
 
@@ -253,8 +264,12 @@ fun FeedScreen(
                                     viewModel = viewModel,
                                     onCommentClick = currentOnCommentClick,
                                     onUserClick = currentOnUserClick,
-                                    onMediaClick = currentOnMediaClick,
-                                    onOptionsClick = { post -> selectedPost = post }
+                                    onOptionsClick = { post -> selectedPost = post },
+                                    onMediaClick = { urls, index ->
+                                        selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                        selectedMediaUrls = urls
+                                        showMediaViewer = true
+                                    }
                                 )
                             }
                         }
@@ -303,7 +318,15 @@ fun FeedScreen(
         hostState = snackbarHostState,
         modifier = Modifier.align(Alignment.BottomCenter)
     )
+
+    if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
+        MediaViewer(
+            mediaUrls = selectedMediaUrls,
+            initialPage = selectedMediaIndex,
+            onDismiss = { showMediaViewer = false }
+        )
     }
+}
 
     selectedPost?.let { post ->
         PostOptionsBottomSheet(
@@ -347,8 +370,8 @@ private fun FeedCommentItem(
     viewModel: FeedViewModel,
     onCommentClick: (Post) -> Unit,
     onUserClick: (String) -> Unit,
-    onMediaClick: (Int) -> Unit,
-    onOptionsClick: (Post) -> Unit
+    onOptionsClick: (Post) -> Unit,
+    onMediaClick: ((List<String>, Int) -> Unit) = { _, _ -> }
 ) {
     // Memoize mapped state to prevent re-mapping on every scroll frame
     val commentState = remember(feedItem) {
@@ -364,7 +387,12 @@ private fun FeedCommentItem(
     val onBookmarkClick = remember(commentState.post) { { viewModel.bookmarkPost(commentState.post) } }
     val onUserClickAction = remember(feedItem.userId) { { onUserClick(feedItem.userId) } }
     val onPostClick = onCommentClickAction
-    val onMediaClickAction = remember(feedItem.id) { { index: Int -> onMediaClick(index) } }
+    val onMediaClickAction = remember(feedItem.id, commentState.mediaUrls) { { _: Post, index: Int ->
+        val urls = commentState.mediaUrls
+        if (urls.isNotEmpty()) {
+            onMediaClick(urls, index)
+        }
+    }}
     val onOptionsClickAction = remember(commentState.post) { { onOptionsClick(commentState.post) } }
     val onPollVote = remember(feedItem.id) { { _: String -> } }
     val onReactionSelected = remember(feedItem.id) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }
