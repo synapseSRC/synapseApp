@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.data.repository.SupabasePresenceRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
@@ -18,10 +18,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object PresenceModule {
-    
-    @Provides
-    @Singleton
-    fun providePresenceRepository(): PresenceRepository = SupabasePresenceRepository()
     
     @Provides
     @Singleton
@@ -51,3 +47,4 @@ object PresenceModule {
     @Singleton
     fun provideUpdateCurrentChatUseCase(repository: PresenceRepository) = UpdateCurrentChatUseCase(repository)
 }
+

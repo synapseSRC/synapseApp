@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { backend as supabase } from '@/lib/backend';
 import type { Story } from './types';
 
 export const getStories = async (): Promise<Story[]> => {

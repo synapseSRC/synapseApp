@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -94,36 +94,6 @@ import kotlinx.serialization.json.Json
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
-    @Provides
-    @Singleton
-    fun provideBusinessRepository(
-        client: SupabaseClientType
-    ): BusinessRepository {
-        return BusinessRepositoryImpl(client)
-    }
-    @Provides
-    @Singleton
-    fun provideAppRepository(
-        httpClient: HttpClient
-    ): AppRepository {
-        return AppRepositoryImpl(httpClient)
-    }
-    @Provides
-    @Singleton
-    fun provideCheckForUpdatesUseCase(
-        appRepository: AppRepository,
-        platformInfoProvider: PlatformInfoProvider
-    ): CheckForUpdatesUseCase {
-        return CheckForUpdatesUseCase(appRepository, platformInfoProvider)
-    }
-    @Provides
-    @Singleton
-    fun providePasskeyRepository(
-        client: SupabaseClientType
-    ): PasskeyRepository {
-        return PasskeyRepositoryImpl(client)
-    }
     @Provides
     @Singleton
     fun providePasskeyManager(
@@ -144,3 +114,4 @@ object AppModule {
     ): com.synapse.social.studioasinc.domain.repository.ReelSubmissionHandler = impl
 
 }
+

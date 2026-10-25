@@ -1,6 +1,7 @@
 
 package com.synapse.social.studioasinc.shared.domain.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -19,9 +20,12 @@ data class StorageConfig(
     val cloudinaryUploadPreset: String = "",
 
 
-    val supabaseUrl: String = "",
-    val supabaseKey: String = "",
-    val supabaseBucket: String = "",
+    @SerialName("supabaseUrl")
+    val primaryUrl: String = "",
+    @SerialName("supabaseKey")
+    val primaryKey: String = "",
+    @SerialName("supabaseBucket")
+    val primaryBucket: String = "",
 
 
     val r2AccountId: String = "",
@@ -36,7 +40,7 @@ data class StorageConfig(
             StorageProvider.IMGBB -> imgBBKey.isNotBlank()
             StorageProvider.CLOUDINARY -> cloudinaryCloudName.isNotBlank() &&
                 (cloudinaryUploadPreset.isNotBlank() || (cloudinaryApiKey.isNotBlank() && cloudinaryApiSecret.isNotBlank()))
-            StorageProvider.SUPABASE -> supabaseUrl.isNotBlank() && supabaseKey.isNotBlank()
+            StorageProvider.PRIMARY -> primaryUrl.isNotBlank() && primaryKey.isNotBlank()
             StorageProvider.CLOUDFLARE_R2 -> r2AccountId.isNotBlank() && r2AccessKeyId.isNotBlank() && r2SecretAccessKey.isNotBlank() && r2BucketName.isNotBlank()
 
         }

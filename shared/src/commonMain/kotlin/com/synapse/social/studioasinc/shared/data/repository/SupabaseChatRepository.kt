@@ -831,7 +831,7 @@ class SupabaseChatRepository(
     override suspend fun uploadMedia(chatId: String, filePath: String, fileName: String, contentType: String, provider: StorageProvider?, config: StorageConfig?, onProgress: ((Int) -> Unit)?): Result<String> = withContext(AppDispatchers.IO) {
         mediaUploadRepository.upload(
             filePath = filePath,
-            provider = provider ?: StorageProvider.SUPABASE,
+            provider = provider ?: StorageProvider.PRIMARY,
             config = config ?: StorageConfig(),
             bucketName = "chat-attachments",
             onProgress = { floatProgress -> onProgress?.invoke((floatProgress * 100).toInt()) }

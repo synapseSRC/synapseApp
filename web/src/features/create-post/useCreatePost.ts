@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { backend as supabase } from '@/lib/backend';
 import { STORAGE_BUCKETS } from '@/config/storageBuckets';
 import type { CreatePostScreenProps, Audience, ToolKey, PostToolState, MediaAttachment, TaggedPerson, LocationChoice, PlaceResult } from './createPostShared';
 import { ALLOWED_MEDIA, MAX_MEDIA_BYTES, MAX_MEDIA_FILES, TEXT_BACKGROUNDS, getDraftKey, isYouTubeUrl, loadDraftText, localDateTime, safeFileName } from './createPostShared';

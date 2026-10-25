@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -95,22 +95,6 @@ import kotlinx.serialization.json.Json
 @Module
 @InstallIn(SingletonComponent::class)
 object SettingsModule {
-
-    @Provides
-    @Singleton
-    fun provideSettingsRepositoryImpl(@ApplicationContext context: Context): SettingsRepositoryImpl {
-        return SettingsRepositoryImpl.getInstance(context)
-    }
-    @Provides
-    @Singleton
-    fun provideDataSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository {
-        return impl
-    }
-    @Provides
-    @Singleton
-    fun provideSettingsRepository(@ApplicationContext context: Context): com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository {
-        return DomainSettingsRepositoryAdapter(SettingsRepositoryImpl.getInstance(context))
-    }
     @Provides
     @Singleton
     fun provideShouldShowProfilePicSuggestionUseCase(
@@ -134,3 +118,4 @@ object SettingsModule {
     }
 
 }
+

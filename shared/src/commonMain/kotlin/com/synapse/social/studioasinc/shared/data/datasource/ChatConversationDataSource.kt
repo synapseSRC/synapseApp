@@ -4,6 +4,7 @@ import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewChatDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.NewDirectChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.NewMinimalGroupChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatInboxSummaryDto
 import com.synapse.social.studioasinc.shared.domain.model.User

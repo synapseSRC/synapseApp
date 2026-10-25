@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseBlockDataSource
 import com.synapse.social.studioasinc.shared.data.repository.BlockRepositoryImpl
@@ -23,12 +23,6 @@ object BlockingModule {
     @Singleton
     fun provideSupabaseBlockDataSource(client: SupabaseClient): SupabaseBlockDataSource {
         return SupabaseBlockDataSource(client)
-    }
-
-    @Provides
-    @Singleton
-    fun provideBlockRepository(dataSource: SupabaseBlockDataSource): BlockRepository {
-        return BlockRepositoryImpl(dataSource)
     }
 
     @Provides
@@ -58,3 +52,5 @@ object BlockingModule {
         return IsUserBlockedUseCase(blockRepository)
     }
 }
+
+
