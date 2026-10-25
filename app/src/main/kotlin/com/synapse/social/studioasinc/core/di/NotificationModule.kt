@@ -93,4 +93,30 @@ import kotlinx.serialization.json.Json
 @Module
 @InstallIn(SingletonComponent::class)
 object NotificationModule {
+
+    @Provides
+    @Singleton
+    fun provideGetNotificationsUseCase(
+        notificationRepository: NotificationRepository,
+        authRepository: AuthRepository
+    ): GetNotificationsUseCase {
+        return GetNotificationsUseCase(notificationRepository, authRepository)
+    }
+    @Provides
+    @Singleton
+    fun provideMarkNotificationAsReadUseCase(
+        notificationRepository: NotificationRepository,
+        authRepository: AuthRepository
+    ): MarkNotificationAsReadUseCase {
+        return MarkNotificationAsReadUseCase(notificationRepository, authRepository)
+    }
+    @Provides
+    @Singleton
+    fun provideSubscribeToNotificationsUseCase(
+        notificationRepository: NotificationRepository,
+        authRepository: AuthRepository
+    ): SubscribeToNotificationsUseCase {
+        return SubscribeToNotificationsUseCase(notificationRepository, authRepository)
+    }
+
 }

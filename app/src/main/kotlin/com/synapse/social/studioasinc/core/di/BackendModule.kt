@@ -265,7 +265,8 @@ fun provideMediaUploadRepository(
         client: SupabaseClientType,
         signalProtocolManager: SignalProtocolManager,
         chatRepository: com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
-    ): ChatVerificationRepositoryImpl = ChatVerificationRepositoryImpl(context, client, signalProtocolManager, chatRepository)
+    ): com.synapse.social.studioasinc.domain.repository.ChatVerificationRepository =
+        com.synapse.social.studioasinc.data.repository.ChatVerificationRepositoryImpl(context, client, signalProtocolManager, chatRepository)
 
     @Provides
     @Singleton
