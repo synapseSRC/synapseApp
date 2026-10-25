@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import com.synapse.social.studioasinc.feature.home.home.components.QuickPostArea
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
@@ -263,7 +264,12 @@ fun FeedScreen(
                                     viewModel = viewModel,
                                     onCommentClick = currentOnCommentClick,
                                     onUserClick = currentOnUserClick,
-                                    onOptionsClick = { post -> selectedPost = post }
+                                    onOptionsClick = { post -> selectedPost = post },
+                                    onMediaClick = { urls, index ->
+                                        selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                        selectedMediaUrls = urls
+                                        showMediaViewer = true
+                                    }
                                 )
                             }
                         }
@@ -364,7 +370,8 @@ private fun FeedCommentItem(
     viewModel: FeedViewModel,
     onCommentClick: (Post) -> Unit,
     onUserClick: (String) -> Unit,
-    onOptionsClick: (Post) -> Unit
+    onOptionsClick: (Post) -> Unit,
+    onMediaClick: ((List<String>, Int) -> Unit) = { _, _ -> }
 ) {
     // Memoize mapped state to prevent re-mapping on every scroll frame
     val commentState = remember(feedItem) {
@@ -380,12 +387,10 @@ private fun FeedCommentItem(
     val onBookmarkClick = remember(commentState.post) { { viewModel.bookmarkPost(commentState.post) } }
     val onUserClickAction = remember(feedItem.userId) { { onUserClick(feedItem.userId) } }
     val onPostClick = onCommentClickAction
-    val onMediaClickAction = remember(feedItem.id, commentState.mediaUrls) { { _, index: Int ->
+    val onMediaClickAction = remember(feedItem.id, commentState.mediaUrls) { { _: Post, index: Int ->
         val urls = commentState.mediaUrls
         if (urls.isNotEmpty()) {
-            selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
-            selectedMediaUrls = urls
-            showMediaViewer = true
+            onMediaClick(urls, index)
         }
     }}
     val onOptionsClickAction = remember(commentState.post) { { onOptionsClick(commentState.post) } }

@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -345,9 +346,9 @@ fun SearchScreen(
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
                                                                  onUserClick = { userId -> onNavigateToProfile(userId) },
-                                                                 onMediaClick = { post, index ->
-                                                                     val urls = post.mediaUrls ?: emptyList()
-                                                                     if (urls.isNotEmpty()) {
+                                                                  onMediaClick = { post, index ->
+                                                                      val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
+                                                                      if (urls.isNotEmpty()) {
                                                                          selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
                                                                          selectedMediaUrls = urls
                                                                          showMediaViewer = true
@@ -464,7 +465,7 @@ fun SearchScreen(
                                                                 onPollVote = viewModel::votePoll,
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
 onMediaClick = { post, index ->
-                                                            val urls = post.mediaUrls ?: emptyList()
+                                                            val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
                                                             if (urls.isNotEmpty()) {
                                                                 selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
                                                                 selectedMediaUrls = urls
