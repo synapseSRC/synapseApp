@@ -20,6 +20,7 @@ import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
@@ -854,7 +855,7 @@ class SupabaseChatRepository(
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
             externalScope.launch {
-                if (!encryptionHelper.isPlaceholder(domainMessage.content)) {
+                if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
                     cachedMessageDao?.upsert(domainMessage)
                 }
                 conversationMutex.withLock {
@@ -880,7 +881,7 @@ class SupabaseChatRepository(
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
             externalScope.launch {
-                if (!encryptionHelper.isPlaceholder(domainMessage.content)) {
+                if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
                     cachedMessageDao?.upsert(domainMessage)
                 }
                 val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
