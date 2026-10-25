@@ -598,7 +598,7 @@ private fun HomeMessages(
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24),
-verticalArrangement = Arrangement.spacedBy(Spacing.space0)
+verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 items(conversations, key = { it.chatId }) { conversation ->
                     InboxConversationRow(
@@ -610,7 +610,7 @@ verticalArrangement = Arrangement.spacedBy(Spacing.space0)
                 item(key = "archived-conversations") {
                     Card(
                         onClick = onOpenArchive,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
                     ) {
