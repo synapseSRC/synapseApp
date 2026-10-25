@@ -396,7 +396,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                             text = conversation.unreadCount.toString(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onError,
-                            modifier = Modifier.padding(horizontal = DesktopSpacing.space6, vertical = DesktopSpacing.space2),
+                            modifier = Modifier.padding(horizontal = DesktopSpacing.space4, vertical = DesktopSpacing.space4),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -676,7 +676,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         text = if (isMe) "🚫 You deleted this message" else "🚫 This message was deleted",
                         color = textColor.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                        modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space10)
+                        modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12)
                     )
                 }
             } else {
@@ -688,7 +688,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                             modifier = Modifier.padding(horizontal = DesktopSpacing.space4)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space10),
+                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -716,7 +716,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                                 text = message.content,
                                 color = textColor,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space10)
+                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12)
                             )
                         }
                     }
@@ -730,7 +730,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                                 text = "📎 [${message.messageType.name.lowercase()} attachment]",
                                 color = textColor,
                                 style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space10)
+                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12)
                             )
                         }
                     }
@@ -748,7 +748,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-                modifier = Modifier.padding(horizontal = DesktopSpacing.space8, vertical = DesktopSpacing.space2)
+                modifier = Modifier.padding(horizontal = DesktopSpacing.space8, vertical = DesktopSpacing.space4)
             ) {
                 Text(
                     text = formattedTime,
