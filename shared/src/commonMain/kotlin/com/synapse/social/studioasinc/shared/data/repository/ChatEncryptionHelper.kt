@@ -9,6 +9,7 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDa
 import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.util.Logger
 import kotlinx.coroutines.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
@@ -38,8 +39,12 @@ internal class ChatEncryptionHelper(
      * where certain messages (like those consuming a one-time pre-key) can only
      * be decrypted once by the protocol's state machine.
      */
-    val decryptedMessageCache = mutableMapOf<String, String>()
-    private val decryptionMutexes = mutableMapOf<String, Mutex>()
+    private val decryptedMessageCache = ConcurrentHashMap<String, String>()
+    private val decryptionMutexes = ConcurrentHashMap<String, Mutex>()
+
+    fun cacheDecrypted(messageId: String, content: String) {
+        if (messageId.isNotBlank()) decryptedMessageCache[messageId] = content
+    }
     private val mutexLock = Any()
 
     private fun mutexFor(senderId: String): Mutex = synchronized(mutexLock) {

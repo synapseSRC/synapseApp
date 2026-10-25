@@ -502,7 +502,7 @@ class SupabaseChatRepository(
                     metadataContainer = metadataContainer
                 )
                 cachedMessageDao?.upsert(cachedMsg)
-                encryptionHelper.decryptedMessageCache[messageDto.id ?: ""] = senderPlaintext
+                encryptionHelper.cacheDecrypted(messageDto.id ?: "", senderPlaintext)
                 cachedMsg
             } else {
                 val cachedMsg = domainMessage.copy(metadataContainer = metadataContainer)
