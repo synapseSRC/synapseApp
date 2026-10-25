@@ -260,13 +260,45 @@ class ProfileViewModel @Inject constructor(
                 followUserUseCase(currentUserId, userId).fold(
                     onSuccess = {
                         android.util.Log.d("ProfileViewModel", "followUser: success userId=$userId")
-                        // Optimistic update already applied — trust it.
-                        // For public profiles (targetFollowing=true), load content immediately.
-                        // For private profiles (targetRequested=true), no content to load yet.
-                        if (targetFollowing) {
-                            checkStory(userId)
-                            loadContent(userId, _state.value.contentFilter)
-                        }
+                        // Verify follow status with server to ensure UI reflects actual backend state
+                        getProfileFollowStatusUseCase(userId).fold(
+                            onSuccess = { followStatus ->
+                                _state.update { state ->
+                                    val ps = state.profileState
+                                    state.copy(
+                                        isFollowing = followStatus == ProfileFollowStatus.FOLLOWING,
+                                        isFollowRequested = followStatus == ProfileFollowStatus.REQUESTED,
+                                        isFollowLoading = false,
+                                        followStatusError = null,
+                                        // If content became accessible (public profile followed), load it
+                                        profileState = if (followStatus == ProfileFollowStatus.FOLLOWING && ps is ProfileUiState.Success) {
+                                            val currentProfile = ps.profile
+                                            val canView = canViewProfileContent(
+                                                isPrivate = currentProfile.isPrivate,
+                                                isOwnProfile = state.isOwnProfile,
+                                                isFollowing = true
+                                            )
+                                            if (canView) {
+                                                // Trigger content load via update - contentJob will be handled by observer
+                                                ps
+                                            } else {
+                                                ps
+                                            }
+                                        } else ps
+                                    )
+                                }
+                                // For public profiles that are now following, load content
+                                if (followStatus == ProfileFollowStatus.FOLLOWING) {
+                                    checkStory(userId)
+                                    loadContent(userId, _state.value.contentFilter)
+                                }
+                            },
+                            onFailure = { error ->
+                                android.util.Log.w("ProfileViewModel", "Failed to verify follow status: ${error.message}")
+                                // Keep optimistic state but clear loading
+                                _state.update { it.copy(isFollowLoading = false) }
+                            }
+                        )
                     },
                     onFailure = { error ->
                         android.util.Log.e("ProfileViewModel", "followUser: failure userId=$userId error=${error.message}", error)
@@ -308,8 +340,28 @@ class ProfileViewModel @Inject constructor(
             try {
                 unfollowUserUseCase(currentUserId, userId).fold(
                     onSuccess = {
-                        contentJob?.cancel()
-                        storyJob?.cancel()
+                        // Verify follow status with server to ensure UI reflects actual backend state
+                        getProfileFollowStatusUseCase(userId).fold(
+                            onSuccess = { followStatus ->
+                                _state.update { state ->
+                                    state.copy(
+                                        isFollowing = followStatus == ProfileFollowStatus.FOLLOWING,
+                                        isFollowRequested = followStatus == ProfileFollowStatus.REQUESTED,
+                                        isFollowLoading = false,
+                                        followStatusError = null,
+                                        profileState = (state.profileState as? ProfileUiState.Success)?.let { success ->
+                                            success.copy(profile = success.profile.copy(followerCount = maxOf(0, success.profile.followerCount - if (wasFollowing) 1 else 0)))
+                                        } ?: state.profileState
+                                    )
+                                }
+                            },
+                            onFailure = { error ->
+                                android.util.Log.w("ProfileViewModel", "Failed to verify unfollow status: ${error.message}")
+                                // Keep optimistic state but clear loading
+                                _state.update { it.copy(isFollowLoading = false) }
+                            }
+                        )
+                        // Clear content if profile was private and we unfollowed
                         val isPrivate = (previousState.profileState as? ProfileUiState.Success)?.profile?.isPrivate == true
                         if (isPrivate) {
                             _state.update { state ->

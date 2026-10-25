@@ -32,6 +32,7 @@ class FollowButtonViewModel @Inject constructor(
     private var currentUserId: String? = null
     private var targetUserId: String? = null
     private val isOperationInProgress = AtomicBoolean(false)
+    private var statusCheckSequence = 0L
 
     fun initialize(targetUserId: String) {
         if (this.targetUserId != targetUserId) {
@@ -59,9 +60,14 @@ class FollowButtonViewModel @Inject constructor(
         val currentUid = currentUserId ?: return
         val targetUid = targetUserId ?: return
 
+        // Increment sequence to track this check - discard stale results from older calls
+        val currentSequence = ++statusCheckSequence
+
         val privateResult = followService.isPrivateProfile(targetUid)
         val statusResult = followService.getFollowStatus(targetUid)
-        if (this.targetUserId != targetUid) return
+        
+        // Discard if a newer check has started or target changed
+        if (this.targetUserId != targetUid || statusCheckSequence != currentSequence) return
 
         val previous = _uiState.value
         if (statusResult.isSuccess) {
