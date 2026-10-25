@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import org.json.JSONObject
 
