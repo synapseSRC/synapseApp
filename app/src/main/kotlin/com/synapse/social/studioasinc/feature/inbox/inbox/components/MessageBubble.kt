@@ -792,7 +792,7 @@ fun MessageBubble(
 
                                 if (message.content.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(Spacing.space4))
-                                    if (isUndecryptableMessageContent(message.content)) {
+                                    if ((message.encryptionFailureReason != null || isUndecryptableMessageContent(message.content))) {
                                         UndecryptableMessageNotice(
                                             fontScale = fontScale,
                                             contentColor = contentColor,
@@ -845,7 +845,7 @@ fun MessageBubble(
                                                             isFromMe = isFromMe,
                                                             initialDurationMs = attachmentDuration
                                                         )
-                                                    } else if (isUndecryptableMessageContent(message.content)) {
+                                                    } else if ((message.encryptionFailureReason != null || isUndecryptableMessageContent(message.content))) {
                                                         UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
                                                     } else {
                                                         Row(
@@ -993,7 +993,7 @@ fun MessageBubble(
 
                                             else -> {
                                                 Column {
-                                                    if (isUndecryptableMessageContent(message.content)) {
+                                                    if ((message.encryptionFailureReason != null || isUndecryptableMessageContent(message.content))) {
                                                         UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
                                                         MessageMetadataRow(
                                                             message = message,

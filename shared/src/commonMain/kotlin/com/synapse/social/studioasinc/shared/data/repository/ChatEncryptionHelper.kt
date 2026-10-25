@@ -6,6 +6,7 @@ import com.synapse.social.studioasinc.shared.data.crypto.models.PreKeyBundle
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.util.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
@@ -104,17 +105,11 @@ internal class ChatEncryptionHelper(
             }
 
             try {
-                val jsonElement = Json.parseToJsonElement(this.content).jsonObject
-
-                // Check if this looks like an encrypted payload map (values have "type" and "body")
-                val looksLikeEncryptedPayload = jsonElement.values.firstOrNull()?.let {
-                    it is kotlinx.serialization.json.JsonObject &&
-                    it.containsKey("type") &&
-                    it.containsKey("body")
-                } == true
+                val looksLikeEncryptedPayload = EncryptedPayloadDetector.isEncryptedPayload(this.content)
 
                 if (looksLikeEncryptedPayload) {
                     if (signalProtocolManager != null) {
+                        val jsonElement = Json.parseToJsonElement(this.content).jsonObject
                         val myPayloadElement = jsonElement[currentUserId]
                         if (myPayloadElement != null) {
                             val senderId = this.senderId
@@ -133,22 +128,19 @@ internal class ChatEncryptionHelper(
                                 decryptedMessageCache[messageId] = decryptedContent
                                 val (content, mediaUrl, metadata) = extractContent(decryptedContent)
                                 try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
-                                return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
+                                return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata, encryptionFailureReason = null)
                             } catch (decryptError: Throwable) {
                                 if (decryptError is CancellationException) throw decryptError
                                 Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Session preserved — Double Ratchet may recover on next message.", tag = "E2EE", throwable = decryptError)
-                                // Do NOT delete the session. Destroying it here makes every
-                                // subsequent message from this sender also fail permanently.
-                                // Session reset belongs only in Settings → Reset Encryption Keys.
                             }
                         }
                     }
-return@withLock this.copy(content = "")
+                    return@withLock this.copy(encryptionFailureReason = "decryption_failed")
                 }
             } catch (_: Exception) {
-                // Not a JSON object — if content looks like an encrypted blob, don't leak it
+                // Not an encrypted payload
             }
-            this
+            this.copy(encryptionFailureReason = null)
         }
     }
 
