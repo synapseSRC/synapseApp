@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, ArrowLeft, Check, Image, Loader2, LogOut, MapPin, MessageCircle, RefreshCw, Send, Settings2, Sparkles, Users, Youtube } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, Image, Loader2, LogOut, MapPin, MessageCircle, RefreshCw, Send, Settings2, Users, Youtube } from 'lucide-react';
 import { MessagesPanel, ProfilePanel } from './SocialPanels';
 import { PostActionBar } from './PostActionBar';
 import { buildPostInteractionStates, parseReplyUsernames, type PostInteractionState } from './postActions';
 import { SettingsScreen } from '@/features/settings/SettingsScreen';
+import { StoryViewer } from '@/features/stories/StoryViewer';
+import { StoryCreator } from '@/features/stories/StoryCreator';
+import type { Story } from '@/features/stories/types';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
 import type { UserProfile } from '@/types';
@@ -390,22 +393,22 @@ export const PostDetailPanel: React.FC<PostDetailPanelProps> = ({ postId, initia
       <header className="sticky top-0 z-30 shrink-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4 sm:px-6"><Button type="button" variant="outline" onClick={onBack} aria-label="Back to feed" className="h-10 w-10 rounded-full border-zinc-300 p-0 text-zinc-700 shadow-none dark:border-zinc-700 dark:text-zinc-300"><ArrowLeft className="h-4 w-4" /></Button><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Conversation</p><h1 className="text-base font-semibold text-zinc-950 dark:text-zinc-100">Post details</h1></div></div>
       </header>
-      <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col space-y-4 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col space-y-2 overflow-y-auto overscroll-contain px-3 py-2 sm:px-4 sm:py-3">
         {actionError && <p role="status" className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">{actionError}</p>}
         {mediaWarning && <p role="status" className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">{mediaWarning}</p>}
         {error && !rootPost && <div role="alert" className="rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">{error}</div>}
         {isLoading && !rootPost ? <div className="h-56 animate-pulse rounded-3xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" /> : rootPost ? <>
           {renderPost(rootPost)}
           <div className="flex items-center justify-between px-1"><h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Replies</h2><span className="text-xs text-zinc-500 dark:text-zinc-400">{replies.length}</span></div>
-          {replies.length ? <div className="space-y-4">{replies.map(renderPost)}</div> : <div className="rounded-3xl border border-zinc-200 bg-white px-6 py-10 text-center dark:border-zinc-800 dark:bg-zinc-900"><p className="font-medium text-zinc-900 dark:text-zinc-100">No replies yet</p><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Start the conversation below.</p></div>}
+          {replies.length ? <div className="space-y-3">{replies.map(renderPost)}</div> : <div className="rounded-3xl border border-zinc-200 bg-white px-6 py-6 text-center dark:border-zinc-800 dark:bg-zinc-900"><p className="font-medium text-zinc-900 dark:text-zinc-100">No replies yet</p><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Start the conversation below.</p></div>}
         </> : null}
       </main>
-      {rootPost && <div data-testid="post-reply-dock" className="z-30 shrink-0 border-t border-zinc-200 bg-white px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] dark:border-zinc-800 dark:bg-zinc-900 sm:px-6">
+      {rootPost && <div data-testid="post-reply-dock" className="z-30 shrink-0 border-t border-zinc-200 bg-white px-3 pt-1 pb-[max(env(safe-area-inset-bottom),0.25rem)] dark:border-zinc-800 dark:bg-zinc-900 sm:px-4">
         <div className="mx-auto w-full max-w-3xl">
           {error && <div role="alert" className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">{error}</div>}
           <form onSubmit={submitReply} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-950">
             <div className="mb-2 flex items-center justify-between gap-3"><p className="truncate text-xs text-zinc-500 dark:text-zinc-400">Replying to <span className="font-semibold text-zinc-800 dark:text-zinc-200">@{replyTargetUsername || 'post'}</span></p>{replyTarget?.id !== rootPost.id && <button type="button" onClick={() => setReplyTargetId(rootPost.id)} className="shrink-0 text-xs font-medium text-zinc-500 underline underline-offset-2 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">Reply to thread</button>}</div>
-            <label htmlFor="post-detail-reply" className="sr-only">Write a reply</label><textarea id="post-detail-reply" value={draft} onChange={event => { setDraft(event.target.value); if (error) setError(null); }} maxLength={5000} rows={2} placeholder="Write a reply…" className="max-h-32 min-h-12 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
+            <label htmlFor="post-detail-reply" className="sr-only">Write a reply</label>            <textarea id="post-detail-reply" value={draft} onChange={event => { setDraft(event.target.value); if (error) setError(null); }} maxLength={5000} rows={2} placeholder="Write a reply…" className="max-h-32 min-h-10 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
             <div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-zinc-500 dark:text-zinc-400">{draft.length}/5000</span><Button type="submit" disabled={!draft.trim() || isSending || replyTarget?.post_disable_comments === 'true'} className="rounded-full bg-zinc-950 px-5 text-sm font-semibold text-white shadow-none hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200">{isSending ? 'Replying…' : 'Reply'}</Button></div>
           </form>
         </div>
@@ -434,6 +437,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onLogout, onCreate
   const [profileWarning, setProfileWarning] = useState<string | null>(null);
   const [storyWarning, setStoryWarning] = useState<string | null>(null);
   const [mediaWarning, setMediaWarning] = useState<string | null>(null);
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+  const [storyViewerIndex, setStoryViewerIndex] = useState(0);
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
 
   const loadPostInteractions = useCallback(async (rows: FeedPost[], append = true) => {
     const postIds = [...new Set(rows.map(post => post.id))];
@@ -666,12 +672,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onLogout, onCreate
   const currentName = currentProfile?.display_name || user.fullName || user.username;
   const currentUsername = currentProfile?.username || user.username;
   const currentAvatar = currentProfile?.avatar || user.avatarUrl;
-  const currentBio = currentProfile?.bio || user.bio;
-  const profileCounts = [
-    { label: 'Posts', value: currentProfile?.posts_count },
-    { label: 'Followers', value: currentProfile?.followers_count },
-    { label: 'Following', value: currentProfile?.following_count },
-  ].filter(item => typeof item.value === 'number');
   const storyLabel = stories.length === 1 ? '1 active story' : `${stories.length} active stories`;
 
   if (activeView === 'post-detail' && selectedPostId) {
@@ -744,20 +744,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onLogout, onCreate
           <section className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-[0_2px_14px_-10px_rgba(0,0,0,0.12)] sm:p-6" aria-labelledby="stories-heading">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div><h2 id="stories-heading" className="text-base font-semibold text-zinc-950 dark:text-zinc-100">Stories</h2><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">{stories.length ? storyLabel : 'Stories from your community will appear here.'}</p></div>
-              <Sparkles className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+              <button type="button" onClick={() => setStoryCreatorOpen(true)} className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-semibold text-white">Create story</button>
             </div>
             {storyWarning ? <p role="status" className="text-sm text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">{storyWarning}</p> : stories.length > 0 ? (
               <div className="flex gap-4 overflow-x-auto pb-1">
-                {stories.map(story => {
+                <button type="button" onClick={() => setStoryCreatorOpen(true)} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center">
+                  <span className="relative grid h-14 w-14 place-items-center rounded-full bg-zinc-100 dark:bg-zinc-800 ring-2 ring-zinc-200 dark:ring-zinc-700">
+                    <span className="text-2xl font-light text-zinc-500">+</span>
+                    <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-blue-600 text-white text-xs font-bold ring-2 ring-white">+</span>
+                  </span>
+                  <span className="w-full truncate text-[11px] font-medium text-zinc-700 dark:text-zinc-300">Create story</span>
+                </button>
+                {stories.map((story, i) => {
                   const author = people[story.user_id];
                   const name = author?.display_name || author?.username || 'Synapse member';
                   const storyImage = safeMediaUrl(story.thumbnail_url || story.media_url);
-                  return <div key={story.id} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center">
+                  return <button type="button" key={story.id} onClick={() => { setStoryViewerIndex(i); setStoryViewerOpen(true); }} className="flex w-16 shrink-0 flex-col items-center gap-2 text-center">
                     <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-zinc-900 p-0.5">
                       <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300">{storyImage ? <img src={storyImage} alt="" className="h-full w-full object-cover" loading="lazy" /> : initials(name)}</span>
                     </span>
                     <span className="w-full truncate text-[11px] text-zinc-600 dark:text-zinc-400 dark:text-zinc-500">{author?.username ? `@${author.username}` : 'Member'}</span>
-                  </div>;
+                  </button>;
                 })}
               </div>
             ) : <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-950 px-4 py-5 text-sm text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">No active stories right now.</div>}
@@ -809,6 +816,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onLogout, onCreate
           <MessagesPanel user={user} onBack={() => setActiveView('home')} onThreadOpenChange={setIsChatThreadOpen} />
         )}
       </main>
+      {storyViewerOpen && (
+        <StoryViewer stories={stories as unknown as Story[]} startIndex={storyViewerIndex} onClose={() => setStoryViewerOpen(false)} />
+      )}
+      {storyCreatorOpen && (
+        <StoryCreator userId={user.id} onClose={() => setStoryCreatorOpen(false)} onCreated={() => void loadFeed()} />
+      )}
     </div>
   );
 };
