@@ -131,7 +131,7 @@ fun MediaPreviewDialog(
                             Surface(
                                 shape = RoundedCornerShape(Sizes.CornerSmall),
                                 color = if (quality == MediaUploadQuality.HD) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.padding(Spacing.space2)
+                                modifier = Modifier.padding(Spacing.space4)
                             ) {
                                 Text(
                                     text = if (quality == MediaUploadQuality.HD) stringResource(R.string.media_quality_hd) else stringResource(R.string.media_quality_standard),
@@ -248,7 +248,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
-                                        .padding(Spacing.space2)
+                                        .padding(Spacing.space4)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape),
                                     contentAlignment = Alignment.Center
@@ -263,7 +263,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(Spacing.space2)
+                                        .padding(Spacing.space4)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.error, CircleShape)
                                         .clickable {

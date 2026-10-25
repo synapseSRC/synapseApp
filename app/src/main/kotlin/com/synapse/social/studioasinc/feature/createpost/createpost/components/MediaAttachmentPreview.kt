@@ -82,7 +82,7 @@ fun MediaItemView(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = Spacing.space10, end = Spacing.space10)
+                .padding(top = Spacing.space8, end = Spacing.space8)
                 .clip(RoundedCornerShape(Sizes.CornerDefault))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {

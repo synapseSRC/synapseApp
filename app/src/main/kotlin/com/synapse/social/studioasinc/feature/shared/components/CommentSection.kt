@@ -197,7 +197,7 @@ fun CommentItem(
                         ) {
                             Text(
                                 text = comment.replies.size.toString(),
-                                modifier = Modifier.padding(horizontal = Spacing.space2)
+                                modifier = Modifier.padding(horizontal = Spacing.space4)
                             )
                         }
                     }

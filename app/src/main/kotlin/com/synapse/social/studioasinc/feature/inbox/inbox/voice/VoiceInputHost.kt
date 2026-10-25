@@ -56,7 +56,7 @@ private const val LOCK_PILL_CHEVRON_END_OFFSET_DP = -2f
 private const val LOCK_PILL_CHEVRON_BOUNCE_DURATION_MILLIS = 1_400
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
-private val LOCK_PILL_GAP = Spacing.space6
+private val LOCK_PILL_GAP = Spacing.space8
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.space4 + Spacing.space8
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
@@ -72,7 +72,7 @@ private val LOCK_PILL_ICON_SIZE = 22.dp
 private val LOCK_PILL_CHEVRON_SIZE = 16.dp
 private val LOCK_PILL_CORNER_RADIUS = 24.dp
 // Fixed track: the pill's resting top sits this far above the mic button's top.
-private val LOCK_PILL_TRACK_GAP = Spacing.space6
+private val LOCK_PILL_TRACK_GAP = Spacing.space8
 // Travel distance the pill slides up from rest to the lock target (≈ lockThreshold).
 private val LOCK_PILL_TRACK_TRAVEL = 110.dp
 // Non-monotonic height curve: height grows to this peak (relative to base) mid-drag, then
@@ -466,7 +466,7 @@ private fun VoiceRecordingContentOverlay(
                     if (tooltipVisible && tooltipAlpha > 0.05f) {
                         Surface(
                             modifier = Modifier
-                                .padding(end = Spacing.space8, top = Spacing.space6)
+                                .padding(end = Spacing.space8, top = Spacing.space8)
                                 .graphicsLayer { alpha = tooltipAlpha },
                             shape = RoundedCornerShape(Spacing.space8),
                             color = MaterialTheme.colorScheme.inverseSurface,
@@ -692,7 +692,7 @@ private fun LockPillCapsule(
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = chevronAlpha),
                     modifier = Modifier
-                        .padding(top = Spacing.space12 + 1.dp + LOCK_PILL_ICON_SIZE + Spacing.space6)
+                        .padding(top = Spacing.space12 + 1.dp + LOCK_PILL_ICON_SIZE + Spacing.space8)
                         .size(LOCK_PILL_CHEVRON_SIZE)
                         .offset(y = if (reducedMotion) 0.dp else (chevronTravel.dp + chevronDragOffset))
                         .testTag("voice-lock-pill-chevron")

@@ -342,7 +342,7 @@ private fun ProfileAppearanceLivePreview(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = Spacing.space10, vertical = Spacing.space4)
+                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                         )
                     }
                 }
@@ -522,7 +522,7 @@ private fun AppearanceCapabilitiesInfoGroup(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(24.dp)
-                        .padding(top = Spacing.space2)
+                        .padding(top = Spacing.space4)
                 )
                 Spacer(modifier = Modifier.width(Spacing.space16))
                 Text(

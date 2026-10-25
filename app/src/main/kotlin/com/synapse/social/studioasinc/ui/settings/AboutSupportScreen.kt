@@ -144,7 +144,7 @@ fun AboutSupportScreen(
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.space2),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space4),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(

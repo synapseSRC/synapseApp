@@ -116,7 +116,7 @@ fun PollCreationSheet(
                 enabled = question.isNotBlank() && options.count { it.isNotBlank() } >= 2,
                 shape = RoundedCornerShape(Sizes.CornerDefault)
             ) {
-                Text(stringResource(R.string.poll_add_to_post), modifier = Modifier.padding(vertical = Spacing.space6))
+                Text(stringResource(R.string.poll_add_to_post), modifier = Modifier.padding(vertical = Spacing.space8))
             }
         }
     }

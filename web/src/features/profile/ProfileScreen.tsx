@@ -83,22 +83,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onOpenSettin
               <span>Joined January 2024</span>
             </div>
           </div>
-
-          {/* Follower Stats */}
-          <div className="flex items-center space-x-6 pt-2 text-sm">
-            <div>
-              <span className="font-bold text-foreground">{user.postsCount || 42}</span>{' '}
-              <span className="text-muted-foreground text-xs">Posts</span>
-            </div>
-            <div>
-              <span className="font-bold text-foreground">{user.followersCount || 1250}</span>{' '}
-              <span className="text-muted-foreground text-xs">Followers</span>
-            </div>
-            <div>
-              <span className="font-bold text-foreground">{user.followingCount || 380}</span>{' '}
-              <span className="text-muted-foreground text-xs">Following</span>
-            </div>
-          </div>
         </div>
       </div>
 

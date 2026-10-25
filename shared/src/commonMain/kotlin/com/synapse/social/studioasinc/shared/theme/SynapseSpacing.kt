@@ -25,27 +25,6 @@ object SynapseSpacing {
     const val minTouchTargetGap = 48f // WCAG / M3 minimum touch target (44/48dp)
     const val sectionDivider = 1f     // Standard divider thickness
 
-    // ── Deprecated Legacy Tokens (retained for migration) ────────────────────
-    /** Non-M3: 2dp. Use [space4] (4dp) or [SpacingScale.step1] */
-    @Deprecated("2dp is non-M3; use space4 (4dp) or SpacingScale.step1", ReplaceWith("space4"))
-    const val space2 = 2f
-
-    /** Non-M3: 6dp. Use [space8] (8dp) or [SpacingScale.step2] */
-    @Deprecated("6dp is non-M3; use space8 (8dp) or SpacingScale.step2", ReplaceWith("space8"))
-    const val space6 = 6f
-
-    /** Non-M3: 10dp. Use [space8] (8dp) or [SpacingScale.step2] */
-    @Deprecated("10dp is non-M3; use space8 (8dp) or SpacingScale.step2", ReplaceWith("space8"))
-    const val space10 = 10f
-
-    /** Non-M3: 28dp. Use [space32] (32dp) or [SpacingScale.step7] */
-    @Deprecated("28dp is non-M3; use space32 (32dp) or SpacingScale.step7", ReplaceWith("space32"))
-    const val space28 = 28f
-
-    /** Non-M3: 40dp. Use [space48] (48dp) or [SpacingScale.step8] */
-    @Deprecated("40dp is non-M3; use space48 (48dp) or SpacingScale.step8", ReplaceWith("space48"))
-    const val space40 = 40f
-
     // ── M3 Geometric Scale Sub-object (step-based naming) ────────────────────
     object SpacingScale {
         const val step0 = 0f      // 0dp  — no spacing

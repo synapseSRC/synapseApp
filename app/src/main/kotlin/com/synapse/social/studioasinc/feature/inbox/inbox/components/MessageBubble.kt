@@ -395,7 +395,7 @@ fun MessageBubble(
             ) {
                 Text(
                     text = message.content,
-                    modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space6),
+                    modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

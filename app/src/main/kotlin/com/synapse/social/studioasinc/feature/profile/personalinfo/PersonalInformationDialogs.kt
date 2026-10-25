@@ -279,7 +279,7 @@ fun RelationshipStatusDialog(
                                 onStatusSelected(status)
                                 onDismissRequest()
                             }
-                            .padding(vertical = Spacing.space10),
+                            .padding(vertical = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(

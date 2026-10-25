@@ -432,7 +432,7 @@ private fun ProviderRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isConfigured) MaterialTheme.colorScheme.onPrimaryContainer
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space2)
+                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                     )
                 }
             }
@@ -462,7 +462,7 @@ private fun ProviderRow(
             sheetState = sheetState,
             containerColor = SettingsColors.cardBackgroundElevated
         ) {
-            Box(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space24)) {
+            Box(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space48)) {
                 when (provider) {
                     StorageProvider.IMGBB -> ImgBBConfigContent(
                         apiKey = storageConfig.imgBBKey,

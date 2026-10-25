@@ -142,7 +142,7 @@ fun UserHeader(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(Spacing.space2))
+            Spacer(modifier = Modifier.height(Spacing.space4))
 
 
             Surface(
@@ -171,7 +171,7 @@ fun UserHeader(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(Spacing.space2))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Icon(
                         Icons.Default.ArrowDropDown,
                         contentDescription = null,

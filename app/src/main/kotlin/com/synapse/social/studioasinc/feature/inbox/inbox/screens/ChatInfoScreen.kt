@@ -745,7 +745,7 @@ private fun SectionHeading(text: String) {
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space2)
+        modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space4)
     )
 }
 

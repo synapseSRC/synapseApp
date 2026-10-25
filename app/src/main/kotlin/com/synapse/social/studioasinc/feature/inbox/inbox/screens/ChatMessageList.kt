@@ -307,7 +307,7 @@ internal fun ChatMessageList(
                         val targetId = message.replyToId?.takeIf { it.isNotBlank() && quotedOriginal == null }
                         targetId?.let(onLocateMessage)
                     }
-                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space2
+                    val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space4
                     MessageBubble(
                         modifier = placementModifier.padding(bottom = bottomGap),
                         message = message,

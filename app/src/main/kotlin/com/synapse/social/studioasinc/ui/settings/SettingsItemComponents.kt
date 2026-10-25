@@ -403,7 +403,7 @@ fun SettingsSelectionItem(
                     style = SettingsTypography.itemSubtitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                    modifier = Modifier.padding(start = if (icon != null) Spacing.space40 else Spacing.space0)
+                    modifier = Modifier.padding(start = if (icon != null) Spacing.space48 else Spacing.space0)
                 )
             }
 
@@ -413,7 +413,7 @@ fun SettingsSelectionItem(
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { if (enabled) expanded = !expanded },
-                modifier = Modifier.padding(start = if (icon != null) Spacing.space40 else Spacing.space0)
+                modifier = Modifier.padding(start = if (icon != null) Spacing.space48 else Spacing.space0)
             ) {
                 OutlinedTextField(
                     value = selectedOption,

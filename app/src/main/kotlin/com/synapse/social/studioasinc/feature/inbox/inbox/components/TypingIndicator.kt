@@ -59,7 +59,7 @@ fun TypingIndicator(
         Row(
             modifier = Modifier.padding(
                 horizontal = Spacing.space16,
-                vertical = Spacing.space6,
+                vertical = Spacing.space8,
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {

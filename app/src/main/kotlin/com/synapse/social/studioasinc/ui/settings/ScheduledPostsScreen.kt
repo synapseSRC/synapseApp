@@ -364,7 +364,7 @@ private fun StatusBadge(status: String) {
             style = MaterialTheme.typography.labelSmall,
             color = textColor,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = Spacing.space10, vertical = Spacing.space4)
+            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
         )
     }
 }

@@ -189,7 +189,7 @@ fun InboxConversationRow(
                             Text(
                                 text = if (conversation.unreadCount > 99) "99+" else conversation.unreadCount.toString(),
                                 style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = Spacing.space6, vertical = Spacing.space2)
+                                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                             )
                         }
                     }

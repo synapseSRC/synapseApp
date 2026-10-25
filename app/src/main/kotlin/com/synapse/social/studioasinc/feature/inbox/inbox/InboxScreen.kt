@@ -588,7 +588,7 @@ private fun HomeMessages(
                 Button(onClick = onRetry) { Text(stringResource(R.string.inbox_retry)) }
             }
             conversations.isEmpty() -> Column(Modifier.fillMaxSize().padding(Spacing.space24), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Spacing.space40))
+                Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Spacing.space48))
                 Spacer(Modifier.height(Spacing.space12))
                 Text(stringResource(R.string.inbox_empty_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.inbox_empty_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

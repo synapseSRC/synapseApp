@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.sp
 object ProfileDimensions {
 
     val spacing0 = Spacing.space0
-    val spacing2 = Spacing.space2
     val spacing4 = Spacing.space4
     val spacing8 = Spacing.space8
     val spacing12 = Spacing.space12
@@ -52,7 +51,7 @@ object ProfileDimensions {
     val buttonCornerRadius = Sizes.CornerDefault
 
 
-    val photoGridSpacing = Spacing.space2
+    val photoGridSpacing = Spacing.space4
     val photoGridCornerRadius = Sizes.CornerSmall
 
 

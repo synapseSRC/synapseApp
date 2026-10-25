@@ -171,7 +171,7 @@ object InboxDimens {
     val StoryRingWidth = Sizes.BorderSelected
     val ChatItemPadding = Spacing.space16
     val ChatItemVerticalSpacing = Spacing.space8
-    val GroupedItemGap = Spacing.space2
+    val GroupedItemGap = Spacing.space4
     val SectionHeaderHeight = Sizes.AvatarSmall
     val SwipeActionIconSize = Sizes.IconExtraLarge
     val FABSize = Sizes.AvatarLarge

@@ -330,7 +330,7 @@ fun StackedMediaCard(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(
                                     horizontal = Spacing.space4,
-                                    vertical = Spacing.space2
+                                    vertical = Spacing.space4
                                 )
                             ) {
                                 Icon(
@@ -339,7 +339,7 @@ fun StackedMediaCard(
                                     tint = Color.White,
                                     modifier = Modifier.size(Sizes.IconSmall)
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.space2))
+                                Spacer(modifier = Modifier.width(Spacing.space4))
                                 Text(
                                     text = durationLabel,
                                     style = MaterialTheme.typography.labelSmall,
@@ -361,7 +361,7 @@ fun StackedMediaCard(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(
                             horizontal = Spacing.space4,
-                            vertical = Spacing.space2
+                            vertical = Spacing.space4
                         )
                     ) {
                         Icon(
@@ -370,7 +370,7 @@ fun StackedMediaCard(
                             tint = Color.White,
                             modifier = Modifier.size(Sizes.IconSmall)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.space2))
+                        Spacer(modifier = Modifier.width(Spacing.space4))
                         Text(
                             text = totalCount.toString(),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),

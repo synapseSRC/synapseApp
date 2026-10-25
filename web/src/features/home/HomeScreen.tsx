@@ -713,8 +713,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onLogout, onCreate
 
       <main className={`mx-auto ${activeView === 'messages' && isChatThreadOpen ? 'w-full max-w-none px-0 py-0' : 'max-w-7xl px-4 py-6 sm:px-6 sm:py-8'}`}>
         {activeView === 'home' ? (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_290px] lg:gap-8">
-        <section className="mx-auto w-full max-w-3xl space-y-5">
+          <div className="lg:block">
+            <section className="mx-auto w-full max-w-3xl space-y-5">
           <div className="flex items-end justify-between gap-4 px-1">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">Your community</p>
@@ -802,18 +802,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onLogout, onCreate
           ) : null}
         </section>
 
-        <aside className="hidden space-y-4 lg:block">
-          <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-[0_2px_14px_-10px_rgba(0,0,0,0.12)]">
-            <div className="flex items-center gap-3"><PersonAvatar name={currentName} image={currentAvatar} size="lg" /><div className="min-w-0"><p className="truncate font-semibold text-zinc-950 dark:text-zinc-100">{currentName}</p><p className="truncate text-sm text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">@{currentUsername}</p></div></div>
-            {currentBio && <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400 dark:text-zinc-500">{currentBio}</p>}
-            {profileCounts.length > 0 && <div className="mt-5 grid grid-cols-3 gap-2 border-t border-zinc-100 dark:border-zinc-800 pt-4">{profileCounts.map(item => <div key={item.label}><p className="text-xs text-zinc-500 dark:text-zinc-400 dark:text-zinc-500">{item.label}</p><p className="mt-1 text-base font-semibold text-zinc-950 dark:text-zinc-100">{item.value}</p></div>)}</div>}
-          </div>
-          <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-            <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">A place for your people</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400 dark:text-zinc-500">Share updates, follow the voices you care about, and keep the conversation moving.</p>
-          </div>
-          <p className="px-2 text-xs leading-5 text-zinc-400 dark:text-zinc-500">Synapse Social · Community feed</p>
-        </aside>
           </div>
         ) : activeView === 'profile' ? (
           <ProfilePanel user={user} onBack={() => setActiveView('home')} onProfileUpdated={updated => setPeople(current => ({ ...current, [updated.uid]: updated }))} />

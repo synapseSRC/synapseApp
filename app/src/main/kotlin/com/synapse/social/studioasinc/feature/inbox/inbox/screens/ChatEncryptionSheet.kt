@@ -249,7 +249,7 @@ private fun EncryptionFeatureItem(
                 }
             }
             Spacer(Modifier.width(Spacing.space12))
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.space2)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                 Text(title, style = MaterialTheme.typography.bodyLarge, color = colors.onSecondaryContainer)
                 Text(supporting, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             }

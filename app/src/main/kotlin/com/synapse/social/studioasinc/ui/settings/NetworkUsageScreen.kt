@@ -209,7 +209,7 @@ fun NetworkUsageScreen(
                                                     modifier = Modifier.size(14.dp),
                                                     tint = MaterialTheme.colorScheme.primary
                                                 )
-                                                Spacer(modifier = Modifier.width(Spacing.space2))
+                                                Spacer(modifier = Modifier.width(Spacing.space4))
                                                 Text(
                                                     text = formatBytes(item.sentBytes),
                                                     style = SettingsTypography.itemSubtitle,
@@ -224,7 +224,7 @@ fun NetworkUsageScreen(
                                                     modifier = Modifier.size(14.dp),
                                                     tint = MaterialTheme.colorScheme.tertiary
                                                 )
-                                                Spacer(modifier = Modifier.width(Spacing.space2))
+                                                Spacer(modifier = Modifier.width(Spacing.space4))
                                                 Text(
                                                     text = formatBytes(item.receivedBytes),
                                                     style = SettingsTypography.itemSubtitle,

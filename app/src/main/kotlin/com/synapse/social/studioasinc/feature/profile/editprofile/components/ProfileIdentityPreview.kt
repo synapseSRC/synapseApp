@@ -274,7 +274,7 @@ fun ProfileIdentityPreview(
                                             ),
                                             contentPadding = PaddingValues(
                                                 horizontal = Spacing.space8,
-                                                vertical = Spacing.space2
+                                                vertical = Spacing.space4
                                             )
                                         ) {
                                             Text(
