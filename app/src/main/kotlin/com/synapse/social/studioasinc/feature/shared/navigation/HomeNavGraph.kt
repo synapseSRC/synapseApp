@@ -72,7 +72,6 @@ fun HomeNavGraph(
                     navController.navigate(HomeDestinations.PostDetail(postId = post.rootPostId ?: post.inReplyToPostId ?: post.id, commentId = if (isComment) post.id else null))
                 },
                 onQuoteClick = { postId -> onNavigateToQuotePost(postId) },
-                onMediaClick = { post, _ -> navController.navigate(HomeDestinations.PostDetail(post.id)) },
                 onEditPost = onNavigateToEditPost,
                 onStoryClick = { userId, allUserIds ->
                     onNavigateToStoryViewer(userId, allUserIds)

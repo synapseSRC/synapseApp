@@ -50,6 +50,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostActions
 import com.synapse.social.studioasinc.feature.shared.components.post.PostOptionsBottomSheet
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
+import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.core.ui.animation.SkeletonMorphedContent
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
@@ -80,6 +81,9 @@ fun SearchScreen(
     val postLinkLabel = stringResource(R.string.clip_label_post_link)
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
+    var showMediaViewer by remember { mutableStateOf(false) }
+    var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedMediaIndex by remember { mutableIntStateOf(0) }
 
 
     val pagerState = rememberPagerState(
@@ -340,9 +344,16 @@ fun SearchScreen(
                                                         onBookmark = viewModel::bookmarkPost,
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
-                                                        onUserClick = { userId -> onNavigateToProfile(userId) },
-                                                        onMediaClick = { _, _ -> onNavigateToPost(post.id) },
-                                                        onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
+                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
+                                                                 onMediaClick = { post, index ->
+                                                                     val urls = post.mediaUrls ?: emptyList()
+                                                                     if (urls.isNotEmpty()) {
+                                                                         selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                                                         selectedMediaUrls = urls
+                                                                         showMediaViewer = true
+                                                                     }
+                                                                 },
+                                                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                     )
                                                 }
                                                 SharedPostItem(
@@ -452,7 +463,14 @@ fun SearchScreen(
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
-onMediaClick = { post, _ -> onNavigateToPost(post.id) },
+onMediaClick = { post, index ->
+                                                            val urls = post.mediaUrls ?: emptyList()
+                                                            if (urls.isNotEmpty()) {
+                                                                selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                                                selectedMediaUrls = urls
+                                                                showMediaViewer = true
+                                                            }
+                                                        },
                                                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                             )
                                                         }
@@ -534,6 +552,14 @@ onMediaClick = { post, _ -> onNavigateToPost(post.id) },
                 showSummarySheet = false
                 viewModel.clearPostSummary()
             }
+        )
+    }
+
+    if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
+        MediaViewer(
+            mediaUrls = selectedMediaUrls,
+            initialPage = selectedMediaIndex,
+            onDismiss = { showMediaViewer = false }
         )
     }
 }

@@ -58,10 +58,6 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
     @Inject lateinit var notificationRepository: NotificationRepository
 
     override fun newImageLoader(context: Context): ImageLoader {
-        val placeholder = BitmapDrawable(
-            resources,
-            BitmapFactory.decodeResource(resources, R.raw.placeholder)
-        )
         val okHttpClient = okhttp3.OkHttpClient.Builder()
             .addInterceptor(
                 SupabaseStorageImageInterceptor(
@@ -84,7 +80,6 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                 add(VideoFrameDecoder.Factory())
                 add(SvgDecoder.Factory())
             }
-            .placeholder(placeholder.asImage())
             .build()
     }
 
