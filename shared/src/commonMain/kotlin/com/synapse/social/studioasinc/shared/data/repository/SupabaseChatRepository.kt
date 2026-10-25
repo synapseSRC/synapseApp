@@ -157,7 +157,7 @@ class SupabaseChatRepository(
                 try {
                     encryptionHelper.run { last.decryptIfNecessary(currentUserId).content }
                 } catch (_: Exception) {
-                    "🔒 Encrypted message"
+                    ""
                 }
             } ?: "No messages yet"
             val isOnline = summary.participantStatus?.equals("ONLINE", ignoreCase = true) == true &&
@@ -1006,4 +1006,8 @@ class SupabaseChatRepository(
             }
             reaction
         }
+
+    override suspend fun releaseTypingChannel(chatId: String) {
+        dataSource.releaseTypingChannel(chatId)
+    }
 }

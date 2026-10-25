@@ -236,6 +236,9 @@ currentUserIdProvider = { currentUserId.value }
         },
         onSyncRequired = {
             currentChatId?.let { chatId -> synchronizeMissedMessages(chatId) }
+        },
+        onCleanupTypingChannel = {
+            currentChatId?.let { chatId -> chatRepository.releaseTypingChannel(chatId) }
         }
     )
 

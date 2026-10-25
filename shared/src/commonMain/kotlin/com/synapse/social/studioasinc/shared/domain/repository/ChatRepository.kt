@@ -90,4 +90,11 @@ interface ChatRepository {
      * Returns the message that should be displayed in the UI (may be an enriched version from cache).
      */
     suspend fun reconcileRealtimeMessage(chatId: String, message: com.synapse.social.studioasinc.shared.domain.model.chat.Message): com.synapse.social.studioasinc.shared.domain.model.chat.Message
+
+    /**
+     * Releases the cached typing broadcast channel for [chatId], if any.
+     * Called when a chat screen is closed to avoid leaking WebSocket channels.
+     * No-op if no channel is currently held for this chat.
+     */
+    suspend fun releaseTypingChannel(chatId: String)
 }

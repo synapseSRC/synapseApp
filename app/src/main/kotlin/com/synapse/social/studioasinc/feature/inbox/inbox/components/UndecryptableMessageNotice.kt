@@ -27,10 +27,7 @@ private val encryptedBodyPattern = Regex("^[A-Za-z0-9+/_-]+={0,2}$")
 
 /** Returns true only for the serialized Signal pre-key envelope currently leaking into chat text. */
 private val encryptedPlaceholderContents = setOf(
-    "Message is encrypted",
-    "🔒 Encrypted message",
-    "🔒 You sent an encrypted message",
-    "🔒 You sent an encrypted message (Copy)"
+    "Message is encrypted"
 )
 
 internal fun isUndecryptableMessageContent(content: String): Boolean {

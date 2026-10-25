@@ -44,6 +44,37 @@ import kotlin.coroutines.cancellation.CancellationException
  * Presence for user state tracking, and Broadcast for ephemeral messaging.
  */
 internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
+    // One persistent typing channel per chat — broadcast sender and receiver
+    // share the same channel object so events are never dropped.
+    private val activeTypingChannels = java.util.concurrent.ConcurrentHashMap<String, RealtimeChannel>()
+
+    private suspend fun getOrCreateTypingChannel(chatId: String): RealtimeChannel {
+        val channelId = "broadcast-typing-${chatId.trim().lowercase()}"
+        val channel = activeTypingChannels.getOrPut(channelId) { client.realtime.channel(channelId) }
+        if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
+            try { client.realtime.connect() } catch (e: Exception) { if (e is CancellationException) throw e }
+            var subscribed = false; var attempts = 0
+            while (!subscribed && attempts < 3) {
+                try { channel.subscribe(blockUntilSubscribed = true); subscribed = true }
+                catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    attempts++
+                    if (attempts < 3) delay(300L * attempts)
+                }
+            }
+        }
+        return channel
+    }
+
+    suspend fun releaseTypingChannel(chatId: String) {
+        val channelId = "broadcast-typing-${chatId.trim().lowercase()}"
+        val channel = activeTypingChannels.remove(channelId) ?: return
+        withContext(AppDispatchers.IO) {
+            try { channel.unsubscribe(); client.realtime.removeChannel(channel) }
+            catch (e: Exception) { Napier.w("Error releasing typing channel $channelId: ${e.message}", tag = "Realtime") }
+        }
+    }
+
 
     /**
      * Retrieves the current authenticated user's unique identifier.

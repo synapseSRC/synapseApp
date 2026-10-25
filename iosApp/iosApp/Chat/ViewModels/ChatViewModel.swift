@@ -153,10 +153,7 @@ class ChatViewModel: ObservableObject {
         guard let useCase = subscribeToMessagesUseCase, let chatId = chatId else { return }
 
         let encryptedPlaceholders: Set<String> = [
-            "Message is encrypted",
-            "🔒 Encrypted message",
-            "🔒 You sent an encrypted message",
-            "🔒 You sent an encrypted message (Copy)"
+            "Message is encrypted"
         ]
 
         subscriptionTask?.cancel()

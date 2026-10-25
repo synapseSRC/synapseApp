@@ -136,16 +136,14 @@ internal class ChatEncryptionHelper(
                                 return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
                             } catch (decryptError: Throwable) {
                                 if (decryptError is CancellationException) throw decryptError
-                                Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId.", tag = "E2EE", throwable = decryptError)
-                                try {
-                                    signalProtocolManager.deleteSession(senderId)
-                                } catch (_: Throwable) {}
+                                Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Session preserved — Double Ratchet may recover on next message.", tag = "E2EE", throwable = decryptError)
+                                // Do NOT delete the session. Destroying it here makes every
+                                // subsequent message from this sender also fail permanently.
+                                // Session reset belongs only in Settings → Reset Encryption Keys.
                             }
                         }
                     }
-                    // Return placeholder instead of leaking raw encrypted JSON map
-                    val fallbackContent = if (this.senderId == currentUserId) "🔒 You sent an encrypted message" else "🔒 Encrypted message"
-                    return@withLock this.copy(content = fallbackContent)
+return@withLock this.copy(content = "")
                 }
             } catch (_: Exception) {
                 // Not a JSON object — if content looks like an encrypted blob, don't leak it

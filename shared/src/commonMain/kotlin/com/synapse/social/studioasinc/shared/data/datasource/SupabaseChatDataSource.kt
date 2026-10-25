@@ -156,6 +156,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) = 
         realtime.broadcastTypingStatus(chatId, isTyping)
 
+    suspend fun releaseTypingChannel(chatId: String) =
+        realtime.releaseTypingChannel(chatId)
+
     fun subscribeToMessages(chatId: String): Flow<MessageDto> =
         realtime.subscribeToMessages(chatId)
 
