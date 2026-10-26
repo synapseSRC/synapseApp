@@ -80,6 +80,7 @@ data class MessageDto(
     @SerialName("expires_at") val expiresAt: String? = null,
     @SerialName("failure_reason") val failureReason: String? = null,
     val encryptionFailureReason: String? = null,
+    @SerialName("client_id") val clientId: String? = null,
     val attachments: List<MessageAttachmentDto>? = null,
     @Serializable(with = AnyMetadataStringSerializer::class)
     @SerialName("metadata") val metadata: String? = null

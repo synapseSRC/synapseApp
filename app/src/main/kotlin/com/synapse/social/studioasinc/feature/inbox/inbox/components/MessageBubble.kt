@@ -792,14 +792,7 @@ fun MessageBubble(
 
                                 if (message.content.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(Spacing.space4))
-                                    if ((message.encryptionFailureReason != null || isUndecryptableMessageContent(message.content))) {
-                                        UndecryptableMessageNotice(
-                                            fontScale = fontScale,
-                                            contentColor = contentColor,
-                                            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4)
-                                        )
-                                    } else {
-                                        Surface(
+                                    Surface(
                                             color = if (hasReplyPreview) Color.Transparent else containerColor,
                                             contentColor = contentColor,
                                             shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
@@ -814,7 +807,6 @@ fun MessageBubble(
                                                 modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                                             )
                                         }
-                                    }
                                 }
                                 MessageMetadataRow(
                                     message = message,
@@ -845,8 +837,6 @@ fun MessageBubble(
                                                             isFromMe = isFromMe,
                                                             initialDurationMs = attachmentDuration
                                                         )
-                                                    } else if ((message.encryptionFailureReason != null || isUndecryptableMessageContent(message.content))) {
-                                                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
                                                     } else {
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
@@ -993,16 +983,7 @@ fun MessageBubble(
 
                                             else -> {
                                                 Column {
-                                                    if ((message.encryptionFailureReason != null || isUndecryptableMessageContent(message.content))) {
-                                                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
-                                                        MessageMetadataRow(
-                                                            message = message,
-                                                            isFromMe = isFromMe,
-                                                            contentColor = contentColor,
-                                                            onRetryClick = onRetryClick
-                                                        )
-                                                    } else {
-                                                        val firstUrl = UrlUtils.extractFirstUrl(message.content)
+                                                    val firstUrl = UrlUtils.extractFirstUrl(message.content)
                                                         if (firstUrl != null && getLinkMetadataUseCase != null) {
                                                             LinkPreviewCard(
                                                                 url = firstUrl,
@@ -1067,12 +1048,11 @@ fun MessageBubble(
                                                             isFromMe = isFromMe,
                                                             contentColor = contentColor,
                                                             onRetryClick = onRetryClick
-                                                        )
-                                                    }
+                                                    )
                                                 }
                                             }
+                                            }
                                         }
-                                    }
                                 }
                             }
                         }

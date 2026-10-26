@@ -101,38 +101,29 @@ class ChatMessagingDelegate(
     fun mergeChronologically(current: List<Message>, incoming: List<Message>): List<Message> {
         if (incoming.isEmpty()) return current
         val ordering = ChatMapper.MessageChronologicalComparator
-        val currentById = current.associateBy { it.id }
-        val incomingById = LinkedHashMap<String, Message>()
+
+        val currentByClientId = current.filter { it.clientId.isNotBlank() }.associateBy { it.clientId }
+
+        val mergedMap = LinkedHashMap<String, Message>()
+        current.forEach { msg -> mergedMap[msg.id] = msg }
+
         incoming.forEach { fresh ->
-            val duplicate = incomingById[fresh.id]
-            incomingById[fresh.id] = duplicate?.mergeMonotonic(fresh) ?: fresh
-        }
-        val sortedIncoming = incomingById.values
-            .map { fresh -> currentById[fresh.id]?.mergeMonotonic(fresh) ?: fresh }
-            .sortedWith(ordering)
-        val incomingIds = sortedIncoming.mapTo(HashSet()) { it.id }
-        val currentOnly = current.filterNot { it.id in incomingIds }
-        val merged = ArrayList<Message>(currentOnly.size + sortedIncoming.size)
-        var currentIndex = 0
-        var incomingIndex = 0
-        while (currentIndex < currentOnly.size && incomingIndex < sortedIncoming.size) {
-            val existing = currentOnly[currentIndex]
-            val fresh = sortedIncoming[incomingIndex]
-            if (existing.id == fresh.id) {
-                merged += existing.mergeMonotonic(fresh)
-                currentIndex++
-                incomingIndex++
-            } else if (ordering.compare(existing, fresh) <= 0) {
-                merged += existing
-                currentIndex++
+            val existingById = mergedMap[fresh.id]
+            val existingByClient = if (fresh.clientId.isNotBlank()) currentByClientId[fresh.clientId] else null
+            val existing = existingById ?: existingByClient
+
+            if (existing != null) {
+                val merged = existing.mergeMonotonic(fresh)
+                if (existing.id != fresh.id) {
+                    mergedMap.remove(existing.id)
+                }
+                mergedMap[merged.id] = merged
             } else {
-                merged += fresh
-                incomingIndex++
+                mergedMap[fresh.id] = fresh
             }
         }
-        while (currentIndex < currentOnly.size) merged += currentOnly[currentIndex++]
-        while (incomingIndex < sortedIncoming.size) merged += sortedIncoming[incomingIndex++]
-        return merged
+
+        return mergedMap.values.sortedWith(ordering)
     }
 
     /** Adds a fetched reply target to the timeline without moving the regular-page cursor. */
@@ -395,7 +386,10 @@ class ChatMessagingDelegate(
 
     companion object {
         val ENCRYPTED_PLACEHOLDERS = setOf(
-            "Message is encrypted"
+            "Message is encrypted",
+            "🔒 Encrypted message",
+            "🔒 You sent an encrypted message",
+            "🔒 You sent an encrypted message (Copy)"
         )
     }
 }

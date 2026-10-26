@@ -47,33 +47,39 @@ object ChatMapper {
         return withT
     }
 
-    fun parseEpochMillis(raw: String?): Long? {
+    fun parseInstant(raw: String?): kotlinx.datetime.Instant? {
         if (raw.isNullOrBlank()) return null
         return try {
             val normalized = normalizeTimestamp(raw) ?: raw
-            kotlinx.datetime.Instant.parse(normalized).toEpochMilliseconds()
+            kotlinx.datetime.Instant.parse(normalized)
         } catch (_: Exception) {
             null
         }
     }
 
+    fun parseEpochMillis(raw: String?): Long? {
+        return parseInstant(raw)?.toEpochMilliseconds()
+    }
+
     /**
      * Canonical chronological comparator for chat messages.
-     * Compares parsed epoch milliseconds first, then canonical ISO string, server id, and finally clientId.
-     * Guarantees consistent ordering between ViewModels, delegates, and UI item mappers.
+     * Compares parsed Instant objects down to nanosecond precision first,
+     * falling back to raw timestamp strings, server id, and clientId.
+     * Guarantees strict, deterministic total ordering across all platforms.
      */
     val MessageChronologicalComparator: Comparator<Message> = Comparator { a, b ->
-        val epochA = parseEpochMillis(a.createdAt)
-        val epochB = parseEpochMillis(b.createdAt)
-        if (epochA != null && epochB != null && epochA != epochB) {
-            return@Comparator epochA.compareTo(epochB)
-        }
-        val strCompare = a.createdAt.compareTo(b.createdAt)
-        if (strCompare != 0) {
-            return@Comparator strCompare
+        val instantA = parseInstant(a.createdAt)
+        val instantB = parseInstant(b.createdAt)
+        if (instantA != null && instantB != null) {
+            val instantCompare = instantA.compareTo(instantB)
+            if (instantCompare != 0) return@Comparator instantCompare
+        } else {
+            val strCompare = (a.createdAt ?: "").compareTo(b.createdAt ?: "")
+            if (strCompare != 0) return@Comparator strCompare
         }
         val idCompare = a.id.compareTo(b.id)
-        if (idCompare != 0) idCompare else a.clientId.compareTo(b.clientId)
+        if (idCompare != 0) return@Comparator idCompare
+        a.clientId.compareTo(b.clientId)
     }
 
     fun ChatDto.toDomain(): ChatInfo = ChatInfo(
@@ -208,7 +214,8 @@ object ChatMapper {
             encryptionFailureReason = encryptionFailureReason,
             attachments = domainAttachments,
             mediaGroupId = derivedGroupId,
-            metadataContainer = parsedMetadata
+            metadataContainer = parsedMetadata,
+            clientId = clientId ?: id ?: ""
         )
     }
 

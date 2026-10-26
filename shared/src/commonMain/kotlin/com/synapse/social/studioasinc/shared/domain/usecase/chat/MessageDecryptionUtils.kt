@@ -41,7 +41,8 @@ internal suspend fun decryptMessageIfNecessary(
     }
 
     try {
-        val jsonElement = Json.parseToJsonElement(message.content) as? JsonObject ?: return message.copy(encryptionFailureReason = "decryption_failed")
+        val jsonElement = Json.parseToJsonElement(message.content) as? JsonObject
+            ?: return message.copy(encryptionFailureReason = "decryption_failed")
         val senderId = message.senderId
         val messageId = message.id
 

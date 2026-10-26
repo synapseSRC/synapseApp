@@ -116,25 +116,21 @@ class SupabaseChatRepository(
         message: Message
     ): Message = withContext(AppDispatchers.IO) {
         try {
-            // Serialize this write against the concurrent inbox-refresh path that also
-            // writes to the same chat's cache (getMessages active-chat branch).
             getCacheMutexForChat(chatId).withLock {
-                // Upsert the real-time message directly — it is the authoritative source.
-                // Skip placeholder content (encrypted messages not yet decryptable).
-                if (!encryptionHelper.isPlaceholder(message.content)) {
+                if (!encryptionHelper.isPlaceholder(message.content) &&
+                    !EncryptedPayloadDetector.isEncryptedPayload(message.content) &&
+                    message.encryptionFailureReason == null
+                ) {
                     cachedMessageDao?.upsert(message)
                     recordCacheSyncTime(chatId)
                 }
             }
-            // Read outside the lock — only the write needs serialization.
-            // If the cache already holds a decrypted version of this message (e.g. from
-            // background sync or a prior decryption pass), prefer that content over an
-            // encrypted placeholder that may have arrived via the real-time channel.
             val cached = cachedMessageDao
                 ?.getMessages(chatId, 1)
                 ?.firstOrNull { it.id == message.id }
             if (cached != null &&
                 !encryptionHelper.isPlaceholder(cached.content) &&
+                !EncryptedPayloadDetector.isEncryptedPayload(cached.content) &&
                 cached.content.isNotBlank()
             ) {
                 cached
@@ -295,37 +291,32 @@ class SupabaseChatRepository(
 
             val messageDtos = dataSource.getMessages(chatId, limit, before, beforeId)
             val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
+            val sortedDecrypted = decrypted.sortedBy { it.createdAt }
 
             if (before == null) {
                 val activeChatId = getActiveChatId()
                 if (activeChatId != null && activeChatId.equals(chatId, ignoreCase = true)) {
-                    // Active chat: use merge strategy to preserve any real-time messages not yet
-                    // reflected in the server response. This prevents inbox refresh (forceNetwork=true)
-                    // from overwriting messages delivered via WebSocket before they propagate server-side.
-                    // Mutex ensures this write is serialized against concurrent real-time upserts.
                     getCacheMutexForChat(chatId).withLock {
                         val existingCached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
-                        val toDelete = reconcileServerMessagesWithCache(existingCached, decrypted, isRealTimeSource = false)
+                        val toDelete = reconcileServerMessagesWithCache(existingCached, sortedDecrypted, isRealTimeSource = false)
                         if (toDelete.isNotEmpty()) {
                             cachedMessageDao?.markDeleted(toDelete)
                         }
-                        val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                        val decryptableForCache = sortedDecrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
                         if (decryptableForCache.isNotEmpty()) {
                             cachedMessageDao?.upsertAll(decryptableForCache)
                             recordCacheSyncTime(chatId)
                         }
                     }
                 } else {
-                    // Inactive chat: standard overwrite is safe — no active real-time subscription
-                    // is writing to this chat's cache concurrently.
-                    val decryptableForCache = decrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                    val decryptableForCache = sortedDecrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
                     if (decryptableForCache.isNotEmpty()) {
                         cachedMessageDao?.upsertAll(decryptableForCache)
                     }
                 }
                 cachedMessageDao?.trimToLimit(chatId, limit)
             }
-            Result.success(decrypted)
+            Result.success(sortedDecrypted)
         } catch (t: Throwable) {
             val cached = cachedMessageDao?.getMessages(chatId, limit) ?: emptyList()
             if (cached.isNotEmpty()) Result.success(cached)
@@ -856,7 +847,10 @@ class SupabaseChatRepository(
 
             externalScope.launch {
                 if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
-                    cachedMessageDao?.upsert(domainMessage)
+                    getCacheMutexForChat(chatId).withLock {
+                        cachedMessageDao?.upsert(domainMessage)
+                        recordCacheSyncTime(chatId)
+                    }
                 }
                 conversationMutex.withLock {
                     val dao = cachedConversationDao
@@ -882,7 +876,10 @@ class SupabaseChatRepository(
 
             externalScope.launch {
                 if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
-                    cachedMessageDao?.upsert(domainMessage)
+                    getCacheMutexForChat(domainMessage.chatId).withLock {
+                        cachedMessageDao?.upsert(domainMessage)
+                        recordCacheSyncTime(domainMessage.chatId)
+                    }
                 }
                 val existing = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
                 val chatInfo = if (existing == null) dataSource.getChatInfo(domainMessage.chatId) else null
