@@ -59,28 +59,3 @@ fun ErrorState(
     }
 }
 
-@Composable
-fun NetworkErrorState(
-    modifier: Modifier = Modifier,
-    onRetry: () -> Unit
-) {
-    ErrorState(
-        title = "Connection Error",
-        message = "Unable to connect to the server. Please check your internet connection and try again.",
-        modifier = modifier,
-        onRetry = onRetry
-    )
-}
-
-@Composable
-fun LoadErrorState(
-    modifier: Modifier = Modifier,
-    onRetry: () -> Unit
-) {
-    ErrorState(
-        title = "Failed to Load",
-        message = "Something went wrong while loading the profile. Please try again.",
-        modifier = modifier,
-        onRetry = onRetry
-    )
-}

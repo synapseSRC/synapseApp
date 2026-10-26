@@ -5,11 +5,6 @@ import android.content.Intent
 import com.synapse.social.studioasinc.R
 
 object PostShareUtils {
-
-    fun getPostShareUrl(postId: String): String {
-        return "synapse://post/$postId"
-    }
-
     fun getPostShareText(context: Context, postId: String): String {
         return context.getString(R.string.share_post_synapse_text, postId)
     }

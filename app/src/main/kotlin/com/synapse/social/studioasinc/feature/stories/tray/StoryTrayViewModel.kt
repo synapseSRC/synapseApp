@@ -21,7 +21,6 @@ class StoryTrayViewModel @Inject constructor(
     private val userRepository: UserRepositoryImpl,
     private val authRepository: AuthRepository
 ) : ViewModel() {
-
     private val _storyTrayState = MutableStateFlow(StoryTrayState())
     val storyTrayState: StateFlow<StoryTrayState> = _storyTrayState.asStateFlow()
 
@@ -99,30 +98,6 @@ class StoryTrayViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 storyRepository.markAsSeen(storyId, viewerId)
-            }
-        }
-    }
-
-    fun markStoriesAsSeen(storyWithUser: StoryWithUser) {
-        _storyTrayState.update { state ->
-            val updatedFriends = state.friendStories.map { story ->
-                if (story.user.uid == storyWithUser.user.uid) {
-                    story.copy(hasUnseenStories = false)
-                } else {
-                    story
-                }
-            }
-            state.copy(friendStories = updatedFriends)
-        }
-
-        val viewerId = currentUserId ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            storyWithUser.stories.forEach { story ->
-                story.id?.let { id ->
-                    launch {
-                        storyRepository.markAsSeen(id, viewerId)
-                    }
-                }
             }
         }
     }

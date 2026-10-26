@@ -38,14 +38,4 @@ class SyncAccessibilitySettingsUseCase constructor(
             println("Failed to sync accessibility settings to remote: ${e.message}")
         }
     }
-
-    suspend fun syncFromRemote() {
-        val userId = authRepository.getCurrentUserId() ?: return
-        userPreferencesRepository.getPreferences(userId).onSuccess { preferences ->
-            preferences.increaseContrastEnabled?.let { settingsRepository.setIncreaseContrastEnabled(it) }
-            preferences.highContrastTextEnabled?.let { settingsRepository.setHighContrastTextEnabled(it) }
-            preferences.reduceAnimationsEnabled?.let { settingsRepository.setReduceAnimationsEnabled(it) }
-            preferences.autoplayAnimationsEnabled?.let { settingsRepository.setAutoplayAnimationsEnabled(it) }
-        }
-    }
 }

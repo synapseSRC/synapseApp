@@ -40,21 +40,3 @@ interface SyncableEntity {
     val syncVersion: Int
 }
 
-/**
- * Direction of sync operation.
- */
-enum class SyncDirection {
-    PULL,
-    PUSH,
-    BIDIRECTIONAL
-}
-
-/**
- * Strategy for resolving sync conflicts. Remote wins by default since Supabase is authoritative.
- */
-enum class SyncConflictResolution {
-    REMOTE_WINS,
-    LOCAL_WINS,
-    MERGE,
-    MANUAL
-}

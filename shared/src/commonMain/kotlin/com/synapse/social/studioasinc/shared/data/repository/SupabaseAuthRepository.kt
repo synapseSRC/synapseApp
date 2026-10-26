@@ -604,13 +604,6 @@ class SupabaseAuthRepository(
         }
     }
 
-    // Compatibility alias
-    fun getCurrentUserUid(): String? = getCurrentUserId()
-
-    fun getCurrentUserIdentities(): List<io.github.jan.supabase.auth.user.Identity>? {
-        return client.auth.currentUserOrNull()?.identities
-    }
-
     private fun logSafeError(message: String, e: Throwable) {
         Napier.e("$message: ${e::class.simpleName} - ${e.message}", tag = TAG)
     }

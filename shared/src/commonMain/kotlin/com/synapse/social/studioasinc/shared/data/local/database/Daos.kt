@@ -7,7 +7,3 @@ interface UserDao {
     suspend fun clearUsers()
 }
 
-interface IdentityKeyDao {
-    suspend fun insertIdentityKey(key: IdentityKeyEntity)
-    suspend fun getIdentityKey(userId: String): IdentityKeyEntity?
-}

@@ -18,12 +18,9 @@ internal data class CacheEntry<T>(val data: T, val timestamp: Long = System.curr
 }
 
 internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
-
     val profileCache = ConcurrentHashMap<String, CacheEntry<ProfileData>>()
-    val userProfileCache = ConcurrentHashMap<String, Result<ProfileData>>()
 
     companion object {
-        const val PREF_LAST_SYNC_TIME = "last_post_sync_time"
         const val CACHE_EXPIRATION_MS = 5 * 60 * 1000L
         const val TAG = "PostRepositoryImpl"
         val PGRST_REGEX = Regex("PGRST\\d+")

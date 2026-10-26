@@ -120,7 +120,6 @@ class ProfileViewModel @Inject constructor(
     private val postRepository: PostRepositoryImpl,
     private val summarizePostUseCase: SummarizePostUseCase
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(ProfileScreenState())
     val state: StateFlow<ProfileScreenState> = _state.asStateFlow()
 
@@ -601,11 +600,6 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             muteUserUseCase(_state.value.currentUserId, mutedUserId).collect {}
         }
-    }
-
-    fun mapPostToState(post: Post): PostCardState {
-        val currentProfile = (_state.value.profileState as? ProfileUiState.Success)?.profile
-        return PostUiMapper.mapToState(post, currentProfile)
     }
 
     private fun checkStory(userId: String) {

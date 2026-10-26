@@ -1,11 +1,8 @@
 
 
-
 package com.synapse.social.studioasinc.domain.model
 
 import kotlinx.serialization.Serializable
-
-
 
 @Serializable
 data class Attachment(
@@ -17,7 +14,6 @@ data class Attachment(
     var mimeType: String? = null,
     var size: Long = 0
 ) {
-
     constructor(publicId: String?, url: String?, width: Int, height: Int, type: String?) : this(
         publicId = publicId,
         url = url,
@@ -28,36 +24,11 @@ data class Attachment(
         size = 0
     )
 
-
-
     fun isVideo(): Boolean {
         return "video" == type || (publicId?.contains("|video") == true)
     }
 
-
-
     fun isImage(): Boolean {
         return "image" == type || !isVideo()
-    }
-
-
-
-    fun getAspectRatio(): Float {
-        if (height > 0 && width > 0) {
-            return width.toFloat() / height
-        }
-        return 1.0f
-    }
-
-
-
-    fun isPortrait(): Boolean {
-        return height > width && width > 0
-    }
-
-
-
-    fun isLandscape(): Boolean {
-        return width > height && height > 0
     }
 }

@@ -271,28 +271,3 @@ fun PostCardSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun PhotoGridSkeleton(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(Spacing.space4)
-    ) {
-        repeat(3) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
-            ) {
-                repeat(3) {
-                    ShimmerBox(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f),
-                        shape = RoundedCornerShape(Sizes.CornerSmall)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(Spacing.space4))
-        }
-    }
-}

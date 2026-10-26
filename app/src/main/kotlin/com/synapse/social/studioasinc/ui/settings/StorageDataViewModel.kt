@@ -10,16 +10,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 
-
-
 class StorageDataViewModel(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
-
-
-
-
-
     private val _cacheSize = MutableStateFlow(0L)
     val cacheSize: StateFlow<Long> = _cacheSize.asStateFlow()
 
@@ -30,14 +23,11 @@ class StorageDataViewModel(
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _isClearingCache = MutableStateFlow(false)
-    val isClearingCache: StateFlow<Boolean> = _isClearingCache.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _cacheClearedMessage = MutableStateFlow<String?>(null)
-    val cacheClearedMessage: StateFlow<String?> = _cacheClearedMessage.asStateFlow()
-
 
     val mediaUploadQuality = settingsRepository.mediaUploadQuality
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MediaUploadQuality.STANDARD)
@@ -55,10 +45,6 @@ class StorageDataViewModel(
         loadStorageSettings()
         calculateCacheSize()
     }
-
-
-
-
 
     fun setMediaUploadQuality(quality: MediaUploadQuality) {
         viewModelScope.launch {
@@ -87,16 +73,9 @@ class StorageDataViewModel(
         }
     }
 
-
-
-
-
-
-
     private fun loadStorageSettings() {
         viewModelScope.launch {
             try {
-
                 settingsRepository.cacheSize.collect { size ->
                     _cacheSize.value = size
                 }
@@ -107,7 +86,6 @@ class StorageDataViewModel(
 
         viewModelScope.launch {
             try {
-
                 settingsRepository.dataSaverEnabled.collect { enabled ->
                     _dataSaverEnabled.value = enabled
                 }
@@ -117,12 +95,6 @@ class StorageDataViewModel(
             }
         }
     }
-
-
-
-
-
-
 
     fun calculateCacheSize() {
         viewModelScope.launch {
@@ -143,12 +115,6 @@ class StorageDataViewModel(
             }
         }
     }
-
-
-
-
-
-
 
     fun clearCache() {
         viewModelScope.launch {
@@ -180,62 +146,6 @@ class StorageDataViewModel(
         }
     }
 
-
-
-
-
-
-
-    fun toggleDataSaver(enabled: Boolean) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            try {
-                settingsRepository.setDataSaverEnabled(enabled)
-                android.util.Log.d(
-                    "StorageDataViewModel",
-                    "Data saver ${if (enabled) "enabled" else "disabled"}"
-                )
-            } catch (e: Exception) {
-                android.util.Log.e("StorageDataViewModel", "Failed to toggle data saver", e)
-                _error.value = "Failed to update data saver"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-
-
-
-
-
-
-    fun getStorageStatistics(): StorageStatistics {
-        val cacheSizeBytes = _cacheSize.value
-        return StorageStatistics(
-            cacheSize = cacheSizeBytes,
-            cacheSizeFormatted = formatBytes(cacheSizeBytes)
-        )
-    }
-
-
-
-
-
-
-
-    fun navigateToStorageProviderConfig() {
-        android.util.Log.d("StorageDataViewModel", "Navigate to storage provider configuration")
-
-    }
-
-
-
-
-
-
-
     private fun formatBytes(bytes: Long): String {
         return when {
             bytes < 1024 -> "$bytes B"
@@ -245,22 +155,8 @@ class StorageDataViewModel(
         }
     }
 
-
-
     fun clearError() {
         _error.value = null
     }
-
-
-
-    fun clearCacheClearedMessage() {
-        _cacheClearedMessage.value = null
-    }
 }
 
-
-
-data class StorageStatistics(
-    val cacheSize: Long,
-    val cacheSizeFormatted: String
-)

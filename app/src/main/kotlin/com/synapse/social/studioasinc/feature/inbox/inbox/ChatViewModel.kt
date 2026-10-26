@@ -88,7 +88,6 @@ class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 ) : ViewModel() {
-
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
 
@@ -117,7 +116,6 @@ class ChatViewModel @Inject constructor(
     val groupMemberNames: StateFlow<Map<String, String>> = _groupMemberNames.asStateFlow()
 
     private val _isCurrentUserAdmin = MutableStateFlow(false)
-    val isCurrentUserAdmin: StateFlow<Boolean> = _isCurrentUserAdmin.asStateFlow()
 
     private val _onlyAdminsCanMessage = MutableStateFlow(false)
     val onlyAdminsCanMessage: StateFlow<Boolean> = _onlyAdminsCanMessage.asStateFlow()
@@ -170,10 +168,8 @@ class ChatViewModel @Inject constructor(
     val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
 
     private val _isE2EEReady = MutableStateFlow(false)
-    val isE2EEReady: StateFlow<Boolean> = _isE2EEReady.asStateFlow()
 
     private val _isScreenVisible = MutableStateFlow(false)
-    val isScreenVisible: StateFlow<Boolean> = _isScreenVisible.asStateFlow()
 
     private var currentChatId: String? = null
 
@@ -1010,8 +1006,6 @@ currentUserIdProvider = { currentUserId.value },
     ) {
         mediaDelegate.uploadAndSendMultipleMedia(files, caption, quality)
     }
-
-    fun getFormattedTimestamp(timestamp: String?): String = TimestampFormatter.formatRelative(timestamp)
 
     private fun cleanup() {
         // Invalidate initialization first so any suspended fetch that resumes later cannot

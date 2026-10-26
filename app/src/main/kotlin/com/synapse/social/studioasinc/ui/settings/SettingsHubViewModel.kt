@@ -17,8 +17,6 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.HeroCard
 import com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction
 import com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository as DomainSettingsRepository
 
-
-
 @HiltViewModel
 class SettingsHubViewModel @Inject constructor(
     application: Application,
@@ -26,7 +24,6 @@ class SettingsHubViewModel @Inject constructor(
     private val getContextualHeroCardsUseCase: GetContextualHeroCardsUseCase,
     private val settingsRepository: DomainSettingsRepository
 ) : AndroidViewModel(application) {
-
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
@@ -54,8 +51,6 @@ class SettingsHubViewModel @Inject constructor(
         loadSettingsCategories()
     }
 
-
-
     private fun loadUserProfile() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -74,7 +69,6 @@ class SettingsHubViewModel @Inject constructor(
                         avatarUrl = currentUser.avatar
                     )
                 } else {
-
                     try {
                         val authService = SupabaseAuthenticationService.getInstance(getApplication())
                         val authUser = authService.getCurrentUser()
@@ -87,7 +81,6 @@ class SettingsHubViewModel @Inject constructor(
                                 avatarUrl = null
                             )
                         } else {
-
                             _userProfileSummary.value = UserProfileSummary(
                                 id = "",
                                 displayName = "User",
@@ -120,13 +113,9 @@ class SettingsHubViewModel @Inject constructor(
         }
     }
 
-
-
     private fun loadSettingsCategories() {
         _settingsGroups.value = SettingsDataProvider.getSettingsGroups()
     }
-
-
 
     fun onNavigateToCategory(destination: SettingsDestination) {
         android.util.Log.d("SettingsHubViewModel", "Navigating to: ${destination.route}")
@@ -166,13 +155,5 @@ class SettingsHubViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-
-
-    fun refreshUserProfile() {
-
-        UserProfileManager.clearCache()
-        loadUserProfile()
     }
 }

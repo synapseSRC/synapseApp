@@ -191,10 +191,6 @@ fun AddToPostSheet(
         }
 }
 
-
-
-
-
 @Composable
 fun StickyBottomActionArea(
     onMediaClick: () -> Unit,
@@ -247,98 +243,6 @@ fun StickyBottomActionArea(
     }
 }
 
-
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TagPeopleSheet(
-    onDismiss: () -> Unit,
-    onPersonSelected: (User) -> Unit
-) {
-
-    val mockUsers = listOf(
-        User(id="1", uid="1", username="john_doe", displayName="John Doe"),
-        User(id="2", uid="2", username="jane_smith", displayName="Jane Smith"),
-        User(id="3", uid="3", username="alex_chen", displayName="Alex Chen"),
-        User(id="4", uid="4", username="sarah_jones", displayName="Sarah Jones")
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface
-    ) {
-         Column(modifier = Modifier.padding(Spacing.space16)) {
-             Text(stringResource(R.string.tag_people_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-             Spacer(modifier = Modifier.height(Spacing.space16))
-             LazyColumn {
-                 items(mockUsers) { user ->
-                     Row(
-                         modifier = Modifier
-                             .fillMaxWidth()
-                             .clickable { onPersonSelected(user) }
-                             .padding(vertical = Spacing.space12),
-                         verticalAlignment = Alignment.CenterVertically
-                     ) {
-                         Box(modifier = Modifier.size(Sizes.IconMassive).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape))
-                         Spacer(modifier = Modifier.width(Spacing.space16))
-                         Text(user.displayName ?: user.username ?: "Unknown")
-                     }
-                 }
-             }
-             Spacer(modifier = Modifier.height(Spacing.space32))
-         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FeelingActivitySheet(
-    onDismiss: () -> Unit,
-    onFeelingSelected: (FeelingActivity) -> Unit
-) {
-    val feelings = listOf(
-        FeelingActivity("😊", "Happy", FeelingType.MOOD),
-        FeelingActivity("😎", "Cool", FeelingType.MOOD),
-        FeelingActivity("😍", "Loved", FeelingType.MOOD),
-        FeelingActivity("😢", "Sad", FeelingType.MOOD),
-        FeelingActivity("🥳", "Celebrating", FeelingType.MOOD),
-        FeelingActivity("😴", "Tired", FeelingType.MOOD)
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface
-    ) {
-         Column(modifier = Modifier.padding(Spacing.space16)) {
-             Text(stringResource(R.string.feeling_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-             Spacer(modifier = Modifier.height(Spacing.space16))
-             LazyVerticalGrid(
-                 columns = GridCells.Fixed(2),
-                 verticalArrangement = Arrangement.spacedBy(Spacing.space8),
-                 horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
-             ) {
-                 items(feelings) { feeling ->
-                     Surface(
-                         shape = RoundedCornerShape(Sizes.CornerMedium),
-                         color = MaterialTheme.colorScheme.surfaceContainer,
-                         onClick = { onFeelingSelected(feeling) }
-                     ) {
-                         Row(
-                             modifier = Modifier.padding(Spacing.space16),
-                             verticalAlignment = Alignment.CenterVertically
-                         ) {
-                             Text(feeling.emoji, style = MaterialTheme.typography.headlineSmall)
-                             Spacer(modifier = Modifier.width(Spacing.space12))
-                             Text(feeling.text)
-                         }
-                     }
-                 }
-             }
-             Spacer(modifier = Modifier.height(Spacing.space32))
-         }
-    }
-}
 @Composable
 fun YoutubeAddDialog(
     onDismiss: () -> Unit,

@@ -21,7 +21,6 @@ class PasskeysViewModel @Inject constructor(
     private val addPasskeyUseCase: AddPasskeyUseCase,
     private val removePasskeyUseCase: RemovePasskeyUseCase
 ) : ViewModel() {
-
     private val _passkeys = MutableStateFlow<List<Passkey>>(emptyList())
     val passkeys: StateFlow<List<Passkey>> = _passkeys.asStateFlow()
 
@@ -45,41 +44,6 @@ class PasskeysViewModel @Inject constructor(
                 .onFailure { e ->
                     Log.e("PasskeysViewModel", "Error loading passkeys", e)
                     _error.value = e.message ?: "Failed to load passkeys"
-                }
-            _isLoading.value = false
-        }
-    }
-
-    fun addPasskey(activityContext: Context) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            addPasskeyUseCase()
-                .onSuccess {
-                    Log.d("PasskeysViewModel", "Passkey added successfully")
-                    loadPasskeys() // Reload the list
-                }
-                .onFailure { e ->
-                    Log.e("PasskeysViewModel", "Error adding passkey", e)
-                    _error.value = e.message ?: "Error adding passkey"
-                }
-
-            _isLoading.value = false
-        }
-    }
-
-    fun removePasskey(id: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            removePasskeyUseCase(id)
-                .onSuccess {
-                    Log.d("PasskeysViewModel", "Passkey removed successfully")
-                    loadPasskeys()
-                }
-                .onFailure { e ->
-                    Log.e("PasskeysViewModel", "Error removing passkey", e)
-                    _error.value = e.message ?: "Failed to remove passkey"
                 }
             _isLoading.value = false
         }

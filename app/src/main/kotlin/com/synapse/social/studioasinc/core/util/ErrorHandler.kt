@@ -9,13 +9,8 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
-
-
 object ErrorHandler {
-
     private const val TAG = "ErrorHandler"
-
-
 
     enum class ErrorType {
         REPLY,
@@ -27,8 +22,6 @@ object ErrorHandler {
         GENERIC
     }
 
-
-
     fun getErrorMessage(
         context: Context,
         errorType: ErrorType,
@@ -36,9 +29,7 @@ object ErrorHandler {
         messageId: String? = null,
         userId: String? = null
     ): String {
-
         logError(errorType, exception, messageId, userId)
-
 
         return when (errorType) {
             ErrorType.REPLY -> getReplyErrorMessage(context, exception)
@@ -51,37 +42,6 @@ object ErrorHandler {
         }
     }
 
-
-
-    fun showErrorSnackbar(
-        view: View,
-        message: String,
-        duration: Int = Snackbar.LENGTH_LONG,
-        retryAction: (() -> Unit)? = null
-    ) {
-        val snackbar = Snackbar.make(view, message, duration)
-
-        if (retryAction != null) {
-            snackbar.setAction(view.context.getString(R.string.error_retry_action)) {
-                retryAction.invoke()
-            }
-        }
-
-        snackbar.show()
-    }
-
-
-
-    fun showSuccessSnackbar(
-        view: View,
-        message: String,
-        duration: Int = Snackbar.LENGTH_SHORT
-    ) {
-        Snackbar.make(view, message, duration).show()
-    }
-
-
-
     fun isNetworkError(exception: Throwable): Boolean {
         return exception is IOException ||
                 exception is SocketTimeoutException ||
@@ -91,22 +51,10 @@ object ErrorHandler {
                 exception.message?.contains("timeout", ignoreCase = true) == true
     }
 
-
-
     fun isRateLimitError(exception: Throwable): Boolean {
         return exception.message?.contains("rate limit", ignoreCase = true) == true ||
                 exception.message?.contains("429", ignoreCase = true) == true
     }
-
-
-
-    fun isRetryableError(exception: Throwable): Boolean {
-        return isNetworkError(exception) ||
-                exception.message?.contains("timeout", ignoreCase = true) == true ||
-                exception.message?.contains("temporary", ignoreCase = true) == true
-    }
-
-
 
     private fun getReplyErrorMessage(context: Context, exception: Throwable): String {
         return when {
@@ -122,7 +70,6 @@ object ErrorHandler {
             isNetworkError(exception) ->
                 context.getString(R.string.error_forward_no_network)
             exception.message?.contains("permission", ignoreCase = true) == true -> {
-
                 val chatName = extractChatName(exception.message)
                 if (chatName != null) {
                     context.getString(R.string.error_forward_no_permission, chatName)
@@ -197,8 +144,6 @@ object ErrorHandler {
         return exception.message ?: context.getString(R.string.error_unexpected)
     }
 
-
-
     private fun logError(
         errorType: ErrorType,
         exception: Throwable,
@@ -214,23 +159,16 @@ object ErrorHandler {
         Log.e(TAG, "Message action error - $contextInfo", exception)
     }
 
-
-
     private fun extractChatName(message: String?): String? {
         if (message == null) return null
-
-
 
         val regex = "\\[([^\\]]+)\\]".toRegex()
         val match = regex.find(message)
         return match?.groupValues?.getOrNull(1)
     }
 
-
-
     private fun extractMinutesFromRateLimitError(message: String?): Int {
         if (message == null) return 60
-
 
         val regex = "(\\d+)\\s*minute".toRegex(RegexOption.IGNORE_CASE)
         val match = regex.find(message)

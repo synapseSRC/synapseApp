@@ -18,10 +18,7 @@ import java.io.IOException
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
 
-
-
 class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote.services.interfaces.IAuthenticationService {
-
     private val context: Context
     private val client = SupabaseClient.client
     private var _authConfig: AuthConfig? = null
@@ -36,21 +33,15 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             _authConfig = value
         }
 
-
-
     constructor(context: Context) {
         this.context = context.applicationContext
-
     }
-
-
 
     constructor() {
         val instance = INSTANCE ?: throw IllegalStateException(
             "SupabaseAuthenticationService not initialized. Use constructor with context or call initialize(context) first."
         )
         this.context = instance.context
-
     }
 
     companion object {
@@ -59,8 +50,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         @Volatile
         private var INSTANCE: SupabaseAuthenticationService? = null
 
-
-
         @JvmStatic
         fun getInstance(context: Context): SupabaseAuthenticationService {
             return INSTANCE ?: synchronized(this) {
@@ -68,14 +57,10 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             }
         }
 
-
-
         @JvmStatic
         fun create(context: Context): SupabaseAuthenticationService {
             return SupabaseAuthenticationService(context)
         }
-
-
 
         @JvmStatic
         fun createForDevelopment(context: Context): SupabaseAuthenticationService {
@@ -84,16 +69,12 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             return service
         }
 
-
-
         @JvmStatic
         fun createForProduction(context: Context): SupabaseAuthenticationService {
             val service = SupabaseAuthenticationService(context)
             service.disableDevelopmentMode()
             return service
         }
-
-
 
         @JvmStatic
         fun initialize(context: Context) {
@@ -106,8 +87,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             }
         }
 
-
-
         @JvmStatic
         fun getInstance(): SupabaseAuthenticationService {
             return INSTANCE ?: throw IllegalStateException(
@@ -116,33 +95,17 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         }
     }
 
-
-
-    fun updateConfig(newConfig: AuthConfig) {
-        authConfig = newConfig
-        AuthConfig.save(context, newConfig)
-        debugLog("Authentication configuration updated: $newConfig")
-    }
-
-
-
     fun getConfig(): AuthConfig = authConfig
-
-
 
     fun enableDevelopmentMode() {
         authConfig = AuthConfig.enableDevelopmentMode(context)
         debugLog("Development mode enabled - email verification bypassed")
     }
 
-
-
     fun disableDevelopmentMode() {
         authConfig = AuthConfig.disableDevelopmentMode(context)
         debugLog("Development mode disabled - email verification required")
     }
-
-
 
     private fun debugLog(message: String, throwable: Throwable? = null) {
         if (authConfig.isDebugLoggingEnabled()) {
@@ -153,8 +116,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             }
         }
     }
-
-
 
     private fun logAuthenticationStep(step: String, email: String? = null, success: Boolean? = null) {
         if (authConfig.isDebugLoggingEnabled()) {
@@ -205,8 +166,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         val errorMessage = AuthErrorHandler.getErrorMessage(authError)
         return Result.failure(Exception(errorMessage))
     }
-
-
 
     override suspend fun signUp(email: String, password: String): Result<AuthResult> {
         return withContext(Dispatchers.IO) {
@@ -292,8 +251,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             }
         }
     }
-
-
 
     override suspend fun signIn(email: String, password: String): Result<AuthResult> {
         return withContext(Dispatchers.IO) {
@@ -384,12 +341,9 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         }
     }
 
-
-
     override suspend fun signOut(): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-
                 OneSignal.logout()
                 debugLog("Logged out from OneSignal")
 
@@ -401,13 +355,10 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         }
     }
 
-
-
     override suspend fun resendVerificationEmail(email: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 logAuthenticationStep("Starting resend verification email", email)
-
 
                 if (authConfig.shouldBypassEmailVerification()) {
                     debugLog("Resend verification email bypassed in development mode")
@@ -415,12 +366,10 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                     return@withContext Result.success(Unit)
                 }
 
-
                 if (!SupabaseClient.isConfigured()) {
                     logAuthenticationStep("Resend verification failed - Supabase not configured", email, false)
                     return@withContext Result.failure(Exception("Supabase not configured. Please set up your credentials."))
                 }
-
 
                 AuthErrorHandler.executeWithRetry(
                     maxAttempts = authConfig.getEffectiveRetryAttempts(),
@@ -431,7 +380,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                     Unit
                 }
 
-
                 AuthErrorHandler.logResendVerificationAttempt(email, true)
                 logAuthenticationStep("Resend verification email completed", email, true)
 
@@ -439,7 +387,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             } catch (e: Exception) {
                 logAuthenticationStep("Resend verification email failed", email, false)
                 debugLog("Failed to resend verification email", e)
-
 
                 AuthErrorHandler.logResendVerificationAttempt(email, false, e.message)
 
@@ -450,13 +397,10 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         }
     }
 
-
-
     override suspend fun checkEmailVerified(email: String): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
                 logAuthenticationStep("Checking email verification status", email)
-
 
                 if (authConfig.shouldBypassEmailVerification()) {
                     debugLog("Email verification check bypassed in development mode - returning true")
@@ -464,12 +408,10 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                     return@withContext Result.success(true)
                 }
 
-
                 if (!SupabaseClient.isConfigured()) {
                     logAuthenticationStep("Email verification check failed - Supabase not configured", email, false)
                     return@withContext Result.failure(Exception("Supabase not configured. Please set up your credentials."))
                 }
-
 
                 val isVerified = AuthErrorHandler.executeWithRetry(
                     maxAttempts = authConfig.getEffectiveRetryAttempts(),
@@ -486,7 +428,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                     }
                 }
 
-
                 AuthErrorHandler.logVerificationAttempt(email, isVerified)
                 logAuthenticationStep("Email verification check completed", email, isVerified)
 
@@ -494,7 +435,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             } catch (e: Exception) {
                 logAuthenticationStep("Email verification check failed", email, false)
                 debugLog("Failed to check email verification status", e)
-
 
                 AuthErrorHandler.logVerificationAttempt(email, false, e.message)
 
@@ -505,10 +445,7 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         }
     }
 
-
-
     override fun getCurrentUser(): User? {
-
         if (!SupabaseClient.isConfigured()) {
             return null
         }
@@ -526,13 +463,9 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
         }
     }
 
-
-
     override fun getCurrentUserId(): String? {
         return client.auth.currentUserOrNull()?.id
     }
-
-
 
     override suspend fun updatePassword(newPassword: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
@@ -546,8 +479,6 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
             }
         }
     }
-
-
 
     override suspend fun updateEmail(newEmail: String): Result<Unit> {
         return withContext(Dispatchers.IO) {

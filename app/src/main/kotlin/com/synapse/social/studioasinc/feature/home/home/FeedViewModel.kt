@@ -74,8 +74,6 @@ class FeedViewModel @Inject constructor(
     private val unrepostPostUseCase: UnrepostPostUseCase,
     private val summarizePostUseCase: SummarizePostUseCase
 ) : BaseViewModel<FeedUiState>(FeedUiState()) {
-
-
     private val _modifiedPosts = MutableStateFlow<Map<String, Post>>(emptyMap())
     private val MAX_MODIFIED_POSTS = 100
 
@@ -103,8 +101,6 @@ class FeedViewModel @Inject constructor(
         }
     }
     .cachedIn(viewModelScope)
-
-    private var savedScrollPosition: ScrollPositionState? = null
 
     init {
         viewModelScope.launch {
@@ -150,11 +146,6 @@ class FeedViewModel @Inject constructor(
             }
             newMap
         }
-    }
-
-    @VisibleForTesting
-    fun getModifiedPostsCount(): Int {
-        return _modifiedPosts.value.size
     }
 
     fun likePost(post: Post) {
@@ -262,34 +253,12 @@ class FeedViewModel @Inject constructor(
         refreshTrigger.value += 1
     }
 
-    fun mapPostToState(post: Post): PostCardState {
-        return PostUiMapper.mapToState(post)
-    }
-
-    fun saveScrollPosition(position: Int, offset: Int) {
-        savedScrollPosition = ScrollPositionState(position, offset)
-    }
-
-    fun restoreScrollPosition(): ScrollPositionState? {
-        val position = savedScrollPosition
-        return if (position != null && !position.isExpired()) {
-            position
-        } else {
-            savedScrollPosition = null
-            null
-        }
-    }
-
     fun isPostOwner(post: Post): Boolean {
         return isPostOwnerUseCase(post.authorUid)
     }
 
     fun areCommentsDisabled(post: Post): Boolean {
         return post.postDisableReplies?.toBoolean() ?: false
-    }
-
-    fun editPost(post: Post) {
-        // Navigation handled in UI
     }
 
     fun deletePost(post: Post) {

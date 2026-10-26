@@ -49,7 +49,6 @@ import kotlinx.coroutines.SupervisorJob
 
 @HiltAndroidApp
 class SynapseApplication : Application(), SingletonImageLoader.Factory {
-
     companion object {
         lateinit var instance: SynapseApplication
             private set
@@ -85,7 +84,6 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
 
     @Inject lateinit var startPresenceTrackingUseCase: StartPresenceTrackingUseCase
     @Inject lateinit var stopPresenceTrackingUseCase: StopPresenceTrackingUseCase
-    @Inject lateinit var updatePresenceUseCase: UpdatePresenceUseCase
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -124,12 +122,9 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
 
         setupAuthSessionObserver()
 
-
         initializeMaintenanceServices()
 
-
         applyThemeOnStartup()
-
 
         if (AuthDevelopmentUtils.isDevelopmentBuild()) {
             AuthDevelopmentUtils.logAuthConfig(this)

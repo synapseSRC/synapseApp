@@ -1,40 +1,21 @@
 package com.synapse.social.studioasinc.ui.settings
 
-
-
 sealed class SettingsDestination(val route: String) {
-
-
-
     object Hub : SettingsDestination(ROUTE_HUB)
-
-
 
     object Account : SettingsDestination(ROUTE_ACCOUNT)
 
-
-
     object Privacy : SettingsDestination(ROUTE_PRIVACY)
-
-
 
     object Appearance : SettingsDestination(ROUTE_APPEARANCE)
 
-
-
     object Notifications : SettingsDestination(ROUTE_NOTIFICATIONS)
-
-
 
     object Storage : SettingsDestination(ROUTE_STORAGE)
 
     object BackupRestore : SettingsDestination(ROUTE_BACKUP_RESTORE)
 
-
-
     object Language : SettingsDestination(ROUTE_LANGUAGE)
-
-
 
     object About : SettingsDestination(ROUTE_ABOUT)
 
@@ -44,51 +25,27 @@ sealed class SettingsDestination(val route: String) {
 
     object AboutEmpty : SettingsDestination(ROUTE_ABOUT_EMPTY)
 
-
-
     object StorageProvider : SettingsDestination(ROUTE_STORAGE_PROVIDER)
-
-
 
     object Licenses : SettingsDestination(ROUTE_LICENSES)
 
-
-
     object SynapsePlus : SettingsDestination(ROUTE_SYNAPSE_PLUS)
-
-
 
     object Avatar : SettingsDestination(ROUTE_AVATAR)
 
-
-
     object Favourites : SettingsDestination(ROUTE_FAVOURITES)
-
-
 
     object Accessibility : SettingsDestination(ROUTE_ACCESSIBILITY)
 
-
-
     object Search : SettingsDestination(ROUTE_SEARCH)
-
-
 
     object ApiKey : SettingsDestination(ROUTE_API_KEY)
 
-
-
     object RequestAccountInfo : SettingsDestination(ROUTE_REQUEST_ACCOUNT_INFO)
-
-
 
     object ManageStorage : SettingsDestination(ROUTE_MANAGE_STORAGE)
 
-
-
     object NetworkUsage : SettingsDestination(ROUTE_NETWORK_USAGE)
-
-
 
     object BusinessPlatform : SettingsDestination(ROUTE_BUSINESS_PLATFORM)
 
@@ -122,14 +79,9 @@ sealed class SettingsDestination(val route: String) {
 
     object PrivacyCheckup : SettingsDestination(ROUTE_PRIVACY_CHECKUP)
 
-    object PrivacyCheckupCategory : SettingsDestination(ROUTE_PRIVACY_CHECKUP_CATEGORY)
-
-    object PrivacyExceptionSelector : SettingsDestination(ROUTE_PRIVACY_EXCEPTION_SELECTOR)
-
     object AppLock : SettingsDestination(ROUTE_APP_LOCK)
 
     companion object {
-
         const val ROUTE_HUB = "settings_hub"
         const val ROUTE_ACCOUNT = "settings_account"
         const val ROUTE_PRIVACY = "settings_privacy"
@@ -178,53 +130,6 @@ sealed class SettingsDestination(val route: String) {
 
         fun createPrivacyExceptionSelectorRoute(settingKey: String): String =
             "settings_privacy_exception_selector/$settingKey"
-
-
-        fun allDestinations(): List<SettingsDestination> = listOf(
-            Hub,
-            Account,
-            Privacy,
-            Appearance,
-            Notifications,
-            Storage,
-            BackupRestore,
-            StorageProvider,
-            Language,
-            About,
-            WhatsNew,
-            Feedback,
-            AboutEmpty,
-            Licenses,
-            SynapsePlus,
-            Avatar,
-            Favourites,
-            Accessibility,
-            ApiKey,
-            RequestAccountInfo,
-            ManageStorage,
-            NetworkUsage,
-            BusinessPlatform,
-            ChangeNumber,
-            BrandPartnerships,
-            BlockedContacts,
-            ChatSettings,
-            ChatFolders,
-            Flags,
-            Font,
-            ScheduledPosts,
-            PrivacyLastSeen,
-            PrivacyProfilePhoto,
-            PrivacyAbout,
-            PrivacyStatus,
-            PrivacyGroups,
-            PrivacyDisappearingMessages,
-            PrivacyCheckup,
-            PrivacyCheckupCategory,
-            PrivacyExceptionSelector,
-            AppLock
-        )
-
-
 
         fun fromRoute(route: String): SettingsDestination? = when (route) {
             ROUTE_HUB -> Hub

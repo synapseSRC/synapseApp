@@ -60,36 +60,6 @@ fun EmptyState(
 }
 
 @Composable
-fun EmptyPostsState(modifier: Modifier = Modifier) {
-    EmptyState(
-        icon = Icons.Default.PostAdd,
-        title = stringResource(R.string.empty_posts_title),
-        message = stringResource(R.string.empty_posts_message),
-        modifier = modifier
-    )
-}
-
-@Composable
-fun EmptyPhotosState(modifier: Modifier = Modifier) {
-    EmptyState(
-        icon = Icons.Default.PhotoLibrary,
-        title = stringResource(R.string.empty_photos_title),
-        message = stringResource(R.string.empty_photos_message),
-        modifier = modifier
-    )
-}
-
-@Composable
-fun EmptyReelsState(modifier: Modifier = Modifier) {
-    EmptyState(
-        icon = Icons.Default.VideoLibrary,
-        title = stringResource(R.string.empty_reels_title),
-        message = stringResource(R.string.empty_reels_message),
-        modifier = modifier
-    )
-}
-
-@Composable
 fun EmptyFollowingState(modifier: Modifier = Modifier) {
     EmptyState(
         icon = Icons.Default.PersonAdd,

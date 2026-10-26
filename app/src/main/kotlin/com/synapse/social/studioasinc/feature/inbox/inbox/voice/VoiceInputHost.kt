@@ -56,7 +56,6 @@ private const val LOCK_PILL_CHEVRON_END_OFFSET_DP = -2f
 private const val LOCK_PILL_CHEVRON_BOUNCE_DURATION_MILLIS = 1_400
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
-private val LOCK_PILL_GAP = Spacing.space8
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.space4 + Spacing.space8
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
@@ -70,7 +69,6 @@ private val LOCK_PILL_WIDTH = 48.dp
 private val LOCK_PILL_BASE_HEIGHT = 120.dp
 private val LOCK_PILL_ICON_SIZE = 22.dp
 private val LOCK_PILL_CHEVRON_SIZE = 16.dp
-private val LOCK_PILL_CORNER_RADIUS = 24.dp
 // Fixed track: the pill's resting top sits this far above the mic button's top.
 private val LOCK_PILL_TRACK_GAP = Spacing.space8
 // Travel distance the pill slides up from rest to the lock target (≈ lockThreshold).

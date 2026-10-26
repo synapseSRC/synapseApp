@@ -25,21 +25,14 @@ import kotlinx.coroutines.CancellationException
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 
-
-
 class ReactionRepositoryImpl @Inject constructor(
     private val client: SupabaseClient
 ) : com.synapse.social.studioasinc.domain.repository.ReactionRepository {
-
     companion object {
         private const val TAG = "ReactionRepositoryImpl"
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 100L
     }
-
-
-
-
 
     override suspend fun toggleReaction(
         targetId: String,
@@ -94,7 +87,6 @@ class ReactionRepositoryImpl @Inject constructor(
             var lastException: Exception? = null
             repeat(MAX_RETRIES) { attempt ->
                 try {
-
                     val existingReaction = client.from(tableName)
                         .select { filter { eq(idColumn, targetId); eq("user_id", userId) } }
                         .decodeSingleOrNull<JsonObject>()
@@ -102,13 +94,11 @@ class ReactionRepositoryImpl @Inject constructor(
                     val result = if (existingReaction != null) {
                         val existingType = existingReaction["reaction_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                         if (existingType == reactionType.name.lowercase()) {
-
                             client.from(tableName)
                                 .delete { filter { eq(idColumn, targetId); eq("user_id", userId) } }
                             Log.d(TAG, "Reaction removed for $targetType $targetId")
                             ReactionToggleResult.REMOVED
                         } else {
-
                             client.from(tableName)
                                 .update({
                                     set("reaction_type", reactionType.name.lowercase())
@@ -117,7 +107,6 @@ class ReactionRepositoryImpl @Inject constructor(
                             ReactionToggleResult.UPDATED
                         }
                     } else {
-
                         client.from(tableName).insert(buildJsonObject {
                             put("user_id", userId)
                             put(idColumn, targetId)
@@ -154,8 +143,6 @@ class ReactionRepositoryImpl @Inject constructor(
             Result.failure(Exception(mapSupabaseError(e)))
         }
     }
-
-
 
     override suspend fun getReactionSummary(
         targetId: String,
@@ -219,8 +206,6 @@ class ReactionRepositoryImpl @Inject constructor(
         }
     }
 
-
-
     override suspend fun getUserReaction(
         targetId: String,
         targetType: String
@@ -245,8 +230,6 @@ class ReactionRepositoryImpl @Inject constructor(
             Result.failure(Exception(mapSupabaseError(e)))
         }
     }
-
-
 
     @Serializable
     internal data class PostReactionSummary(
@@ -397,7 +380,6 @@ class ReactionRepositoryImpl @Inject constructor(
             }
 
             applyReactionSummaries(posts, summaries)
-
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -452,101 +434,9 @@ class ReactionRepositoryImpl @Inject constructor(
         }
     }
 
-
-
-
-    suspend fun populateMessageReactions(messages: List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>): List<com.synapse.social.studioasinc.shared.domain.model.chat.Message> = withContext(Dispatchers.IO) {
-        if (messages.isEmpty()) return@withContext messages
-
-        try {
-            val allMessageIds = messages.map { it.id }
-            val semaphore = Semaphore(5)
-
-            val summaries = supervisorScope {
-                 allMessageIds.chunked(20).map { chunkIds ->
-                     async {
-                         semaphore.withPermit {
-                             try {
-                                 val reactions = client.from("message_reactions")
-                                     .select { filter { isIn("message_id", chunkIds) } }
-                                     .decodeList<JsonObject>()
-
-                                 val currentUser = client.auth.currentUserOrNull()
-
-                                 val reactionsByMessageId = reactions.groupBy { it.getStringOrNull("message_id") }
-
-                                 chunkIds.map { messageId ->
-                                     val messageReactions = reactionsByMessageId[messageId] ?: emptyList()
-
-                                     // Count each reaction type
-                                     val summaryMap = messageReactions
-                                         .mapNotNull { it.getStringOrNull("reaction_type") }
-                                         .groupBy { it }
-                                         .mapKeys { com.synapse.social.studioasinc.shared.domain.model.ReactionType.fromString(it.key) }
-                                         .mapValues { it.value.size }
-
-                                     val userReactionStr = currentUser?.let { user ->
-                                         messageReactions.firstOrNull { it.getStringOrNull("user_id") == user.id }
-                                             ?.getStringOrNull("reaction_type")
-                                     }
-                                     val userReaction = userReactionStr?.let { com.synapse.social.studioasinc.shared.domain.model.ReactionType.fromString(it) }
-
-                                     messageId to Pair(summaryMap, userReaction)
-                                 }
-                             } catch(e: Exception) {
-                                 Log.e(TAG, "Failed to fetch reaction summaries for message chunk", e)
-                                 chunkIds.map { messageId ->
-                                     messageId to Pair(emptyMap<com.synapse.social.studioasinc.shared.domain.model.ReactionType, Int>(), null)
-                                 }
-                             }
-                         }
-                     }
-                 }.awaitAll().flatten().toMap()
-            }
-
-            return@withContext messages.map { msg ->
-                val summary = summaries[msg.id]
-                if (summary != null) {
-                    msg.copy(reactions = summary.first, userReaction = summary.second)
-                } else {
-                    msg
-                }
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to populate message reactions", e)
-            messages
-        }
-    }
-
-suspend fun togglePostReaction(postId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(postId, "post", reactionType, oldReaction, skipCheck)
-
     suspend fun toggleCommentReaction(commentId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(commentId, "comment", reactionType, oldReaction, skipCheck)
 
-    suspend fun getPostReactionSummary(postId: String) =
-        getReactionSummary(postId, "post")
-
-    suspend fun getCommentReactionSummary(commentId: String) =
-        getReactionSummary(commentId, "comment")
-
     suspend fun toggleMessageReaction(messageId: String, reactionType: ReactionType, oldReaction: ReactionType? = null, skipCheck: Boolean = false) = toggleReaction(messageId, "message", reactionType, oldReaction, skipCheck)
-
-    suspend fun getMessageReactionSummary(messageId: String) =
-        getReactionSummary(messageId, "message")
-
-    suspend fun getUserMessageReaction(messageId: String) =
-        getUserReaction(messageId, "message")
-
-
-    suspend fun getUserPostReaction(postId: String) =
-        getUserReaction(postId, "post")
-
-    suspend fun getUserCommentReaction(commentId: String) =
-        getUserReaction(commentId, "comment")
-
-
-
 
     private fun getTableName(targetType: String): String {
         return when (targetType.lowercase()) {
@@ -563,10 +453,6 @@ suspend fun togglePostReaction(postId: String, reactionType: ReactionType, oldRe
             else -> "post_id"
         }
     }
-
-
-
-
 
     private fun mapSupabaseError(exception: Exception): String {
         val message = exception.message ?: "Unknown error"
@@ -590,38 +476,9 @@ suspend fun togglePostReaction(postId: String, reactionType: ReactionType, oldRe
         }
     }
 
-
-
-
-
-    fun determineToggleResult(
-        existingReactionType: ReactionType?,
-        newReactionType: ReactionType
-    ): ReactionToggleResult {
-        return when {
-            existingReactionType == null -> ReactionToggleResult.ADDED
-            existingReactionType == newReactionType -> ReactionToggleResult.REMOVED
-            else -> ReactionToggleResult.UPDATED
-        }
-    }
-
-
-
-    fun calculateReactionSummary(reactions: List<ReactionType>): Map<ReactionType, Int> {
-        return reactions.groupingBy { it }.eachCount()
-    }
-
-
-
-    fun isReactionSummaryAccurate(summary: Map<ReactionType, Int>, totalReactions: Int): Boolean {
-        return summary.values.sum() == totalReactions
-    }
-
     private fun JsonObject.getStringOrNull(key: String): String? {
         val element = this[key] ?: return null
         return if (element is kotlinx.serialization.json.JsonPrimitive) element.contentOrNull else null
     }
 }
-
-
 

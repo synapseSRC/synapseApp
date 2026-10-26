@@ -57,10 +57,8 @@ class SyncManager(
     private var reconnectJob: Job? = null
 
     private val _syncStates = MutableStateFlow<Map<String, SyncState>>(emptyMap())
-    val syncStates: StateFlow<Map<String, SyncState>> = _syncStates.asStateFlow()
 
     private val _syncEvents = MutableSharedFlow<SyncEvent>(extraBufferCapacity = 64)
-    val syncEvents: SharedFlow<SyncEvent> = _syncEvents.asSharedFlow()
 
     private val _isOnline = MutableStateFlow(true)
     val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
@@ -76,20 +74,7 @@ class SyncManager(
         Napier.d("Registered syncer: $entityType", tag = TAG)
     }
 
-    fun unregisterSyncer(entityType: String) {
-        entitySyncers.remove(entityType)
-        unsubscribeRealtime(entityType)
-    }
-
     // ── Account ───────────────────────────────────────────────────────────
-
-    fun setCurrentUser(userId: String?) {
-        val previous = currentUserId
-        currentUserId = userId
-        if (previous != userId) {
-            scope.launch { _syncEvents.emit(SyncEvent.AccountChanged(previous, userId)) }
-        }
-    }
 
     // ── Sync ──────────────────────────────────────────────────────────────
 
@@ -329,8 +314,6 @@ class SyncManager(
         _syncStates.value = _syncStates.value + (entityType to state)
         scope.launch { syncStateStorage.save(state) }
     }
-
-    fun getSyncState(entityType: String): SyncState? = _syncStates.value[entityType]
 }
 
 // ── Realtime payload helpers ──────────────────────────────────────────────────
@@ -355,7 +338,6 @@ sealed class SyncEvent {
     data class RemoteDelete(val entityType: String, val id: String) : SyncEvent()
     data class PendingActionCompleted(val actionId: String) : SyncEvent()
     data class PendingActionFailed(val actionId: String, val reason: String) : SyncEvent()
-    data class AccountChanged(val previousUserId: String?, val newUserId: String?) : SyncEvent()
     data object NetworkReconnected : SyncEvent()
     data object NetworkDisconnected : SyncEvent()
     data object DataCleared : SyncEvent()

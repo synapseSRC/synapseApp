@@ -32,8 +32,6 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 
-
-
 @Composable
 fun ReelsGrid(
     items: List<MediaItem>,
@@ -63,8 +61,6 @@ fun ReelsGrid(
                     animationDelay = (index % 9) * 50
                 )
             }
-
-
         }
     }
 }
@@ -111,7 +107,6 @@ private fun AnimatedReelItem(
             .clip(RoundedCornerShape(Sizes.CornerSmall))
             .clickable { onClick() }
     ) {
-
         AsyncImage(
             model = item.thumbnailUrl ?: item.url,
             contentDescription = null,
@@ -121,9 +116,6 @@ private fun AnimatedReelItem(
                 imageLoaded = state is AsyncImagePainter.State.Success
             }
         )
-
-
-
 
         Box(
             modifier = Modifier
@@ -139,7 +131,6 @@ private fun AnimatedReelItem(
                     )
                 )
         )
-
 
         Row(
             modifier = Modifier
@@ -161,30 +152,6 @@ private fun AnimatedReelItem(
             )
         }
     }
-}
-
-@Composable
-private fun ShimmerReelItem(animationDelay: Int = 0) {
-    var visible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(animationDelay.toLong())
-        visible = true
-    }
-
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 200),
-        label = "shimmerAlpha"
-    )
-
-    Box(
-        modifier = Modifier
-            .aspectRatio(9f / 16f)
-            .graphicsLayer { this.alpha = alpha }
-            .clip(RoundedCornerShape(Sizes.CornerSmall))
-            .shimmer()
-    )
 }
 
 @Composable

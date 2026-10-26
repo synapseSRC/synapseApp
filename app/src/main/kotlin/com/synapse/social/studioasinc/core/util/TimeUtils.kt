@@ -7,41 +7,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object TimeUtils {
-    fun setTime(currentTime: Double, textView: TextView, context: Context) {
-        val c1 = Calendar.getInstance()
-        val c2 = Calendar.getInstance()
-        val timeDiff = c1.timeInMillis - currentTime
-
-        when {
-            timeDiff < 60000 -> {
-                val seconds = (timeDiff / 1000).toLong()
-                if (seconds < 2) {
-                    textView.text = "1s"
-                } else {
-                    textView.text = "${seconds}s"
-                }
-            }
-            timeDiff < (60 * 60000) -> {
-                val minutes = (timeDiff / 60000).toLong()
-                textView.text = "${minutes}m"
-            }
-            timeDiff < (24 * 60 * 60000) -> {
-                val hours = (timeDiff / (60 * 60000)).toLong()
-                textView.text = "${hours}h"
-            }
-            timeDiff < (7 * 24 * 60 * 60000) -> {
-                val days = (timeDiff / (24 * 60 * 60000)).toLong()
-                textView.text = "${days}d"
-            }
-            else -> {
-                val weeks = (timeDiff / (7 * 24 * 60 * 60000)).toLong()
-                textView.text = "${weeks}w"
-            }
-        }
-    }
-
-
-
     fun formatTimestamp(timestamp: Long, now: Long = System.currentTimeMillis()): String {
         val diff = now - timestamp
 
@@ -54,8 +19,6 @@ object TimeUtils {
             else -> "${diff / 604800_000}w"
         }
     }
-
-
 
     private val fallbackFormatter = java.time.format.DateTimeFormatter.ofPattern("[yyyy-MM-dd['T'][ ]HH:mm:ss[.SSSSSS][.SSS][.SS][.S][X]]").withZone(java.time.ZoneId.of("UTC"))
 

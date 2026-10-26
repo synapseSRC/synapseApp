@@ -57,8 +57,6 @@ class AuthErrorHandler {
             }
         }
 
-
-
         fun isRecoverableError(error: AuthError): Boolean {
             return when (error) {
                 AuthError.NETWORK_ERROR -> true
@@ -66,20 +64,6 @@ class AuthErrorHandler {
                 else -> false
             }
         }
-
-
-
-        fun getRecoveryAction(error: AuthError): RecoveryAction {
-            return when (error) {
-                AuthError.EMAIL_NOT_VERIFIED -> RecoveryAction.RESEND_VERIFICATION
-                AuthError.INVALID_CREDENTIALS -> RecoveryAction.RETRY_WITH_CORRECT_CREDENTIALS
-                AuthError.NETWORK_ERROR -> RecoveryAction.RETRY_WITH_DELAY
-                AuthError.SUPABASE_NOT_CONFIGURED -> RecoveryAction.CHECK_CONFIGURATION
-                AuthError.UNKNOWN_ERROR -> RecoveryAction.RETRY_WITH_DELAY
-            }
-        }
-
-
 
         suspend fun <T> executeWithRetry(
             maxAttempts: Int = MAX_RETRY_ATTEMPTS,
@@ -99,12 +83,10 @@ class AuthErrorHandler {
 
                     Log.w(TAG, "Operation failed on attempt ${attempt + 1}: ${e.message}")
 
-
                     if (!isRecoverableError(authError) || attempt == maxAttempts - 1) {
                         Log.e(TAG, "Non-recoverable error or max attempts reached", e)
                         throw e
                     }
-
 
                     Log.d(TAG, "Retrying in ${currentDelay}ms...")
                     kotlinx.coroutines.delay(currentDelay)
@@ -115,11 +97,8 @@ class AuthErrorHandler {
             throw lastException ?: Exception("Operation failed after $maxAttempts attempts")
         }
 
-
-
         private fun logAuthenticationError(error: Throwable) {
             Log.e(TAG, "Authentication error occurred", error)
-
 
             when {
                 error.message?.contains("email not confirmed", ignoreCase = true) == true -> {
@@ -140,8 +119,6 @@ class AuthErrorHandler {
             }
         }
 
-
-
         fun logVerificationAttempt(email: String, success: Boolean, errorMessage: String? = null) {
             if (success) {
                 Log.i(TAG, "Email verification successful for: $email")
@@ -149,8 +126,6 @@ class AuthErrorHandler {
                 Log.w(TAG, "Email verification failed for: $email, error: $errorMessage")
             }
         }
-
-
 
         fun logResendVerificationAttempt(email: String, success: Boolean, errorMessage: String? = null) {
             if (success) {
@@ -162,11 +137,3 @@ class AuthErrorHandler {
     }
 }
 
-
-
-enum class RecoveryAction {
-    RESEND_VERIFICATION,
-    RETRY_WITH_CORRECT_CREDENTIALS,
-    RETRY_WITH_DELAY,
-    CHECK_CONFIGURATION
-}

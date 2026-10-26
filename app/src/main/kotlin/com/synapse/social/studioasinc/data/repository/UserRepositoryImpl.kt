@@ -24,49 +24,6 @@ class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val client: SupabaseClient = SharedSupabaseClient.client
 ) {
-
-    suspend fun refreshUser(userId: String): Result<User?> {
-        return try {
-            val userProfile = client.from(SharedSupabaseClient.TABLE_USERS)
-                .select {
-                    filter {
-                        eq("uid", userId)
-                    }
-                }
-                .decodeSingleOrNull<UserProfile>()
-
-            if (userProfile != null) {
-                val cachedUser = userDao.getUserById(userId)?.let { UserMapper.toModel(it) }
-
-                val avatarUrl = userProfile.avatar?.let { url ->
-                    if (url.startsWith("http")) url else SharedSupabaseClient.constructAvatarUrl(url)
-                }
-
-                val updatedUser = cachedUser?.copy(
-                    username = userProfile.username,
-                    displayName = userProfile.displayName,
-                    avatar = avatarUrl,
-                    email = userProfile.email,
-                    verify = userProfile.verify
-                ) ?: User(
-                    uid = userProfile.uid,
-                    username = userProfile.username,
-                    displayName = userProfile.displayName,
-                    avatar = avatarUrl,
-                    email = userProfile.email,
-                    verify = userProfile.verify
-                )
-
-                userDao.insertUser(UserMapper.toUserEntity(updatedUser))
-                Result.success(updatedUser)
-            } else {
-                 Result.success(null)
-            }
-        } catch (e: Exception) {
-            return SupabaseErrorHandler.toResult(e, "UserRepositoryImpl", "Failed to refresh user: $userId")
-        }
-    }
-
     suspend fun getUserById(userId: String): Result<User?> {
         return try {
             // First try to get from cache
@@ -221,17 +178,4 @@ class UserRepositoryImpl @Inject constructor(
     suspend fun isUsernameAvailable(username: String): Result<Boolean> {
         return checkUsernameAvailability(username)
     }
-
-    @Serializable
-    private data class UserProfileDto(
-        val uid: String,
-        val username: String? = null,
-        @SerialName("display_name") val displayName: String? = null,
-        val email: String? = null,
-        val bio: String? = null,
-        @SerialName("account_premium") val accountPremium: Boolean? = false,
-        val verify: Boolean? = false,
-        val region: String? = null,
-        @SerialName("created_at") val createdAt: String? = null
-    )
 }

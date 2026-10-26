@@ -15,10 +15,7 @@ import java.io.File
 import java.util.*
 import kotlin.math.pow
 
-
-
 class SupabaseStorageService @Inject constructor() {
-
     companion object {
         private const val TAG = "SupabaseStorageService"
     }
@@ -26,25 +23,13 @@ class SupabaseStorageService @Inject constructor() {
     private val client = SupabaseClient.client
     private val storage = client.storage
 
-
-
     suspend fun uploadAvatar(userId: String, filePath: String): Result<String> {
         return uploadImage(SupabaseClient.BUCKET_USER_AVATARS, userId, filePath)
     }
 
-
-
     suspend fun uploadCover(userId: String, filePath: String): Result<String> {
         return uploadImage(SupabaseClient.BUCKET_USER_COVERS, userId, filePath)
     }
-
-
-
-    suspend fun uploadPostImage(userId: String, filePath: String): Result<String> {
-        return uploadImage(SupabaseClient.BUCKET_POST_MEDIA, userId, filePath)
-    }
-
-
 
     private suspend fun uploadImage(bucket: String, userId: String, filePath: String): Result<String> {
         return withContext(Dispatchers.IO) {
@@ -73,7 +58,6 @@ class SupabaseStorageService @Inject constructor() {
 
                 // Sanitized log: Removed path
                 android.util.Log.d("SupabaseStorage", "Uploading image...")
-
 
                 var uploadSuccess = false
                 var lastException: Exception? = null
@@ -132,7 +116,6 @@ class SupabaseStorageService @Inject constructor() {
                 // Let's be safe and log just success.
                 android.util.Log.d("SupabaseStorage", "Upload successful")
                 Result.success(mediaReference)
-
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (e: Exception) {
@@ -141,23 +124,5 @@ class SupabaseStorageService @Inject constructor() {
             }
         }
     }
-
-
-
-    suspend fun deleteImage(bucket: String, path: String): Result<Unit> {
-        return withContext(Dispatchers.IO) {
-            try {
-                storage.from(bucket).delete(path)
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-    }
-
-
-
 }
-
-
 

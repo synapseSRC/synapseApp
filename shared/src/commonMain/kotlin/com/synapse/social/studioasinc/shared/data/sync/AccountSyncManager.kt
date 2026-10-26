@@ -15,7 +15,6 @@ import io.github.aakira.napier.Napier
  * prevent the rest of the cleanup from completing.
  */
 object AccountSyncManager {
-
     private const val TAG = "AccountSyncManager"
 
     /**
@@ -47,14 +46,6 @@ object AccountSyncManager {
         safeRun("syncManager") { syncManager?.clearAllData() }
 
         Napier.d("Local data cleared", tag = TAG)
-    }
-
-    /**
-     * Initialise sync state after a successful login.
-     */
-    suspend fun initializeForUser(userId: String, syncManager: SyncManager) {
-        Napier.d("Initializing sync for user: $userId", tag = TAG)
-        syncManager.setCurrentUser(userId)
     }
 
     private suspend inline fun safeRun(label: String, block: suspend () -> Unit) {

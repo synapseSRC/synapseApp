@@ -10,17 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-
-
 class AppearanceViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-
     private val settingsRepository = SettingsRepositoryImpl.getInstance(application)
-
-
-
-
 
     private val _appearanceSettings = MutableStateFlow(AppearanceSettings())
     val appearanceSettings: StateFlow<AppearanceSettings> = _appearanceSettings.asStateFlow()
@@ -34,19 +27,11 @@ class AppearanceViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-
-
     val isDynamicColorSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     init {
         loadAppearanceSettings()
     }
-
-
-
-
-
-
 
     private fun loadAppearanceSettings() {
         viewModelScope.launch {
@@ -55,7 +40,6 @@ class AppearanceViewModel(
                     _appearanceSettings.value = settings
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
-
                 throw e
             } catch (e: Exception) {
                 android.util.Log.e("AppearanceViewModel", "Failed to load appearance settings", e)
@@ -77,12 +61,6 @@ class AppearanceViewModel(
         }
     }
 
-
-
-
-
-
-
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -101,15 +79,11 @@ class AppearanceViewModel(
         }
     }
 
-
-
     fun getThemeModeDisplayName(mode: ThemeMode): String = when (mode) {
         ThemeMode.LIGHT -> "Light"
         ThemeMode.DARK -> "Dark"
         ThemeMode.SYSTEM -> "System Default"
     }
-
-
 
     fun getThemeModeOptions(): List<String> = listOf(
         getThemeModeDisplayName(ThemeMode.LIGHT),
@@ -117,20 +91,12 @@ class AppearanceViewModel(
         getThemeModeDisplayName(ThemeMode.SYSTEM)
     )
 
-
-
     fun getThemeModeFromDisplayName(displayName: String): ThemeMode = when (displayName) {
         "Light" -> ThemeMode.LIGHT
         "Dark" -> ThemeMode.DARK
         "System Default" -> ThemeMode.SYSTEM
         else -> ThemeMode.SYSTEM
     }
-
-
-
-
-
-
 
     fun setDynamicColorEnabled(enabled: Boolean) {
         if (!isDynamicColorSupported) {
@@ -153,12 +119,6 @@ class AppearanceViewModel(
         }
     }
 
-
-
-
-
-
-
     fun setFontScale(scale: FontScale) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -175,8 +135,6 @@ class AppearanceViewModel(
         }
     }
 
-
-
     fun getFontScaleFromSliderValue(value: Float): FontScale = when (value.toInt()) {
         0 -> FontScale.SMALL
         1 -> FontScale.MEDIUM
@@ -185,8 +143,6 @@ class AppearanceViewModel(
         else -> FontScale.MEDIUM
     }
 
-
-
     fun getSliderValueFromFontScale(scale: FontScale): Float = when (scale) {
         FontScale.SMALL -> 0f
         FontScale.MEDIUM -> 1f
@@ -194,15 +150,7 @@ class AppearanceViewModel(
         FontScale.EXTRA_LARGE -> 3f
     }
 
-
-
     fun getFontScalePreviewText(scale: FontScale): String = scale.displayName()
-
-
-
-
-
-
 
     fun setPostViewStyle(style: PostViewStyle) {
         viewModelScope.launch {
@@ -220,37 +168,16 @@ class AppearanceViewModel(
         }
     }
 
-
-
     fun getPostViewStyleOptions(): List<String> = listOf(
         PostViewStyle.SWIPE.displayName(),
         PostViewStyle.GRID.displayName()
     )
-
-
 
     fun getPostViewStyleFromDisplayName(displayName: String): PostViewStyle = when (displayName) {
         "Swipe" -> PostViewStyle.SWIPE
         "Grid" -> PostViewStyle.GRID
         else -> PostViewStyle.SWIPE
     }
-
-
-
-
-
-
-
-    fun navigateToChatCustomization() {
-        android.util.Log.d("AppearanceViewModel", "Navigate to chat customization")
-
-    }
-
-
-
-
-
-
 
     fun clearError() {
         _error.value = null

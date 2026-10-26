@@ -11,13 +11,11 @@ import java.util.Calendar
 import java.util.UUID
 
 class ChatStorageService {
-
     companion object {
         internal const val TAG = "ChatStorageService"
         internal const val CHAT_MEDIA_BUCKET = "chat-attachments"
         internal const val MAX_RETRY_ATTEMPTS = 3
         internal const val BASE_RETRY_DELAY_MS = 1000L
-        internal const val PROGRESS_UPDATE_INTERVAL_MS = 100L
     }
 
     private val client = SupabaseClient.client
@@ -160,34 +158,6 @@ class ChatStorageService {
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Delete failed", e)
             return Result.failure(mapStorageException(e, "Delete failed"))
-        }
-    }
-
-    fun getPublicUrl(path: String): String {
-        return storage.from(CHAT_MEDIA_BUCKET).authenticatedUrl(path)
-    }
-
-    fun generateStoragePath(chatId: String, fileName: String): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = String.format("%02d", calendar.get(Calendar.MONTH) + 1)
-        val day = String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH))
-        val fileExtension = fileName.substringAfterLast(".", "")
-        val uniqueFileName = "${UUID.randomUUID()}_${fileName.substringBeforeLast(".")}"
-        val finalFileName = if (fileExtension.isNotEmpty()) {
-            "$uniqueFileName.$fileExtension"
-        } else {
-            uniqueFileName
-        }
-        return "$chatId/$year/$month/$day/$finalFileName"
-    }
-
-    suspend fun testStorageInfrastructure(context: Context): Result<String> {
-        return try {
-            Result.success("Storage infrastructure test removed")
-        } catch (e: Exception) {
-            android.util.Log.e(TAG, "Error running storage infrastructure tests", e)
-            Result.failure(e)
         }
     }
 

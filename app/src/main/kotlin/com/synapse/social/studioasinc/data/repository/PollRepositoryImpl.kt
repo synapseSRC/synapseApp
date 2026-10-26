@@ -14,12 +14,9 @@ import kotlinx.serialization.Serializable
 import java.time.Instant
 import javax.inject.Inject
 
-
-
 class PollRepositoryImpl @Inject constructor(
     private val client: SupabaseClient
 ) : com.synapse.social.studioasinc.domain.repository.PollRepository {
-
     @Serializable
     private data class PollVote(
         val id: String? = null,
@@ -43,30 +40,9 @@ class PollRepositoryImpl @Inject constructor(
         @SerialName("poll_end_time") val pollEndTime: String?
     )
 
-
-
-    suspend fun getUserVote(postId: String): Result<Int?> = runCatching {
-        val userId = client.auth.currentUserOrNull()?.id
-            ?: return Result.failure(Exception("Not authenticated"))
-
-        val votes = client.from("poll_votes")
-            .select(Columns.list("option_index")) {
-                filter {
-                    eq("post_id", postId)
-                    eq("user_id", userId)
-                }
-            }
-            .decodeList<PollVote>()
-
-        votes.firstOrNull()?.optionIndex
-    }
-
-
-
     override suspend fun submitVote(postId: String, optionIndex: Int): Result<Unit> = runCatching {
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Result.failure(Exception("Not authenticated"))
-
 
         val post = client.from("posts")
             .select(Columns.list("id", "poll_options", "poll_end_time")) {
@@ -80,11 +56,9 @@ class PollRepositoryImpl @Inject constructor(
             }
         }
 
-
         if (optionIndex < 0 || optionIndex >= post.pollOptions.size) {
             return Result.failure(Exception("Invalid option index"))
         }
-
 
         val existingVote = client.from("poll_votes")
             .select(Columns.list("id")) {
@@ -97,7 +71,6 @@ class PollRepositoryImpl @Inject constructor(
             .firstOrNull()
 
         if (existingVote != null) {
-
             client.from("poll_votes")
                 .update({
                     set("option_index", optionIndex)
@@ -105,7 +78,6 @@ class PollRepositoryImpl @Inject constructor(
                     existingVote.id?.let { id -> filter { eq("id", id) } }
                 }
         } else {
-
             client.from("poll_votes")
                 .insert(PollVote(
                     postId = postId,
@@ -117,12 +89,9 @@ class PollRepositoryImpl @Inject constructor(
         Log.d(TAG, "Vote submitted: post=$postId, option=$optionIndex")
     }
 
-
-
     override suspend fun revokeVote(postId: String): Result<Unit> = runCatching {
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Result.failure(Exception("Not authenticated"))
-
 
         client.from("poll_votes").delete {
             filter {
@@ -133,33 +102,6 @@ class PollRepositoryImpl @Inject constructor(
 
         Log.d(TAG, "Vote revoked: post=$postId")
     }
-
-
-
-    suspend fun getPollResults(postId: String): Result<List<PollOptionResult>> = runCatching {
-
-        val post = client.from("posts")
-            .select(Columns.list("poll_options")) {
-                filter { eq("id", postId) }
-            }
-            .decodeSingle<PostPollData>()
-
-
-        val votes = client.from("poll_votes")
-            .select(Columns.list("option_index")) {
-                filter { eq("post_id", postId) }
-            }
-            .decodeList<PollVote>()
-
-
-        val voteCounts = votes.groupingBy { it.optionIndex }.eachCount()
-
-        PollOptionResult.calculateResults(post.pollOptions.map { it.text }, voteCounts)
-    }
-
-
-
-
 
     override suspend fun getBatchUserVotes(postIds: List<String>): Result<Map<String, Int>> = runCatching {
         val userId = client.auth.currentUserOrNull()?.id
@@ -178,8 +120,6 @@ class PollRepositoryImpl @Inject constructor(
 
         votes.associate { it.postId to it.optionIndex }
     }
-
-
 
     override suspend fun getBatchPollVotes(postIds: List<String>): Result<Map<String, Map<Int, Int>>> = runCatching {
         if (postIds.isEmpty()) return Result.success(emptyMap())

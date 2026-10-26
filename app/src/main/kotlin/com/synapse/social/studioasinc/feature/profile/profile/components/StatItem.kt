@@ -84,47 +84,6 @@ fun StatItem(
     }
 }
 
-@Composable
-fun StatsRow(
-    postsCount: Int,
-    followersCount: Int,
-    followingCount: Int,
-    onStatsClick: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    content: (@Composable RowScope.() -> Unit)? = null
-) {
-    Row(
-        horizontalArrangement = if (content != null) Arrangement.Start else Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        if (content != null) {
-            content()
-        } else {
-            StatItem(
-                count = postsCount,
-                label = stringResource(R.string.posts),
-                onClick = { onStatsClick("posts") },
-                modifier = Modifier.weight(1f)
-            )
-
-            StatItem(
-                count = followersCount,
-                label = stringResource(R.string.followers),
-                onClick = { onStatsClick("followers") },
-                modifier = Modifier.weight(1f)
-            )
-
-            StatItem(
-                count = followingCount,
-                label = stringResource(R.string.following),
-                onClick = { onStatsClick("following") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun StatItemPreview() {

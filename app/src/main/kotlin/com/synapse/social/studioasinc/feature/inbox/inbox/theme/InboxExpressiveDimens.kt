@@ -10,7 +10,6 @@ object InboxExpressiveDimens {
     val FloatingToolbarHeight = 64.dp
     val IconTouchTarget = 48.dp
     val MediumActionButtonHeight = 56.dp
-    val FilterChipHeight = 32.dp
     val FilterChipIconSize = 18.dp
     val OutlineWidth = 1.dp
 }

@@ -24,7 +24,6 @@ import org.signal.libsignal.protocol.state.SignalProtocolStore
 import org.signal.libsignal.protocol.InvalidKeyIdException
 
 class AndroidSignalStore(context: Context, private val sharedPreferences: SharedPreferences? = null) : SignalProtocolStore {
-
     private val prefs: SharedPreferences by lazy {
         sharedPreferences ?: try {
             val masterKey = MasterKey.Builder(context)
@@ -336,12 +335,6 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
-
-    fun getLastSignedPreKeyId(): Int = prefs.getInt("last_signed_prekey_id", 0)
-
-    fun setLastSignedPreKeyId(id: Int) {
-        prefs.edit().putInt("last_signed_prekey_id", id).commitOrThrow("Failed to save last signed prekey id")
-    }
 
     @get:JvmName("identityKeyPairHelper")
     val identityKeyPair: IdentityKeyPair

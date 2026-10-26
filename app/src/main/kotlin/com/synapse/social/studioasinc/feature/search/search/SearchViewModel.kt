@@ -122,18 +122,6 @@ class SearchViewModel @Inject constructor(
         saveHistory(currentHistory)
     }
 
-    fun removeFromHistory(query: String) {
-        val currentHistory = currentState.searchHistory.toMutableList()
-        currentHistory.remove(query)
-        updateState { it.copy(searchHistory = currentHistory) }
-        saveHistory(currentHistory)
-    }
-
-    fun clearHistory() {
-        updateState { it.copy(searchHistory = emptyList()) }
-        saveHistory(emptyList())
-    }
-
     fun onQueryChange(query: String) {
         updateState { it.copy(query = query) }
         searchJob?.cancel()
@@ -144,10 +132,6 @@ class SearchViewModel @Inject constructor(
             }
             performSearch(query)
         }
-    }
-
-    fun onActiveChange(active: Boolean) {
-        updateState { it.copy(active = active) }
     }
 
     fun onTabSelected(tab: SearchTab) {
@@ -380,7 +364,6 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-
     fun reactToPost(post: com.synapse.social.studioasinc.domain.model.Post, reactionType: com.synapse.social.studioasinc.domain.model.ReactionType) {
         viewModelScope.launch {
             reactToPostUseCase(post, reactionType).collect { result ->
@@ -407,7 +390,6 @@ class SearchViewModel @Inject constructor(
     }
 
     fun sharePost(post: com.synapse.social.studioasinc.domain.model.Post) {
-
     }
 
     fun votePoll(post: com.synapse.social.studioasinc.domain.model.Post, optionIndex: Int) {
@@ -433,7 +415,6 @@ class SearchViewModel @Inject constructor(
     }
 
     fun copyPostLink(post: com.synapse.social.studioasinc.domain.model.Post) {
-
     }
 
     fun toggleComments(post: com.synapse.social.studioasinc.domain.model.Post) {
@@ -445,7 +426,6 @@ class SearchViewModel @Inject constructor(
     }
 
     fun reportPost(post: com.synapse.social.studioasinc.domain.model.Post) {
-
     }
 
     fun blockUser(userId: String) {

@@ -34,7 +34,6 @@ class ChatMediaDelegate(
     private val replyToMessageIdProvider: () -> String? = { null },
     private val onReplyConsumed: (String?) -> Unit = {}
 ) {
-
     suspend fun uploadAndSendVoiceMessageSuspend(
         audioFile: java.io.File,
         durationMs: Long = 0L,
@@ -128,34 +127,6 @@ class ChatMediaDelegate(
             val err = "Upload error: ${e.message}"
             onOptimisticMessageFailed(tempId, err)
             onResult?.invoke(false, err)
-        }
-    }
-
-    fun uploadAndSendVoiceMessage(
-        audioFile: java.io.File,
-        durationMs: Long = 0L,
-        storageConfig: com.synapse.social.studioasinc.shared.domain.model.StorageConfig,
-        voiceUploadService: com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService,
-        sendMessageUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase = this.sendMessageUseCase,
-        currentUserIdProvider: () -> String? = this.currentUserIdProvider,
-        chatIdProvider: () -> String? = this.chatIdProvider,
-        viewModelScope: kotlinx.coroutines.CoroutineScope = this.viewModelScope,
-        onResult: ((Boolean, String?) -> Unit)? = null
-    ): Job {
-        val selectedReplyToId = replyToMessageIdProvider()
-        return viewModelScope.launch {
-            uploadAndSendVoiceMessageSuspend(
-                audioFile = audioFile,
-                durationMs = durationMs,
-                storageConfig = storageConfig,
-                voiceUploadService = voiceUploadService,
-                sendMessageUseCase = sendMessageUseCase,
-                currentUserIdProvider = currentUserIdProvider,
-                chatIdProvider = chatIdProvider,
-                replyToId = selectedReplyToId,
-                clearReplySelection = true,
-                onResult = onResult
-            )
         }
     }
 
