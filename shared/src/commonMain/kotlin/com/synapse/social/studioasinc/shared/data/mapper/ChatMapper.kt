@@ -277,7 +277,8 @@ object ChatMapper {
             attachments = domainAttachments,
             mediaGroupId = derivedGroupId,
             metadataContainer = parsedMetadata,
-            clientId = clientId ?: id ?: ""
+            clientId = clientId ?: id ?: "",
+            deviceId = deviceId
         )
     }
 

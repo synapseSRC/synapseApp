@@ -46,6 +46,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -65,8 +66,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -139,11 +142,14 @@ private fun InboxScreenContent(
     var destination by rememberSaveable { mutableStateOf(InboxDestination.INBOX) }
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedChatIds by remember { mutableStateOf(emptySet<String>()) }
+    var selectedArchivedIds by remember { mutableStateOf(emptySet<String>()) }
     var showNewMessageSheet by remember { mutableStateOf(false) }
     var showFolderSheet by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSelectionMenu by remember { mutableStateOf(false) }
+    var showInboxMenu by remember { mutableStateOf(false) }
+    var showArchivedMenu by remember { mutableStateOf(false) }
     var showBriefingMenu by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
 
@@ -190,8 +196,24 @@ private fun InboxScreenContent(
     fun returnToInbox() {
         destination = InboxDestination.INBOX
         selectedChatIds = emptySet()
+        selectedArchivedIds = emptySet()
         showSelectionMenu = false
+        showArchivedMenu = false
         viewModel.searchInbox("")
+    }
+
+    fun archiveSelected() {
+        viewModel.archiveConversations(selectedChatIds) { archivedIds ->
+            scope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = context.resources.getQuantityString(R.plurals.inbox_archived_snackbar, archivedIds.size, archivedIds.size),
+                    actionLabel = context.getString(R.string.inbox_undo),
+                    duration = SnackbarDuration.Short
+                )
+                if (result == SnackbarResult.ActionPerformed) viewModel.unarchiveConversations(archivedIds)
+            }
+        }
+        returnToInbox()
     }
 
     fun openConversation(conversation: Conversation) {
@@ -212,7 +234,10 @@ private fun InboxScreenContent(
         }
     }
 
-    BackHandler(enabled = destination != InboxDestination.INBOX) { returnToInbox() }
+    BackHandler(enabled = destination != InboxDestination.INBOX) {
+        if (destination == InboxDestination.ARCHIVED && selectedArchivedIds.isNotEmpty()) selectedArchivedIds = emptySet()
+        else returnToInbox()
+    }
 
     Scaffold(
         topBar = {
@@ -232,6 +257,18 @@ private fun InboxScreenContent(
                     actions = {
                         IconButton(onClick = { destination = InboxDestination.SEARCH }) {
                             Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.inbox_search_action), tint = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Box {
+                            IconButton(onClick = { showInboxMenu = true }) {
+                                Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.inbox_menu_more), tint = MaterialTheme.colorScheme.onSurface)
+                            }
+                            DropdownMenu(expanded = showInboxMenu, onDismissRequest = { showInboxMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.inbox_menu_archived, archivedConversations.size)) },
+                                    leadingIcon = { Icon(Icons.Rounded.Archive, contentDescription = null) },
+                                    onClick = { showInboxMenu = false; destination = InboxDestination.ARCHIVED }
+                                )
+                            }
                         }
                     },
                     colors = barColors
@@ -258,11 +295,33 @@ private fun InboxScreenContent(
                     },
                     colors = barColors
                 )
-                InboxDestination.ARCHIVED -> TopAppBar(
-                    title = { Text(stringResource(R.string.inbox_archive_screen_title)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
-                    colors = barColors
-                )
+                InboxDestination.ARCHIVED -> if (selectedArchivedIds.isEmpty()) {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.inbox_archive_screen_title)) },
+                        navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                        colors = barColors
+                    )
+                } else {
+                    TopAppBar(
+                        title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedArchivedIds.size, selectedArchivedIds.size)) },
+                        navigationIcon = { IconButton(onClick = { selectedArchivedIds = emptySet() }) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
+                        actions = {
+                            IconButton(onClick = { viewModel.unarchiveConversations(selectedArchivedIds); selectedArchivedIds = emptySet() }) {
+                                Icon(Icons.Rounded.Unarchive, contentDescription = stringResource(R.string.inbox_action_unarchive))
+                            }
+                            Box {
+                                IconButton(onClick = { showArchivedMenu = true }) { Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.inbox_more_actions)) }
+                                DropdownMenu(expanded = showArchivedMenu, onDismissRequest = { showArchivedMenu = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.inbox_select_all)) },
+                                        onClick = { selectedArchivedIds = archivedConversations.map { it.chatId }.toSet(); showArchivedMenu = false }
+                                    )
+                                }
+                            }
+                        },
+                        colors = barColors
+                    )
+                }
                 InboxDestination.SELECTION -> TopAppBar(
                     title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedChatIds.size, selectedChatIds.size)) },
                     navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
@@ -400,8 +459,12 @@ private fun InboxScreenContent(
                 InboxDestination.ARCHIVED -> InboxArchivedScreen(
                     conversations = archivedConversations,
                     isLoading = isLoadingArchived,
+                    selectedChatIds = selectedArchivedIds,
                     onOpenConversation = ::openConversation,
-                    onRestore = viewModel::restoreArchivedConversation
+                    onToggleSelection = { chatId ->
+                        selectedArchivedIds = if (chatId in selectedArchivedIds) selectedArchivedIds - chatId else selectedArchivedIds + chatId
+                    },
+                    onUnarchive = { chatId -> viewModel.unarchiveConversations(setOf(chatId)) }
                 )
                 InboxDestination.SELECTION -> SelectionContent(
                     conversations = conversations,
@@ -416,10 +479,7 @@ private fun InboxScreenContent(
                     },
                     onPin = { viewModel.setConversationsPinned(selectedChatIds, selectedConversations.any { !it.isPinned }) },
                     onMute = { viewModel.setConversationsMuted(selectedChatIds, selectedConversations.any { !it.isMuted }) },
-                    onArchive = {
-                        viewModel.archiveConversations(selectedChatIds)
-                        returnToInbox()
-                    },
+                    onArchive = ::archiveSelected,
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
                     onDone = ::returnToInbox
@@ -592,14 +652,21 @@ private fun HomeMessages(
                 Spacer(Modifier.height(Spacing.space12))
                 Text(stringResource(R.string.inbox_empty_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.inbox_empty_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(Spacing.space16))
-                Button(onClick = onOpenArchive) { Text(stringResource(R.string.inbox_archived_title, archivedCount)) }
+                if (archivedCount > 0) {
+                    Spacer(Modifier.height(Spacing.space16))
+                    Button(onClick = onOpenArchive) { Text(stringResource(R.string.inbox_archived_title, archivedCount)) }
+                }
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24),
 verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
+                if (archivedCount > 0) {
+                    item(key = "archived-conversations") {
+                        ArchivedConversationsEntry(count = archivedCount, onClick = onOpenArchive)
+                    }
+                }
                 items(conversations, key = { it.chatId }) { conversation ->
                     InboxConversationRow(
                         conversation = conversation,
@@ -607,28 +674,30 @@ verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                         onLongClick = { onLongPressConversation(conversation.chatId) }
                     )
                 }
-                item(key = "archived-conversations") {
-                    Card(
-                        onClick = onOpenArchive,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().height(InboxExpressiveDimens.ConversationRowHeight).padding(horizontal = Spacing.space16),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(InboxExpressiveDimens.ConversationAvatarSize))
-                            Spacer(Modifier.width(Spacing.space12))
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.inbox_archived_title, archivedCount), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                                Text(stringResource(R.string.inbox_archived_summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
             }
+        }
+    }
+}
+
+@Composable
+private fun ArchivedConversationsEntry(count: Int, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(InboxExpressiveDimens.ConversationRowHeight).padding(horizontal = Spacing.space16),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(InboxExpressiveDimens.ConversationAvatarSize))
+            Spacer(Modifier.width(Spacing.space12))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.inbox_archived_title, count), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.inbox_archived_summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

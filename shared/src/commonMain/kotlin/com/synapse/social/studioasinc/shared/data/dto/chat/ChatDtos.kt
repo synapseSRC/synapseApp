@@ -81,6 +81,7 @@ data class MessageDto(
     @SerialName("failure_reason") val failureReason: String? = null,
     val encryptionFailureReason: String? = null,
     @SerialName("client_id") val clientId: String? = null,
+    @SerialName("device_id") val deviceId: String? = null,
     val attachments: List<MessageAttachmentDto>? = null,
     @Serializable(with = AnyMetadataStringSerializer::class)
     @SerialName("metadata") val metadata: String? = null

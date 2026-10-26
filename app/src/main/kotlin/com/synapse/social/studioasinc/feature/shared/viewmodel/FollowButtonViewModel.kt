@@ -17,7 +17,8 @@ data class FollowButtonUiState(
     val isFollowing: Boolean = false,
     val isFollowRequested: Boolean = false,
     val isPrivate: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
 )
 
 @HiltViewModel
@@ -120,14 +121,22 @@ class FollowButtonViewModel @Inject constructor(
                         // Confirm with server state in background (non-blocking)
                         checkFollowStatus()
                     },
-                    onFailure = {
-                        // Revert optimistic update on failure
-                        _uiState.value = previousState.copy(isLoading = false)
+                    onFailure = { error ->
+                        // Revert optimistic update on failure and show error
+                        android.util.Log.e("FollowButtonViewModel", "Follow operation failed: ${error.message}", error)
+                        _uiState.value = previousState.copy(
+                            isLoading = false,
+                            errorMessage = error.message ?: "Failed to follow user"
+                        )
                     }
                 )
             } finally {
                 isOperationInProgress.set(false)
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
     }
 }

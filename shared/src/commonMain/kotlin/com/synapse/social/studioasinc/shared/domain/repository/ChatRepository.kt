@@ -97,4 +97,8 @@ interface ChatRepository {
      * No-op if no channel is currently held for this chat.
      */
     suspend fun releaseTypingChannel(chatId: String)
+
+    // Device synchronization methods
+    fun setCurrentDeviceId(deviceId: String?)
+    fun getCurrentDeviceId(): String?
 }

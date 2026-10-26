@@ -36,7 +36,9 @@ data class Message(
     val mediaGroupId: String? = null,
     val metadataContainer: MessageMetadataContainer? = null,
     /** Stable local identity retained when an optimistic message receives its server ID. */
-    val clientId: String = id
+    val clientId: String = id,
+    /** ID of the device that sent this message (for multi-device sync). */
+    val deviceId: String? = null
 ) {
     fun isFromMe(currentUserId: String): Boolean = senderId == currentUserId
 

@@ -18,9 +18,17 @@ fun FollowButtonCompose(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var lastClickTime by remember { mutableLongStateOf(0L) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(targetUserId) {
         viewModel.initialize(targetUserId)
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { errorMessage ->
+            snackbarHostState.showSnackbar(errorMessage)
+            viewModel.clearError()
+        }
     }
 
     val handleClick = {
@@ -65,4 +73,6 @@ fun FollowButtonCompose(
             }
         }
     }
+
+    SnackbarHost(hostState = snackbarHostState)
 }

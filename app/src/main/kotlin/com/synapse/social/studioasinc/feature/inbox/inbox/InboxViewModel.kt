@@ -310,19 +310,22 @@ class InboxViewModel @Inject constructor(
         }
     }
 
-    fun archiveConversations(chatIds: Set<String>) {
+    fun archiveConversations(chatIds: Set<String>, onArchived: (Set<String>) -> Unit = {}) {
         if (chatIds.isEmpty()) return
         viewModelScope.launch {
-            var failures = 0
+            val archived = mutableSetOf<String>()
             chatIds.forEach { chatId ->
                 chatRepository.updateConversationArchiveStatus(chatId, true)
-                    .onSuccess { _conversations.value = _conversations.value.filterNot { it.chatId == chatId } }
-                    .onFailure { failures++ }
+                    .onSuccess {
+                        archived += chatId
+                        _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
+                    }
             }
-            if (failures > 0) {
-                _error.value = "Failed to archive $failures conversation(s)."
-            } else {
+            val failures = chatIds.size - archived.size
+            if (failures > 0) _error.value = "Failed to archive $failures conversation(s)."
+            if (archived.isNotEmpty()) {
                 loadArchivedConversations()
+                onArchived(archived)
             }
         }
     }
@@ -356,18 +359,22 @@ class InboxViewModel @Inject constructor(
         }
     }
 
-    fun restoreArchivedConversation(chatId: String) {
+    fun unarchiveConversations(chatIds: Set<String>) {
+        if (chatIds.isEmpty()) return
         viewModelScope.launch {
-            chatRepository.updateConversationArchiveStatus(chatId, false)
-                .onSuccess {
-                    _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId == chatId }
-                    refreshConversations()
-                }
-                .onFailure { _error.value = "Failed to restore conversation: ${it.message.orEmpty()}" }
+            val restored = mutableSetOf<String>()
+            chatIds.forEach { chatId ->
+                chatRepository.updateConversationArchiveStatus(chatId, false)
+                    .onSuccess { restored += chatId }
+            }
+            val failures = chatIds.size - restored.size
+            if (failures > 0) _error.value = "Failed to unarchive $failures conversation(s)."
+            if (restored.isNotEmpty()) {
+                _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId in restored }
+                refreshConversations()
+            }
         }
     }
-
-    fun undoArchiveConversation(chatId: String) = restoreArchivedConversation(chatId)
 
     fun clearError() { _error.value = null }
 

@@ -157,12 +157,28 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         expiresAt: String? = null,
         replyToId: String? = null,
         attachments: List<com.synapse.social.studioasinc.shared.data.dto.chat.MessageAttachmentDto>? = null,
-        metadata: String? = null
+        metadata: String? = null,
+        deviceId: String? = null
     ): MessageDto =
         withContext(AppDispatchers.IO) {
             val senderId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
             val newMessage = NewMessageDto(chatId, senderId, content, messageType, mediaUrl, expiresAt, replyToId, attachments = attachments, metadata = metadata)
-            client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
+            val result = client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
+            
+            // If deviceId is provided, update the message with it
+            if (deviceId != null && result.id != null) {
+                try {
+                    client.postgrest.from("messages").update({
+                        set("device_id", deviceId)
+                    }) {
+                        filter { eq("id", result.id) }
+                    }
+                } catch (e: Exception) {
+                    Napier.w("Failed to update device_id for message ${result.id}", e)
+                }
+            }
+            
+            result
         }
 
     suspend fun getMessageById(messageId: String): MessageDto? = withContext(AppDispatchers.IO) {
@@ -267,13 +283,14 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             client.postgrest.from("user_deleted_messages").insert(deletions)
         }
 
-    suspend fun markMessagesAsRead(chatId: String) = withContext(AppDispatchers.IO) {
+    suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null) = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext
             val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
 
             client.postgrest.from("chat_participants").update({
                 set("last_read_at", now)
+                if (deviceId != null) set("last_read_device_id", deviceId)
             }) {
                 filter {
                     eq("chat_id", chatId)
@@ -283,25 +300,33 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
 
             // Optimize: Call an RPC to perform a bulk update on the database side
             // This replaces 1 SELECT and M UPDATE queries with a single network call.
+            val rpcParams = mutableMapOf(
+                "p_chat_id" to chatId,
+                "p_user_id" to currentUserId
+            )
+            if (deviceId != null) {
+                rpcParams["p_device_id"] = deviceId
+            }
+            
             client.postgrest.rpc(
                 function = "mark_messages_as_read",
-                parameters = mapOf(
-                    "p_chat_id" to chatId,
-                    "p_user_id" to currentUserId
-                )
+                parameters = rpcParams
             )
         } catch (e: Exception) {
             Napier.e("Error marking messages as read", e)
         }
     }
 
-    suspend fun markMessagesAsDelivered(chatId: String) = withContext(AppDispatchers.IO) {
+    suspend fun markMessagesAsDelivered(chatId: String, deviceId: String? = null) = withContext(AppDispatchers.IO) {
         try {
+            val rpcParams = mutableMapOf("p_chat_id" to chatId)
+            if (deviceId != null) {
+                rpcParams["p_device_id"] = deviceId
+            }
+            
             client.postgrest.rpc(
                 function = "mark_messages_as_delivered",
-                parameters = mapOf(
-                    "p_chat_id" to chatId
-                )
+                parameters = rpcParams
             )
         } catch (e: Exception) {
             Napier.e("Error marking received messages as delivered", e)

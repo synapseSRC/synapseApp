@@ -23,6 +23,8 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     private val groups = ChatGroupDataSource(client)
     private val realtime = ChatRealtimeDataSource(client)
     private val keys = ChatKeyDataSource(client)
+    private val deviceRegistration = DeviceRegistrationDataSource(client)
+    private val chatSettings = ChatParticipantSettingsDataSource(client)
 
     fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
 
@@ -52,8 +54,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
         expiresAt: String? = null,
         replyToId: String? = null,
         attachments: List<com.synapse.social.studioasinc.shared.data.dto.chat.MessageAttachmentDto>? = null,
-        metadata: String? = null
-    ): MessageDto = messages.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId, attachments, metadata)
+        metadata: String? = null,
+        deviceId: String? = null
+    ): MessageDto = messages.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId, attachments, metadata, deviceId)
 
     suspend fun getOtherParticipantId(chatId: String, currentUserId: String): String? =
         keys.getOtherParticipantId(chatId, currentUserId)
@@ -123,11 +126,11 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getDisappearingMode(chatId: String): String? =
         conversations.getDisappearingMode(chatId)
 
-    suspend fun markMessagesAsRead(chatId: String) =
-        messages.markMessagesAsRead(chatId)
+    suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null) =
+        messages.markMessagesAsRead(chatId, deviceId)
 
-    suspend fun markMessagesAsDelivered(chatId: String) =
-        messages.markMessagesAsDelivered(chatId)
+    suspend fun markMessagesAsDelivered(chatId: String, deviceId: String? = null) =
+        messages.markMessagesAsDelivered(chatId, deviceId)
 
     suspend fun getMessageById(messageId: String): MessageDto? =
         messages.getMessageById(messageId)
@@ -140,6 +143,32 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun editMessageMetadata(messageId: String, metadata: String?) = messages.editMessageMetadata(messageId, metadata)
 
     suspend fun markViewOnceConsumed(messageId: String) = messages.markViewOnceConsumed(messageId)
+
+    // Device registration methods
+    suspend fun registerDevice(deviceToken: String, deviceName: String? = null, deviceType: String? = null) =
+        deviceRegistration.registerDevice(deviceToken, deviceName, deviceType)
+
+    suspend fun updateDevicePresence(deviceId: String) =
+        deviceRegistration.updateDevicePresence(deviceId)
+
+    suspend fun getUserDevices() =
+        deviceRegistration.getUserDevices()
+
+    // Chat settings methods
+    suspend fun getChatSettings(chatId: String) =
+        chatSettings.getChatSettings(chatId)
+
+    suspend fun updateChatSettings(
+        chatId: String,
+        isPinned: Boolean? = null,
+        isMuted: Boolean? = null,
+        isArchived: Boolean? = null,
+        currentVersion: Int? = null
+    ) =
+        chatSettings.updateChatSettings(chatId, isPinned, isMuted, isArchived, currentVersion)
+
+    suspend fun getAllUserSettings() =
+        chatSettings.getAllUserSettings()
 
     suspend fun deleteMessage(messageId: String): Unit = 
         messages.deleteMessage(messageId)

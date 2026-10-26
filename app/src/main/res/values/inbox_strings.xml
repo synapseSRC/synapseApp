@@ -59,7 +59,10 @@
     <string name="inbox_delete_confirm">Delete</string>
     <string name="inbox_cancel">Cancel</string>
     <string name="inbox_archive_screen_title">Archived Conversations</string>
-    <string name="inbox_archive_restore">Restore</string>
+    <string name="inbox_action_unarchive">Unarchive</string>
+    <string name="inbox_menu_archived">Archived (%1$d)</string>
+    <string name="inbox_menu_more">More options</string>
+    <string name="inbox_undo">Undo</string>
     <string name="inbox_archive_empty">No archived conversations.</string>
     <string name="inbox_empty_title">No conversations yet</string>
     <string name="inbox_empty_body">Start a conversation with someone you know.</string>
@@ -91,5 +94,9 @@
     <plurals name="inbox_unread_threads">
         <item quantity="one">%1$d unread thread</item>
         <item quantity="other">%1$d unread threads</item>
+    </plurals>
+    <plurals name="inbox_archived_snackbar">
+        <item quantity="one">Conversation archived</item>
+        <item quantity="other">%1$d conversations archived</item>
     </plurals>
 </resources>

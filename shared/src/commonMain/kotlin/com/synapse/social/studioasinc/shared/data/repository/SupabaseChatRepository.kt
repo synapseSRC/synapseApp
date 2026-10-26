@@ -102,6 +102,16 @@ class SupabaseChatRepository(
             (TimeProvider.nowMillis() - lastSync) < maxAgeMs
         }
 
+    // Device ID management - will be injected via constructor in future
+    // For now, placeholder implementation
+    private var currentDeviceId: String? = null
+    
+    override fun setCurrentDeviceId(deviceId: String?) {
+        currentDeviceId = deviceId
+    }
+    
+    override fun getCurrentDeviceId(): String? = currentDeviceId
+
     /** Raw envelopes and failed decryptions must never replace a readable cached message. */
     private fun Message.hasReadableContent(): Boolean =
         encryptionFailureReason == null &&
@@ -498,8 +508,11 @@ class SupabaseChatRepository(
                 }
             }
 
+            // Get current device ID from secure storage if available
+            val deviceId = getCurrentDeviceId()
+
             val messageDto = try {
-                dataSource.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId, dtoAttachments, serializedMetadata)
+                dataSource.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId, dtoAttachments, serializedMetadata, deviceId)
             } catch (e: Exception) {
                 if (offlineActionRepository != null) {
                     queueMessageOffline(chatId, content, mediaUrl, messageType, expiresAt, replyToId, currentUserId, attachments, metadataContainer)
@@ -637,7 +650,8 @@ class SupabaseChatRepository(
 
     override suspend fun markMessagesAsRead(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) {
         try {
-            dataSource.markMessagesAsRead(chatId)
+            val deviceId = getCurrentDeviceId()
+            dataSource.markMessagesAsRead(chatId, deviceId)
             val currentUserId = getCurrentUserId()
             if (currentUserId != null) {
                 cachedMessageDao?.markRead(chatId, currentUserId)
@@ -660,7 +674,8 @@ class SupabaseChatRepository(
 
     override suspend fun markMessagesAsDelivered(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) {
         try {
-            dataSource.markMessagesAsDelivered(chatId)
+            val deviceId = getCurrentDeviceId()
+            dataSource.markMessagesAsDelivered(chatId, deviceId)
             Result.success(Unit)
         } catch (e: Exception) {
             Logger.e("Error marking messages as delivered", throwable = e)

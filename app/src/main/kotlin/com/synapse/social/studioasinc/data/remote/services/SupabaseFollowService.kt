@@ -34,10 +34,13 @@ class SupabaseFollowService @Inject constructor() {
         try {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
-            client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
+            android.util.Log.d("SupabaseFollowService", "Attempting to follow: followerId=$followerId, followingId=$followingId")
+            val response = client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
+            android.util.Log.d("SupabaseFollowService", "Follow request successful: $response")
             return@withContext Result.success(Unit)
         } catch (e: Exception) {
-            android.util.Log.e("SupabaseFollowService", "Failed to request follow", e)
+            android.util.Log.e("SupabaseFollowService", "Failed to request follow: ${e.message}", e)
+            android.util.Log.e("SupabaseFollowService", "Error details: ${e::class.simpleName} - ${e.stackTraceToString()}")
             Result.failure(e)
         }
     }

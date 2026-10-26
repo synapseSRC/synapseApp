@@ -50,10 +50,11 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
-import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material.icons.rounded.VolumeOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -63,6 +64,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -459,12 +461,15 @@ shape = RoundedCornerShape(0.dp),
 fun InboxArchivedScreen(
     conversations: List<Conversation>,
     isLoading: Boolean,
+    selectedChatIds: Set<String>,
     onOpenConversation: (Conversation) -> Unit,
-    onRestore: (String) -> Unit,
+    onToggleSelection: (String) -> Unit,
+    onUnarchive: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val selectionMode = selectedChatIds.isNotEmpty()
     when {
-        isLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        isLoading && conversations.isEmpty() -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         conversations.isEmpty() -> Box(modifier.fillMaxSize().padding(Spacing.space24), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.inbox_archive_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -476,10 +481,19 @@ fun InboxArchivedScreen(
             items(conversations, key = { "archived-${it.chatId}" }) { conversation ->
                 InboxConversationRow(
                     conversation = conversation,
-                    onClick = { onOpenConversation(conversation) },
-                    trailingContent = {
-                        IconButton(onClick = { onRestore(conversation.chatId) }) {
-                            Icon(Icons.Rounded.Restore, contentDescription = stringResource(R.string.inbox_archive_restore), tint = MaterialTheme.colorScheme.primary)
+                    selected = conversation.chatId in selectedChatIds,
+                    selectionMode = selectionMode,
+                    onClick = {
+                        if (selectionMode) onToggleSelection(conversation.chatId) else onOpenConversation(conversation)
+                    },
+                    onLongClick = { onToggleSelection(conversation.chatId) },
+                    trailingContent = if (selectionMode) null else {
+                        {
+                            TextButton(onClick = { onUnarchive(conversation.chatId) }) {
+                                Icon(Icons.Rounded.Unarchive, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                                Text(stringResource(R.string.inbox_action_unarchive))
+                            }
                         }
                     }
                 )
