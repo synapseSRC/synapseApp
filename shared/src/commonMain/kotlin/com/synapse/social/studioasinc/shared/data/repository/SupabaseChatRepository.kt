@@ -125,6 +125,10 @@ class SupabaseChatRepository(
                     recordCacheSyncTime(chatId)
                 }
             }
+            // Read outside the lock — only the write needs serialization.
+            // If the cache already holds a decrypted version of this message (e.g. from
+            // background sync or a prior decryption pass), prefer that content over an
+            // encrypted placeholder that may have arrived via the real-time channel.
             val cached = cachedMessageDao
                 ?.getMessages(chatId, 1)
                 ?.firstOrNull { it.id == message.id }

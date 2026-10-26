@@ -28,10 +28,7 @@ private val encryptedBodyPattern = Regex("^[A-Za-z0-9+/_-]+={0,2}$")
 
 /** Returns true for known encrypted placeholder strings and ciphertext payloads. */
 private val encryptedPlaceholderContents = setOf(
-    "Message is encrypted",
-    "🔒 Encrypted message",
-    "🔒 You sent an encrypted message",
-    "🔒 You sent an encrypted message (Copy)"
+    "Message is encrypted"
 )
 
 internal fun isUndecryptableMessageContent(content: String): Boolean {

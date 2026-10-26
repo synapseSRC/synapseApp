@@ -790,9 +790,9 @@ fun MessageBubble(
                                     }
                                 }
 
-                                if (message.content.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(Spacing.space4))
-                                    Surface(
+if (message.content.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
+                                        Surface(
                                             color = if (hasReplyPreview) Color.Transparent else containerColor,
                                             contentColor = contentColor,
                                             shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
