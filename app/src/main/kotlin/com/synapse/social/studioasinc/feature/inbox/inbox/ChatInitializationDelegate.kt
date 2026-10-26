@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
 import com.synapse.social.studioasinc.shared.domain.model.User
-import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
@@ -13,6 +12,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUser
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,6 +29,7 @@ class ChatInitializationDelegate(
     private val markMessagesAsReadUseCase: MarkMessagesAsReadUseCase,
     private val viewModelScope: CoroutineScope,
     private val currentUserIdProvider: () -> String?,
+    private val currentChatIdProvider: () -> String?,
     private val messagingDelegate: ChatMessagingDelegate,
     private val subscriptionDelegate: ChatSubscriptionDelegate,
     private val aiDelegate: ChatAiDelegate,
@@ -47,80 +48,51 @@ class ChatInitializationDelegate(
     private val _groupMemberNames: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
 ) {
 
-    fun initialize(chatId: String, participantId: String?, currentChatId: String?) {
-        // If re-entering the same chat, restart subscriptions and reload messages
-        // (cleanup() clears messages before this runs, so they must be reloaded).
-        if (chatId != "new" && (chatId.equals(currentChatId, ignoreCase = true) || (participantId != null && currentChatId != null))) {
-            val resolvedId = currentChatId ?: chatId
-            subscriptionDelegate.startSubscriptions(resolvedId)
-            viewModelScope.launch {
-                try {
-                    // Cache first for instant display; background refresh follows when cache exists.
-                    getMessagesUseCase.cacheFirst(resolvedId, refreshInBackground = false).onSuccess { messages ->
-                        messagingDelegate.setMessages(messages)
-                        if (messages.isEmpty()) {
-                            _isLoading.value = true
-                        } else {
-                            _isRefreshing.value = true
-                        }
-                    }.onFailure { e ->
-                        _error.value = e.message
-                        _isLoading.value = true
-                    }
-                    getMessagesUseCase(resolvedId, forceNetwork = true).onSuccess { fresh ->
-                        messagingDelegate.setMessages(fresh)
-                    }.onFailure { e ->
-                        if (messagingDelegate.messages.value.isEmpty()) _error.value = e.message
-                        Napier.w("Network refresh failed on re-entry for chatId=" + resolvedId + ": " + e.message, tag = "ChatInit")
-                    }
-                } finally {
-                    _isLoading.value = false
-                    _isRefreshing.value = false
-                }
-                markMessagesAsReadUseCase(resolvedId)
-            }
-            if (participantId != null) {
-                viewModelScope.launch {
-                    observeUserPresenceDetailUseCase(participantId).collect { presence ->
-                        _isParticipantActive.value = presence.isOnline
-                        if (!presence.lastSeen.isNullOrBlank()) {
-                            _participantProfile.update { current ->
-                                current?.copy(lastSeen = presence.lastSeen)
-                            }
-                        }
-                    }
-                }
-            }
-            return
-        }
+    private var activeJob: Job? = null
+    private var initializationToken = 0L
 
+    /** Cancels any in-flight initialization so stale results cannot land in the new chat. */
+    fun cancelInitialization() {
+        initializationToken++
+        activeJob?.cancel()
+        activeJob = null
+    }
+
+    private fun isCurrent(token: Long, chatId: String): Boolean =
+        token == initializationToken &&
+            currentChatIdProvider()?.equals(chatId, ignoreCase = true) == true
+
+    fun initialize(chatId: String, participantId: String?) {
+        cancelInitialization()
+        val token = initializationToken
+
+        // Switching chats must not show the previous conversation's profile, group flags,
+        // presence, or disappearing mode while the new metadata loads.
         _groupMemberNames.value = emptyMap()
+        _participantProfile.value = null
+        _isParticipantActive.value = false
+        _isGroupChat.value = false
+        _onlyAdminsCanMessage.value = false
+        _isCurrentUserAdmin.value = false
+        _disappearingMode.value = com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
         _isLoading.value = true
         _error.value = null
 
-        // Set participant profile info
-        if (participantId != null) {
-            viewModelScope.launch {
-                getUserProfileUseCase(participantId).onSuccess { user ->
-                    Napier.d("Loaded participant profile: ${user?.username}, avatar: ${user?.avatar}", tag = "ChatViewModel")
-                    _participantProfile.value = user
-                }.onFailure { e ->
-                    Napier.e("Failed to load participant profile", e)
-                }
-            }
-        }
-
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             val actualChatId = if ((chatId == "new" || chatId == participantId) && participantId != null) {
                 getOrCreateChatUseCase(participantId).getOrElse { error ->
-                    val detail = error.message?.takeIf { it.isNotBlank() }
-                    _error.value = detail?.let { "Failed to create chat: $it" } ?: "Failed to create chat"
-                    _isLoading.value = false
+                    if (token == initializationToken) {
+                        val detail = error.message?.takeIf { it.isNotBlank() }
+                        _error.value = detail?.let { "Failed to create chat: $it" } ?: "Failed to create chat"
+                        _isLoading.value = false
+                    }
                     return@launch
                 }
             } else {
                 chatId
             }
+
+            if (token != initializationToken) return@launch
 
             onChatIdResolved(actualChatId)
 
@@ -128,12 +100,26 @@ class ChatInitializationDelegate(
             // or any other network call. Any delay here is a window where messages are lost.
             subscriptionDelegate.startSubscriptions(actualChatId)
 
+            if (participantId != null) {
+                launch {
+                    getUserProfileUseCase(participantId).onSuccess { user ->
+                        if (!isCurrent(token, actualChatId)) return@onSuccess
+                        Napier.d("Loaded participant profile: ${user?.username}, avatar: ${user?.avatar}", tag = "ChatViewModel")
+                        _participantProfile.value = user
+                    }.onFailure { e ->
+                        Napier.e("Failed to load participant profile", e)
+                    }
+                }
+            }
+
             // All remaining work runs in parallel so none of it blocks the subscription.
             launch {
                 initializeE2EUseCase().onSuccess {
+                    if (!isCurrent(token, actualChatId)) return@onSuccess
                     _isE2EEReady.value = true
                     Napier.d("E2EE initialization successful", tag = "E2EE")
                 }.onFailure { e ->
+                    if (!isCurrent(token, actualChatId)) return@onFailure
                     _isE2EEReady.value = false
                     Napier.e("E2EE initialization failed: ${e.message}", e, tag = "E2EE")
                 }
@@ -143,6 +129,7 @@ class ChatInitializationDelegate(
                 try {
                     // Cache first for instant display; background refresh follows when cache exists.
                     getMessagesUseCase.cacheFirst(actualChatId, refreshInBackground = false).onSuccess { messages ->
+                        if (!isCurrent(token, actualChatId)) return@onSuccess
                         messagingDelegate.setMessages(messages)
                         if (messages.isEmpty()) {
                             _isLoading.value = true
@@ -150,29 +137,38 @@ class ChatInitializationDelegate(
                             _isRefreshing.value = true
                         }
                     }.onFailure { error ->
+                        if (!isCurrent(token, actualChatId)) return@onFailure
                         _error.value = error.message
                         _isLoading.value = true
                     }
                     getMessagesUseCase(actualChatId, forceNetwork = true).onSuccess { fresh ->
+                        if (!isCurrent(token, actualChatId)) return@onSuccess
                         messagingDelegate.setMessages(fresh)
                     }.onFailure { error ->
+                        if (!isCurrent(token, actualChatId)) return@onFailure
                         if (messagingDelegate.messages.value.isEmpty()) _error.value = error.message
                         Napier.w("Network refresh failed on init for chatId=" + actualChatId + ": " + error.message, tag = "ChatInit")
                     }
                 } finally {
-                    _isLoading.value = false
-                    _isRefreshing.value = false
+                    if (isCurrent(token, actualChatId)) {
+                        _isLoading.value = false
+                        _isRefreshing.value = false
+                    }
                 }
-                aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
-                markMessagesAsReadUseCase(actualChatId)
+                if (isCurrent(token, actualChatId)) {
+                    aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
+                    markMessagesAsReadUseCase(actualChatId)
+                }
             }
 
             launch {
                 getChatInfoUseCase(actualChatId).onSuccess { chatDto ->
+                    if (!isCurrent(token, actualChatId)) return@onSuccess
                     _isGroupChat.value = chatDto?.isGroup == true
                     if (chatDto?.isGroup == true) {
                         _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
                         getGroupMembersUseCase(actualChatId).onSuccess { members ->
+                            if (!isCurrent(token, actualChatId)) return@onSuccess
                             _groupMemberNames.value = members.associate { (member, _) ->
                                 val displayName = member.displayName?.takeIf(String::isNotBlank)
                                     ?: member.nickname?.takeIf(String::isNotBlank)
@@ -188,6 +184,7 @@ class ChatInitializationDelegate(
 
             launch {
                 getDisappearingModeUseCase(actualChatId).onSuccess { mode ->
+                    if (!isCurrent(token, actualChatId)) return@onSuccess
                     _disappearingMode.value = mode
                 }
             }
@@ -195,6 +192,7 @@ class ChatInitializationDelegate(
             if (participantId != null) {
                 launch {
                     observeUserPresenceDetailUseCase(participantId).collect { presence ->
+                        if (!isCurrent(token, actualChatId)) return@collect
                         _isParticipantActive.value = presence.isOnline
                         if (!presence.lastSeen.isNullOrBlank()) {
                             _participantProfile.update { current ->
@@ -206,4 +204,5 @@ class ChatInitializationDelegate(
             }
         }
     }
+
 }

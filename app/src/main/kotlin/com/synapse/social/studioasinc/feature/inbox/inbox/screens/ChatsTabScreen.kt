@@ -260,6 +260,12 @@ private fun ConversationItem(
     onAssignToFolder: (chatId: String, folderId: String) -> Unit = { _, _ -> }
 ) {
     var showFolderSheet by remember { mutableStateOf(false) }
+    // Conversation previews are plain strings; a ciphertext row must not leak into the list.
+    val lastMessageText = if (isUndecryptableMessageContent(conversation.lastMessage)) {
+        stringResource(R.string.chat_message_decryption_failed)
+    } else {
+        conversation.lastMessage
+    }
 
     PeekingBox(
         modifier = Modifier.fillMaxWidth(),
@@ -363,7 +369,7 @@ private fun ConversationItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = conversation.lastMessage,
+                        text = lastMessageText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (conversation.unreadCount > 0) MaterialTheme.colorScheme.onSurface
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -398,7 +404,7 @@ private fun ConversationItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = conversation.lastMessage,
+                        text = lastMessageText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

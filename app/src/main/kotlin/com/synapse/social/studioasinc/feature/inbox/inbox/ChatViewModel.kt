@@ -34,10 +34,10 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -344,7 +344,11 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         _isParticipantActive = _isParticipantActive,
         _disappearingMode = _disappearingMode,
         getDisappearingModeUseCase = getDisappearingModeUseCase,
-        onChatIdResolved = { currentChatId = it }
+        currentChatIdProvider = { currentChatId },
+        onChatIdResolved = { resolvedChatId ->
+            currentChatId = resolvedChatId
+            chatRepository.setActiveChatId(resolvedChatId)
+        }
     )
 
     private val inputDelegate = ChatInputDelegate(
@@ -401,9 +405,31 @@ val uid = currentUserId.value
     }
 
     fun initialize(chatId: String, participantId: String? = null) {
+        // Returning to a chat that this ViewModel already initialized keeps the loaded timeline
+        // and metadata; only subscriptions and any messages missed while away need repairing.
+        // This also avoids tearing down an in-flight E2EE initialization.
+        val activeChatId = currentChatId
+        if (chatId != "new" && activeChatId != null && chatId.equals(activeChatId, ignoreCase = true)) {
+            _error.value = null
+            chatRepository.setActiveChatId(chatId)
+            subscriptionDelegate.startSubscriptions(chatId)
+            if (!_isE2EEReady.value) {
+                viewModelScope.launch {
+                    initializeE2EUseCase().onSuccess {
+                        if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                            _isE2EEReady.value = true
+                        }
+                    }.onFailure { e ->
+                        Napier.e("E2EE re-initialization failed: ${e.message}", e, tag = "E2EE")
+                    }
+                }
+            }
+            refreshMessages()
+            return
+        }
+
         cleanup()
-        chatRepository.setActiveChatId(chatId)
-        initializationDelegate.initialize(chatId, participantId, currentChatId)
+        initializationDelegate.initialize(chatId, participantId)
     }
 
     fun refreshMessages() {
@@ -428,10 +454,16 @@ val uid = currentUserId.value
         } else {
             candidate.cancel()
         }
-        sync.start()
-        sync.await()
-        _isLoading.value = false
-        _isRefreshing.value = false
+        try {
+            sync.start()
+            sync.await()
+        } finally {
+            // A stale sync must not clear the loading state of the chat now on screen.
+            if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                _isLoading.value = false
+                _isRefreshing.value = false
+            }
+        }
     }
 
     private suspend fun fetchMissedMessages(chatId: String) {
@@ -458,6 +490,7 @@ val uid = currentUserId.value
                     Napier.w("Initial delta sync failed: " + initialResult.exceptionOrNull()?.message, tag = "ChatViewModel")
                     return
                 }
+                if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
                 messagingDelegate.setMessages(initialMessages)
                 val recoveredLatest = messagingDelegate.messages.value.lastOrNull {
                     it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING &&
@@ -480,6 +513,7 @@ val uid = currentUserId.value
                 return
             }
             if (page.isNullOrEmpty()) return
+            if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
             val nextCursor = page.last()
             if (compareSyncCursor(nextCursor, cursorCreatedAt, cursorId) <= 0) {
                 Napier.w("Incremental message cursor did not advance", tag = "ChatViewModel")
@@ -597,7 +631,7 @@ val uid = currentUserId.value
         viewModelScope.launch {
             try {
                 getMessagesUseCase(chatId, before = oldest, beforeId = oldestId).onSuccess { older ->
-                    if (currentChatId != chatId) return@onSuccess
+                    if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@onSuccess
                     if (older.isEmpty()) {
                         _hasMoreMessages.value = false
                     } else {
@@ -627,7 +661,7 @@ val uid = currentUserId.value
         // when the first real-time message arrives in a chat with no loaded messages.
         val wasEmpty = messagingDelegate.messages.value.isEmpty()
 
-        val encryptedPlaceholders = ChatMessagingDelegate.ENCRYPTED_PLACEHOLDERS
+        val incomingUndecryptable = ChatMessagingDelegate.isUndecryptable(newMessage)
         val currentSnapshot = messagingDelegate._messages.value
         val existing = currentSnapshot.firstOrNull { it.id == newMessage.id }
 
@@ -641,9 +675,9 @@ val uid = currentUserId.value
                 .filter { it.chatId.equals(newMessage.chatId, ignoreCase = true) && it.senderId == newMessage.senderId }
                 .filter { it.messageType == newMessage.messageType && it.replyToId == newMessage.replyToId }
                 .filter {
-                    it.content.trim() == newMessage.content.trim() ||
-                    newMessage.content in encryptedPlaceholders ||
-                    it.content in encryptedPlaceholders
+                    incomingUndecryptable ||
+                        it.content.trim() == newMessage.content.trim() ||
+                        ChatMessagingDelegate.isUndecryptable(it)
                 }
                 .minByOrNull { it.createdAt }
         } else {
@@ -666,18 +700,17 @@ val uid = currentUserId.value
             val stableClientId = matchingOptimisticMessage?.clientId
                 ?: existingInUpdate?.clientId
                 ?: newMessage.clientId
-            val displayContent = when {
-                existingInUpdate != null && existingInUpdate.content !in encryptedPlaceholders &&
-                    newMessage.content in encryptedPlaceholders -> existingInUpdate.content
-                matchingOptimisticMessage != null && matchingOptimisticMessage.content !in encryptedPlaceholders &&
-                    newMessage.content in encryptedPlaceholders -> matchingOptimisticMessage.content
-                else -> newMessage.content
-            }
+            // A decrypted copy must never be replaced by an unreadable realtime payload.
+            val existingReadable = existingInUpdate != null &&
+                !ChatMessagingDelegate.isUndecryptable(existingInUpdate)
+            val optimisticReadable = matchingOptimisticMessage != null &&
+                !ChatMessagingDelegate.isUndecryptable(matchingOptimisticMessage)
+            val keepExistingContent = incomingUndecryptable && existingReadable
+            val keepOptimisticContent = incomingUndecryptable && !keepExistingContent && optimisticReadable
+            val contentChanged = !incomingUndecryptable && existingInUpdate != null &&
+                existingInUpdate.content != newMessage.content
 
-            val mergedMessage = if (
-                existingInUpdate != null && existingInUpdate.content !in encryptedPlaceholders &&
-                newMessage.content in encryptedPlaceholders
-            ) {
+            val mergedMessage = if (keepExistingContent) {
                 existingInUpdate.copy(
                     deliveryStatus = newMessage.deliveryStatus,
                     readBy = effectiveReadBy,
@@ -686,10 +719,14 @@ val uid = currentUserId.value
                 )
             } else {
                 newMessage.copy(
-                    content = displayContent,
+                    content = if (keepOptimisticContent) {
+                        matchingOptimisticMessage.content
+                    } else {
+                        newMessage.content
+                    },
                     readBy = effectiveReadBy,
                     clientId = stableClientId,
-                    isEdited = if (existingInUpdate != null && existingInUpdate.content != newMessage.content) {
+                    isEdited = if (contentChanged) {
                         newMessage.isEdited
                     } else {
                         existingInUpdate?.isEdited ?: newMessage.isEdited
@@ -738,10 +775,9 @@ val uid = currentUserId.value
         }
 
         // Persist to cache with real-time priority so inbox refresh cannot overwrite this message.
-        // Skip if content is still an encrypted placeholder — the retry block below will reconcile
-        // once the decrypted version is available.
-        val isPlaceholder = newMessage.content in encryptedPlaceholders
-        if (!isPlaceholder) {
+        // Skip while the payload is unreadable — the decryption retry below reconciles once a
+        // decrypted version is available.
+        if (!incomingUndecryptable) {
             val messageForReconciliation = messagingDelegate._messages.value.firstOrNull { it.id == newMessage.id }
             if (messageForReconciliation != null) {
                 val chatIdToReconcile = currentChatId ?: newMessage.chatId
@@ -755,31 +791,42 @@ val uid = currentUserId.value
             }
         }
 
-        if (newMessage.senderId != currentUserId.value && newMessage.content in encryptedPlaceholders) {
-            viewModelScope.launch {
-                for (retryDelay in listOf(500L, 1500L)) {
-                    delay(retryDelay)
-                    val result = getMessageByIdUseCase(newMessage.id)
-                    val refreshed = result.getOrNull()
-                    if (refreshed != null && refreshed.content !in encryptedPlaceholders) {
-                        messagingDelegate._messages.update { current ->
-                            val stableClientId = current.firstOrNull { it.id == newMessage.id }?.clientId
-                            val toWrite = if (stableClientId != null) refreshed.copy(clientId = stableClientId) else refreshed
-                            with(messagingDelegate) { current.replaceById(newMessage.id, toWrite) }
-                        }
-                        // Reconcile the decrypted message into cache now that content is available.
-                        val decryptedForReconciliation = messagingDelegate._messages.value.firstOrNull { it.id == newMessage.id }
-                        if (decryptedForReconciliation != null) {
-                            val chatIdToReconcile = currentChatId ?: newMessage.chatId
-                            try {
-                                reconcileRealtimeMessageUseCase(chatIdToReconcile, decryptedForReconciliation)
-                            } catch (e: Exception) {
-                                Napier.w("Cache reconciliation failed for decrypted message ${newMessage.id}: ${e.message}", tag = "ChatViewModel")
-                            }
-                        }
-                        break
-                    }
+        if (newMessage.senderId != currentUserId.value && incomingUndecryptable) {
+            retryDecryptionWhenReady(newMessage)
+        }
+    }
+
+    /**
+     * Re-reads a message that arrived before its E2EE session was usable. Waiting on the
+     * initialization signal (instead of fixed retry delays) repairs the message as soon as
+     * decryption becomes possible, and leaves the fallback notice in place if it never does.
+     */
+    private fun retryDecryptionWhenReady(message: Message) {
+        val chatId = currentChatId ?: message.chatId
+        viewModelScope.launch {
+            val ready = _isE2EEReady.value ||
+                withTimeoutOrNull(10.seconds) { _isE2EEReady.first { it } } == true
+            if (!ready) return@launch
+            if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@launch
+
+            getMessageByIdUseCase(message.id).onSuccess { refreshed ->
+                if (refreshed == null || ChatMessagingDelegate.isUndecryptable(refreshed)) return@onSuccess
+                if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@onSuccess
+                messagingDelegate._messages.update { current ->
+                    val existing = current.firstOrNull { it.id == message.id }
+                    val toWrite = refreshed.copy(clientId = existing?.clientId ?: refreshed.clientId)
+                    val merged = existing?.mergeMonotonic(toWrite) ?: toWrite
+                    with(messagingDelegate) { current.replaceById(message.id, merged) }
                 }
+                val decrypted = messagingDelegate._messages.value.firstOrNull { it.id == message.id }
+                    ?: return@onSuccess
+                try {
+                    reconcileRealtimeMessageUseCase(chatId, decrypted)
+                } catch (e: Exception) {
+                    Napier.w("Cache reconciliation failed for decrypted message ${message.id}: ${e.message}", tag = "ChatViewModel")
+                }
+            }.onFailure { error ->
+                Napier.w("Decryption retry failed for message ${message.id}: ${error.message}", tag = "ChatViewModel")
             }
         }
     }
@@ -963,12 +1010,23 @@ currentUserIdProvider = { currentUserId.value },
     fun getFormattedTimestamp(timestamp: String?): String = TimestampFormatter.formatRelative(timestamp)
 
     private fun cleanup() {
+        // Invalidate initialization first so any suspended fetch that resumes later cannot
+        // write its result into the chat that is about to be opened.
+        initializationDelegate.cancelInitialization()
         subscriptionDelegate.cleanup()
         aiDelegate.cancelPendingSmartReplies()
         inputDelegate.cleanup()
+        activeMessageSyncs.values.forEach { it.cancel() }
+        activeMessageSyncs.clear()
+        emptyChatSyncCursors.clear()
         messagingDelegate.pendingTempIds.value = emptySet()
         messagingDelegate.clearMessages()
+        currentChatId = null
         _hasMoreMessages.value = true
+        _isLoadingMore.value = false
+        _isLoading.value = false
+        _isRefreshing.value = false
+        _error.value = null
         chatRepository.setActiveChatId(null)
         viewModelScope.launch {
             updateCurrentChatUseCase(null)

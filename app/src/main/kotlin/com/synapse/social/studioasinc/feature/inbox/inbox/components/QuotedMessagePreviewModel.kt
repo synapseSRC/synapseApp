@@ -4,10 +4,11 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.model.chat.AttachmentType
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 
 /** Presentation-level message categories used by the shared quoted-message preview. */
 internal enum class QuotedMessageKind {
-    UNAVAILABLE, DELETED, TEXT, PHOTO, VIDEO, VOICE, AUDIO, MEDIA, FILE, POLL,
+    UNAVAILABLE, DELETED, UNDECRYPTABLE, TEXT, PHOTO, VIDEO, VOICE, AUDIO, MEDIA, FILE, POLL,
     CONTACT, LOCATION, LIVE_LOCATION, GIF, STICKER, LINK, MUSIC, SHARED_POST,
     STORY, EVENT, PRODUCT, PAYMENT, MAP, CODE, CALL, SYSTEM, VIEW_ONCE
 }
@@ -25,6 +26,9 @@ internal fun quotedMessagePreviewModel(message: Message?): QuotedMessagePreviewM
     if (message == null) return QuotedMessagePreviewModel(QuotedMessageKind.UNAVAILABLE)
     if (message.isDeleted || message.contentStatus == ContentStatus.DELETED) {
         return QuotedMessagePreviewModel(QuotedMessageKind.DELETED)
+    }
+    if (EncryptedPayloadDetector.isUndecryptable(message.content, message.encryptionFailureReason)) {
+        return QuotedMessagePreviewModel(QuotedMessageKind.UNDECRYPTABLE)
     }
 
     val content = message.content.trim().takeIf(String::isNotEmpty)

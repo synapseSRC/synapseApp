@@ -51,14 +51,7 @@ internal class ChatEncryptionHelper(
         decryptionMutexes.getOrPut(senderId.ifBlank { "__global__" }) { Mutex() }
     }
 
-    private val placeholders = setOf(
-        "Message is encrypted",
-        "🔒 Encrypted message",
-        "🔒 You sent an encrypted message",
-        "🔒 You sent an encrypted message (Copy)"
-    )
-
-    fun isPlaceholder(content: String): Boolean = content in placeholders
+    fun isPlaceholder(content: String): Boolean = EncryptedPayloadDetector.isPlaceholder(content)
 
     /**
      * Extracts content, mediaUrl, and metadata from a decrypted JSON payload like {"content":"...","mediaUrl":"...","metadata":"..."}.
@@ -101,7 +94,11 @@ internal class ChatEncryptionHelper(
             val dbCached = try {
                 cachedMessageDao?.getMessages(chatId, 200)?.find { it.id == messageId }
             } catch (_: Exception) { null }
-            if (dbCached != null && dbCached.content !in placeholders && dbCached.content.isNotBlank()) {
+            if (dbCached != null &&
+                dbCached.content.isNotBlank() &&
+                !EncryptedPayloadDetector.isPlaceholder(dbCached.content) &&
+                !EncryptedPayloadDetector.isEncryptedPayload(dbCached.content)
+            ) {
                 Logger.d("E2EE_DECRYPT: Found message $messageId in local DB cache", tag = "E2EE")
                 decryptedMessageCache[messageId] = dbCached.content
                 return@withLock this.copy(content = dbCached.content, mediaUrl = dbCached.mediaUrl ?: this.mediaUrl, metadata = dbCached.metadataContainer?.let {
@@ -113,31 +110,46 @@ internal class ChatEncryptionHelper(
                 val looksLikeEncryptedPayload = EncryptedPayloadDetector.isEncryptedPayload(this.content)
 
                 if (looksLikeEncryptedPayload) {
-                    if (signalProtocolManager != null) {
-                        val jsonElement = Json.parseToJsonElement(this.content).jsonObject
-                        val myPayloadElement = jsonElement[currentUserId]
-                        if (myPayloadElement != null) {
-                            val senderId = this.senderId
-                            val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
-                            try {
-                                if (!signalProtocolManager.hasSession(senderId)) {
-                                    try {
-                                        ensureSession(senderId)
-                                    } catch (sessionErr: Exception) {
-                                        Logger.w("E2EE_DECRYPT: Session not pre-established with $senderId, attempting direct decrypt", tag = "E2EE")
-                                    }
+                    val jsonElement = Json.parseToJsonElement(this.content).jsonObject
+                    val myPayloadElement = jsonElement[currentUserId]
+
+                    // The sender's own entry is a plaintext JSON payload, not a ratchet message.
+                    // Read it directly so the sending device (and its other devices) never show
+                    // the raw envelope as message text.
+                    if (myPayloadElement is JsonPrimitive && myPayloadElement.isString) {
+                        val plaintextPayload = myPayloadElement.content
+                        val (content, mediaUrl, metadata) = extractContent(plaintextPayload)
+                        decryptedMessageCache[messageId] = plaintextPayload
+                        try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
+                        return@withLock this.copy(
+                            content = content,
+                            mediaUrl = mediaUrl ?: this.mediaUrl,
+                            metadata = metadata ?: this.metadata,
+                            encryptionFailureReason = null
+                        )
+                    }
+
+                    if (signalProtocolManager != null && myPayloadElement != null) {
+                        val senderId = this.senderId
+                        val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
+                        try {
+                            if (!signalProtocolManager.hasSession(senderId)) {
+                                try {
+                                    ensureSession(senderId)
+                                } catch (sessionErr: Exception) {
+                                    Logger.w("E2EE_DECRYPT: Session not pre-established with $senderId, attempting direct decrypt", tag = "E2EE")
                                 }
-                                val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
-                                val decryptedContent = decryptedBytes.decodeToString()
-                                Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
-                                decryptedMessageCache[messageId] = decryptedContent
-                                val (content, mediaUrl, metadata) = extractContent(decryptedContent)
-                                try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
-                                return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata, encryptionFailureReason = null)
-                            } catch (decryptError: Throwable) {
-                                if (decryptError is CancellationException) throw decryptError
-                                Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Session preserved — Double Ratchet may recover on next message.", tag = "E2EE", throwable = decryptError)
                             }
+                            val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
+                            val decryptedContent = decryptedBytes.decodeToString()
+                            Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
+                            decryptedMessageCache[messageId] = decryptedContent
+                            val (content, mediaUrl, metadata) = extractContent(decryptedContent)
+                            try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
+                            return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata, encryptionFailureReason = null)
+                        } catch (decryptError: Throwable) {
+                            if (decryptError is CancellationException) throw decryptError
+                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Session preserved — Double Ratchet may recover on next message.", tag = "E2EE", throwable = decryptError)
                         }
                     }
                     return@withLock this.copy(encryptionFailureReason = "decryption_failed")
@@ -145,7 +157,11 @@ internal class ChatEncryptionHelper(
             } catch (_: Exception) {
                 // Not an encrypted payload
             }
-            this.copy(encryptionFailureReason = null)
+            if (EncryptedPayloadDetector.isEncryptedPayload(this.content)) {
+                this.copy(encryptionFailureReason = "decryption_failed")
+            } else {
+                this.copy(encryptionFailureReason = null)
+            }
         }
     }
 

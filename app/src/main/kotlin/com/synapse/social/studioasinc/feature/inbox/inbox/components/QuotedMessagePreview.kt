@@ -110,6 +110,7 @@ internal fun QuotedMessagePreview(
     val excerpt = when (preview.kind) {
         QuotedMessageKind.UNAVAILABLE -> stringResource(R.string.chat_reply_message_unavailable)
         QuotedMessageKind.DELETED -> stringResource(R.string.chat_reply_message_deleted)
+        QuotedMessageKind.UNDECRYPTABLE -> stringResource(R.string.chat_message_decryption_failed)
         QuotedMessageKind.TEXT -> detail ?: label
         QuotedMessageKind.POLL -> detail ?: label
         else -> listOfNotNull(label, detail?.takeUnless { it.equals(label, ignoreCase = true) }, duration, fileSize)
@@ -230,6 +231,7 @@ internal fun QuotedMessagePreview(
 private fun quotedKindLabel(kind: QuotedMessageKind): String = when (kind) {
     QuotedMessageKind.UNAVAILABLE -> stringResource(R.string.chat_reply_unavailable_title)
     QuotedMessageKind.DELETED -> stringResource(R.string.chat_reply_message_deleted)
+    QuotedMessageKind.UNDECRYPTABLE -> stringResource(R.string.chat_message_decryption_failed)
     QuotedMessageKind.TEXT -> stringResource(R.string.chat_reply_type_text)
     QuotedMessageKind.PHOTO -> stringResource(R.string.chat_reply_type_photo)
     QuotedMessageKind.VIDEO -> stringResource(R.string.chat_reply_type_video)

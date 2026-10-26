@@ -5,6 +5,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
@@ -70,61 +71,14 @@ class ChatMessagingDelegate(
         }
     }
 
-    fun insertChronologically(current: List<Message>, message: Message): List<Message> {
-        val ordering = ChatMapper.MessageChronologicalComparator
-        val last = current.lastOrNull()
-        if (last == null || ordering.compare(last, message) <= 0) return current + message
+    fun insertChronologically(current: List<Message>, message: Message): List<Message> =
+        ChatMapper.insertChronologically(current, message)
 
-        var low = 0
-        var high = current.size
-        while (low < high) {
-            val middle = (low + high) ushr 1
-            if (ordering.compare(current[middle], message) <= 0) low = middle + 1 else high = middle
-        }
-        return current.toMutableList().apply { add(low, message) }
-    }
+    fun replaceChronologically(current: List<Message>, targetId: String, message: Message): List<Message> =
+        ChatMapper.replaceChronologically(current, targetId, message)
 
-    fun replaceChronologically(current: List<Message>, targetId: String, message: Message): List<Message> {
-        val index = current.indexOfFirst { it.id == targetId }
-        if (index < 0) return insertChronologically(current, message)
-        val ordering = ChatMapper.MessageChronologicalComparator
-        val previous = current.getOrNull(index - 1)
-        val next = current.getOrNull(index + 1)
-        if ((previous == null || ordering.compare(previous, message) <= 0) &&
-            (next == null || ordering.compare(message, next) <= 0)
-        ) {
-            return current.toMutableList().apply { set(index, message) }
-        }
-        return insertChronologically(current.toMutableList().apply { removeAt(index) }, message)
-    }
-
-    fun mergeChronologically(current: List<Message>, incoming: List<Message>): List<Message> {
-        if (incoming.isEmpty()) return current
-        val ordering = ChatMapper.MessageChronologicalComparator
-
-        val currentByClientId = current.filter { it.clientId.isNotBlank() }.associateBy { it.clientId }
-
-        val mergedMap = LinkedHashMap<String, Message>()
-        current.forEach { msg -> mergedMap[msg.id] = msg }
-
-        incoming.forEach { fresh ->
-            val existingById = mergedMap[fresh.id]
-            val existingByClient = if (fresh.clientId.isNotBlank()) currentByClientId[fresh.clientId] else null
-            val existing = existingById ?: existingByClient
-
-            if (existing != null) {
-                val merged = existing.mergeMonotonic(fresh)
-                if (existing.id != fresh.id) {
-                    mergedMap.remove(existing.id)
-                }
-                mergedMap[merged.id] = merged
-            } else {
-                mergedMap[fresh.id] = fresh
-            }
-        }
-
-        return mergedMap.values.sortedWith(ordering)
-    }
+    fun mergeChronologically(current: List<Message>, incoming: List<Message>): List<Message> =
+        ChatMapper.mergeChronologically(current, incoming)
 
     /** Adds a fetched reply target to the timeline without moving the regular-page cursor. */
     fun addQuotedMessageToTimeline(message: Message) {
@@ -385,8 +339,8 @@ class ChatMessagingDelegate(
     }
 
     companion object {
-        val ENCRYPTED_PLACEHOLDERS = setOf(
-            "Message is encrypted"
-        )
+        /** True when [message] must not be rendered or cached as plaintext. */
+        fun isUndecryptable(message: Message): Boolean =
+            EncryptedPayloadDetector.isUndecryptable(message.content, message.encryptionFailureReason)
     }
 }

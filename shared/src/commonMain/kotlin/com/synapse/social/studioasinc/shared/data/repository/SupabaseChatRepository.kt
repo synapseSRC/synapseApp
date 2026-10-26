@@ -11,6 +11,7 @@ import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.data.local.database.MessageReactionDao
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.MessageChronologicalComparator
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDto
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
@@ -101,6 +102,15 @@ class SupabaseChatRepository(
             (TimeProvider.nowMillis() - lastSync) < maxAgeMs
         }
 
+    /** Raw envelopes and failed decryptions must never replace a readable cached message. */
+    private fun Message.hasReadableContent(): Boolean =
+        encryptionFailureReason == null &&
+            !EncryptedPayloadDetector.isPlaceholder(content) &&
+            !EncryptedPayloadDetector.isEncryptedPayload(content)
+
+    private fun conversationPreview(message: Message): String =
+        if (message.hasReadableContent()) message.content else EncryptedPayloadDetector.PLACEHOLDER
+
     // Active chat registry — tracks which chat screen is currently open.
     // Used by inbox refresh to avoid overwriting an active chat's real-time message cache.
     private val _activeChatId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
@@ -132,11 +142,7 @@ class SupabaseChatRepository(
             val cached = cachedMessageDao
                 ?.getMessages(chatId, 1)
                 ?.firstOrNull { it.id == message.id }
-            if (cached != null &&
-                !encryptionHelper.isPlaceholder(cached.content) &&
-                !EncryptedPayloadDetector.isEncryptedPayload(cached.content) &&
-                cached.content.isNotBlank()
-            ) {
+            if (cached != null && cached.content.isNotBlank() && cached.hasReadableContent()) {
                 cached
             } else {
                 message
@@ -156,9 +162,17 @@ class SupabaseChatRepository(
         dataSource.getInboxSummaries(archivedOnly).map { summary ->
             val lastMessageText = summary.lastMessage?.let { last ->
                 try {
-                    encryptionHelper.run { last.decryptIfNecessary(currentUserId).content }
+                    val decrypted = encryptionHelper.run { last.decryptIfNecessary(currentUserId) }
+                    if (decrypted.encryptionFailureReason != null ||
+                        EncryptedPayloadDetector.isPlaceholder(decrypted.content) ||
+                        EncryptedPayloadDetector.isEncryptedPayload(decrypted.content)
+                    ) {
+                        EncryptedPayloadDetector.PLACEHOLDER
+                    } else {
+                        decrypted.content
+                    }
                 } catch (_: Exception) {
-                    ""
+                    EncryptedPayloadDetector.PLACEHOLDER
                 }
             } ?: "No messages yet"
             val isOnline = summary.participantStatus?.equals("ONLINE", ignoreCase = true) == true &&
@@ -286,8 +300,8 @@ class SupabaseChatRepository(
                     cachedMessageDao?.delete(userDeletedIds.toList())
                 }
                 val visibleCached = cached.filterNot { it.id in userDeletedIds }
-                val hasPlaceholders = visibleCached.any { encryptionHelper.isPlaceholder(it.content) }
-                if (visibleCached.isNotEmpty() && !hasPlaceholders) {
+                val hasUndecryptable = visibleCached.any { !it.hasReadableContent() }
+                if (visibleCached.isNotEmpty() && !hasUndecryptable) {
                     syncMessagesInBackground(chatId, limit, currentUserId, visibleCached)
                     return@withContext Result.success(visibleCached)
                 }
@@ -295,7 +309,7 @@ class SupabaseChatRepository(
 
             val messageDtos = dataSource.getMessages(chatId, limit, before, beforeId)
             val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
-            val sortedDecrypted = decrypted.sortedBy { it.createdAt }
+            val sortedDecrypted = decrypted.sortedWith(MessageChronologicalComparator)
 
             if (before == null) {
                 val activeChatId = getActiveChatId()
@@ -306,14 +320,14 @@ class SupabaseChatRepository(
                         if (toDelete.isNotEmpty()) {
                             cachedMessageDao?.markDeleted(toDelete)
                         }
-                        val decryptableForCache = sortedDecrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                        val decryptableForCache = sortedDecrypted.filter { it.hasReadableContent() }
                         if (decryptableForCache.isNotEmpty()) {
                             cachedMessageDao?.upsertAll(decryptableForCache)
                             recordCacheSyncTime(chatId)
                         }
                     }
                 } else {
-                    val decryptableForCache = sortedDecrypted.filter { !encryptionHelper.isPlaceholder(it.content) }
+                    val decryptableForCache = sortedDecrypted.filter { it.hasReadableContent() }
                     if (decryptableForCache.isNotEmpty()) {
                         cachedMessageDao?.upsertAll(decryptableForCache)
                     }
@@ -335,8 +349,10 @@ class SupabaseChatRepository(
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
             val messageDtos = dataSource.getMessagesAfter(chatId, after, afterId, limit)
-            val decrypted = messageDtos.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
-            val cacheable = decrypted.filterNot { encryptionHelper.isPlaceholder(it.content) }
+            val decrypted = messageDtos
+                .map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
+                .sortedWith(MessageChronologicalComparator)
+            val cacheable = decrypted.filter { it.hasReadableContent() }
             if (cacheable.isNotEmpty()) {
                 cachedMessageDao?.upsertAll(cacheable)
                 cachedMessageDao?.trimToLimit(chatId, limit)
@@ -364,7 +380,9 @@ class SupabaseChatRepository(
             val userDeletedIds = if (cached.isEmpty()) emptySet() else dataSource.getUserDeletedMessageIds(cached.map { it.id })
             if (userDeletedIds.isNotEmpty()) cachedMessageDao?.delete(userDeletedIds.toList())
             val visibleCached = cached.filterNot { it.id in userDeletedIds }
-            if (refreshInBackground && visibleCached.isNotEmpty() && visibleCached.none { encryptionHelper.isPlaceholder(it.content) }) {
+            // Refresh whenever the cache is stale — including when it still holds undecryptable
+            // rows, which is exactly when a network pass is most likely to repair the display.
+            if (refreshInBackground && visibleCached.isNotEmpty() && !isCacheFresh(chatId)) {
                 syncMessagesInBackground(chatId, limit, currentUserId, visibleCached)
             }
             Result.success(visibleCached)
@@ -418,7 +436,9 @@ class SupabaseChatRepository(
         externalScope.launch {
             try {
                 val fresh = dataSource.getMessages(chatId, limit, null, null)
-                val decrypted = fresh.map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
+                val decrypted = fresh
+                    .map { encryptionHelper.run { it.decryptIfNecessary(currentUserId).toDomain() } }
+                    .sortedWith(MessageChronologicalComparator)
 
                 val toDelete = reconcileServerMessagesWithCache(cached, decrypted, isRealTimeSource = false)
                 if (toDelete.isNotEmpty()) {
@@ -426,13 +446,16 @@ class SupabaseChatRepository(
                 }
 
                 val mergedMessages = decrypted.map { freshMsg ->
-                    if (freshMsg.content.startsWith("{") || encryptionHelper.isPlaceholder(freshMsg.content)) {
-                        cached.find { it.id == freshMsg.id && !encryptionHelper.isPlaceholder(it.content) && !it.content.startsWith("{") } ?: freshMsg
-                    } else freshMsg
+                    if (!freshMsg.hasReadableContent()) {
+                        cached.firstOrNull { it.id == freshMsg.id && it.hasReadableContent() } ?: freshMsg
+                    } else {
+                        freshMsg
+                    }
                 }
-                val validToCache = mergedMessages.filter { !encryptionHelper.isPlaceholder(it.content) }
+                val validToCache = mergedMessages.filter { it.hasReadableContent() }
                 if (validToCache.isNotEmpty()) {
                     cachedMessageDao?.upsertAll(validToCache)
+                    recordCacheSyncTime(chatId)
                 }
                 cachedMessageDao?.trimToLimit(chatId, limit)
             } catch (e: Exception) {
@@ -862,7 +885,7 @@ class SupabaseChatRepository(
                         val existing = dao.getAll().find { it.chatId == domainMessage.chatId }
                         if (existing != null) {
                             dao.upsertAll(listOf(existing.copy(
-                                lastMessage = domainMessage.content,
+                                lastMessage = conversationPreview(domainMessage),
                                 lastMessageTime = domainMessage.createdAt,
                                 unreadCount = 0
                             )))
@@ -892,7 +915,7 @@ class SupabaseChatRepository(
                     val currentExisting = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
                     val updated = if (currentExisting != null) {
                         currentExisting.copy(
-                            lastMessage = domainMessage.content,
+                            lastMessage = conversationPreview(domainMessage),
                             lastMessageTime = domainMessage.createdAt,
                             unreadCount = if (domainMessage.senderId == userId) currentExisting.unreadCount else currentExisting.unreadCount + 1
                         )
@@ -903,7 +926,7 @@ class SupabaseChatRepository(
                             participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
                             participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else try { SupabaseUserDataSource(io.github.jan.supabase.SupabaseClient as SupabaseClientLib).getUserProfile(domainMessage.senderId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username } ?: "Unknown User" } catch (_: Exception) { "Unknown User" },
                             participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
-                            lastMessage = domainMessage.content,
+                            lastMessage = conversationPreview(domainMessage),
                             lastMessageTime = domainMessage.createdAt,
                             unreadCount = if (domainMessage.senderId == userId) 0 else 1,
                             isOnline = false,

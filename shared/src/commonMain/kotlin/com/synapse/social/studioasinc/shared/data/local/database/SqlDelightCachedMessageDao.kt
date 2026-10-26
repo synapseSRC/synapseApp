@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -31,11 +32,24 @@ class SqlDelightCachedMessageDao(
             val now = Clock.System.now().toEpochMilliseconds()
             db.transaction {
                 messages.forEach { message ->
-                    db.cachedMessageQueries.upsertMessage(toCachedMessage(message, now))
+                    val incoming = toCachedMessage(message, now)
+                    val existing = db.cachedMessageQueries.selectActiveById(message.id).executeAsOneOrNull()
+                    if (existing?.content.isReadableContent() && incoming.content.isUndecryptableContent()) {
+                        return@forEach
+                    }
+                    db.cachedMessageQueries.upsertMessage(incoming)
                 }
             }
         }
     }
+
+    private fun String?.isReadableContent(): Boolean =
+        !isNullOrBlank() &&
+            !EncryptedPayloadDetector.isPlaceholder(this) &&
+            !EncryptedPayloadDetector.isEncryptedPayload(this)
+
+    private fun String?.isUndecryptableContent(): Boolean =
+        EncryptedPayloadDetector.isPlaceholder(this) || EncryptedPayloadDetector.isEncryptedPayload(this)
 
     override suspend fun getMessages(chatId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
         db.cachedMessageQueries.selectByChatId(
@@ -101,7 +115,12 @@ class SqlDelightCachedMessageDao(
     override suspend fun upsert(message: Message) {
         withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
-            db.cachedMessageQueries.upsertMessage(toCachedMessage(message, now))
+            val incoming = toCachedMessage(message, now)
+            val existing = db.cachedMessageQueries.selectActiveById(message.id).executeAsOneOrNull()
+            if (existing?.content.isReadableContent() && incoming.content.isUndecryptableContent()) {
+                return@withContext
+            }
+            db.cachedMessageQueries.upsertMessage(incoming)
         }
     }
 

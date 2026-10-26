@@ -20,22 +20,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
-import org.json.JSONObject
 
-private val recipientIdPattern = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-private val encryptedBodyPattern = Regex("^[A-Za-z0-9+/_-]+={0,2}$")
+/** Returns true for legacy encrypted placeholders and ciphertext payloads. */
+internal fun isUndecryptableMessageContent(content: String): Boolean =
+    EncryptedPayloadDetector.isUndecryptable(content)
 
-/** Returns true for known encrypted placeholder strings and ciphertext payloads. */
-private val encryptedPlaceholderContents = setOf(
-    "Message is encrypted"
-)
-
-internal fun isUndecryptableMessageContent(content: String): Boolean {
-    if (content.trim() in encryptedPlaceholderContents) return true
-    if (EncryptedPayloadDetector.isEncryptedPayload(content)) return true
-    return false
-}
+internal fun Message.isUndecryptableMessage(): Boolean =
+    EncryptedPayloadDetector.isUndecryptable(content, encryptionFailureReason)
 
 @Composable
 internal fun UndecryptableMessageNotice(

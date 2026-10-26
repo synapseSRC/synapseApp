@@ -11,6 +11,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import kotlinx.serialization.json.Json
 
 object ChatMapper {
@@ -80,6 +81,67 @@ object ChatMapper {
         val idCompare = a.id.compareTo(b.id)
         if (idCompare != 0) return@Comparator idCompare
         a.clientId.compareTo(b.clientId)
+    }
+
+    fun insertChronologically(current: List<Message>, message: Message): List<Message> {
+        val ordering = MessageChronologicalComparator
+        val last = current.lastOrNull()
+        if (last == null || ordering.compare(last, message) <= 0) return current + message
+
+        var low = 0
+        var high = current.size
+        while (low < high) {
+            val middle = (low + high) ushr 1
+            if (ordering.compare(current[middle], message) <= 0) low = middle + 1 else high = middle
+        }
+        return current.toMutableList().apply { add(low, message) }
+    }
+
+    fun replaceChronologically(current: List<Message>, targetId: String, message: Message): List<Message> {
+        val index = current.indexOfFirst { it.id == targetId }
+        if (index < 0) return insertChronologically(current, message)
+        val ordering = MessageChronologicalComparator
+        val previous = current.getOrNull(index - 1)
+        val next = current.getOrNull(index + 1)
+        if ((previous == null || ordering.compare(previous, message) <= 0) &&
+            (next == null || ordering.compare(message, next) <= 0)
+        ) {
+            return current.toMutableList().apply { set(index, message) }
+        }
+        return insertChronologically(current.toMutableList().apply { removeAt(index) }, message)
+    }
+
+    /**
+     * Merges a fetched page or realtime batch into the visible timeline. Messages are matched
+     * by id first and by stable clientId second, so a server confirmation replaces the
+     * optimistic copy instead of duplicating it, and the result is always chronologically sorted.
+     */
+    fun mergeChronologically(current: List<Message>, incoming: List<Message>): List<Message> {
+        if (incoming.isEmpty()) return current
+        val ordering = MessageChronologicalComparator
+
+        val currentByClientId = current.filter { it.clientId.isNotBlank() }.associateBy { it.clientId }
+
+        val mergedMap = LinkedHashMap<String, Message>()
+        current.forEach { msg -> mergedMap[msg.id] = msg }
+
+        incoming.forEach { fresh ->
+            val existingById = mergedMap[fresh.id]
+            val existingByClient = if (fresh.clientId.isNotBlank()) currentByClientId[fresh.clientId] else null
+            val existing = existingById ?: existingByClient
+
+            if (existing != null) {
+                val merged = existing.mergeMonotonic(fresh)
+                if (existing.id != fresh.id) {
+                    mergedMap.remove(existing.id)
+                }
+                mergedMap[merged.id] = merged
+            } else {
+                mergedMap[fresh.id] = fresh
+            }
+        }
+
+        return mergedMap.values.sortedWith(ordering)
     }
 
     fun ChatDto.toDomain(): ChatInfo = ChatInfo(
@@ -227,24 +289,46 @@ object ChatMapper {
             else -> newer.deliveryStatus
         }
 
-        val mergedSentAt = newer.sentAt ?: this.sentAt
-        val mergedDeliveredAt = newer.deliveredAt ?: this.deliveredAt
-        val mergedReadAt = newer.readAt ?: this.readAt
-        val mergedEditedAt = newer.editedAt ?: this.editedAt
-        val mergedDeletedAt = newer.deletedAt ?: this.deletedAt
+        // A fetch or realtime event can deliver a still-encrypted payload after this message
+        // was already decrypted (or while decryption temporarily failed). Never let that
+        // overwrite readable content and the fields carried inside the encrypted payload.
+        val incomingDisplayable = !EncryptedPayloadDetector.isUndecryptable(newer.content, newer.encryptionFailureReason)
+        val existingDisplayable = !EncryptedPayloadDetector.isUndecryptable(this.content, this.encryptionFailureReason)
+        val keepExistingContent = !incomingDisplayable && existingDisplayable && newer.content.isNotBlank()
 
+        val incomingDeleted = newer.isDeleted || newer.contentStatus == ContentStatus.DELETED
         val mergedContentStatus = when {
-            this.contentStatus == ContentStatus.DELETED || newer.contentStatus == ContentStatus.DELETED -> ContentStatus.DELETED
+            incomingDeleted || this.contentStatus == ContentStatus.DELETED -> ContentStatus.DELETED
+            keepExistingContent -> this.contentStatus
             newer.contentStatus == ContentStatus.EDITED || this.contentStatus == ContentStatus.EDITED -> ContentStatus.EDITED
             else -> ContentStatus.ACTIVE
         }
+
+        val mergedSentAt = newer.sentAt ?: this.sentAt
+        val mergedDeliveredAt = newer.deliveredAt ?: this.deliveredAt
+        val mergedReadAt = newer.readAt ?: this.readAt
+        val mergedEditedAt = if (keepExistingContent) this.editedAt ?: newer.editedAt else newer.editedAt ?: this.editedAt
+        val mergedDeletedAt = newer.deletedAt ?: this.deletedAt
+        val mergedReadBy = (this.readBy + newer.readBy).distinct()
 
         // Authoritative server timestamp from newer takes priority over temporary optimistic timestamp.
         val stableCreatedAt = if (newer.createdAt.isNotBlank()) newer.createdAt else this.createdAt
 
         return newer.copy(
             clientId = this.clientId,
+            messageType = if (keepExistingContent) this.messageType else newer.messageType,
+            content = if (keepExistingContent) this.content else newer.content,
+            mediaUrl = if (keepExistingContent) this.mediaUrl ?: newer.mediaUrl else newer.mediaUrl ?: this.mediaUrl,
+            attachments = if (keepExistingContent && this.attachments.isNotEmpty()) this.attachments else newer.attachments,
+            mediaGroupId = if (keepExistingContent) this.mediaGroupId ?: newer.mediaGroupId else newer.mediaGroupId ?: this.mediaGroupId,
+            metadataContainer = if (keepExistingContent) this.metadataContainer ?: newer.metadataContainer else newer.metadataContainer ?: this.metadataContainer,
+            linkPreview = if (keepExistingContent) this.linkPreview ?: newer.linkPreview else newer.linkPreview ?: this.linkPreview,
+            replyToId = if (keepExistingContent) this.replyToId ?: newer.replyToId else newer.replyToId ?: this.replyToId,
+            isForwarded = if (keepExistingContent) this.isForwarded else newer.isForwarded,
+            forwardedFromMessageId = if (keepExistingContent) this.forwardedFromMessageId ?: newer.forwardedFromMessageId else newer.forwardedFromMessageId ?: this.forwardedFromMessageId,
             createdAt = stableCreatedAt,
+            updatedAt = newer.updatedAt ?: this.updatedAt,
+            expiresAt = newer.expiresAt ?: this.expiresAt,
             deliveryStatus = mergedDelivery,
             contentStatus = mergedContentStatus,
             isDeleted = mergedContentStatus == ContentStatus.DELETED,
@@ -252,8 +336,10 @@ object ChatMapper {
             sentAt = mergedSentAt,
             deliveredAt = mergedDeliveredAt,
             readAt = mergedReadAt,
+            readBy = mergedReadBy,
             editedAt = mergedEditedAt,
             deletedAt = mergedDeletedAt,
+            encryptionFailureReason = if (keepExistingContent) this.encryptionFailureReason else newer.encryptionFailureReason,
             failureReason = newer.failureReason ?: this.failureReason
         )
     }

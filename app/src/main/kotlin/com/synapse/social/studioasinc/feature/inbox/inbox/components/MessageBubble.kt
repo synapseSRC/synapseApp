@@ -380,6 +380,33 @@ fun MessageBubble(
         }
     }
 
+    // A message whose payload could not be decrypted must never fall through to the
+    // type-specific renderers, which would print the raw envelope as ordinary text.
+    if (message.isUndecryptableMessage()) {
+        Box(
+            modifier = modifier.fillMaxWidth(),
+            contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            Surface(
+                color = containerColor,
+                contentColor = contentColor,
+                shape = RoundedCornerShape(Sizes.CornerMedium),
+                tonalElevation = Sizes.BorderThin
+            ) {
+                Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
+                    UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
+                    MessageMetadataRow(
+                        message = message,
+                        isFromMe = isFromMe,
+                        contentColor = contentColor,
+                        onRetryClick = onRetryClick
+                    )
+                }
+            }
+        }
+        return
+    }
+
     // SYSTEM messages render as centered pill without tails or metadata status row
     if (message.messageType == MessageType.SYSTEM) {
         Box(
