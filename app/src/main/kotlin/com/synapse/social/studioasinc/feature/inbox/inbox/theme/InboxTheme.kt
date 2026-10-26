@@ -120,6 +120,15 @@ object InboxAnimations {
         easing = FastOutSlowInEasing
     )
 
+    const val MessageEntranceDurationMs = 200
+    val MessageEntranceOffset = Spacing.space16
+
+    // M3 emphasized-decelerate easing: most of the motion lands early, so it reads as snappy.
+    val MessageEntranceSpec: AnimationSpec<Float> = tween(
+        durationMillis = MessageEntranceDurationMs,
+        easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+    )
+
     val PulseSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = tween(
             durationMillis = 1500,

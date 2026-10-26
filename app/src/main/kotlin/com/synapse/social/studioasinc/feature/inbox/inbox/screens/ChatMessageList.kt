@@ -18,7 +18,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxAnimations
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.DateDividerChip
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.GroupPosition
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.MessageBubble
@@ -27,6 +30,8 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.components.isWithinTim
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.quotedSenderDisplayName
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.TypingIndicator
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.spring
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -79,7 +84,8 @@ internal fun ChatMessageList(
     modifier: Modifier = Modifier,
     onLocateMessage: (String) -> Unit = {},
     groupMemberNames: Map<String, String> = emptyMap(),
-    initialMessageId: String? = null
+    initialMessageId: String? = null,
+    isFreshLiveMessage: (clientId: String) -> Boolean = { false }
 ) {
     val scope = rememberCoroutineScope()
     val messagesMap = remember(messages) {
@@ -120,6 +126,8 @@ internal fun ChatMessageList(
     }
 
     val reversedItems = remember(chatItems) { chatItems.reversed() }
+    val entranceProgress = remember(chatId) { HashMap<String, Animatable<Float, AnimationVector1D>?>() }
+    val entranceOffsetPx = with(LocalDensity.current) { InboxAnimations.MessageEntranceOffset.toPx() }
     val groupingStructure = remember(reversedItems) {
         reversedItems.map { item ->
             when (item) {
@@ -265,14 +273,41 @@ internal fun ChatMessageList(
                 item.message.createdAt < oldestCreatedAt
             )
 
-            // Shared placement and exit spec for items.
-            // Appear animation is removed as requested; items appear instantly.
-            // Incoming messages get a short spring fade-in so they cross-fade with
-            // the typing indicator's exit instead of popping in while the bubble is
-            // still shrinking — this eliminates the visible layout jump.
+            // Decided once per clientId per chat, so recycling, reconciliation and
+            // re-composition after scrolling never replay the entrance.
+            val entrance = remember(itemKey) {
+                if (entranceProgress.containsKey(itemKey)) {
+                    entranceProgress[itemKey]
+                } else {
+                    val animatable = if (!reducedMotion && item is ChatListItem.MessageItem && isFreshLiveMessage(itemKey)) {
+                        Animatable(0f)
+                    } else {
+                        null
+                    }
+                    entranceProgress[itemKey] = animatable
+                    animatable
+                }
+            }
+            val entranceModifier = if (entrance != null) {
+                LaunchedEffect(entrance) {
+                    entrance.animateTo(1f, InboxAnimations.MessageEntranceSpec)
+                }
+                Modifier.graphicsLayer {
+                    val progress = entrance.value
+                    alpha = progress
+                    translationY = (1f - progress) * entranceOffsetPx
+                }
+            } else {
+                Modifier
+            }
+
+            // Placement and exit springs for non-historical items. New live messages fade in
+            // through entranceModifier instead, so their item fade-in is disabled to avoid a
+            // double fade. Other incoming items keep a short spring fade so they cross-fade
+            // with the typing indicator's exit instead of popping in.
             val placementModifier = if (!reducedMotion && !isInitialSyncing && !isHistorical) {
                 Modifier.animateItem(
-                    fadeInSpec = spring(
+                    fadeInSpec = if (entrance != null) null else spring(
                         dampingRatio = 1.0f,
                         stiffness = 5000f
                     ),
@@ -309,7 +344,7 @@ internal fun ChatMessageList(
                     }
                     val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space4
                     MessageBubble(
-                        modifier = placementModifier.padding(bottom = bottomGap),
+                        modifier = placementModifier.then(entranceModifier).padding(bottom = bottomGap),
                         message = message,
                         isFromMe = message.isFromMe(currentUserId),
                         position = position,

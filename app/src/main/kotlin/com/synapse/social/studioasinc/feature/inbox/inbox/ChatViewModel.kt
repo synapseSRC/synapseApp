@@ -255,6 +255,7 @@ currentUserIdProvider = { currentUserId.value }
         chatIdProvider = { currentChatId },
         onOptimisticMessageAdded = { msg, tempId ->
             messagingDelegate.pendingTempIds.update { it + tempId }
+            messagingDelegate.markLiveInsert(msg.clientId)
             messagingDelegate._messages.update { current ->
                 messagingDelegate.insertChronologically(current, msg)
             }
@@ -390,12 +391,15 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
     val messageSummary: StateFlow<String?> = aiDelegate.messageSummary
     val isSummarizingMessage: StateFlow<Boolean> = aiDelegate.isSummarizingMessage
 
+    fun isFreshLiveMessage(clientId: String): Boolean = messagingDelegate.isFreshLiveMessage(clientId)
+
     fun onVisibilityChanged(visible: Boolean) {
         _isScreenVisible.value = visible
         if (visible) {
             currentChatId?.let { chatId ->
                 subscriptionDelegate.queueReadReceipt(chatId)
                 viewModelScope.launch { updateCurrentChatUseCase(chatId) }
+                retryAllUndecryptableMessages(chatId)
             }
 val uid = currentUserId.value
             if (!uid.isNullOrBlank()) {
@@ -417,14 +421,21 @@ val uid = currentUserId.value
             _error.value = null
             chatRepository.setActiveChatId(chatId)
             subscriptionDelegate.startSubscriptions(chatId)
-            if (!_isE2EEReady.value) {
-                viewModelScope.launch {
-                    initializeE2EUseCase().onSuccess {
-                        if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
-                            _isE2EEReady.value = true
-                        }
-                    }.onFailure { e ->
-                        Napier.e("E2EE re-initialization failed: ${e.message}", e, tag = "E2EE")
+            // Always attempt E2EE re-initialization on resume to handle cases where the OS
+            // tore down the crypto session while the screen was off
+            viewModelScope.launch {
+                initializeE2EUseCase().onSuccess {
+                    if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                        _isE2EEReady.value = true
+                        Napier.d("E2EE re-initialized on resume for chat $chatId", tag = "ChatViewModel")
+                    }
+                }.onFailure { e ->
+                    // If re-init fails, don't unset the flag if it was already true
+                    // (the existing session might still be valid)
+                    if (!_isE2EEReady.value) {
+                        Napier.e("E2EE initialization failed: ${e.message}", e, tag = "E2EE")
+                    } else {
+                        Napier.w("E2EE re-init failed but existing session may be valid: ${e.message}", tag = "E2EE")
                     }
                 }
             }
@@ -759,7 +770,10 @@ val uid = currentUserId.value
             when {
                 existingInUpdate != null -> messagingDelegate.replaceChronologically(currentWithoutOptimistic, newMessage.id, reconciledMessage)
                 matchingOptimisticMessage != null -> messagingDelegate.replaceChronologically(currentWithoutOptimistic, matchingOptimisticMessage.id, reconciledMessage)
-                else -> messagingDelegate.insertChronologically(currentWithoutOptimistic, reconciledMessage)
+                else -> {
+                    messagingDelegate.markLiveInsert(reconciledMessage.clientId)
+                    messagingDelegate.insertChronologically(currentWithoutOptimistic, reconciledMessage)
+                }
             }
         }
         aiDelegate.generateSmartReplies(messages.value)
@@ -831,6 +845,57 @@ val uid = currentUserId.value
                 }
             }.onFailure { error ->
                 Napier.w("Decryption retry failed for message ${message.id}: ${error.message}", tag = "ChatViewModel")
+            }
+        }
+    }
+
+    /**
+     * Re-attempts decryption for all currently undecryptable messages in the timeline.
+     * This handles the case where messages arrived while the screen was off and
+     * E2EE was not ready, leaving them stuck in an undecryptable state.
+     */
+    private fun retryAllUndecryptableMessages(chatId: String) {
+        viewModelScope.launch {
+            val ready = _isE2EEReady.value ||
+                withTimeoutOrNull(15.seconds) { _isE2EEReady.first { it } } == true
+
+            if (!ready) {
+                Napier.w("E2EE not ready after 15s on resume, skipping decryption retry", tag = "ChatViewModel")
+                return@launch
+            }
+
+            if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@launch
+
+            val undecryptableMessages = messagingDelegate.messages.value
+                .filter { ChatMessagingDelegate.isUndecryptable(it) && it.senderId != currentUserId.value }
+                .takeLast(10)
+
+            if (undecryptableMessages.isEmpty()) return@launch
+
+            Napier.d("Retrying decryption for ${undecryptableMessages.size} messages on resume", tag = "ChatViewModel")
+
+            undecryptableMessages.forEach { message ->
+                getMessageByIdUseCase(message.id).onSuccess { refreshed ->
+                    if (refreshed == null || ChatMessagingDelegate.isUndecryptable(refreshed)) return@onSuccess
+                    if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@onSuccess
+
+                    messagingDelegate._messages.update { current ->
+                        val existing = current.firstOrNull { it.id == message.id }
+                        val toWrite = refreshed.copy(clientId = existing?.clientId ?: refreshed.clientId)
+                        val merged = existing?.mergeMonotonic(toWrite) ?: toWrite
+                        with(messagingDelegate) { current.replaceById(message.id, merged) }
+                    }
+
+                    val decrypted = messagingDelegate._messages.value.firstOrNull { it.id == message.id }
+                        ?: return@onSuccess
+                    try {
+                        reconcileRealtimeMessageUseCase(chatId, decrypted)
+                    } catch (e: Exception) {
+                        Napier.w("Cache reconciliation failed for decrypted message ${message.id}: ${e.message}", tag = "ChatViewModel")
+                    }
+                }.onFailure { error ->
+                    Napier.w("Decryption retry failed for message ${message.id}: ${error.message}", tag = "ChatViewModel")
+                }
             }
         }
     }

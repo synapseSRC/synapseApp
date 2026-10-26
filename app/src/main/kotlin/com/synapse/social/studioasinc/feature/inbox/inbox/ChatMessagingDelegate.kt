@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
+import android.os.SystemClock
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
@@ -50,6 +51,20 @@ class ChatMessagingDelegate(
 
     val pendingTempIds = MutableStateFlow<Set<String>>(emptySet())
 
+    // clientId -> elapsedRealtime of messages inserted live (local send or realtime insert),
+    // as opposed to cache, sync, or pagination loads.
+    private val liveInsertTimes = ConcurrentHashMap<String, Long>()
+
+    /** Must be called before the message is published to [_messages]. */
+    fun markLiveInsert(clientId: String) {
+        liveInsertTimes.putIfAbsent(clientId, SystemClock.elapsedRealtime())
+    }
+
+    fun isFreshLiveMessage(clientId: String): Boolean {
+        val insertedAt = liveInsertTimes[clientId] ?: return false
+        return SystemClock.elapsedRealtime() - insertedAt <= LIVE_MESSAGE_FRESHNESS_MS
+    }
+
     private val sendMutexes = ConcurrentHashMap<String, Mutex>()
 
     private val paginationCursorLock = Any()
@@ -96,6 +111,7 @@ class ChatMessagingDelegate(
 
     fun clearMessages() {
         pendingTempIds.value = emptySet()
+        liveInsertTimes.clear()
         _messages.value = emptyList()
         synchronized(paginationCursorLock) { _oldestLoadedPageMessage = null }
     }
@@ -162,6 +178,7 @@ class ChatMessagingDelegate(
                 replyToId = replyToId,
                 clientId = tempId
             )
+            markLiveInsert(tempId)
             _messages.update { current ->
                 insertChronologically(current, newMessage)
             }
@@ -341,6 +358,10 @@ class ChatMessagingDelegate(
     }
 
     companion object {
+        // A live message first composed after this window (e.g. chat reopened, or the user was
+        // scrolled away when it arrived) appears without an entrance animation.
+        private const val LIVE_MESSAGE_FRESHNESS_MS = 1_000L
+
         /** True when [message] must not be rendered or cached as plaintext. */
         fun isUndecryptable(message: Message): Boolean =
             EncryptedPayloadDetector.isUndecryptable(message.content, message.encryptionFailureReason)

@@ -448,6 +448,7 @@ val currentUserId = currentUserIdState ?: ""
                         groupMemberNames = groupMemberNames,
                         listState = listState,
                         initialMessageId = initialMessageId,
+                        isFreshLiveMessage = viewModel::isFreshLiveMessage,
                         isLoadingMore = isLoadingMore,
                         isInitialSyncing = isLoading,
 typingStatus = typingStatus,
