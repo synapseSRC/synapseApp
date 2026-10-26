@@ -5,9 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.UserProfileManager
 import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.domain.model.User
-import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase
-import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxBriefingState
-import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxBriefingThread
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxFilter
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCategory
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchResult
@@ -55,8 +52,7 @@ class InboxViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val authRepository: AuthRepository,
     private val getMessagesUseCase: GetMessagesUseCase,
-    private val searchUsersUseCase: SearchUsersUseCase,
-    private val summarizeChatUseCase: SummarizeChatUseCase
+    private val searchUsersUseCase: SearchUsersUseCase
 ) : ViewModel() {
 
     private val _currentUserProfile = MutableStateFlow<User?>(null)
@@ -123,9 +119,6 @@ class InboxViewModel @Inject constructor(
 
     private val _searchState = MutableStateFlow(InboxSearchState())
     val searchState: StateFlow<InboxSearchState> = _searchState.asStateFlow()
-
-    private val _briefingState = MutableStateFlow(InboxBriefingState())
-    val briefingState: StateFlow<InboxBriefingState> = _briefingState.asStateFlow()
 
     private var inboxSubscriptionJob: Job? = null
     private var subscribedChatIds: List<String> = emptyList()
@@ -416,61 +409,4 @@ class InboxViewModel @Inject constructor(
         InboxSearchCategory.DOCS -> message.messageType.name.contains("FILE", true) || message.messageType.name.contains("DOCUMENT", true) || message.attachments.any { it.type.name.contains("FILE", ignoreCase = true) }
     }
 
-    fun generateCatchUp() {
-        val unreadThreads = _conversations.value
-            .filter { it.unreadCount > 0 }
-            .sortedWith(compareByDescending<Conversation> { it.unreadCount }.thenByDescending { it.lastMessageTime ?: "" })
-            .take(3)
-        if (unreadThreads.isEmpty()) {
-            _briefingState.value = InboxBriefingState()
-            return
-        }
-        _briefingState.value = InboxBriefingState(isLoading = true)
-        viewModelScope.launch {
-            val summaries = mutableListOf<InboxBriefingThread>()
-            var partialFailure = false
-            val currentUserId = chatRepository.getCurrentUserId()
-            unreadThreads.forEach { conversation ->
-                val messagesResult = getMessagesUseCase(conversation.chatId, limit = 50)
-                val messages = messagesResult.getOrElse {
-                    partialFailure = true
-                    emptyList()
-                }
-                val summaryInput = messages.filterNot { it.isDeleted }.takeLast(50).mapNotNull { message ->
-                    val body = message.content.trim()
-                    if (body.isBlank()) null
-                    else "${if (message.senderId == currentUserId) "You" else conversation.participantName}: $body"
-                }
-                if (summaryInput.isEmpty()) {
-                    partialFailure = true
-                    return@forEach
-                }
-                summarizeChatUseCase(summaryInput, conversation.chatId)
-                    .onSuccess { summaries += InboxBriefingThread(conversation, it) }
-                    .onFailure { partialFailure = true }
-            }
-            _briefingState.value = InboxBriefingState(isLoading = false, threads = summaries, partialFailure = partialFailure)
-        }
-    }
-
-    fun markSummarizedAsRead(chatIds: Set<String>, onComplete: () -> Unit) {
-        if (chatIds.isEmpty()) {
-            onComplete()
-            return
-        }
-        viewModelScope.launch {
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.markMessagesAsRead(chatId)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.map { conversation ->
-                            if (conversation.chatId == chatId) conversation.copy(unreadCount = 0) else conversation
-                        }
-                    }
-                    .onFailure { failures++ }
-            }
-            if (failures > 0) _error.value = "Failed to mark $failures conversation(s) as read."
-            onComplete()
-        }
-    }
 }

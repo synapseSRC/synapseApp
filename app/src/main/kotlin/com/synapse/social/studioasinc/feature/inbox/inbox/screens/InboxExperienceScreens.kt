@@ -80,7 +80,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxBriefingState
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCategory
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchResult
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchState
@@ -370,87 +369,6 @@ private fun SearchPersonRow(person: User, onClick: () -> Unit) {
                 }
             }
             Icon(Icons.Rounded.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-@Composable
-fun InboxBriefingScreen(
-    state: InboxBriefingState,
-    onOpenConversation: (Conversation) -> Unit,
-    onMarkAsRead: (Set<String>) -> Unit,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val chatIds = state.threads.map { it.conversation.chatId }.toSet()
-    Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = Spacing.space16, vertical = Spacing.space12),
-        verticalArrangement = Arrangement.spacedBy(Spacing.space12)
-    ) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-shape = RoundedCornerShape(0.dp),
-            modifier = Modifier.fillMaxWidth().animateContentSize(spring(dampingRatio = 0.8f, stiffness = 380f))
-        ) {
-            Column(Modifier.padding(Spacing.space16), verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(Spacing.space8))
-                    Text(stringResource(R.string.inbox_ai_catchup_title, state.threads.size), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                }
-                when {
-                    state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.space12)) {
-                        CircularProgressIndicator(modifier = Modifier.size(Spacing.space24))
-                        Text(stringResource(R.string.inbox_loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    state.threads.isEmpty() && !state.partialFailure -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
-                        Text(stringResource(R.string.inbox_ai_catchup_empty_title), style = MaterialTheme.typography.titleSmall)
-                        Text(stringResource(R.string.inbox_ai_catchup_empty_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    else -> state.threads.forEach { thread ->
-                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
-                            Text(thread.conversation.participantName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text(thread.summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-        }
-        if (state.partialFailure) {
-            Text(stringResource(R.string.inbox_ai_catchup_partial_error), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
-        if (state.threads.isNotEmpty()) {
-            Text(stringResource(R.string.inbox_ai_quick_actions), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                items(state.threads, key = { "briefing-${it.conversation.chatId}" }) { thread ->
-                    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-                        Row(Modifier.padding(Spacing.space12), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Bolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Spacer(Modifier.width(Spacing.space12))
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.inbox_ai_reply_to, thread.conversation.participantName), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(stringResource(R.string.inbox_ai_open_to_reply), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            }
-                            IconButton(onClick = { onOpenConversation(thread.conversation) }) {
-                                Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(R.string.inbox_action_open_conversation), tint = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    }
-                }
-            }
-            Button(
-                onClick = { onMarkAsRead(chatIds) },
-                enabled = !state.isLoading && chatIds.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth().height(InboxExpressiveDimens.MediumActionButtonHeight)
-            ) {
-                Icon(Icons.Rounded.DoneAll, contentDescription = null)
-                Spacer(Modifier.width(Spacing.space8))
-                Text(stringResource(R.string.inbox_ai_mark_read))
-            }
-        } else if (!state.isLoading && state.partialFailure) {
-            Button(onClick = onRetry, modifier = Modifier.fillMaxWidth().height(InboxExpressiveDimens.MediumActionButtonHeight)) {
-                Text(stringResource(R.string.inbox_retry))
-            }
         }
     }
 }

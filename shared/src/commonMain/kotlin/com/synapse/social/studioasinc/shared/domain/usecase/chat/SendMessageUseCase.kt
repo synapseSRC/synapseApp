@@ -99,20 +99,12 @@ class SendMessageUseCase(
         }
 
         if (signalProtocolManager == null) {
-            if (requireE2EE) {
-                return Result.failure(IllegalStateException("End-to-end encryption is required; voice message was not sent."))
-            }
-            Napier.w("E2EE_ENCRYPT: SignalProtocolManager is null — sending plain text message", tag = "E2EE")
-            return repository.sendMessage(
-                chatId = chatId,
-                content = content,
-                mediaUrl = mediaUrl,
-                messageType = messageType,
-                expiresAt = expiresAt,
-                replyToId = replyToId,
-                senderPlaintext = content,
-                attachments = attachments,
-                metadataContainer = metadataContainer
+            // E2EE is unavailable — fail rather than silently sending plain text,
+            // which could cause delivery failures if the recipient expects E2EE.
+            return Result.failure(
+                IllegalStateException(
+                    "End-to-end encryption is not initialized. Initialize E2EE before sending messages."
+                )
             )
         }
 

@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -134,6 +135,7 @@ fun VoiceInputHost(
     // The lock indicator is now an overlay (rendered outside the measured layout) to avoid
     // pushing the chat message list upward when the mic is held — fixing the layout glitch.
     Column(modifier = modifier.fillMaxWidth()) {
+        val isDark = isSystemInDarkTheme()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -143,7 +145,7 @@ fun VoiceInputHost(
                 .onGloballyPositioned { hostBoundsInRoot = it.boundsInRoot() }
                 .testTag("voice-recording-bar")
                 .shadow(
-                    elevation = Sizes.ElevationMedium,
+                    elevation = if (isDark) Sizes.ElevationMedium else 0.dp,
                     shape = RoundedCornerShape(Sizes.CornerMassive),
                     clip = false
                 )

@@ -104,6 +104,13 @@ internal fun ChatMessageList(
     // visual column the next incoming message will occupy, which keeps the
     // indicator→message transition free of layout jumps.
     val typingLaneInset = Sizes.AvatarSmall + Spacing.space8
+    // WhatsApp-style: track whether typing indicator is active to smoothly shift
+    // the message list up/down when it appears/disappears, rather than just fading.
+    val isTypingIndicatorActive = remember { mutableStateOf(false) }
+
+    LaunchedEffect(chatId, typingStatus) {
+        isTypingIndicatorActive.value = typingStatus?.isTyping ?: false
+    }
     val initialKeysCaptured = remember(chatId) { mutableStateOf(false) }
     val initialItemKeys = remember(chatId) { mutableSetOf<String>() }
     val oldestInitialCreatedAt = remember(chatId) { mutableStateOf<String?>(null) }
@@ -209,10 +216,12 @@ internal fun ChatMessageList(
     ) {
         if (typingStatus != null && typingStatus.isTyping) {
             item(key = "typing_indicator", contentType = "typing_indicator") {
+                // WhatsApp-style: animate typing indicator with smooth spring physics.
+                // The indicator pushes message bubbles up when it appears and lets them
+                // settle back down when it disappears, creating a fluid conversation-like feel.
                 val typingModifier = if (!reducedMotion) {
                     Modifier.animateItem(
-                        // M3 fast effects spring — damping 1.0 (no overshoot).
-                        // Stiffness 5000 for near-instant opacity settle (~60 ms).
+                        // Fast opacity transition for immediate visual feedback.
                         fadeInSpec = spring(
                             dampingRatio = 1.0f,
                             stiffness = 5000f
@@ -221,11 +230,10 @@ internal fun ChatMessageList(
                             dampingRatio = 1.0f,
                             stiffness = 5000f
                         ),
-                        // Critically-damped spatial spring: stiffness 3000 for
-                        // fast slide-up (~80 ms) when the indicator pushes bubbles.
+                        // Placement spring: shifts messages up/down smoothly like WhatsApp.
                         placementSpec = spring(
                             dampingRatio = 1.0f,
-                            stiffness = 3000f
+                            stiffness = 4000f
                         )
                     )
                 } else {

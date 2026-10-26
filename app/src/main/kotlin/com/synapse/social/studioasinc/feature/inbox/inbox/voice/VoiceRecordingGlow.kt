@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.voice
 import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -239,14 +240,12 @@ fun VoiceRecordingGlowSurface(
     reducedMotionOverride: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val active = voiceState.isGlowActive()
-    val reducedMotion = reducedMotionOverride
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
-    val shape = RoundedCornerShape(Sizes.CornerMassive)
-    val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
-    val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")
-    val isPaused = (voiceState as? VoiceState.Locked)?.isPaused == true
-    val phase = rememberVoiceGlowPhase(intensity, active, isPaused, reducedMotion, "voiceRecordingInterior")
+    val isDark = isSystemInDarkTheme()
+    val surfaceColor = if (isDark) {
+        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    } else {
+        Color.White
+    }
 
     val activeAlpha by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
@@ -330,23 +329,33 @@ fun VoiceRecordingGlowSurface(
             }
 
             // Glass Specular Rim Border & Refraction Highlight
-            val borderAlpha = activeAlpha * (0.35f + intensity * 0.25f)
-            val strokePx = 1.8.dp.toPx()
+            val borderAlpha = if (isDark) activeAlpha * (0.35f + intensity * 0.25f) else 0.15f
+            val strokePx = if (isDark) 1.8.dp.toPx() else 1.dp.toPx()
             val strokeCornerRadiusPx = with(density) { (Sizes.CornerMassive - (strokePx / 2f).toDp()).toPx() }
             val strokeCorner = CornerRadius(minOf(strokeCornerRadiusPx, (height - strokePx) / 2f).coerceAtLeast(0f))
-            drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        GlowColors.SpecularRim.copy(alpha = borderAlpha * 1.5f),
-                        GlowColors.Cyan.copy(alpha = borderAlpha),
-                        GlowColors.Violet.copy(alpha = borderAlpha * 0.9f)
-                    )
-                ),
-                topLeft = Offset(strokePx / 2f, strokePx / 2f),
-                size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
-                cornerRadius = strokeCorner,
-                style = Stroke(width = strokePx)
-            )
+            if (isDark) {
+                drawRoundRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            GlowColors.SpecularRim.copy(alpha = borderAlpha * 1.5f),
+                            GlowColors.Cyan.copy(alpha = borderAlpha),
+                            GlowColors.Violet.copy(alpha = borderAlpha * 0.9f)
+                        )
+                    ),
+                    topLeft = Offset(strokePx / 2f, strokePx / 2f),
+                    size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
+                    cornerRadius = strokeCorner,
+                    style = Stroke(width = strokePx)
+                )
+            } else {
+                drawRoundRect(
+                    color = Color(0xFFE5E5E5),
+                    topLeft = Offset(strokePx / 2f, strokePx / 2f),
+                    size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
+                    cornerRadius = strokeCorner,
+                    style = Stroke(width = strokePx)
+                )
+            }
         }
     }
 }

@@ -138,7 +138,7 @@ private fun AttachmentCategoryItem(
             scaleY = scale
         },
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
         interactionSource = interactionSource
     ) {

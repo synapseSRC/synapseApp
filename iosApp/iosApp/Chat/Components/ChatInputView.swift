@@ -36,7 +36,7 @@ struct ChatInputView: View {
                 TextField(String(localized: "chat_message_placeholder"), text: $inputText, axis: .vertical)
                     .lineLimit(1...5)
                     .padding(AppTheme.Spacing.space8)
-                    .background(Color(UIColor.secondarySystemBackground))
+                    .background(Color(UIColor.systemBackground)) // Use systemBackground for white in light mode
                     .cornerRadius(20)
                     .disabled(isSending)
                     .onChange(of: inputText) { newValue in

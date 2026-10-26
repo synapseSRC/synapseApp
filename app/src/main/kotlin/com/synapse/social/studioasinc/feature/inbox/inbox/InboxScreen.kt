@@ -6,8 +6,6 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -39,7 +37,6 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Archive
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
@@ -98,7 +95,6 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCate
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.CallsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ContactsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxArchivedScreen
-import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxBriefingScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxConversationRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSearchScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSelectionToolbar
@@ -108,7 +104,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import kotlinx.coroutines.launch
 
-private enum class InboxDestination { INBOX, SEARCH, BRIEFING, ARCHIVED, SELECTION }
+private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION }
 
 @Composable
 fun InboxScreen(
@@ -144,7 +140,6 @@ private fun InboxScreenContent(
     var showCreateFolderDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSelectionMenu by remember { mutableStateOf(false) }
-    var showBriefingMenu by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
 
     val context = LocalContext.current
@@ -162,7 +157,6 @@ private fun InboxScreenContent(
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
     val folders by viewModel.chatFolders.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
-    val briefingState by viewModel.briefingState.collectAsState()
     val unreadThreadCount = conversations.count { it.unreadCount > 0 }
     val selectedConversations = conversations.filter { it.chatId in selectedChatIds }
     val allSelectedPinned = selectedConversations.isNotEmpty() && selectedConversations.all { it.isPinned }
@@ -182,7 +176,6 @@ private fun InboxScreenContent(
         when (destination) {
             InboxDestination.SEARCH -> viewModel.searchInbox("", InboxSearchCategory.UNREAD)
             InboxDestination.ARCHIVED -> viewModel.loadArchivedConversations()
-            InboxDestination.BRIEFING -> Unit
             else -> Unit
         }
     }
@@ -239,23 +232,6 @@ private fun InboxScreenContent(
                 InboxDestination.SEARCH -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_search_title)) },
                     navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
-                    colors = barColors
-                )
-                InboxDestination.BRIEFING -> TopAppBar(
-                    title = { Text(stringResource(R.string.inbox_ai_screen_title)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
-                    actions = {
-                        Box {
-                            IconButton(onClick = { showBriefingMenu = true }) { Icon(Icons.Rounded.Tune, contentDescription = stringResource(R.string.inbox_ai_refresh)) }
-                            DropdownMenu(expanded = showBriefingMenu, onDismissRequest = { showBriefingMenu = false }) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.inbox_ai_refresh)) },
-                                    leadingIcon = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null) },
-                                    onClick = { showBriefingMenu = false; viewModel.generateCatchUp() }
-                                )
-                            }
-                        }
-                    },
                     colors = barColors
                 )
                 InboxDestination.ARCHIVED -> TopAppBar(
@@ -335,12 +311,6 @@ private fun InboxScreenContent(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
             transitionSpec = {
                 when {
-                    targetState == InboxDestination.BRIEFING ->
-                        (slideInVertically(initialOffsetY = { it }, animationSpec = spring(dampingRatio = 0.8f, stiffness = 200f)) + fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))) togetherWith
-                            fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
-                    initialState == InboxDestination.BRIEFING ->
-                        (slideInVertically(initialOffsetY = { -it }, animationSpec = spring(dampingRatio = 0.8f, stiffness = 200f)) + fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))) togetherWith
-                            (slideOutVertically(targetOffsetY = { it }, animationSpec = spring(dampingRatio = 0.8f, stiffness = 200f)) + fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)))
                     targetState == InboxDestination.SEARCH || initialState == InboxDestination.SEARCH ->
                         fadeIn(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f)) togetherWith fadeOut(animationSpec = spring(dampingRatio = 1f, stiffness = 1600f))
                     else ->
@@ -369,7 +339,6 @@ private fun InboxScreenContent(
                             archivedCount = archivedConversations.size,
                             onFilterChange = viewModel::selectFilter,
                             onFolderSelected = viewModel::selectFolder,
-                            onOpenBriefing = { destination = InboxDestination.BRIEFING; viewModel.generateCatchUp() },
                             onOpenArchive = { destination = InboxDestination.ARCHIVED },
                             onRetry = viewModel::loadConversations,
                             onOpenConversation = ::openConversation,
@@ -390,12 +359,6 @@ private fun InboxScreenContent(
                     onCategoryChange = { viewModel.searchInbox(searchState.query, it) },
                     onOpenConversation = ::openConversation,
                     onOpenPerson = { person -> onNavigateToChat("new", person.uid, person.displayName ?: person.username, person.avatar) }
-                )
-                InboxDestination.BRIEFING -> InboxBriefingScreen(
-                    state = briefingState,
-                    onOpenConversation = ::openConversation,
-                    onMarkAsRead = { chatIds -> viewModel.markSummarizedAsRead(chatIds) { returnToInbox() } },
-                    onRetry = viewModel::generateCatchUp
                 )
                 InboxDestination.ARCHIVED -> InboxArchivedScreen(
                     conversations = archivedConversations,
@@ -529,7 +492,6 @@ private fun HomeMessages(
     archivedCount: Int,
     onFilterChange: (InboxFilter) -> Unit,
     onFolderSelected: (String?) -> Unit,
-    onOpenBriefing: () -> Unit,
     onOpenArchive: () -> Unit,
     onRetry: () -> Unit,
     onOpenConversation: (Conversation) -> Unit,
@@ -557,28 +519,6 @@ private fun HomeMessages(
         }
         if (folders.isNotEmpty()) {
             FolderTabRow(folders = folders, selectedFolderId = selectedFolderId, onFolderSelected = onFolderSelected)
-        }
-        Card(
-            onClick = onOpenBriefing,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space16, vertical = Spacing.space4)
-        ) {
-            Row(Modifier.padding(Spacing.space16), verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape, modifier = Modifier.size(InboxExpressiveDimens.ConversationAvatarSize)) {
-                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                }
-                Spacer(Modifier.width(Spacing.space12))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.inbox_ai_banner_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        if (unreadThreadCount > 0) stringResource(R.string.inbox_ai_banner_summary, unreadThreadCount) else stringResource(R.string.inbox_ai_banner_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
         }
         when {
             isLoading && conversations.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { androidx.compose.material3.CircularProgressIndicator() }

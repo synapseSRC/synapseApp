@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.RectangleShape
 
 import android.content.Context
@@ -93,12 +94,14 @@ fun ChatInputBar(
         label = "inputWidthFraction"
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.space4)
-            .padding(top = Spacing.space4, bottom = Spacing.space16)
-    ) {
+        val isDark = isSystemInDarkTheme()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.space4)
+                .padding(top = Spacing.space4, bottom = Spacing.space16)
+                .background(if (!isDark) Color.White else MaterialTheme.colorScheme.surface)
+        ) {
         // Shared quote preview keeps the composer context consistent with sent reply bubbles.
         AnimatedVisibility(
             visible = replyingToMessage != null,

@@ -138,8 +138,8 @@ class ChatSubscriptionDelegate(
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    io.github.aakira.napier.Napier.w("Messages subscription failed or ended for chat $chatId, reconnecting in 2s...", e, tag = "ChatSubscription")
-                    delay(2000)
+                    io.github.aakira.napier.Napier.w("Messages subscription failed or ended for chat $chatId, reconnecting in 500ms...", e, tag = "ChatSubscription")
+                    delay(500) // Reduced from 2s — trims reconnect dead window for faster recovery
                 }
                 delay(100) // Reduced from 1 s — trims reconnect dead window
             }
@@ -170,7 +170,7 @@ class ChatSubscriptionDelegate(
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    delay(2000)
+                    delay(500)
                 }
                 delay(100) // Reduced from 1 s — trims reconnect dead window
             }
@@ -184,9 +184,9 @@ class ChatSubscriptionDelegate(
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    delay(2000)
+                    delay(500)
                 }
-                delay(100) // Reduced from 1 s — trims reconnect dead window
+                delay(100)
             }
         }
 
