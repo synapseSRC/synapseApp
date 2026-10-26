@@ -176,6 +176,9 @@ class ChatViewModel @Inject constructor(
     val isScreenVisible: StateFlow<Boolean> = _isScreenVisible.asStateFlow()
 
     private var currentChatId: String? = null
+
+    private val _resolvedChatId = MutableStateFlow<String?>(null)
+    val resolvedChatId: StateFlow<String?> = _resolvedChatId.asStateFlow()
     private val loadingQuotedMessageIds = ConcurrentHashMap<String, Unit>()
     private val historyPaginationMutex = Mutex()
     private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
@@ -347,6 +350,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         currentChatIdProvider = { currentChatId },
         onChatIdResolved = { resolvedChatId ->
             currentChatId = resolvedChatId
+            _resolvedChatId.value = resolvedChatId
             chatRepository.setActiveChatId(resolvedChatId)
         }
     )
@@ -1022,6 +1026,7 @@ currentUserIdProvider = { currentUserId.value },
         messagingDelegate.pendingTempIds.value = emptySet()
         messagingDelegate.clearMessages()
         currentChatId = null
+        _resolvedChatId.value = null
         _hasMoreMessages.value = true
         _isLoadingMore.value = false
         _isLoading.value = false

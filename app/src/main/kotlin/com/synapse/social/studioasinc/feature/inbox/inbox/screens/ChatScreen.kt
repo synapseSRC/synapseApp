@@ -111,6 +111,7 @@ import kotlinx.coroutines.withContext
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
     val isGroupChat by viewModel.isGroupChat.collectAsState()
+    val resolvedChatId by viewModel.resolvedChatId.collectAsState()
     val groupMemberNames by viewModel.groupMemberNames.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
@@ -664,7 +665,7 @@ typingStatus = typingStatus,
     }
     if (showEncryptionSheet && !isGroupChat) {
         ChatEncryptionSheet(
-            chatId = chatId,
+            chatId = resolvedChatId ?: chatId,
             participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
                 ?: participantProfile?.name?.takeIf { it.isNotBlank() }
                 ?: participantProfile?.username?.takeIf { it.isNotBlank() }

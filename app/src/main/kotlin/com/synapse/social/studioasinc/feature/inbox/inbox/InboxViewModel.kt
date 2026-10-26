@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -209,11 +210,20 @@ class InboxViewModel @Inject constructor(
         subscribedChatIds = chatIds
         if (chatIds.isEmpty()) return
         inboxSubscriptionJob = viewModelScope.launch {
-            subscribeToInboxUpdatesUseCase(chatIds)
-                .debounce(300L)
-                .collect {
-                    refreshConversations()
+            while (isActive) {
+                try {
+                    subscribeToInboxUpdatesUseCase(chatIds)
+                        .debounce(300L)
+                        .collect {
+                            refreshConversations()
+                        }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    io.github.aakira.napier.Napier.w("Inbox realtime subscription failed, reconnecting in 2s: ${e.message}", tag = "InboxRealtime")
+                    delay(2000)
                 }
+            }
         }
     }
 

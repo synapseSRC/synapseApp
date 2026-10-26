@@ -44,7 +44,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * Presence for user state tracking, and Broadcast for ephemeral messaging.
  */
 internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
-    // One persistent typing channel per chat — broadcast sender and receiver
+    // One persistent typing channel per chat ï¿½ broadcast sender and receiver
     // share the same channel object so events are never dropped.
     private val activeTypingChannels = java.util.concurrent.ConcurrentHashMap<String, RealtimeChannel>()
 
@@ -298,8 +298,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Note: Server-side RLS (Row Level Security) ensures the user only receives messages they are authorized to see.
      */
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
-        val sortedChatIds = chatIds.sorted()
-        val channelId = "inbox_flow_${sortedChatIds.joinToString("_")}"
+        // Fixed topic: Supabase rejects channel topics over 100 bytes, and joining every chat id
+        // would exceed that with 3+ conversations. Row visibility is enforced by RLS, not the topic.
+        val channelId = "inbox_flow"
         Napier.d("Creating realtime channel for inbox: $channelId", tag = "Realtime")
 
         try {

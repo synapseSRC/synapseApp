@@ -173,7 +173,7 @@ object ChatModule {
 
     @Provides
     @Singleton
-    fun provideSendMessageUseCase(chatRepository: ChatRepository): SendMessageUseCase = SendMessageUseCase(chatRepository)
+    fun provideSendMessageUseCase(chatRepository: ChatRepository, signalProtocolManager: SignalProtocolManager): SendMessageUseCase = SendMessageUseCase(chatRepository, signalProtocolManager)
 
     @Provides
     @Singleton
