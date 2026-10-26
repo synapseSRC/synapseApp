@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.Chat
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.OpenInNew
@@ -104,8 +103,7 @@ fun ChatEncryptionSheet(
                     state = uiState,
                     participantName = participantName,
                     onShowVerification = { if (uiState.info != null) page = EncryptionSheetPage.VERIFY },
-                    onLearnMore = { showPrivacyExplanation = true },
-                    onDismiss = onDismiss
+                    onLearnMore = { showPrivacyExplanation = true }
                 )
                 EncryptionSheetPage.VERIFY -> VerificationContent(
                     state = uiState,
@@ -144,8 +142,7 @@ private fun EncryptionOverview(
     state: ChatEncryptionUiState,
     participantName: String,
     onShowVerification: () -> Unit,
-    onLearnMore: () -> Unit,
-    onDismiss: () -> Unit
+    onLearnMore: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
     Column(
@@ -153,25 +150,6 @@ private fun EncryptionOverview(
             .verticalScroll(rememberScrollState()).padding(horizontal = Spacing.space16),
         verticalArrangement = Arrangement.spacedBy(Spacing.space12)
     ) {
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = Spacing.space16),
-            thickness = ChatEncryptionMetrics.dividerThickness,
-            color = colors.outlineVariant
-        )
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            val infoSource = remember { MutableInteractionSource() }
-            FilledTonalIconButton(
-                onClick = onLearnMore,
-                modifier = Modifier.size(ChatEncryptionMetrics.iconButtonSize).pressScale(infoSource),
-                colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = colors.secondaryContainer, contentColor = colors.onSecondaryContainer),
-                interactionSource = infoSource
-            ) { Icon(Icons.Rounded.VerifiedUser, contentDescription = stringResource(R.string.chat_security_details)) }
-            Spacer(Modifier.weight(1f))
-            val closeSource = remember { MutableInteractionSource() }
-            IconButton(onClick = onDismiss, modifier = Modifier.size(ChatEncryptionMetrics.iconButtonSize).pressScale(closeSource), interactionSource = closeSource) {
-                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.chat_security_close))
-            }
-        }
         Text(stringResource(R.string.chat_security_encryption_title), style = MaterialTheme.typography.headlineSmall, color = colors.onSurface)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
             Icon(
