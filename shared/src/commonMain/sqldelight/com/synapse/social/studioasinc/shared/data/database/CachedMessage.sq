@@ -118,3 +118,11 @@ selectPendingMessages:
 SELECT * FROM CachedMessage
 WHERE updated_at > last_synced_at
 AND delivery_status = 'SENDING';
+
+-- Delete expired messages for a chat
+deleteExpired:
+DELETE FROM CachedMessage
+WHERE chat_id = :chatId
+  AND expires_at IS NOT NULL
+  AND expires_at < :now
+  AND is_locally_deleted = 0;

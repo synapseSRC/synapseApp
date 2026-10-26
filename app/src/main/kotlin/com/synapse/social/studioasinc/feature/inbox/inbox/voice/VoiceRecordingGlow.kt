@@ -241,7 +241,7 @@ fun VoiceRecordingGlowSurface(
 ) {
     val active = voiceState.isGlowActive()
     val reducedMotion = reducedMotionOverride
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val shape = RoundedCornerShape(Sizes.CornerMassive)
     val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
     val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")
@@ -279,7 +279,6 @@ fun VoiceRecordingGlowSurface(
             val maxCornerPx = with(density) { Sizes.CornerMassive.toPx() }
             val corner = CornerRadius(minOf(maxCornerPx, height / 2f))
 
-            // Translucent glass base surface
             drawRoundRect(
                 color = surfaceColor,
                 cornerRadius = corner

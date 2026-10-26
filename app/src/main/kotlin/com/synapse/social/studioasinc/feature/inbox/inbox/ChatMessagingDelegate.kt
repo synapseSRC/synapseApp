@@ -1,7 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
-import android.os.SystemClock
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.MessageEntranceRequest
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -39,30 +39,43 @@ class ChatMessagingDelegate(
     private val bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase,
     private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
     private val viewModelScope: CoroutineScope,
-    private val currentUserIdProvider: () -> String?
+    private val currentUserIdProvider: () -> String?,
+    private val isScreenVisibleProvider: () -> Boolean
 ) {
 
     val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
+    private val unpublishedEntrances = ConcurrentHashMap<String, MessageEntranceRequest>()
+
     val chatItems: StateFlow<List<ChatListItem>> = _messages
-        .map { ChatItemsMapper.buildChatItems(it, currentUserIdProvider() ?: "") }
+        .scan(emptyList<ChatListItem>()) { previous, messages ->
+            val previousMessages = previous.filterIsInstance<ChatListItem.MessageItem>()
+                .associateBy { it.message.clientId }
+            ChatItemsMapper.buildChatItems(messages, currentUserIdProvider() ?: "").map { item ->
+                if (item is ChatListItem.MessageItem) {
+                    item.copy(entrance = unpublishedEntrances.remove(item.message.clientId)
+                        ?: previousMessages[item.message.clientId]?.entrance)
+                } else {
+                    item
+                }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val pendingTempIds = MutableStateFlow<Set<String>>(emptySet())
 
-    // clientId -> elapsedRealtime of messages inserted live (local send or realtime insert),
-    // as opposed to cache, sync, or pagination loads.
-    private val liveInsertTimes = ConcurrentHashMap<String, Long>()
-
-    /** Must be called before the message is published to [_messages]. */
+    // Transfer the request to its timeline item before lazy composition can start.
     fun markLiveInsert(clientId: String) {
-        liveInsertTimes.putIfAbsent(clientId, SystemClock.elapsedRealtime())
+        if (isScreenVisibleProvider() && _messages.value.none { it.clientId == clientId }) {
+            unpublishedEntrances.putIfAbsent(clientId, MessageEntranceRequest())
+        }
     }
 
-    fun isFreshLiveMessage(clientId: String): Boolean {
-        val insertedAt = liveInsertTimes[clientId] ?: return false
-        return SystemClock.elapsedRealtime() - insertedAt <= LIVE_MESSAGE_FRESHNESS_MS
+    fun clearPendingMessageEntrances() {
+        unpublishedEntrances.values.forEach { it.consume() }
+        unpublishedEntrances.clear()
+        chatItems.value.filterIsInstance<ChatListItem.MessageItem>().forEach { it.entrance?.consume() }
     }
 
     private val sendMutexes = ConcurrentHashMap<String, Mutex>()
@@ -111,7 +124,7 @@ class ChatMessagingDelegate(
 
     fun clearMessages() {
         pendingTempIds.value = emptySet()
-        liveInsertTimes.clear()
+        clearPendingMessageEntrances()
         _messages.value = emptyList()
         synchronized(paginationCursorLock) { _oldestLoadedPageMessage = null }
     }
@@ -256,7 +269,7 @@ class ChatMessagingDelegate(
             replyToId = message.replyToId,
             onError = onError
         )
-        _messages.update { current -> current.filter { it.id != message.id } }
+        removeMessages(setOf(message.id))
     }
 
     fun saveEdit(
@@ -313,10 +326,21 @@ class ChatMessagingDelegate(
         }
     }
 
+    private fun removeMessages(messageIds: Set<String>) {
+        _messages.update { current ->
+            val removedClientIds = current.filter { it.id in messageIds }.map { it.clientId }.toSet()
+            removedClientIds.forEach { unpublishedEntrances.remove(it)?.consume() }
+            chatItems.value.filterIsInstance<ChatListItem.MessageItem>()
+                .filter { it.message.clientId in removedClientIds }
+                .forEach { it.entrance?.consume() }
+            current.filterNot { it.id in messageIds }
+        }
+    }
+
     fun deleteMessageForMe(messageId: String) {
         viewModelScope.launch {
             deleteMessageForMeUseCase(messageId)
-            _messages.update { current -> current.filter { it.id != messageId } }
+            removeMessages(setOf(messageId))
         }
     }
 
@@ -328,9 +352,7 @@ class ChatMessagingDelegate(
         if (selectedIds.isEmpty()) return
 
         viewModelScope.launch {
-            _messages.update { current ->
-                current.filter { it.id !in selectedIds }
-            }
+            removeMessages(selectedIds.toSet())
 
             bulkDeleteMessagesForMeUseCase(selectedIds).onFailure { e ->
                 onError(e.message)
@@ -358,10 +380,6 @@ class ChatMessagingDelegate(
     }
 
     companion object {
-        // A live message first composed after this window (e.g. chat reopened, or the user was
-        // scrolled away when it arrived) appears without an entrance animation.
-        private const val LIVE_MESSAGE_FRESHNESS_MS = 1_000L
-
         /** True when [message] must not be rendered or cached as plaintext. */
         fun isUndecryptable(message: Message): Boolean =
             EncryptedPayloadDetector.isUndecryptable(message.content, message.encryptionFailureReason)

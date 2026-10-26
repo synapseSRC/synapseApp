@@ -145,7 +145,14 @@ object ChatModule {
 
     @Provides
     @Singleton
-    fun provideSetDisappearingModeUseCase(chatRepository: ChatRepository): SetDisappearingModeUseCase = SetDisappearingModeUseCase(chatRepository)
+    fun provideDeleteExpiredMessagesUseCase(chatRepository: ChatRepository): com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase = com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideSetDisappearingModeUseCase(chatRepository: ChatRepository): com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase {
+        val addSystemMessageUseCase = com.synapse.social.studioasinc.shared.domain.usecase.chat.AddSystemMessageUseCase(chatRepository)
+        return com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase(chatRepository, addSystemMessageUseCase)
+    }
 
     @Provides
     @Singleton

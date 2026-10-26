@@ -121,7 +121,7 @@ object InboxAnimations {
     )
 
     const val MessageEntranceDurationMs = 200
-    val MessageEntranceOffset = Spacing.space16
+    val MessageEntranceOffset = (Spacing.space8 + Spacing.space12) / 2
 
     // M3 emphasized-decelerate easing: most of the motion lands early, so it reads as snappy.
     val MessageEntranceSpec: AnimationSpec<Float> = tween(

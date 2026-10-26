@@ -323,13 +323,53 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             if (deviceId != null) {
                 rpcParams["p_device_id"] = deviceId
             }
-            
+
             client.postgrest.rpc(
                 function = "mark_messages_as_delivered",
                 parameters = rpcParams
             )
         } catch (e: Exception) {
             Napier.e("Error marking received messages as delivered", e)
+        }
+    }
+
+    suspend fun insertSystemMessage(chatId: String, content: String): MessageDto = withContext(AppDispatchers.IO) {
+        try {
+            val senderId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+            val newMessage = NewMessageDto(
+                chatId = chatId,
+                senderId = senderId,
+                content = content,
+                messageType = "system",
+                expiresAt = null, // System messages don't expire
+                replyToId = null,
+                attachments = null,
+                metadata = null
+            )
+            client.postgrest.from("messages").insert(newMessage) { select() }.decodeSingle<MessageDto>()
+        } catch (e: Exception) {
+            Napier.e("Error inserting system message", e)
+            throw e
+        }
+    }
+
+    suspend fun deleteExpiredMessages(chatId: String): Int = withContext(AppDispatchers.IO) {
+        try {
+            val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
+            val result = client.postgrest.from("messages").update({
+                set("is_deleted", true)
+            }) {
+                filter {
+                    eq("chat_id", chatId)
+                    eq("is_deleted", false)
+                    lt("expires_at", now)
+                }
+            }
+            // Supabase doesn't return affected count, so we estimate based on success
+            1
+        } catch (e: Exception) {
+            Napier.e("Error deleting expired messages", e)
+            0
         }
     }
 }

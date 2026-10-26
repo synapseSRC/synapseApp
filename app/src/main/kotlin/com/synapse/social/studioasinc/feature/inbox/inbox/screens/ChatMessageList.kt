@@ -15,7 +15,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -25,13 +29,14 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxAnimations
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.DateDividerChip
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.GroupPosition
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.MessageBubble
+import com.synapse.social.studioasinc.feature.inbox.inbox.components.SystemHistoryChip
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.UnreadDividerRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.isWithinTimeThreshold
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.quotedSenderDisplayName
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.TypingIndicator
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.MessageEntranceRequest
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.spring
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -60,7 +65,6 @@ internal fun ChatMessageList(
     isGroupChat: Boolean,
     listState: LazyListState,
     isLoadingMore: Boolean,
-    isInitialSyncing: Boolean,
     typingStatus: TypingStatus?,
     typingStatusDisplayName: String? = null,
     onLoadMore: () -> Unit,
@@ -85,7 +89,8 @@ internal fun ChatMessageList(
     onLocateMessage: (String) -> Unit = {},
     groupMemberNames: Map<String, String> = emptyMap(),
     initialMessageId: String? = null,
-    isFreshLiveMessage: (clientId: String) -> Boolean = { false }
+    isListVisible: Boolean = true,
+    isScreenVisible: Boolean
 ) {
     val scope = rememberCoroutineScope()
     val messagesMap = remember(messages) {
@@ -110,29 +115,13 @@ internal fun ChatMessageList(
     // visual column the next incoming message will occupy, which keeps the
     // indicator→message transition free of layout jumps.
     val typingLaneInset = Sizes.AvatarSmall + Spacing.space8
-    val initialKeysCaptured = remember(chatId) { mutableStateOf(false) }
-    val initialItemKeys = remember(chatId) { mutableSetOf<String>() }
-    val oldestInitialCreatedAt = remember(chatId) { mutableStateOf<String?>(null) }
-    if (!initialKeysCaptured.value && chatItems.isNotEmpty()) {
-        chatItems.forEach { item ->
-            when (item) {
-                is ChatListItem.DateDivider -> initialItemKeys.add("date_${item.label}")
-                is ChatListItem.UnreadDivider -> initialItemKeys.add("unread_divider")
-                is ChatListItem.MessageItem -> initialItemKeys.add(item.message.clientId)
-            }
-        }
-        oldestInitialCreatedAt.value = messages.minByOrNull { it.createdAt }?.createdAt
-        initialKeysCaptured.value = true
-    }
-
     val reversedItems = remember(chatItems) { chatItems.reversed() }
-    val entranceProgress = remember(chatId) { HashMap<String, Animatable<Float, AnimationVector1D>?>() }
-    val entranceOffsetPx = with(LocalDensity.current) { InboxAnimations.MessageEntranceOffset.toPx() }
     val groupingStructure = remember(reversedItems) {
         reversedItems.map { item ->
             when (item) {
                 is ChatListItem.DateDivider -> Pair("date", item.label)
                 is ChatListItem.UnreadDivider -> "unread"
+                is ChatListItem.SystemHistoryItem -> "system"
                 is ChatListItem.MessageItem -> listOf("message", item.message.clientId, item.message.senderId, item.message.createdAt, item.message.messageType.name)
             }
         }
@@ -253,86 +242,20 @@ internal fun ChatMessageList(
                  is ChatListItem.DateDivider -> "date_${item.label}"
                  is ChatListItem.UnreadDivider -> "unread_divider"
                  is ChatListItem.MessageItem -> item.message.clientId
+                 is ChatListItem.SystemHistoryItem -> "system_${item.message.id}"
              }
          }, contentType = { _, item ->
              when (item) {
                  is ChatListItem.DateDivider -> "date_divider"
                  is ChatListItem.UnreadDivider -> "unread_divider"
                  is ChatListItem.MessageItem -> "message"
+                 is ChatListItem.SystemHistoryItem -> "system_history"
              }
          }) { index, item ->
-            val itemKey = when (item) {
-                is ChatListItem.DateDivider -> "date_${item.label}"
-                is ChatListItem.UnreadDivider -> "unread_divider"
-                is ChatListItem.MessageItem -> item.message.clientId
-            }
-            val oldestCreatedAt = oldestInitialCreatedAt.value
-            val isHistorical = itemKey in initialItemKeys || (
-                item is ChatListItem.MessageItem &&
-                oldestCreatedAt != null &&
-                item.message.createdAt < oldestCreatedAt
-            )
-
-            // Decided once per clientId per chat, so recycling, reconciliation and
-            // re-composition after scrolling never replay the entrance.
-            val entrance = remember(itemKey) {
-                if (entranceProgress.containsKey(itemKey)) {
-                    entranceProgress[itemKey]
-                } else {
-                    val animatable = if (!reducedMotion && item is ChatListItem.MessageItem && isFreshLiveMessage(itemKey)) {
-                        Animatable(0f)
-                    } else {
-                        null
-                    }
-                    entranceProgress[itemKey] = animatable
-                    animatable
-                }
-            }
-            val entranceModifier = if (entrance != null) {
-                LaunchedEffect(entrance) {
-                    entrance.animateTo(1f, InboxAnimations.MessageEntranceSpec)
-                }
-                Modifier.graphicsLayer {
-                    val progress = entrance.value
-                    alpha = progress
-                    translationY = (1f - progress) * entranceOffsetPx
-                }
-            } else {
-                Modifier
-            }
-
-            // Placement and exit springs for non-historical items. New live messages fade in
-            // through entranceModifier instead, so their item fade-in is disabled to avoid a
-            // double fade. Other incoming items keep a short spring fade so they cross-fade
-            // with the typing indicator's exit instead of popping in.
-            val placementModifier = if (!reducedMotion && !isInitialSyncing && !isHistorical) {
-                Modifier.animateItem(
-                    fadeInSpec = if (entrance != null) null else spring(
-                        dampingRatio = 1.0f,
-                        stiffness = 5000f
-                    ),
-                    fadeOutSpec = spring(
-                        dampingRatio = 1.0f,
-                        stiffness = 5000f
-                    ),
-                    placementSpec = spring(
-                        dampingRatio = 1.0f,
-                        stiffness = 3000f
-                    )
-                )
-            } else {
-                Modifier
-            }
-
             when (item) {
-                is ChatListItem.DateDivider -> DateDividerChip(
-                    label = item.label,
-                    modifier = placementModifier
-                )
-                is ChatListItem.UnreadDivider -> UnreadDividerRow(
-                    count = item.count,
-                    modifier = placementModifier
-                )
+                is ChatListItem.DateDivider -> DateDividerChip(label = item.label)
+                is ChatListItem.UnreadDivider -> UnreadDividerRow(count = item.count)
+                is ChatListItem.SystemHistoryItem -> SystemHistoryChip(message = item.message)
                 is ChatListItem.MessageItem -> {
                     val message = item.message
                     val position = groupPositions.getOrNull(index) ?: GroupPosition.SINGLE
@@ -344,7 +267,15 @@ internal fun ChatMessageList(
                     }
                     val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space4
                     MessageBubble(
-                        modifier = placementModifier.then(entranceModifier).padding(bottom = bottomGap),
+                        modifier = messageEntranceModifier(
+                            chatId = chatId,
+                            clientId = message.clientId,
+                            listState = listState,
+                            isListVisible = isListVisible,
+                            reducedMotion = reducedMotion,
+                            isScreenVisible = isScreenVisible,
+                            request = item.entrance
+                        ).padding(bottom = bottomGap),
                         message = message,
                         isFromMe = message.isFromMe(currentUserId),
                         position = position,
@@ -419,5 +350,46 @@ internal fun ChatMessageList(
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun messageEntranceModifier(
+    chatId: String,
+    clientId: String,
+    listState: LazyListState,
+    isListVisible: Boolean,
+    reducedMotion: Boolean,
+    isScreenVisible: Boolean,
+    request: MessageEntranceRequest?
+): Modifier {
+    if (request == null) return Modifier
+
+    val progress = remember(chatId, clientId, request) { Animatable(if (request.isPending) 0f else 1f) }
+    val offsetPx = with(LocalDensity.current) { InboxAnimations.MessageEntranceOffset.toPx() }
+    LaunchedEffect(chatId, clientId, request, listState, isListVisible, isScreenVisible, reducedMotion) {
+        if (!isScreenVisible || reducedMotion || !request.isPending) {
+            request.consume()
+            progress.snapTo(1f)
+            return@LaunchedEffect
+        }
+        // Lazy prefetch can compose an item before it is actually in the viewport.
+        snapshotFlow {
+            isListVisible && listState.layoutInfo.visibleItemsInfo.any { it.key == clientId }
+        }.first { it }
+        if (request.consume()) {
+            try {
+                progress.animateTo(1f, InboxAnimations.MessageEntranceSpec)
+            } finally {
+                withContext(NonCancellable) { progress.snapTo(1f) }
+            }
+        } else {
+            progress.snapTo(1f)
+        }
+    }
+    return Modifier.graphicsLayer {
+        val value = if (reducedMotion || !isScreenVisible) 1f else progress.value
+        alpha = value
+        translationY = (1f - value) * offsetPx
     }
 }

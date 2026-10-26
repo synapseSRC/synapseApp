@@ -486,9 +486,9 @@ class SupabaseChatRepository(
     }
 
     override suspend fun sendMessage(
-        chatId: String, 
+        chatId: String,
         content: String,
-        mediaUrl: String?, 
+        mediaUrl: String?,
         messageType: String,
         expiresAt: String?,
         replyToId: String?,
@@ -508,14 +508,32 @@ class SupabaseChatRepository(
                 }
             }
 
+            // Calculate expiresAt based on chat's disappearing mode if not provided
+            val calculatedExpiresAt = if (expiresAt == null && messageType != "system") {
+                try {
+                    val mode = dataSource.getDisappearingMode(chatId)
+                    mode?.let { modeString ->
+                        val modeEnum = try { DisappearingMode.valueOf(modeString) } catch (e: Exception) { DisappearingMode.OFF }
+                        if (modeEnum != DisappearingMode.OFF && modeEnum.seconds != null) {
+                            val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant()
+                            val expiresAtInstant = kotlinx.datetime.Instant.fromEpochMilliseconds(now.toEpochMilliseconds() + (modeEnum.seconds * 1000))
+                            expiresAtInstant.toString()
+                        } else null
+                    }
+                } catch (e: Exception) {
+                    Logger.w("Failed to get disappearing mode for message expiration", throwable = e)
+                    null
+                }
+            } else expiresAt
+
             // Get current device ID from secure storage if available
             val deviceId = getCurrentDeviceId()
 
             val messageDto = try {
-                dataSource.sendMessage(chatId, content, mediaUrl, messageType, expiresAt, replyToId, dtoAttachments, serializedMetadata, deviceId)
+                dataSource.sendMessage(chatId, content, mediaUrl, messageType, calculatedExpiresAt, replyToId, dtoAttachments, serializedMetadata, deviceId)
             } catch (e: Exception) {
                 if (offlineActionRepository != null) {
-                    queueMessageOffline(chatId, content, mediaUrl, messageType, expiresAt, replyToId, currentUserId, attachments, metadataContainer)
+                    queueMessageOffline(chatId, content, mediaUrl, messageType, calculatedExpiresAt, replyToId, currentUserId, attachments, metadataContainer)
                 } else throw e
             }
 
@@ -1049,5 +1067,30 @@ class SupabaseChatRepository(
 
     override suspend fun releaseTypingChannel(chatId: String) {
         dataSource.releaseTypingChannel(chatId)
+    }
+
+    override suspend fun addSystemMessage(chatId: String, content: String): Result<Message> = withContext(AppDispatchers.IO) {
+        try {
+            val dto = dataSource.insertSystemMessage(chatId, content)
+            val domainMessage = dto.toDomain()
+            cachedMessageDao?.upsert(domainMessage)
+            Result.success(domainMessage)
+        } catch (e: Exception) {
+            Logger.e("Error adding system message", throwable = e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteExpiredMessages(chatId: String): Result<Int> = withContext(AppDispatchers.IO) {
+        try {
+            val deletedCount = dataSource.deleteExpiredMessages(chatId)
+            // Also delete from local cache
+            val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
+            cachedMessageDao?.deleteExpired(chatId, now)
+            Result.success(deletedCount)
+        } catch (e: Exception) {
+            Logger.e("Error deleting expired messages", throwable = e)
+            Result.failure(e)
+        }
     }
 }

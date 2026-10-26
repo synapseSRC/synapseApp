@@ -351,4 +351,13 @@ class SqlDelightCachedMessageDao(
             metadataContainer = parsedMetadata
         )
     }
+
+    override suspend fun deleteExpired(chatId: String, now: String) {
+        withContext(AppDispatchers.IO) {
+            db.cachedMessageQueries.deleteExpired(
+                chatId = chatId,
+                now = now
+            )
+        }
+    }
 }

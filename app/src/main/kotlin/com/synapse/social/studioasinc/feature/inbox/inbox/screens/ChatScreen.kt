@@ -96,6 +96,7 @@ import kotlinx.coroutines.withContext
     val inputText by viewModel.inputText.collectAsState()
 
     val isLoading by viewModel.isLoading.collectAsState()
+    val isScreenVisible by viewModel.isScreenVisible.collectAsState()
     val participantProfile by viewModel.participantProfile.collectAsState()
     val isParticipantActive by viewModel.isParticipantActive.collectAsState()
 
@@ -332,17 +333,12 @@ val currentUserId = currentUserIdState ?: ""
                 val isNearBottom = listState.firstVisibleItemIndex <= bottomThreshold
 
                 if (isFromMe) {
-                    // Always snap-scroll for own messages — instant snap feels
-                    // intentional and prevents animated scroll from fighting
-                    // the placement spring during rapid-fire sending.
+                    // Bubble entrances provide the motion without a competing scroll animation.
                     listState.scrollToItem(0)
                     lastScrolledMessageClientId = newestMessageClientId
                 } else if (isNearBottom) {
                     if (!isUserDragging) {
-                        // Snap-scroll for incoming messages too. The bubble entrance is already
-                        // animated by the animateItem placement spring in ChatMessageList, so an
-                        // animated scroll here would run alongside it and make the incoming bubble
-                        // appear to animate twice (slide-in + list scroll).
+                        // Keep incoming entrances independent of list scrolling.
                         listState.scrollToItem(0)
                         lastScrolledMessageClientId = newestMessageClientId
                     }
@@ -448,9 +444,9 @@ val currentUserId = currentUserIdState ?: ""
                         groupMemberNames = groupMemberNames,
                         listState = listState,
                         initialMessageId = initialMessageId,
-                        isFreshLiveMessage = viewModel::isFreshLiveMessage,
+                        isListVisible = listReady || messages.isEmpty(),
+                        isScreenVisible = isScreenVisible,
                         isLoadingMore = isLoadingMore,
-                        isInitialSyncing = isLoading,
 typingStatus = typingStatus,
                         typingStatusDisplayName = if (isGroupChat) {
                             typingStatus?.userId?.let { groupMemberNames[it] }

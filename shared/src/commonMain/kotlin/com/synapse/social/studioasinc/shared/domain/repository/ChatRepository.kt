@@ -67,6 +67,12 @@ interface ChatRepository {
     suspend fun voteInPoll(messageId: String, optionId: String, pollId: String): Result<Unit>
     suspend fun markViewOnceConsumed(messageId: String): Result<Unit>
 
+    /** Adds a system message (e.g., for disappearing mode changes) to the chat timeline. */
+    suspend fun addSystemMessage(chatId: String, content: String): Result<Message>
+
+    /** Deletes all expired messages for a chat (where expires_at < now). */
+    suspend fun deleteExpiredMessages(chatId: String): Result<Int>
+
     /** Reads whether the authenticated participant has muted notifications for this chat. */
     suspend fun getConversationMuteStatus(chatId: String): Result<Boolean>
     /** Persists the authenticated participant's notification mute setting for this chat. */

@@ -126,6 +126,12 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getDisappearingMode(chatId: String): String? =
         conversations.getDisappearingMode(chatId)
 
+    suspend fun insertSystemMessage(chatId: String, content: String): MessageDto =
+        messages.insertSystemMessage(chatId, content)
+
+    suspend fun deleteExpiredMessages(chatId: String): Int =
+        messages.deleteExpiredMessages(chatId)
+
     suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null) =
         messages.markMessagesAsRead(chatId, deviceId)
 

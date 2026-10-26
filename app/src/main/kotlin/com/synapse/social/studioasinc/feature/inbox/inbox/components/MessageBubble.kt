@@ -77,6 +77,7 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
 import kotlinx.coroutines.launch
+import kotlinx.datetime.toLocalDateTime
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -244,13 +245,17 @@ fun isWithinTimeThreshold(timeStr1: String?, timeStr2: String?): Boolean {
 
 private fun formatMessageTime(isoTimestamp: String?): String {
     if (isoTimestamp == null) return ""
-    return try {
-        val instant = Instant.parse(isoTimestamp)
-        val formatter = DateTimeFormatter.ofPattern("h:mm a").withZone(ZoneId.systemDefault())
-        formatter.format(instant)
-    } catch (e: Exception) {
-        ""
+    val instant = com.synapse.social.studioasinc.shared.util.TimestampFormatter.parseInstant(isoTimestamp) ?: return ""
+    val local = instant.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val hour = local.hour
+    val minute = local.minute.toString().padStart(2, '0')
+    val amPm = if (hour >= 12) "PM" else "AM"
+    val displayHour = when {
+        hour == 0 -> 12
+        hour > 12 -> hour - 12
+        else -> hour
     }
+    return "$displayHour:$minute $amPm"
 }
 
 @Composable

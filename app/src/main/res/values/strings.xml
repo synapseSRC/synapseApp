@@ -2212,6 +2212,12 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="chat_info_error_clear_chat">Failed to clear chat history</string>
     <string name="chat_info_msg_blocked">Contact blocked</string>
     <string name="chat_info_msg_unblocked">Contact unblocked</string>
+    <!-- System message strings for disappearing messages -->
+    <string name="system_disappearing_messages_turned_on">Disappearing messages turned on</string>
+    <string name="system_disappearing_messages_turned_off">Disappearing messages turned off</string>
+    <string name="system_disappearing_messages_set_24h">Disappearing messages set to 24 hours</string>
+    <string name="system_disappearing_messages_set_7d">Disappearing messages set to 7 days</string>
+    <string name="system_disappearing_messages_set_90d">Disappearing messages set to 90 days</string>
     <string name="chat_info_msg_cleared">Chat history cleared</string>
     <string name="unmuted">Unmuted</string>
     <string name="user">User</string>

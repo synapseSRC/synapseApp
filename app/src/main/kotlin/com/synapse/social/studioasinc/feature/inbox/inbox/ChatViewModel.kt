@@ -79,6 +79,7 @@ class ChatViewModel @Inject constructor(
     private val updateCurrentChatUseCase: UpdateCurrentChatUseCase,
     private val setDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase,
     private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
+    private val deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase,
     private val voiceUploadService: VoiceUploadService,
     private val getStorageConfigUseCase: GetStorageConfigUseCase,
     private val voteInPollUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.VoteInPollUseCase,
@@ -205,7 +206,8 @@ class ChatViewModel @Inject constructor(
         bulkDeleteMessagesForMeUseCase = bulkDeleteMessagesForMeUseCase,
         populateMessageReactionsUseCase = populateMessageReactionsUseCase,
         viewModelScope = viewModelScope,
-currentUserIdProvider = { currentUserId.value }
+        currentUserIdProvider = { currentUserId.value },
+        isScreenVisibleProvider = { _isScreenVisible.value }
     )
 
     private val aiDelegate = ChatAiDelegate(
@@ -391,8 +393,6 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
     val messageSummary: StateFlow<String?> = aiDelegate.messageSummary
     val isSummarizingMessage: StateFlow<Boolean> = aiDelegate.isSummarizingMessage
 
-    fun isFreshLiveMessage(clientId: String): Boolean = messagingDelegate.isFreshLiveMessage(clientId)
-
     fun onVisibilityChanged(visible: Boolean) {
         _isScreenVisible.value = visible
         if (visible) {
@@ -406,6 +406,7 @@ val uid = currentUserId.value
                 messagingDelegate.markAllIncomingAsRead(uid)
             }
         } else {
+            messagingDelegate.clearPendingMessageEntrances()
             viewModelScope.launch {
                 updateCurrentChatUseCase(null)
             }
@@ -437,6 +438,14 @@ val uid = currentUserId.value
                     } else {
                         Napier.w("E2EE re-init failed but existing session may be valid: ${e.message}", tag = "E2EE")
                     }
+                }
+                // Opportunistic cleanup of expired messages when chat is opened
+                deleteExpiredMessagesUseCase(chatId).onSuccess { deletedCount ->
+                    if (deletedCount > 0) {
+                        Napier.d("Deleted $deletedCount expired messages for chat $chatId", tag = "ChatViewModel")
+                    }
+                }.onFailure { e ->
+                    Napier.w("Failed to delete expired messages: ${e.message}", e, tag = "ChatViewModel")
                 }
             }
             refreshMessages()

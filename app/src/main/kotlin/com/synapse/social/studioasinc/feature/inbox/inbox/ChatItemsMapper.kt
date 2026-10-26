@@ -57,8 +57,8 @@ object ChatItemsMapper {
         val result = mutableListOf<ChatListItem>()
         var lastDate: LocalDate? = null
 
-        // Find first unread incoming message
-        val unreadIncomingMessages = sorted.filter { currentUserId.isNotBlank() && currentUserId !in it.readBy && it.senderId != currentUserId }
+        // Find first unread incoming message (excluding system messages)
+        val unreadIncomingMessages = sorted.filter { currentUserId.isNotBlank() && currentUserId !in it.readBy && it.senderId != currentUserId && it.messageType != com.synapse.social.studioasinc.shared.domain.model.chat.MessageType.SYSTEM }
         val firstUnreadIndex = if (unreadIncomingMessages.isNotEmpty()) sorted.indexOf(unreadIncomingMessages.first()) else -1
         val hasReadBefore = firstUnreadIndex > 0
         val unreadCount = unreadIncomingMessages.size
@@ -78,7 +78,12 @@ object ChatItemsMapper {
             if (index == firstUnreadIndex && hasReadBefore && unreadCount > 0) {
                 result.add(ChatListItem.UnreadDivider(unreadCount))
             }
-            result.add(ChatListItem.MessageItem(message))
+            // Add system messages as SystemHistoryItem, regular messages as MessageItem
+            if (message.messageType == com.synapse.social.studioasinc.shared.domain.model.chat.MessageType.SYSTEM) {
+                result.add(ChatListItem.SystemHistoryItem(message))
+            } else {
+                result.add(ChatListItem.MessageItem(message))
+            }
         }
         return result
     }
