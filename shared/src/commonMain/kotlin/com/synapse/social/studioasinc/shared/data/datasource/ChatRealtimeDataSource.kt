@@ -76,6 +76,11 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     }
 
 
+    // realtime.channel(id) returns the still-registered channel for a reused topic, so a restarted
+    // subscription would share the old one and its async unsubscribe/removeChannel would silently
+    // drop the new subscription. Postgres-change routing ignores the topic, so a unique suffix is safe.
+    private fun uniqueTopic(prefix: String): String = "${prefix}_${UUIDUtils.randomUUID().take(8)}"
+
     /**
      * Retrieves the current authenticated user's unique identifier.
      */
@@ -156,7 +161,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      */
     fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
         val normalizedChatId = chatId.trim().lowercase()
-        val channelId = "msgs_flow_${normalizedChatId}"
+        val channelId = uniqueTopic("msgs_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for messages: $channelId", tag = "Realtime")
 
         try {
@@ -298,9 +303,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Note: Server-side RLS (Row Level Security) ensures the user only receives messages they are authorized to see.
      */
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
-        // Fixed topic: Supabase rejects channel topics over 100 bytes, and joining every chat id
-        // would exceed that with 3+ conversations. Row visibility is enforced by RLS, not the topic.
-        val channelId = "inbox_flow"
+        // Chat ids are not part of the topic: Supabase rejects topics over 100 bytes.
+        // Row visibility is enforced by RLS, not the topic.
+        val channelId = uniqueTopic("inbox_flow")
         Napier.d("Creating realtime channel for inbox: $channelId", tag = "Realtime")
 
         try {
@@ -491,7 +496,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      */
     fun subscribeToReadReceipts(chatId: String): Flow<MessageDto> = callbackFlow {
         val normalizedChatId = chatId.trim().lowercase()
-        val channelId = "read_flow_${normalizedChatId}"
+        val channelId = uniqueTopic("read_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for read receipts: $channelId", tag = "Realtime")
 
         try {
@@ -545,7 +550,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      */
     fun subscribeToMessageReactions(chatId: String): Flow<MessageReactionDto> = callbackFlow {
         val normalizedChatId = chatId.trim().lowercase()
-        val channelId = "react_flow_${normalizedChatId}"
+        val channelId = uniqueTopic("react_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for reactions: $channelId", tag = "Realtime")
 
         try {

@@ -125,6 +125,7 @@ class ChatMessagingDelegate(
         text: String,
         expiresAt: String?,
         replyToId: String?,
+        awaitReady: suspend () -> Unit = {},
         onError: (String?) -> Unit
     ) {
         viewModelScope.launch {
@@ -169,6 +170,7 @@ class ChatMessagingDelegate(
             val sendResult: Result<Message> = try {
                 kotlinx.coroutines.withTimeout(30_000L) {
                     sendMutex.withLock {
+                        awaitReady()
                         sendMessageUseCase(
                             chatId = chatId,
                             content = text,
