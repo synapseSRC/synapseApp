@@ -121,7 +121,7 @@ class ChatInitializationDelegate(
                 }.onFailure { e ->
                     if (!isCurrent(token, actualChatId)) return@onFailure
                     _isE2EEReady.value = false
-                    Napier.e("E2EE initialization failed: ${e.message}", e, tag = "E2EE")
+                    Napier.e("E2EE initialization failed", tag = "E2EE")
                 }
             }
 
@@ -144,10 +144,12 @@ class ChatInitializationDelegate(
                     getMessagesUseCase(actualChatId, forceNetwork = true).onSuccess { fresh ->
                         if (!isCurrent(token, actualChatId)) return@onSuccess
                         messagingDelegate.setMessages(fresh)
-                    }.onFailure { error ->
+                        _error.value = null
+                    }.onFailure { _ ->
                         if (!isCurrent(token, actualChatId)) return@onFailure
-                        if (messagingDelegate.messages.value.isEmpty()) _error.value = error.message
-                        Napier.w("Network refresh failed on init for chatId=" + actualChatId + ": " + error.message, tag = "ChatInit")
+                        // Keep cached history visible and surface a retryable, non-blocking error.
+                        _error.value = "Unable to refresh messages. Please retry."
+                        Napier.w("Initial message refresh failed", tag = "ChatInit")
                     }
                 } finally {
                     if (isCurrent(token, actualChatId)) {

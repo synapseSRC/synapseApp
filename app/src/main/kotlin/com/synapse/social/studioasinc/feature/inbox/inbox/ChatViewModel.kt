@@ -487,7 +487,7 @@ val uid = currentUserId.value
                 val initialResult = getMessagesUseCase(chatId, forceNetwork = true)
                 val initialMessages = initialResult.getOrNull()
                 if (initialMessages == null) {
-                    Napier.w("Initial delta sync failed: " + initialResult.exceptionOrNull()?.message, tag = "ChatViewModel")
+                    Napier.w("Initial delta sync failed", tag = "ChatViewModel")
                     return
                 }
                 if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
@@ -509,7 +509,7 @@ val uid = currentUserId.value
             val pageResult = getMessagesUseCase.after(chatId, cursorCreatedAt, cursorId, MESSAGE_SYNC_PAGE_SIZE)
             val page = pageResult.getOrNull()
             if (pageResult.isFailure) {
-                Napier.w("Incremental message sync failed: " + pageResult.exceptionOrNull()?.message, tag = "ChatViewModel")
+                Napier.w("Incremental message sync failed", tag = "ChatViewModel")
                 return
             }
             if (page.isNullOrEmpty()) return
@@ -641,7 +641,7 @@ val uid = currentUserId.value
                         }
                     }
                 }.onFailure { e ->
-                    if (currentChatId == chatId) _error.value = "Failed to load older messages: ${e.message}"
+                    if (currentChatId == chatId) _error.value = "Unable to load older messages. Please retry."
                 }
             } finally {
                 _isLoadingMore.value = false
@@ -650,7 +650,7 @@ val uid = currentUserId.value
         }
     }
     private fun handleIncomingMessage(newMessage: Message) {
-        Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
+        Napier.d("Realtime message received", tag = "ChatViewModel")
 
         if (currentChatId != null && !newMessage.chatId.equals(currentChatId, ignoreCase = true)) {
             Napier.d("Ignoring message for chat ${newMessage.chatId} while viewing $currentChatId", tag = "ChatViewModel")
@@ -769,7 +769,7 @@ val uid = currentUserId.value
                 try {
                     synchronizeMissedMessages(chatId)
                 } catch (e: Exception) {
-                    Napier.w("Initial sync on first empty-chat message failed: ${e.message}", tag = "ChatViewModel")
+                    Napier.w("Initial sync on first empty-chat message failed", tag = "ChatViewModel")
                 }
             }
         }
@@ -785,7 +785,7 @@ val uid = currentUserId.value
                     try {
                         reconcileRealtimeMessageUseCase(chatIdToReconcile, messageForReconciliation)
                     } catch (e: Exception) {
-                        Napier.w("Cache reconciliation failed for realtime message ${newMessage.id}: ${e.message}", tag = "ChatViewModel")
+                        Napier.w("Realtime cache reconciliation failed", tag = "ChatViewModel")
                     }
                 }
             }
@@ -823,10 +823,10 @@ val uid = currentUserId.value
                 try {
                     reconcileRealtimeMessageUseCase(chatId, decrypted)
                 } catch (e: Exception) {
-                    Napier.w("Cache reconciliation failed for decrypted message ${message.id}: ${e.message}", tag = "ChatViewModel")
+                    Napier.w("Decrypted message cache reconciliation failed", tag = "ChatViewModel")
                 }
             }.onFailure { error ->
-                Napier.w("Decryption retry failed for message ${message.id}: ${error.message}", tag = "ChatViewModel")
+                Napier.w("Message decryption retry failed", tag = "ChatViewModel")
             }
         }
     }

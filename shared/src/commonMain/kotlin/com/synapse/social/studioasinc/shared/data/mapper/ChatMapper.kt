@@ -119,29 +119,37 @@ object ChatMapper {
     fun mergeChronologically(current: List<Message>, incoming: List<Message>): List<Message> {
         if (incoming.isEmpty()) return current
         val ordering = MessageChronologicalComparator
+        val mergedById = LinkedHashMap<String, Message>()
+        val idByClientId = mutableMapOf<String, String>()
 
-        val currentByClientId = current.filter { it.clientId.isNotBlank() }.associateBy { it.clientId }
+        fun mergeOne(candidate: Message) {
+            val existingById = mergedById[candidate.id]
+            val existingByClientId = candidate.clientId
+                .takeIf { it.isNotBlank() }
+                ?.let(idByClientId::get)
+                ?.let(mergedById::get)
+            val existing = existingById ?: existingByClientId
 
-        val mergedMap = LinkedHashMap<String, Message>()
-        current.forEach { msg -> mergedMap[msg.id] = msg }
-
-        incoming.forEach { fresh ->
-            val existingById = mergedMap[fresh.id]
-            val existingByClient = if (fresh.clientId.isNotBlank()) currentByClientId[fresh.clientId] else null
-            val existing = existingById ?: existingByClient
-
-            if (existing != null) {
-                val merged = existing.mergeMonotonic(fresh)
-                if (existing.id != fresh.id) {
-                    mergedMap.remove(existing.id)
-                }
-                mergedMap[merged.id] = merged
-            } else {
-                mergedMap[fresh.id] = fresh
+            if (existing == null) {
+                mergedById[candidate.id] = candidate
+                if (candidate.clientId.isNotBlank()) idByClientId[candidate.clientId] = candidate.id
+                return
             }
+
+            val merged = existing.mergeMonotonic(candidate)
+            if (existing.id != merged.id) mergedById.remove(existing.id)
+            if (candidate.id != merged.id) mergedById.remove(candidate.id)
+            mergedById[merged.id] = merged
+            if (merged.clientId.isNotBlank()) idByClientId[merged.clientId] = merged.id
+            if (candidate.clientId.isNotBlank()) idByClientId[candidate.clientId] = merged.id
         }
 
-        return mergedMap.values.sortedWith(ordering)
+        // Normalize the current timeline as well as the incoming page. This repairs any
+        // duplicate optimistic/server copies already present before the next fetch arrives.
+        current.forEach(::mergeOne)
+        incoming.forEach(::mergeOne)
+
+        return mergedById.values.sortedWith(ordering)
     }
 
     fun ChatDto.toDomain(): ChatInfo = ChatInfo(
@@ -294,7 +302,7 @@ object ChatMapper {
         // overwrite readable content and the fields carried inside the encrypted payload.
         val incomingDisplayable = !EncryptedPayloadDetector.isUndecryptable(newer.content, newer.encryptionFailureReason)
         val existingDisplayable = !EncryptedPayloadDetector.isUndecryptable(this.content, this.encryptionFailureReason)
-        val keepExistingContent = !incomingDisplayable && existingDisplayable && newer.content.isNotBlank()
+        val keepExistingContent = !incomingDisplayable && existingDisplayable
 
         val incomingDeleted = newer.isDeleted || newer.contentStatus == ContentStatus.DELETED
         val mergedContentStatus = when {
