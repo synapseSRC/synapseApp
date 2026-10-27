@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -37,7 +38,11 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.components.TypingIndic
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.MessageEntranceRequest
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -208,21 +213,17 @@ internal fun ChatMessageList(
             item(key = "typing_indicator", contentType = "typing_indicator") {
                 val typingModifier = if (!reducedMotion) {
                     Modifier.animateItem(
-                        // M3 fast effects spring — damping 1.0 (no overshoot).
-                        // Stiffness 5000 for near-instant opacity settle (~60 ms).
-                        fadeInSpec = spring(
-                            dampingRatio = 1.0f,
-                            stiffness = 5000f
+                        fadeInSpec = tween(
+                            durationMillis = 200,
+                            easing = FastOutSlowInEasing
                         ),
-                        fadeOutSpec = spring(
-                            dampingRatio = 1.0f,
-                            stiffness = 5000f
+                        fadeOutSpec = tween(
+                            durationMillis = 150,
+                            easing = FastOutLinearInEasing
                         ),
-                        // Critically-damped spatial spring: stiffness 3000 for
-                        // fast slide-up (~80 ms) when the indicator pushes bubbles.
                         placementSpec = spring(
-                            dampingRatio = 1.0f,
-                            stiffness = 3000f
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
                         )
                     )
                 } else {
@@ -266,16 +267,33 @@ internal fun ChatMessageList(
                         targetId?.let(onLocateMessage)
                     }
                     val bottomGap = if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) Spacing.space12 else Spacing.space4
+                    val itemPlacementModifier = if (!reducedMotion) {
+                        Modifier.animateItem(
+                            fadeInSpec = null,
+                            fadeOutSpec = null,
+                            placementSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    } else {
+                        Modifier
+                    }
                     MessageBubble(
-                        modifier = messageEntranceModifier(
-                            chatId = chatId,
-                            clientId = message.clientId,
-                            listState = listState,
-                            isListVisible = isListVisible,
-                            reducedMotion = reducedMotion,
-                            isScreenVisible = isScreenVisible,
-                            request = item.entrance
-                        ).padding(bottom = bottomGap),
+                        modifier = Modifier
+                            .then(itemPlacementModifier)
+                            .then(
+                                messageEntranceModifier(
+                                    chatId = chatId,
+                                    clientId = message.clientId,
+                                    listState = listState,
+                                    isListVisible = isListVisible,
+                                    reducedMotion = reducedMotion,
+                                    isScreenVisible = isScreenVisible,
+                                    request = item.entrance
+                                )
+                            )
+                            .padding(bottom = bottomGap),
                         message = message,
                         isFromMe = message.isFromMe(currentUserId),
                         position = position,
@@ -365,31 +383,43 @@ internal fun messageEntranceModifier(
 ): Modifier {
     if (request == null) return Modifier
 
-    val progress = remember(chatId, clientId, request) { Animatable(if (request.isPending) 0f else 1f) }
+    val progress = remember(chatId, clientId, request) {
+        Animatable(if (request.isPending && !request.isExpired && !reducedMotion && isScreenVisible) 0f else 1f)
+    }
     val offsetPx = with(LocalDensity.current) { InboxAnimations.MessageEntranceOffset.toPx() }
+
     LaunchedEffect(chatId, clientId, request, listState, isListVisible, isScreenVisible, reducedMotion) {
-        if (!isScreenVisible || reducedMotion || !request.isPending) {
+        if (!isScreenVisible || reducedMotion || !request.isPending || request.isExpired) {
             request.consume()
             progress.snapTo(1f)
             return@LaunchedEffect
         }
         // Lazy prefetch can compose an item before it is actually in the viewport.
-        snapshotFlow {
-            isListVisible && listState.layoutInfo.visibleItemsInfo.any { it.key == clientId }
-        }.first { it }
-        if (request.consume()) {
+        // Wait up to 400ms for the item to become visible in the viewport.
+        // If not visible within 400ms (e.g. user is scrolled up reading old messages),
+        // consume without animating so it will never animate when the user scrolls down later.
+        val becameVisible = withTimeoutOrNull(400L) {
+            snapshotFlow {
+                isListVisible && listState.layoutInfo.visibleItemsInfo.any { it.key == clientId }
+            }.first { it }
+            true
+        } ?: false
+
+        if (becameVisible && request.consume()) {
             try {
                 progress.animateTo(1f, InboxAnimations.MessageEntranceSpec)
             } finally {
                 withContext(NonCancellable) { progress.snapTo(1f) }
             }
         } else {
+            request.consume()
             progress.snapTo(1f)
         }
     }
+
     return Modifier.graphicsLayer {
         val value = if (reducedMotion || !isScreenVisible) 1f else progress.value
         alpha = value
-        translationY = (1f - value) * offsetPx
+        translationY = if (reducedMotion || !isScreenVisible) 0f else (1f - value) * offsetPx
     }
 }

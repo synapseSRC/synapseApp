@@ -137,22 +137,32 @@ object InboxAnimations {
         repeatMode = RepeatMode.Reverse
     )
 
+    const val TypingCycleDurationMs = 1200
+    const val TypingDotStaggerMs = 160
+    const val TypingRiseDurationMs = 180
+    const val TypingFallDurationMs = 180
+
     /**
      * Per-dot bounce spec for the typing indicator. The stagger is baked into
      * the keyframe timings so a single InfiniteTransition can drive all three
      * dots and the motion is stable across recompositions.
      *
-     * @param dotIndex 0-based dot index; delays the movement phase by
-     *   [dotIndex] * 150 ms.
+     * Produces a normalized 0f..1f wave progress where 0f is rest and 1f is peak bounce.
+     *
+     * @param dotIndex 0-based dot index (0, 1, or 2); delays the wave phase by
+     *   [dotIndex] * 160 ms.
      */
     fun typingBounceSpec(dotIndex: Int): InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = keyframes {
-            durationMillis = 600
-            val delayMs = dotIndex * 150
+            durationMillis = TypingCycleDurationMs
+            val delayMs = dotIndex * TypingDotStaggerMs
             0f at 0 using LinearEasing
-            -5f at (150 + delayMs) using FastOutSlowInEasing
-            0f at (300 + delayMs) using FastOutSlowInEasing
-            0f at 600 using LinearEasing
+            if (delayMs > 0) {
+                0f at delayMs using FastOutSlowInEasing
+            }
+            1f at (delayMs + TypingRiseDurationMs) using FastOutSlowInEasing
+            0f at (delayMs + TypingRiseDurationMs + TypingFallDurationMs) using FastOutSlowInEasing
+            0f at TypingCycleDurationMs using LinearEasing
         },
         repeatMode = RepeatMode.Restart
     )

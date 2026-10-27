@@ -53,10 +53,15 @@ data class ChatParticipantDto(
     @SerialName("updated_at") val updatedAt: String? = null
 )
 
-class MessageEntranceRequest {
+class MessageEntranceRequest(val createdAtEpochMs: Long = System.currentTimeMillis()) {
     private val pending = AtomicBoolean(true)
     val isPending: Boolean get() = pending.get()
+    val isExpired: Boolean get() = (System.currentTimeMillis() - createdAtEpochMs) > ENTRANCE_EXPIRY_MS
     fun consume(): Boolean = pending.compareAndSet(true, false)
+
+    companion object {
+        const val ENTRANCE_EXPIRY_MS = 1500L
+    }
 }
 
 sealed class ChatListItem {

@@ -209,6 +209,7 @@ class ChatSubscriptionDelegate(
                         currentCoroutineContext().ensureActive()
                         if (!isSubscriptionCurrent(chatId, token) || !newMessage.chatId.equals(chatId, ignoreCase = true)) return@collect
                         try {
+                            dismissTypingForUser(newMessage.senderId)
                             onNewMessage(newMessage)
                         } catch (e: Exception) {
                             if (e is CancellationException) throw e
@@ -320,6 +321,16 @@ class ChatSubscriptionDelegate(
             }
             typingTimeoutJob = job
             job.start()
+        }
+    }
+
+    fun dismissTypingForUser(userId: String) {
+        if (userId.isBlank()) return
+        if (activeTypingUsers.remove(userId) != null) {
+            publishTypingStatus()
+            if (activeTypingUsers.isEmpty()) {
+                clearTypingStatus()
+            }
         }
     }
 
