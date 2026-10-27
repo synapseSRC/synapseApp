@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -148,7 +149,9 @@ val currentUserId = currentUserIdState ?: ""
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
     var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
 
-    val listState = rememberLazyListState()
+    val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
+        LazyListState(0, 0)
+    }
     var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -211,7 +214,11 @@ val currentUserId = currentUserIdState ?: ""
         }
     }
 
-    val messageListBottomPadding = maxOf(Sizes.WidthLarge, composerHeight + Spacing.space8)
+    val messageListBottomPadding = if (composerHeight > 0.dp) {
+        composerHeight + Spacing.space12
+    } else {
+        Sizes.Height100
+    }
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
     fun acceptSelectedUris(uris: List<Uri>) {
@@ -308,8 +315,9 @@ val currentUserId = currentUserIdState ?: ""
         }
     }
 
-    var listReady by remember { mutableStateOf(false) }
-    var showDisappearingModeDialog by remember { mutableStateOf(false) }
+    val hasInitialTarget = !initialMessageId.isNullOrBlank()
+    var initialScrollCompleted by rememberSaveable(chatId) { mutableStateOf(hasInitialTarget) }
+    var showDisappearingModeDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     var isUserDragging by remember { mutableStateOf(false) }
     LaunchedEffect(listState.interactionSource) {
@@ -322,18 +330,17 @@ val currentUserId = currentUserIdState ?: ""
         }
     }
 
-    var lastScrolledMessageClientId by remember { mutableStateOf<String?>(null) }
+    var lastScrolledMessageClientId by rememberSaveable(chatId) { mutableStateOf<String?>(null) }
     val newestMessage = remember(chatItems) {
         chatItems.filterIsInstance<ChatListItem.MessageItem>().lastOrNull()?.message
     }
     val newestMessageClientId = newestMessage?.clientId
-    val totalMessageCount = chatItems.size
 
-    LaunchedEffect(newestMessageClientId, totalMessageCount, isUserDragging) {
+    LaunchedEffect(chatId, newestMessageClientId) {
         if (newestMessageClientId != null) {
-            if (!listReady) {
+            if (!initialScrollCompleted) {
                 listState.scrollToItem(0)
-                listReady = true
+                initialScrollCompleted = true
                 lastScrolledMessageClientId = newestMessageClientId
             } else if (newestMessageClientId != lastScrolledMessageClientId) {
                 val isFromMe = newestMessage.senderId == currentUserId
@@ -341,21 +348,36 @@ val currentUserId = currentUserIdState ?: ""
                 val isNearBottom = listState.firstVisibleItemIndex <= bottomThreshold
 
                 if (isFromMe) {
-                    // Bubble entrances provide the motion without a competing scroll animation.
                     listState.scrollToItem(0)
                     lastScrolledMessageClientId = newestMessageClientId
                 } else if (isNearBottom) {
                     if (!isUserDragging) {
-                        // Keep incoming entrances independent of list scrolling.
                         listState.scrollToItem(0)
                         lastScrolledMessageClientId = newestMessageClientId
                     }
-                    // While the user is dragging, keep lastScrolledMessageClientId untouched so the
-                    // pending catch-up scroll still runs when the drag ends.
                 } else {
-                    // User has scrolled up to view older messages. Do not disrupt them.
                     lastScrolledMessageClientId = newestMessageClientId
                 }
+            }
+        }
+    }
+
+    LaunchedEffect(isUserDragging) {
+        if (!isUserDragging && initialScrollCompleted && newestMessageClientId != null && newestMessageClientId != lastScrolledMessageClientId) {
+            val bottomThreshold = if (typingStatus?.isTyping == true) 4 else 3
+            if (listState.firstVisibleItemIndex <= bottomThreshold) {
+                listState.scrollToItem(0)
+                lastScrolledMessageClientId = newestMessageClientId
+            }
+        }
+    }
+
+    val isTyping = typingStatus?.isTyping == true
+    LaunchedEffect(isTyping) {
+        if (isTyping && initialScrollCompleted && !isUserDragging) {
+            val bottomThreshold = 4
+            if (listState.firstVisibleItemIndex <= bottomThreshold) {
+                listState.animateScrollToItem(0)
             }
         }
     }
@@ -435,7 +457,7 @@ val currentUserId = currentUserIdState ?: ""
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(top = paddingValues.calculateTopPadding())
-                .imePadding()
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = {
                         focusManager.clearFocus()
@@ -477,7 +499,7 @@ val currentUserId = currentUserIdState ?: ""
                 else -> {
                     ChatMessageList(
                         chatId = chatId,
-                        modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
+                        modifier = Modifier.graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
                         bottomContentPadding = messageListBottomPadding,
@@ -495,7 +517,7 @@ val currentUserId = currentUserIdState ?: ""
                         groupMemberNames = groupMemberNames,
                         listState = listState,
                         initialMessageId = initialMessageId,
-                        isListVisible = listReady || messages.isEmpty(),
+                        isListVisible = initialScrollCompleted || messages.isEmpty(),
                         isScreenVisible = isScreenVisible,
                         isLoadingMore = isLoadingMore,
 typingStatus = typingStatus,

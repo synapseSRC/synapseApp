@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -107,7 +108,7 @@ internal fun ChatMessageList(
             val total = info.totalItemsCount
             if (total < 5) return@derivedStateOf false
             val highestVisibleIndex = info.visibleItemsInfo.maxOfOrNull { it.index } ?: 0
-            highestVisibleIndex >= total - 3
+            highestVisibleIndex >= total - 3 && listState.firstVisibleItemIndex > 0
         }
     }
     LaunchedEffect(shouldLoadMore.value) {
@@ -115,11 +116,6 @@ internal fun ChatMessageList(
     }
 
     val reducedMotion = AnimationUtil.rememberReducedMotion()
-    // Incoming messages render with an avatar lane on the left (AvatarSmall + space8),
-    // so the typing bubble is inset to sit under the sender's text column — the same
-    // visual column the next incoming message will occupy, which keeps the
-    // indicator→message transition free of layout jumps.
-    val typingLaneInset = Sizes.AvatarSmall + Spacing.space8
     val reversedItems = remember(chatItems) { chatItems.reversed() }
     val groupingStructure = remember(reversedItems) {
         reversedItems.map { item ->
@@ -132,32 +128,33 @@ internal fun ChatMessageList(
         }
     }
     val groupPositions = remember(groupingStructure) {
-        // Build lookup of all messages (including non-text) for index mapping
-        val messageEntries = reversedItems.mapIndexedNotNull { index, item ->
-            (item as? ChatListItem.MessageItem)?.let { index to it.message }
-        }
-        
-        // Extract only text messages for grouping purposes (non-text messages excluded from group count)
-        val textMessageEntries = messageEntries.filter { (_, message) ->
-            message.messageType == MessageType.TEXT
-        }
-        
         val positions = MutableList<GroupPosition?>(reversedItems.size) { null }
 
-        // Compute group positions only for text messages; non-text messages are always SINGLE
-        textMessageEntries.forEachIndexed { textMessageIndex, entry ->
-            val itemIndex = entry.first
-            val message = entry.second
-            val olderMessage = textMessageEntries.getOrNull(textMessageIndex + 1)?.second
-            val newerMessage = textMessageEntries.getOrNull(textMessageIndex - 1)?.second
-            val hasOlder = olderMessage != null &&
-                olderMessage.senderId == message.senderId &&
-                isWithinTimeThreshold(olderMessage.createdAt, message.createdAt)
-            val hasNewer = newerMessage != null &&
-                newerMessage.senderId == message.senderId &&
-                isWithinTimeThreshold(message.createdAt, newerMessage.createdAt)
+        reversedItems.forEachIndexed { index, item ->
+            val messageItem = item as? ChatListItem.MessageItem ?: return@forEachIndexed
+            val message = messageItem.message
 
-            positions[itemIndex] = when {
+            // Compute group positions only for text messages; non-text messages are always SINGLE
+            if (message.messageType != MessageType.TEXT) {
+                positions[index] = GroupPosition.SINGLE
+                return@forEachIndexed
+            }
+
+            // In reversedItems: index + 1 is the older item, index - 1 is the newer item
+            val olderItem = reversedItems.getOrNull(index + 1) as? ChatListItem.MessageItem
+            val newerItem = reversedItems.getOrNull(index - 1) as? ChatListItem.MessageItem
+
+            val hasOlder = olderItem != null &&
+                olderItem.message.messageType == MessageType.TEXT &&
+                olderItem.message.senderId == message.senderId &&
+                isWithinTimeThreshold(olderItem.message.createdAt, message.createdAt)
+
+            val hasNewer = newerItem != null &&
+                newerItem.message.messageType == MessageType.TEXT &&
+                newerItem.message.senderId == message.senderId &&
+                isWithinTimeThreshold(message.createdAt, newerItem.message.createdAt)
+
+            positions[index] = when {
                 !hasOlder && !hasNewer -> GroupPosition.SINGLE
                 !hasOlder && hasNewer -> GroupPosition.FIRST
                 hasOlder && !hasNewer -> GroupPosition.LAST
@@ -229,12 +226,23 @@ internal fun ChatMessageList(
                 } else {
                     Modifier
                 }
-                TypingIndicator(
-                    modifier = typingModifier
-                        .padding(start = typingLaneInset, bottom = Spacing.space8),
-                    reducedMotion = reducedMotion,
-                    displayName = typingStatusDisplayName
-                )
+                androidx.compose.foundation.layout.Row(
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = typingModifier.padding(bottom = Spacing.space8)
+                ) {
+                    if (!chatAvatarDisabled) {
+                        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+                            avatarUrl = participantAvatarUrl,
+                            displayName = typingStatusDisplayName ?: participantProfile?.displayName ?: initialParticipantName,
+                            size = Sizes.AvatarSmall
+                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(Spacing.space8))
+                    }
+                    TypingIndicator(
+                        reducedMotion = reducedMotion,
+                        displayName = typingStatusDisplayName
+                    )
+                }
             }
         }
 

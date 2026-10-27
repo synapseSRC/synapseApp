@@ -69,6 +69,7 @@ import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
 import com.synapse.social.studioasinc.feature.shared.theme.*
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.FileMessageBubble
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
@@ -234,13 +235,9 @@ enum class GroupPosition {
 
 fun isWithinTimeThreshold(timeStr1: String?, timeStr2: String?): Boolean {
     if (timeStr1 == null || timeStr2 == null) return false
-    return try {
-        val t1 = Instant.parse(timeStr1).epochSecond
-        val t2 = Instant.parse(timeStr2).epochSecond
-        abs(t1 - t2) <= 300
-    } catch (e: Exception) {
-        false
-    }
+    val t1 = ChatMapper.parseEpochMillis(timeStr1) ?: return false
+    val t2 = ChatMapper.parseEpochMillis(timeStr2) ?: return false
+    return abs(t1 - t2) <= 300_000L
 }
 
 private fun formatMessageTime(isoTimestamp: String?): String {
@@ -269,9 +266,9 @@ private fun ColumnScope.MessageMetadataRow(
 ) {
     Row(
         modifier = modifier
-            .align(if (isFromMe) Alignment.End else Alignment.Start)
+            .align(if (isFromMe) Alignment.Start else Alignment.End)
             .padding(top = Spacing.space4),
-        horizontalArrangement = Arrangement.End,
+        horizontalArrangement = if (isFromMe) Arrangement.Start else Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (message.isEdited || message.contentStatus == ContentStatus.EDITED) {
