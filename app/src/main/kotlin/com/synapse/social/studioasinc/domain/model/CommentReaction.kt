@@ -3,8 +3,6 @@ package com.synapse.social.studioasinc.domain.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
-
 @Serializable
 data class CommentReaction(
     val id: String? = null,
@@ -19,15 +17,7 @@ data class CommentReaction(
     @SerialName("updated_at")
     val updatedAt: String? = null
 ) {
-
-
-    fun getReactionTypeEnum(): ReactionType {
-        return ReactionType.fromString(reactionType)
-    }
-
     companion object {
-
-
         fun create(
             commentId: String,
             userId: String,

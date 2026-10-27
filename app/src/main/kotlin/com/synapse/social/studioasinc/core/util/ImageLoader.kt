@@ -16,41 +16,10 @@ import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import io.github.jan.supabase.auth.auth
 
-
-
 object ImageLoader {
     private const val TAG = "ImageLoader"
     private const val MAX_RETRIES = 2
     private const val INITIAL_RETRY_DELAY_MS = 100L
-
-
-
-    fun loadImage(
-        context: Context,
-        url: String?,
-        imageView: ImageView,
-        placeholder: Int = 0,
-        onSuccess: (() -> Unit)? = null,
-        onFailure: (() -> Unit)? = null
-    ) {
-        if (url.isNullOrBlank()) {
-            imageView.setImageResource(placeholder)
-            onFailure?.invoke()
-            return
-        }
-
-        loadImageWithRetry(
-            context = context,
-            url = url,
-            imageView = imageView,
-            placeholder = placeholder,
-            retryCount = 0,
-            onSuccess = onSuccess,
-            onFailure = onFailure
-        )
-    }
-
-
 
     private fun loadImageWithRetry(
         context: Context,
@@ -61,11 +30,9 @@ object ImageLoader {
         onSuccess: (() -> Unit)?,
         onFailure: (() -> Unit)?
     ) {
-
         imageView.load(url) {
             placeholder(placeholder)
             error(placeholder)
-
 
             addSupabaseAuthHeaders(this, url)
 
@@ -78,13 +45,9 @@ object ImageLoader {
                     Log.w(TAG, "Image load failed (attempt ${retryCount + 1}/${MAX_RETRIES + 1}): $url")
 
                     if (retryCount < MAX_RETRIES) {
-
                         val delayMs = INITIAL_RETRY_DELAY_MS * (1 shl retryCount)
 
                         Log.d(TAG, "Retrying image load after ${delayMs}ms...")
-
-
-
 
                         imageView.postDelayed({
                             loadImageWithRetry(
@@ -108,10 +71,7 @@ object ImageLoader {
         }
     }
 
-
-
     private fun addSupabaseAuthHeaders(builder: ImageRequest.Builder, url: String) {
-
         val needsAuth = url.contains("supabase.co/storage") &&
                        !url.contains("/public/")
 
@@ -131,8 +91,6 @@ object ImageLoader {
         }
     }
 
-
-
     fun buildImageRequest(context: Context, url: String?): ImageRequest {
         val builder = ImageRequest.Builder(context)
             .data(url)
@@ -142,30 +100,5 @@ object ImageLoader {
         }
 
         return builder.build()
-    }
-
-
-
-    fun preloadImage(context: Context, url: String?) {
-        if (url.isNullOrBlank()) return
-
-        val requestBuilder = ImageRequest.Builder(context)
-            .data(url)
-
-        addSupabaseAuthHeaders(requestBuilder, url)
-
-        context.imageLoader.enqueue(requestBuilder.build())
-    }
-
-
-
-    fun clearMemoryCache(context: Context) {
-        context.imageLoader.memoryCache?.clear()
-    }
-
-
-
-    suspend fun clearDiskCache(context: Context) {
-        context.imageLoader.diskCache?.clear()
     }
 }

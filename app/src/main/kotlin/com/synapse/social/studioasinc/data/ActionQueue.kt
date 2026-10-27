@@ -12,10 +12,7 @@ import java.util.UUID
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-
-
 class ActionQueue(context: Context) {
-
     companion object {
         private const val TAG = "ActionQueue"
         private const val PREFS_NAME = "action_queue_prefs"
@@ -37,8 +34,6 @@ class ActionQueue(context: Context) {
     }
     private val gson = Gson()
 
-
-
     fun add(action: PendingAction) {
         try {
             Log.d(TAG, "Adding action to queue: ${action.actionType} for message ${action.targetId}")
@@ -53,8 +48,6 @@ class ActionQueue(context: Context) {
             Log.e(TAG, "Error adding action to queue", e)
         }
     }
-
-
 
     fun remove(actionId: String) {
         try {
@@ -74,8 +67,6 @@ class ActionQueue(context: Context) {
         }
     }
 
-
-
     fun getAll(): List<PendingAction> {
         return try {
             val json = prefs.getString(KEY_PENDING_ACTIONS, null)
@@ -90,8 +81,6 @@ class ActionQueue(context: Context) {
             emptyList()
         }
     }
-
-
 
     fun update(action: PendingAction) {
         try {
@@ -112,8 +101,6 @@ class ActionQueue(context: Context) {
         }
     }
 
-
-
     fun clear() {
         try {
             Log.d(TAG, "Clearing all actions from queue")
@@ -124,19 +111,13 @@ class ActionQueue(context: Context) {
         }
     }
 
-
-
     fun size(): Int {
         return getAll().size
     }
 
-
-
     fun isEmpty(): Boolean {
         return getAll().isEmpty()
     }
-
-
 
     private fun saveActions(actions: List<PendingAction>) {
         try {
@@ -145,49 +126,5 @@ class ActionQueue(context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Error saving actions to queue", e)
         }
-    }
-
-
-
-    fun createEditAction(messageId: String, newContent: String): PendingAction {
-        return PendingAction(
-            id = UUID.randomUUID().toString(),
-            actionType = PendingAction.ActionType.EDIT,
-            targetId = messageId,
-            payload = buildJsonObject {
-                put("newContent", newContent)
-            }.toString()
-        )
-    }
-
-
-
-    fun createDeleteAction(messageId: String, deleteForEveryone: Boolean): PendingAction {
-        return PendingAction(
-            id = UUID.randomUUID().toString(),
-            actionType = PendingAction.ActionType.DELETE,
-            targetId = messageId,
-            payload = buildJsonObject {
-                put("deleteForEveryone", deleteForEveryone)
-            }.toString()
-        )
-    }
-
-
-
-    fun createForwardAction(
-        messageId: String,
-        messageData: Map<String, Any?>,
-        targetChatIds: List<String>
-    ): PendingAction {
-        return PendingAction(
-            id = UUID.randomUUID().toString(),
-            actionType = PendingAction.ActionType.FORWARD,
-            targetId = messageId,
-            payload = buildJsonObject {
-                put("messageData", gson.toJson(messageData))
-                put("targetChatIds", gson.toJson(targetChatIds))
-            }.toString()
-        )
     }
 }

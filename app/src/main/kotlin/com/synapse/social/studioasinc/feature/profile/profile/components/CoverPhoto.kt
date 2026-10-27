@@ -33,8 +33,6 @@ import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.domain.model.UserStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
-
-
 @Composable
 fun CoverPhoto(
     coverImageUrl: String?,
@@ -118,57 +116,6 @@ private fun CoverPlaceholder(
         )
     }
 }
-
-
-
-@Composable
-fun CoverPhotoWithProfile(
-    coverImageUrl: String?,
-    avatar: String?,
-    status: UserStatus? = null,
-    scrollOffsetProvider: () -> Float = { 0f },
-    isOwnProfile: Boolean = false,
-    hasStory: Boolean = false,
-    displayName: String? = null,
-    onProfileImageClick: () -> Unit = {},
-    onCoverClick: () -> Unit = {},
-    coverHeight: Dp = Sizes.HeightExtraLarge,
-    profileImageSize: Dp = Sizes.ShimmerWidthLarge,
-    modifier: Modifier = Modifier
-) {
-    val profileImageOffset = profileImageSize / 2
-
-    Box(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        CoverPhoto(
-            coverImageUrl = coverImageUrl,
-            scrollOffsetProvider = scrollOffsetProvider,
-            isOwnProfile = isOwnProfile,
-            onCoverClick = onCoverClick,
-            height = coverHeight
-        )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = Spacing.space16)
-                .offset(y = profileImageOffset)
-        ) {
-            ProfileImageWithRing(
-                avatar = avatar,
-                size = profileImageSize,
-                status = status,
-                hasStory = hasStory,
-                isOwnProfile = isOwnProfile,
-                displayName = displayName,
-                onClick = onProfileImageClick
-            )
-        }
-    }
-}
-
-
 
 @Composable
 fun ProfileImageWithRing(

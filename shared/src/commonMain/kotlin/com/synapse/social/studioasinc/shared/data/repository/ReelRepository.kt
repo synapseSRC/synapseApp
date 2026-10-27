@@ -24,13 +24,9 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-
-
 class ReelRepository {
     private val client = SupabaseClient.client
     private val TAG = "ReelRepository"
-
-
 
     suspend fun getReels(page: Int = 0, pageSize: Int = 10): Result<List<Reel>> {
         return try {
@@ -75,8 +71,6 @@ class ReelRepository {
         }
     }
 
-
-
     suspend fun reportReel(reelId: String, reason: String): Result<Unit> {
         return try {
             val currentUser = client.auth.currentUserOrNull() ?: throw Exception("Not logged in")
@@ -93,8 +87,6 @@ class ReelRepository {
         }
     }
 
-
-
     suspend fun blockCreator(creatorId: String): Result<Unit> {
         return try {
             val currentUser = client.auth.currentUserOrNull() ?: throw Exception("Not logged in")
@@ -110,50 +102,9 @@ class ReelRepository {
         }
     }
 
-
-
-    suspend fun getReel(reelId: String): Result<Reel> {
-        return try {
-            val currentUserId = client.auth.currentUserOrNull()?.id
-
-            val dto = client.from("reels")
-                .select(columns = Columns.raw("*, users:creator_id(username, avatar)")) {
-                    filter { eq("id", reelId) }
-                }.decodeSingle<ReelDto>()
-
-            val interactions = if (currentUserId != null) {
-                client.from("reel_interactions")
-                    .select {
-                        filter {
-                            eq("user_id", currentUserId)
-                            eq("reel_id", reelId)
-                        }
-                    }.decodeList<ReelInteraction>()
-            } else {
-                emptyList()
-            }
-
-            val reel = dto.toDomain(
-                isLiked = interactions.any { it.interactionType == "like" },
-                isOpposed = interactions.any { it.interactionType == "oppose" }
-            )
-            Result.success(reel.copy(
-                videoUrl = SupabaseClient.createSignedStorageUrl("reels", reel.videoUrl),
-                thumbnailUrl = reel.thumbnailUrl?.let { SupabaseClient.createSignedStorageUrl("reels", it) }
-            ))
-        } catch (e: Exception) {
-            Napier.e("Failed to fetch reel $reelId", e, tag = TAG)
-            Result.failure(e)
-        }
-    }
-
-
-
     suspend fun likeReel(reelId: String): Result<Unit> {
         return performInteraction(reelId, "like")
     }
-
-
 
     suspend fun opposeReel(reelId: String, isAnonymous: Boolean = false): Result<Unit> {
         return try {
@@ -162,8 +113,6 @@ class ReelRepository {
             Result.failure(e)
         }
     }
-
-
 
     suspend fun createReel(
         videoUrl: String,
@@ -229,8 +178,6 @@ class ReelRepository {
         }
     }
 
-
-
     suspend fun getComments(reelId: String): Result<List<ReelComment>> {
         return try {
             val comments = client.from("reel_comments")
@@ -245,8 +192,6 @@ class ReelRepository {
             Result.failure(e)
         }
     }
-
-
 
     suspend fun addComment(reelId: String, content: String): Result<Unit> {
         return try {
@@ -264,24 +209,6 @@ class ReelRepository {
         }
     }
 
-    private suspend fun <T> withRetry(
-        maxRetries: Int = 3,
-        initialDelay: Long = 1000L,
-        block: suspend () -> T
-    ): T {
-        var currentDelay = initialDelay
-        repeat(maxRetries - 1) { attempt ->
-            try {
-                return block()
-            } catch (e: Exception) {
-                Napier.w("Retry attempt ${attempt + 1} failed: ${e.message}", tag = TAG)
-                delay(currentDelay)
-                currentDelay *= 2
-            }
-        }
-        return block()
-    }
-
     private suspend fun performInteraction(reelId: String, type: String, anonymous: Boolean = false): Result<Unit> {
         return try {
             val currentUser = client.auth.currentUserOrNull() ?: throw Exception("Not logged in")
@@ -295,7 +222,6 @@ class ReelRepository {
             }.decodeList<ReelInteraction>()
 
             if (existing.isNotEmpty()) {
-
                 client.from("reel_interactions").delete {
                     filter {
                          eq("user_id", currentUser.id)
@@ -304,7 +230,6 @@ class ReelRepository {
                     }
                 }
             } else {
-
                 val insertData = mapOf(
                     "user_id" to currentUser.id,
                     "reel_id" to reelId,

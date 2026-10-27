@@ -106,25 +106,6 @@ class BlockingViewModel @Inject constructor(
         }
     }
     
-    /**
-     * Checks if a user is blocked.
-     * Does not update UI state - provides result via callback.
-     * 
-     * @param userId The ID of the user to check
-     * @param onResult Callback invoked with the result (true if blocked, false otherwise)
-     */
-    fun checkIfBlocked(userId: String, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            isUserBlockedUseCase(userId)
-                .onSuccess { isBlocked ->
-                    onResult(isBlocked)
-                }
-                .onFailure {
-                    // On error, assume not blocked
-                    onResult(false)
-                }
-        }
-    }
     
     /**
      * Resets UI state to idle.

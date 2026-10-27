@@ -7,7 +7,6 @@ package com.synapse.social.studioasinc.shared.theme
  * Legacy dp-value tokens are retained with @Deprecated annotations for migration.
  */
 object SynapseSpacing {
-
     // ── M3 Geometric Scale (4dp base, step-based naming) ─────────────────────
     // M3: 0, 4, 8, 12, 16, 20, 24, 32, 48, 64 dp
     const val space0 = 0f      // 0dp  — no spacing
@@ -20,10 +19,6 @@ object SynapseSpacing {
     const val space32 = 32f    // 32dp — page margins
     const val space48 = 48f    // 48dp — touch target minimum, elevation gap
     const val space64 = 64f    // 64dp — max page margin, large separator
-
-    // ── Accessibility / Semantic Tokens ──────────────────────────────────────
-    const val minTouchTargetGap = 48f // WCAG / M3 minimum touch target (44/48dp)
-    const val sectionDivider = 1f     // Standard divider thickness
 
     // ── M3 Geometric Scale Sub-object (step-based naming) ────────────────────
     object SpacingScale {

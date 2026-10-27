@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 
-
 data class Comment(
     val id: String,
     val authorName: String,
@@ -49,54 +48,6 @@ data class Comment(
     val parentCommentId: String? = null,
     val replies: List<Comment> = emptyList()
 )
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CommentSection(
-    comments: List<Comment>,
-    onAddComment: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var newCommentText by remember { mutableStateOf("") }
-
-    Column(modifier = modifier) {
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = Spacing.space12)
-        ) {
-            items(comments) { comment ->
-                ExpandableCommentThread(comment)
-                Spacer(modifier = Modifier.height(Spacing.space8))
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.space8),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = newCommentText,
-                onValueChange = { newCommentText = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(stringResource(R.string.comment_write)) }
-            )
-            Spacer(modifier = Modifier.width(Spacing.space8))
-            IconButton(
-                onClick = {
-                    if (newCommentText.isNotBlank()) {
-                        onAddComment(newCommentText)
-                        newCommentText = ""
-                    }
-                }
-            ) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.cd_send))
-            }
-        }
-    }
-}
 
 @Composable
 fun ExpandableCommentThread(comment: Comment, level: Int = 0) {

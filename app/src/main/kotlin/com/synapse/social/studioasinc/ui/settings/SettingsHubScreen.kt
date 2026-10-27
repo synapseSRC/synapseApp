@@ -176,43 +176,6 @@ fun SettingsSearchBar(
 }
 
 @Composable
-fun SettingsHeroCardsSection(
-    heroCards: List<HeroCard>,
-    onCardClick: (HeroCard) -> Unit
-) {
-    LazyRow(
-        contentPadding = PaddingValues(vertical = Spacing.space8),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
-    ) {
-        items(heroCards) { card ->
-            Card(
-                onClick = { onCardClick(card) },
-                modifier = Modifier.width(280.dp),
-                shape = SettingsShapes.cardShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = com.synapse.social.studioasinc.feature.shared.theme.safeParseColorHex(
-                        card.backgroundColor,
-                        MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-            ) {
-                Column(modifier = Modifier.padding(Spacing.space16)) {
-                    Icon(
-                        imageVector = if (card.id == "storage_cleanup") Icons.Filled.Storage else Icons.Filled.Shield,
-                        contentDescription = null,
-                        modifier = Modifier.size(Sizes.IconHuge)
-                    )
-                    Spacer(modifier = Modifier.height(Spacing.space12))
-                    Text(card.title, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(Spacing.space4))
-                    Text(card.description, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun SettingsCommandPaletteResults(
     results: List<SettingsNode>,
     onActionClick: (com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction) -> Unit,

@@ -55,7 +55,6 @@ class InboxViewModel @Inject constructor(
     private val getMessagesUseCase: GetMessagesUseCase,
     private val searchUsersUseCase: SearchUsersUseCase
 ) : ViewModel() {
-
     private val _currentUserProfile = MutableStateFlow<User?>(null)
     val currentUserProfile: StateFlow<User?> = _currentUserProfile.asStateFlow()
 
@@ -228,13 +227,9 @@ class InboxViewModel @Inject constructor(
         onError: (String) -> Unit
     ) = chatLockManager.authenticate(activity, onSuccess, onError)
 
-    fun getFormattedTimestamp(timestamp: String?): String = TimestampFormatter.formatRelative(timestamp)
-
     fun selectFolder(folderId: String?) { _selectedFolderId.value = folderId }
 
     fun selectFilter(filter: InboxFilter) { _selectedFilter.value = filter }
-
-    fun assignConversationToFolder(chatId: String, folderId: String) = assignConversationsToFolder(setOf(chatId), folderId)
 
     fun assignConversationsToFolder(chatIds: Set<String>, folderId: String) {
         viewModelScope.launch {

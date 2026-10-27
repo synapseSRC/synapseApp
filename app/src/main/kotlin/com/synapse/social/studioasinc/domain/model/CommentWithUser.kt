@@ -4,8 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
-
 @Serializable
 data class CommentWithUser(
     val id: String,
@@ -46,31 +44,13 @@ data class CommentWithUser(
     @Transient
     val reactionSummary: Map<ReactionType, Int> = emptyMap()
 ) {
-
-
     fun isReply(): Boolean = parentCommentId != null
-
-
-
-    fun hasReplies(): Boolean = repliesCount > 0
-
-
-
-    fun hasMedia(): Boolean = !mediaUrl.isNullOrEmpty()
-
-
 
     fun getTotalReactions(): Int = reactionSummary.values.sum()
 
-
-
     fun getDisplayName(): String = user?.displayName ?: "Unknown User"
 
-
-
     fun getUsername(): String = user?.username ?: "unknown"
-
-
 
     fun getAvatarUrl(): String? = user?.avatar
 }

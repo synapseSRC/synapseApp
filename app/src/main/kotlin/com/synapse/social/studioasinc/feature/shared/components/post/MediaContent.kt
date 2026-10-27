@@ -41,18 +41,6 @@ import androidx.compose.runtime.remember
 import com.synapse.social.studioasinc.feature.shared.theme.UiAtmosphereColors
 import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 
-fun calculateMediaDisplayHeight(
-    intrinsicWidth: Float,
-    intrinsicHeight: Float,
-    containerWidth: Float,
-    maxHeight: Float = Sizes.HeightMediaSingle.value
-): Float {
-    if (intrinsicWidth <= 0f || intrinsicHeight <= 0f) return maxHeight
-    val intrinsicAspectRatio = intrinsicWidth / intrinsicHeight
-    val idealHeight = containerWidth / intrinsicAspectRatio
-    return idealHeight.coerceAtMost(maxHeight)
-}
-
 @Composable
 fun MediaContent(
     mediaUrls: List<String>,
@@ -110,7 +98,6 @@ fun MediaContent(
             }
         }
     } else if (postViewStyle == PostViewStyle.GRID) {
-
         PostMediaGrid(mediaUrls, onMediaClick, modifier, safePost)
     } else {
         val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { mediaUrls.size })
@@ -157,7 +144,6 @@ fun MediaContent(
                 }
             }
 
-
             if (mediaUrls.size > 1) {
                 androidx.compose.material3.Text(
                     text = "${pagerState.currentPage + 1}/${mediaUrls.size}",
@@ -203,7 +189,6 @@ fun PostMediaGrid(
                 }
             }
             3 -> {
-
                 MediaGridItem(url = mediaUrls[0], modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid3Top), onClick = { onMediaClick(safePost, 0) })
                 Spacer(modifier = Modifier.height(spacing))
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridMedium)) {
@@ -213,7 +198,6 @@ fun PostMediaGrid(
                 }
             }
             else -> {
-
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridLarge)) {
                     MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 0) })
                     Spacer(modifier = Modifier.width(spacing))

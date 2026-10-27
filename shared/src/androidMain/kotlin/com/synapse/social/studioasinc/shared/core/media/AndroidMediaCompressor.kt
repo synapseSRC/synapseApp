@@ -22,13 +22,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 class AndroidMediaCompressor(private val context: Context) : MediaCompressor {
-
     companion object {
         private const val MAX_WIDTH = 1920
         private const val MAX_HEIGHT = 1080
         private const val MAX_FILE_SIZE_MB = 1
         private const val MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024L
-        private const val DEFAULT_COMPRESSION_QUALITY = 85
         private const val MIN_COMPRESSION_QUALITY = 50
     }
 
@@ -88,7 +86,6 @@ class AndroidMediaCompressor(private val context: Context) : MediaCompressor {
             scaledBitmap.recycle()
 
             Result.success(compressedFile)
-
         } catch (e: OutOfMemoryError) {
             Result.failure(IOException("Out of memory while compressing image", e))
         } catch (e: Exception) {

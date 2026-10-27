@@ -4,8 +4,6 @@ import android.content.Context
 import android.util.Log
 import com.synapse.social.studioasinc.BuildConfig
 
-
-
 data class AuthConfig(
     val requireEmailVerification: Boolean = true,
     val resendCooldownSeconds: Int = 60,
@@ -87,10 +85,8 @@ data class AuthConfig(
             return securePrefs
         }
 
-
         fun create(context: Context): AuthConfig {
             val prefs = getEncryptedSharedPreferences(context)
-
 
             val isDevelopmentMode = try {
                 BuildConfig.AUTH_DEVELOPMENT_MODE
@@ -100,7 +96,6 @@ data class AuthConfig(
                 System.getProperty("auth.development.mode")?.toBoolean() == true ||
                 prefs.getBoolean(KEY_DEVELOPMENT_MODE, BuildConfig.DEBUG)
 
-
             val enableDebugLogging = try {
                 BuildConfig.AUTH_ENABLE_DEBUG_LOGGING
             } catch (e: Exception) {
@@ -108,15 +103,12 @@ data class AuthConfig(
             } || System.getProperty("auth.debug.logging")?.toBoolean() == true ||
                 prefs.getBoolean(KEY_ENABLE_DEBUG_LOGGING, BuildConfig.DEBUG)
 
-
             val requireEmailVerification = try {
-
                 val buildConfigValue = BuildConfig.AUTH_REQUIRE_EMAIL_VERIFICATION
 
                 System.getProperty("auth.require.email.verification")?.toBoolean()
                     ?: prefs.getBoolean(KEY_REQUIRE_EMAIL_VERIFICATION, buildConfigValue)
             } catch (e: Exception) {
-
                 if (isDevelopmentMode) {
                     System.getProperty("auth.require.email.verification")?.toBoolean()
                         ?: prefs.getBoolean(KEY_REQUIRE_EMAIL_VERIFICATION, false)
@@ -125,7 +117,6 @@ data class AuthConfig(
                         ?: prefs.getBoolean(KEY_REQUIRE_EMAIL_VERIFICATION, true)
                 }
             }
-
 
             val resendCooldownSeconds = try {
                 System.getProperty("auth.resend.cooldown.seconds")?.toIntOrNull()
@@ -178,8 +169,6 @@ data class AuthConfig(
             return config
         }
 
-
-
         fun save(context: Context, config: AuthConfig) {
             val prefs = getEncryptedSharedPreferences(context)
             prefs.edit().apply {
@@ -198,8 +187,6 @@ data class AuthConfig(
             }
         }
 
-
-
         fun reset(context: Context): AuthConfig {
             val prefs = getEncryptedSharedPreferences(context)
             prefs.edit().clear().apply()
@@ -208,8 +195,6 @@ data class AuthConfig(
             Log.d(TAG, "AuthConfig reset to defaults: $config")
             return config
         }
-
-
 
         fun enableDevelopmentMode(context: Context): AuthConfig {
             val currentConfig = create(context)
@@ -223,8 +208,6 @@ data class AuthConfig(
             Log.d(TAG, "Development mode enabled: $devConfig")
             return devConfig
         }
-
-
 
         fun disableDevelopmentMode(context: Context): AuthConfig {
             val currentConfig = create(context)
@@ -240,39 +223,19 @@ data class AuthConfig(
         }
     }
 
-
-
     fun shouldBypassEmailVerification(): Boolean {
         return developmentMode && !requireEmailVerification
     }
-
-
 
     fun isDebugLoggingEnabled(): Boolean {
         return enableDebugLogging || BuildConfig.DEBUG
     }
 
-
-
     fun getEffectiveRetryAttempts(): Int {
         return autoRetryAttempts.coerceIn(1, 10)
     }
 
-
-
     fun getEffectiveRetryDelay(): Long {
         return retryDelayMs.coerceIn(500L, 10000L)
-    }
-
-
-
-    fun getEffectiveResendCooldown(): Int {
-        return resendCooldownSeconds.coerceIn(30, 300)
-    }
-
-
-
-    fun getEffectiveMaxResendAttempts(): Int {
-        return maxResendAttempts.coerceIn(3, 10)
     }
 }

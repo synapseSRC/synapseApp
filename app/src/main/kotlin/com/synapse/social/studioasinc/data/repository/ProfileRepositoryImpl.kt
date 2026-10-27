@@ -23,22 +23,14 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 @Serializable
-data class FollowInsert(
-    val follower_id: String,
-    val following_id: String
-)
-
-@Serializable
 private data class FollowingIdResponse(
     val following_id: String
 )
-
 
 class ProfileRepositoryImpl(
     private val client: SupabaseClientType,
     private val commentRepository: CommentRepositoryImpl
 ) : ProfileRepository {
-
     private val postsRepository = ProfilePostsRepositoryImpl(
         client = client,
         commentRepository = commentRepository,
@@ -48,7 +40,6 @@ class ProfileRepositoryImpl(
     )
 
     companion object {
-
         internal const val KEY_UID = "uid"
         internal const val KEY_USERNAME = "username"
         internal const val KEY_NICKNAME = "nickname"
@@ -80,8 +71,6 @@ class ProfileRepositoryImpl(
         internal const val KEY_PERSONAL_WEBSITE = "personal_website"
         internal const val KEY_PUBLIC_EMAIL = "public_email"
     }
-
-
 
     internal fun resolveUserId(userId: String): String? {
         return if (userId == "me") {
@@ -183,7 +172,6 @@ class ProfileRepositoryImpl(
             if (response == null) {
                 android.util.Log.e("ProfileRepository", "Profile not found for userId: $actualUserId")
 
-
                 try {
                     val currentUser = client.auth.currentUserOrNull()
                     if (currentUser != null && currentUser.id == actualUserId) {
@@ -204,13 +192,11 @@ class ProfileRepositoryImpl(
                         client.from("users").insert(userMap)
                         android.util.Log.d("ProfileRepository", "Created missing profile, retrying query")
 
-
                         val retryResponse = client.from("users").select() {
                             filter { eq(KEY_UID, actualUserId) }
                         }.decodeSingleOrNull<JsonObject>()
 
                         if (retryResponse != null) {
-
                             val postCount = try {
                                 client.from("posts").select(columns = Columns.raw("count")) {
                                     filter { eq(ProfilePostsRepositoryImpl.KEY_AUTHOR_UID, actualUserId) }
@@ -235,7 +221,6 @@ class ProfileRepositoryImpl(
                 emit(Result.failure(Exception("Profile not found for user: $actualUserId")))
                 return@flow
             }
-
 
             val postCount = if (isLimitedPreview) {
                 response.getInt(KEY_POSTS_COUNT)
@@ -332,7 +317,6 @@ class ProfileRepositoryImpl(
     override suspend fun getFollowing(userId: String, limit: Int, offset: Int): Result<List<UserProfile>> = try {
         val actualUserId = resolveUserId(userId) ?: return Result.failure(Exception("User not authenticated"))
 
-
         val followingIds = client.from("follows").select(columns = Columns.raw("following_id")) {
             filter { eq("follower_id", actualUserId) }
             limit(limit.toLong())
@@ -344,7 +328,6 @@ class ProfileRepositoryImpl(
         if (followingIds.isEmpty()) {
             Result.success(emptyList())
         } else {
-
             val usersResponse = client.from("users").select {
                 filter { isIn(KEY_UID, followingIds) }
             }.decodeList<JsonObject>()

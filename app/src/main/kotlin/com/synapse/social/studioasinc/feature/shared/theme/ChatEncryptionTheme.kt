@@ -16,6 +16,5 @@ internal object ChatEncryptionMetrics {
     val buttonHeight = 56.dp
     val verificationCardHeight = 180.dp
     val topBarHeight = 64.dp
-    val dividerThickness = 1.dp
     val qrSize = 144.dp
 }

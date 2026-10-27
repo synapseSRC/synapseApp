@@ -27,40 +27,6 @@ class ReelUploadManager @Inject constructor(
     private val _uploadError = MutableStateFlow<String?>(null)
     val uploadError = _uploadError.asStateFlow()
 
-    fun uploadReel(videoUri: Uri, caption: String, musicTrack: String) {
-        scope.launch {
-            _uploadError.value = null
-            _uploadProgress.value = 0f
-
-            try {
-                // Upload video
-                val uploadResult = uploadMediaUseCase(
-                    filePath = videoUri.toString(),
-                    mediaType = com.synapse.social.studioasinc.shared.domain.model.MediaType.VIDEO,
-                    bucketName = "reels",
-                    onProgress = { progress ->
-                        _uploadProgress.value = progress
-                    }
-                ).getOrThrow()
-
-                // Register with database
-                reelRepository.createReel(
-                    videoUrl = uploadResult.url,
-                    caption = caption,
-                    musicTrack = musicTrack
-                ).onSuccess {
-                    _uploadProgress.value = null
-                }.onFailure { e ->
-                    _uploadProgress.value = null
-                    _uploadError.value = e.message
-                }
-            } catch (e: Exception) {
-                _uploadProgress.value = null
-                _uploadError.value = e.message
-            }
-        }
-    }
-
     fun clearError() {
         _uploadError.value = null
     }

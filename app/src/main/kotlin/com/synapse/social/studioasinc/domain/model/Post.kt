@@ -53,8 +53,6 @@ data class FeelingActivity(
     val type: FeelingType = FeelingType.MOOD
 )
 
-
-
 @Serializable
 data class Post(
     val id: String = "",
@@ -195,15 +193,6 @@ data class Post(
     @SerialName("metadata")
     val metadata: PostMetadata? = null
 ) {
-    fun determinePostType() {
-        postType = when {
-            mediaItems?.any { it.type == MediaType.VIDEO } == true -> "VIDEO"
-            mediaItems?.any { it.type == MediaType.IMAGE } == true -> "IMAGE"
-            !postText.isNullOrEmpty() -> "TEXT"
-            else -> "TEXT"
-        }
-    }
-
     fun getTotalReactionsCount(): Int = reactions?.values?.sum() ?: likesCount
 
     fun getTopReactions(): List<Pair<ReactionType, Int>> =
@@ -222,35 +211,5 @@ data class Post(
             else -> "$emojis $total"
         }
     }
-
-    fun hasMultipleMedia(): Boolean = (mediaItems?.size ?: 0) > 1
-
-    fun toDetailItems(): List<PostDetailItem> {
-        val items = mutableListOf<PostDetailItem>()
-
-
-        if (!postText.isNullOrEmpty()) {
-            items.add(
-                PostDetailItem.Caption(
-                    postId = id,
-                    text = postText,
-                    likesCount = captionLikesCount,
-                    replyCount = captionReplyCount,
-                    userHasLiked = userHasLikedCaption
-                )
-            )
-        }
-
-
-        mediaItems?.forEach { media ->
-            when (media.type) {
-                MediaType.IMAGE -> items.add(PostDetailItem.Image(media, id))
-                MediaType.VIDEO -> items.add(PostDetailItem.Video(media, id))
-            }
-        }
-
-        return items
-    }
 }
 
-fun HashMap<String, Any>.toPost(): Post = json.decodeFromJsonElement(this.toJsonElement())

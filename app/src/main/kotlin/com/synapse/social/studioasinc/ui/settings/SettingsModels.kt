@@ -8,13 +8,6 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatWallpaper
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 
-
-
-
-
-
-
-
 enum class NavigationPlacement {
     TOP, BOTTOM;
     fun displayName(): String = name.lowercase().replaceFirstChar { it.uppercase() }
@@ -24,18 +17,8 @@ enum class ThemeMode { LIGHT, DARK, SYSTEM }
 
 enum class FontScale {
     SMALL, MEDIUM, LARGE, EXTRA_LARGE;
-    fun scaleFactor(): Float = when (this) {
-        SMALL -> 0.85f
-        MEDIUM -> 1.0f
-        LARGE -> 1.15f
-        EXTRA_LARGE -> 1.3f
-    }
     fun displayName(): String = name.lowercase().replaceFirstChar { it.uppercase() }
 }
-
-
-
-
 
 enum class ProfileVisibility {
     PUBLIC, FOLLOWERS_ONLY, PRIVATE;
@@ -72,18 +55,10 @@ enum class StatusVisibility {
     fun displayName(): String = name.lowercase().replace("_", " ").replaceFirstChar { it.uppercase() }
 }
 
-
-
-
-
 enum class NotificationCategory {
     LIKES, COMMENTS, REPLIES, FOLLOWS, MESSAGES, MENTIONS, NEW_POSTS, SHARES, SYSTEM_UPDATES;
     fun displayName(): String = name.lowercase().replace("_", " ").replaceFirstChar { it.uppercase() }
 }
-
-
-
-
 
 enum class MediaAutoDownload {
     ALWAYS, WIFI_ONLY, NEVER;
@@ -133,10 +108,6 @@ data class LargeFileInfo(
     val thumbnailUri: String?,
     val type: MediaType
 )
-
-
-
-
 
 data class AppearanceSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,

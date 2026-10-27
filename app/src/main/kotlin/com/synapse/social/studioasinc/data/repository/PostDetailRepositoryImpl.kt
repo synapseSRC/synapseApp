@@ -25,7 +25,6 @@ class PostDetailRepositoryImpl @Inject constructor(
     private val reactionRepository: ReactionRepositoryImpl,
     private val mediaUploadRepository: MediaUploadRepository? = null
 ) {
-
     companion object {
         private const val TAG = "PostDetailRepositoryImpl"
     }
@@ -128,13 +127,6 @@ class PostDetailRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to increment comment view count: ${e.message}", e)
             Result.success(Unit)
-        }
-    }
-
-    fun observePostChanges(postId: String): Flow<PostDetail> = flow {
-        val result = getPostWithDetails(postId)
-        if (result.isSuccess) {
-            emit(result.getOrThrow())
         }
     }
 
@@ -395,54 +387,5 @@ class PostDetailRepositoryImpl @Inject constructor(
             message.contains("unauthorized", ignoreCase = true) -> "Permission denied."
             else -> "Failed to load post: $message"
         }
-    }
-
-    fun hasYouTubeUrl(post: Post): Boolean {
-        return !post.youtubeUrl.isNullOrEmpty()
-    }
-
-    fun isPostEdited(post: Post): Boolean {
-        return post.isEdited == true
-    }
-
-    fun getEditedTimestamp(post: Post): String? {
-        return if (post.isEdited == true) post.editedAt else null
-    }
-
-    fun getAuthorBadge(author: UserProfile): String? {
-        return when {
-            author.verify -> "verified"
-            author.account_type == "premium" -> "premium"
-            else -> null
-        }
-    }
-
-    fun isPostDataComplete(postDetail: PostDetail): Boolean {
-        val post = postDetail.post
-        val author = postDetail.author
-
-        if (post.id.isEmpty()) return false
-        if (post.authorUid.isEmpty()) return false
-        if (author.uid.isEmpty()) return false
-
-        if (post.postType == "IMAGE" || post.postType == "VIDEO") {
-            if (post.mediaItems.isNullOrEmpty() && post.postImage.isNullOrEmpty()) {
-                if (post.postText.isNullOrEmpty()) return false
-            }
-        }
-
-        if (post.hasLocation == true) {
-            if (post.locationName.isNullOrEmpty() && post.locationAddress.isNullOrEmpty()) {
-                return false
-            }
-        }
-
-        if (post.hasPoll == true) {
-            if (post.pollQuestion.isNullOrEmpty() || post.pollOptions.isNullOrEmpty()) {
-                return false
-            }
-        }
-
-        return true
     }
 }

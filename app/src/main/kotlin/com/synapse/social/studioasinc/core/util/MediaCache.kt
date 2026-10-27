@@ -11,10 +11,7 @@ import java.util.LinkedHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
-
-
 class MediaCache(private val context: Context) {
-
     companion object {
         private const val TAG = "MediaCache"
         private const val CACHE_DIR_NAME = "media"
@@ -35,16 +32,12 @@ class MediaCache(private val context: Context) {
     private val fileSizes = ConcurrentHashMap<String, Long>()
 
     init {
-
         if (!cacheDir.exists()) {
             cacheDir.mkdirs()
         }
 
-
         initializeCacheMetadata()
     }
-
-
 
     suspend fun put(key: String, file: File) = withContext(Dispatchers.IO) {
         if (!file.exists() || !file.isFile) {
@@ -56,39 +49,31 @@ class MediaCache(private val context: Context) {
             val cacheKey = generateCacheKey(key)
             val cachedFile = getCacheFile(cacheKey)
 
-
             file.copyTo(cachedFile, overwrite = true)
 
             val fileSize = cachedFile.length()
             val currentTime = System.currentTimeMillis()
 
-
             updateFileMetadata(cacheKey, fileSize, currentTime)
-
 
             if (currentCacheSize.get() > MAX_CACHE_SIZE_BYTES) {
                 evictLRU()
             }
 
             Log.d(TAG, "Cached file with key: $key, size: ${fileSize}B")
-
         } catch (e: IOException) {
             Log.e(TAG, "Failed to cache file with key: $key", e)
         }
     }
-
-
 
     suspend fun get(key: String): File? = withContext(Dispatchers.IO) {
         val cacheKey = generateCacheKey(key)
         val cachedFile = getCacheFile(cacheKey)
 
         if (!cachedFile.exists()) {
-
             removeFileMetadata(cacheKey)
             return@withContext null
         }
-
 
         val fileAge = System.currentTimeMillis() - cachedFile.lastModified()
         if (fileAge > CACHE_EXPIRATION_MS) {
@@ -97,14 +82,11 @@ class MediaCache(private val context: Context) {
             return@withContext null
         }
 
-
         accessTimes[cacheKey] = System.currentTimeMillis()
 
         Log.d(TAG, "Cache hit for key: $key")
         return@withContext cachedFile
     }
-
-
 
     suspend fun remove(key: String) = withContext(Dispatchers.IO) {
         val cacheKey = generateCacheKey(key)
@@ -127,8 +109,6 @@ class MediaCache(private val context: Context) {
         }
     }
 
-
-
     suspend fun clear() = withContext(Dispatchers.IO) {
         try {
             cacheDir.deleteRecursively()
@@ -139,13 +119,10 @@ class MediaCache(private val context: Context) {
             currentCacheSize.set(0)
 
             Log.d(TAG, "Cache cleared")
-
         } catch (e: Exception) {
             Log.e(TAG, "Failed to clear cache", e)
         }
     }
-
-
 
     suspend fun evictExpired(expirationDays: Long = CACHE_EXPIRATION_DAYS) = withContext(Dispatchers.IO) {
         val currentTime = System.currentTimeMillis()
@@ -171,8 +148,6 @@ class MediaCache(private val context: Context) {
         }
     }
 
-
-
     suspend fun evictLRU(maxSizeBytes: Long = MAX_CACHE_SIZE_BYTES) = withContext(Dispatchers.IO) {
         if (currentCacheSize.get() <= maxSizeBytes) {
             return@withContext
@@ -183,7 +158,6 @@ class MediaCache(private val context: Context) {
         val batchSize = 50
 
         while (currentCacheSize.get() > maxSizeBytes * 0.8) {
-
             // OPTIMIZATION: Process in batches to reduce lock contention
             val keysToEvict = synchronized(accessTimes) {
                 if (accessTimes.isEmpty()) emptyList()
@@ -233,16 +207,6 @@ class MediaCache(private val context: Context) {
         }
     }
 
-
-
-    fun getCacheSize(): Long = currentCacheSize.get()
-
-
-
-    fun getCacheFileCount(): Int = accessTimes.size
-
-
-
     fun getCacheStats(): CacheStats {
         return CacheStats(
             totalSize = currentCacheSize.get(),
@@ -251,8 +215,6 @@ class MediaCache(private val context: Context) {
             expirationDays = CACHE_EXPIRATION_DAYS
         )
     }
-
-
 
     private fun initializeCacheMetadata() {
         var totalSize = 0L
@@ -274,10 +236,8 @@ class MediaCache(private val context: Context) {
     }
 
     private fun updateFileMetadata(cacheKey: String, fileSize: Long, accessTime: Long) {
-
         val oldSize = fileSizes[cacheKey] ?: 0L
         currentCacheSize.addAndGet(fileSize - oldSize)
-
 
         accessTimes[cacheKey] = accessTime
         fileSizes[cacheKey] = fileSize
@@ -289,41 +249,26 @@ class MediaCache(private val context: Context) {
     }
 
     private fun generateCacheKey(key: String): String {
-
         val digest = MessageDigest.getInstance("MD5")
         val hashBytes = digest.digest(key.toByteArray())
         return hashBytes.joinToString("") { "%02x".format(it) }
-    }
-
-    private fun reverseGenerateCacheKey(cacheKey: String): String {
-
-
-        return cacheKey
     }
 
     private fun getCacheFile(cacheKey: String): File {
         return cacheDir.resolve(cacheKey)
     }
 
-
-
     fun schedulePeriodicCleanup() {
         MediaCacheCleanupWorker.schedulePeriodicCleanup(context)
     }
-
-
 
     fun cancelPeriodicCleanup() {
         MediaCacheCleanupWorker.cancelPeriodicCleanup(context)
     }
 
-
-
     fun runCleanupNow() {
         MediaCacheCleanupWorker.runCleanupNow(context)
     }
-
-
 
     fun contains(key: String): Boolean {
         val cacheKey = generateCacheKey(key)
@@ -331,74 +276,15 @@ class MediaCache(private val context: Context) {
         return cachedFile.exists()
     }
 
-
-
     fun getFileSize(key: String): Long? {
         val cacheKey = generateCacheKey(key)
         return fileSizes[cacheKey]
     }
-
-
-
-    fun getLastAccessTime(key: String): Long? {
-        val cacheKey = generateCacheKey(key)
-        return accessTimes[cacheKey]
-    }
-
-
-
-    fun getAllKeys(): Set<String> {
-        return accessTimes.keys.toSet()
-    }
-
-
-
-    suspend fun performMaintenance(): MaintenanceResult = withContext(Dispatchers.IO) {
-        val startTime = System.currentTimeMillis()
-        val initialFileCount = accessTimes.size
-        val initialSize = currentCacheSize.get()
-
-
-        evictExpired()
-        val afterExpiredFileCount = accessTimes.size
-        val afterExpiredSize = currentCacheSize.get()
-
-
-        evictLRU()
-        val finalFileCount = accessTimes.size
-        val finalSize = currentCacheSize.get()
-
-        val duration = System.currentTimeMillis() - startTime
-
-        return@withContext MaintenanceResult(
-            expiredFilesRemoved = initialFileCount - afterExpiredFileCount,
-            lruFilesRemoved = afterExpiredFileCount - finalFileCount,
-            totalFilesRemoved = initialFileCount - finalFileCount,
-            bytesFreed = initialSize - finalSize,
-            durationMs = duration,
-            finalCacheSize = finalSize,
-            finalFileCount = finalFileCount
-        )
-    }
-
-
 
     data class CacheStats(
         val totalSize: Long,
         val fileCount: Int,
         val maxSize: Long,
         val expirationDays: Long
-    )
-
-
-
-    data class MaintenanceResult(
-        val expiredFilesRemoved: Int,
-        val lruFilesRemoved: Int,
-        val totalFilesRemoved: Int,
-        val bytesFreed: Long,
-        val durationMs: Long,
-        val finalCacheSize: Long,
-        val finalFileCount: Int
     )
 }

@@ -102,57 +102,6 @@ fun RepliesIndicatorRow(count: Int) {
 }
 
 @Composable
-fun SenderHeaderRow(
-    avatarUrl: String?,
-    displayName: String,
-    timestamp: String,
-    isStarred: Boolean,
-    showAvatar: Boolean
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = Spacing.space4),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showAvatar) {
-            AsyncImage(
-                model = avatarUrl,
-                contentDescription = "Sender Avatar",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(Sizes.AvatarSmall)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            )
-            Spacer(modifier = Modifier.width(Spacing.space8))
-        }
-        Column {
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.tertiary
-            )
-            Text(
-                text = timestamp,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        if (isStarred) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = "Starred",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(Sizes.IconSmall)
-            )
-        }
-    }
-}
-
-@Composable
 fun DateDividerChip(
     label: String,
     modifier: Modifier = Modifier
@@ -637,8 +586,6 @@ fun MessageBubble(
             Column(
                 horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
             ) {
-
-
                 Column(
                     horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
                 ) {

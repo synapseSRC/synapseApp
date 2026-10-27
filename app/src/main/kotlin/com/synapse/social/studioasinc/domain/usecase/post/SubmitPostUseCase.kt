@@ -26,7 +26,6 @@ class SubmitPostUseCase @Inject constructor(
     private val mediaUploadHandler: MediaUploadHandler,
     private val reelSubmissionHandler: ReelSubmissionHandler
 ) {
-
     suspend operator fun invoke(
         requests: List<CreatePostRequest>,
         currentUserId: String,
@@ -140,122 +139,6 @@ class SubmitPostUseCase @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    private suspend fun buildAndSubmitSingle(
-        request: CreatePostRequest,
-        currentUserId: String,
-        originalPost: Post?,
-        onProgress: (Float) -> Unit
-    ): Result<Post?> = withContext(Dispatchers.IO) {
-        try {
-            if (originalPost != null && originalPost.authorUid != currentUserId) {
-                return@withContext Result.failure(Exception("Unauthorized: You can only edit your own posts"))
-            }
-
-            val hasVideo = request.mediaItems.any { it.type == MediaType.VIDEO }
-            if (hasVideo) {
-                return@withContext reelSubmissionHandler.submitReel(request, onProgress).map { null }
-            }
-
-            val text = request.postText.trim()
-            if (text.isEmpty() && request.mediaItems.isEmpty() && request.pollOptions == null && request.youtubeUrl == null) {
-                return@withContext Result.failure(Exception("Please add some content to your post"))
-            }
-
-            onProgress(0f)
-
-            val now = Clock.System.now()
-            val timestamp = now.toEpochMilliseconds()
-            val publishDate = now.toString()
-
-            val postType = when {
-                request.mediaItems.isNotEmpty() -> "IMAGE"
-                request.pollOptions != null -> "POLL"
-                else -> "TEXT"
-            }
-
-            val pollEndTime = request.pollOptions?.let {
-                kotlinx.datetime.Instant.fromEpochMilliseconds(timestamp + request.pollDurationHours * 3600 * 1000L).toString()
-            }
-
-            val post = Post(
-                id = request.editPostId ?: "${kotlin.random.Random.nextLong().toULong().toString(16)}-${kotlin.random.Random.nextLong().toULong().toString(16)}",
-                key = originalPost?.key ?: "post_${timestamp}_${(1000..9999).random()}",
-                authorUid = currentUserId,
-                postText = text.ifEmpty { null },
-                postType = postType,
-                postVisibility = request.privacy,
-                inReplyToPostId = request.replyToPostId,
-                isQuote = false,
-                postHideViewsCount = if (request.hideViewsCount) "true" else "false",
-                postHideLikeCount = if (request.hideLikeCount) "true" else "false",
-                postHideReplyCount = if (request.hideCommentsCount) "true" else "false",
-                postDisableReplies = if (request.disableComments) "true" else "false",
-                publishDate = publishDate,
-                timestamp = timestamp,
-                youtubeUrl = request.youtubeUrl,
-                hasPoll = request.pollOptions != null,
-                pollQuestion = request.pollQuestion,
-                pollOptions = request.pollOptions?.map { PollOption(text = it, votes = 0) },
-                pollEndTime = pollEndTime,
-                pollAllowMultiple = false,
-                hasLocation = request.location != null,
-                locationName = request.location?.name,
-                locationAddress = request.location?.address,
-                locationLatitude = request.location?.latitude,
-                locationLongitude = request.location?.longitude,
-                locationPlaceId = null,
-                metadata = PostMetadata(
-                    layoutType = DEFAULT_LAYOUT_TYPE,
-                    taggedPeople = request.taggedPeople.ifEmpty { null }?.map { com.synapse.social.studioasinc.domain.model.User(uid = it) },
-                    feeling = null,
-                    backgroundColor = request.textBackgroundColor
-                )
-            )
-
-            val newMedia = request.mediaItems.filter { !it.url.startsWith("http") }
-            val existingMedia = request.mediaItems.filter { it.url.startsWith("http") }
-
-            val finalPost = if (newMedia.isEmpty()) {
-                post.copy(
-                    mediaItems = existingMedia.toMutableList(),
-                    postImage = existingMedia.firstOrNull { it.type == MediaType.IMAGE }?.url
-                )
-            } else {
-                val uploaded = mediaUploadHandler.uploadMedia(newMedia, onProgress)
-                val allMedia = existingMedia + uploaded
-                post.copy(
-                    mediaItems = allMedia.toMutableList(),
-                    postImage = allMedia.firstOrNull { it.type == MediaType.IMAGE }?.url
-                )
-            }
-
-            val enrichedPost = enrichWithUserInfo(finalPost, request.isEditMode)
-
-            if (request.isEditMode) {
-                postRepository.updatePost(enrichedPost).map { it }
-            } else {
-                postRepository.createPost(enrichedPost).map { it }
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    private suspend fun enrichWithUserInfo(post: Post, isEditMode: Boolean): Post {
-        if (!isEditMode && post.username.isNullOrEmpty()) {
-            try {
-                userRepository.getUserById(post.authorUid).getOrThrow()?.let { user ->
-                    post.username = user.username
-                    post.avatarUrl = user.avatar
-                    post.isVerified = user.verify
-                }
-            } catch (e: Exception) {
-                throw Exception("Failed to fetch user details for post creation: ${e.message}", e)
-            }
-        }
-        return post
     }
 
     companion object {

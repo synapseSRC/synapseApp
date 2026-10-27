@@ -5,8 +5,6 @@ import androidx.compose.ui.unit.sp
 import com.synapse.social.studioasinc.shared.theme.SynapseSizes
 import com.synapse.social.studioasinc.shared.theme.SynapseSpacing
 
-
-
 /** Thin Dp adapters over the shared Synapse spacing values. */
 object Spacing {
     val space0 = SynapseSpacing.space0.dp
@@ -31,9 +29,6 @@ object Spacing {
     val step7 = SynapseSpacing.SpacingScale.step7.dp
     val step8 = SynapseSpacing.SpacingScale.step8.dp
     val step9 = SynapseSpacing.SpacingScale.step9.dp
-
-    // Accessibility minimum touch gap.
-    val minTouchTarget = AccessibilitySizes.minimumTouchTarget
 }
 
 object Sizes {
@@ -122,7 +117,6 @@ object Sizes {
     val ShimmerWidthLarge = SynapseSizes.ShimmerWidthLarge.dp
     val ShimmerWidthExtraLarge = SynapseSizes.ShimmerWidthExtraLarge.dp
 
-
     val SendButton = SynapseSizes.SendButton.dp
     val SendButtonCompact = SynapseSizes.SendButtonCompact.dp
     val InputButtonCompact = SynapseSizes.InputButtonCompact.dp
@@ -149,9 +143,6 @@ object Sizes {
     val ProfileImageOffset = SynapseSizes.ProfileImageOffset.dp
 
     val HeightAvatarLarge = 72.dp
-    val IconSmallMedium = 22.dp
-    val IconSemiMediumLarge = 18.dp
-    val BorderThinAlt = 1.5.dp
 
     val ElevationNone = 0.dp
     // Project-specific component dimensions; these are not Material 3 spacing tokens.
@@ -162,10 +153,8 @@ object Sizes {
     val TypingIndicatorBounceOffset = 4.dp
     val WavyDividerHeight = 6.dp
     val LoadingOverlayBlurRadius = 10.dp
-    val ChatInputFadeSize = 16.dp
     val MessageWaveLength = 24.dp
     val MessageWaveAmplitude = 2.dp
-    val DividerThickness = 8.dp
     val ProfileGridOverlayHeight = 32.dp
     val AudioFallbackRowHeight = 32.dp
     val ElevationLow = 2.dp
@@ -210,7 +199,6 @@ object BatchMediaCardMetrics {
 }
 
 object FontSizes {
-    val ExtraSmall = 10.sp
     val Small = 12.sp
     val FontSizeDisplay = 36.sp
 }

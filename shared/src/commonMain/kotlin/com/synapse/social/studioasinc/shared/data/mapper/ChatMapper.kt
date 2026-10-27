@@ -58,10 +58,6 @@ object ChatMapper {
         }
     }
 
-    fun parseEpochMillis(raw: String?): Long? {
-        return parseInstant(raw)?.toEpochMilliseconds()
-    }
-
     /**
      * Canonical chronological comparator for chat messages.
      * Compares parsed Instant objects down to nanosecond precision first,

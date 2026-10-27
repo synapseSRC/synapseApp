@@ -86,7 +86,6 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(Spacing.space16),
             contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
-
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
@@ -170,37 +169,6 @@ fun SettingsScreen(
             }
         }
     }
-}
-
-
-
-@Composable
-fun SecureTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String
-) {
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        trailingIcon = {
-            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(
-                    imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                    tint = if (passwordVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Sizes.CornerDefault),
-        singleLine = true
-    )
 }
 
 @Composable

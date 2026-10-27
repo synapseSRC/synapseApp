@@ -49,8 +49,6 @@ import kotlin.math.roundToInt
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
-
-
 @Stable
 data class PollOption(
     val id: String,
@@ -58,8 +56,6 @@ data class PollOption(
     val voteCount: Int,
     val isSelected: Boolean
 )
-
-
 
 @Composable
 fun PollContent(
@@ -77,7 +73,6 @@ fun PollContent(
             .fillMaxWidth()
             .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
     ) {
-
         if (question.isNotBlank()) {
             Text(
                 text = question,
@@ -87,7 +82,6 @@ fun PollContent(
                 modifier = Modifier.padding(bottom = Spacing.space12)
             )
         }
-
 
         options.forEach { option ->
             AnimatedPollOptionItem(
@@ -111,8 +105,6 @@ fun PollContent(
     }
 }
 
-
-
 @Composable
 fun AnimatedPollOptionItem(
     option: PollOption,
@@ -122,7 +114,6 @@ fun AnimatedPollOptionItem(
 ) {
     val percentage = if (totalVotes > 0) option.voteCount.toFloat() / totalVotes else 0f
     val percentageText = if (hasVoted && totalVotes > 0) "${(percentage * 100).roundToInt()}%" else ""
-
 
     var showProgress by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
@@ -162,11 +153,9 @@ fun AnimatedPollOptionItem(
         label = "checkScale"
     )
 
-
     LaunchedEffect(hasVoted) {
         showProgress = hasVoted
     }
-
 
     val progressGradient = Brush.horizontalGradient(
         colors = listOf(
@@ -202,7 +191,6 @@ fun AnimatedPollOptionItem(
                 onClick = onClick
             )
     ) {
-
         if (hasVoted) {
             Box(
                 modifier = Modifier
@@ -212,7 +200,6 @@ fun AnimatedPollOptionItem(
             )
         }
 
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -220,12 +207,10 @@ fun AnimatedPollOptionItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-
                 if (option.isSelected) {
                     Box(
                         modifier = Modifier
@@ -248,7 +233,6 @@ fun AnimatedPollOptionItem(
                     fontWeight = if (option.isSelected) FontWeight.SemiBold else FontWeight.Normal
                 )
             }
-
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -279,18 +263,3 @@ fun AnimatedPollOptionItem(
     }
 }
 
-
-
-@Composable
-fun PollOptionItem(
-    option: PollOption,
-    totalVotes: Int,
-    onClick: () -> Unit
-) {
-    AnimatedPollOptionItem(
-        option = option,
-        totalVotes = totalVotes,
-        hasVoted = totalVotes > 0,
-        onClick = onClick
-    )
-}

@@ -11,7 +11,6 @@ import com.synapse.social.studioasinc.ui.settings.MediaType
 import kotlinx.coroutines.flow.first
 
 object AutoDownloadManager {
-
     enum class NetworkType {
         WIFI, MOBILE, ROAMING, NONE
     }
@@ -91,14 +90,5 @@ object AutoDownloadManager {
             NetworkType.NONE -> emptySet()
         }
         return mediaType in allowedTypes
-    }
-
-    fun attachmentTypeToMediaType(attachmentType: AttachmentType): MediaType {
-        return when (attachmentType) {
-            AttachmentType.IMAGE -> MediaType.PHOTO
-            AttachmentType.VIDEO -> MediaType.VIDEO
-            AttachmentType.AUDIO -> MediaType.AUDIO
-            AttachmentType.FILE -> MediaType.DOCUMENT
-        }
     }
 }

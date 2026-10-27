@@ -25,7 +25,6 @@ class NotificationSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val notificationRepository: NotificationRepository
 ) : ViewModel() {
-
     private val _notificationPreferences = MutableStateFlow(NotificationPreferences())
     val notificationPreferences: StateFlow<NotificationPreferences> = _notificationPreferences.asStateFlow()
 
@@ -73,10 +72,6 @@ class NotificationSettingsViewModel @Inject constructor(
 
     fun toggleNotificationCategory(category: NotificationCategory, enabled: Boolean) {
         updatePreferences { it.withCategory(category, enabled) }
-    }
-
-    fun toggleInAppNotifications(enabled: Boolean) {
-        updatePreferences { it.copy(inAppNotificationsEnabled = enabled) }
     }
 
     fun toggleDoNotDisturb(enabled: Boolean) {
@@ -187,10 +182,6 @@ class NotificationSettingsViewModel @Inject constructor(
             dndUntil = prefs.dndUntil,
             updatedAt = getCurrentIsoTime()
         )
-    }
-
-    fun isCategoryEnabled(category: NotificationCategory): Boolean {
-        return _notificationPreferences.value.isEnabled(category)
     }
 
     private fun updateOneSignalTags(prefs: NotificationPreferences) {

@@ -97,11 +97,6 @@ import kotlinx.coroutines.withContext
         viewModel.initialize(chatId, participantId)
     }
 
-
-
-
-
-
     val messages by viewModel.messages.collectAsState()
     val chatItems by viewModel.chatItems.collectAsState()
     val inputText by viewModel.inputText.collectAsState()
@@ -268,7 +263,6 @@ val currentUserId = currentUserIdState ?: ""
             }
         }
     }
-
 
     val photoVideoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10),
@@ -487,7 +481,6 @@ val currentUserId = currentUserIdState ?: ""
                     })
                 }
         ) {
-
             ChatBackground(
                 chatWallpaperType = chatWallpaperType,
                 chatWallpaperValue = chatWallpaperValue,
@@ -892,13 +885,6 @@ typingStatus = typingStatus,
             onDismiss = { showEncryptionSheet = false }
         )
     }
-
-}
-
-@dagger.hilt.EntryPoint
-@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
-interface VoiceUploadServiceEntryPoint {
-    fun getVoiceUploadService(): VoiceUploadService
 }
 
 private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(

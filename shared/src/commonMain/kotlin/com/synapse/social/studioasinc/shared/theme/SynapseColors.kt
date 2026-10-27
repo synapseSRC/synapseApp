@@ -55,8 +55,6 @@ data class SynapseColorScheme(
 object SynapseColors {
     // Brand identity - Synapse Blue (Harmonized M3 Primary Tones)
     val Blue = 0xFF0061A4
-    val DarkBlue = 0xFF00497D
-    val LightBlue = 0xFFBBDEFB
 
     // Status colors
     val StatusOnline = 0xFF2E7D32

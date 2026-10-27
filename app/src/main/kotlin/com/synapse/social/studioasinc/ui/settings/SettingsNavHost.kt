@@ -33,8 +33,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 
-
-
 @Composable
 fun SettingsNavHost(
     modifier: Modifier = Modifier,
@@ -57,7 +55,6 @@ fun SettingsNavHost(
         popEnterTransition = { SettingsAnimations.popEnterTransition },
         popExitTransition = { SettingsAnimations.popExitTransition }
     ) {
-
         composable(route = SettingsDestination.ROUTE_HUB) {
             val viewModel: SettingsHubViewModel = hiltViewModel()
             SettingsHubScreen(
@@ -89,7 +86,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_ACCOUNT) {
             val viewModel: AccountSettingsViewModel = hiltViewModel()
             AccountSettingsScreen(
@@ -111,7 +107,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_REQUEST_ACCOUNT_INFO) {
             val viewModel: RequestAccountInfoViewModel = viewModel()
             RequestAccountInfoScreen(
@@ -121,8 +116,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
-
 
         composable(route = SettingsDestination.ROUTE_PRIVACY) {
             val viewModel: PrivacySecurityViewModel = viewModel()
@@ -138,10 +131,8 @@ fun SettingsNavHost(
                     navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS)
                 },
                 onNavigateToMutedUsers = {
-
                 },
                 onNavigateToActiveSessions = {
-
                 },
                 onNavigateToLastSeen = {
                     navController.navigate(SettingsDestination.ROUTE_PRIVACY_LAST_SEEN)
@@ -412,7 +403,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_APPEARANCE) {
             val viewModel: AppearanceViewModel = viewModel()
             AppearanceScreen(
@@ -421,7 +411,6 @@ fun SettingsNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToChatCustomization = {
-
                 },
                 onNavigateToFont = {
                     navController.navigate(SettingsDestination.ROUTE_FONT)
@@ -438,7 +427,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_BACKUP_RESTORE) {
             val viewModel: SettingsBackupViewModel = hiltViewModel()
@@ -458,9 +446,6 @@ fun SettingsNavHost(
             )
         }
 
-
-
-
         composable(route = SettingsDestination.ROUTE_STORAGE) {
             val viewModel: StorageDataViewModel = viewModel(
                 factory = StorageDataViewModelFactory(settingsRepository)
@@ -474,7 +459,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_MANAGE_STORAGE) {
             val viewModel: ManageStorageViewModel = hiltViewModel()
             ManageStorageScreen(
@@ -485,7 +469,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_NETWORK_USAGE) {
             val viewModel: NetworkUsageViewModel = hiltViewModel()
             NetworkUsageScreen(
@@ -495,7 +478,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_BUSINESS_PLATFORM) {
             val viewModel: BusinessPlatformViewModel = hiltViewModel()
@@ -537,7 +519,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_STORAGE_PROVIDER) {
             val viewModel: SettingsViewModel = hiltViewModel()
             StorageProviderScreen(
@@ -545,7 +526,6 @@ fun SettingsNavHost(
                 viewModel = viewModel
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_LANGUAGE) {
             val viewModel: LanguageRegionViewModel = viewModel()
@@ -556,7 +536,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_ABOUT) {
             val viewModel: AboutSupportViewModel = hiltViewModel()
@@ -576,7 +555,6 @@ fun SettingsNavHost(
                 viewModel = viewModel
             )
         }
-
 
         composable(
             route = SettingsDestination.ROUTE_LICENSES,
@@ -621,8 +599,6 @@ fun SettingsNavHost(
             AboutEmptyScreen(onBackClick = { navController.popBackStack() })
         }
 
-
-
         composable(route = SettingsDestination.ROUTE_FLAGS) {
             val viewModel: FlagsViewModel = hiltViewModel()
             FlagsScreen(
@@ -643,7 +619,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_SYNAPSE_PLUS) {
             SynapsePlusScreen(
                 onBackClick = {
@@ -651,7 +626,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_AVATAR) {
             val viewModel: AvatarViewModel = hiltViewModel()
@@ -663,7 +637,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_FAVOURITES) {
             FavouritesScreen(
                 onBackClick = {
@@ -671,7 +644,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_ACCESSIBILITY) {
             val viewModel: AccessibilityViewModel = hiltViewModel()
@@ -683,7 +655,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_BLOCKED_CONTACTS) {
             val viewModel: BlockingViewModel = hiltViewModel()
             BlockedContactsScreen(
@@ -694,7 +665,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_SEARCH) {
             com.synapse.social.studioasinc.feature.settings.search.SettingsSearchScreen(
                 onBackClick = { navController.popBackStack() },
@@ -703,45 +673,6 @@ fun SettingsNavHost(
         }
     }
 }
-
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChatPlaceholderScreen(
-    title: String,
-    onBackClick: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.settings_chat_not_implemented),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
 
 private fun aboutForwardEnter(): EnterTransition =
     slideInHorizontally(
