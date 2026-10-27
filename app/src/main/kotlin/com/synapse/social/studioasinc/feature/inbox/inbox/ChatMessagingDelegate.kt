@@ -129,6 +129,11 @@ class ChatMessagingDelegate(
         synchronized(paginationCursorLock) { _oldestLoadedPageMessage = null }
     }
 
+    fun cleanup() {
+        clearMessages()
+        sendMutexes.clear()
+    }
+
     fun markAllIncomingAsRead(currentUserId: String) {
         _messages.update { current ->
             var changed = false

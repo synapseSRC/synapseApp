@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 class ChatAiDelegate(
     private val generateSmartRepliesUseCase: GenerateSmartRepliesUseCase,
@@ -40,6 +41,7 @@ class ChatAiDelegate(
 
     private var smartRepliesJob: Job? = null
     private var smartRepliesGeneration = 0L
+    private val activeJobs = ConcurrentHashMap<Job, Unit>()
 
     fun cancelPendingSmartReplies() {
         smartRepliesGeneration++
@@ -74,6 +76,8 @@ class ChatAiDelegate(
                 _smartReplies.value = emptyList()
             }
         }
+        activeJobs[smartRepliesJob!!] = Unit
+        smartRepliesJob!!.invokeOnCompletion { activeJobs.remove(smartRepliesJob!!) }
     }
 
     private companion object {
@@ -81,7 +85,7 @@ class ChatAiDelegate(
     }
 
     fun summarizeChat(currentMessages: List<Message>) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             if (currentMessages.isEmpty()) {
                 _chatSummary.value = "No messages to summarize."
                 return@launch
@@ -105,6 +109,8 @@ class ChatAiDelegate(
                     onLoading(false)
                 }
         }
+        activeJobs[job] = Unit
+        job.invokeOnCompletion { activeJobs.remove(job) }
     }
 
     fun clearSummary() {
@@ -112,16 +118,24 @@ class ChatAiDelegate(
     }
 
     fun summarizeMessage(content: String) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             _isSummarizingMessage.value = true
             summarizeMessageUseCase(content, chatIdProvider())
                 .onSuccess { _messageSummary.value = it }
                 .onFailure { _messageSummary.value = "Failed to summarize: ${it.message}" }
             _isSummarizingMessage.value = false
         }
+        activeJobs[job] = Unit
+        job.invokeOnCompletion { activeJobs.remove(job) }
     }
 
     fun clearMessageSummary() {
         _messageSummary.value = null
+    }
+
+    fun cleanup() {
+        cancelPendingSmartReplies()
+        activeJobs.keys.forEach { it.cancel() }
+        activeJobs.clear()
     }
 }

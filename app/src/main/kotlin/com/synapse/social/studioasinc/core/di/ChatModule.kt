@@ -23,6 +23,9 @@ import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.UpdateCurrentChatUseCase
 import com.synapse.social.studioasinc.shared.data.repository.AccountRepository
 import com.synapse.social.studioasinc.shared.data.repository.AppRepositoryImpl
 import com.synapse.social.studioasinc.shared.data.repository.BusinessRepositoryImpl
@@ -127,6 +130,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
+
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatAiDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatMediaDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatMessagingDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatSettingsDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatSubscriptionDependencies
+
+import com.synapse.social.studioasinc.shared.domain.usecase.ai.GenerateSmartRepliesUseCase
+import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase
+import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeMessageUseCase
+import com.synapse.social.studioasinc.core.util.UploadProgressManager
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase
 
 
 @Module
@@ -276,4 +292,147 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideSubscribeToInboxUpdatesUseCase(chatRepository: ChatRepository): SubscribeToInboxUpdatesUseCase = SubscribeToInboxUpdatesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideChatDependencies(
+        messaging: ChatMessagingDependencies,
+        subscription: ChatSubscriptionDependencies,
+        ai: ChatAiDependencies,
+        media: ChatMediaDependencies,
+        settings: ChatSettingsDependencies,
+        initializeE2EUseCase: InitializeE2EUseCase,
+        getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase,
+        getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase,
+        getGroupMembersUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase,
+        getMessageByIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase,
+        toggleMessageReactionUseCase: ToggleMessageReactionUseCase,
+        observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase,
+        observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase,
+        updateCurrentChatUseCase: UpdateCurrentChatUseCase,
+        voteInPollUseCase: VoteInPollUseCase,
+        markViewOnceConsumedUseCase: MarkViewOnceConsumedUseCase,
+        searchMessagesUseCase: SearchMessagesUseCase,
+        exportChatUseCase: ExportChatUseCase
+    ): ChatDependencies = ChatDependencies(
+        messaging = messaging,
+        subscription = subscription,
+        ai = ai,
+        media = media,
+        settings = settings,
+        initializeE2EUseCase = initializeE2EUseCase,
+        getOrCreateChatUseCase = getOrCreateChatUseCase,
+        getChatInfoUseCase = getChatInfoUseCase,
+        getGroupMembersUseCase = getGroupMembersUseCase,
+        getMessageByIdUseCase = getMessageByIdUseCase,
+        toggleMessageReactionUseCase = toggleMessageReactionUseCase,
+        observeUserActiveStatusUseCase = observeUserActiveStatusUseCase,
+        observeUserPresenceDetailUseCase = observeUserPresenceDetailUseCase,
+        updateCurrentChatUseCase = updateCurrentChatUseCase,
+        voteInPollUseCase = voteInPollUseCase,
+        markViewOnceConsumedUseCase = markViewOnceConsumedUseCase,
+        searchMessagesUseCase = searchMessagesUseCase,
+        exportChatUseCase = exportChatUseCase
+    )
+
+    // Messaging dependencies group
+    @Provides
+    @Singleton
+    fun provideChatMessagingDependencies(
+        sendMessageUseCase: SendMessageUseCase,
+        editMessageUseCase: EditMessageUseCase,
+        deleteMessageUseCase: DeleteMessageUseCase,
+        deleteMessageForMeUseCase: DeleteMessageForMeUseCase,
+        bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase,
+        populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
+        currentUserIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCurrentUserIdUseCase,
+        reconcileRealtimeMessageUseCase: ReconcileRealtimeMessageUseCase,
+        chatRepository: ChatRepository,
+        authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+    ): ChatMessagingDependencies = ChatMessagingDependencies(
+        sendMessageUseCase = sendMessageUseCase,
+        editMessageUseCase = editMessageUseCase,
+        deleteMessageUseCase = deleteMessageUseCase,
+        deleteMessageForMeUseCase = deleteMessageForMeUseCase,
+        bulkDeleteMessagesForMeUseCase = bulkDeleteMessagesForMeUseCase,
+        populateMessageReactionsUseCase = populateMessageReactionsUseCase,
+        currentUserIdUseCase = currentUserIdUseCase,
+        reconcileRealtimeMessageUseCase = reconcileRealtimeMessageUseCase,
+        chatRepository = chatRepository,
+        authRepository = authRepository
+    )
+
+    // Subscription dependencies group
+    @Provides
+    @Singleton
+    fun provideChatSubscriptionDependencies(
+        subscribeToMessagesUseCase: SubscribeToMessagesUseCase,
+        subscribeToTypingStatusUseCase: SubscribeToTypingStatusUseCase,
+        subscribeToMessageReactionsUseCase: SubscribeToMessageReactionsUseCase,
+        markMessagesAsReadUseCase: MarkMessagesAsReadUseCase,
+        markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
+        getMessagesUseCase: GetMessagesUseCase
+    ): ChatSubscriptionDependencies = ChatSubscriptionDependencies(
+        subscribeToMessagesUseCase = subscribeToMessagesUseCase,
+        subscribeToTypingStatusUseCase = subscribeToTypingStatusUseCase,
+        subscribeToMessageReactionsUseCase = subscribeToMessageReactionsUseCase,
+        markMessagesAsReadUseCase = markMessagesAsReadUseCase,
+        markMessagesAsDeliveredUseCase = markMessagesAsDeliveredUseCase,
+        getMessagesUseCase = getMessagesUseCase
+    )
+
+    // AI dependencies group
+    @Provides
+    @Singleton
+    fun provideChatAiDependencies(
+        generateSmartRepliesUseCase: GenerateSmartRepliesUseCase,
+        summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase,
+        summarizeMessageUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeMessageUseCase,
+        getUserProfileUseCase: GetUserProfileUseCase
+    ): ChatAiDependencies = ChatAiDependencies(
+        generateSmartRepliesUseCase = generateSmartRepliesUseCase,
+        summarizeChatUseCase = summarizeChatUseCase,
+        summarizeMessageUseCase = summarizeMessageUseCase,
+        getUserProfileUseCase = getUserProfileUseCase
+    )
+
+    // Media dependencies group
+    @Provides
+    @Singleton
+    fun provideChatMediaDependencies(
+        uploadMediaUseCase: UploadMediaUseCase,
+        fileUploader: FileUploader,
+        uploadProgressManager: UploadProgressManager,
+        voiceUploadService: VoiceUploadService,
+        mediaCompressor: MediaCompressor?,
+        getStorageConfigUseCase: GetStorageConfigUseCase
+    ): ChatMediaDependencies = ChatMediaDependencies(
+        uploadMediaUseCase = uploadMediaUseCase,
+        fileUploader = fileUploader,
+        uploadProgressManager = uploadProgressManager,
+        voiceUploadService = voiceUploadService,
+        mediaCompressor = mediaCompressor,
+        getStorageConfigUseCase = getStorageConfigUseCase
+    )
+
+    // Settings dependencies group
+    @Provides
+    @Singleton
+    fun provideChatSettingsDependencies(
+        setDisappearingModeUseCase: SetDisappearingModeUseCase,
+        getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
+        getChatSettingsUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase,
+        getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
+        setConversationMuteStatusUseCase: SetConversationMuteStatusUseCase,
+        chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
+        deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase
+    ): ChatSettingsDependencies = ChatSettingsDependencies(
+        setDisappearingModeUseCase = setDisappearingModeUseCase,
+        getDisappearingModeUseCase = getDisappearingModeUseCase,
+        getChatSettingsUseCase = getChatSettingsUseCase,
+        getConversationMuteStatusUseCase = getConversationMuteStatusUseCase,
+        setConversationMuteStatusUseCase = setConversationMuteStatusUseCase,
+        chatLockManager = chatLockManager,
+        deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase
+    )
 }

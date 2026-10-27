@@ -3,17 +3,20 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.core.util.UploadProgressManager
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
+import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatUiState
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.mergeMonotonic
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.PopulateMessageReactionsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ToggleMessageReactionUseCase
-import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
+import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
+import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
@@ -24,6 +27,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileU
 import com.synapse.social.studioasinc.shared.domain.usecase.GetStorageConfigUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 import com.synapse.social.studioasinc.shared.util.TimeProvider
+import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -45,55 +49,63 @@ private const val MESSAGE_SYNC_PAGE_SIZE = 50
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val getMessagesUseCase: GetMessagesUseCase,
-    private val sendMessageUseCase: SendMessageUseCase,
-    private val subscribeToMessagesUseCase: SubscribeToMessagesUseCase,
-    private val markMessagesAsReadUseCase: MarkMessagesAsReadUseCase,
-    private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
-    private val broadcastTypingStatusUseCase: BroadcastTypingStatusUseCase,
-    private val subscribeToTypingStatusUseCase: SubscribeToTypingStatusUseCase,
-    private val editMessageUseCase: EditMessageUseCase,
-    private val deleteMessageUseCase: DeleteMessageUseCase,
-    private val deleteMessageForMeUseCase: DeleteMessageForMeUseCase,
-    private val bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase,
-    private val uploadMediaUseCase: UploadMediaUseCase,
-    private val getUserProfileUseCase: GetUserProfileUseCase,
-    private val initializeE2EUseCase: InitializeE2EUseCase,
-    private val getCurrentUserIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCurrentUserIdUseCase,
-    private val getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase,
-    private val getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase,
-    private val getGroupMembersUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase,
-    private val getMessageByIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase,
-    private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
-    private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.ai.GenerateSmartRepliesUseCase,
-    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase,
-    private val summarizeMessageUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeMessageUseCase,
-    private val uploadProgressManager: UploadProgressManager,
-    private val fileUploader: FileUploader,
-    private val toggleMessageReactionUseCase: ToggleMessageReactionUseCase,
-    private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
-    private val subscribeToMessageReactionsUseCase: SubscribeToMessageReactionsUseCase,
-    private val getChatSettingsUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase,
-    private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase,
-    private val observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase,
-    private val updateCurrentChatUseCase: UpdateCurrentChatUseCase,
-    private val setDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase,
-    private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
-    private val deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase,
-    private val voiceUploadService: VoiceUploadService,
-    private val getStorageConfigUseCase: GetStorageConfigUseCase,
-    private val voteInPollUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.VoteInPollUseCase,
-    private val markViewOnceConsumedUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkViewOnceConsumedUseCase,
-    private val mediaCompressor: com.synapse.social.studioasinc.shared.domain.service.MediaCompressor? = null,
-    private val reconcileRealtimeMessageUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ReconcileRealtimeMessageUseCase,
-    private val chatRepository: ChatRepository,
-    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository,
-    private val getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
-    private val setConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase,
-    private val searchMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesUseCase,
-    private val exportChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ExportChatUseCase
+    private val dependencies: ChatDependencies
 ) : ViewModel() {
 
+    // Extracted individual dependencies from ChatDependencies
+    private val getMessagesUseCase: GetMessagesUseCase = dependencies.subscription.getMessagesUseCase
+private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessagesUseCase)
+    private val sendMessageUseCase: SendMessageUseCase = dependencies.messaging.sendMessageUseCase
+    private val subscribeToMessagesUseCase: SubscribeToMessagesUseCase = dependencies.subscription.subscribeToMessagesUseCase
+    private val markMessagesAsReadUseCase: MarkMessagesAsReadUseCase = dependencies.subscription.markMessagesAsReadUseCase
+    private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase = dependencies.subscription.markMessagesAsDeliveredUseCase
+    private val broadcastTypingStatusUseCase: BroadcastTypingStatusUseCase = 
+        com.synapse.social.studioasinc.shared.domain.usecase.chat.BroadcastTypingStatusUseCase(dependencies.messaging.chatRepository)
+    private val subscribeToTypingStatusUseCase: SubscribeToTypingStatusUseCase = dependencies.subscription.subscribeToTypingStatusUseCase
+    private val editMessageUseCase: EditMessageUseCase = dependencies.messaging.editMessageUseCase
+    private val deleteMessageUseCase: DeleteMessageUseCase = dependencies.messaging.deleteMessageUseCase
+    private val deleteMessageForMeUseCase: DeleteMessageForMeUseCase = dependencies.messaging.deleteMessageForMeUseCase
+    private val bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase = dependencies.messaging.bulkDeleteMessagesForMeUseCase
+    private val uploadMediaUseCase: UploadMediaUseCase = dependencies.media.uploadMediaUseCase
+    private val getUserProfileUseCase: GetUserProfileUseCase = dependencies.ai.getUserProfileUseCase
+    private val initializeE2EUseCase: InitializeE2EUseCase = dependencies.initializeE2EUseCase
+    private val getCurrentUserIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCurrentUserIdUseCase = dependencies.messaging.currentUserIdUseCase
+    private val getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase = dependencies.getOrCreateChatUseCase
+    private val getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase = dependencies.getChatInfoUseCase
+    private val getGroupMembersUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase = dependencies.getGroupMembersUseCase
+    private val getMessageByIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase = dependencies.getMessageByIdUseCase
+    private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager = dependencies.settings.chatLockManager
+    private val generateSmartRepliesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.ai.GenerateSmartRepliesUseCase = dependencies.ai.generateSmartRepliesUseCase
+    private val summarizeChatUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeChatUseCase = dependencies.ai.summarizeChatUseCase
+    private val summarizeMessageUseCase: com.synapse.social.studioasinc.domain.usecase.ai.SummarizeMessageUseCase = dependencies.ai.summarizeMessageUseCase
+    private val uploadProgressManager: UploadProgressManager = dependencies.media.uploadProgressManager
+    private val fileUploader: FileUploader = dependencies.media.fileUploader
+    private val toggleMessageReactionUseCase: ToggleMessageReactionUseCase = dependencies.toggleMessageReactionUseCase
+    private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase = dependencies.messaging.populateMessageReactionsUseCase
+    private val subscribeToMessageReactionsUseCase: SubscribeToMessageReactionsUseCase = dependencies.subscription.subscribeToMessageReactionsUseCase
+    private val getChatSettingsUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatSettingsUseCase = dependencies.settings.getChatSettingsUseCase
+    private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase = dependencies.observeUserActiveStatusUseCase
+    private val observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase = dependencies.observeUserPresenceDetailUseCase
+    private val updateCurrentChatUseCase: UpdateCurrentChatUseCase = dependencies.updateCurrentChatUseCase
+    private val setDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase = dependencies.settings.setDisappearingModeUseCase
+    private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase = dependencies.settings.getDisappearingModeUseCase
+    private val deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase = dependencies.settings.deleteExpiredMessagesUseCase
+    private val voiceUploadService: VoiceUploadService = dependencies.media.voiceUploadService
+    private val getStorageConfigUseCase: GetStorageConfigUseCase = dependencies.media.getStorageConfigUseCase
+    private val voteInPollUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.VoteInPollUseCase = dependencies.voteInPollUseCase
+    private val markViewOnceConsumedUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkViewOnceConsumedUseCase = dependencies.markViewOnceConsumedUseCase
+    private val mediaCompressor: com.synapse.social.studioasinc.shared.domain.service.MediaCompressor? = dependencies.media.mediaCompressor
+    private val reconcileRealtimeMessageUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ReconcileRealtimeMessageUseCase = dependencies.messaging.reconcileRealtimeMessageUseCase
+    private val chatRepository: ChatRepository = dependencies.messaging.chatRepository
+    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository = dependencies.messaging.authRepository
+    private val getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase = dependencies.settings.getConversationMuteStatusUseCase
+    private val setConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase = dependencies.settings.setConversationMuteStatusUseCase
+    private val searchMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesUseCase = dependencies.searchMessagesUseCase
+    private val exportChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ExportChatUseCase = dependencies.exportChatUseCase
+
+    // ===== ChatUiState: consolidated UI state =====
+    private val _uiState = MutableStateFlow(ChatUiState())
+    val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
 
@@ -149,7 +161,7 @@ class ChatViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset.DEFAULT)
     val chatMessageCornerRadius = getChatSettingsUseCase.chatMessageCornerRadius
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 16)
-    
+
     private val chatMaxMessageChunkSize = getChatSettingsUseCase.chatMaxMessageChunkSize
         .stateIn(viewModelScope, SharingStarted.Eagerly, 500)
 
@@ -192,6 +204,9 @@ class ChatViewModel @Inject constructor(
     private val _isScreenVisible = MutableStateFlow(false)
     val isScreenVisible: StateFlow<Boolean> = _isScreenVisible.asStateFlow()
 
+    private val _currentUserId = MutableStateFlow<String?>(getCurrentUserIdUseCase())
+    val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
+
     private var currentChatId: String? = null
 
     private val _resolvedChatId = MutableStateFlow<String?>(null)
@@ -201,19 +216,49 @@ class ChatViewModel @Inject constructor(
     private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
     private val emptyChatSyncCursors = ConcurrentHashMap<String, Pair<String, String>>()
 
-    private val _currentUserId = MutableStateFlow<String?>(getCurrentUserIdUseCase())
-    val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            authRepository.sessionStatus.collect { status ->
-                if (status == com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus.AUTHENTICATED) {
-                    _currentUserId.value = getCurrentUserIdUseCase()
-                }
-            }
-        }
+    private fun updateUiState() {
+        _uiState.value = ChatUiState(
+            messages = messagingDelegate.messages.value,
+            searchResults = _searchResults.value,
+            inputText = _inputText.value,
+            isLoading = _isLoading.value,
+            isRefreshing = _isRefreshing.value,
+            isLoadingMore = _isLoadingMore.value,
+            hasMoreMessages = _hasMoreMessages.value,
+            isSearching = _isSearching.value,
+            editingMessage = _editingMessage.value,
+            replyingToMessage = _replyingToMessage.value,
+            selectedMessageIds = _selectedMessageIds.value,
+            disappearingMode = _disappearingMode.value,
+            error = _error.value,
+            toastMessage = _toastMessage.value,
+            isE2EEReady = _isE2EEReady.value,
+            isScreenVisible = _isScreenVisible.value,
+            currentUserId = _currentUserId.value,
+            resolvedChatId = _resolvedChatId.value,
+            participantProfile = _participantProfile.value,
+            isGroupChat = _isGroupChat.value,
+            onlyAdminsCanMessage = _onlyAdminsCanMessage.value,
+            currentUserIsAdmin = _isCurrentUserAdmin.value,
+            isParticipantActive = _isParticipantActive.value,
+            isMuted = _isMuted.value,
+            isMuteUpdating = _isMuteUpdating.value,
+            canSendMessage = canSendMessage.value,
+            chatWallpaperType = chatWallpaperType.value,
+            chatWallpaperValue = chatWallpaperValue.value,
+            chatWallpaperBlur = chatWallpaperBlur.value,
+            chatFontScale = chatFontScale.value,
+            chatThemePreset = chatThemePreset.value,
+            chatMessageCornerRadius = chatMessageCornerRadius.value,
+            chatMaxMessageChunkSize = chatMaxMessageChunkSize.value,
+            messageSuggestionEnabled = messageSuggestionEnabled.value,
+            chatAvatarDisabled = chatAvatarDisabled.value,
+            typingIndicatorsEnabled = typingIndicatorsEnabled.value,
+            isSummarizingMessage = aiDelegate.isSummarizingMessage.value,
+        )
     }
 
+    // Delegates
     private val messagingDelegate = ChatMessagingDelegate(
         sendMessageUseCase = sendMessageUseCase,
         editMessageUseCase = editMessageUseCase,
@@ -237,6 +282,16 @@ class ChatViewModel @Inject constructor(
         messageSuggestionEnabledProvider = { messageSuggestionEnabled.value },
         onError = { _error.value = it },
         onLoading = { _isLoading.value = it }
+    )
+
+    private val chatE2EDelegate = ChatE2EDelegate(
+        getMessageByIdUseCase = getMessageByIdUseCase,
+        reconcileRealtimeMessageUseCase = reconcileRealtimeMessageUseCase,
+        messagingDelegate = messagingDelegate,
+        viewModelScope = viewModelScope,
+        currentUserIdProvider = { currentUserId.value },
+        currentChatIdProvider = { currentChatId },
+        isE2EEReady = _isE2EEReady
     )
 
     private val subscriptionDelegate = ChatSubscriptionDelegate(
@@ -321,7 +376,7 @@ class ChatViewModel @Inject constructor(
                         } else if (userId.isNotBlank()) {
                             newUserReactions.remove(userId)
                         }
-msg.withUserReactions(newUserReactions, currentUserId.value)
+                        msg.withUserReactions(newUserReactions, currentUserId.value)
                     }
                 }
             }
@@ -402,13 +457,24 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
     )
 
     init {
-        // Turning the setting off must retract an indicator peers already show, not just stop future broadcasts.
+        viewModelScope.launch {
+            authRepository.sessionStatus.collect { status ->
+                if (status == com.synapse.social.studioasinc.shared.domain.model.auth.AuthSessionStatus.AUTHENTICATED) {
+                    _currentUserId.value = getCurrentUserIdUseCase()
+                    updateUiState()
+                }
+            }
+        }
+    }
+
+    init {
         viewModelScope.launch {
             typingIndicatorsEnabled.collect { enabled ->
                 if (!enabled) {
                     inputDelegate.stopTyping()
                     subscriptionDelegate.clearTypingStatus()
                 }
+                updateUiState()
             }
         }
     }
@@ -428,7 +494,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
             currentChatId?.let { chatId ->
                 subscriptionDelegate.queueReadReceipt(chatId)
                 viewModelScope.launch { updateCurrentChatUseCase(chatId) }
-                retryAllUndecryptableMessages(chatId)
+                chatE2EDelegate.retryAllUndecryptableMessages(chatId)
             }
             val uid = currentUserId.value
             if (!uid.isNullOrBlank()) {
@@ -443,6 +509,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
             }
         }
         if (visible) inputDelegate.onVisibilityChanged(true)
+        updateUiState()
     }
 
     fun initialize(chatId: String, participantId: String? = null) {
@@ -477,15 +544,17 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
                         Napier.d("Deleted $deletedCount expired messages for chat $chatId", tag = "ChatViewModel")
                     }
                 }.onFailure { e ->
-                    Napier.w("Failed to delete expired messages: ${e.message}", e, tag = "ChatViewModel")
+                    Napier.w("Failed to delete expired messages: ${e.message}", tag = "ChatViewModel")
                 }
             }
             refreshMessages()
+            updateUiState()
             return
         }
 
         cleanup()
         initializationDelegate.initialize(chatId, participantId)
+        updateUiState()
     }
 
     fun refreshMessages() {
@@ -500,7 +569,14 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         } else {
             _isLoading.value = true
         }
+
+        val lastConfirmed = messagingDelegate.messages.value.lastOrNull {
+            it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING &&
+                it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.FAILED
+        }
+
         val candidate = viewModelScope.async(start = CoroutineStart.LAZY) {
+            // Refresh outgoing messages
             val outgoingIds = messagingDelegate.messages.value.filter {
                 it.senderId == currentUserId.value &&
                     it.deliveryStatus in setOf(
@@ -508,12 +584,27 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
                         com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.DELIVERED
                     )
             }.map { it.id }
-            getMessagesUseCase.byIds(chatId, outgoingIds).onSuccess { refreshed ->
-                if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
-                    messagingDelegate.setMessages(refreshed)
+            if (outgoingIds.isNotEmpty()) {
+                getMessagesUseCase.byIds(chatId, outgoingIds).onSuccess { refreshed ->
+                    if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                        messagingDelegate.setMessages(refreshed)
+                    }
+                }.onFailure { Napier.w("Receipt reconciliation failed", it, tag = "ChatViewModel") }
+            }
+
+            // Sync missed messages via use case
+            val syncResult = messageSyncUseCase.syncMissedMessages(chatId, lastConfirmed)
+            if (syncResult.isSuccess) {
+                val newMessages = syncResult.getOrDefault(emptyList())
+                if (newMessages.isNotEmpty() && currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                    messagingDelegate._messages.update { current ->
+                        messagingDelegate.mergeChronologically(current, newMessages)
+                    }
                 }
-            }.onFailure { Napier.w("Receipt reconciliation failed", it, tag = "ChatViewModel") }
-            fetchMissedMessages(chatId)
+            } else {
+                Napier.w("Message sync failed: " + syncResult.exceptionOrNull()?.message, tag = "ChatViewModel")
+            }
+
             if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
                 subscriptionDelegate.enqueueIncomingReceipt(chatId)
             }
@@ -529,80 +620,11 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
             sync.start()
             sync.await()
         } finally {
-            // A stale sync must not clear the loading state of the chat now on screen.
             if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
                 _isLoading.value = false
                 _isRefreshing.value = false
             }
         }
-    }
-
-    private suspend fun fetchMissedMessages(chatId: String) {
-        if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
-        val latestConfirmed = messagingDelegate.messages.value.lastOrNull {
-            it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING &&
-                it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.FAILED
-        }
-        var cursorCreatedAt: String
-        var cursorId: String
-        if (latestConfirmed != null) {
-            emptyChatSyncCursors.remove(chatId)
-            cursorCreatedAt = latestConfirmed.createdAt
-            cursorId = latestConfirmed.id
-        } else {
-            val emptyCursor = emptyChatSyncCursors[chatId]
-            if (emptyCursor == null) {
-                // Start the empty-chat watermark before the fetch so messages that arrive
-                // during the request remain inside the next reconciliation window.
-                val syncStartedAt = TimeProvider.nowInstant().toString()
-                val initialResult = getMessagesUseCase(chatId, forceNetwork = true)
-                val initialMessages = initialResult.getOrNull()
-                if (initialMessages == null) {
-                    Napier.w("Initial delta sync failed: " + initialResult.exceptionOrNull()?.message, tag = "ChatViewModel")
-                    return
-                }
-                if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
-                messagingDelegate.setMessages(initialMessages)
-                val recoveredLatest = messagingDelegate.messages.value.lastOrNull {
-                    it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING &&
-                        it.deliveryStatus != com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.FAILED
-                }
-                if (recoveredLatest == null) {
-                    emptyChatSyncCursors[chatId] = syncStartedAt to "00000000-0000-0000-0000-000000000000"
-                }
-                return
-            }
-            cursorCreatedAt = emptyCursor.first
-            cursorId = emptyCursor.second
-        }
-
-        while (currentChatId?.equals(chatId, ignoreCase = true) == true) {
-            val pageResult = getMessagesUseCase.after(chatId, cursorCreatedAt, cursorId, MESSAGE_SYNC_PAGE_SIZE)
-            val page = pageResult.getOrNull()
-            if (pageResult.isFailure) {
-                Napier.w("Incremental message sync failed: " + pageResult.exceptionOrNull()?.message, tag = "ChatViewModel")
-                return
-            }
-            if (page.isNullOrEmpty()) return
-            if (currentChatId?.equals(chatId, ignoreCase = true) != true) return
-            val nextCursor = page.last()
-            if (compareSyncCursor(nextCursor, cursorCreatedAt, cursorId) <= 0) {
-                Napier.w("Incremental message cursor did not advance", tag = "ChatViewModel")
-                return
-            }
-            messagingDelegate.setMessages(page)
-            cursorCreatedAt = nextCursor.createdAt
-            cursorId = nextCursor.id
-        }
-    }
-
-    private fun compareSyncCursor(message: Message, createdAt: String, id: String): Int {
-        val timestampComparison = try {
-            kotlinx.datetime.Instant.parse(message.createdAt).compareTo(kotlinx.datetime.Instant.parse(createdAt))
-        } catch (_: Exception) {
-            message.createdAt.compareTo(createdAt)
-        }
-        return if (timestampComparison != 0) timestampComparison else message.id.compareTo(id)
     }
 
     fun loadQuotedMessage(messageId: String) {
@@ -720,6 +742,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
             }
         }
     }
+
     private fun handleIncomingMessage(newMessage: Message) {
         Napier.d("Incoming realtime message: ${newMessage.id} in chat ${newMessage.chatId}, status=${newMessage.deliveryStatus}", tag = "ChatViewModel")
 
@@ -732,7 +755,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         // when the first real-time message arrives in a chat with no loaded messages.
         val wasEmpty = messagingDelegate.messages.value.isEmpty()
 
-        val incomingUndecryptable = ChatMessagingDelegate.isUndecryptable(newMessage)
+        val incomingUndecryptable = ChatE2EDelegate.isUndecryptable(newMessage)
         val currentSnapshot = messagingDelegate._messages.value
         val existing = currentSnapshot.firstOrNull { it.id == newMessage.id }
 
@@ -748,7 +771,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
                 .filter {
                     incomingUndecryptable ||
                         it.content.trim() == newMessage.content.trim() ||
-                        ChatMessagingDelegate.isUndecryptable(it)
+                        ChatE2EDelegate.isUndecryptable(it)
                 }
                 .minByOrNull { it.createdAt }
         } else {
@@ -773,9 +796,9 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
                 ?: newMessage.clientId
             // A decrypted copy must never be replaced by an unreadable realtime payload.
             val existingReadable = existingInUpdate != null &&
-                !ChatMessagingDelegate.isUndecryptable(existingInUpdate)
+                !ChatE2EDelegate.isUndecryptable(existingInUpdate)
             val optimisticReadable = matchingOptimisticMessage != null &&
-                !ChatMessagingDelegate.isUndecryptable(matchingOptimisticMessage)
+                !ChatE2EDelegate.isUndecryptable(matchingOptimisticMessage)
             val keepExistingContent = incomingUndecryptable && existingReadable
             val keepOptimisticContent = incomingUndecryptable && !keepExistingContent && optimisticReadable
             val contentChanged = !incomingUndecryptable && existingInUpdate != null &&
@@ -869,93 +892,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         }
 
         if (newMessage.senderId != currentUserId.value && incomingUndecryptable) {
-            retryDecryptionWhenReady(newMessage)
-        }
-    }
-
-    /**
-     * Re-reads a message that arrived before its E2EE session was usable. Waiting on the
-     * initialization signal (instead of fixed retry delays) repairs the message as soon as
-     * decryption becomes possible, and leaves the fallback notice in place if it never does.
-     */
-    private fun retryDecryptionWhenReady(message: Message) {
-        val chatId = currentChatId ?: message.chatId
-        viewModelScope.launch {
-            val ready = _isE2EEReady.value ||
-                withTimeoutOrNull(10.seconds) { _isE2EEReady.first { it } } == true
-            if (!ready) return@launch
-            if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@launch
-
-            getMessageByIdUseCase(message.id).onSuccess { refreshed ->
-                if (refreshed == null || ChatMessagingDelegate.isUndecryptable(refreshed)) return@onSuccess
-                if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@onSuccess
-                messagingDelegate._messages.update { current ->
-                    val existing = current.firstOrNull { it.id == message.id }
-                    val toWrite = refreshed.copy(clientId = existing?.clientId ?: refreshed.clientId)
-                    val merged = existing?.mergeMonotonic(toWrite) ?: toWrite
-                    with(messagingDelegate) { current.replaceById(message.id, merged) }
-                }
-                val decrypted = messagingDelegate._messages.value.firstOrNull { it.id == message.id }
-                    ?: return@onSuccess
-                try {
-                    reconcileRealtimeMessageUseCase(chatId, decrypted)
-                } catch (e: Exception) {
-                    Napier.w("Cache reconciliation failed for decrypted message ${message.id}: ${e.message}", tag = "ChatViewModel")
-                }
-            }.onFailure { error ->
-                Napier.w("Decryption retry failed for message ${message.id}: ${error.message}", tag = "ChatViewModel")
-            }
-        }
-    }
-
-    /**
-     * Re-attempts decryption for all currently undecryptable messages in the timeline.
-     * This handles the case where messages arrived while the screen was off and
-     * E2EE was not ready, leaving them stuck in an undecryptable state.
-     */
-    private fun retryAllUndecryptableMessages(chatId: String) {
-        viewModelScope.launch {
-            val ready = _isE2EEReady.value ||
-                withTimeoutOrNull(15.seconds) { _isE2EEReady.first { it } } == true
-
-            if (!ready) {
-                Napier.w("E2EE not ready after 15s on resume, skipping decryption retry", tag = "ChatViewModel")
-                return@launch
-            }
-
-            if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@launch
-
-            val undecryptableMessages = messagingDelegate.messages.value
-                .filter { ChatMessagingDelegate.isUndecryptable(it) && it.senderId != currentUserId.value }
-                .takeLast(10)
-
-            if (undecryptableMessages.isEmpty()) return@launch
-
-            Napier.d("Retrying decryption for ${undecryptableMessages.size} messages on resume", tag = "ChatViewModel")
-
-            undecryptableMessages.forEach { message ->
-                getMessageByIdUseCase(message.id).onSuccess { refreshed ->
-                    if (refreshed == null || ChatMessagingDelegate.isUndecryptable(refreshed)) return@onSuccess
-                    if (currentChatId?.equals(chatId, ignoreCase = true) != true) return@onSuccess
-
-                    messagingDelegate._messages.update { current ->
-                        val existing = current.firstOrNull { it.id == message.id }
-                        val toWrite = refreshed.copy(clientId = existing?.clientId ?: refreshed.clientId)
-                        val merged = existing?.mergeMonotonic(toWrite) ?: toWrite
-                        with(messagingDelegate) { current.replaceById(message.id, merged) }
-                    }
-
-                    val decrypted = messagingDelegate._messages.value.firstOrNull { it.id == message.id }
-                        ?: return@onSuccess
-                    try {
-                        reconcileRealtimeMessageUseCase(chatId, decrypted)
-                    } catch (e: Exception) {
-                        Napier.w("Cache reconciliation failed for decrypted message ${message.id}: ${e.message}", tag = "ChatViewModel")
-                    }
-                }.onFailure { error ->
-                    Napier.w("Decryption retry failed for message ${message.id}: ${error.message}", tag = "ChatViewModel")
-                }
-            }
+            chatE2EDelegate.retryDecryptionWhenReady(newMessage)
         }
     }
 
@@ -1165,7 +1102,7 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
                 storageConfig = storageConfig,
                 voiceUploadService = voiceUploadService,
                 sendMessageUseCase = sendMessageUseCase,
-currentUserIdProvider = { currentUserId.value },
+                currentUserIdProvider = { currentUserId.value },
                 chatIdProvider = { currentChatId },
                 replyToId = replyToId,
                 clearReplySelection = true,
@@ -1205,15 +1142,16 @@ currentUserIdProvider = { currentUserId.value },
     private fun cleanup() {
         // Invalidate initialization first so any suspended fetch that resumes later cannot
         // write its result into the chat that is about to be opened.
-        initializationDelegate.cancelInitialization()
+        initializationDelegate.cleanup()
         subscriptionDelegate.cleanup()
-        aiDelegate.cancelPendingSmartReplies()
+        aiDelegate.cleanup()
         inputDelegate.cleanup()
+        messagingDelegate.cleanup()
+        mediaDelegate.cleanup()
+        chatE2EDelegate.cleanup()
         activeMessageSyncs.values.forEach { it.cancel() }
         activeMessageSyncs.clear()
         emptyChatSyncCursors.clear()
-        messagingDelegate.pendingTempIds.value = emptySet()
-        messagingDelegate.clearMessages()
         currentChatId = null
         _resolvedChatId.value = null
         _hasMoreMessages.value = true
@@ -1225,6 +1163,7 @@ currentUserIdProvider = { currentUserId.value },
         viewModelScope.launch {
             updateCurrentChatUseCase(null)
         }
+        updateUiState()
     }
 
     override fun onCleared() {

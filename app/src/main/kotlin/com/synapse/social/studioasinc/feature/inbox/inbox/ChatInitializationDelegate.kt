@@ -59,6 +59,21 @@ class ChatInitializationDelegate(
         activeJob = null
     }
 
+    /** Full cleanup: cancel in-flight job and reset all state this delegate manages. */
+    fun cleanup() {
+        cancelInitialization()
+        _groupMemberNames.value = emptyMap()
+        _participantProfile.value = null
+        _isParticipantActive.value = false
+        _isGroupChat.value = false
+        _onlyAdminsCanMessage.value = false
+        _isCurrentUserAdmin.value = false
+        _disappearingMode.value = com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
+        _isMuted.value = false
+        _isE2EEReady.value = false
+        _error.value = null
+    }
+
     private fun isCurrent(token: Long, chatId: String): Boolean =
         token == initializationToken &&
             currentChatIdProvider()?.equals(chatId, ignoreCase = true) == true
