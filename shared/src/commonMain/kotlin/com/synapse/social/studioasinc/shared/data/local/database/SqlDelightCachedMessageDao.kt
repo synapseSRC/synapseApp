@@ -12,7 +12,6 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
-import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -31,25 +30,23 @@ class SqlDelightCachedMessageDao(
         withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
             db.transaction {
-                messages.forEach { message ->
-                    val incoming = toCachedMessage(message, now)
-                    val existing = db.cachedMessageQueries.selectActiveById(message.id).executeAsOneOrNull()
-                    if (existing?.content.isReadableContent() && incoming.content.isUndecryptableContent()) {
-                        return@forEach
-                    }
-                    db.cachedMessageQueries.upsertMessage(incoming)
-                }
+                messages.forEach { message -> upsertMerged(message, now) }
             }
         }
     }
 
-    private fun String?.isReadableContent(): Boolean =
-        !isNullOrBlank() &&
-            !EncryptedPayloadDetector.isPlaceholder(this) &&
-            !EncryptedPayloadDetector.isEncryptedPayload(this)
+    // Call inside a transaction so the read/merge/write cannot race another cache update.
+    private fun upsertMerged(message: Message, cachedAt: Long) {
+        val existing = db.cachedMessageQueries.selectActiveById(message.id).executeAsOneOrNull()
+        val merged = existing?.let { cached ->
+            with(ChatMapper) { toDomainMessage(cached).mergeMonotonic(message) }
+        } ?: message
+        db.cachedMessageQueries.upsertMessage(toCachedMessage(merged, cachedAt))
+    }
 
-    private fun String?.isUndecryptableContent(): Boolean =
-        EncryptedPayloadDetector.isPlaceholder(this) || EncryptedPayloadDetector.isEncryptedPayload(this)
+    override suspend fun getMessageById(id: String): Message? = withContext(AppDispatchers.IO) {
+        db.cachedMessageQueries.selectActiveById(id).executeAsOneOrNull()?.let { toDomainMessage(it) }
+    }
 
     override suspend fun getMessages(chatId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
         db.cachedMessageQueries.selectByChatId(
@@ -115,12 +112,9 @@ class SqlDelightCachedMessageDao(
     override suspend fun upsert(message: Message) {
         withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
-            val incoming = toCachedMessage(message, now)
-            val existing = db.cachedMessageQueries.selectActiveById(message.id).executeAsOneOrNull()
-            if (existing?.content.isReadableContent() && incoming.content.isUndecryptableContent()) {
-                return@withContext
+            db.transaction {
+                upsertMerged(message, now)
             }
-            db.cachedMessageQueries.upsertMessage(incoming)
         }
     }
 
@@ -277,9 +271,9 @@ class SqlDelightCachedMessageDao(
         val rawDeliveryStatus = cached.delivery_status
         val readByList = cached.read_by?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
         val deliveryStatus = when {
-            rawDeliveryStatus.equals("FAILED", ignoreCase = true) -> DeliveryStatus.FAILED
             cached.read_at != null || readByList.any { it != cached.sender_id } || rawDeliveryStatus.equals("READ", ignoreCase = true) -> DeliveryStatus.READ
             cached.delivered_at != null || rawDeliveryStatus.equals("DELIVERED", ignoreCase = true) -> DeliveryStatus.DELIVERED
+            rawDeliveryStatus.equals("FAILED", ignoreCase = true) -> DeliveryStatus.FAILED
             rawDeliveryStatus.equals("SENDING", ignoreCase = true) -> DeliveryStatus.SENDING
             else -> DeliveryStatus.SENT
         }
@@ -340,10 +334,10 @@ class SqlDelightCachedMessageDao(
             readAt = cached.read_at,
             editedAt = cached.edited_at,
             deletedAt = cached.deleted_at,
-            failureReason = cached.failure_reason,
+            failureReason = cached.failure_reason.takeIf { deliveryStatus == DeliveryStatus.FAILED },
             createdAt = cached.created_at,
             expiresAt = cached.expires_at,
-            readBy = cached.read_by?.split(",") ?: emptyList(),
+            readBy = readByList,
             reactions = emptyMap(),
             userReaction = null,
             attachments = attachmentsList,

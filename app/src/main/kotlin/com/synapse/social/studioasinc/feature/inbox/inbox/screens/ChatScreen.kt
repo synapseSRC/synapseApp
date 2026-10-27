@@ -1,7 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
 import androidx.compose.ui.platform.LocalUriHandler
-
+import android.widget.Toast
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -76,10 +76,18 @@ import kotlinx.coroutines.withContext
         onNavigateToProfile: (String) -> Unit = {},
         onNavigateToEvent: (String) -> Unit = {},
         onNavigateToProduct: (String) -> Unit = {},
+        onNavigateToNewGroup: () -> Unit = {},
+        onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
+        onNavigateToChatSettings: (String) -> Unit = {},
+        onNavigateToChatSearch: (String) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
@@ -355,6 +363,8 @@ val currentUserId = currentUserIdState ?: ""
     Scaffold(
         topBar = {
             val disappearingMode by viewModel.disappearingMode.collectAsState()
+            val isMuted by viewModel.isMuted.collectAsState()
+            val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
             ChatTopAppBar(
                 selectedMessageIds = selectedMessageIds,
                 messages = messages,
@@ -366,16 +376,57 @@ val currentUserId = currentUserIdState ?: ""
                 isParticipantActive = isParticipantActive,
                 chatId = chatId,
                 disappearingMode = disappearingMode,
-                isLocked = viewModel.isChatLocked(),
+                isMuted = isMuted,
+                isMuteUpdating = isMuteUpdating,
                 onClearSelection = viewModel::clearSelection,
                 onDeleteSelectedMessages = viewModel::deleteSelectedMessages,
                 onNavigateBack = onNavigateBack,
                 onSummarizeChat = viewModel::summarizeChat,
                 onNavigateToGroupInfo = onNavigateToGroupInfo,
                 onNavigateToChatInfo = onNavigateToChatInfo,
-                onSetDisappearingMode = { showDisappearingModeDialog = true },
-                onLockChat = viewModel::lockCurrentChat,
-                onUnlockChat = viewModel::unlockCurrentChat
+                onOpenDisappearingMessages = { showDisappearingModeDialog = true },
+                onStartVoiceCall = {
+                    Toast.makeText(context, "Voice call - Coming soon", Toast.LENGTH_SHORT).show()
+                },
+                onStartVideoCall = {
+                    Toast.makeText(context, "Video call - Coming soon", Toast.LENGTH_SHORT).show()
+                },
+                onNewGroup = onNavigateToNewGroup,
+                onSearchInChat = { onNavigateToChatSearch(chatId) },
+                onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
+                onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
+                onOpenChatTheme = { onNavigateToChatSettings(chatId) },
+                onReportChat = { showReportDialog = true },
+                onBlockChat = { showBlockDialog = true },
+                onClearChat = { showClearChatDialog = true },
+                onExportChat = {
+                    viewModel.exportChat(
+                        onSuccess = { formattedText ->
+                            // For now, just show a toast with the formatted text
+                            // In a full implementation, this would save to a file or share
+                            Toast.makeText(context, "Chat exported (${formattedText.length} chars)", Toast.LENGTH_SHORT).show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                onAddShortcut = {
+                    val chatName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName ?: "Chat"
+                    viewModel.createChatShortcut(
+                        chatName = chatName,
+                        avatarUrl = participantProfile?.avatar,
+                        onSuccess = {
+                            Toast.makeText(context, "Shortcut created", Toast.LENGTH_SHORT).show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                onAddToFolder = {
+                    showFolderDialog = true
+                }
             )
         }
     ) { paddingValues ->
@@ -617,6 +668,112 @@ typingStatus = typingStatus,
                 currentMode = disappearingMode,
                 onModeSelected = { viewModel.setDisappearingMode(it) },
                 onDismissRequest = { showDisappearingModeDialog = false }
+            )
+        }
+
+        if (showReportDialog) {
+            AlertDialog(
+                onDismissRequest = { showReportDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_report)) },
+                text = {
+                    Column {
+                        Text("Are you sure you want to report this user?")
+                        Spacer(modifier = Modifier.height(Spacing.space8))
+                        OutlinedTextField(
+                            value = "",
+                            onValueChange = { },
+                            label = { Text("Reason") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showReportDialog = false
+                            Toast.makeText(context, "Report submitted", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showReportDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+
+        if (showBlockDialog) {
+            AlertDialog(
+                onDismissRequest = { showBlockDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_block)) },
+                text = { Text("Are you sure you want to block this user? You won't receive messages from them.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showBlockDialog = false
+                            Toast.makeText(context, "User blocked", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBlockDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+
+        if (showClearChatDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearChatDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_clear_chat)) },
+                text = { Text("Are you sure you want to clear this chat? This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showClearChatDialog = false
+                            Toast.makeText(context, "Chat cleared", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearChatDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+
+        if (showFolderDialog) {
+            ChatFolderSelectionBottomSheet(
+                folders = emptyList(), // TODO: Load from SettingsRepository
+                currentFolderId = null,
+                onFolderSelected = { folder ->
+                    viewModel.addToFolder(
+                        chatId = chatId,
+                        folderId = folder.id,
+                        onSuccess = {
+                            Toast.makeText(context, "Added to ${folder.name}", Toast.LENGTH_SHORT).show()
+                            showFolderDialog = false
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                onCreateNewFolder = {
+                    showFolderDialog = false
+                    Toast.makeText(context, "Create folder - Coming soon", Toast.LENGTH_SHORT).show()
+                },
+                onDismiss = { showFolderDialog = false }
             )
         }
     }

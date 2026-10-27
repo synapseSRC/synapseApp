@@ -76,5 +76,9 @@ sealed interface AppDestination {
     @Serializable
     data class ChatInfo(val chatId: String, val userId: String) : AppDestination
     @Serializable
+    data class ChatSettings(val chatId: String) : AppDestination
+    @Serializable
+    data class ChatSearch(val chatId: String) : AppDestination
+    @Serializable
     data class HashtagFeed(val tag: String) : AppDestination
 }

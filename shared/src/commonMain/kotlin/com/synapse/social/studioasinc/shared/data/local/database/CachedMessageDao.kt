@@ -4,6 +4,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
 interface CachedMessageDao {
     suspend fun upsertAll(messages: List<Message>)
+    suspend fun getMessageById(id: String): Message?
     suspend fun getMessages(chatId: String, limit: Int): List<Message>
     suspend fun getMessagesBefore(chatId: String, beforeCreatedAt: String, beforeId: String, limit: Int): List<Message>
     suspend fun getMessagesAfter(chatId: String, afterCreatedAt: String, afterId: String, limit: Int): List<Message>

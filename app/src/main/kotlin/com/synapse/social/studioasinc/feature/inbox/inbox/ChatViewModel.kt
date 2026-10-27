@@ -87,7 +87,11 @@ class ChatViewModel @Inject constructor(
     private val mediaCompressor: com.synapse.social.studioasinc.shared.domain.service.MediaCompressor? = null,
     private val reconcileRealtimeMessageUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ReconcileRealtimeMessageUseCase,
     private val chatRepository: ChatRepository,
-    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+    private val authRepository: com.synapse.social.studioasinc.shared.domain.repository.AuthRepository,
+    private val getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
+    private val setConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase,
+    private val searchMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesUseCase,
+    private val exportChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ExportChatUseCase
 ) : ViewModel() {
 
     private val _inputText = MutableStateFlow("")
@@ -148,6 +152,18 @@ class ChatViewModel @Inject constructor(
     
     private val chatMaxMessageChunkSize = getChatSettingsUseCase.chatMaxMessageChunkSize
         .stateIn(viewModelScope, SharingStarted.Eagerly, 500)
+
+    private val _isMuted = MutableStateFlow(false)
+    val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
+
+    private val _isMuteUpdating = MutableStateFlow(false)
+    val isMuteUpdating: StateFlow<Boolean> = _isMuteUpdating.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>>(emptyList())
+    val searchResults: StateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
     val messageSuggestionEnabled = getChatSettingsUseCase.messageSuggestionEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -239,11 +255,10 @@ class ChatViewModel @Inject constructor(
         onReactionEvent = { reaction ->
             handleIncomingReaction(reaction)
         },
-        onSyncRequired = {
-            currentChatId?.let { chatId -> synchronizeMissedMessages(chatId) }
-        },
-        onCleanupTypingChannel = {
-            currentChatId?.let { chatId -> chatRepository.releaseTypingChannel(chatId) }
+        onSyncRequired = { chatId ->
+            if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                synchronizeMissedMessages(chatId)
+            }
         }
     )
 
@@ -332,9 +347,9 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         getGroupMembersUseCase = getGroupMembersUseCase,
         observeUserActiveStatusUseCase = observeUserActiveStatusUseCase,
         observeUserPresenceDetailUseCase = observeUserPresenceDetailUseCase,
-        markMessagesAsReadUseCase = markMessagesAsReadUseCase,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId.value },
+        currentChatIdProvider = { currentChatId },
         messagingDelegate = messagingDelegate,
         subscriptionDelegate = subscriptionDelegate,
         aiDelegate = aiDelegate,
@@ -350,7 +365,8 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         _isParticipantActive = _isParticipantActive,
         _disappearingMode = _disappearingMode,
         getDisappearingModeUseCase = getDisappearingModeUseCase,
-        currentChatIdProvider = { currentChatId },
+        _isMuted = _isMuted,
+        getConversationMuteStatusUseCase = getConversationMuteStatusUseCase,
         onChatIdResolved = { resolvedChatId ->
             currentChatId = resolvedChatId
             _resolvedChatId.value = resolvedChatId
@@ -373,7 +389,8 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         isE2EEReadyProvider = { _isE2EEReady.value },
         disappearingModeProvider = { _disappearingMode.value },
         typingIndicatorsEnabledProvider = { typingIndicatorsEnabled.value },
-        onChatRefreshRequired = { currentChatId?.let { initialize(it) } }
+        onChatRefreshRequired = { currentChatId?.let { initialize(it) } },
+        isScreenVisibleProvider = { _isScreenVisible.value }
     )
 
     private val settingsDelegate = ChatSettingsDelegate(
@@ -383,6 +400,18 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
         _disappearingMode = _disappearingMode,
         currentChatIdProvider = { currentChatId }
     )
+
+    init {
+        // Turning the setting off must retract an indicator peers already show, not just stop future broadcasts.
+        viewModelScope.launch {
+            typingIndicatorsEnabled.collect { enabled ->
+                if (!enabled) {
+                    inputDelegate.stopTyping()
+                    subscriptionDelegate.clearTypingStatus()
+                }
+            }
+        }
+    }
 
     // Public delegated properties
     val messages: StateFlow<List<Message>> = messagingDelegate.messages
@@ -401,16 +430,19 @@ msg.withUserReactions(newUserReactions, currentUserId.value)
                 viewModelScope.launch { updateCurrentChatUseCase(chatId) }
                 retryAllUndecryptableMessages(chatId)
             }
-val uid = currentUserId.value
+            val uid = currentUserId.value
             if (!uid.isNullOrBlank()) {
                 messagingDelegate.markAllIncomingAsRead(uid)
             }
         } else {
+            inputDelegate.onVisibilityChanged(false)
+            subscriptionDelegate.clearTypingStatus()
             messagingDelegate.clearPendingMessageEntrances()
             viewModelScope.launch {
                 updateCurrentChatUseCase(null)
             }
         }
+        if (visible) inputDelegate.onVisibilityChanged(true)
     }
 
     fun initialize(chatId: String, participantId: String? = null) {
@@ -469,7 +501,22 @@ val uid = currentUserId.value
             _isLoading.value = true
         }
         val candidate = viewModelScope.async(start = CoroutineStart.LAZY) {
+            val outgoingIds = messagingDelegate.messages.value.filter {
+                it.senderId == currentUserId.value &&
+                    it.deliveryStatus in setOf(
+                        com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENT,
+                        com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.DELIVERED
+                    )
+            }.map { it.id }
+            getMessagesUseCase.byIds(chatId, outgoingIds).onSuccess { refreshed ->
+                if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                    messagingDelegate.setMessages(refreshed)
+                }
+            }.onFailure { Napier.w("Receipt reconciliation failed", it, tag = "ChatViewModel") }
             fetchMissedMessages(chatId)
+            if (currentChatId?.equals(chatId, ignoreCase = true) == true) {
+                subscriptionDelegate.enqueueIncomingReceipt(chatId)
+            }
         }
         val existing = activeMessageSyncs.putIfAbsent(chatId, candidate)
         val sync = existing ?: candidate
@@ -674,7 +721,7 @@ val uid = currentUserId.value
         }
     }
     private fun handleIncomingMessage(newMessage: Message) {
-        Napier.d("Incoming realtime message: ${newMessage.id} from ${newMessage.senderId} in chat ${newMessage.chatId}. Content: ${newMessage.content.take(20)}...", tag = "ChatViewModel")
+        Napier.d("Incoming realtime message: ${newMessage.id} in chat ${newMessage.chatId}, status=${newMessage.deliveryStatus}", tag = "ChatViewModel")
 
         if (currentChatId != null && !newMessage.chatId.equals(currentChatId, ignoreCase = true)) {
             Napier.d("Ignoring message for chat ${newMessage.chatId} while viewing $currentChatId", tag = "ChatViewModel")
@@ -738,6 +785,9 @@ val uid = currentUserId.value
                 existingInUpdate.copy(
                     deliveryStatus = newMessage.deliveryStatus,
                     readBy = effectiveReadBy,
+                    sentAt = newMessage.sentAt ?: existingInUpdate.sentAt,
+                    deliveredAt = newMessage.deliveredAt ?: existingInUpdate.deliveredAt,
+                    readAt = newMessage.readAt ?: existingInUpdate.readAt,
                     updatedAt = newMessage.updatedAt,
                     clientId = stableClientId
                 )
@@ -1031,12 +1081,74 @@ val uid = currentUserId.value
         settingsDelegate.setDisappearingMode(mode)
     }
 
+    fun toggleMuteNotifications() {
+        val chatId = currentChatId ?: return
+        if (_isMuteUpdating.value) return
+        val newMutedState = !_isMuted.value
+        _isMuteUpdating.value = true
+        viewModelScope.launch {
+            setConversationMuteStatusUseCase(chatId, newMutedState)
+                .onSuccess {
+                    _isMuted.value = newMutedState
+                    _isMuteUpdating.value = false
+                }
+                .onFailure {
+                    _isMuteUpdating.value = false
+                    _error.value = "Failed to update mute status"
+                }
+        }
+    }
+
+    fun searchMessages(chatId: String, query: String) {
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
+            return
+        }
+        _isSearching.value = true
+        viewModelScope.launch {
+            searchMessagesUseCase(chatId, query)
+                .onSuccess { results ->
+                    _searchResults.value = results
+                    _isSearching.value = false
+                }
+                .onFailure {
+                    _error.value = "Failed to search messages"
+                    _isSearching.value = false
+                }
+        }
+    }
+
+    fun exportChat(onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        val chatId = currentChatId ?: return
+        viewModelScope.launch {
+            exportChatUseCase(chatId)
+                .onSuccess { formattedText ->
+                    onSuccess(formattedText)
+                }
+                .onFailure {
+                    onError("Failed to export chat")
+                }
+        }
+    }
+
+    fun createChatShortcut(chatName: String, avatarUrl: String?, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        // This will be implemented with platform-specific code in the Activity
+        // For now, just call the callbacks
+        onSuccess()
+    }
+
+    fun addToFolder(chatId: String, folderId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        // TODO: Implement folder assignment logic with SettingsRepository
+        onSuccess()
+    }
+
     fun uploadVoiceMessage(
         audioFile: File,
         durationMs: Long = 0L,
         onResult: ((Boolean, String?) -> Unit)? = null
     ): Job {
         val replyToId = _replyingToMessage.value?.id
+        inputDelegate.stopTyping()
         return viewModelScope.launch {
             ensureActive()
             val storageConfig: com.synapse.social.studioasinc.shared.domain.model.StorageConfig
@@ -1063,6 +1175,7 @@ currentUserIdProvider = { currentUserId.value },
     }
 
     fun sendMediaMessage(mediaUrl: String, fileName: String, contentType: String, messageType: String, caption: String? = null) {
+        inputDelegate.stopTyping()
         mediaDelegate.sendMediaMessage(mediaUrl, fileName, contentType, messageType, caption)
     }
 
@@ -1074,6 +1187,7 @@ currentUserIdProvider = { currentUserId.value },
         caption: String? = null,
         quality: com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality = com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality.STANDARD
     ) {
+        inputDelegate.stopTyping()
         mediaDelegate.uploadAndSendMedia(filePath, fileName, contentType, messageType, caption, quality)
     }
 
@@ -1082,6 +1196,7 @@ currentUserIdProvider = { currentUserId.value },
         caption: String? = null,
         quality: com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality = com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality.STANDARD
     ) {
+        inputDelegate.stopTyping()
         mediaDelegate.uploadAndSendMultipleMedia(files, caption, quality)
     }
 

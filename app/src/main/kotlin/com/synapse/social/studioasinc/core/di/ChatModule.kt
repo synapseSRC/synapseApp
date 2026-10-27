@@ -71,6 +71,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistor
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.ExportChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCommonGroupsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
@@ -78,10 +79,12 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearing
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsReadUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ResetE2EUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
@@ -164,6 +167,10 @@ object ChatModule {
 
     @Provides
     @Singleton
+    fun provideGetSharedContentUseCase(chatRepository: ChatRepository): GetSharedContentUseCase = GetSharedContentUseCase(chatRepository)
+
+    @Provides
+    @Singleton
     fun provideGetConversationMuteStatusUseCase(chatRepository: ChatRepository): GetConversationMuteStatusUseCase = GetConversationMuteStatusUseCase(chatRepository)
 
     @Provides
@@ -177,6 +184,14 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideGetMessagesUseCase(chatRepository: ChatRepository): GetMessagesUseCase = GetMessagesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideSearchMessagesUseCase(chatRepository: ChatRepository): SearchMessagesUseCase = SearchMessagesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideExportChatUseCase(chatRepository: ChatRepository): ExportChatUseCase = ExportChatUseCase(chatRepository)
 
     @Provides
     @Singleton

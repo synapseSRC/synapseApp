@@ -141,6 +141,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getMessageById(messageId: String): MessageDto? =
         messages.getMessageById(messageId)
 
+    suspend fun getMessagesByIds(chatId: String, messageIds: List<String>): List<MessageDto> =
+        messages.getMessagesByIds(chatId, messageIds)
+
     suspend fun editMessage(
         messageId: String, 
         newContent: String
@@ -194,8 +197,8 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun releaseTypingChannel(chatId: String) =
         realtime.releaseTypingChannel(chatId)
 
-    fun subscribeToMessages(chatId: String): Flow<MessageDto> =
-        realtime.subscribeToMessages(chatId)
+    fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit = {}): Flow<MessageDto> =
+        realtime.subscribeToMessages(chatId, onConnected)
 
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> =
         realtime.subscribeToInboxUpdates(chatIds)

@@ -3,13 +3,20 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BroadcastTypingStatusUseCase
+import android.os.SystemClock
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 
 class ChatInputDelegate(
@@ -27,63 +34,157 @@ class ChatInputDelegate(
     private val isE2EEReadyProvider: () -> Boolean,
     private val disappearingModeProvider: () -> DisappearingMode,
     private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
+    private val isScreenVisibleProvider: () -> Boolean = { true },
     private val onChatRefreshRequired: () -> Unit
 ) {
-    private var typingDebounceJob: Job? = null
-    private var isCurrentlyTyping = false
+    // A stop is matched by identity, so new input cannot inherit an in-flight attempt.
+    private class PendingStop {
+        var attempts = 0
+        var retryAt = 0L
+    }
+
+    private val typingWakeups = Channel<Unit>(Channel.CONFLATED)
+    private var typingChatId: String? = null
+    private var lastInputActivityAt = 0L
+    private var nextHeartbeatAt = 0L
+    private var screenVisible = true
+    private val pendingStops = linkedMapOf<String, PendingStop>()
+    private val possiblyTypingChats = linkedSetOf<String>()
     private val e2eeWaitExhaustedChats = ConcurrentHashMap.newKeySet<String>()
 
-    fun onInputTextChange(newText: String) {
-        _inputText.value = newText
+    init {
+        // One scope-owned writer serializes true/false so a retry can never reorder behind its stop.
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                while (isActive) {
+                    val now = SystemClock.elapsedRealtime()
+                    typingChatId?.let { chatId ->
+                        if (!canBroadcastTyping() || currentChatIdProvider()?.equals(chatId, ignoreCase = true) != true ||
+                            now - lastInputActivityAt >= TYPING_IDLE_MS
+                        ) {
+                            stopTyping()
+                        }
+                    }
 
-        val chatId = currentChatIdProvider() ?: return
-        val typingEnabled = typingIndicatorsEnabledProvider()
+                    val stop = pendingStops.entries.firstOrNull { it.value.retryAt <= now }
+                        ?.let { it.key to it.value }
+                    if (stop != null) {
+                        val (chatId, request) = stop
+                        val succeeded = broadcastTyping(chatId, false)
+                        if (pendingStops[chatId] === request) {
+                            val attempts = request.attempts + 1
+                            if (succeeded || attempts >= STOP_ATTEMPTS) {
+                                pendingStops.remove(chatId)
+                            } else {
+                                request.attempts = attempts
+                                request.retryAt = SystemClock.elapsedRealtime() + STOP_RETRY_MS * attempts
+                            }
+                        }
+                        if (succeeded) possiblyTypingChats.remove(chatId)
+                        continue
+                    }
 
-        if (newText.isBlank()) {
-            typingDebounceJob?.cancel()
-            typingDebounceJob = null
-            if (isCurrentlyTyping) {
-                isCurrentlyTyping = false
-                if (typingEnabled) {
-                    viewModelScope.launch {
-                        broadcastTypingStatusUseCase(chatId, false)
+                    val chatId = typingChatId
+                    if (chatId != null && now >= nextHeartbeatAt) {
+                        nextHeartbeatAt = now + TYPING_HEARTBEAT_MS
+                        // A timeout has an unknown outcome; cleanup must still send false.
+                        possiblyTypingChats.add(chatId)
+                        broadcastTyping(chatId, true)
+                        continue
+                    }
+
+                    if (chatId == null && pendingStops.isEmpty()) {
+                        typingWakeups.receive()
+                    } else {
+                        withTimeoutOrNull(TYPING_STATE_POLL_MS) { typingWakeups.receive() }
                     }
                 }
-            }
-            return
-        }
-
-        if (!isCurrentlyTyping) {
-            isCurrentlyTyping = true
-            if (typingEnabled) {
-                viewModelScope.launch {
-                    broadcastTypingStatusUseCase(chatId, true)
+            } finally {
+                // Bounded NonCancellable stop, using captured chat IDs because providers now point at the next chat.
+                withContext(NonCancellable) {
+                    withTimeoutOrNull(TYPING_CLEANUP_TIMEOUT_MS) {
+                        val chatIds = (pendingStops.keys + possiblyTypingChats).distinct()
+                        chatIds.forEach { chatId ->
+                            var attempts = 0
+                            while (attempts < STOP_ATTEMPTS) {
+                                if (broadcastTyping(chatId, false)) break
+                                attempts++
+                                if (attempts < STOP_ATTEMPTS) delay(STOP_RETRY_MS)
+                            }
+                        }
+                    }
                 }
+                typingChatId = null
+                pendingStops.clear()
+                possiblyTypingChats.clear()
+                typingWakeups.close()
             }
-        }
-
-        typingDebounceJob?.cancel()
-        typingDebounceJob = viewModelScope.launch {
-            delay(3000)
-            broadcastTypingStatusUseCase(chatId, false)
-            isCurrentlyTyping = false
         }
     }
 
+    private fun canBroadcastTyping(): Boolean =
+        screenVisible && isScreenVisibleProvider() && typingIndicatorsEnabledProvider()
+
+    private suspend fun broadcastTyping(chatId: String, isTyping: Boolean): Boolean = try {
+        withTimeoutOrNull(TYPING_NETWORK_TIMEOUT_MS) {
+            broadcastTypingStatusUseCase(chatId, isTyping).getOrThrow()
+            true
+        } ?: false
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Napier.w("Failed to broadcast typing status", e, tag = "ChatInput")
+        false
+    }
+
+    fun onInputTextChange(newText: String) {
+        val changed = _inputText.value != newText
+        _inputText.value = newText
+        val chatId = currentChatIdProvider()
+        if (newText.isBlank() || chatId.isNullOrBlank() || !canBroadcastTyping() || !viewModelScope.isActive) {
+            stopTyping()
+            return
+        }
+        // Restoring an unchanged draft (including on resume) is not new input activity.
+        if (!changed) return
+        if (typingChatId != chatId) {
+            stopTyping()
+            typingChatId = chatId
+            nextHeartbeatAt = 0
+        }
+        lastInputActivityAt = SystemClock.elapsedRealtime()
+        pendingStops.remove(chatId)
+        typingWakeups.trySend(Unit)
+    }
+
+    fun stopTyping() {
+        val chatId = typingChatId ?: return
+        typingChatId = null
+        pendingStops[chatId] = PendingStop()
+        typingWakeups.trySend(Unit)
+    }
+
+    fun onVisibilityChanged(visible: Boolean) {
+        screenVisible = visible
+        if (!visible) stopTyping()
+        // Becoming visible deliberately does not publish an unsent draft.
+    }
+
+    private companion object {
+        const val TYPING_HEARTBEAT_MS = 2_000L
+        const val TYPING_IDLE_MS = 3_000L
+        const val TYPING_NETWORK_TIMEOUT_MS = 1_500L
+        const val TYPING_CLEANUP_TIMEOUT_MS = 3_500L
+        const val TYPING_STATE_POLL_MS = 250L
+        const val STOP_RETRY_MS = 500L
+        const val STOP_ATTEMPTS = 3
+    }
+
     fun sendMessage() {
+        stopTyping()
         val text = _inputText.value.trim()
         val chatId = currentChatIdProvider() ?: return
         if (text.isEmpty()) return
-
-        // Immediately clear typing status when sending
-        typingDebounceJob?.cancel()
-        typingDebounceJob = null
-        if (isCurrentlyTyping) {
-            isCurrentlyTyping = false
-            viewModelScope.launch {
-                broadcastTypingStatusUseCase(chatId, false)
-            }
-        }
 
         val editingMsg = _editingMessage.value
         if (editingMsg != null) {
@@ -154,11 +255,13 @@ class ChatInputDelegate(
     }
 
     fun startEditing(message: Message) {
+        stopTyping()
         _editingMessage.value = message
         _inputText.value = message.content ?: ""
     }
 
     fun cancelEditing() {
+        stopTyping()
         _editingMessage.value = null
         _inputText.value = ""
     }
@@ -197,16 +300,8 @@ class ChatInputDelegate(
     }
 
     fun cleanup() {
-        typingDebounceJob?.cancel()
-        typingDebounceJob = null
-        if (isCurrentlyTyping) {
-            isCurrentlyTyping = false
-            val chatId = currentChatIdProvider()
-            if (chatId != null) {
-                viewModelScope.launch {
-                    broadcastTypingStatusUseCase(chatId, false)
-                }
-            }
-        }
+        stopTyping()
+        // Keep the single scope-owned writer for the next chat; scope cancellation
+        // performs the bounded final stop if this is the ViewModel's teardown.
     }
 }

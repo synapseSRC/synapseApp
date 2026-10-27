@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.delay
@@ -44,34 +45,44 @@ import kotlin.coroutines.cancellation.CancellationException
  * Presence for user state tracking, and Broadcast for ephemeral messaging.
  */
 internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
-    // One persistent typing channel per chat � broadcast sender and receiver
-    // share the same channel object so events are never dropped.
-    private val activeTypingChannels = java.util.concurrent.ConcurrentHashMap<String, RealtimeChannel>()
+    private class TypingChannel(val channel: RealtimeChannel, var collectors: Int = 0)
+    private val typingMutex = kotlinx.coroutines.sync.Mutex()
+    private val activeTypingChannels = mutableMapOf<String, TypingChannel>()
 
-    private suspend fun getOrCreateTypingChannel(chatId: String): RealtimeChannel {
-        val channelId = "broadcast-typing-${chatId.trim().lowercase()}"
-        val channel = activeTypingChannels.getOrPut(channelId) { client.realtime.channel(channelId) }
+    private fun typingTopic(chatId: String) = "broadcast-typing-${chatId.trim().lowercase()}"
+
+    private fun typingChannel(topic: String): TypingChannel =
+        activeTypingChannels.getOrPut(topic) {
+            TypingChannel(client.realtime.channel(topic) {
+                broadcast { acknowledgeBroadcasts = true }
+            })
+        }
+
+    private suspend fun subscribeTypingChannel(channel: RealtimeChannel) {
         if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
-            try { client.realtime.connect() } catch (e: Exception) { if (e is CancellationException) throw e }
-            var subscribed = false; var attempts = 0
-            while (!subscribed && attempts < 3) {
-                try { channel.subscribe(blockUntilSubscribed = true); subscribed = true }
-                catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    attempts++
-                    if (attempts < 3) delay(300L * attempts)
-                }
+            kotlinx.coroutines.withTimeout(5000) {
+                client.realtime.connect()
+                channel.subscribe(blockUntilSubscribed = true)
             }
         }
-        return channel
+    }
+
+    private suspend fun removeTypingChannel(topic: String, entry: TypingChannel) {
+        if (entry.collectors != 0 || activeTypingChannels[topic] !== entry) return
+        // Removal is serialized with acquisition: Supabase registers channels by topic, not identity.
+        withContext(NonCancellable) {
+            try {
+                kotlinx.coroutines.withTimeout(5000) { client.realtime.removeChannel(entry.channel) }
+            } finally {
+                activeTypingChannels.remove(topic)
+            }
+        }
     }
 
     suspend fun releaseTypingChannel(chatId: String) {
-        val channelId = "broadcast-typing-${chatId.trim().lowercase()}"
-        val channel = activeTypingChannels.remove(channelId) ?: return
-        withContext(AppDispatchers.IO) {
-            try { channel.unsubscribe(); client.realtime.removeChannel(channel) }
-            catch (e: Exception) { Napier.w("Error releasing typing channel $channelId: ${e.message}", tag = "Realtime") }
+        typingMutex.withLock {
+            val topic = typingTopic(chatId)
+            activeTypingChannels[topic]?.let { removeTypingChannel(topic, it) }
         }
     }
 
@@ -95,57 +106,23 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      */
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) =
         withContext(AppDispatchers.IO) {
-            try {
-                val currentUserId = getCurrentUserId() ?: return@withContext
-                val normalizedChatId = chatId.trim().lowercase()
-                val channelId = "broadcast-typing-$normalizedChatId"
-                val channel = client.realtime.channel(channelId)
-
-                // Ensure the realtime socket is connected before subscribing.
+            val currentUserId = getCurrentUserId()
+                ?: throw NotAuthenticatedException("User not authenticated")
+            typingMutex.withLock {
+                val topic = typingTopic(chatId)
+                val entry = typingChannel(topic)
                 try {
-                    client.realtime.connect()
-                } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    Napier.w("Realtime connect failed before broadcast: ${e.message}", e, tag = "Realtime")
-                    return@withContext
-                }
-
-                // Subscribe to the channel before broadcasting. If subscription fails,
-                // abort rather than silently-failing broadcasts on an unsubscribed channel.
-                if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
-                    var subscribed = false
-                    var attempts = 0
-                    while (!subscribed && attempts < 3) {
-                        try {
-                            channel.subscribe(blockUntilSubscribed = true)
-                            subscribed = true
-                        } catch (e: Exception) {
-                            if (e is CancellationException) throw e
-                            attempts++
-                            Napier.w("Attempt $attempts failed to subscribe to typing channel: ${e.message}", e, tag = "Realtime")
-                            if (attempts < 3) delay(500L * attempts)
-                        }
+                    subscribeTypingChannel(entry.channel)
+                    val payload = buildJsonObject {
+                        put("user_id", currentUserId)
+                        put("is_typing", isTyping)
                     }
-                    if (!subscribed) {
-                        Napier.e("Aborting typing broadcast: could not subscribe to channel $channelId", tag = "Realtime")
-                        return@withContext
+                    kotlinx.coroutines.withTimeout(5000) {
+                        entry.channel.broadcast(event = "typing", message = payload)
                     }
+                } finally {
+                    removeTypingChannel(topic, entry)
                 }
-
-                val payload = buildJsonObject {
-                    put("user_id", currentUserId)
-                    put("is_typing", isTyping)
-                }
-                try {
-                    channel.broadcast(event = "typing", message = payload)
-                    Napier.d("Broadcast typing status for chat $normalizedChatId: isTyping=$isTyping", tag = "Realtime")
-                } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    Napier.w("Broadcast typing failed: ${e.message}", e, tag = "Realtime")
-                }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Napier.e("Error broadcasting typing status", e)
             }
         }
 
@@ -159,7 +136,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * is finalized. This prevents a race condition where messages sent immediately after
      * entering a chat are missed.
      */
-    fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
+    fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit = {}): Flow<MessageDto> = callbackFlow {
         val normalizedChatId = chatId.trim().lowercase()
         val channelId = uniqueTopic("msgs_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for messages: $channelId", tag = "Realtime")
@@ -251,33 +228,17 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             try {
                 subscriptionReady.await()
                 yield()
-                var subscribed = false
-                var attempts = 0
-                while (!subscribed && attempts < 3 && isActive) {
-                    try {
-                        channel.subscribe(blockUntilSubscribed = true)
-                        subscribed = true
-                        Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
-                    } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        attempts++
-                        Napier.w("Attempt $attempts failed to subscribe to messages channel: $channelId: ${e.message}", tag = "Realtime")
-                        if (attempts < 3) delay(1000L * attempts)
-                    }
+                kotlinx.coroutines.withTimeout(10_000) {
+                    channel.subscribe(blockUntilSubscribed = true)
                 }
-                if (!subscribed && isActive) {
-                    try {
-                        channel.subscribe(blockUntilSubscribed = false)
-                        Napier.d("Subscribed to messages channel non-blocking: $channelId", tag = "Realtime")
-                    } catch (e: Exception) {
-                        if (e !is CancellationException) {
-                            Napier.e("Failed to subscribe to messages channel after retries: $channelId", e, tag = "Realtime")
-                            close(e)
-                        }
-                    }
-                }
+                Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
+                onConnected()
             } catch (e: Exception) {
-                if (e !is CancellationException) {
+                if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    close(IllegalStateException("Message subscription timed out", e))
+                } else if (e is CancellationException) {
+                    throw e
+                } else {
                     Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
                     close(e)
                 }
@@ -407,89 +368,79 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * immediately after entering a chat are missed.
      */
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> = callbackFlow {
-        val normalizedChatId = chatId.trim().lowercase()
-        val channelId = "broadcast-typing-$normalizedChatId"
-        Napier.d("Subscribing to typing broadcast channel: $channelId", tag = "Realtime")
-
-        try {
-            client.realtime.connect()
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-        }
-
-        val channel = client.realtime.channel(channelId)
-
-        val subscriptionReady = CompletableDeferred<Unit>()
-
-        val collector = launch(AppDispatchers.IO) {
+        val topic = typingTopic(chatId)
+        var entry: TypingChannel? = null
+        var collector: kotlinx.coroutines.Job? = null
+        var statusMonitor: kotlinx.coroutines.Job? = null
+        val setup = launch(AppDispatchers.IO) {
             try {
-                channel.broadcastFlow<kotlinx.serialization.json.JsonObject>("typing")
-                    .onStart { subscriptionReady.complete(Unit) }
-                    .collect { json ->
-                        val userId = json["user_id"]?.jsonPrimitive?.contentOrNull
-                        val isTyping = json["is_typing"]?.jsonPrimitive?.booleanOrNull
-
-                        if (userId != null && isTyping != null) {
-                            trySend(mapOf("user_id" to userId, "is_typing" to isTyping))
-                        }
-                    }
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    Napier.w("Typing broadcast flow ended: ${e.message}", e, tag = "Realtime")
-                }
-            }
-        }
-
-        launch(AppDispatchers.IO) {
-            try {
-                subscriptionReady.await()
-                yield()
-                var subscribed = false
-                var attempts = 0
-                while (!subscribed && attempts < 3 && isActive) {
-                    try {
-                        channel.subscribe(blockUntilSubscribed = true)
-                        subscribed = true
-                        Napier.d("Successfully subscribed to typing channel: $channelId", tag = "Realtime")
-                    } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        attempts++
-                        Napier.w("Attempt $attempts failed to subscribe to typing channel: ${e.message}", e, tag = "Realtime")
-                        if (attempts < 3) delay(500L * attempts)
-                    }
-                }
-                if (!subscribed && isActive) {
-                    try {
-                        channel.subscribe(blockUntilSubscribed = false)
-                        Napier.d("Subscribed to typing channel non-blocking: $channelId", tag = "Realtime")
-                    } catch (e: Exception) {
-                        if (e !is CancellationException) {
-                            Napier.e("Failed to subscribe to typing channel after retries: $channelId", e, tag = "Realtime")
+                typingMutex.withLock {
+                    val acquired = typingChannel(topic)
+                    entry = acquired
+                    acquired.collectors++
+                    val channel = acquired.channel
+                    val broadcasts = channel.broadcastFlow<kotlinx.serialization.json.JsonObject>("typing")
+                    collector = this@callbackFlow.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                        try {
+                            broadcasts.collect { json ->
+                                val userId = (json["user_id"] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
+                                val isTyping = (json["is_typing"] as? kotlinx.serialization.json.JsonPrimitive)?.booleanOrNull
+                                if (!userId.isNullOrBlank() && isTyping != null) {
+                                    send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                                }
+                            }
+                            close(IllegalStateException("Typing broadcast stream ended"))
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
                             close(e)
                         }
                     }
+                    subscribeTypingChannel(channel)
+                    statusMonitor = this@callbackFlow.launch {
+                        launch {
+                            channel.status.collect { status ->
+                                if (status != RealtimeChannel.Status.SUBSCRIBED) {
+                                    close(IllegalStateException("Typing channel lost subscription"))
+                                }
+                            }
+                        }
+                        launch {
+                            client.realtime.status.collect { status ->
+                                if (status != Realtime.Status.CONNECTED) {
+                                    close(IllegalStateException("Typing socket disconnected"))
+                                }
+                            }
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    Napier.e("Failed to subscribe to typing channel: $channelId", e, tag = "Realtime")
+                if (e is CancellationException) {
+                    if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                        close(IllegalStateException("Typing subscription timed out", e))
+                    } else throw e
+                } else {
                     close(e)
                 }
             }
         }
-
         awaitClose {
-            Napier.d("Closing typing broadcast channel: $channelId", tag = "Realtime")
-            collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            setup.cancel()
+            collector?.cancel()
+            statusMonitor?.cancel()
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
-                    channel.unsubscribe()
-                    client.realtime.removeChannel(channel)
+                    typingMutex.withLock {
+                        entry?.let {
+                            it.collectors--
+                            removeTypingChannel(topic, it)
+                        }
+                    }
                 } catch (e: Exception) {
-                    Napier.w("Error during typing channel cleanup: ${e.message}", tag = "Realtime")
+                    Napier.w("Error releasing typing channel", e, tag = "Realtime")
                 }
             }
         }
-    }
+    }.buffer(Channel.BUFFERED)
 
     /**
      * Listens for updates to existing messages (e.g., status changes to 'read' or 'delivered').

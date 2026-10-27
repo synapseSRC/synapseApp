@@ -5,13 +5,16 @@ import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import com.synapse.social.studioasinc.shared.data.datasource.ChatReactionDataSource
+import com.synapse.social.studioasinc.shared.data.datasource.NotAuthenticatedException
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseUserDataSource
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.data.local.database.MessageReactionDao
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.MessageChronologicalComparator
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.mergeMonotonic
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDto
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
@@ -40,6 +43,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -121,6 +125,18 @@ class SupabaseChatRepository(
     private fun conversationPreview(message: Message): String =
         if (message.hasReadableContent()) message.content else EncryptedPayloadDetector.PLACEHOLDER
 
+    // Receipt UPDATEs replay older rows, so only a genuinely newer message may move a conversation forward.
+    private fun isMoreRecent(createdAt: String?, reference: String?): Boolean {
+        val current = ChatMapper.parseInstant(createdAt)
+        val existing = ChatMapper.parseInstant(reference)
+        return when {
+            current != null && existing != null -> current.compareTo(existing) > 0
+            current != null -> true
+            existing != null -> false
+            else -> (createdAt ?: "").compareTo(reference ?: "") > 0
+        }
+    }
+
     // Active chat registry — tracks which chat screen is currently open.
     // Used by inbox refresh to avoid overwriting an active chat's real-time message cache.
     private val _activeChatId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
@@ -137,29 +153,47 @@ class SupabaseChatRepository(
     ): Message = withContext(AppDispatchers.IO) {
         try {
             getCacheMutexForChat(chatId).withLock {
-                if (!encryptionHelper.isPlaceholder(message.content) &&
-                    !EncryptedPayloadDetector.isEncryptedPayload(message.content) &&
-                    message.encryptionFailureReason == null
-                ) {
-                    cachedMessageDao?.upsert(message)
+                val cached = cachedMessageDao?.getMessageById(message.id)
+                val merged = cached?.mergeMonotonic(message) ?: message
+                if (merged.hasReadableContent()) {
+                    cachedMessageDao?.upsert(merged)
                     recordCacheSyncTime(chatId)
                 }
-            }
-            // Read outside the lock — only the write needs serialization.
-            // If the cache already holds a decrypted version of this message (e.g. from
-            // background sync or a prior decryption pass), prefer that content over an
-            // encrypted placeholder that may have arrived via the real-time channel.
-            val cached = cachedMessageDao
-                ?.getMessages(chatId, 1)
-                ?.firstOrNull { it.id == message.id }
-            if (cached != null && cached.content.isNotBlank() && cached.hasReadableContent()) {
-                cached
-            } else {
-                message
+                merged
             }
         } catch (e: Exception) {
             Logger.e("Failed to reconcile real-time message ${message.id}", throwable = e)
             message
+        }
+    }
+
+    override suspend fun getMessagesByIds(chatId: String, messageIds: List<String>): Result<List<Message>> =
+        withContext(AppDispatchers.IO) {
+            try {
+                val userId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+                val messages = dataSource.getMessagesByIds(chatId, messageIds).map { dto ->
+                    val decrypted = encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() }
+                    reconcileRealtimeMessage(chatId, decrypted)
+                }
+                Result.success(messages)
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun searchMessages(chatId: String, query: String): Result<List<Message>> = withContext(AppDispatchers.IO) {
+        try {
+            val allMessages = getMessages(chatId, limit = 200, forceNetwork = false).getOrElse { emptyList() }
+            val lowerQuery = query.lowercase()
+            val filtered = allMessages.filter { message ->
+                message.content?.lowercase()?.contains(lowerQuery) == true ||
+                message.attachments?.any { it.type.name.lowercase().contains(lowerQuery) } == true
+            }
+            Result.success(filtered)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            Result.failure(e)
         }
     }
 
@@ -457,7 +491,7 @@ class SupabaseChatRepository(
 
                 val mergedMessages = decrypted.map { freshMsg ->
                     if (!freshMsg.hasReadableContent()) {
-                        cached.firstOrNull { it.id == freshMsg.id && it.hasReadableContent() } ?: freshMsg
+                        cached.firstOrNull { it.id == freshMsg.id && it.hasReadableContent() }?.mergeMonotonic(freshMsg) ?: freshMsg
                     } else {
                         freshMsg
                     }
@@ -685,6 +719,7 @@ class SupabaseChatRepository(
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Logger.e("Error marking messages as read", throwable = e)
             Result.failure(e)
         }
@@ -696,6 +731,7 @@ class SupabaseChatRepository(
             dataSource.markMessagesAsDelivered(chatId, deviceId)
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Logger.e("Error marking messages as delivered", throwable = e)
             Result.failure(e)
         }
@@ -895,31 +931,28 @@ class SupabaseChatRepository(
             dataSource.broadcastTypingStatus(chatId, isTyping)
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Logger.e("Error broadcasting typing status", throwable = e)
             Result.failure(e)
         }
     }
 
-    override fun subscribeToMessages(chatId: String): Flow<Message> =
-        dataSource.subscribeToMessages(chatId).map { dto ->
+    override fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit): Flow<Message> =
+        dataSource.subscribeToMessages(chatId, onConnected).map { dto ->
             val userId = getCurrentUserId() ?: ""
-            val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
+            val decrypted = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
+            val domainMessage = reconcileRealtimeMessage(chatId, decrypted)
 
             externalScope.launch {
-                if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
-                    getCacheMutexForChat(chatId).withLock {
-                        cachedMessageDao?.upsert(domainMessage)
-                        recordCacheSyncTime(chatId)
-                    }
-                }
                 conversationMutex.withLock {
                     val dao = cachedConversationDao
                     if (dao != null) {
                         val existing = dao.getAll().find { it.chatId == domainMessage.chatId }
                         if (existing != null) {
+                            val isNewest = isMoreRecent(domainMessage.createdAt, existing.lastMessageTime)
                             dao.upsertAll(listOf(existing.copy(
-                                lastMessage = conversationPreview(domainMessage),
-                                lastMessageTime = domainMessage.createdAt,
+                                lastMessage = if (isNewest) conversationPreview(domainMessage) else existing.lastMessage,
+                                lastMessageTime = if (isNewest) domainMessage.createdAt else existing.lastMessageTime,
                                 unreadCount = 0
                             )))
                         }
@@ -947,10 +980,14 @@ class SupabaseChatRepository(
                 conversationMutex.withLock {
                     val currentExisting = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
                     val updated = if (currentExisting != null) {
+                        val isNewest = isMoreRecent(domainMessage.createdAt, currentExisting.lastMessageTime)
                         currentExisting.copy(
-                            lastMessage = conversationPreview(domainMessage),
-                            lastMessageTime = domainMessage.createdAt,
-                            unreadCount = if (domainMessage.senderId == userId) currentExisting.unreadCount else currentExisting.unreadCount + 1
+                            lastMessage = if (isNewest) conversationPreview(domainMessage) else currentExisting.lastMessage,
+                            lastMessageTime = if (isNewest) domainMessage.createdAt else currentExisting.lastMessageTime,
+                            unreadCount = when {
+                                !isNewest || domainMessage.senderId == userId -> currentExisting.unreadCount
+                                else -> currentExisting.unreadCount + 1
+                            }
                         )
                     } else {
                         val isGroup = chatInfo?.isGroup ?: false
@@ -978,10 +1015,7 @@ class SupabaseChatRepository(
         }
 
     override fun subscribeToReadReceipts(chatId: String): Flow<Message> =
-        dataSource.subscribeToReadReceipts(chatId).map { 
-            val userId = getCurrentUserId() ?: ""
-            if (userId.isNotBlank()) encryptionHelper.run { it.decryptIfNecessary(userId).toDomain() } else it.toDomain()
-        }
+        subscribeToMessages(chatId).filter { it.deliveryStatus == com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.DELIVERED || it.deliveryStatus == com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.READ }
 
     override suspend fun initializeE2EE(): Result<Unit> = withContext(AppDispatchers.IO) {
         encryptionHelper.initializeE2EE(getCurrentUserId())

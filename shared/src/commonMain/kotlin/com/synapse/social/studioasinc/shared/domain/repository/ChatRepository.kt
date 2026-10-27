@@ -12,6 +12,8 @@ interface ChatRepository {
     suspend fun getMessagesAfter(chatId: String, after: String, afterId: String, limit: Int = 50): Result<List<Message>>
     suspend fun getMessagesCacheFirst(chatId: String, limit: Int = 50, refreshInBackground: Boolean = false, before: String? = null, beforeId: String? = null): Result<List<Message>>
     suspend fun getMessageById(messageId: String): Result<Message?>
+    suspend fun getMessagesByIds(chatId: String, messageIds: List<String>): Result<List<Message>>
+    suspend fun searchMessages(chatId: String, query: String): Result<List<Message>>
     suspend fun sendMessage(
         chatId: String,
         content: String,
@@ -40,7 +42,7 @@ interface ChatRepository {
     suspend fun uploadMedia(chatId: String, filePath: String, fileName: String, contentType: String, provider: com.synapse.social.studioasinc.shared.domain.model.StorageProvider? = null, config: com.synapse.social.studioasinc.shared.domain.model.StorageConfig? = null, onProgress: ((Int) -> Unit)? = null): Result<String>
 
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean): Result<Unit>
-    fun subscribeToMessages(chatId: String): Flow<Message>
+    fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit = {}): Flow<Message>
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message>
     fun subscribeToTypingStatus(chatId: String): Flow<TypingStatus>
     fun subscribeToReadReceipts(chatId: String): Flow<Message>

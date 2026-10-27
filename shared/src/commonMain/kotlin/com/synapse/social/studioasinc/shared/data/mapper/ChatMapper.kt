@@ -224,11 +224,14 @@ object ChatMapper {
         }
         val finalType = if (domainAttachments.size >= 2 || baseType == MessageType.MEDIA_GROUP) MessageType.MEDIA_GROUP else baseType
 
+        fun hasDeliveryState(state: String): Boolean =
+            deliveryStatus.equals(state, ignoreCase = true) || messageState.equals(state, ignoreCase = true)
+
         val mappedDeliveryStatus = when {
-            deliveryStatus.equals("failed", ignoreCase = true) -> DeliveryStatus.FAILED
-            readAt != null || (readBy?.any { it != senderId } == true) || deliveryStatus.equals("read", ignoreCase = true) -> DeliveryStatus.READ
-            deliveredAt != null || deliveryStatus.equals("delivered", ignoreCase = true) -> DeliveryStatus.DELIVERED
-            deliveryStatus.equals("sending", ignoreCase = true) -> DeliveryStatus.SENDING
+            readAt != null || (readBy?.any { it.isNotBlank() && it != senderId } == true) || hasDeliveryState("read") -> DeliveryStatus.READ
+            deliveredAt != null || hasDeliveryState("delivered") -> DeliveryStatus.DELIVERED
+            hasDeliveryState("failed") -> DeliveryStatus.FAILED
+            hasDeliveryState("sending") -> DeliveryStatus.SENDING
             else -> DeliveryStatus.SENT
         }
 
@@ -268,7 +271,7 @@ object ChatMapper {
             readAt = normalizeTimestamp(readAt),
             editedAt = normalizeTimestamp(editedAt),
             deletedAt = normalizeTimestamp(deletedAt),
-            failureReason = failureReason,
+            failureReason = failureReason.takeIf { mappedDeliveryStatus == DeliveryStatus.FAILED },
             createdAt = normalizeTimestamp(createdAt) ?: "",
             updatedAt = normalizeTimestamp(updatedAt),
             readBy = readBy ?: emptyList(),
@@ -283,10 +286,18 @@ object ChatMapper {
     }
 
     fun Message.mergeMonotonic(newer: Message): Message {
+        val mergedSentAt = newer.sentAt ?: this.sentAt
+        val mergedDeliveredAt = newer.deliveredAt ?: this.deliveredAt
+        val mergedReadAt = newer.readAt ?: this.readAt
+        val mergedReadBy = (this.readBy + newer.readBy).filter { it.isNotBlank() }.distinct()
+
+        // Optimistic sentAt is not confirmation; receipt evidence must survive stale events.
         val mergedDelivery = when {
-            this.deliveryStatus == DeliveryStatus.FAILED && newer.deliveryStatus != DeliveryStatus.FAILED -> this.deliveryStatus
-            this.deliveryStatus == DeliveryStatus.READ && newer.deliveryStatus != DeliveryStatus.FAILED -> DeliveryStatus.READ
-            this.deliveryStatus == DeliveryStatus.DELIVERED && (newer.deliveryStatus == DeliveryStatus.SENT || newer.deliveryStatus == DeliveryStatus.SENDING) -> DeliveryStatus.DELIVERED
+            mergedReadAt != null || mergedReadBy.any { it != newer.senderId } ||
+                this.deliveryStatus == DeliveryStatus.READ || newer.deliveryStatus == DeliveryStatus.READ -> DeliveryStatus.READ
+            mergedDeliveredAt != null || this.deliveryStatus == DeliveryStatus.DELIVERED ||
+                newer.deliveryStatus == DeliveryStatus.DELIVERED -> DeliveryStatus.DELIVERED
+            this.deliveryStatus == DeliveryStatus.SENT || newer.deliveryStatus == DeliveryStatus.SENT -> DeliveryStatus.SENT
             else -> newer.deliveryStatus
         }
 
@@ -295,7 +306,7 @@ object ChatMapper {
         // overwrite readable content and the fields carried inside the encrypted payload.
         val incomingDisplayable = !EncryptedPayloadDetector.isUndecryptable(newer.content, newer.encryptionFailureReason)
         val existingDisplayable = !EncryptedPayloadDetector.isUndecryptable(this.content, this.encryptionFailureReason)
-        val keepExistingContent = !incomingDisplayable && existingDisplayable && newer.content.isNotBlank()
+        val keepExistingContent = !incomingDisplayable && existingDisplayable
 
         val incomingDeleted = newer.isDeleted || newer.contentStatus == ContentStatus.DELETED
         val mergedContentStatus = when {
@@ -305,12 +316,8 @@ object ChatMapper {
             else -> ContentStatus.ACTIVE
         }
 
-        val mergedSentAt = newer.sentAt ?: this.sentAt
-        val mergedDeliveredAt = newer.deliveredAt ?: this.deliveredAt
-        val mergedReadAt = newer.readAt ?: this.readAt
         val mergedEditedAt = if (keepExistingContent) this.editedAt ?: newer.editedAt else newer.editedAt ?: this.editedAt
         val mergedDeletedAt = newer.deletedAt ?: this.deletedAt
-        val mergedReadBy = (this.readBy + newer.readBy).distinct()
 
         // Authoritative server timestamp from newer takes priority over temporary optimistic timestamp.
         val stableCreatedAt = if (newer.createdAt.isNotBlank()) newer.createdAt else this.createdAt
@@ -341,7 +348,7 @@ object ChatMapper {
             editedAt = mergedEditedAt,
             deletedAt = mergedDeletedAt,
             encryptionFailureReason = if (keepExistingContent) this.encryptionFailureReason else newer.encryptionFailureReason,
-            failureReason = newer.failureReason ?: this.failureReason
+            failureReason = if (mergedDelivery == DeliveryStatus.FAILED) newer.failureReason ?: this.failureReason else null
         )
     }
 }

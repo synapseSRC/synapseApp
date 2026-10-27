@@ -92,7 +92,7 @@ internal class ChatEncryptionHelper(
 
             // 2) Check local DB for previously-decrypted content (survives app restart)
             val dbCached = try {
-                cachedMessageDao?.getMessages(chatId, 200)?.find { it.id == messageId }
+                cachedMessageDao?.getMessageById(messageId)
             } catch (_: Exception) { null }
             if (dbCached != null &&
                 dbCached.content.isNotBlank() &&

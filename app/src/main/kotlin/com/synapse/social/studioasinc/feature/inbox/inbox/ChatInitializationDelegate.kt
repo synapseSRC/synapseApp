@@ -2,11 +2,11 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsReadUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
@@ -26,7 +26,6 @@ class ChatInitializationDelegate(
     private val getGroupMembersUseCase: GetGroupMembersUseCase,
     private val observeUserActiveStatusUseCase: ObserveUserActiveStatusUseCase,
     private val observeUserPresenceDetailUseCase: ObserveUserPresenceDetailUseCase,
-    private val markMessagesAsReadUseCase: MarkMessagesAsReadUseCase,
     private val viewModelScope: CoroutineScope,
     private val currentUserIdProvider: () -> String?,
     private val currentChatIdProvider: () -> String?,
@@ -44,6 +43,8 @@ class ChatInitializationDelegate(
     private val _isParticipantActive: MutableStateFlow<Boolean>,
     private val _disappearingMode: MutableStateFlow<com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode>,
     private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
+    private val _isMuted: MutableStateFlow<Boolean>,
+    private val getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
     private val onChatIdResolved: (String) -> Unit,
     private val _groupMemberNames: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
 ) {
@@ -75,6 +76,7 @@ class ChatInitializationDelegate(
         _onlyAdminsCanMessage.value = false
         _isCurrentUserAdmin.value = false
         _disappearingMode.value = com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
+        _isMuted.value = false
         _isLoading.value = true
         _error.value = null
 
@@ -156,8 +158,8 @@ class ChatInitializationDelegate(
                     }
                 }
                 if (isCurrent(token, actualChatId)) {
+                    subscriptionDelegate.enqueueIncomingReceipt(actualChatId)
                     aiDelegate.generateSmartReplies(messagingDelegate.messages.value)
-                    markMessagesAsReadUseCase(actualChatId)
                 }
             }
 
@@ -186,6 +188,13 @@ class ChatInitializationDelegate(
                 getDisappearingModeUseCase(actualChatId).onSuccess { mode ->
                     if (!isCurrent(token, actualChatId)) return@onSuccess
                     _disappearingMode.value = mode
+                }
+            }
+
+            launch {
+                getConversationMuteStatusUseCase(actualChatId).onSuccess { muted ->
+                    if (!isCurrent(token, actualChatId)) return@onSuccess
+                    _isMuted.value = muted
                 }
             }
 

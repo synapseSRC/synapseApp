@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.ui.navigation
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -275,6 +276,18 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
+                    },
+                    onNavigateToNewGroup = {
+                        navController.navigate(AppDestination.CreateGroup)
+                    },
+                    onNavigateToSharedContent = { chatId, tab ->
+                        navController.navigate(AppDestination.SharedContent(chatId, tab))
+                    },
+                    onNavigateToChatSettings = { chatId ->
+                        navController.navigate(AppDestination.ChatSettings(chatId))
+                    },
+                    onNavigateToChatSearch = { chatId ->
+                        navController.navigate(AppDestination.ChatSearch(chatId))
                     }
                 )
             }
@@ -340,6 +353,19 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+    composable<AppDestination.ChatSettings> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.ChatSettings>()
+                navController.navigate(AppDestination.Settings) {
+                    popUpTo(AppDestination.Settings) { inclusive = true }
+                }
+    }
+    composable<AppDestination.ChatSearch> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.ChatSearch>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatSearchScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)

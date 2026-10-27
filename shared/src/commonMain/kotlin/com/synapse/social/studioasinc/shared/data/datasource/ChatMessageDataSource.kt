@@ -28,6 +28,19 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
     suspend fun getMessagesAfter(chatId: String, limit: Int = 50, after: String, afterId: String): List<MessageDto> =
         getMessagesPage(chatId, limit, null, null, after, afterId)
 
+    suspend fun getMessagesByIds(chatId: String, messageIds: List<String>): List<MessageDto> =
+        withContext(AppDispatchers.IO) {
+            getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+            messageIds.distinct().chunked(50).flatMap { ids ->
+                client.postgrest.from("messages").select {
+                    filter {
+                        eq("chat_id", chatId)
+                        isIn("id", ids)
+                    }
+                }.decodeList<MessageDto>()
+            }
+        }
+
     private suspend fun getMessagesPage(
         chatId: String,
         limit: Int = 50,
@@ -284,53 +297,41 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         }
 
     suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null) = withContext(AppDispatchers.IO) {
-        try {
-            val currentUserId = getCurrentUserId() ?: return@withContext
-            val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
-
-            client.postgrest.from("chat_participants").update({
-                set("last_read_at", now)
-                if (deviceId != null) set("last_read_device_id", deviceId)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", currentUserId)
-                }
+        val currentUserId = getCurrentUserId()
+            ?: throw NotAuthenticatedException("User not authenticated")
+        val rpcParams = mutableMapOf(
+            "p_chat_id" to chatId,
+            "p_user_id" to currentUserId
+        )
+        if (deviceId != null) rpcParams["p_device_id"] = deviceId
+        client.postgrest.rpc(
+            function = "mark_messages_as_read",
+            parameters = rpcParams
+        )
+        val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
+        client.postgrest.from("chat_participants").update({
+            set("last_read_at", now)
+            if (deviceId != null) set("last_read_device_id", deviceId)
+        }) {
+            filter {
+                eq("chat_id", chatId)
+                eq("user_id", currentUserId)
             }
-
-            // Optimize: Call an RPC to perform a bulk update on the database side
-            // This replaces 1 SELECT and M UPDATE queries with a single network call.
-            val rpcParams = mutableMapOf(
-                "p_chat_id" to chatId,
-                "p_user_id" to currentUserId
-            )
-            if (deviceId != null) {
-                rpcParams["p_device_id"] = deviceId
-            }
-            
-            client.postgrest.rpc(
-                function = "mark_messages_as_read",
-                parameters = rpcParams
-            )
-        } catch (e: Exception) {
-            Napier.e("Error marking messages as read", e)
         }
+        Unit
     }
 
     suspend fun markMessagesAsDelivered(chatId: String, deviceId: String? = null) = withContext(AppDispatchers.IO) {
-        try {
-            val rpcParams = mutableMapOf("p_chat_id" to chatId)
-            if (deviceId != null) {
-                rpcParams["p_device_id"] = deviceId
-            }
-
-            client.postgrest.rpc(
-                function = "mark_messages_as_delivered",
-                parameters = rpcParams
-            )
-        } catch (e: Exception) {
-            Napier.e("Error marking received messages as delivered", e)
+        getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+        val rpcParams = mutableMapOf("p_chat_id" to chatId)
+        if (deviceId != null) {
+            rpcParams["p_device_id"] = deviceId
         }
+        client.postgrest.rpc(
+            function = "mark_messages_as_delivered",
+            parameters = rpcParams
+        )
+        Unit
     }
 
     suspend fun insertSystemMessage(chatId: String, content: String): MessageDto = withContext(AppDispatchers.IO) {

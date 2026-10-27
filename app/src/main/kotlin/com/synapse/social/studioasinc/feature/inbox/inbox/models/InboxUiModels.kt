@@ -22,17 +22,6 @@ data class InboxSearchState(
     val contactsSearchFailed: Boolean = false
 )
 
-data class InboxBriefingThread(
-    val conversation: Conversation,
-    val summary: String
-)
-
-data class InboxBriefingState(
-    val isLoading: Boolean = false,
-    val threads: List<InboxBriefingThread> = emptyList(),
-    val partialFailure: Boolean = false
-)
-
 enum class EmptyStateType {
     CHATS,
     CALLS,
