@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-informational.svg)](#)
 
+<p align="center"><img src="assets/synapse_transparent_black_bg.png" alt="Synapse Logo" width="200"/></p>
 <h1 align="center">⚡ Synapse Social</h1>
 <p align="center"><i>Native UI. Shared Logic. Real-time everything.</i></p>
 
