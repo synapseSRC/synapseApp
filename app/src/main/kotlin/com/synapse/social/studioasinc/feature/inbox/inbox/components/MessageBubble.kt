@@ -266,9 +266,9 @@ private fun ColumnScope.MessageMetadataRow(
 ) {
     Row(
         modifier = modifier
-            .align(if (isFromMe) Alignment.Start else Alignment.End)
+            .align(Alignment.End)
             .padding(top = Spacing.space4),
-        horizontalArrangement = if (isFromMe) Arrangement.Start else Arrangement.End,
+        horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (message.isEdited || message.contentStatus == ContentStatus.EDITED) {
