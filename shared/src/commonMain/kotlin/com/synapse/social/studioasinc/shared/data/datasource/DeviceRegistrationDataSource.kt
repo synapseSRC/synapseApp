@@ -16,7 +16,6 @@ import kotlinx.serialization.json.put
  * Handles multi-device synchronization by registering devices and tracking their presence.
  */
 class DeviceRegistrationDataSource(private val client: SupabaseClientLib) {
-
     private fun getCurrentUserId(): String? = runCatching {
         client.pluginManager.getPluginOrNull(io.github.jan.supabase.auth.Auth)?.currentUserOrNull()?.id
     }.getOrNull()
@@ -103,29 +102,6 @@ class DeviceRegistrationDataSource(private val client: SupabaseClientLib) {
             Result.success(devices)
         } catch (e: Exception) {
             Napier.e("Error retrieving user devices", e, tag = "DeviceRegistration")
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Deactivates a device (sets is_active to false).
-     *
-     * @param deviceId The device ID to deactivate
-     */
-    suspend fun deactivateDevice(deviceId: String): Result<Unit> = withContext(AppDispatchers.IO) {
-        try {
-            client.postgrest.from("user_devices")
-                .update({
-                    set("is_active", false)
-                }) {
-                    filter {
-                        eq("id", deviceId)
-                    }
-                }
-            Napier.d("Device deactivated: $deviceId", tag = "DeviceRegistration")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Napier.e("Error deactivating device", e, tag = "DeviceRegistration")
             Result.failure(e)
         }
     }

@@ -145,23 +145,6 @@ private class LiquidShaderHolder {
     }
 }
 
-internal data class VoiceLiquidMotion(
-    val cyclesPerSecond: Float,
-    val travelRatio: Float,
-    val deformation: Float,
-    val pigmentAlpha: Float
-)
-
-internal fun voiceLiquidMotion(amplitude: Float): VoiceLiquidMotion {
-    val clamped = amplitude.coerceIn(0f, 1f)
-    return VoiceLiquidMotion(
-        cyclesPerSecond = 0.35f + 1.15f * clamped,
-        travelRatio = 0.20f + 0.60f * clamped,
-        deformation = 0.15f + 0.85f * clamped,
-        pigmentAlpha = 0.68f + 0.32f * clamped
-    )
-}
-
 private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
 
 internal fun VoiceState.glowAmplitude(): Float = when (this) {

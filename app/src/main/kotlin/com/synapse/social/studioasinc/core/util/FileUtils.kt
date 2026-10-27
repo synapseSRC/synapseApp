@@ -14,7 +14,6 @@ import java.io.FileOutputStream
 data class FileInfo(val fileName: String, val mimeType: String, val extension: String)
 
 object FileUtils {
-
     private const val TAG = "FileUtils"
 
     fun detectFileInfoFromUrl(
@@ -59,14 +58,6 @@ object FileUtils {
             finalFileName += extension
         }
         return FileInfo(finalFileName, mimeType, extension)
-    }
-
-    fun getTmpFileUri(context: Context, extension: String = ".png", prefix: String? = null): Uri {
-        val filePrefix = prefix ?: if (extension == ".mp4") "tmp_video_file" else "tmp_image_file"
-        val tempDir = File(context.cacheDir, "temp")
-        if (!tempDir.exists()) tempDir.mkdirs()
-        val tmpFile = File.createTempFile(filePrefix, extension, tempDir)
-        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tmpFile)
     }
 
     fun createNewFile(path: String) {
@@ -137,11 +128,6 @@ object FileUtils {
         }
     }
 
-    fun moveFile(sourcePath: String, destPath: String) {
-        copyFile(sourcePath, destPath)
-        deleteFile(sourcePath)
-    }
-
     fun deleteFile(path: String) {
         val file = File(path)
         if (!file.exists()) return
@@ -170,19 +156,6 @@ object FileUtils {
         }
     }
 
-    fun listDir(path: String, list: ArrayList<String>?) {
-        val dir = File(path)
-        if (!dir.exists() || dir.isFile) return
-
-        val listFiles = dir.listFiles()
-        if (listFiles.isNullOrEmpty()) return
-
-        list?.apply {
-            clear()
-            addAll(listFiles.map { it.absolutePath })
-        }
-    }
-
     fun isDirectory(path: String): Boolean {
         if (!isExistFile(path)) return false
         return File(path).isDirectory
@@ -191,15 +164,6 @@ object FileUtils {
     fun isFile(path: String): Boolean {
         if (!isExistFile(path)) return false
         return File(path).isFile
-    }
-
-    fun getFileLength(path: String): Long {
-        if (!isExistFile(path)) return 0
-        return File(path).length()
-    }
-
-    fun getPackageDataDir(context: Context): String {
-        return context.getExternalFilesDir(null)?.absolutePath ?: ""
     }
 
     fun validateAndCleanPath(context: Context, path: String): String? {

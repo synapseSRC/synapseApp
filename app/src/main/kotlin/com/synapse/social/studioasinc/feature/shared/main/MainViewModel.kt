@@ -31,12 +31,10 @@ class MainViewModel @Inject constructor(
     private val shouldShowProfilePicSuggestionUseCase: ShouldShowProfilePicSuggestionUseCase,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
-
     private val _updateState = MutableLiveData<UpdateState>()
     val updateState: LiveData<UpdateState> = _updateState
 
     private val _authState = MutableLiveData<AuthState>()
-    val authState: LiveData<AuthState> = _authState
 
     private val _isCheckingAuth = MutableStateFlow(true)
     val isCheckingAuth = _isCheckingAuth.asStateFlow()
@@ -79,7 +77,6 @@ class MainViewModel @Inject constructor(
     fun checkUserAuthentication() {
         viewModelScope.launch {
             try {
-
                 // Wait for session to be fully loaded
                 authRepository.sessionStatus.first { it == AuthSessionStatus.AUTHENTICATED || it == AuthSessionStatus.NOT_AUTHENTICATED }
                 val isAuthenticated = authRepository.restoreSession()
@@ -98,11 +95,9 @@ class MainViewModel @Inject constructor(
                                     } else {
                                         _authState.value = AuthState.Banned
 
-
                                         _startDestination.value = AppDestination.Auth
                                     }
                                 } else {
-
                                     _authState.value = AuthState.Authenticated
                                     _startDestination.value = AppDestination.Home
                                 }

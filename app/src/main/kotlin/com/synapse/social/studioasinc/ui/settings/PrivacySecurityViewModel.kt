@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 class PrivacySecurityViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-
     private val biometricChecker: BiometricChecker = BiometricCheckerImpl()
 
     private val settingsRepository = SettingsRepositoryImpl.getInstance(application)
@@ -30,10 +29,8 @@ class PrivacySecurityViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _show2FASetupDialog = MutableStateFlow(false)
-    val show2FASetupDialog: StateFlow<Boolean> = _show2FASetupDialog.asStateFlow()
 
     private val _twoFactorSetupState = MutableStateFlow(TwoFactorSetupState())
-    val twoFactorSetupState: StateFlow<TwoFactorSetupState> = _twoFactorSetupState.asStateFlow()
 
     init {
         loadPrivacySettings()
@@ -208,68 +205,6 @@ class PrivacySecurityViewModel(
         }
     }
 
-    fun generate2FASecret() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val currentUserEmail = com.synapse.social.studioasinc.core.auth.AuthHelper.getCurrentUserEmail()
-
-                if (currentUserEmail != null) {
-                    val secret = generateBase32Secret()
-                    val qrCodeUrl = "otpauth://totp/Synapse:${currentUserEmail}?secret=$secret&issuer=Synapse"
-
-                    _twoFactorSetupState.value = _twoFactorSetupState.value.copy(
-                        secret = secret,
-                        qrCodeUrl = qrCodeUrl,
-                        step = TwoFactorSetupStep.SCAN_QR
-                    )
-                } else {
-                    _error.value = "User email not found"
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("PrivacySecurityViewModel", "Failed to generate 2FA secret", e)
-                _error.value = "Failed to generate 2FA secret"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun verify2FACode(code: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                if (code.length != 6 || !code.all { it.isDigit() }) {
-                    _error.value = "Please enter a valid 6-digit code"
-                    return@launch
-                }
-
-                settingsRepository.setTwoFactorEnabled(true)
-
-                _twoFactorSetupState.value = _twoFactorSetupState.value.copy(
-                    step = TwoFactorSetupStep.COMPLETED
-                )
-
-                android.util.Log.d("PrivacySecurityViewModel", "Two-factor authentication enabled successfully")
-            } catch (e: Exception) {
-                android.util.Log.e("PrivacySecurityViewModel", "Failed to verify 2FA code", e)
-                _error.value = "Failed to verify code"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun dismiss2FASetupDialog() {
-        _show2FASetupDialog.value = false
-        _twoFactorSetupState.value = TwoFactorSetupState()
-    }
-
-    private fun generateBase32Secret(): String {
-        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
-        return (1..32).map { chars.random() }.joinToString("")
-    }
-
     fun setBiometricLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -288,18 +223,6 @@ class PrivacySecurityViewModel(
                 _isLoading.value = false
             }
         }
-    }
-
-    fun navigateToBlockedUsers() {
-        android.util.Log.d("PrivacySecurityViewModel", "Navigate to blocked users")
-    }
-
-    fun navigateToMutedUsers() {
-        android.util.Log.d("PrivacySecurityViewModel", "Navigate to muted users")
-    }
-
-    fun navigateToActiveSessions() {
-        android.util.Log.d("PrivacySecurityViewModel", "Navigate to active sessions")
     }
 
     fun setReadReceiptsEnabled(enabled: Boolean) {

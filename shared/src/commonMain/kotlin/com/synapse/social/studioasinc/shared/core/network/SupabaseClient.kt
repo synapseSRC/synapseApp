@@ -140,10 +140,6 @@ object SupabaseClient {
         return constructStorageUrl(BUCKET_USER_AVATARS, storagePath)
     }
 
-    fun constructCoverUrl(storagePath: String): String {
-        return constructStorageUrl(BUCKET_USER_COVERS, storagePath)
-    }
-
     /** Signs a protected Storage object only after Storage RLS authorizes the current session. */
     suspend fun createSignedStorageUrl(defaultBucket: String, pathOrUrl: String): String {
         val reference = resolveProtectedStorageObject(defaultBucket, pathOrUrl) ?: return pathOrUrl

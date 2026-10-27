@@ -106,7 +106,6 @@ object SettingsConstants {
     val KEY_REDUCE_ANIMATIONS_ENABLED = booleanPreferencesKey("reduce_animations_enabled")
     val KEY_AUTOPLAY_ANIMATIONS_ENABLED = booleanPreferencesKey("autoplay_animations_enabled")
 
-
     val DEFAULT_THEME_MODE = ThemeMode.SYSTEM
     val DEFAULT_DYNAMIC_COLOR_ENABLED = true
     val DEFAULT_FONT_SCALE = FontScale.MEDIUM
@@ -138,13 +137,8 @@ object SettingsConstants {
     val DEFAULT_CHAT_AVATAR_DISABLED = false
     const val DEFAULT_CHAT_MESSAGE_PAGINATION_LIMIT = 50
     val DEFAULT_DATA_SAVER_ENABLED = false
-    val DEFAULT_ENTER_IS_SEND_ENABLED = false
-    val DEFAULT_MEDIA_VISIBILITY_ENABLED = true
-    val DEFAULT_VOICE_TRANSCRIPTS_ENABLED = false
-    val DEFAULT_AUTO_BACKUP_ENABLED = true
     val DEFAULT_REMINDERS_ENABLED = false
     val DEFAULT_HIGH_PRIORITY_ENABLED = true
-    val DEFAULT_REACTION_NOTIFICATIONS_ENABLED = true
     val DEFAULT_APP_LOCK_ENABLED = false
     val DEFAULT_CHAT_LOCK_ENABLED = false
     val DEFAULT_ACCOUNT_REPORTS_AUTO_CREATE = false

@@ -60,8 +60,6 @@ sealed interface AppDestination {
     @Serializable
     data class StoryViewer(val userId: String, val userIds: List<String> = emptyList()) : AppDestination
     @Serializable
-    data object StoryCreator : AppDestination
-    @Serializable
     data class ChatPrivacy(val chatId: String) : AppDestination
     @Serializable
     data class DisappearingMessages(val chatId: String) : AppDestination

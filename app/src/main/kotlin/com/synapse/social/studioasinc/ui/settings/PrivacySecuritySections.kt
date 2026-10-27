@@ -6,8 +6,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import com.synapse.social.studioasinc.R
 
-
-
 @Composable
 internal fun PrivacyCheckupSection(
     isLoading: Boolean,
@@ -23,8 +21,6 @@ internal fun PrivacyCheckupSection(
         )
     }
 }
-
-
 
 @Composable
 internal fun ProfilePrivacySection(
@@ -71,8 +67,6 @@ internal fun ProfilePrivacySection(
     }
 }
 
-
-
 @Composable
 internal fun MessagePrivacySection(
     readReceiptsEnabled: Boolean,
@@ -101,8 +95,6 @@ internal fun MessagePrivacySection(
     }
 }
 
-
-
 @Composable
 internal fun GroupPrivacySection(
     privacySettings: PrivacySettings,
@@ -119,8 +111,6 @@ internal fun GroupPrivacySection(
         )
     }
 }
-
-
 
 @Composable
 internal fun SecuritySection(
@@ -154,26 +144,6 @@ internal fun SecuritySection(
         )
     }
 }
-
-
-
-@Composable
-internal fun ActiveSessionsSection(
-    onNavigateToActiveSessions: () -> Unit,
-    isLoading: Boolean
-) {
-    SettingsSection(title = stringResource(R.string.settings_active_sessions_title)) {
-        SettingsNavigationItem(
-            title = stringResource(R.string.settings_active_sessions_title),
-            subtitle = stringResource(R.string.settings_active_sessions_subtitle),
-            imageVector = Icons.Filled.Key,
-            onClick = onNavigateToActiveSessions,
-            enabled = !isLoading
-        )
-    }
-}
-
-
 
 @Composable
 internal fun ContactsSection(

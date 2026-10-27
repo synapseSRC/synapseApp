@@ -26,37 +26,14 @@ class NetworkMonitor(
 ) {
     companion object {
         private const val TAG = "NetworkMonitor"
-        private const val POLL_INTERVAL_MS = 30_000L
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var pollJob: Job? = null
 
     private val _isOnline = MutableStateFlow(true)
     val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
-
-    fun startPolling() {
-        if (pollJob?.isActive == true) return
-        pollJob = scope.launch {
-            while (isActive) {
-                delay(POLL_INTERVAL_MS)
-                // Platforms that inject real connectivity events don't need this;
-                // it's a safety net to re-trigger sync if events were missed.
-                if (_isOnline.value) {
-                    syncManager?.onNetworkReconnected()
-                }
-            }
-        }
-        Napier.d("Network polling started", tag = TAG)
-    }
-
-    fun stopPolling() {
-        pollJob?.cancel()
-        pollJob = null
-        Napier.d("Network polling stopped", tag = TAG)
-    }
 
     // ── Called by platform connectivity callbacks ─────────────────────────
 

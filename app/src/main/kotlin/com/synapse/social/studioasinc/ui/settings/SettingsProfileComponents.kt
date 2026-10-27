@@ -48,7 +48,6 @@ fun ProfileHeaderCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             Box(
                 modifier = Modifier.size(Sizes.AvatarSemiLarge)
             ) {
@@ -72,7 +71,6 @@ fun ProfileHeaderCard(
 
             Spacer(modifier = Modifier.width(Spacing.space16))
 
-
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.Start,
@@ -93,72 +91,3 @@ fun ProfileHeaderCard(
     }
 }
 
-
-
-@Composable
-fun SettingsInfoItem(
-    title: String,
-    value: String,
-    icon: ImageVector? = null,
-    onCopy: (() -> Unit)? = null
-) {
-    val modifier = if (onCopy != null) {
-        Modifier
-            .clickable(onClick = onCopy)
-            .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
-            )
-    } else {
-        Modifier
-            .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
-            )
-    }
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.space16),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(Sizes.IconLarge),
-                    tint = SettingsColors.itemIcon
-                )
-            }
-
-            Column {
-                Text(
-                    text = title,
-                    style = SettingsTypography.itemTitle,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (value.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(Spacing.space4))
-                    Text(
-                        text = value,
-                        style = SettingsTypography.itemSubtitle,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        if (onCopy != null) {
-             Icon(
-                imageVector = Icons.Filled.ContentCopy,
-                contentDescription = "Copy",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}

@@ -118,7 +118,6 @@ class CreatePostViewModel @Inject constructor(
     private val submitPostUseCase: SubmitPostUseCase,
     private val scheduledPostRepository: ScheduledPostRepository
 ) : AndroidViewModel(application) {
-
     private val authService = SupabaseAuthenticationService()
 
     private val _uiState = MutableStateFlow(CreatePostUiState())
@@ -240,14 +239,6 @@ class CreatePostViewModel @Inject constructor(
         _uiState.update { it.copy(threadPosts = currentThreads) }
     }
 
-    fun removeThreadPost(index: Int) {
-        val currentThreads = _uiState.value.threadPosts.toMutableList()
-        if (index in currentThreads.indices) {
-            currentThreads.removeAt(index)
-            _uiState.update { it.copy(threadPosts = currentThreads) }
-        }
-    }
-
     fun updateThreadPostText(index: Int, text: String) {
         val currentThreads = _uiState.value.threadPosts.toMutableList()
         if (index in currentThreads.indices) {
@@ -287,27 +278,6 @@ class CreatePostViewModel @Inject constructor(
         }
     }
 
-    fun updateThreadMediaItem(postIndex: Int, mediaIndex: Int, uri: Uri) {
-        val currentThreads = _uiState.value.threadPosts.toMutableList()
-        if (postIndex in currentThreads.indices) {
-            val currentMedia = currentThreads[postIndex].mediaItems.toMutableList()
-            if (mediaIndex in currentMedia.indices) {
-                val context = getApplication<Application>()
-                UriUtils.getPathFromUri(context, uri)?.let { path ->
-                    val oldItem = currentMedia[mediaIndex]
-                    val newItem = oldItem.copy(
-                        url = path,
-                        mimeType = context.contentResolver.getType(uri)
-                    )
-                    currentMedia[mediaIndex] = newItem
-                    currentThreads[postIndex] = currentThreads[postIndex].copy(mediaItems = currentMedia)
-                    _uiState.update { it.copy(threadPosts = currentThreads) }
-                }
-            }
-        }
-    }
-
-
     fun addTaggedPerson(user: User) {
         val current = _uiState.value.taggedPeople.toMutableList()
 
@@ -334,10 +304,6 @@ class CreatePostViewModel @Inject constructor(
 
     fun setFeelingActivity(feeling: FeelingActivity?) {
         _uiState.update { it.copy(feeling = feeling) }
-    }
-
-    fun setTextBackgroundColor(color: Long?) {
-        _uiState.update { it.copy(textBackgroundColor = color) }
     }
 
     fun addMedia(uris: List<Uri>) {
@@ -400,10 +366,6 @@ class CreatePostViewModel @Inject constructor(
 
     fun setPrivacy(privacy: String) {
         _uiState.update { it.copy(privacy = privacy) }
-    }
-
-    fun updateSettings(settings: PostSettings) {
-        _uiState.update { it.copy(settings = settings) }
     }
 
     fun setScheduledAt(scheduledAt: String?) {

@@ -24,17 +24,6 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 object SettingsColors {
-
-    val categoryIconTint: Color
-        @Composable
-        @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.primary
-
-    val categoryBackground: Color
-        @Composable
-        @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.primaryContainer
-
     val sectionTitle: Color
         @Composable
         @ReadOnlyComposable
@@ -65,16 +54,6 @@ object SettingsColors {
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.onErrorContainer
 
-    val toggleActive: Color
-        @Composable
-        @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.primary
-
-    val toggleTrack: Color
-        @Composable
-        @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.surfaceVariant
-
     val chevronIcon: Color
         @Composable
         @ReadOnlyComposable
@@ -97,7 +76,6 @@ object SettingsColors {
 }
 
 object SettingsShapes {
-
     val cardShape: Shape
         @Composable
         @ReadOnlyComposable
@@ -127,33 +105,9 @@ object SettingsShapes {
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.small
-
-    private val scallopedPolygon = RoundedPolygon(
-        numVertices = 8,
-        radius = 0.5f,
-        centerX = 0.5f,
-        centerY = 0.5f,
-        rounding = CornerRounding(0.5f)
-    )
-
-    val scallopedShape: Shape = object : Shape {
-        override fun createOutline(
-            size: Size,
-            layoutDirection: LayoutDirection,
-            density: Density
-        ): Outline {
-            val path = scallopedPolygon.toPath().asComposePath()
-            val matrix = Matrix().apply {
-                scale(size.width, size.height)
-            }
-            path.transform(matrix)
-            return Outline.Generic(path)
-        }
-    }
 }
 
 object SettingsSpacing {
-
     val screenPadding: Dp = Spacing.space16
 
     val sectionSpacing: Dp = Spacing.space12
@@ -169,11 +123,9 @@ object SettingsSpacing {
     val profileHeaderPadding: Dp = Spacing.space16
 
     val iconTextSpacing: Dp = Spacing.space16
-
 }
 
 object SettingsTypography {
-
     val screenTitle: TextStyle
         @Composable
         @ReadOnlyComposable
@@ -211,7 +163,6 @@ object SettingsTypography {
 }
 
 enum class SettingsItemPosition {
-
     Single,
 
     Top,

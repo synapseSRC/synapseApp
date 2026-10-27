@@ -68,9 +68,7 @@ class StoryCreatorViewModel @Inject constructor(
     private val getPostByIdUseCase: GetPostByIdUseCase,
     private val getUserByIdUseCase: com.synapse.social.studioasinc.domain.usecase.user.GetUserByIdUseCase
 ) : ViewModel() {
-
     companion object {
-        private const val MAX_VIDEO_DURATION_MS = 15_000L
     }
 
     private val _state = MutableStateFlow(StoryCreatorState())
@@ -112,59 +110,11 @@ class StoryCreatorViewModel @Inject constructor(
         }
     }
 
-    fun toggleFlash() {
-        _state.update { state ->
-            val newMode = when (state.flashMode) {
-                FlashMode.OFF -> FlashMode.ON
-                FlashMode.ON -> FlashMode.AUTO
-                FlashMode.AUTO -> FlashMode.OFF
-            }
-            state.copy(flashMode = newMode)
-        }
-    }
-
-    fun flipCamera() {
-        _state.update { it.copy(isFrontCamera = !it.isFrontCamera) }
-    }
-
     fun capturePhoto() {
         _state.update {
             it.copy(
                 capturedMediaUri = null,
                 mediaType = StoryMediaType.PHOTO
-            )
-        }
-    }
-
-    fun startVideoRecording() {
-        _state.update { it.copy(isRecording = true, recordingProgress = 0f) }
-
-        recordingJob = viewModelScope.launch {
-            val startTime = System.currentTimeMillis()
-
-            while (_state.value.isRecording) {
-                val elapsed = System.currentTimeMillis() - startTime
-                val progress = (elapsed.toFloat() / MAX_VIDEO_DURATION_MS).coerceIn(0f, 1f)
-
-                _state.update { it.copy(recordingProgress = progress) }
-
-                if (elapsed >= MAX_VIDEO_DURATION_MS) {
-                    stopVideoRecording()
-                    break
-                }
-
-                delay(50)
-            }
-        }
-    }
-
-    fun stopVideoRecording() {
-        recordingJob?.cancel()
-        recordingJob = null
-        _state.update {
-            it.copy(
-                isRecording = false,
-                mediaType = StoryMediaType.VIDEO
             )
         }
     }
@@ -182,15 +132,6 @@ class StoryCreatorViewModel @Inject constructor(
     fun undoDrawing() {
         _state.update { state ->
             state.copy(drawings = state.drawings.dropLast(1))
-        }
-    }
-
-    fun setCapturedMedia(uri: Uri, type: StoryMediaType) {
-        _state.update {
-            it.copy(
-                capturedMediaUri = uri,
-                mediaType = type
-            )
         }
     }
 
@@ -216,14 +157,6 @@ class StoryCreatorViewModel @Inject constructor(
         }
     }
 
-    fun removeTextOverlay(index: Int) {
-        _state.update { state ->
-            state.copy(
-                textOverlays = state.textOverlays.filterIndexed { i, _ -> i != index }
-            )
-        }
-    }
-
     fun updateTextPosition(index: Int, position: Offset) {
         _state.update { state ->
             state.copy(
@@ -244,19 +177,11 @@ class StoryCreatorViewModel @Inject constructor(
         }
     }
 
-
     fun addDrawing(path: DrawingPath) {
         _state.update { state ->
             state.copy(drawings = state.drawings + path)
         }
     }
-
-    fun clearDrawings() {
-        _state.update { state ->
-            state.copy(drawings = emptyList())
-        }
-    }
-
 
     fun addSticker(emoji: String) {
         _state.update { state ->
@@ -265,14 +190,6 @@ class StoryCreatorViewModel @Inject constructor(
                     emoji = emoji,
                     position = Offset(200f, 400f)
                 )
-            )
-        }
-    }
-
-    fun removeSticker(index: Int) {
-        _state.update { state ->
-            state.copy(
-                stickers = state.stickers.filterIndexed { i, _ -> i != index }
             )
         }
     }

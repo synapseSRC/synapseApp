@@ -42,8 +42,6 @@ data class MediaItem(
     val thumbnailUrl: String? = null
 )
 
-
-
 @Composable
 fun PhotoGrid(
     items: List<MediaItem>,
@@ -73,13 +71,9 @@ fun PhotoGrid(
                     animationDelay = (index % 9) * 50
                 )
             }
-
-
         }
     }
 }
-
-
 
 @Composable
 private fun AnimatedGridItem(
@@ -123,7 +117,6 @@ private fun AnimatedGridItem(
             .clip(RoundedCornerShape(Sizes.CornerSmall))
             .clickable { onClick() }
     ) {
-
         AsyncImage(
             model = item.thumbnailUrl ?: item.url,
             contentDescription = null,
@@ -134,9 +127,6 @@ private fun AnimatedGridItem(
             }
         )
 
-
-
-
         if (item.isVideo) {
             VideoIndicator(
                 modifier = Modifier
@@ -145,7 +135,6 @@ private fun AnimatedGridItem(
             )
         }
 
-
         if (item.isMultiple) {
             MultipleMediaIndicator(
                 modifier = Modifier
@@ -153,7 +142,6 @@ private fun AnimatedGridItem(
                     .padding(Spacing.space8)
             )
         }
-
 
         Box(
             modifier = Modifier
@@ -171,8 +159,6 @@ private fun AnimatedGridItem(
         )
     }
 }
-
-
 
 @Composable
 private fun VideoIndicator(modifier: Modifier = Modifier) {
@@ -192,8 +178,6 @@ private fun VideoIndicator(modifier: Modifier = Modifier) {
     }
 }
 
-
-
 @Composable
 private fun MultipleMediaIndicator(modifier: Modifier = Modifier) {
     Box(
@@ -211,34 +195,6 @@ private fun MultipleMediaIndicator(modifier: Modifier = Modifier) {
         )
     }
 }
-
-
-
-@Composable
-private fun ShimmerGridItem(animationDelay: Int = 0) {
-    var visible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(animationDelay.toLong())
-        visible = true
-    }
-
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 200),
-        label = "shimmerAlpha"
-    )
-
-    Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .graphicsLayer { this.alpha = alpha }
-            .clip(RoundedCornerShape(Sizes.CornerSmall))
-            .shimmer()
-    )
-}
-
-
 
 @Composable
 private fun PhotoGridEmptyState(modifier: Modifier = Modifier) {

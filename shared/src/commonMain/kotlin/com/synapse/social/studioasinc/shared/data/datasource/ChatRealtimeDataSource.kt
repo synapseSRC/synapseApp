@@ -48,24 +48,6 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     // share the same channel object so events are never dropped.
     private val activeTypingChannels = java.util.concurrent.ConcurrentHashMap<String, RealtimeChannel>()
 
-    private suspend fun getOrCreateTypingChannel(chatId: String): RealtimeChannel {
-        val channelId = "broadcast-typing-${chatId.trim().lowercase()}"
-        val channel = activeTypingChannels.getOrPut(channelId) { client.realtime.channel(channelId) }
-        if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
-            try { client.realtime.connect() } catch (e: Exception) { if (e is CancellationException) throw e }
-            var subscribed = false; var attempts = 0
-            while (!subscribed && attempts < 3) {
-                try { channel.subscribe(blockUntilSubscribed = true); subscribed = true }
-                catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    attempts++
-                    if (attempts < 3) delay(300L * attempts)
-                }
-            }
-        }
-        return channel
-    }
-
     suspend fun releaseTypingChannel(chatId: String) {
         val channelId = "broadcast-typing-${chatId.trim().lowercase()}"
         val channel = activeTypingChannels.remove(channelId) ?: return
@@ -74,7 +56,6 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             catch (e: Exception) { Napier.w("Error releasing typing channel $channelId: ${e.message}", tag = "Realtime") }
         }
     }
-
 
     // realtime.channel(id) returns the still-registered channel for a reused topic, so a restarted
     // subscription would share the old one and its async unsubscribe/removeChannel would silently

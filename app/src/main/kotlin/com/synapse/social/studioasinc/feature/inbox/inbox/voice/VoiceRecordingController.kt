@@ -282,18 +282,6 @@ class VoiceRecordingController(
         }
     }
 
-    private fun returnFromAbandonedSlide(currentState: VoiceState.Recording) {
-        gestureDirection = GestureDirection.Undecided
-        cumulativeX = 0f
-        cumulativeY = 0f
-        _state.value = currentState.copy(
-            slideOffsetPx = 0f,
-            dragOffsetYPx = 0f,
-            cancelProgress = 0f,
-            lockProgress = 0f
-        )
-    }
-
     private fun cancelRecording() {
         if (_state.value !is VoiceState.Recording && _state.value !is VoiceState.Locked) return
 
@@ -437,10 +425,6 @@ class VoiceRecordingController(
             voicePlayerManager.seekTo(positionMs)
             _state.value = currentState.copy(playbackPositionMs = positionMs)
         }
-    }
-
-    fun setSendHandler(handler: (File, Long, (Boolean, String?) -> Unit) -> Job?) {
-        this.onSendVoiceMessage = handler
     }
 
     private fun sendDraft() {

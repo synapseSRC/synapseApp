@@ -326,32 +326,4 @@ class ChatMessagingRepositoryImpl @Inject constructor(
             }
         }
     }
-
-    /**
-     * Get the other user's profile for a given chat.
-     */
-    suspend fun getChatParticipantProfile(chatId: String): User? = withContext(Dispatchers.IO) {
-        try {
-            val currentUserId = getCurrentUserId() ?: return@withContext null
-
-            val otherParticipants = client.from(TABLE_CHAT_PARTICIPANTS)
-                .select(columns = Columns.list(COL_USER_ID)) {
-                    filter {
-                        eq(COL_CHAT_ID, chatId)
-                        neq(COL_USER_ID, currentUserId)
-                    }
-                }.decodeList<ChatParticipantDto>()
-
-            val otherUserId = otherParticipants.firstOrNull()?.userId ?: return@withContext null
-
-            client.from(TABLE_USERS)
-                .select {
-                    filter { eq(COL_UID, otherUserId) }
-                    limit(1)
-                }.decodeSingleOrNull<User>()
-        } catch (e: Exception) {
-            Napier.e("Error fetching chat participant profile", e, tag = TAG)
-            null
-        }
-    }
 }

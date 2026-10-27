@@ -26,7 +26,6 @@ class CommentRepositoryImpl constructor(
     @Named("ApplicationScope") private val externalScope: CoroutineScope,
     private val reactionRepository: ReactionRepositoryImpl
 ) {
-
     companion object {
         private const val TAG = "CommentRepositoryImpl"
         private const val MAX_RETRIES = 3
@@ -147,31 +146,6 @@ class CommentRepositoryImpl constructor(
             Result.success(populatedReplies)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch paginated replies: ${e.message}", e)
-            Result.failure(Exception(mapSupabaseError(e)))
-        }
-    }
-
-    suspend fun getReplies(commentId: String): Result<List<CommentWithUser>> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Fetching replies for comment: $commentId")
-
-            val replies = remoteDataSource.fetchAllReplies(commentId)
-
-            Log.d(TAG, "Raw response size: ${replies.size}")
-
-            // Optimized: Bulk fetch reactions
-            val populatedReplies = reactionRepository.populateCommentReactions(replies)
-
-            Log.d(TAG, "Successfully parsed ${populatedReplies.size} replies")
-
-            val commentsToCache = populatedReplies.map {
-                CommentMapper.toSharedEntity(it.toComment(), it.user?.username, it.user?.avatar)
-            }
-            localDataSource.insertAll(commentsToCache)
-
-            Result.success(populatedReplies)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch paged comments: ${e.message}", e)
             Result.failure(Exception(mapSupabaseError(e)))
         }
     }
@@ -313,7 +287,6 @@ class CommentRepositoryImpl constructor(
             } else {
                  Result.failure(lastException ?: Exception("Failed to add comment"))
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Failed to add comment: ${e.message}", e)
             Result.failure(Exception(mapSupabaseError(e)))

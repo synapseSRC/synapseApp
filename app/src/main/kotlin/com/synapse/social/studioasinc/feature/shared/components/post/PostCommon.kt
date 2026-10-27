@@ -9,8 +9,6 @@ import com.synapse.social.studioasinc.data.model.UserProfile
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-
-
 object PostUiMapper {
     /**
      * Maximum depth for nested comments to prevent performance degradation.
@@ -19,7 +17,6 @@ object PostUiMapper {
     private const val MAX_COMMENT_DEPTH = 10
 
     fun toPostCardState(post: Post, currentProfile: UserProfile? = null, isExpanded: Boolean = false): PostCardState {
-
         val resolvedUsername = when {
             !post.username.isNullOrBlank() -> post.username
             currentProfile?.id == post.authorUid -> currentProfile.username
@@ -53,7 +50,6 @@ object PostUiMapper {
         )
 
         val mediaUrls = post.mediaItems?.mapNotNull { it.url } ?: listOfNotNull(post.postImage)
-
 
         val mappedPollOptions = post.pollOptions?.mapIndexed { index, option ->
             PollOption(
@@ -204,18 +200,13 @@ object PostUiMapper {
     }
 }
 
-
-
 sealed class PostEvent {
     data class Liked(val postId: String, val isLiked: Boolean, val newLikeCount: Int) : PostEvent()
-    data class PollVoted(val postId: String, val optionIndex: Int, val pollOptions: List<com.synapse.social.studioasinc.domain.model.PollOption>, val userVote: Int?) : PostEvent()
     data class Deleted(val postId: String) : PostEvent()
     data class Updated(val post: Post) : PostEvent()
     data class Created(val post: Post) : PostEvent()
     data class Error(val message: String) : PostEvent()
 }
-
-
 
 object PostEventBus {
     private val _events = MutableSharedFlow<PostEvent>(extraBufferCapacity = 64)
@@ -225,8 +216,6 @@ object PostEventBus {
         _events.tryEmit(event)
     }
 }
-
-
 
 @Stable
 data class PostActions(
