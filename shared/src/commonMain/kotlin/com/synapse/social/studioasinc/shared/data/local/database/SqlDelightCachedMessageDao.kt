@@ -315,16 +315,18 @@ class SqlDelightCachedMessageDao(
         val isForwarded = parsedMetadata?.forwarded != null
         val forwardedFromMessageId = parsedMetadata?.forwarded?.originalMessageId
 
+        val isDeletedMessage = cached.is_deleted == 1L || contentStatus == ContentStatus.DELETED
+
         return Message(
             id = cached.id,
             chatId = cached.chat_id,
             senderId = cached.sender_id,
-            content = cached.content,
+            content = if (isDeletedMessage) "" else cached.content,
             messageType = finalMessageType,
-            mediaUrl = resolvedMediaUrl,
+            mediaUrl = if (isDeletedMessage) null else resolvedMediaUrl,
             deliveryStatus = deliveryStatus,
             contentStatus = contentStatus,
-            isDeleted = cached.is_deleted == 1L || contentStatus == ContentStatus.DELETED,
+            isDeleted = isDeletedMessage,
             isEdited = cached.is_edited == 1L || contentStatus == ContentStatus.EDITED,
             isForwarded = isForwarded,
             replyToId = cached.reply_to_id,
@@ -340,9 +342,9 @@ class SqlDelightCachedMessageDao(
             readBy = readByList,
             reactions = emptyMap(),
             userReaction = null,
-            attachments = attachmentsList,
+            attachments = if (isDeletedMessage) emptyList() else attachmentsList,
             mediaGroupId = attachmentsList.firstOrNull()?.mediaGroupId,
-            metadataContainer = parsedMetadata
+            metadataContainer = if (isDeletedMessage) null else parsedMetadata
         )
     }
 

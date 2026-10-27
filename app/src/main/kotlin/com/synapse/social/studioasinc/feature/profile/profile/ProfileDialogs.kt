@@ -19,20 +19,17 @@ internal fun ProfileMoreMenuSection(
     effectiveIsOwnProfile: Boolean,
     profile: com.synapse.social.studioasinc.data.model.UserProfile?,
     context: Context,
-    profileLinkLabel: String,
-    postLinkLabel: String,
     onNavigateToSettings: () -> Unit
 ) {
     if (state.showMoreMenu) {
         ProfileMoreMenuBottomSheet(
             isOwnProfile = effectiveIsOwnProfile,
-            onDismiss = { viewModel.toggleMoreMenu() },
-            onShareProfile = { viewModel.showShareSheet() },
+            onDismiss = { viewModel.hideMoreMenu() },
+            onShareProfile = { shareProfile(context, profile?.username) },
             onViewAs = { viewModel.showViewAsSheet() },
             onLockProfile = {
                 viewModel.showLockProfileScreen()
             },
-            onQrCode = { viewModel.showQrCode() },
             onSettings = onNavigateToSettings,
             onBlockUser = {
                 profile?.let { viewModel.blockUser(it.id) }
@@ -45,45 +42,22 @@ internal fun ProfileMoreMenuSection(
     }
 }
 
-@Composable
-internal fun ShareProfileSection(
-    state: ProfileScreenState,
-    viewModel: ProfileViewModel,
-    profile: com.synapse.social.studioasinc.data.model.UserProfile?,
-    context: Context,
-    profileLinkLabel: String
-) {
-    if (state.showShareSheet) {
-        ShareProfileBottomSheet(
-            onDismiss = { viewModel.hideShareSheet() },
-            onCopyLink = {
-                val username = profile?.username ?: ""
-                val url = "${BuildConfig.APP_DOMAIN}/profile/$username"
-                val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-                val clip = android.content.ClipData.newPlainText(profileLinkLabel, url)
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, context.getString(R.string.toast_link_copied), Toast.LENGTH_SHORT).show()
-                viewModel.hideShareSheet()
-            },
-            onShareToStory = {
-                Toast.makeText(context, context.getString(R.string.toast_share_story_soon), Toast.LENGTH_SHORT).show()
-                viewModel.hideShareSheet()
-            },
-            onShareViaMessage = {
-                Toast.makeText(context, context.getString(R.string.toast_share_message_soon), Toast.LENGTH_SHORT).show()
-                viewModel.hideShareSheet()
-            },
-            onShareExternal = {
-                val username = profile?.username ?: ""
-                val url = "${BuildConfig.APP_DOMAIN}/profile/$username"
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_profile_text, url))
-                }
-                context.startActivity(Intent.createChooser(intent, context.getString(R.string.title_share_profile)))
-                viewModel.hideShareSheet()
-            }
-        )
+private const val PROFILE_LINK_FALLBACK_DOMAIN = "https://synapseofficial.vercel.app"
+
+private fun shareProfile(context: Context, username: String?) {
+    if (username.isNullOrBlank()) {
+        Toast.makeText(context, R.string.profile_menu_share_unavailable, Toast.LENGTH_SHORT).show()
+        return
+    }
+    val domain = BuildConfig.APP_DOMAIN.ifBlank { PROFILE_LINK_FALLBACK_DOMAIN }.trimEnd('/')
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_profile_text, "$domain/profile/$username"))
+    }
+    try {
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.title_share_profile)))
+    } catch (e: android.content.ActivityNotFoundException) {
+        Toast.makeText(context, R.string.profile_menu_share_unavailable, Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -137,21 +111,6 @@ internal fun UserSearchSection(
             },
             searchResults = state.searchResults,
             isSearching = state.isSearching
-        )
-    }
-}
-
-@Composable
-internal fun QRCodeSection(
-    state: ProfileScreenState,
-    viewModel: ProfileViewModel,
-    profile: com.synapse.social.studioasinc.data.model.UserProfile?
-) {
-    if (state.showQrCode) {
-        QRCodeDialog(
-            profileUrl = "${BuildConfig.APP_DOMAIN}/profile/${profile?.username ?: ""}",
-            username = profile?.username ?: "",
-            onDismiss = { viewModel.hideQrCode() }
         )
     }
 }

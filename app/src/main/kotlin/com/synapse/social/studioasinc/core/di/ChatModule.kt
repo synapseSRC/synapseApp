@@ -247,6 +247,10 @@ object ChatModule {
 
     @Provides
     @Singleton
+    fun provideBulkDeleteMessagesUseCase(chatRepository: ChatRepository): BulkDeleteMessagesUseCase = BulkDeleteMessagesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
     fun provideBulkDeleteMessagesForMeUseCase(chatRepository: ChatRepository): BulkDeleteMessagesForMeUseCase = BulkDeleteMessagesForMeUseCase(chatRepository)
 
     @Provides
@@ -343,6 +347,7 @@ object ChatModule {
         editMessageUseCase: EditMessageUseCase,
         deleteMessageUseCase: DeleteMessageUseCase,
         deleteMessageForMeUseCase: DeleteMessageForMeUseCase,
+        bulkDeleteMessagesUseCase: BulkDeleteMessagesUseCase,
         bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase,
         populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
         currentUserIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCurrentUserIdUseCase,
@@ -354,6 +359,7 @@ object ChatModule {
         editMessageUseCase = editMessageUseCase,
         deleteMessageUseCase = deleteMessageUseCase,
         deleteMessageForMeUseCase = deleteMessageForMeUseCase,
+        bulkDeleteMessagesUseCase = bulkDeleteMessagesUseCase,
         bulkDeleteMessagesForMeUseCase = bulkDeleteMessagesForMeUseCase,
         populateMessageReactionsUseCase = populateMessageReactionsUseCase,
         currentUserIdUseCase = currentUserIdUseCase,

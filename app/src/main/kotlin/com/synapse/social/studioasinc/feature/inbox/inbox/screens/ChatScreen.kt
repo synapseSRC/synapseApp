@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.media.VoicePlayerManager
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
+import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
@@ -81,6 +82,7 @@ import kotlinx.coroutines.withContext
         onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
         onNavigateToChatSettings: (String) -> Unit = {},
         onNavigateToChatSearch: (String) -> Unit = {},
+        onStartCall: (CallLaunchRequest) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
@@ -143,11 +145,35 @@ val currentUserId = currentUserIdState ?: ""
             else com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(it)
         }
 
+    val launchCall: (Boolean) -> Unit = { isVideo ->
+        val peerId = participantId
+        if (peerId != null) {
+            onStartCall(
+                CallLaunchRequest(
+                    participantId = peerId,
+                    participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
+                        ?: participantProfile?.name?.takeIf { it.isNotBlank() }
+                        ?: participantProfile?.username?.takeIf { it.isNotBlank() }
+                        ?: initialParticipantName?.takeIf { it.isNotBlank() }
+                        ?: peerId,
+                    participantAvatarUrl = participantAvatarUrl,
+                    chatId = resolvedChatId?.takeIf { it.isNotBlank() && it != "new" },
+                    isVideo = isVideo
+                )
+            )
+        }
+    }
+
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
     var batchGalleryMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
     var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
+    var showDeleteSelectedDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+
+    LaunchedEffect(selectedMessageIds) {
+        if (selectedMessageIds.isEmpty()) showDeleteSelectedDialog = false
+    }
 
     val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
         LazyListState(0, 0)
@@ -401,18 +427,15 @@ val currentUserId = currentUserIdState ?: ""
                 isMuted = isMuted,
                 isMuteUpdating = isMuteUpdating,
                 onClearSelection = viewModel::clearSelection,
-                onDeleteSelectedMessages = viewModel::deleteSelectedMessages,
+                onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
                 onNavigateBack = onNavigateBack,
                 onSummarizeChat = viewModel::summarizeChat,
                 onNavigateToGroupInfo = onNavigateToGroupInfo,
                 onNavigateToChatInfo = onNavigateToChatInfo,
                 onOpenDisappearingMessages = { showDisappearingModeDialog = true },
-                onStartVoiceCall = {
-                    Toast.makeText(context, "Voice call - Coming soon", Toast.LENGTH_SHORT).show()
-                },
-                onStartVideoCall = {
-                    Toast.makeText(context, "Video call - Coming soon", Toast.LENGTH_SHORT).show()
-                },
+                onStartVoiceCall = { launchCall(false) },
+                onStartVideoCall = { launchCall(true) },
+                showCallActions = participantId != null && !isGroupChat,
                 onNewGroup = onNavigateToNewGroup,
                 onSearchInChat = { onNavigateToChatSearch(chatId) },
                 onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
@@ -573,6 +596,7 @@ typingStatus = typingStatus,
 
             DeleteMessageDialog(
                 message = showDeleteMessageDialog,
+                canDeleteForEveryone = showDeleteMessageDialog?.senderId == currentUserId,
                 onDismissRequest = { showDeleteMessageDialog = null },
                 onDeleteForMe = { message ->
                     showDeleteMessageDialog = null
@@ -583,6 +607,24 @@ typingStatus = typingStatus,
                     viewModel.deleteMessage(message)
                 }
             )
+
+            if (showDeleteSelectedDialog) {
+                val selectedMessages = messages.filter { it.id in selectedMessageIds }
+                DeleteSelectedMessagesDialog(
+                    messageCount = selectedMessageIds.size,
+                    canDeleteForEveryone = selectedMessages.isNotEmpty() &&
+                        selectedMessages.all { it.senderId == currentUserId },
+                    onDismissRequest = { showDeleteSelectedDialog = false },
+                    onDeleteForMe = {
+                        showDeleteSelectedDialog = false
+                        viewModel.deleteSelectedMessagesForMe()
+                    },
+                    onDeleteForEveryone = {
+                        showDeleteSelectedDialog = false
+                        viewModel.deleteSelectedMessagesForEveryone()
+                    }
+                )
+            }
 
             if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {
                 VoiceRecordingAmbientGlow(

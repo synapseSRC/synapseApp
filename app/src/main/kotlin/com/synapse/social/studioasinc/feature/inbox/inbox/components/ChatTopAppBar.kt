@@ -21,6 +21,7 @@ import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithSt
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
+import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.User
@@ -50,6 +51,7 @@ fun ChatTopAppBar(
     onOpenDisappearingMessages: () -> Unit,
     onStartVoiceCall: () -> Unit = {},
     onStartVideoCall: () -> Unit = {},
+    showCallActions: Boolean = true,
     onNewGroup: () -> Unit = {},
     onSearchInChat: () -> Unit = {},
     onOpenMediaLinksAndDocs: () -> Unit = {},
@@ -75,8 +77,16 @@ fun ChatTopAppBar(
             },
             actions = {
                 IconButton(onClick = {
-                    val selectedContent = messages.filter { it.id in selectedMessageIds }.joinToString("\n") { it.content }
-                    clipboard.setText(AnnotatedString(selectedContent))
+                    val selectedContent = messages
+                        .filter {
+                            it.id in selectedMessageIds &&
+                                !it.isDeleted &&
+                                it.contentStatus != ContentStatus.DELETED
+                        }
+                        .joinToString("\n") { it.content }
+                    if (selectedContent.isNotBlank()) {
+                        clipboard.setText(AnnotatedString(selectedContent))
+                    }
                     onClearSelection()
                 }) {
                     Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
@@ -149,17 +159,19 @@ fun ChatTopAppBar(
                 }
             },
             actions = {
-                IconButton(onClick = onStartVoiceCall) {
-                    Icon(
-                        Icons.Default.Call,
-                        contentDescription = stringResource(R.string.chat_action_voice_call)
-                    )
-                }
-                IconButton(onClick = onStartVideoCall) {
-                    Icon(
-                        Icons.Default.Videocam,
-                        contentDescription = stringResource(R.string.chat_action_video_call)
-                    )
+                if (showCallActions) {
+                    IconButton(onClick = onStartVoiceCall) {
+                        Icon(
+                            Icons.Default.Call,
+                            contentDescription = stringResource(R.string.chat_action_voice_call)
+                        )
+                    }
+                    IconButton(onClick = onStartVideoCall) {
+                        Icon(
+                            Icons.Default.Videocam,
+                            contentDescription = stringResource(R.string.chat_action_video_call)
+                        )
+                    }
                 }
                 ChatOverflowMenu(
                     isMuted = isMuted,

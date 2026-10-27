@@ -34,8 +34,7 @@ class ChatInputDelegate(
     private val isE2EEReadyProvider: () -> Boolean,
     private val disappearingModeProvider: () -> DisappearingMode,
     private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
-    private val isScreenVisibleProvider: () -> Boolean = { true },
-    private val onChatRefreshRequired: () -> Unit
+    private val isScreenVisibleProvider: () -> Boolean = { true }
 ) {
     // A stop is matched by identity, so new input cannot inherit an in-flight attempt.
     private class PendingStop {
@@ -280,14 +279,25 @@ class ChatInputDelegate(
         _selectedMessageIds.value = emptySet()
     }
 
-    fun deleteSelectedMessages() {
+    fun deleteSelectedMessagesForMe() {
         val selectedIds = _selectedMessageIds.value.toList()
-        _selectedMessageIds.value = emptySet()
+        if (selectedIds.isEmpty()) return
 
-        messagingDelegate.deleteSelectedMessages(
+        messagingDelegate.deleteSelectedMessagesForMe(
             selectedIds = selectedIds,
             onError = { _error.value = "Failed to delete messages: $it" },
-            onRequiresRefresh = onChatRefreshRequired
+            onSuccess = { _selectedMessageIds.value = emptySet() }
+        )
+    }
+
+    fun deleteSelectedMessagesForEveryone() {
+        val selectedIds = _selectedMessageIds.value.toList()
+        if (selectedIds.isEmpty()) return
+
+        messagingDelegate.deleteSelectedMessagesForEveryone(
+            selectedIds = selectedIds,
+            onError = { _error.value = "Failed to delete messages: $it" },
+            onSuccess = { _selectedMessageIds.value = emptySet() }
         )
     }
 

@@ -258,7 +258,12 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
         withContext(AppDispatchers.IO) {
             try {
                 client.postgrest.from("messages").update({
+                    // Delete-for-everyone must not leave the payload readable to participants.
                     set("is_deleted", true)
+                    set("content", "")
+                    set("media_url", null as String?)
+                    set("metadata", null as String?)
+                    set("attachments", null as String?)
                 }) {
                     filter { eq("id", messageId) }
                 }
@@ -273,6 +278,10 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             try {
                 client.postgrest.from("messages").update({
                     set("is_deleted", true)
+                    set("content", "")
+                    set("media_url", null as String?)
+                    set("metadata", null as String?)
+                    set("attachments", null as String?)
                 }) {
                     filter { isIn("id", messageIds) }
                 }

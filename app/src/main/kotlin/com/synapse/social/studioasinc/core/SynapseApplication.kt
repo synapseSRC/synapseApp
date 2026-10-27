@@ -25,6 +25,7 @@ import com.synapse.social.studioasinc.core.util.MediaCacheCleanupManager
 import com.synapse.social.studioasinc.core.util.SupabaseStorageImageInterceptor
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.feature.shared.theme.ThemeManager
+import com.synapse.social.studioasinc.feature.settings.backup.SettingsCloudSyncScheduler
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StartPresenceTrackingUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StopPresenceTrackingUseCase
@@ -86,6 +87,7 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
     @Inject lateinit var startPresenceTrackingUseCase: StartPresenceTrackingUseCase
     @Inject lateinit var stopPresenceTrackingUseCase: StopPresenceTrackingUseCase
     @Inject lateinit var updatePresenceUseCase: UpdatePresenceUseCase
+    @Inject lateinit var settingsCloudSyncScheduler: SettingsCloudSyncScheduler
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -124,6 +126,7 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
 
         setupAuthSessionObserver()
 
+        settingsCloudSyncScheduler.start()
 
         initializeMaintenanceServices()
 
@@ -141,6 +144,7 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
             override fun onStart(owner: LifecycleOwner) {
                 isAppInForeground = true
                 managePresenceTracking()
+                settingsCloudSyncScheduler.requestSyncIfEligible()
                 // Reconnect Realtime on foreground resume (e.g. after screen-off/Doze)
                 if (isAuthenticated) {
                     applicationScope.launch(Dispatchers.IO) {

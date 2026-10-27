@@ -5,13 +5,14 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.util.AtomicFile
-import androidx.datastore.preferences.core.Preferences
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -21,6 +22,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.security.MessageDigest
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -80,6 +82,7 @@ class SettingsBackupManager @Inject constructor(
     private val syncMetadata by lazy {
         context.getSharedPreferences("settings_backup_sync_metadata", Context.MODE_PRIVATE)
     }
+    private val syncMutex = Mutex()
 
     fun isCloudConfigured(): Boolean = SupabaseClient.isConfigured()
 
@@ -101,13 +104,23 @@ class SettingsBackupManager @Inject constructor(
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
-    fun observeSettings(): kotlinx.coroutines.flow.Flow<Preferences> =
-        settingsDataStore.observePreferencesForBackup()
-
     fun lastSuccessfulSyncAt(userId: String): Long? {
         val value = syncMetadata.getLong(lastSyncKey(userId), 0L)
         return value.takeIf { it > 0L }
     }
+
+    fun hasCloudBaseline(userId: String): Boolean = syncBaselineFile(userId).exists()
+
+    suspend fun currentBackup(): Result<SettingsBackup> = capture {
+        withContext(Dispatchers.IO) { captureCurrentBackup() }
+    }
+
+    suspend fun hasChangesSinceBaseline(userId: String): Boolean = capture {
+        withContext(Dispatchers.IO) {
+            val baseline = loadSyncBaseline(userId) ?: return@withContext false
+            captureCurrentBackup().settings != baseline.settings
+        }
+    }.getOrDefault(false)
 
     suspend fun createLocalBackup(): Result<SettingsBackupMetadata> = capture {
         withContext(Dispatchers.IO) {
@@ -166,111 +179,131 @@ class SettingsBackupManager @Inject constructor(
 
     suspend fun uploadCurrentSettingsToCloud(): Result<SettingsBackup> = capture {
         withContext(Dispatchers.IO) {
-            requireOnline()
-            val userId = requireCurrentUserId()
-            val backup = captureCurrentBackup()
-            saveLocalBackup(backup)
-            ensureSameAccount(userId)
-            writeCloudRecord(userId, backup)
-            ensureSameAccount(userId)
-            saveSyncBaseline(userId, backup)
-            markSuccessfulSync(userId)
-            backup
+            syncMutex.withLock {
+                requireOnline()
+                val userId = requireCurrentUserId()
+                val backup = captureCurrentBackup()
+                saveLocalBackup(backup)
+                ensureSameAccount(userId)
+                writeCloudRecord(userId, backup)
+                ensureSameAccount(userId)
+                saveSyncBaseline(userId, backup)
+                markSuccessfulSync(userId)
+                backup
+            }
         }
     }
 
     suspend fun restoreCloudBackup(userId: String, backup: SettingsBackup, expectedRevision: String): Result<Unit> = capture {
         withContext(Dispatchers.IO) {
-            requireOnline()
-            ensureSameAccount(userId)
-            val localBeforeRestore = captureCurrentBackup()
-            val currentCloud = fetchCloudRecord(userId)
-            if (currentCloud?.updatedAt != expectedRevision || currentCloud.backup.settings != backup.settings) {
-                throw SettingsBackupCloudChangedException()
+            syncMutex.withLock {
+                requireOnline()
+                ensureSameAccount(userId)
+                val localBeforeRestore = captureCurrentBackup()
+                val currentCloud = fetchCloudRecord(userId)
+                if (currentCloud?.updatedAt != expectedRevision || currentCloud.backup.settings != backup.settings) {
+                    throw SettingsBackupCloudChangedException()
+                }
+                ensureSameAccount(userId)
+                applyBackupIfLocalUnchanged(localBeforeRestore, backup)
+                ensureSameAccount(userId)
+                saveLocalBackup(backup)
+                saveSyncBaseline(userId, backup)
+                markSuccessfulSync(userId)
             }
-            ensureSameAccount(userId)
-            applyBackupIfLocalUnchanged(localBeforeRestore, backup)
-            ensureSameAccount(userId)
-            saveLocalBackup(backup)
-            saveSyncBaseline(userId, backup)
-            markSuccessfulSync(userId)
         }
     }
 
     suspend fun syncCloudSettings(): Result<CloudSettingsSyncOutcome> = capture {
         withContext(Dispatchers.IO) {
-            requireOnline()
-            val userId = requireCurrentUserId()
-            val localBackup = captureCurrentBackup()
-            val cloudRecord = fetchCloudRecord(userId)
-            ensureSameAccount(userId)
+            syncMutex.withLock {
+                requireOnline()
+                val userId = requireCurrentUserId()
+                val localBackup = captureCurrentBackup()
+                val cloudRecord = fetchCloudRecord(userId)
+                ensureSameAccount(userId)
 
-            if (cloudRecord == null) return@withContext CloudSettingsSyncOutcome.NoCloudBackup
+                if (cloudRecord == null) return@withLock CloudSettingsSyncOutcome.NoCloudBackup
 
-            val baseline = loadSyncBaseline(userId)
-            val cloudBackup = cloudRecord.backup
-            if (baseline == null) {
-                if (localBackup.settings == cloudBackup.settings) {
-                    saveSyncBaseline(userId, cloudBackup)
-                    markSuccessfulSync(userId)
-                    return@withContext CloudSettingsSyncOutcome.Synchronized(cloudBackup)
-                }
-                return@withContext CloudSettingsSyncOutcome.Conflict(
-                    SettingsBackupConflict(userId, localBackup, cloudBackup, cloudRecord.updatedAt)
-                )
-            }
-
-            val localChanged = localBackup.settings != baseline.settings
-            val cloudChanged = cloudBackup.settings != baseline.settings
-            if (localBackup.settings == cloudBackup.settings) {
-                saveSyncBaseline(userId, cloudBackup)
-                markSuccessfulSync(userId)
-                return@withContext CloudSettingsSyncOutcome.Synchronized(cloudBackup)
-            }
-
-            when {
-                localChanged && !cloudChanged -> {
-                    val updated = updateCloudRecordIfRevisionMatches(userId, cloudRecord.updatedAt, localBackup)
-                    if (!updated) {
-                        val latest = fetchCloudRecord(userId)
-                        val currentLocal = captureCurrentBackup()
-                        CloudSettingsSyncOutcome.Conflict(
-                            SettingsBackupConflict(userId, currentLocal, latest?.backup, latest?.updatedAt)
-                        )
-                    } else {
-                        ensureSameAccount(userId)
-                        saveSyncBaseline(userId, localBackup)
-                        markSuccessfulSync(userId)
-                        CloudSettingsSyncOutcome.Synchronized(localBackup)
-                    }
-                }
-                !localChanged && cloudChanged -> {
-                    try {
-                        applyBackupIfLocalUnchanged(localBackup, cloudBackup)
-                    } catch (_: SettingsBackupLocalChangedException) {
-                        val latest = fetchCloudRecord(userId)
-                        val currentLocal = captureCurrentBackup()
-                        return@withContext CloudSettingsSyncOutcome.Conflict(
-                            SettingsBackupConflict(userId, currentLocal, latest?.backup, latest?.updatedAt)
-                        )
-                    }
-                    val latest = fetchCloudRecord(userId)
-                    ensureSameAccount(userId)
-                    if (latest == null || latest.updatedAt != cloudRecord.updatedAt || latest.backup.settings != cloudBackup.settings) {
-                        val currentLocal = captureCurrentBackup()
-                        CloudSettingsSyncOutcome.Conflict(
-                            SettingsBackupConflict(userId, currentLocal, latest?.backup, latest?.updatedAt)
-                        )
-                    } else {
+                val baseline = loadSyncBaseline(userId)
+                val cloudBackup = cloudRecord.backup
+                if (baseline == null) {
+                    if (localBackup.settings == cloudBackup.settings) {
                         saveLocalBackup(cloudBackup)
                         saveSyncBaseline(userId, cloudBackup)
                         markSuccessfulSync(userId)
-                        CloudSettingsSyncOutcome.Synchronized(cloudBackup)
+                        return@withLock CloudSettingsSyncOutcome.Synchronized(cloudBackup)
                     }
+                    return@withLock CloudSettingsSyncOutcome.Conflict(
+                        SettingsBackupConflict(userId, localBackup, cloudBackup, cloudRecord.updatedAt)
+                    )
                 }
-                else -> CloudSettingsSyncOutcome.Conflict(
-                    SettingsBackupConflict(userId, localBackup, cloudBackup, cloudRecord.updatedAt)
-                )
+
+                val localChanged = localBackup.settings != baseline.settings
+                val cloudChanged = cloudBackup.settings != baseline.settings
+                if (localBackup.settings == cloudBackup.settings) {
+                    saveLocalBackup(cloudBackup)
+                    saveSyncBaseline(userId, cloudBackup)
+                    markSuccessfulSync(userId)
+                    return@withLock CloudSettingsSyncOutcome.Synchronized(cloudBackup)
+                }
+
+                when {
+                    localChanged && !cloudChanged -> {
+                        val updated = updateCloudRecordIfRevisionMatches(userId, cloudRecord.updatedAt, localBackup)
+                        if (!updated) {
+                            val latest = fetchCloudRecord(userId)
+                            CloudSettingsSyncOutcome.Conflict(
+                                SettingsBackupConflict(userId, captureCurrentBackup(), latest?.backup, latest?.updatedAt)
+                            )
+                        } else {
+                            ensureSameAccount(userId)
+                            saveLocalBackup(localBackup)
+                            saveSyncBaseline(userId, localBackup)
+                            markSuccessfulSync(userId)
+                            CloudSettingsSyncOutcome.Synchronized(localBackup)
+                        }
+                    }
+                    !localChanged && cloudChanged -> {
+                        val confirmedCloud = fetchCloudRecord(userId)
+                        ensureSameAccount(userId)
+                        if (confirmedCloud == null ||
+                            confirmedCloud.updatedAt != cloudRecord.updatedAt ||
+                            confirmedCloud.backup.settings != cloudBackup.settings
+                        ) {
+                            return@withLock CloudSettingsSyncOutcome.Conflict(
+                                SettingsBackupConflict(userId, localBackup, confirmedCloud?.backup, confirmedCloud?.updatedAt)
+                            )
+                        }
+                        try {
+                            applyBackupIfLocalUnchanged(localBackup, confirmedCloud.backup)
+                        } catch (_: SettingsBackupLocalChangedException) {
+                            val latest = fetchCloudRecord(userId)
+                            return@withLock CloudSettingsSyncOutcome.Conflict(
+                                SettingsBackupConflict(userId, captureCurrentBackup(), latest?.backup, latest?.updatedAt)
+                            )
+                        }
+                        val latest = fetchCloudRecord(userId)
+                        ensureSameAccount(userId)
+                        if (latest == null ||
+                            latest.updatedAt != confirmedCloud.updatedAt ||
+                            latest.backup.settings != confirmedCloud.backup.settings
+                        ) {
+                            val originalLocal = revertLocalIfUnchanged(confirmedCloud.backup, localBackup)
+                            CloudSettingsSyncOutcome.Conflict(
+                                SettingsBackupConflict(userId, originalLocal, latest?.backup, latest?.updatedAt)
+                            )
+                        } else {
+                            saveLocalBackup(confirmedCloud.backup)
+                            saveSyncBaseline(userId, confirmedCloud.backup)
+                            markSuccessfulSync(userId)
+                            CloudSettingsSyncOutcome.Synchronized(confirmedCloud.backup)
+                        }
+                    }
+                    else -> CloudSettingsSyncOutcome.Conflict(
+                        SettingsBackupConflict(userId, localBackup, cloudBackup, cloudRecord.updatedAt)
+                    )
+                }
             }
         }
     }
@@ -280,70 +313,71 @@ class SettingsBackupManager @Inject constructor(
         useCloudCopy: Boolean
     ): Result<CloudSettingsSyncOutcome> = capture {
         withContext(Dispatchers.IO) {
-            requireOnline()
-            ensureSameAccount(conflict.userId)
-            val latestCloud = fetchCloudRecord(conflict.userId)
-            ensureSameAccount(conflict.userId)
-            if (latestCloud?.updatedAt != conflict.cloudRevision) {
-                val currentLocal = captureCurrentBackup()
-                return@withContext CloudSettingsSyncOutcome.Conflict(
-                    SettingsBackupConflict(
-                        conflict.userId,
-                        currentLocal,
-                        latestCloud?.backup,
-                        latestCloud?.updatedAt
-                    )
-                )
-            }
-
-            val selected = if (useCloudCopy) {
-                val cloud = conflict.cloudBackup ?: throw InvalidSettingsBackupException()
-                try {
-                    applyBackupIfLocalUnchanged(conflict.localBackup, cloud)
-                } catch (_: SettingsBackupLocalChangedException) {
-                    val latest = fetchCloudRecord(conflict.userId)
-                    val currentLocal = captureCurrentBackup()
-                    return@withContext CloudSettingsSyncOutcome.Conflict(
-                        SettingsBackupConflict(conflict.userId, currentLocal, latest?.backup, latest?.updatedAt)
-                    )
-                }
-                val latest = fetchCloudRecord(conflict.userId)
+            syncMutex.withLock {
+                requireOnline()
                 ensureSameAccount(conflict.userId)
-                if (latest == null || latest.updatedAt != conflict.cloudRevision || latest.backup.settings != cloud.settings) {
+                val latestCloud = fetchCloudRecord(conflict.userId)
+                ensureSameAccount(conflict.userId)
+                if (latestCloud?.updatedAt != conflict.cloudRevision) {
                     val currentLocal = captureCurrentBackup()
-                    return@withContext CloudSettingsSyncOutcome.Conflict(
-                        SettingsBackupConflict(conflict.userId, currentLocal, latest?.backup, latest?.updatedAt)
+                    return@withLock CloudSettingsSyncOutcome.Conflict(
+                        SettingsBackupConflict(
+                            conflict.userId,
+                            currentLocal,
+                            latestCloud?.backup,
+                            latestCloud?.updatedAt
+                        )
                     )
                 }
-                saveLocalBackup(cloud)
-                cloud
-            } else {
-                val local = captureCurrentBackup()
-                if (local.settings != conflict.localBackup.settings) {
+
+                val selected = if (useCloudCopy) {
+                    val cloud = conflict.cloudBackup ?: throw InvalidSettingsBackupException()
+                    try {
+                        applyBackupIfLocalUnchanged(conflict.localBackup, cloud)
+                    } catch (_: SettingsBackupLocalChangedException) {
+                        val latest = fetchCloudRecord(conflict.userId)
+                        return@withLock CloudSettingsSyncOutcome.Conflict(
+                            SettingsBackupConflict(conflict.userId, captureCurrentBackup(), latest?.backup, latest?.updatedAt)
+                        )
+                    }
                     val latest = fetchCloudRecord(conflict.userId)
-                    return@withContext CloudSettingsSyncOutcome.Conflict(
-                        SettingsBackupConflict(conflict.userId, local, latest?.backup, latest?.updatedAt)
-                    )
-                }
-                val updated = if (latestCloud == null) {
-                    insertCloudRecordIfAbsent(conflict.userId, conflict.localBackup)
+                    ensureSameAccount(conflict.userId)
+                    if (latest == null || latest.updatedAt != conflict.cloudRevision || latest.backup.settings != cloud.settings) {
+                        val originalLocal = revertLocalIfUnchanged(cloud, conflict.localBackup)
+                        return@withLock CloudSettingsSyncOutcome.Conflict(
+                            SettingsBackupConflict(conflict.userId, originalLocal, latest?.backup, latest?.updatedAt)
+                        )
+                    }
+                    saveLocalBackup(cloud)
+                    cloud
                 } else {
-                    updateCloudRecordIfRevisionMatches(conflict.userId, latestCloud.updatedAt, conflict.localBackup)
+                    val local = captureCurrentBackup()
+                    if (local.settings != conflict.localBackup.settings) {
+                        val latest = fetchCloudRecord(conflict.userId)
+                        return@withLock CloudSettingsSyncOutcome.Conflict(
+                            SettingsBackupConflict(conflict.userId, local, latest?.backup, latest?.updatedAt)
+                        )
+                    }
+                    val updated = if (latestCloud == null) {
+                        insertCloudRecordIfAbsent(conflict.userId, conflict.localBackup)
+                    } else {
+                        updateCloudRecordIfRevisionMatches(conflict.userId, latestCloud.updatedAt, conflict.localBackup)
+                    }
+                    if (!updated) {
+                        val latest = fetchCloudRecord(conflict.userId)
+                        val currentLocal = captureCurrentBackup()
+                        return@withLock CloudSettingsSyncOutcome.Conflict(
+                            SettingsBackupConflict(conflict.userId, currentLocal, latest?.backup, latest?.updatedAt)
+                        )
+                    }
+                    saveLocalBackup(conflict.localBackup)
+                    conflict.localBackup
                 }
-                if (!updated) {
-                    val latest = fetchCloudRecord(conflict.userId)
-                    val currentLocal = captureCurrentBackup()
-                    return@withContext CloudSettingsSyncOutcome.Conflict(
-                        SettingsBackupConflict(conflict.userId, currentLocal, latest?.backup, latest?.updatedAt)
-                    )
-                }
-                saveLocalBackup(conflict.localBackup)
-                conflict.localBackup
+                ensureSameAccount(conflict.userId)
+                saveSyncBaseline(conflict.userId, selected)
+                markSuccessfulSync(conflict.userId)
+                CloudSettingsSyncOutcome.Synchronized(selected)
             }
-            ensureSameAccount(conflict.userId)
-            saveSyncBaseline(conflict.userId, selected)
-            markSuccessfulSync(conflict.userId)
-            CloudSettingsSyncOutcome.Synchronized(selected)
         }
     }
 
@@ -359,22 +393,38 @@ class SettingsBackupManager @Inject constructor(
         }
     }
 
+    /**
+     * Restores the pre-sync snapshot when the cloud changed after it was already applied locally.
+     * Returns the snapshot that now represents this device, or the current local state if a newer
+     * edit landed in the meantime.
+     */
+    private suspend fun revertLocalIfUnchanged(applied: SettingsBackup, original: SettingsBackup): SettingsBackup =
+        try {
+            applyBackupIfLocalUnchanged(applied, original)
+            original
+        } catch (_: SettingsBackupLocalChangedException) {
+            captureCurrentBackup()
+        }
+
     private suspend fun updateCloudRecordIfRevisionMatches(
         userId: String,
         expectedRevision: String,
         backup: SettingsBackup
     ): Boolean {
         ensureSameAccount(userId)
-        val updated = SupabaseClient.client.from(TABLE_SETTINGS_BACKUPS).update(
+        val result = SupabaseClient.client.from(TABLE_SETTINGS_BACKUPS).update(
             CloudBackupWrite(userId = userId, backup = SettingsBackupCodec.validate(backup))
         ) {
             filter {
                 eq("user_id", userId)
                 eq("updated_at", expectedRevision)
             }
-        }.decodeSingleOrNull<CloudBackupRecord>()
+            select()
+        }
         ensureSameAccount(userId)
-        return updated != null
+        // A conditional update that matches no rows returns an empty representation.
+        if (result.data.isBlank()) return false
+        return result.decodeList<CloudBackupRecord>().isNotEmpty()
     }
 
     private suspend fun insertCloudRecordIfAbsent(userId: String, backup: SettingsBackup): Boolean {
@@ -511,5 +561,6 @@ private data class CloudBackupRecord(
 @Serializable
 private data class CloudBackupWrite(
     @SerialName("user_id") val userId: String,
-    @SerialName("backup_json") val backup: SettingsBackup
+    @SerialName("backup_json") val backup: SettingsBackup,
+    @SerialName("updated_at") val updatedAt: String = Instant.now().toString()
 )

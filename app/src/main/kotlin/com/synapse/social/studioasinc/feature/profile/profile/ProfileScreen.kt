@@ -71,7 +71,6 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-    val profileLinkLabel = stringResource(R.string.clip_label_profile_link)
     val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
     val effectiveIsOwnProfile = state.isOwnProfile && state.viewAsMode == null
@@ -208,17 +207,7 @@ fun ProfileScreen(
             effectiveIsOwnProfile = effectiveIsOwnProfile,
             profile = profile,
             context = context,
-            profileLinkLabel = profileLinkLabel,
-            postLinkLabel = postLinkLabel,
             onNavigateToSettings = onNavigateToSettings
-        )
-
-        ShareProfileSection(
-            state = state,
-            viewModel = viewModel,
-            profile = profile,
-            context = context,
-            profileLinkLabel = profileLinkLabel
         )
 
         ViewAsSection(
@@ -233,12 +222,6 @@ fun ProfileScreen(
             viewModel = viewModel,
             state = state,
             onDismiss = { showUserSearchDialog = false }
-        )
-
-        QRCodeSection(
-            state = state,
-            viewModel = viewModel,
-            profile = profile
         )
 
         ReportSection(

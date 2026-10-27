@@ -26,9 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -48,6 +45,7 @@ data class SettingsBackupUiState(
     val mode: BackupDestinationMode = BackupDestinationMode.LOCAL,
     val isBusy: Boolean = true,
     val localBackup: SettingsBackupMetadata? = null,
+    val localBackupStale: Boolean = false,
     val localErrorResource: Int? = null,
     val isCloudConfigured: Boolean = false,
     val isSignedIn: Boolean = false,
@@ -57,6 +55,7 @@ data class SettingsBackupUiState(
     val cloudBackupExists: Boolean? = null,
     val cloudBackupTimestamp: Long? = null,
     val cloudBackupVersion: Int? = null,
+    val cloudPendingChanges: Boolean = false,
     val lastSuccessfulSyncAt: Long? = null,
     val cloudErrorResource: Int? = null,
     val pendingRestore: PendingSettingsRestore? = null,
@@ -76,19 +75,10 @@ class SettingsBackupViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<Int>(extraBufferCapacity = 8)
     val events: SharedFlow<Int> = _events.asSharedFlow()
-    private var observationJob: Job? = null
     private var refreshJob: Job? = null
 
     init {
         refresh()
-        observationJob = viewModelScope.launch {
-            backupManager.observeSettings().drop(1).debounce(AUTO_SYNC_DEBOUNCE_MILLIS).collect {
-                val current = _uiState.value
-                if (current.mode == BackupDestinationMode.CLOUD && current.canUseCloud) {
-                    syncCloud(showSuccess = false)
-                }
-            }
-        }
     }
 
     fun onResume() = refresh()
@@ -142,7 +132,7 @@ class SettingsBackupViewModel @Inject constructor(
         _uiState.update { it.copy(isBusy = true, localErrorResource = null) }
         backupManager.createLocalBackup().fold(
             onSuccess = { metadata ->
-                _uiState.update { it.copy(isBusy = false, localBackup = metadata, localErrorResource = null) }
+                _uiState.update { it.copy(isBusy = false, localBackup = metadata, localBackupStale = false, localErrorResource = null) }
                 emit(R.string.backup_local_created)
             },
             onFailure = { error -> fail(error, cloud = false) }
@@ -324,7 +314,7 @@ class SettingsBackupViewModel @Inject constructor(
         when (outcome) {
             CloudSettingsSyncOutcome.NoCloudBackup -> {
                 _uiState.update {
-                    it.copy(isBusy = false, cloudStatus = CloudBackupUiStatus.NO_BACKUP, cloudBackupExists = false, cloudBackupTimestamp = null, cloudBackupVersion = null, conflict = null)
+                    it.copy(isBusy = false, cloudStatus = CloudBackupUiStatus.NO_BACKUP, cloudBackupExists = false, cloudBackupTimestamp = null, cloudBackupVersion = null, cloudPendingChanges = false, conflict = null)
                 }
                 if (showSuccess) emit(R.string.backup_no_cloud_backup)
             }
@@ -337,6 +327,7 @@ class SettingsBackupViewModel @Inject constructor(
                         cloudBackupExists = true,
                         cloudBackupTimestamp = outcome.backup.timestamp,
                         cloudBackupVersion = outcome.backup.version,
+                        cloudPendingChanges = false,
                         lastSuccessfulSyncAt = userId?.let(backupManager::lastSuccessfulSyncAt),
                         conflict = null,
                         cloudErrorResource = null
@@ -353,6 +344,7 @@ class SettingsBackupViewModel @Inject constructor(
                         cloudBackupExists = outcome.details.cloudBackup != null,
                         cloudBackupTimestamp = outcome.details.cloudBackup?.timestamp,
                         cloudBackupVersion = outcome.details.cloudBackup?.version,
+                        cloudPendingChanges = true,
                         conflict = outcome.details,
                         cloudErrorResource = null
                     )
@@ -412,10 +404,23 @@ class SettingsBackupViewModel @Inject constructor(
     private fun refreshLocalMetadata() {
         viewModelScope.launch {
             backupManager.loadLocalBackup().fold(
-                onSuccess = { metadata -> _uiState.update { it.copy(localBackup = metadata, localErrorResource = null) } },
+                onSuccess = { metadata ->
+                    val current = backupManager.currentBackup().getOrNull()
+                    val stale = metadata != null && current != null && metadata.backup.settings != current.settings
+                    val userId = backupManager.currentUserId()
+                    val cloudPending = userId != null && backupManager.hasChangesSinceBaseline(userId)
+                    _uiState.update {
+                        it.copy(
+                            localBackup = metadata,
+                            localBackupStale = stale,
+                            cloudPendingChanges = cloudPending,
+                            localErrorResource = null
+                        )
+                    }
+                },
                 onFailure = { error ->
                     val resource = messageFor(error, cloud = false)
-                    _uiState.update { it.copy(localBackup = null, localErrorResource = resource) }
+                    _uiState.update { it.copy(localBackup = null, localBackupStale = false, localErrorResource = resource) }
                 }
             )
         }
@@ -469,9 +474,5 @@ class SettingsBackupViewModel @Inject constructor(
 
     private fun emit(resource: Int) {
         _events.tryEmit(resource)
-    }
-
-    companion object {
-        private const val AUTO_SYNC_DEBOUNCE_MILLIS = 1_000L
     }
 }

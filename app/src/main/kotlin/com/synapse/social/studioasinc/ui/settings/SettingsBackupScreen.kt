@@ -145,8 +145,8 @@ fun SettingsBackupScreen(
                             )
                             Spacer(Modifier.size(Spacing.space16))
                             Text(
-                                text = stringResource(R.string.backup_restore_title),
-                                style = MaterialTheme.typography.titleLarge,
+                                text = stringResource(R.string.backup_restore_subtitle),
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -329,6 +329,11 @@ private fun LocalBackupSection(
             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_local_status_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.backup_local_cache_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             val metadata = state.localBackup
             if (metadata == null) {
                 Text(
@@ -344,6 +349,13 @@ private fun LocalBackupSection(
                 )
                 Text(stringResource(R.string.backup_created_at, formatTimestamp(LocalContext.current, metadata.backup.timestamp)))
                 Text(stringResource(R.string.backup_size_version, Formatter.formatFileSize(LocalContext.current, metadata.sizeBytes), metadata.backup.version))
+                if (state.localBackupStale) {
+                    Text(
+                        stringResource(R.string.backup_local_stale),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
             state.localErrorResource?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
             Button(onClick = onCreate, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
@@ -391,13 +403,22 @@ private fun CloudBackupSection(
                 Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_status_title), style = MaterialTheme.typography.titleMedium)
             }
-            Text(
-                text = cloudStatusText(state.cloudStatus),
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (state.cloudStatus == CloudBackupUiStatus.ERROR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            state.cloudErrorResource?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+            val errorResource = state.cloudErrorResource
+            if (errorResource != null) {
+                Text(
+                    text = stringResource(errorResource),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            } else {
+                Text(
+                    text = cloudStatusText(state.cloudStatus),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.cloudStatus == CloudBackupUiStatus.ERROR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (state.cloudBackupExists == true && state.cloudBackupTimestamp != null && state.cloudBackupVersion != null) {
                 Text(stringResource(R.string.backup_cloud_created_at, formatTimestamp(context, state.cloudBackupTimestamp), state.cloudBackupVersion))
             }
@@ -406,6 +427,13 @@ private fun CloudBackupSection(
                     stringResource(R.string.backup_last_successful_sync, formatTimestamp(context, it)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (state.cloudPendingChanges) {
+                Text(
+                    stringResource(R.string.backup_cloud_pending_changes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
             Text(

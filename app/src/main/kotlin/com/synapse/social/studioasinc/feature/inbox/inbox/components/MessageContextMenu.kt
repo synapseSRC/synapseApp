@@ -38,6 +38,7 @@ import androidx.compose.ui.text.AnnotatedString
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,6 +94,7 @@ fun MessageContextMenu(
             HorizontalDivider()
 
             val isFromMe = selectedMessage.senderId == currentUserId
+            val isDeleted = selectedMessage.isDeleted || selectedMessage.contentStatus == ContentStatus.DELETED
 
             @Composable
             fun ActionRow(
@@ -124,7 +126,7 @@ fun MessageContextMenu(
                 )
             }
 
-            if (isFromMe) {
+            if (isFromMe && !isDeleted) {
                 ActionRow(
                     icon = Icons.Default.Edit,
                     text = stringResource(R.string.inbox_context_menu_edit),
@@ -134,14 +136,16 @@ fun MessageContextMenu(
                     }
                 )
             }
-            ActionRow(
-                icon = Icons.AutoMirrored.Filled.Forward,
-                text = stringResource(R.string.inbox_context_menu_forward),
-                onClick = {
-                    onForwardMessage()
-                    onDismissRequest()
-                }
-            )
+            if (!isDeleted) {
+                ActionRow(
+                    icon = Icons.AutoMirrored.Filled.Forward,
+                    text = stringResource(R.string.inbox_context_menu_forward),
+                    onClick = {
+                        onForwardMessage()
+                        onDismissRequest()
+                    }
+                )
+            }
 
             HorizontalDivider()
 
@@ -161,14 +165,16 @@ fun MessageContextMenu(
                     onDismissRequest()
                 }
             )
-            ActionRow(
-                icon = Icons.Default.ContentCopy,
-                text = stringResource(R.string.inbox_context_menu_copy),
-                onClick = {
-                    clipboard.setText(AnnotatedString(selectedMessage.content))
-                    onDismissRequest()
-                }
-            )
+            if (!isDeleted) {
+                ActionRow(
+                    icon = Icons.Default.ContentCopy,
+                    text = stringResource(R.string.inbox_context_menu_copy),
+                    onClick = {
+                        clipboard.setText(AnnotatedString(selectedMessage.content))
+                        onDismissRequest()
+                    }
+                )
+            }
 
             HorizontalDivider()
 

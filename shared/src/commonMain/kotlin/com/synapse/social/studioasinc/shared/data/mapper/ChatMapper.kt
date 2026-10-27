@@ -235,8 +235,10 @@ object ChatMapper {
             else -> DeliveryStatus.SENT
         }
 
+        val isDeletedMessage = isDeleted || deletedAt != null || contentState.equals("deleted", ignoreCase = true)
+
         val mappedContentStatus = when {
-            isDeleted || deletedAt != null || contentState.equals("deleted", ignoreCase = true) -> ContentStatus.DELETED
+            isDeletedMessage -> ContentStatus.DELETED
             isEdited || editedAt != null || contentState.equals("edited", ignoreCase = true) -> ContentStatus.EDITED
             else -> ContentStatus.ACTIVE
         }
@@ -256,9 +258,9 @@ object ChatMapper {
             id = id ?: "",
             chatId = chatId,
             senderId = senderId,
-            content = content,
+            content = if (isDeletedMessage) "" else content,
             messageType = finalType,
-            mediaUrl = mediaUrl ?: domainAttachments.firstOrNull()?.url,
+            mediaUrl = if (isDeletedMessage) null else mediaUrl ?: domainAttachments.firstOrNull()?.url,
             deliveryStatus = mappedDeliveryStatus,
             contentStatus = mappedContentStatus,
             isDeleted = mappedContentStatus == ContentStatus.DELETED,
@@ -277,9 +279,9 @@ object ChatMapper {
             readBy = readBy ?: emptyList(),
             expiresAt = normalizeTimestamp(expiresAt),
             encryptionFailureReason = encryptionFailureReason,
-            attachments = domainAttachments,
+            attachments = if (isDeletedMessage) emptyList() else domainAttachments,
             mediaGroupId = derivedGroupId,
-            metadataContainer = parsedMetadata,
+            metadataContainer = if (isDeletedMessage) null else parsedMetadata,
             clientId = clientId ?: id ?: "",
             deviceId = deviceId
         )

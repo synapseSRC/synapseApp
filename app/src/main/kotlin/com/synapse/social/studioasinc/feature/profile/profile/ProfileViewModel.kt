@@ -74,9 +74,7 @@ data class ProfileScreenState(
     val showMoreMenu: Boolean = false,
     val likedPostIds: Set<String> = emptySet(),
     val savedPostIds: Set<String> = emptySet(),
-    val showShareSheet: Boolean = false,
     val showViewAsSheet: Boolean = false,
-    val showQrCode: Boolean = false,
     val showReportDialog: Boolean = false,
     val viewAsMode: ViewAsMode? = null,
     val viewAsUserName: String? = null,
@@ -498,12 +496,8 @@ class ProfileViewModel @Inject constructor(
     }
 
     // UI Helpers
-    fun showShareSheet() { _state.update { it.copy(showShareSheet = true) } }
-    fun hideShareSheet() { _state.update { it.copy(showShareSheet = false) } }
     fun showViewAsSheet() { _state.update { it.copy(showViewAsSheet = true) } }
     fun hideViewAsSheet() { _state.update { it.copy(showViewAsSheet = false) } }
-    fun showQrCode() { _state.update { it.copy(showQrCode = true) } }
-    fun hideQrCode() { _state.update { it.copy(showQrCode = false) } }
     fun showReportDialog() { _state.update { it.copy(showReportDialog = true) } }
     fun hideReportDialog() { _state.update { it.copy(showReportDialog = false) } }
 
@@ -517,6 +511,10 @@ class ProfileViewModel @Inject constructor(
 
     fun toggleMoreMenu() {
         _state.update { it.copy(showMoreMenu = !it.showMoreMenu) }
+    }
+
+    fun hideMoreMenu() {
+        _state.update { it.copy(showMoreMenu = false) }
     }
 
     fun showLockProfileScreen() {

@@ -73,10 +73,10 @@ internal class MessageEntitySyncer(
                 id             = id,
                 chatId         = chatId,
                 senderId       = senderId,
-                content        = content,
+                content        = if (isDeleted) "" else content,
                 messageType    = runCatching { MessageType.valueOf(typeStr.uppercase()) }
                     .getOrDefault(MessageType.TEXT),
-                mediaUrl       = record["media_url"]?.toString(),
+                mediaUrl       = if (isDeleted) null else record["media_url"]?.toString(),
                 deliveryStatus = DeliveryStatus.SENT,
                 contentStatus  = if (isDeleted) ContentStatus.DELETED else ContentStatus.ACTIVE,
                 isDeleted      = isDeleted,

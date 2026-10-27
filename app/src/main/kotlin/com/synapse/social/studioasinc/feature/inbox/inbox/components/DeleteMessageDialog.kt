@@ -10,15 +10,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
 /**
  * Simple confirmation dialog that asks the user to choose between deleting a message
  * for themselves only or for everyone in the conversation.
  *
- * Only shown when the message belongs to the current user.
+ * "Delete for everyone" is only offered when [canDeleteForEveryone] is true.
  *
  * @param message The message being deleted.
+ * @param canDeleteForEveryone Whether the message belongs to the current user.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".
@@ -27,11 +29,13 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 @Composable
 fun DeleteMessageDialog(
     message: Message?,
+    canDeleteForEveryone: Boolean,
     onDismissRequest: () -> Unit,
     onDeleteForMe: (Message) -> Unit,
     onDeleteForEveryone: (Message) -> Unit
 ) {
     message?.let {
+        val isDeleted = it.isDeleted || it.contentStatus == ContentStatus.DELETED
         AlertDialog(
             onDismissRequest = onDismissRequest,
             icon = {
@@ -50,18 +54,32 @@ fun DeleteMessageDialog(
             },
             text = {
                 Text(
-                    text = it.content,
+                    text = if (isDeleted || it.content.isBlank()) {
+                        stringResource(R.string.chat_reply_message_deleted)
+                    } else {
+                        it.content
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
-                TextButton(onClick = { onDeleteForEveryone(it) }) {
-                    Text(
-                        text = stringResource(R.string.delete_for_everyone),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                if (canDeleteForEveryone) {
+                    TextButton(onClick = { onDeleteForEveryone(it) }) {
+                        Text(
+                            text = stringResource(R.string.delete_for_everyone),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                } else {
+                    TextButton(onClick = { onDeleteForMe(it) }) {
+                        Text(
+                            text = stringResource(R.string.delete_for_me),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             },
             dismissButton = {
@@ -76,12 +94,14 @@ fun DeleteMessageDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    TextButton(onClick = { onDeleteForMe(it) }) {
-                        Text(
-                            text = stringResource(R.string.delete_for_me),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    if (canDeleteForEveryone) {
+                        TextButton(onClick = { onDeleteForMe(it) }) {
+                            Text(
+                                text = stringResource(R.string.delete_for_me),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             },

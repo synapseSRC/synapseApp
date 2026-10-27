@@ -7,6 +7,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +40,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.AuthScreen
 import com.synapse.social.studioasinc.ui.home.HomeScreen
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.InboxScreen
+import com.synapse.social.studioasinc.feature.call.CallScreen
 import com.synapse.social.studioasinc.ui.search.SearchScreen
 import com.synapse.social.studioasinc.ui.search.SearchViewModel
 import com.synapse.social.studioasinc.feature.post.postdetail.PostDetailScreen
@@ -256,9 +260,27 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToSearch = {
                         navController.navigate(AppDestination.Search)
                     },
-                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) }
+                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
+                    onStartCall = { request -> navController.navigate(request.toDestination()) },
+                    debugToolsEnabled = BuildConfig.DEBUG
                 )
             }
+    composable<AppDestination.Call>(
+        enterTransition = { fadeIn(tween(CALL_TRANSITION_MILLIS)) },
+        exitTransition = { fadeOut(tween(CALL_TRANSITION_MILLIS)) },
+        popEnterTransition = { fadeIn(tween(CALL_TRANSITION_MILLIS)) },
+        popExitTransition = { fadeOut(tween(CALL_TRANSITION_MILLIS)) }
+    ) {
+        CallScreen(
+            debugToolsEnabled = BuildConfig.DEBUG,
+            onClose = {
+                // Only pop once so repeated dismissals can't skip past the call route.
+                if (navController.currentDestination?.hasRoute<AppDestination.Call>() == true) {
+                    navController.popBackStack()
+                }
+            }
+        )
+    }
     composable<AppDestination.Chat> { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.Chat>()
                 ChatScreen(
@@ -288,7 +310,8 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToChatSearch = { chatId ->
                         navController.navigate(AppDestination.ChatSearch(chatId))
-                    }
+                    },
+                    onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
             }
     composable<AppDestination.CreateGroup> {
@@ -718,3 +741,5 @@ fun NavGraphBuilder.storyGraph(
                 )
             }
 }
+
+private const val CALL_TRANSITION_MILLIS = 200

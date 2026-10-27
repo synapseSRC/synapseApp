@@ -385,6 +385,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="delete_messages_confirmation">Delete %d messages?</string>
     <string name="delete_for_me">Delete for me</string>
     <string name="delete_for_me_explanation">This message will only be removed from your device. Other participants will still see it.</string>
+    <string name="delete_messages_for_me_explanation">These messages will only be removed from your device. Other participants will still see them.</string>
     <string name="delete_for_everyone">Delete for everyone</string>
     <string name="delete_for_everyone_explanation">This message will be removed for all participants in this conversation. This action cannot be undone.</string>
     <string name="delete">Delete</string>
@@ -2347,5 +2348,91 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="featured_collections_body">Creating story highlights and custom content collections requires a persistent backend highlight data model.</string>
     <string name="post_media_attachment_label">Media Post</string>
     <string name="post_contains_media_badge">Includes Media</string>
+
+    <!-- Call experience -->
+    <string name="call_phase_calling">Calling…</string>
+    <string name="call_phase_ringing">Ringing…</string>
+    <string name="call_phase_connecting">Connecting…</string>
+    <string name="call_phase_reconnecting">Reconnecting…</string>
+    <string name="call_incoming_voice">Incoming voice call</string>
+    <string name="call_incoming_video">Incoming video call</string>
+
+    <string name="call_control_speaker">Speaker</string>
+    <string name="call_control_mute">Mute</string>
+    <string name="call_control_audio">Audio</string>
+    <string name="call_control_audio_output">Audio output</string>
+    <string name="call_control_video">Video</string>
+    <string name="call_control_switch_to_video">Switch to video</string>
+    <string name="call_control_camera">Camera</string>
+    <string name="call_control_flip_camera">Flip camera</string>
+    <string name="call_control_end">End call</string>
+    <string name="call_control_accept">Accept</string>
+    <string name="call_control_decline">Decline</string>
+    <string name="call_control_switch_to_voice">Switch to voice</string>
+
+    <string name="call_state_muted">Muted</string>
+    <string name="call_state_camera_off">Camera off</string>
+    <string name="call_state_weak_connection">Weak connection</string>
+    <string name="call_state_poor_connection">Poor connection</string>
+    <string name="call_state_microphone_on">Microphone on</string>
+    <string name="call_state_microphone_muted">Microphone muted</string>
+    <string name="call_state_speaker_on">Speaker on</string>
+    <string name="call_state_speaker_off">Speaker off</string>
+    <string name="call_state_camera_on">Camera on</string>
+    <string name="call_state_front_camera">Front camera</string>
+    <string name="call_state_rear_camera">Rear camera</string>
+    <string name="call_state_on">On</string>
+    <string name="call_state_off">Off</string>
+
+    <string name="call_audio_route_title">Audio output</string>
+    <string name="call_audio_route_earpiece">Earpiece</string>
+    <string name="call_audio_route_speaker">Speaker</string>
+    <string name="call_audio_route_bluetooth">Bluetooth</string>
+    <string name="call_audio_route_wired">Wired headset</string>
+    <string name="call_audio_route_not_connected">Not connected</string>
+
+    <string name="call_ended_title">Call ended</string>
+    <string name="call_ended_declined">Call declined</string>
+    <string name="call_ended_no_answer">No answer</string>
+    <string name="call_ended_missed">Missed call</string>
+    <string name="call_ended_cancelled">Call cancelled</string>
+    <string name="call_ended_unavailable">Call unavailable</string>
+    <string name="call_ended_failed">Call failed</string>
+    <string name="call_action_call_again">Call again</string>
+    <string name="call_action_done">Done</string>
+    <string name="call_end_dialog_title">End this call?</string>
+    <string name="call_end_dialog_message">The call will end and you’ll return to your chat.</string>
+    <string name="call_end_dialog_confirm">End call</string>
+    <string name="call_end_dialog_dismiss">Cancel</string>
+    <string name="call_summary_line">%1$s · %2$s</string>
+    <string name="call_direction_incoming">Incoming</string>
+    <string name="call_direction_outgoing">Outgoing</string>
+
+    <string name="call_duration_spoken_hours">Call duration: %1$d hours, %2$d minutes, %3$d seconds</string>
+    <string name="call_duration_spoken_minutes">Call duration: %1$d minutes, %2$d seconds</string>
+    <string name="call_duration_spoken_seconds">Call duration: %1$d seconds</string>
+    <string name="call_pip_description">Your camera preview</string>
+    <string name="call_pip_camera_off_description">Your camera is off</string>
+    <string name="call_debug_open">Open call simulation</string>
+
+    <string name="call_debug_tools_title">Call simulation</string>
+    <string name="call_debug_tools_subtitle">Debug builds only. No real call is placed.</string>
+    <string name="call_debug_quality_good">Good connection</string>
+    <string name="call_debug_quality_weak">Weak connection</string>
+    <string name="call_debug_quality_poor">Poor connection</string>
+    <string name="call_debug_reconnect">Simulate reconnecting</string>
+    <string name="call_debug_remote_video_off">Remote camera off</string>
+    <string name="call_debug_remote_video_on">Remote camera on</string>
+    <string name="call_debug_remote_declines">Remote declines</string>
+    <string name="call_debug_no_answer">No answer</string>
+    <string name="call_debug_unavailable">Call unavailable</string>
+    <string name="call_debug_remote_ends">Remote ends call</string>
+    <string name="call_debug_hint">Long-press the call status for simulation controls.</string>
+    <string name="call_debug_badge">Debug</string>
+    <string name="call_debug_launch_title">Simulated calls</string>
+    <string name="call_debug_launch_subtitle">Debug builds only. No real call is placed.</string>
+    <string name="call_debug_launch_incoming_voice">Incoming voice call</string>
+    <string name="call_debug_launch_incoming_video">Incoming video call</string>
+    <string name="call_debug_sample_caller">Amara Okafor</string>
 
 </resources>

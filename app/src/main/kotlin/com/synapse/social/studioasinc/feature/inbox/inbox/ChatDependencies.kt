@@ -21,6 +21,7 @@ data class ChatMessagingDependencies(
     val editMessageUseCase: EditMessageUseCase,
     val deleteMessageUseCase: DeleteMessageUseCase,
     val deleteMessageForMeUseCase: DeleteMessageForMeUseCase,
+    val bulkDeleteMessagesUseCase: BulkDeleteMessagesUseCase,
     val bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase,
     val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
     val currentUserIdUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCurrentUserIdUseCase,

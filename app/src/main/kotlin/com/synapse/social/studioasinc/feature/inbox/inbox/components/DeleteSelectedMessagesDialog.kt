@@ -18,6 +18,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
  * or for everyone in the conversation.
  *
  * @param messageCount The number of messages selected for deletion.
+ * @param canDeleteForEveryone Whether every selected message can be deleted for all participants.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".
@@ -26,6 +27,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 @Composable
 fun DeleteSelectedMessagesDialog(
     messageCount: Int,
+    canDeleteForEveryone: Boolean,
     onDismissRequest: () -> Unit,
     onDeleteForMe: () -> Unit,
     onDeleteForEveryone: () -> Unit
@@ -48,18 +50,34 @@ fun DeleteSelectedMessagesDialog(
         },
         text = {
             Text(
-                text = stringResource(R.string.delete_for_everyone_explanation),
+                text = stringResource(
+                    if (canDeleteForEveryone) {
+                        R.string.delete_for_everyone_explanation
+                    } else {
+                        R.string.delete_messages_for_me_explanation
+                    }
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         confirmButton = {
-            TextButton(onClick = onDeleteForEveryone) {
-                Text(
-                    text = stringResource(R.string.delete_for_everyone),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.error
-                )
+            if (canDeleteForEveryone) {
+                TextButton(onClick = onDeleteForEveryone) {
+                    Text(
+                        text = stringResource(R.string.delete_for_everyone),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            } else {
+                TextButton(onClick = onDeleteForMe) {
+                    Text(
+                        text = stringResource(R.string.delete_for_me),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         },
         dismissButton = {
@@ -74,12 +92,14 @@ fun DeleteSelectedMessagesDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                TextButton(onClick = onDeleteForMe) {
-                    Text(
-                        text = stringResource(R.string.delete_for_me),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                if (canDeleteForEveryone) {
+                    TextButton(onClick = onDeleteForMe) {
+                        Text(
+                            text = stringResource(R.string.delete_for_me),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         },

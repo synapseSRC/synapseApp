@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ContactsViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.ContactItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyState
@@ -37,6 +38,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.*
 fun ContactsTabScreen(
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
+    onStartCall: (CallLaunchRequest) -> Unit = {},
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     viewModel: ContactsViewModel = hiltViewModel()
@@ -99,7 +101,16 @@ fun ContactsTabScreen(
                                     // Placeholder for options
                                 },
                                 onCallClick = { user, isVideo ->
-                                    // Placeholder for calling
+                                    onStartCall(
+                                        CallLaunchRequest(
+                                            participantId = user.uid,
+                                            participantName = user.displayName?.takeIf { it.isNotBlank() }
+                                                ?: user.username?.takeIf { it.isNotBlank() }
+                                                ?: user.uid,
+                                            participantAvatarUrl = user.avatar,
+                                            isVideo = isVideo
+                                        )
+                                    )
                                 }
                             )
                         }

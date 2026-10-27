@@ -53,7 +53,7 @@ updateContent:
 UPDATE CachedMessage SET content = :content, is_edited = 1, content_status = 'EDITED', edited_at = :editedAt WHERE id = :id;
 
 markDeleted:
-UPDATE CachedMessage SET is_deleted = 1, content_status = 'DELETED', deleted_at = :deletedAt WHERE id = :id;
+UPDATE CachedMessage SET is_deleted = 1, content_status = 'DELETED', content = '', media_url = NULL, metadata = NULL, deleted_at = :deletedAt WHERE id = :id;
 
 updateReadBy:
 UPDATE CachedMessage SET read_by = :read_by, delivery_status = 'READ', read_at = :readAt WHERE id = :id;

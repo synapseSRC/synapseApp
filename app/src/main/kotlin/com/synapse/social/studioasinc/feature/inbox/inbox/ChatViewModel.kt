@@ -65,6 +65,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val editMessageUseCase: EditMessageUseCase = dependencies.messaging.editMessageUseCase
     private val deleteMessageUseCase: DeleteMessageUseCase = dependencies.messaging.deleteMessageUseCase
     private val deleteMessageForMeUseCase: DeleteMessageForMeUseCase = dependencies.messaging.deleteMessageForMeUseCase
+    private val bulkDeleteMessagesUseCase: BulkDeleteMessagesUseCase = dependencies.messaging.bulkDeleteMessagesUseCase
     private val bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase = dependencies.messaging.bulkDeleteMessagesForMeUseCase
     private val uploadMediaUseCase: UploadMediaUseCase = dependencies.media.uploadMediaUseCase
     private val getUserProfileUseCase: GetUserProfileUseCase = dependencies.ai.getUserProfileUseCase
@@ -264,6 +265,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         editMessageUseCase = editMessageUseCase,
         deleteMessageUseCase = deleteMessageUseCase,
         deleteMessageForMeUseCase = deleteMessageForMeUseCase,
+        bulkDeleteMessagesUseCase = bulkDeleteMessagesUseCase,
         bulkDeleteMessagesForMeUseCase = bulkDeleteMessagesForMeUseCase,
         populateMessageReactionsUseCase = populateMessageReactionsUseCase,
         viewModelScope = viewModelScope,
@@ -444,7 +446,6 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         isE2EEReadyProvider = { _isE2EEReady.value },
         disappearingModeProvider = { _disappearingMode.value },
         typingIndicatorsEnabledProvider = { typingIndicatorsEnabled.value },
-        onChatRefreshRequired = { currentChatId?.let { initialize(it) } },
         isScreenVisibleProvider = { _isScreenVisible.value }
     )
 
@@ -964,8 +965,12 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         inputDelegate.clearSelection()
     }
 
-    fun deleteSelectedMessages() {
-        inputDelegate.deleteSelectedMessages()
+    fun deleteSelectedMessagesForMe() {
+        inputDelegate.deleteSelectedMessagesForMe()
+    }
+
+    fun deleteSelectedMessagesForEveryone() {
+        inputDelegate.deleteSelectedMessagesForEveryone()
     }
 
     fun setReplyingToMessage(message: Message) {

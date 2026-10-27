@@ -58,6 +58,15 @@ sealed interface AppDestination {
         val messageId: String? = null
     ) : AppDestination
     @Serializable
+    data class Call(
+        val peerUserId: String,
+        val peerName: String,
+        val peerAvatarUrl: String? = null,
+        val chatId: String? = null,
+        val isVideo: Boolean = false,
+        val isIncoming: Boolean = false
+    ) : AppDestination
+    @Serializable
     data class StoryViewer(val userId: String, val userIds: List<String> = emptyList()) : AppDestination
     @Serializable
     data object StoryCreator : AppDestination

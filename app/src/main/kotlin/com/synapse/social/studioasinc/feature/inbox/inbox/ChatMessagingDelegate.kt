@@ -8,6 +8,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesForMeUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase
@@ -36,6 +37,7 @@ class ChatMessagingDelegate(
     private val editMessageUseCase: EditMessageUseCase,
     private val deleteMessageUseCase: DeleteMessageUseCase,
     private val deleteMessageForMeUseCase: DeleteMessageForMeUseCase,
+    private val bulkDeleteMessagesUseCase: BulkDeleteMessagesUseCase,
     private val bulkDeleteMessagesForMeUseCase: BulkDeleteMessagesForMeUseCase,
     private val populateMessageReactionsUseCase: PopulateMessageReactionsUseCase,
     private val viewModelScope: CoroutineScope,
@@ -317,6 +319,8 @@ class ChatMessagingDelegate(
 
     fun deleteMessage(messageId: String) {
         viewModelScope.launch {
+            val original = _messages.value.firstOrNull { it.id == messageId } ?: return@launch
+            if (original.senderId != currentUserIdProvider()) return@launch
             val nowStr = TimeProvider.nowInstant().toString()
             _messages.update { current ->
                 current.updateById(messageId) {
@@ -328,8 +332,23 @@ class ChatMessagingDelegate(
                 }
             }
             deleteMessageUseCase(messageId)
+                .onSuccess {
+                    _messages.update { current ->
+                        current.updateById(messageId) { it.redactedForDeletion() }
+                    }
+                }
+                .onFailure {
+                    _messages.update { current -> current.replaceById(messageId, original) }
+                }
         }
     }
+
+    private fun Message.redactedForDeletion(): Message = copy(
+        content = "",
+        mediaUrl = null,
+        attachments = emptyList(),
+        metadataContainer = null
+    )
 
     private fun removeMessages(messageIds: Set<String>) {
         _messages.update { current ->
@@ -349,20 +368,64 @@ class ChatMessagingDelegate(
         }
     }
 
-    fun deleteSelectedMessages(
+    fun deleteSelectedMessagesForMe(
         selectedIds: List<String>,
         onError: (String?) -> Unit,
-        onRequiresRefresh: () -> Unit
+        onSuccess: () -> Unit
     ) {
         if (selectedIds.isEmpty()) return
 
         viewModelScope.launch {
-            removeMessages(selectedIds.toSet())
+            bulkDeleteMessagesForMeUseCase(selectedIds)
+                .onSuccess {
+                    removeMessages(selectedIds.toSet())
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    onError(e.message ?: "Failed to delete messages")
+                }
+        }
+    }
 
-            bulkDeleteMessagesForMeUseCase(selectedIds).onFailure { e ->
-                onError(e.message)
-                onRequiresRefresh()
-            }
+    fun deleteSelectedMessagesForEveryone(
+        selectedIds: List<String>,
+        onError: (String?) -> Unit,
+        onSuccess: () -> Unit
+    ) {
+        if (selectedIds.isEmpty()) return
+
+        val currentUserId = currentUserIdProvider()
+        val ownIds = selectedIds.filter { id ->
+            _messages.value.any { it.id == id && it.senderId == currentUserId }
+        }
+        if (ownIds.size != selectedIds.size) {
+            onError("You can only delete your own messages for everyone")
+            return
+        }
+
+        viewModelScope.launch {
+            bulkDeleteMessagesUseCase(ownIds)
+                .onSuccess {
+                    val nowStr = TimeProvider.nowInstant().toString()
+                    val ids = ownIds.toSet()
+                    _messages.update { current ->
+                        current.map { message ->
+                            if (message.id in ids) {
+                                message.redactedForDeletion().copy(
+                                    isDeleted = true,
+                                    contentStatus = ContentStatus.DELETED,
+                                    deletedAt = nowStr
+                                )
+                            } else {
+                                message
+                            }
+                        }
+                    }
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    onError(e.message ?: "Failed to delete messages")
+                }
         }
     }
 

@@ -97,6 +97,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.FolderTabRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxFilter
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCategory
+import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.CallsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ContactsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxArchivedScreen
@@ -117,6 +118,8 @@ fun InboxScreen(
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit = {},
+    onStartCall: (CallLaunchRequest) -> Unit = {},
+    debugToolsEnabled: Boolean = false,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
     InboxScreenContent(
@@ -124,6 +127,8 @@ fun InboxScreen(
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
         onNavigateToCreateGroup = onNavigateToCreateGroup,
+        onStartCall = onStartCall,
+        debugToolsEnabled = debugToolsEnabled,
         viewModel = viewModel
     )
 }
@@ -135,6 +140,8 @@ private fun InboxScreenContent(
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit,
+    onStartCall: (CallLaunchRequest) -> Unit,
+    debugToolsEnabled: Boolean,
     viewModel: InboxViewModel
 ) {
     var destination by rememberSaveable { mutableStateOf(InboxDestination.INBOX) }
@@ -432,10 +439,15 @@ private fun InboxScreenContent(
                             onOpenConversation = ::openConversation,
                             onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION }
                         )
-                        1 -> CallsTabScreen(contentPadding = PaddingValues())
+                        1 -> CallsTabScreen(
+                            contentPadding = PaddingValues(),
+                            debugToolsEnabled = debugToolsEnabled,
+                            onStartCall = onStartCall
+                        )
                         else -> ContactsTabScreen(
                             onNavigateToChat = onNavigateToChat,
                             onNavigateToSearch = onNavigateToSearch,
+                            onStartCall = onStartCall,
                             contentPadding = PaddingValues()
                         )
                     }

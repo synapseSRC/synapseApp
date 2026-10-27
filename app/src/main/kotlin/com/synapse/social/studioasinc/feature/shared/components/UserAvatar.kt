@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.feature.shared.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 
@@ -21,30 +23,35 @@ fun UserAvatar(
     size: Dp,
     modifier: Modifier = Modifier,
     displayName: String? = null,
-    shape: Shape = CircleShape
+    shape: Shape = CircleShape,
+    initialsTextStyle: TextStyle = MaterialTheme.typography.titleMedium
 ) {
-    if (avatarUrl.isNullOrBlank()) {
+    // The initials sit under the image so an unloaded or failed URL still identifies the user.
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(shape),
+        contentAlignment = Alignment.Center
+    ) {
         Box(
-            modifier = modifier
-                .size(size)
-                .clip(shape)
+            modifier = Modifier
+                .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = displayName.let { name -> name?.firstOrNull { it.isLetterOrDigit() } ?: name?.firstOrNull() }?.uppercaseChar()?.toString() ?: "?",
-                style = MaterialTheme.typography.titleMedium,
+                style = initialsTextStyle,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
-    } else {
-        AsyncImage(
-            model = avatarUrl,
-            contentDescription = "User avatar",
-            modifier = modifier
-                .size(size)
-                .clip(shape),
-            contentScale = ContentScale.Crop
-        )
+        if (!avatarUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = "User avatar",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }
