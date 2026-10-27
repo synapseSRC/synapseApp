@@ -1,10 +1,3 @@
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Kotlin Version](https://img.shields.io/badge/kotlin-2.3.20-blue.svg)](https://kotlinlang.org/)
-[![Compose Version](https://img.shields.io/badge/compose-2026.03.00-orange.svg)](https://developer.android.com/jetpack/compose)
-[![Supabase](https://img.shields.io/badge/backend-Supabase-green.svg)](https://supabase.com/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-informational.svg)](#)
-
 <p align="center"><img src="assets/synapse_transparent_black_bg.png" alt="Synapse Logo" width="200"/></p>
 <h1 align="center">⚡ Synapse Social</h1>
 <p align="center"><i>Native UI. Shared Logic. Real-time everything.</i></p>
