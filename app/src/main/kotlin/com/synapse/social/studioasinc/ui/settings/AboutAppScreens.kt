@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.widget.Toast
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -27,20 +25,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.OfflineBolt
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -51,7 +42,6 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialExpressiveTheme
@@ -84,7 +74,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -95,7 +84,6 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.animation.core.spring
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -127,187 +115,6 @@ internal fun AboutDetailTopAppBar(title: String, onBackClick: () -> Unit) {
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface
         )
     )
-}
-
-private data class ReleaseEntry(
-    val title: String,
-    val description: String,
-    val icon: ImageVector
-)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun WhatsNewScreen(
-    onBackClick: () -> Unit,
-    viewModel: WhatsNewViewModel = hiltViewModel()
-) {
-    val context = LocalContext.current
-    val releases = listOf(
-        ReleaseEntry(
-            stringResource(R.string.about_release_100_title),
-            stringResource(R.string.about_release_100_description),
-            Icons.Filled.Sell
-        ),
-        ReleaseEntry(
-            stringResource(R.string.about_release_310_title),
-            stringResource(R.string.about_release_310_description),
-            Icons.Filled.OfflineBolt
-        ),
-        ReleaseEntry(
-            stringResource(R.string.about_release_300_title),
-            stringResource(R.string.about_release_300_description),
-            Icons.Filled.Gesture
-        ),
-        ReleaseEntry(
-            stringResource(R.string.about_release_295_title),
-            stringResource(R.string.about_release_295_description),
-            Icons.Filled.Security
-        )
-    )
-    val whatsNewState by viewModel.uiState.collectAsState()
-    val githubReleasesUrl = stringResource(R.string.about_github_releases_url)
-
-    AboutAppTheme {
-        Scaffold(
-            containerColor = SettingsColors.screenBackground,
-            topBar = {
-                AboutDetailTopAppBar(
-                    title = stringResource(R.string.about_whats_new_screen_title),
-                    onBackClick = onBackClick
-                )
-            },
-            floatingActionButton = {
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        IntentUtils.openUrl(context, githubReleasesUrl)
-                    },
-                    modifier = Modifier.height(dimensionResource(R.dimen.about_releases_fab_height)),
-                    shape = CircleShape,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    icon = { Icon(Icons.Filled.Code, contentDescription = null) },
-                    text = { Text(stringResource(R.string.about_github_releases)) }
-                )
-            }
-        ) { insets ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(insets),
-                contentPadding = PaddingValues(
-                    start = Spacing.space16,
-                    top = Spacing.space16,
-                    end = Spacing.space16,
-                    bottom = Spacing.space24
-                ),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.about_list_item_gap))
-            ) {
-                items(releases.size) { index ->
-                    val release = releases[index]
-                    ReleaseHistoryItem(
-                        entry = release,
-                        shape = aboutListShape(index, releases.size),
-                        expandable = index == 0,
-                        expanded = whatsNewState.expandedLatest,
-                        onToggle = viewModel::toggleLatestRelease
-                    )
-                }
-                item { Spacer(modifier = Modifier.height(Spacing.space48)) }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun ReleaseHistoryItem(
-    entry: ReleaseEntry,
-    shape: androidx.compose.ui.graphics.Shape,
-    expandable: Boolean,
-    expanded: Boolean,
-    onToggle: () -> Unit
-) {
-    val expandedStateDescription = stringResource(if (expanded) R.string.about_expanded else R.string.about_collapsed)
-    val contents: @Composable () -> Unit = {
-        Column(
-            modifier = Modifier.animateContentSize(
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = dimensionResource(R.dimen.about_release_item_min_height))
-                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AboutLeadingIcon(entry.icon)
-                Spacer(modifier = Modifier.width(Spacing.space16))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(entry.title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-                    Text(entry.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                if (expandable) {
-                    Spacer(modifier = Modifier.width(Spacing.space8))
-                    Icon(
-                        imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ArrowDropDown,
-                        contentDescription = stringResource(if (expanded) R.string.about_collapse_release else R.string.about_expand_release),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            if (expandable && expanded) {
-                Column(
-                    modifier = Modifier.padding(
-                        start = Spacing.space16 + dimensionResource(R.dimen.about_icon_container_size) + Spacing.space16,
-                        end = Spacing.space16,
-                        bottom = Spacing.space16
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.space8)
-                ) {
-                    Text(
-                        stringResource(R.string.about_release_highlights),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    ReleaseHighlight(stringResource(R.string.about_release_highlight_memory))
-                    ReleaseHighlight(stringResource(R.string.about_release_highlight_offline))
-                }
-            }
-        }
-    }
-    if (expandable) {
-        Surface(
-            onClick = onToggle,
-            modifier = Modifier.fillMaxWidth().semantics {
-                stateDescription = expandedStateDescription
-            },
-            shape = shape,
-            color = SettingsColors.cardBackground,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ) { contents() }
-    } else {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = shape,
-            color = SettingsColors.cardBackground,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ) { contents() }
-    }
-}
-
-@Composable
-private fun ReleaseHighlight(text: String) {
-    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-        Icon(
-            imageVector = Icons.Filled.Check,
-            contentDescription = null,
-            modifier = Modifier.size(dimensionResource(R.dimen.about_icon_size)),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
 }
 
 @Composable

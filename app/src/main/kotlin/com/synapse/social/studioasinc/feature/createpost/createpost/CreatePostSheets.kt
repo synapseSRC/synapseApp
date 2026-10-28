@@ -49,11 +49,19 @@ fun ScheduleDateTimePickerDialog(
                         step = 1
                     } else {
                         val dateMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                        val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
-                        cal.timeInMillis = dateMillis
-                        cal.set(java.util.Calendar.HOUR_OF_DAY, timePickerState.hour)
-                        cal.set(java.util.Calendar.MINUTE, timePickerState.minute)
-                        cal.set(java.util.Calendar.SECOND, 0)
+                        // DatePicker reports the selected calendar day as UTC midnight; the
+                        // picked hour/minute are wall-clock time in the device timezone.
+                        val utcCal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                        utcCal.timeInMillis = dateMillis
+                        val cal = java.util.Calendar.getInstance()
+                        cal.set(
+                            utcCal.get(java.util.Calendar.YEAR),
+                            utcCal.get(java.util.Calendar.MONTH),
+                            utcCal.get(java.util.Calendar.DAY_OF_MONTH),
+                            timePickerState.hour,
+                            timePickerState.minute,
+                            0
+                        )
                         cal.set(java.util.Calendar.MILLISECOND, 0)
 
                         val chosenMillis = cal.timeInMillis

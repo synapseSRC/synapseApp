@@ -5,6 +5,11 @@
     <dimen name="about_list_item_gap">3dp</dimen>
     <dimen name="about_list_item_min_height">72dp</dimen>
     <dimen name="about_release_item_min_height">88dp</dimen>
+    <dimen name="about_release_bullet_size">8dp</dimen>
+    <dimen name="about_release_heading_icon_size">20dp</dimen>
+    <dimen name="about_release_action_icon_size">18dp</dimen>
+    <dimen name="about_release_accent_size">48dp</dimen>
+    <dimen name="about_skeleton_hero_height">200dp</dimen>
     <dimen name="about_icon_container_size">40dp</dimen>
     <dimen name="about_icon_size">24dp</dimen>
     <dimen name="about_list_outer_corner">28dp</dimen>

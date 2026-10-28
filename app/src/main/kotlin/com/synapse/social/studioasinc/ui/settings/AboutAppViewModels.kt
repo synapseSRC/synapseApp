@@ -13,19 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Immutable presentation state for the What's New screen. */
-data class WhatsNewUiState(val expandedLatest: Boolean = false)
-
-@HiltViewModel
-class WhatsNewViewModel @Inject constructor() : ViewModel() {
-    private val _uiState = MutableStateFlow(WhatsNewUiState())
-    val uiState: StateFlow<WhatsNewUiState> = _uiState.asStateFlow()
-
-    fun toggleLatestRelease() {
-        _uiState.update { state -> state.copy(expandedLatest = !state.expandedLatest) }
-    }
-}
-
 /** Immutable state and filtering behavior for the open-source library list. */
 data class AboutOpenSourceUiState(
     val entries: List<OpenSourceLicense> = emptyList(),

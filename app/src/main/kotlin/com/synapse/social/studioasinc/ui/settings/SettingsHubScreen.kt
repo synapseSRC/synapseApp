@@ -39,6 +39,7 @@ fun SettingsHubScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     val heroCards by viewModel.heroCards.collectAsState()
+    val unreadCategoryIds by viewModel.unreadCategoryIds.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -101,6 +102,7 @@ fun SettingsHubScreen(
                         item {
                             SettingsFlattenedContent(
                                 settingsGroups = settingsGroups,
+                                unreadCategoryIds = unreadCategoryIds,
                                 onNavigate = {
                                     viewModel.onNavigateToCategory(it)
                                     onNavigateToCategory(it)
@@ -227,8 +229,10 @@ fun SettingsCommandPaletteResults(
 @Composable
 fun SettingsFlattenedContent(
     settingsGroups: List<SettingsGroup>,
-    onNavigate: (SettingsDestination) -> Unit
+    onNavigate: (SettingsDestination) -> Unit,
+    unreadCategoryIds: Set<String> = emptySet()
 ) {
+    val unreadDescription = stringResource(R.string.settings_unread_indicator)
     Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
         settingsGroups.forEach { group ->
             Column {
@@ -255,7 +259,12 @@ fun SettingsFlattenedContent(
                             subtitle = category.subtitle.asString(),
                             imageVector = category.icon,
                             onClick = { onNavigate(category.destination) },
-                            position = position
+                            position = position,
+                            indicator = if (category.id in unreadCategoryIds) {
+                                { SettingsUnreadDot(description = unreadDescription) }
+                            } else {
+                                null
+                            }
                         )
                     }
                 }
