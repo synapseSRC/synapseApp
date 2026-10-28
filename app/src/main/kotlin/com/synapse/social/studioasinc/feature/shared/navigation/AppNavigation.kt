@@ -69,6 +69,10 @@ import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileViewModel
 import com.synapse.social.studioasinc.feature.profile.lockprofile.LockProfileScreen
 import com.synapse.social.studioasinc.feature.profile.lockprofile.LockProfileViewModel
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
+import com.synapse.social.studioasinc.feature.permission.PermissionOnboardingScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionOnboardingViewModel
 import com.synapse.social.studioasinc.ui.settings.SettingsNavHost
 import com.synapse.social.studioasinc.ui.settings.BusinessPlatformScreen
 import com.synapse.social.studioasinc.ui.settings.BusinessPlatformViewModel
@@ -88,6 +92,7 @@ fun AppNavigation(
     navController: NavHostController,
     startDestination: Any = AppDestination.Auth,
     reelUploadManager: ReelUploadManager,
+    postAuthDestination: () -> Any = { AppDestination.Home },
     modifier: Modifier = Modifier
 ) {
     var pendingNotificationRequest by remember { mutableStateOf<NotificationNavigationRequest?>(null) }
@@ -113,6 +118,9 @@ fun AppNavigation(
         val request = pendingNotificationRequest ?: return@LaunchedEffect
         val currentEntry = currentBackStackEntry ?: return@LaunchedEffect
         if (currentEntry.destination.hasRoute<AppDestination.Auth>()) return@LaunchedEffect
+        // Onboarding owns the screen until the user finishes it; the pending request is routed afterwards.
+        if (currentEntry.destination.hasRoute<AppDestination.PermissionOnboarding>()) return@LaunchedEffect
+        if (currentEntry.destination.hasRoute<AppDestination.PermissionManager>()) return@LaunchedEffect
 
         pendingNotificationRequest = null
         val routedToRootDestination = when (request.target) {
@@ -167,7 +175,8 @@ fun AppNavigation(
             startDestination = startDestination,
             modifier = Modifier.fillMaxSize()
         ) {
-            authGraph(navController, this@SharedTransitionLayout)
+            authGraph(navController, this@SharedTransitionLayout, postAuthDestination)
+            permissionGraph(navController)
             homeGraph(navController, reelUploadManager, this@SharedTransitionLayout)
             inboxGraph(navController, this@SharedTransitionLayout)
             postGraph(navController, this@SharedTransitionLayout)
@@ -181,7 +190,8 @@ fun AppNavigation(
 @OptIn(ExperimentalSharedTransitionApi::class)
 fun NavGraphBuilder.authGraph(
     navController: NavHostController,
-    sharedTransitionScope: SharedTransitionScope
+    sharedTransitionScope: SharedTransitionScope,
+    postAuthDestination: () -> Any = { AppDestination.Home }
 ) {
     composable<AppDestination.Auth> {
         val context = LocalContext.current
@@ -209,10 +219,40 @@ fun NavGraphBuilder.authGraph(
                 }
             },
             onNavigateToMain = {
-                navController.navigate(AppDestination.Home) {
+                navController.navigate(postAuthDestination()) {
                     popUpTo(AppDestination.Auth) { inclusive = true }
                 }
             }
+        )
+    }
+}
+
+/**
+ * First-run permission onboarding and the permanent permission manager.
+ *
+ * The manager is also mounted inside Settings, from where it is the same screen reading the same live
+ * state; this graph only gives it a root-level route for the onboarding summary.
+ */
+fun NavGraphBuilder.permissionGraph(navController: NavHostController) {
+    composable<AppDestination.PermissionOnboarding> {
+        val viewModel: PermissionOnboardingViewModel = hiltViewModel()
+        PermissionOnboardingScreen(
+            viewModel = viewModel,
+            onFinished = {
+                navController.navigate(AppDestination.Home) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            onManagePermissions = {
+                navController.navigate(AppDestination.PermissionManager) { launchSingleTop = true }
+            }
+        )
+    }
+    composable<AppDestination.PermissionManager> {
+        val viewModel: PermissionManagerViewModel = hiltViewModel()
+        PermissionManagerScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() }
         )
     }
 }

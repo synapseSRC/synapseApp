@@ -32,6 +32,8 @@ import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
 
 @Composable
 fun SettingsNavHost(
@@ -154,6 +156,16 @@ fun SettingsNavHost(
                 },
                 onNavigateToPrivacyCheckup = {
                     navController.navigate(SettingsDestination.ROUTE_PRIVACY_CHECKUP)
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_PERMISSIONS) {
+            val viewModel: PermissionManagerViewModel = hiltViewModel()
+            PermissionManagerScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }

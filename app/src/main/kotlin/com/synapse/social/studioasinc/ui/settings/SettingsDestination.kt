@@ -7,6 +7,8 @@ sealed class SettingsDestination(val route: String) {
 
     object Privacy : SettingsDestination(ROUTE_PRIVACY)
 
+    object Permissions : SettingsDestination(ROUTE_PERMISSIONS)
+
     object Appearance : SettingsDestination(ROUTE_APPEARANCE)
 
     object Notifications : SettingsDestination(ROUTE_NOTIFICATIONS)
@@ -85,6 +87,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_HUB = "settings_hub"
         const val ROUTE_ACCOUNT = "settings_account"
         const val ROUTE_PRIVACY = "settings_privacy"
+        const val ROUTE_PERMISSIONS = "settings_permissions"
         const val ROUTE_APPEARANCE = "settings_appearance"
         const val ROUTE_NOTIFICATIONS = "settings_notifications"
         const val ROUTE_STORAGE = "settings_storage"
@@ -135,6 +138,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_HUB -> Hub
             ROUTE_ACCOUNT -> Account
             ROUTE_PRIVACY -> Privacy
+            ROUTE_PERMISSIONS -> Permissions
             ROUTE_APPEARANCE -> Appearance
             ROUTE_NOTIFICATIONS -> Notifications
             ROUTE_STORAGE -> Storage
