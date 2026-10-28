@@ -24,3 +24,9 @@
 -keep class org.signal.libsignal.** { *; }
 -keepclassmembers class org.signal.libsignal.** { *; }
 -dontwarn org.signal.libsignal.**
+
+# WebRTC (io.github.webrtc-sdk:android) — the JNI layer calls back into org.webrtc classes by name,
+# so R8 must not rename or strip them. Guards a future minifyEnabled = true flip.
+-keep class org.webrtc.** { *; }
+-keep class com.synapse.social.studioasinc.data.call.webrtc.** { *; }
+-dontwarn org.webrtc.**

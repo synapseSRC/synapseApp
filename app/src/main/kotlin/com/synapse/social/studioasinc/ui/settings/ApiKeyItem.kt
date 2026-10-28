@@ -38,7 +38,7 @@ fun ApiKeyItem(
             Text(
                 text = "${apiKey.provider.uppercase()} • ${apiKey.usageCount}/${apiKey.usageLimit ?: "∞"} used",
                 style = SettingsTypography.itemSubtitle,
-                color = SettingsColors.itemIcon
+                color = MaterialTheme.colorScheme.primary
             )
         }
 

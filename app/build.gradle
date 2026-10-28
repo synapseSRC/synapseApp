@@ -54,7 +54,10 @@ android {
         buildConfigField "double", "SENTRY_AGENT_TRACE_SAMPLE_RATE", sentryAgentTraceSampleRate
         minSdk = 26
         targetSdk 35
-        def gitHash = "git rev-parse --short HEAD".execute().text.trim()
+        def gitHash = getGitCommitHash()
+        // Exposed separately from versionName so the About screen can show the exact commit of the
+        // build without parsing versionNameSuffix ("-debug") out of the hash.
+        buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitHash}\""
         versionCode = getGitCommitCount()
         versionName = "${(project.findProperty("projectVersion") ?: "0.1.0").toString().replaceFirst("^v", "")}-${gitHash}"
         vectorDrawables.useSupportLibrary = true
@@ -81,6 +84,11 @@ android {
             // buildConfigField "String", "ONESIGNAL_REST_API_KEY", "\"${System.getenv('ONESIGNAL_REST_API_KEY') ?: project.findProperty('ONESIGNAL_REST_API_KEY') ?: ''}\""
             buildConfigField "String", "APP_DOMAIN", "\"${System.getenv('APP_DOMAIN') ?: ''}\""
 
+            // Supabase Edge Function that mints short-lived TURN credentials. This is a route
+            // name, not a secret: the shared secret lives in Supabase functions secrets
+            // (TURN_SHARED_SECRET) and never reaches the app.
+            buildConfigField "String", "TURN_FUNCTION_NAME", "\"${System.getenv('TURN_FUNCTION_NAME') ?: project.findProperty('TURN_FUNCTION_NAME') ?: 'turn-credentials'}\""
+
             // Authentication configuration for production
             buildConfigField "boolean", "AUTH_REQUIRE_EMAIL_VERIFICATION", "${project.findProperty('auth.require.email.verification') ?: ''}"
             buildConfigField "boolean", "AUTH_ENABLE_DEBUG_LOGGING", "${project.findProperty('auth.enable.debug.logging') ?: ''}"
@@ -100,6 +108,18 @@ android {
             // Shifted to Supabase Edge Functions for security.
             // buildConfigField "String", "ONESIGNAL_REST_API_KEY", "\"${System.getenv('ONESIGNAL_REST_API_KEY') ?: project.findProperty('ONESIGNAL_REST_API_KEY') ?: ''}\""
             buildConfigField "String", "APP_DOMAIN", "\"${System.getenv('APP_DOMAIN') ?: ''}\""
+
+            // Supabase Edge Function that mints short-lived TURN credentials. This is a route
+            // name, not a secret: the shared secret lives in Supabase functions secrets
+            // (TURN_SHARED_SECRET) and never reaches the app.
+            buildConfigField "String", "TURN_FUNCTION_NAME", "\"${System.getenv('TURN_FUNCTION_NAME') ?: project.findProperty('TURN_FUNCTION_NAME') ?: 'turn-credentials'}\""
+
+            // Opt-in switch for the debug-only simulated call repository (app/src/debug). Off by
+            // default: a debug build dials for real unless this says otherwise. Flip it with
+            // `call.simulation.enabled=true` in gradle.properties (or -Pcall.simulation.enabled=true)
+            // and reinstall. The release build type has no such field and no mock in its dex — the
+            // simulation code is not compiled into it at all.
+            buildConfigField "boolean", "CALL_SIMULATION_ENABLED", "${project.findProperty('call.simulation.enabled') ?: 'false'}"
             
             // Google OAuth Configuration (Client ID only; secrets are kept server-side)
             buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${System.getenv('GOOGLE_WEB_CLIENT_ID') ?: project.findProperty('GOOGLE_WEB_CLIENT_ID') ?: ''}\""
@@ -296,6 +316,11 @@ dependencies {
     implementation "androidx.media3:media3-exoplayer:1.11.1"
     implementation "androidx.media3:media3-ui:1.11.1"
     implementation "androidx.media3:media3-common:1.11.1"
+
+    // WebRTC for real-time voice & video calls (prebuilt libwebrtc binaries, Maven Central).
+    // Pinned to the M144 line: the org.webrtc API surface we depend on is stable there and it is
+    // the widely integrated release, which keeps native crashes attributable. Upgrade deliberately.
+    implementation "io.github.webrtc-sdk:android:144.7559.15"
 
     // Networking
     implementation 'com.squareup.okhttp3:okhttp:5.3.2'

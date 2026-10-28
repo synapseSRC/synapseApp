@@ -17,13 +17,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -31,8 +32,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
+import com.synapse.social.studioasinc.feature.call.toCallAgainRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.CallsViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.CallRecordItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.InboxEmptyState
@@ -40,6 +44,13 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.models.EmptyStateType
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
+/**
+ * The Calls tab.
+ *
+ * Refreshes whenever it becomes visible rather than on construction: the ViewModel outlives a
+ * navigation into a chat or a call, and coming back to this tab is exactly when the history the user
+ * is looking at may have changed.
+ */
 @Composable
 fun CallsTabScreen(
     modifier: Modifier = Modifier,
@@ -48,39 +59,98 @@ fun CallsTabScreen(
     onStartCall: (CallLaunchRequest) -> Unit = {},
     viewModel: CallsViewModel = hiltViewModel()
 ) {
-    val callHistory by viewModel.callHistory.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val loadFailedMessage = stringResource(R.string.call_history_load_failed)
 
-    if (callHistory.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-        ) {
-            InboxEmptyState(
-                type = EmptyStateType.CALLS,
-                modifier = Modifier.fillMaxSize()
-            )
-            if (debugToolsEnabled) {
-                DebugCallLaunchCard(
-                    onStartCall = onStartCall,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(Spacing.space16)
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
+
+    when {
+        // A read that failed with nothing to fall back on: the retry is the only useful action.
+        uiState.history.isEmpty() && uiState.error != null -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+            ) {
+                InboxEmptyState(
+                    type = EmptyStateType.ERROR,
+                    message = loadFailedMessage,
+                    onActionClick = viewModel::retry,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
-    } else {
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = contentPadding
-        ) {
-            items(callHistory) { record ->
-                CallRecordItem(
-                    callRecord = record,
-                    onCallClick = { userId, isVideo ->
-                        viewModel.initiateCall(userId, isVideo)
-                    }
+
+        // Covers both the first read and a retry after a failure: until something has landed, a
+        // spinner is honest and "no calls yet" is not.
+        uiState.history.isEmpty() && (uiState.isLoading || !uiState.hasLoaded) -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(contentPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
+        uiState.history.isEmpty() -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+            ) {
+                InboxEmptyState(
+                    type = EmptyStateType.CALLS,
+                    modifier = Modifier.fillMaxSize()
                 )
+                if (debugToolsEnabled) {
+                    DebugCallLaunchCard(
+                        onStartCall = onStartCall,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(Spacing.space16)
+                    )
+                }
+            }
+        }
+
+        else -> {
+            LazyColumn(
+                modifier = modifier.fillMaxSize(),
+                contentPadding = contentPadding
+            ) {
+                // A failed refresh keeps the list the user already had; the row is the only
+                // indication that it may be behind, and the only way to ask again.
+                if (uiState.error != null) {
+                    item(key = "history-refresh-failed") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Spacing.space16, vertical = Spacing.space4),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = loadFailedMessage,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = viewModel::retry) {
+                                Text(stringResource(R.string.action_retry))
+                            }
+                        }
+                    }
+                }
+                items(uiState.history, key = { it.id }) { session ->
+                    CallRecordItem(
+                        session = session,
+                        onCallClick = { onStartCall(it.toCallAgainRequest()) }
+                    )
+                }
             }
         }
     }

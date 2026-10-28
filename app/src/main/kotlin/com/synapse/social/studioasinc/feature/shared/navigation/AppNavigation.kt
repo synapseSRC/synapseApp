@@ -41,6 +41,7 @@ import com.synapse.social.studioasinc.ui.home.HomeScreen
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.InboxScreen
 import com.synapse.social.studioasinc.feature.call.CallScreen
+import com.synapse.social.studioasinc.feature.call.IncomingCallViewModel
 import com.synapse.social.studioasinc.ui.search.SearchScreen
 import com.synapse.social.studioasinc.ui.search.SearchViewModel
 import com.synapse.social.studioasinc.feature.post.postdetail.PostDetailScreen
@@ -98,6 +99,16 @@ fun AppNavigation(
         }
     }
 
+    // A ring the watch noticed on its own — because nobody tapped anything, the call simply arrived. The
+    // call screen opened here is the same one a tap would have opened, so answering, declining and the
+    // permission gate all run through one path whichever way the user got here.
+    val incomingCalls: IncomingCallViewModel = hiltViewModel()
+    LaunchedEffect(incomingCalls, navController) {
+        incomingCalls.newInvitation.collect { invitation ->
+            navController.navigate(invitation.toDestination()) { launchSingleTop = true }
+        }
+    }
+
     LaunchedEffect(pendingNotificationRequest, currentBackStackEntry) {
         val request = pendingNotificationRequest ?: return@LaunchedEffect
         val currentEntry = currentBackStackEntry ?: return@LaunchedEffect
@@ -117,11 +128,26 @@ fun AppNavigation(
                 navController.navigate(AppDestination.LockProfile) { launchSingleTop = true }
                 true
             }
+            // A call tap opens the ringing screen rather than answering anything: the payload's identifiers
+            // only say which peer to look for, and the repository still has to find a ringing row that
+            // names this user as the callee before there is a call to show.
+            "CALL" -> request.userId?.takeIf { it.isNotBlank() }?.let { callerId ->
+                navController.navigate(
+                    AppDestination.Call(
+                        peerUserId = callerId,
+                        peerName = request.callerName.orEmpty(),
+                        chatId = request.chatId?.takeIf { it.isNotBlank() },
+                        isVideo = request.mediaType.equals("video", ignoreCase = true),
+                        isIncoming = true
+                    )
+                ) { launchSingleTop = true }
+                true
+            } ?: false
             else -> false
         }
 
         if (!routedToRootDestination) {
-            if (request.target == "CHAT" || request.target == "PROFILE") {
+            if (request.target == "CHAT" || request.target == "PROFILE" || request.target == "CALL") {
                 android.util.Log.w("NotificationNavigation", "Push target is missing its required identifier; using Notifications")
             }
             val homeRequest = if (request.target in setOf("POST", "POST_COMMENT", "NOTIFICATIONS")) request

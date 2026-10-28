@@ -42,6 +42,7 @@ The backend runs on **Supabase** — handling real-time messaging, authenticatio
    GEMINI_API_KEY=your-gemini-api-key-here
    ```
 3. For Android, ensure `google-services.json` is present in the `app/` directory if required for specific Firebase features.
+4. **Calling (optional, real 1:1 voice/video):** calling needs the calling schema in Supabase (already applied to this project), a coturn TURN server, and the `turn-credentials` Edge Function configured with `TURN_SHARED_SECRET` and `TURN_URLS`. Set `TURN_FUNCTION_NAME` in `gradle.properties` and deploy the functions in `supabase/functions/` with their secrets before calls will connect. No TURN, service-role, or push secrets belong in the app or this repository.
 
 ### Running the App
 - **Android**: Run `./gradlew :app:installDebug` or use Android Studio.

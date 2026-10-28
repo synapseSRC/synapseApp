@@ -1,10 +1,5 @@
 package com.synapse.social.studioasinc.ui.settings
 
-import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
-
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
-
-import androidx.compose.foundation.clickable
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -303,47 +298,22 @@ private fun QuietHoursItem(
     position: SettingsItemPosition = SettingsItemPosition.Single
 ) {
     val enabled = notificationPreferences.globalEnabled
+    val quietHoursSummary = if (notificationPreferences.quietHoursEnabled) {
+        "${notificationPreferences.quietHoursStart} - ${notificationPreferences.quietHoursEnd}"
+    } else {
+        stringResource(R.string.settings_disabled)
+    }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = position.getShape(),
-        color = SettingsColors.cardBackground
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(enabled = enabled, onClick = onShowStartTimePicker)
-                .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
-                )
-                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Schedule,
-                contentDescription = null,
-                modifier = Modifier.size(Sizes.IconLarge),
-                tint = SettingsColors.itemIcon
-            )
-            Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.settings_quiet_hours_title),
-                    style = SettingsTypography.itemTitle,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface
-                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                )
-                Text(
-                    text = if (notificationPreferences.quietHoursEnabled)
-                        "${notificationPreferences.quietHoursStart} - ${notificationPreferences.quietHoursEnd}"
-                    else stringResource(R.string.settings_disabled),
-                    style = SettingsTypography.itemSubtitle,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                           else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                )
-            }
-            Spacer(modifier = Modifier.width(Spacing.space16))
+    SettingsListItem(
+        title = stringResource(R.string.settings_quiet_hours_title),
+        subtitle = quietHoursSummary,
+        position = position,
+        enabled = enabled,
+        onClick = onShowStartTimePicker,
+        leadingContent = {
+            SettingsIconBadge(imageVector = Icons.Default.Schedule)
+        },
+        trailingContent = {
             Switch(
                 checked = notificationPreferences.quietHoursEnabled,
                 onCheckedChange = onToggleQuietHours,
@@ -356,7 +326,7 @@ private fun QuietHoursItem(
                 )
             )
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

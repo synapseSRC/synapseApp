@@ -7,6 +7,7 @@
     <string name="about_share_message">Synapse %1$s — get the app and see what\'s new.</string>
     <string name="about_product_name">Synapse</string>
     <string name="about_version_build">Version %1$s (Build %2$s)</string>
+    <string name="about_version_build_commit">Version %1$s (%2$s) • Build %3$s</string>
     <string name="about_version_unknown">Unknown</string>
     <string name="about_version_copied">Version copied</string>
     <string name="about_whats_new_title">What\'s new</string>
@@ -54,21 +55,15 @@
     <string name="about_license_sort_name">Sort by library name</string>
     <string name="about_license_sort_author">Sort by author</string>
     <string name="about_license_no_results">No matching libraries</string>
-    <string name="about_license_compose">androidx.compose.material3</string>
-    <string name="about_license_compose_detail">Apache License 2.0 • The Android Open Source Project</string>
-    <string name="about_author_android">The Android Open Source Project</string>
-    <string name="about_license_coroutines">kotlinx.coroutines</string>
-    <string name="about_license_coroutines_detail">Apache License 2.0 • JetBrains</string>
-    <string name="about_author_jetbrains">JetBrains</string>
-    <string name="about_license_coil">coil-kt / coil-compose</string>
-    <string name="about_license_coil_detail">Apache License 2.0 • Coil Contributors</string>
-    <string name="about_author_coil">Coil Contributors</string>
-    <string name="about_license_retrofit">square / retrofit</string>
-    <string name="about_license_retrofit_detail">Apache License 2.0 • Square, Inc.</string>
-    <string name="about_author_square">Square, Inc.</string>
-    <string name="about_license_lottie">airbnb / lottie-android</string>
-    <string name="about_license_lottie_detail">Apache License 2.0 • Airbnb, Inc.</string>
-    <string name="about_author_airbnb">Airbnb, Inc.</string>
+    <string name="about_license_loading">Loading libraries…</string>
+    <string name="about_license_load_failed">Couldn\'t load the list of libraries.</string>
+    <string name="about_license_row">%1$s • %2$s</string>
+    <string name="about_license_label_apache_2_0">Apache License 2.0</string>
+    <string name="about_license_label_mit">MIT License</string>
+    <string name="about_license_label_bsd_3_clause">BSD 3-Clause License</string>
+    <string name="about_license_label_agpl_3_0">GNU AGPL v3.0</string>
+    <string name="about_license_label_gpl_2_0_classpath_exception">GNU GPL v2.0 with Classpath Exception</string>
+    <string name="about_license_label_play_services_terms">Google Play services Terms of Service</string>
 
     <string name="about_feedback_screen_title">Feedback</string>
     <string name="about_feedback_heading">We\'d love to hear from you</string>
@@ -89,10 +84,5 @@
     <string name="about_feedback_submit_failed">Could not submit feedback. Check your connection and try again.</string>
     <string name="about_feedback_sent">Feedback submitted</string>
     <string name="about_screen_five_title">Screen 5</string>
-    <string name="about_license_url_android">https://github.com/androidx/androidx</string>
-    <string name="about_license_url_coroutines">https://github.com/Kotlin/kotlinx.coroutines</string>
-    <string name="about_license_url_coil">https://github.com/coil-kt/coil</string>
-    <string name="about_license_url_retrofit">https://github.com/square/retrofit</string>
-    <string name="about_license_url_lottie">https://github.com/airbnb/lottie-android</string>
     <string name="about_feedback_contact_line">%1$s\n\nContact email: %2$s</string>
 </resources>

@@ -6,31 +6,26 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
@@ -83,64 +78,47 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = Spacing.space16),
-            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
             contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                    Text(
-                        text = stringResource(R.string.settings_account_short),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = Spacing.space12, bottom = Spacing.space4)
+                SettingsSection(title = stringResource(R.string.settings_account_short)) {
+                    SettingRow(
+                        icon = Icons.Filled.Person,
+                        title = stringResource(R.string.settings_account),
+                        subtitle = stringResource(R.string.settings_account_subtitle),
+                        imageUrl = currentUser?.avatar,
+                        onClick = onAccountClick,
+                        position = SettingsItemPosition.Top
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)) {
-                        SettingRow(
-                            icon = Icons.Filled.Person,
-                            title = stringResource(R.string.settings_account),
-                            subtitle = stringResource(R.string.settings_account_subtitle),
-                            imageUrl = currentUser?.avatar,
-                            onClick = onAccountClick,
-                            position = SettingsItemPosition.Top
-                        )
-                        SettingRow(
-                            icon = Icons.Filled.Shield,
-                            title = stringResource(R.string.settings_privacy),
-                            subtitle = stringResource(R.string.settings_privacy_subtitle),
-                            onClick = onPrivacyClick,
-                            position = SettingsItemPosition.Middle
-                        )
-                        SettingRow(
-                            icon = Icons.Filled.Notifications,
-                            title = stringResource(R.string.settings_notifications),
-                            subtitle = stringResource(R.string.settings_notifications_subtitle),
-                            onClick = onNotificationsClick,
-                            position = SettingsItemPosition.Bottom
-                        )
-                    }
+                    SettingRow(
+                        icon = Icons.Filled.Shield,
+                        title = stringResource(R.string.settings_privacy),
+                        subtitle = stringResource(R.string.settings_privacy_subtitle),
+                        onClick = onPrivacyClick,
+                        position = SettingsItemPosition.Middle
+                    )
+                    SettingRow(
+                        icon = Icons.Filled.Notifications,
+                        title = stringResource(R.string.settings_notifications),
+                        subtitle = stringResource(R.string.settings_notifications_subtitle),
+                        onClick = onNotificationsClick,
+                        position = SettingsItemPosition.Bottom
+                    )
                 }
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                    Text(
-                        text = stringResource(R.string.settings_security_short),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = Spacing.space12, bottom = Spacing.space4)
+                SettingsSection(title = stringResource(R.string.settings_security_short)) {
+                    SettingRow(
+                        icon = Icons.Filled.VpnKey,
+                        title = stringResource(R.string.settings_reset_encryption_keys_title),
+                        subtitle = if (isResettingE2EE) stringResource(R.string.settings_resetting) else stringResource(R.string.settings_reset_encryption_keys_subtitle),
+                        showChevron = !isResettingE2EE,
+                        enabled = !isResettingE2EE,
+                        onClick = { viewModel.resetE2EE() },
+                        position = SettingsItemPosition.Single
                     )
-                    SettingsCard {
-                        SettingRow(
-                            icon = Icons.Filled.VpnKey,
-                            title = stringResource(R.string.settings_reset_encryption_keys_title),
-                            subtitle = if (isResettingE2EE) stringResource(R.string.settings_resetting) else stringResource(R.string.settings_reset_encryption_keys_subtitle),
-                            showChevron = !isResettingE2EE,
-                            onClick = { if (!isResettingE2EE) viewModel.resetE2EE() },
-                            position = SettingsItemPosition.Single
-                        )
-                    }
                 }
             }
 
@@ -152,7 +130,7 @@ fun SettingsScreen(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ),
-                    shape = RoundedCornerShape(Sizes.CornerLarge)
+                    shape = SettingsShapes.itemShape
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Logout,
@@ -173,66 +151,45 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector?,
     title: String,
     subtitle: String?,
     imageUrl: String? = null,
     showChevron: Boolean = true,
+    enabled: Boolean = true,
     position: SettingsItemPosition = SettingsItemPosition.Single,
     onClick: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = position.getShape(),
-        color = SettingsColors.cardBackground
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = Spacing.space16, vertical = Spacing.space16),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    SettingsListItem(
+        title = title,
+        subtitle = subtitle,
+        position = position,
+        enabled = enabled,
+        onClick = onClick,
+        leadingContent = {
             if (imageUrl != null) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                SettingsIconBadge(
-                    imageVector = icon
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = Spacing.space16)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Surface(
+                    modifier = Modifier.size(SettingsSpacing.iconBadgeSize),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
                 }
+            } else if (icon != null) {
+                SettingsIconBadge(imageVector = icon)
             }
-            if (showChevron) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    modifier = Modifier.size(Sizes.IconLarge),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-            }
+        },
+        trailingContent = if (showChevron) {
+            { SettingsNavigationChevron() }
+        } else {
+            null
         }
-    }
+    )
 }

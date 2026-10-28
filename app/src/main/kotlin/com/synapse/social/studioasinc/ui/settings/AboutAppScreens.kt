@@ -405,39 +405,7 @@ fun AboutOpenSourceScreen(
     val context = LocalContext.current
     var filterMenuOpen by remember { mutableStateOf(false) }
     val licenseState by viewModel.uiState.collectAsState()
-    val allEntries = listOf(
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_compose),
-            stringResource(R.string.about_license_compose_detail),
-            stringResource(R.string.about_author_android),
-            stringResource(R.string.about_license_url_android)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_coroutines),
-            stringResource(R.string.about_license_coroutines_detail),
-            stringResource(R.string.about_author_jetbrains),
-            stringResource(R.string.about_license_url_coroutines)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_coil),
-            stringResource(R.string.about_license_coil_detail),
-            stringResource(R.string.about_author_coil),
-            stringResource(R.string.about_license_url_coil)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_retrofit),
-            stringResource(R.string.about_license_retrofit_detail),
-            stringResource(R.string.about_author_square),
-            stringResource(R.string.about_license_url_retrofit)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_lottie),
-            stringResource(R.string.about_license_lottie_detail),
-            stringResource(R.string.about_author_airbnb),
-            stringResource(R.string.about_license_url_lottie)
-        )
-    )
-    val visibleEntries = viewModel.visibleEntries(allEntries)
+    val visibleEntries = viewModel.visibleEntries()
 
     AboutAppTheme {
         Scaffold(
@@ -532,25 +500,33 @@ fun AboutOpenSourceScreen(
                     }
                 }
 
-                if (visibleEntries.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.about_license_no_results),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space24),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                when {
+                    licenseState.isLoading -> item {
+                        AboutLicenseStatusMessage(stringResource(R.string.about_license_loading))
                     }
-                } else {
-                    item {
+
+                    licenseState.loadFailed -> item {
+                        AboutLicenseStatusMessage(stringResource(R.string.about_license_load_failed))
+                    }
+
+                    visibleEntries.isEmpty() -> item {
+                        AboutLicenseStatusMessage(stringResource(R.string.about_license_no_results))
+                    }
+
+                    else -> item {
                         AboutListGroup(
-                            items = visibleEntries.map { entry ->
+                            items = visibleEntries.map { license ->
                                 AboutLinkItem(
-                                    title = entry.name,
-                                    supportingText = entry.licenseAndAuthor,
+                                    title = license.name,
+                                    supportingText = stringResource(
+                                        R.string.about_license_row,
+                                        licenseLabel(license.licenseId),
+                                        license.author
+                                    ),
+                                    description = license.licenseNote,
                                     leadingIcon = Icons.Filled.Code,
                                     trailingIcon = Icons.Filled.OpenInNew,
-                                    onClick = { IntentUtils.openUrl(context, entry.repositoryUrl) }
+                                    onClick = { IntentUtils.openUrl(context, license.repositoryUrl) }
                                 )
                             }
                         )
@@ -559,6 +535,32 @@ fun AboutOpenSourceScreen(
             }
         }
     }
+}
+
+/** Status line shown while the licence list loads, fails, or matches no query. */
+@Composable
+private fun AboutLicenseStatusMessage(text: String) {
+    Text(
+        text = text,
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space24),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/**
+ * Maps a stable licence token from the bundled asset to its localised label.
+ * An unrecognised token is displayed verbatim rather than guessed at.
+ */
+@Composable
+private fun licenseLabel(licenseId: String): String = when (licenseId) {
+    "apache-2.0" -> stringResource(R.string.about_license_label_apache_2_0)
+    "mit" -> stringResource(R.string.about_license_label_mit)
+    "bsd-3-clause" -> stringResource(R.string.about_license_label_bsd_3_clause)
+    "agpl-3.0" -> stringResource(R.string.about_license_label_agpl_3_0)
+    "gpl-2.0-with-classpath-exception" -> stringResource(R.string.about_license_label_gpl_2_0_classpath_exception)
+    "google-play-services-tos" -> stringResource(R.string.about_license_label_play_services_terms)
+    else -> licenseId
 }
 
 private enum class FeedbackCategory(val labelRes: Int) {

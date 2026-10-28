@@ -4,6 +4,7 @@ import android.app.Application
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.AppUpdateCheckResult
 import com.synapse.social.studioasinc.domain.usecase.about.CheckForUpdatesUseCase
@@ -36,6 +37,10 @@ class AboutSupportViewModel @Inject constructor(
 
     private val _buildNumber = MutableStateFlow("")
     val buildNumber: StateFlow<String> = _buildNumber.asStateFlow()
+
+    /** Short commit hash stamped into [BuildConfig] at build time; blank when git was unavailable. */
+    private val _commitHash = MutableStateFlow(BuildConfig.GIT_COMMIT_HASH.trim())
+    val commitHash: StateFlow<String> = _commitHash.asStateFlow()
 
     private val _updateStatus = MutableStateFlow<AboutUpdateStatus>(AboutUpdateStatus.Idle)
     val updateStatus: StateFlow<AboutUpdateStatus> = _updateStatus.asStateFlow()

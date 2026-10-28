@@ -189,35 +189,36 @@ fun SettingsCommandPaletteResults(
     ) {
         LazyColumn(
             modifier = Modifier.padding(Spacing.space16),
-            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
+            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
         ) {
             items(results) { node ->
                 val action = node.action
-                Card(
+                val navigateDestination =
+                    (action as? com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Navigate)?.destination
+                val toggleAction =
+                    action as? com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Toggle
+
+                SettingsListItem(
+                    title = node.title,
+                    subtitle = node.subtitle,
                     onClick = {
-                        if (action is com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Navigate) {
-                            onNavigate(action.destination)
-                        } else if (action != null) {
-                            onActionClick(action)
+                        when {
+                            toggleAction != null -> onActionClick(toggleAction)
+                            navigateDestination != null -> onNavigate(navigateDestination)
+                            action != null -> onActionClick(action)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.itemShape,
-                    colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(Spacing.space16),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(node.title, style = MaterialTheme.typography.titleSmall)
-                            node.subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    trailingContent = if (toggleAction != null) {
+                        {
+                            Switch(
+                                checked = toggleAction.currentValue,
+                                onCheckedChange = { onActionClick(toggleAction) }
+                            )
                         }
-                        if (action is com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Toggle) {
-                            Switch(checked = action.currentValue, onCheckedChange = { onActionClick(action) })
-                        }
+                    } else {
+                        null
                     }
-                }
+                )
             }
         }
     }

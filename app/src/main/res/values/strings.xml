@@ -1074,8 +1074,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_back_description">Navigate back</string>
     <string name="settings_profile_avatar_description">Profile picture</string>
     <string name="settings_category_icon_description">Category icon</string>
-    <string name="settings_chevron_description">Navigate to details</string>
-    <string name="settings_toggle_description">Toggle setting</string>
     <string name="settings_dropdown_description">Select option</string>
     <string name="settings_slider_description">Adjust value</string>
     <string name="settings_loading_description">Loading content</string>
@@ -2398,6 +2396,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="call_ended_cancelled">Call cancelled</string>
     <string name="call_ended_unavailable">Call unavailable</string>
     <string name="call_ended_failed">Call failed</string>
+    <string name="call_history_load_failed">We couldn\'t load your calls. Please try again.</string>
     <string name="call_action_call_again">Call again</string>
     <string name="call_action_done">Done</string>
     <string name="call_end_dialog_title">End this call?</string>
@@ -2413,6 +2412,28 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="call_duration_spoken_seconds">Call duration: %1$d seconds</string>
     <string name="call_pip_description">Your camera preview</string>
     <string name="call_pip_camera_off_description">Your camera is off</string>
+
+    <string name="call_permission_required_title">Permission needed</string>
+    <string name="call_permission_required_microphone">Synapse needs your microphone to make calls.</string>
+    <string name="call_permission_required_camera">Synapse needs your microphone and camera to make video calls.</string>
+    <string name="call_permission_settings_hint">Turn the permissions on for Synapse in Settings, then come back to this call.</string>
+    <string name="call_permission_try_again">Try again</string>
+    <string name="call_permission_open_settings">Open settings</string>
+
+    <string name="call_notification_incoming_voice">%1$s is calling</string>
+    <string name="call_notification_incoming_video">%1$s is video calling</string>
+    <string name="call_notification_incoming_hint">Tap to open the call and answer</string>
+    <string name="call_notification_unknown_caller">Someone</string>
+    <string name="call_notification_action_accept">Accept</string>
+    <string name="call_notification_action_decline">Decline</string>
+    <string name="call_notification_active_title">Call in progress</string>
+    <string name="call_notification_active_voice">Voice call with %1$s</string>
+    <string name="call_notification_active_video">Video call with %1$s</string>
+    <string name="call_notification_channel_incoming_name">Incoming calls</string>
+    <string name="call_notification_channel_incoming_description">Rings for calls people place to you, with accept and decline buttons.</string>
+    <string name="call_notification_channel_active_name">Ongoing calls</string>
+    <string name="call_notification_channel_active_description">Shows that a call is still running while Synapse is in the background. Silent.</string>
+
     <string name="call_debug_open">Open call simulation</string>
 
     <string name="call_debug_tools_title">Call simulation</string>
