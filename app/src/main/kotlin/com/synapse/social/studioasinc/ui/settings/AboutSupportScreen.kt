@@ -92,7 +92,7 @@ fun AboutSupportScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SettingsColors.screenBackground,
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.about_app_title)) },
@@ -126,8 +126,8 @@ fun AboutSupportScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = SettingsColors.screenBackground,
+                        scrolledContainerColor = SettingsColors.cardBackground,
                         titleContentColor = MaterialTheme.colorScheme.onSurface,
                         navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                         actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -391,7 +391,7 @@ internal fun AboutListItem(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = SettingsColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { rowContent() }
     } else {
@@ -399,7 +399,7 @@ internal fun AboutListItem(
             onClick = item.onClick,
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = SettingsColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { rowContent() }
     }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.pressScale
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.raisedControlColor
 import com.synapse.social.studioasinc.shared.domain.model.call.CallAudioRoute
 
 /**
@@ -56,10 +59,10 @@ fun CallControlButton(
     modifier: Modifier = Modifier,
     selected: Boolean = false,
     stateDescription: String? = null,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    selectedContainerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    containerColor: Color = raisedControlColor(),
+    selectedContainerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    selectedContentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedContentColor: Color = MaterialTheme.colorScheme.onPrimary,
     labelColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -164,41 +167,34 @@ fun EndCallButton(
     }
 }
 
+/**
+ * The rounded bottom sheet the active-call controls sit on, so the control circles read as buttons
+ * on a surface instead of floating loose over the page or the video frame.
+ */
 @Composable
-fun IncomingCallActions(
-    onAccept: () -> Unit,
-    onDecline: () -> Unit,
+fun CallControlPanel(
     modifier: Modifier = Modifier,
-    overVideo: Boolean = false
+    overMedia: Boolean = false,
+    content: @Composable () -> Unit
 ) {
     val scheme = MaterialTheme.colorScheme
-    val labelColor = if (overVideo) callMediaTextColor() else scheme.onSurface
-    val declineLabel = stringResource(R.string.call_control_decline)
-    val acceptLabel = stringResource(R.string.call_control_accept)
-
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(CallDimens.IncomingActionGap, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(Sizes.CornerExtraLarge),
+        color = if (overMedia) {
+            scheme.scrim.copy(alpha = CallDimens.ControlSurfaceAlpha)
+        } else {
+            scheme.surfaceContainerHigh
+        }
     ) {
-        IncomingActionButton(
-            icon = CallIcons.endCall,
-            label = declineLabel,
-            containerColor = scheme.error,
-            contentColor = scheme.onError,
-            labelColor = labelColor,
-            onClick = onDecline,
-            modifier = Modifier.weight(1f, fill = false)
-        )
-        IncomingActionButton(
-            icon = CallIcons.acceptCall,
-            label = acceptLabel,
-            containerColor = scheme.primary,
-            contentColor = scheme.onPrimary,
-            labelColor = labelColor,
-            onClick = onAccept,
-            modifier = Modifier.weight(1f, fill = false)
-        )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+            contentAlignment = Alignment.Center
+        ) {
+            content()
+        }
     }
 }
 
@@ -242,58 +238,6 @@ fun CallSwitchChip(
             style = MaterialTheme.typography.labelMedium,
             color = content,
             maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun IncomingActionButton(
-    icon: ImageVector,
-    label: String,
-    containerColor: Color,
-    contentColor: Color,
-    labelColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .widthIn(min = CallDimens.ControlLabelWidth * 1.5f)
-            .pressScale(interactionSource)
-            .clip(RoundedCornerShape(Sizes.CornerDefault))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(),
-                role = Role.Button,
-                onClick = onClick
-            )
-            .semanticsMerge(label, stateDescription = null, selected = false)
-            .padding(vertical = Spacing.space4)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(CallDimens.IncomingAction)
-                .clip(CircleShape)
-                .background(containerColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(CallDimens.ControlIcon),
-                tint = contentColor
-            )
-        }
-        Spacer(Modifier.height(Spacing.space8))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge.copy(hyphens = Hyphens.None),
-            color = labelColor,
-            textAlign = TextAlign.Center,
-            maxLines = 2
         )
     }
 }

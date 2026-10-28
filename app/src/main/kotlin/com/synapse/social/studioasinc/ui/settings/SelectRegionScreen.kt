@@ -55,7 +55,7 @@ fun SelectRegionScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             if (isSearchActive) {
                 SearchBar(
@@ -93,7 +93,7 @@ fun SelectRegionScreen(
                         if (!active) searchQuery = ""
                     },
                     colors = SearchBarDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = SettingsColors.cardBackground,
                     )
                 ) {
                     LazyColumn(
@@ -125,8 +125,8 @@ fun SelectRegionScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                        containerColor = SettingsColors.screenBackground,
+                        scrolledContainerColor = SettingsColors.cardBackground
                     )
                 )
             }

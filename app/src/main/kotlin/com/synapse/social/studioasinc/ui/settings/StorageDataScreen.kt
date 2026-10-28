@@ -83,6 +83,7 @@ private fun StorageDataContent(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_storage_data_title)) },
@@ -95,8 +96,8 @@ private fun StorageDataContent(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = SettingsColors.screenBackground,
+                    scrolledContainerColor = SettingsColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )

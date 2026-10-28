@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,7 +91,7 @@ fun CallVideoContent(
         when {
             isIncomingRinging -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CallAvatar(session = session, size = CallDimens.AvatarCompact)
+                    CallAvatar(session = session, size = CallDimens.PortraitCompact)
                     Spacer(Modifier.height(Spacing.space16))
                     Text(
                         text = stringResource(R.string.call_incoming_video),
@@ -107,7 +108,7 @@ fun CallVideoContent(
 
             !session.isRemoteVideoEnabled -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CallAvatar(session = session, size = CallDimens.Avatar)
+                    CallAvatar(session = session, size = CallDimens.Portrait)
                     Spacer(Modifier.height(Spacing.space16))
                     CallChipView(
                         chip = CallChip(
@@ -180,14 +181,20 @@ fun CallVideoContent(
             Spacer(Modifier.weight(1f))
 
             if (isIncomingRinging) {
-                IncomingCallActions(
-                    onAccept = actions.onAccept,
-                    onDecline = actions.onDecline,
-                    overVideo = true
-                )
+                // Keyed to the call: a second incoming session can replace this one without the
+                // screen leaving composition, and it must start with an untouched slider.
+                key(session.id) {
+                    SlideToAnswerBar(
+                        onAccept = actions.onAccept,
+                        onDecline = actions.onDecline,
+                        overMedia = true
+                    )
+                }
             } else {
-                CallControlRow(modifier = Modifier.fillMaxWidth()) {
-                    VideoCallControls(session = session, actions = actions)
+                CallControlPanel(overMedia = true) {
+                    CallControlRow(modifier = Modifier.fillMaxWidth()) {
+                        VideoCallControls(session = session, actions = actions)
+                    }
                 }
                 Spacer(Modifier.height(Spacing.space24))
                 EndCallButton(
@@ -271,19 +278,13 @@ private fun CallLocalPreview(session: CallSession, modifier: Modifier = Modifier
 
 @Composable
 private fun VideoCallControls(session: CallSession, actions: CallActions) {
-    val scheme = MaterialTheme.colorScheme
     val content = callMediaTextColor()
-    val controlColor = scheme.scrim.copy(alpha = CallDimens.ControlSurfaceAlpha)
 
     CallControlButton(
         icon = callAudioRouteIcon(session.audioRoute),
         label = stringResource(R.string.call_control_audio),
         stateDescription = callAudioRouteLabel(session.audioRoute),
         onClick = actions.onOpenAudioSheet,
-        containerColor = controlColor,
-        contentColor = content,
-        selectedContainerColor = scheme.primary,
-        selectedContentColor = scheme.onPrimary,
         labelColor = content
     )
     CallControlButton(
@@ -295,10 +296,6 @@ private fun VideoCallControls(session: CallSession, actions: CallActions) {
             else R.string.call_state_microphone_on
         ),
         onClick = actions.onToggleMute,
-        containerColor = controlColor,
-        contentColor = content,
-        selectedContainerColor = scheme.primary,
-        selectedContentColor = scheme.onPrimary,
         labelColor = content
     )
     CallControlButton(
@@ -310,10 +307,6 @@ private fun VideoCallControls(session: CallSession, actions: CallActions) {
             else R.string.call_state_camera_off
         ),
         onClick = actions.onToggleCamera,
-        containerColor = controlColor,
-        contentColor = content,
-        selectedContainerColor = scheme.primary,
-        selectedContentColor = scheme.onPrimary,
         labelColor = content
     )
     CallControlButton(
@@ -324,10 +317,6 @@ private fun VideoCallControls(session: CallSession, actions: CallActions) {
             else R.string.call_state_rear_camera
         ),
         onClick = actions.onFlipCamera,
-        containerColor = controlColor,
-        contentColor = content,
-        selectedContainerColor = scheme.primary,
-        selectedContentColor = scheme.onPrimary,
         labelColor = content
     )
 }

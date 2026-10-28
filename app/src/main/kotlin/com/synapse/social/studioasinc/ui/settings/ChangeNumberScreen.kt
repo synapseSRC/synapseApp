@@ -48,6 +48,7 @@ fun ChangeNumberScreen(
     }
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_change_number_title)) },

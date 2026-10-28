@@ -9,12 +9,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.automirrored.filled.PhoneMissed
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,7 +34,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.call.components.CallIcons
+import com.synapse.social.studioasinc.feature.call.components.callEndReasonLabel
+import com.synapse.social.studioasinc.feature.call.components.formatCallDuration
+import com.synapse.social.studioasinc.feature.call.components.spokenDuration
+import com.synapse.social.studioasinc.feature.shared.theme.DarkError
+import com.synapse.social.studioasinc.feature.shared.theme.DarkErrorContainer
+import com.synapse.social.studioasinc.feature.shared.theme.DarkOnError
+import com.synapse.social.studioasinc.feature.shared.theme.DarkOnErrorContainer
+import com.synapse.social.studioasinc.feature.shared.theme.DarkOnPrimary
+import com.synapse.social.studioasinc.feature.shared.theme.DarkOnTertiaryContainer
+import com.synapse.social.studioasinc.feature.shared.theme.DarkPrimary
+import com.synapse.social.studioasinc.feature.shared.theme.DarkTertiaryContainer
+import com.synapse.social.studioasinc.feature.shared.theme.LightError
+import com.synapse.social.studioasinc.feature.shared.theme.LightErrorContainer
+import com.synapse.social.studioasinc.feature.shared.theme.LightOnError
+import com.synapse.social.studioasinc.feature.shared.theme.LightOnErrorContainer
+import com.synapse.social.studioasinc.feature.shared.theme.LightOnPrimary
+import com.synapse.social.studioasinc.feature.shared.theme.LightOnTertiaryContainer
+import com.synapse.social.studioasinc.feature.shared.theme.LightPrimary
+import com.synapse.social.studioasinc.feature.shared.theme.LightTertiaryContainer
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.call.CallEndReason
+import com.synapse.social.studioasinc.shared.domain.model.call.callEndReasonFromRaw
+import com.synapse.social.studioasinc.shared.domain.model.call.isMissedCall
 import com.synapse.social.studioasinc.shared.domain.model.chat.*
 
 /**
@@ -775,50 +801,129 @@ fun CodeSnippetCardBubble(
 }
 
 /**
- * M3 Expressive Call log message.
- * Uses full (pill) shape and tertiaryContainer / errorContainer roles.
+ * Call log message.
+ *
+ * Wraps its content at the chat bubble radius and carries the timestamp / delivery status in the
+ * trailing corner. Its colors are pinned to the static scheme rather than read off
+ * [MaterialTheme.colorScheme] so the same call outcome cannot change hue per device or chat theme.
  */
 @Composable
 fun CallLogCardBubble(
     metadata: CallMetadata?,
-    contentColor: Color
+    isFromMe: Boolean,
+    cornerRadius: Int,
+    modifier: Modifier = Modifier,
+    footer: (@Composable ColumnScope.(Color) -> Unit)? = null
 ) {
-    val isMissed = metadata?.callStatus == "MISSED"
+    val isIncoming = !isFromMe
+    val reason = callEndReasonFromRaw(metadata?.callStatus)
     val isVideo = metadata?.isVideo == true
+    val durationMs = (metadata?.durationSeconds ?: 0) * 1000L
+    val isMissed = isMissedCall(reason = reason, connected = durationMs > 0L, isIncoming = isIncoming)
+    val statusLabel = callEndReasonLabel(reason, isIncoming = isIncoming)
+    val hasDuration = durationMs > 0L &&
+        (reason == CallEndReason.COMPLETED || reason == CallEndReason.REMOTE_ENDED)
 
-    val containerColor = if (isMissed) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer
-    val textColor = if (isMissed) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onTertiaryContainer
+    // Material You re-derives the tertiary role per wallpaper, which rendered one completed call
+    // purple on a Pixel emulator and cyan on a Galaxy. The neutral roles stay neutral either way.
+    val isDark = isSystemInDarkTheme()
+    val containerColor = if (isMissed) {
+        if (isDark) DarkErrorContainer else LightErrorContainer
+    } else {
+        if (isDark) DarkTertiaryContainer else LightTertiaryContainer
+    }
+    val textColor = if (isMissed) {
+        if (isDark) DarkOnErrorContainer else LightOnErrorContainer
+    } else {
+        if (isDark) DarkOnTertiaryContainer else LightOnTertiaryContainer
+    }
+    // A solid semantic disc instead of a neutral one: the grey circle sat too close to the
+    // container fill to read as a separate element at a glance.
+    val iconDiscColor = if (isMissed) {
+        if (isDark) DarkError else LightError
+    } else {
+        if (isDark) DarkPrimary else LightPrimary
+    }
+    val iconTint = if (isMissed) {
+        if (isDark) DarkOnError else LightOnError
+    } else {
+        if (isDark) DarkOnPrimary else LightOnPrimary
+    }
+
+    // The spoken form spells the duration out; the visual "0:13" reads as "oh thirteen".
+    val subtitle = if (hasDuration) {
+        stringResource(R.string.call_summary_line, statusLabel, formatCallDuration(durationMs))
+    } else {
+        statusLabel
+    }
+    val subtitleDescription = if (hasDuration) {
+        stringResource(R.string.call_summary_line, statusLabel, spokenDuration(durationMs))
+    } else {
+        null
+    }
 
     Surface(
         color = containerColor,
-        shape = CircleShape,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = Spacing.space4)
+        shape = RoundedCornerShape(cornerRadius.dp),
+        modifier = modifier
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+            modifier = Modifier.padding(
+                start = Spacing.space12,
+                top = Spacing.space8,
+                end = Spacing.space16,
+                bottom = Spacing.space8
+            ),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (isMissed) Icons.AutoMirrored.Filled.PhoneMissed else if (isVideo) Icons.Default.Videocam else Icons.Default.Phone,
-                contentDescription = null,
-                tint = textColor,
-                modifier = Modifier.size(20.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(Sizes.IconMassive)
+                    .clip(CircleShape)
+                    .background(iconDiscColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isMissed) CallIcons.missed else if (isVideo) Icons.Default.Videocam else Icons.Default.Phone,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(Sizes.IconLarge)
+                )
+            }
             Spacer(modifier = Modifier.width(Spacing.space8))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (isVideo) "Video Call" else "Voice Call",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = textColor
-                )
-                Text(
-                    text = metadata?.callStatus ?: "COMPLETED",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = textColor.copy(alpha = 0.8f)
-                )
+            Row(
+                modifier = Modifier.weight(1f, fill = false),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Column(modifier = Modifier.weight(1f, fill = false)) {
+                    Text(
+                        text = stringResource(
+                            if (isVideo) R.string.chat_action_video_call else R.string.chat_action_voice_call
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.space4))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = if (subtitleDescription != null) {
+                            Modifier.semantics { contentDescription = subtitleDescription }
+                        } else {
+                            Modifier
+                        }
+                    )
+                }
+                footer?.let { composeFooter ->
+                    Spacer(modifier = Modifier.width(Spacing.space8))
+                    Column { composeFooter(textColor) }
+                }
             }
         }
     }

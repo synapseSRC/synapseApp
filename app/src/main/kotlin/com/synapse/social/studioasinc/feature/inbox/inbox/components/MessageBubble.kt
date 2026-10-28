@@ -211,6 +211,7 @@ private fun ColumnScope.MessageMetadataRow(
     contentColor: Color,
     onRetryClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    readTint: Color = MaterialTheme.colorScheme.primary,
     currentUserId: String = ""
 ) {
     Row(
@@ -248,7 +249,7 @@ private fun ColumnScope.MessageMetadataRow(
                 DeliveryStatus.FAILED -> Triple(Icons.Filled.Warning, stringResource(R.string.msg_status_failed), MaterialTheme.colorScheme.error)
                 DeliveryStatus.SENT -> Triple(Icons.Filled.Check, stringResource(R.string.msg_status_sent), contentColor.copy(alpha = 0.7f))
                 DeliveryStatus.DELIVERED -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_delivered), contentColor.copy(alpha = 0.7f))
-                DeliveryStatus.READ -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_read), MaterialTheme.colorScheme.primary)
+                DeliveryStatus.READ -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_read), readTint)
             }
             Icon(
                 imageVector = icon,
@@ -382,26 +383,29 @@ fun MessageBubble(
         return
     }
 
-    // CALL messages render as a standalone centered pill without double-nested bubble surfaces
+    // CALL messages get their own direction-aligned bubble, so no nested bubble surface
     if (message.messageType == MessageType.CALL) {
         Box(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(vertical = Spacing.space4),
-            contentAlignment = Alignment.Center
+            contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CallLogCardBubble(
-                    metadata = message.metadataContainer?.call,
-                    contentColor = contentColor
-                )
-                MessageMetadataRow(
-                    message = message,
-                    isFromMe = isFromMe,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    onRetryClick = onRetryClick
-                )
-            }
+            CallLogCardBubble(
+                metadata = message.metadataContainer?.call,
+                isFromMe = isFromMe,
+                cornerRadius = cornerRadius,
+                modifier = Modifier.widthIn(max = bubbleMaxWidth),
+                footer = { footerColor ->
+                    MessageMetadataRow(
+                        message = message,
+                        isFromMe = isFromMe,
+                        contentColor = footerColor,
+                        readTint = footerColor,
+                        onRetryClick = onRetryClick
+                    )
+                }
+            )
         }
         return
     }

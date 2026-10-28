@@ -16,6 +16,27 @@ enum class CallEndReason {
     REMOTE_ENDED
 }
 
+/** Reasons where nobody got through, so an incoming one reads to the receiver as a missed call. */
+val CallEndReason.isUnanswered: Boolean
+    get() = this == CallEndReason.NO_ANSWER || this == CallEndReason.DECLINED || this == CallEndReason.CANCELLED ||
+        this == CallEndReason.UNAVAILABLE || this == CallEndReason.FAILED
+
+/**
+ * Reads back the status the backend wrote onto a call log message.
+ *
+ * Returns null for anything unrecognised so a caller can fall back to a generic label, rather than
+ * printing a raw enum name to the user.
+ */
+fun callEndReasonFromRaw(raw: String?): CallEndReason? {
+    val key = raw?.trim()?.uppercase()?.replace('-', '_')?.replace(' ', '_') ?: return null
+    if (key == "MISSED") return CallEndReason.NO_ANSWER
+    return CallEndReason.entries.firstOrNull { it.name == key }
+}
+
+/** Only the receiver of a ring nobody answered has a missed call; the caller simply got no answer. */
+fun isMissedCall(reason: CallEndReason?, connected: Boolean, isIncoming: Boolean): Boolean =
+    !connected && isIncoming && reason?.isUnanswered == true
+
 enum class CallAudioRoute { EARPIECE, SPEAKER, BLUETOOTH, WIRED_HEADSET }
 
 enum class CallConnectionQuality { GOOD, FAIR, POOR }

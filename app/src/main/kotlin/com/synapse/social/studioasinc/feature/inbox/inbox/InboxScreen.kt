@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.spring
@@ -8,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
@@ -89,10 +92,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.FolderTabRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxFilter
@@ -105,10 +111,17 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxConversat
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSearchScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSelectionToolbar
 import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxExpressiveDimens
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
+import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION }
 
@@ -441,7 +454,9 @@ private fun InboxScreenContent(
                         )
                         1 -> CallsTabScreen(
                             contentPadding = PaddingValues(),
-                            debugToolsEnabled = debugToolsEnabled,
+                            // The simulated-call launcher is only meaningful when the mock call repository
+                            // is the one backing the screen; on a real backend it would place real calls.
+                            debugToolsEnabled = debugToolsEnabled && BuildConfig.CALL_SIMULATION_ENABLED,
                             onStartCall = onStartCall
                         )
                         else -> ContactsTabScreen(
@@ -579,7 +594,12 @@ private fun HomeMessages(
     onOpenConversation: (Conversation) -> Unit,
     onLongPressConversation: (String) -> Unit
 ) {
-    Column(Modifier.fillMaxSize()) {
+    val sections = remember(conversations) { groupConversations(conversations) }
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Spacing.space16, vertical = Spacing.space8),
             horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
@@ -621,33 +641,89 @@ private fun HomeMessages(
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24),
-verticalArrangement = Arrangement.spacedBy(Spacing.space8)
+                contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24)
             ) {
                 if (archivedCount > 0) {
                     item(key = "archived-conversations") {
-                        ArchivedConversationsEntry(count = archivedCount, onClick = onOpenArchive)
+                        ArchivedConversationsEntry(
+                            count = archivedCount,
+                            onClick = onOpenArchive,
+                            modifier = Modifier.padding(bottom = Spacing.space8)
+                        )
                     }
                 }
-                items(conversations, key = { it.chatId }) { conversation ->
-                    InboxConversationRow(
-                        conversation = conversation,
-                        onClick = { onOpenConversation(conversation) },
-                        onLongClick = { onLongPressConversation(conversation.chatId) }
-                    )
+                sections.forEach { (section, sectionConversations) ->
+                    item(key = "conversation-header-${section.name}") {
+                        Text(
+                            text = stringResource(section.labelRes),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .padding(start = Spacing.space4, top = Spacing.space16, bottom = Spacing.space8)
+                                .semantics { heading() }
+                        )
+                    }
+                    itemsIndexed(sectionConversations, key = { _, conversation -> conversation.chatId }) { index, conversation ->
+                        InboxConversationRow(
+                            conversation = conversation,
+                            position = GroupedItemPosition.at(index, sectionConversations.size),
+                            onClick = { onOpenConversation(conversation) },
+                            onLongClick = { onLongPressConversation(conversation.chatId) },
+                            modifier = if (index == 0) Modifier else Modifier.padding(top = GroupedListSpacing)
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+private enum class ConversationSection(@StringRes val labelRes: Int) {
+    PINNED(R.string.inbox_section_pinned),
+    TODAY(R.string.inbox_section_today),
+    YESTERDAY(R.string.inbox_section_yesterday),
+    EARLIER(R.string.inbox_section_earlier)
+}
+
+/**
+ * Section labels only: conversations keep the ViewModel's pinned-first, newest-first order because
+ * they are bucketed in arrival order and the buckets render in a fixed order.
+ */
+private fun groupConversations(
+    conversations: List<Conversation>
+): List<Pair<ConversationSection, List<Conversation>>> {
+    val zone = TimeZone.currentSystemDefault()
+    val todayEpochDays = Clock.System.now().toLocalDateTime(zone).date.toEpochDays()
+    val buckets = LinkedHashMap<ConversationSection, MutableList<Conversation>>()
+
+    conversations.forEach { conversation ->
+        val lastMessageEpochDays = TimestampFormatter.parseInstant(conversation.lastMessageTime)
+            ?.toLocalDateTime(zone)?.date?.toEpochDays()
+        val section = when {
+            conversation.isPinned -> ConversationSection.PINNED
+            lastMessageEpochDays == todayEpochDays -> ConversationSection.TODAY
+            lastMessageEpochDays == todayEpochDays - 1 -> ConversationSection.YESTERDAY
+            else -> ConversationSection.EARLIER
+        }
+        buckets.getOrPut(section) { mutableListOf() }.add(conversation)
+    }
+
+    return ConversationSection.entries.mapNotNull { section ->
+        buckets[section]?.let { section to it }
+    }
+}
+
 @Composable
-private fun ArchivedConversationsEntry(count: Int, onClick: () -> Unit) {
+private fun ArchivedConversationsEntry(
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth()
+        colors = CardDefaults.cardColors(containerColor = cardSurfaceColor()),
+        shape = GroupedItemPosition.Single.shape,
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().height(InboxExpressiveDimens.ConversationRowHeight).padding(horizontal = Spacing.space16),
@@ -679,7 +755,12 @@ private fun SelectionContent(
     onDelete: () -> Unit,
     onDone: () -> Unit
 ) {
-    Column(Modifier.fillMaxSize().padding(horizontal = Spacing.space16)) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(horizontal = Spacing.space16)
+    ) {
         Box(Modifier.fillMaxWidth().padding(vertical = Spacing.space8), contentAlignment = Alignment.Center) {
             InboxSelectionToolbar(
                 allPinned = allSelectedPinned,

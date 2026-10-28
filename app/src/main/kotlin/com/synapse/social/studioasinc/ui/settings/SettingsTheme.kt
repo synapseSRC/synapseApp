@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -25,10 +26,11 @@ object SettingsColors {
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.surfaceContainerLow
 
+    /** Raised backdrop of the more-menu sheet, so the [cardBackground] rows read as recessed. */
     val screenBackground: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.background
+        get() = MaterialTheme.colorScheme.surfaceContainerHighest
 
     val cardBackgroundElevated: Color
         @Composable
@@ -191,22 +193,11 @@ enum class SettingsItemPosition {
 
     Bottom;
 
-    /** 28dp on the outer edge of the stack, 8dp where two items meet. */
     @Composable
     fun getShape(): Shape = when (this) {
-        Single -> RoundedCornerShape(Sizes.CornerMassive)
-        Top -> RoundedCornerShape(
-            topStart = Sizes.CornerMassive,
-            topEnd = Sizes.CornerMassive,
-            bottomStart = Sizes.CornerMedium,
-            bottomEnd = Sizes.CornerMedium
-        )
-        Middle -> RoundedCornerShape(Sizes.CornerMedium)
-        Bottom -> RoundedCornerShape(
-            topStart = Sizes.CornerMedium,
-            topEnd = Sizes.CornerMedium,
-            bottomStart = Sizes.CornerMassive,
-            bottomEnd = Sizes.CornerMassive
-        )
+        Single -> GroupedItemPosition.Single.shape
+        Top -> GroupedItemPosition.Top.shape
+        Middle -> GroupedItemPosition.Middle.shape
+        Bottom -> GroupedItemPosition.Bottom.shape
     }
 }

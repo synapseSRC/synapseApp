@@ -232,9 +232,19 @@ private fun CallDurationText(elapsedMs: Long, color: Color) {
 }
 
 @Composable
-fun callEndReasonLabel(session: CallSession): String = when (session.endReason) {
+fun callEndReasonLabel(session: CallSession): String =
+    callEndReasonLabel(session.endReason, session.direction == CallDirection.INCOMING)
+
+/**
+ * The one table that says what an ended call is called.
+ *
+ * The calls tab, the end-call screen and the in-chat call log all read from here, so the same
+ * outcome cannot be worded three different ways.
+ */
+@Composable
+fun callEndReasonLabel(reason: CallEndReason?, isIncoming: Boolean): String = when (reason) {
     CallEndReason.DECLINED -> stringResource(R.string.call_ended_declined)
-    CallEndReason.NO_ANSWER -> if (session.direction == CallDirection.INCOMING) {
+    CallEndReason.NO_ANSWER -> if (isIncoming) {
         stringResource(R.string.call_ended_missed)
     } else {
         stringResource(R.string.call_ended_no_answer)

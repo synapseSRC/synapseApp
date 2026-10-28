@@ -14,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -26,9 +25,9 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
 /**
- * Incoming-style typing bubble: asymmetric rounded shape (massive on the sender's
- * side, small on the bottom-left tail), accent-colored dots, and a subtle shadow
- * so it reads as a floating, transient element rather than part of the background.
+ * Incoming-style typing bubble: a floating pill with accent-colored dots and a
+ * subtle shadow so it reads as a transient element rather than part of the
+ * background.
  *
  * @param reducedMotion Honors the system reduced-motion setting — when true the
  *   dots are rendered statically and no animation is started.
@@ -41,18 +40,9 @@ fun TypingIndicator(
     reducedMotion: Boolean = false,
     displayName: String? = null,
 ) {
-    val shape = remember {
-        RoundedCornerShape(
-            topStart = Sizes.CornerMassive,
-            topEnd = Sizes.CornerMassive,
-            bottomStart = Sizes.CornerSmall,
-            bottomEnd = Sizes.CornerMassive,
-        )
-    }
-
     Surface(
         modifier = modifier,
-        shape = shape,
+        shape = RoundedCornerShape(percent = 50),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = Sizes.ElevationNone,
         shadowElevation = Sizes.ElevationLow,

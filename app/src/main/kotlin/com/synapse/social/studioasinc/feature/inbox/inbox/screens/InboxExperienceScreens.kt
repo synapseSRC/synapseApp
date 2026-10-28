@@ -11,6 +11,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +33,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Check
@@ -78,7 +81,10 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchResu
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchState
 import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxExpressiveDimens
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
@@ -92,6 +98,7 @@ fun InboxConversationRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
     trailingContent: (@Composable () -> Unit)? = null,
+    position: GroupedItemPosition = GroupedItemPosition.Single,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -101,13 +108,17 @@ fun InboxConversationRow(
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
         label = "conversation-row-press"
     )
+    val rowShape = position.shape
     Surface(
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else cardSurfaceColor(),
         contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
-        shape = MaterialTheme.shapes.medium,
+        shape = rowShape,
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { scaleX = scale; scaleY = scale }
+            // Clip here, not only on the Surface: the ripple is drawn by this node's indication
+            // layer, which sits outside the Surface's own rounded clip.
+            .clip(rowShape)
             .combinedClickable(
                 interactionSource = interactionSource,
                 onClick = onClick,
@@ -118,8 +129,8 @@ fun InboxConversationRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(InboxExpressiveDimens.ConversationRowHeight)
-                .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+                .heightIn(min = InboxExpressiveDimens.ConversationRowHeight)
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (selectionMode) {
@@ -205,7 +216,11 @@ fun InboxSearchScreen(
         val recognized = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
         if (!recognized.isNullOrBlank()) onQueryChange(recognized)
     }
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
         TextField(
             value = state.query,
             onValueChange = onQueryChange,
@@ -329,8 +344,8 @@ private fun SearchMessageRow(result: InboxSearchResult, onClick: () -> Unit) {
     }
     Surface(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.medium,
+        color = cardSurfaceColor(),
+        shape = RoundedCornerShape(Sizes.CornerLarge),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(Modifier.padding(Spacing.space16), verticalAlignment = Alignment.CenterVertically) {
@@ -350,7 +365,12 @@ private fun SearchMessageRow(result: InboxSearchResult, onClick: () -> Unit) {
 
 @Composable
 private fun SearchPersonRow(person: User, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        onClick = onClick,
+        color = cardSurfaceColor(),
+        shape = RoundedCornerShape(Sizes.CornerLarge),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(Modifier.padding(Spacing.space16), verticalAlignment = Alignment.CenterVertically) {
             UserAvatar(avatarUrl = person.avatar, displayName = person.displayName ?: person.username, size = InboxExpressiveDimens.ConversationAvatarSize)
             Spacer(Modifier.width(Spacing.space12))
@@ -378,12 +398,12 @@ fun InboxArchivedScreen(
 ) {
     val selectionMode = selectedChatIds.isNotEmpty()
     when {
-        isLoading && conversations.isEmpty() -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        conversations.isEmpty() -> Box(modifier.fillMaxSize().padding(Spacing.space24), contentAlignment = Alignment.Center) {
+        isLoading && conversations.isEmpty() -> Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerLow), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        conversations.isEmpty() -> Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerLow).padding(Spacing.space24), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.inbox_archive_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         else -> LazyColumn(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerLow),
             contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8),
             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {

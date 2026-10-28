@@ -47,7 +47,7 @@ fun ManageStorageScreen(
             LargeTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = SettingsColors.cardBackground
                 ),
                 title = {
                     Text(

@@ -73,6 +73,7 @@ fun PrivacyCheckupCategoryScreen(
     var silenceUnknownCallers by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(config.title) },
@@ -86,8 +87,8 @@ fun PrivacyCheckupCategoryScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = SettingsColors.screenBackground,
+                    scrolledContainerColor = SettingsColors.cardBackground
                 )
             )
         }

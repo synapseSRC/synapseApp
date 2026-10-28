@@ -184,8 +184,8 @@ fun SettingsCommandPaletteResults(
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        color = MaterialTheme.colorScheme.background
+            .background(SettingsColors.screenBackground),
+        color = SettingsColors.screenBackground
     ) {
         LazyColumn(
             modifier = Modifier.padding(Spacing.space16),

@@ -2364,7 +2364,8 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="call_control_camera">Camera</string>
     <string name="call_control_flip_camera">Flip camera</string>
     <string name="call_control_end">End call</string>
-    <string name="call_control_accept">Accept</string>
+    <string name="call_control_answer">Answer</string>
+    <string name="call_answer_slider">Slide to answer or decline</string>
     <string name="call_control_decline">Decline</string>
     <string name="call_control_switch_to_voice">Switch to voice</string>
 
@@ -2406,6 +2407,9 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="call_summary_line">%1$s · %2$s</string>
     <string name="call_direction_incoming">Incoming</string>
     <string name="call_direction_outgoing">Outgoing</string>
+    <string name="call_history_today">Today</string>
+    <string name="call_history_yesterday">Yesterday</string>
+    <string name="call_history_earlier">Earlier</string>
 
     <string name="call_duration_spoken_hours">Call duration: %1$d hours, %2$d minutes, %3$d seconds</string>
     <string name="call_duration_spoken_minutes">Call duration: %1$d minutes, %2$d seconds</string>
