@@ -76,16 +76,19 @@ jobs:
         id: set_sha
         run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      - name: ✏️ Rename APK with commit hash
+      - name: ✏️ Rename APKs with commit hash
         run: |
-          mv app/build/outputs/apk/release/app-release.apk \
-             app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
+          cd app/build/outputs/apk/release
+          for apk in app-*-release.apk; do
+            mv "$apk" "${apk%.apk}-${{ steps.set_sha.outputs.short_sha }}.apk"
+          done
+          ls -la
 
       - name: 📤 Upload Release APK
         uses: actions/upload-artifact@v7
         with:
           name: apk-release-${{ steps.set_sha.outputs.short_sha }}
-          path: app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
+          path: app/build/outputs/apk/release/app-*-release-${{ steps.set_sha.outputs.short_sha }}.apk
 
   aggregateAndSend:
     name: 📣 Send APKs to Telegram
@@ -128,7 +131,9 @@ jobs:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TOPIC_ID: ${{ secrets.TELEGRAM_TOPIC_ID }}
-          APK_PATH: ./downloaded-artifact/app-release-${{ needs.build.outputs.short_sha }}.apk
+          # arm64-v8a only: the split per ABI means an APK no longer runs on every device, and
+          # arm64 covers the test fleet. All three splits stay available in the uploaded artifact.
+          APK_PATH: ./downloaded-artifact/app-arm64-v8a-release-${{ needs.build.outputs.short_sha }}.apk
           GITHUB_ACTOR: ${{ github.actor }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: python ./.github/workflows/deploy_artifacts.py

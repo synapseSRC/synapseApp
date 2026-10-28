@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -92,6 +91,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -111,8 +111,10 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxConversat
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSearchScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSelectionToolbar
 import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxExpressiveDimens
+import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
@@ -262,12 +264,20 @@ private fun InboxScreenContent(
                 InboxDestination.INBOX -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_brand)) },
                     navigationIcon = {
-                        IconButton(onClick = {
-                            val profileId = currentUserProfile?.id
-                            if (profileId != null) onNavigateToProfile(profileId)
-                            else scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_profile_unavailable)) }
-                        }) {
-                            Icon(Icons.Rounded.AccountCircle, contentDescription = stringResource(R.string.inbox_account), tint = MaterialTheme.colorScheme.onSurface)
+                        val accountLabel = stringResource(R.string.inbox_account)
+                        IconButton(
+                            onClick = {
+                                val profileId = currentUserProfile?.uid
+                                if (profileId != null) onNavigateToProfile(profileId)
+                                else scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_profile_unavailable)) }
+                            },
+                            modifier = Modifier.semantics { contentDescription = accountLabel }
+                        ) {
+                            UserAvatar(
+                                avatarUrl = currentUserProfile?.avatar,
+                                displayName = currentUserProfile?.displayName ?: currentUserProfile?.username,
+                                size = Sizes.AvatarSmall
+                            )
                         }
                     },
                     actions = {

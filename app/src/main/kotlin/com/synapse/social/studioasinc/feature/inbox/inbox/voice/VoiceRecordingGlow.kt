@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -224,7 +225,7 @@ fun VoiceRecordingGlowSurface(
 ) {
     val active = voiceState.isGlowActive()
     val reducedMotion = reducedMotionOverride
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val surfaceColor = cardSurfaceColor()
     val shape = RoundedCornerShape(Sizes.CornerMassive)
     val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
     val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")

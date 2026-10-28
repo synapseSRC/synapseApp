@@ -30,3 +30,21 @@
 -keep class org.webrtc.** { *; }
 -keep class com.synapse.social.studioasinc.data.call.webrtc.** { *; }
 -dontwarn org.webrtc.**
+
+# ── Release minification guards ───────────────────────────────────────────────
+# Gson rebuilds generic types (List<PendingAction>) from erased signatures, so they must survive.
+-keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
+
+# Chat background names are read off the field names of R$raw reflectively.
+-keep class **.R$raw { *; }
+
+# ActionQueue writes PendingAction as Gson JSON into EncryptedSharedPreferences. Field names and
+# enum constants are the storage keys — obfuscating them orphans actions already queued on device.
+-keepclassmembers class com.synapse.social.studioasinc.shared.domain.model.PendingAction { *; }
+-keepclassmembers enum com.synapse.social.studioasinc.shared.domain.model.PendingAction$ActionType { *; }
+
+# EncryptedSharedPreferences reaches Tink's primitive registry, which instantiates by class name.
+-keep class com.google.crypto.tink.** { *; }
+
+# The Gemini SDK maps JSON onto AutoValue models through Gson reflection.
+-keep class com.google.genai.** { *; }

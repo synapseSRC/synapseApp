@@ -68,11 +68,15 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled = false
-            shrinkResources = false
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig = signingConfigs.release
             buildConfigField "String", "DEVELOPER_EMAIL", "\"mashikahamed0@gmail.com\""
+            // The call-simulation switch is debug-only, but the inbox reads it from the shared
+            // source set, so the release variant needs the field to compile. Always false here:
+            // the mock repository is not in this variant's dex, so the flag can only ever be off.
+            buildConfigField "boolean", "CALL_SIMULATION_ENABLED", "false"
             buildConfigField "String", "SUPABASE_URL", "\"${System.getenv('SUPABASE_URL') ?: project.findProperty('SUPABASE_URL') ?: ''}\""
             buildConfigField "String", "SUPABASE_ANON_KEY", "\"${System.getenv('SUPABASE_ANON_KEY') ?: project.findProperty('SUPABASE_ANON_KEY') ?: ''}\""
             // Google OAuth Configuration (Client ID only; secrets are kept server-side)
@@ -135,6 +139,19 @@ android {
         }
     }
 
+    // libsignal and WebRTC each carry a multi-megabyte native library per ABI, so shipping every
+    // ABI in one APK made each user download three architectures they can never load. Splitting
+    // puts one architecture per file. 32-bit x86 is left out: Android devices with it are extinct
+    // and the emulator uses x86_64, which is kept.
+    splits {
+        abi {
+            enable = true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            universalApk = false
+        }
+    }
+
     compileOptions {
         coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_17
@@ -150,7 +167,7 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
+        viewBinding = false
         dataBinding = false
         buildConfig = true
         compose = true
@@ -176,6 +193,10 @@ android {
         resources.excludes.add("META-INF/DEPENDENCIES")
         resources.excludes.add("**/libsignal_jni*.dylib")
         resources.excludes.add("**/signal_jni*.dll")
+        // The libsignal-android AAR ships its Rust test harness next to the runtime library, one
+        // copy per ABI. Only libsignal_jni.so is loaded by the protocol code, so the testing binary
+        // is dead weight in every APK.
+        jniLibs.excludes.add("**/libsignal_jni_testing.so")
     }
 }
 

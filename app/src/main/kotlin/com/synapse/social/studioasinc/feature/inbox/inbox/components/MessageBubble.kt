@@ -503,18 +503,19 @@ fun MessageBubble(
                 density: androidx.compose.ui.unit.Density
             ): androidx.compose.ui.graphics.Outline {
                 val sharpCorner = lerp(Sizes.CornerSharp, radius, (offsetX.value / threshold).coerceIn(0f, 1f))
-                val tailRadius = 4.dp
+                // A group starts with both of its top corners at the full bubble radius; only the
+                // corner facing the next bubble in the run stays tight.
                 val delegate = if (isFromMe) {
                     when (position) {
-                        GroupPosition.SINGLE -> RoundedCornerShape(topStart = radius, topEnd = tailRadius, bottomEnd = radius, bottomStart = radius)
-                        GroupPosition.FIRST -> RoundedCornerShape(topStart = radius, topEnd = tailRadius, bottomEnd = sharpCorner, bottomStart = radius)
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(topStart = radius, topEnd = radius, bottomEnd = sharpCorner, bottomStart = radius)
                         GroupPosition.MIDDLE -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = sharpCorner, bottomStart = radius)
                         GroupPosition.LAST -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = radius, bottomStart = radius)
                     }
                 } else {
                     when (position) {
-                        GroupPosition.SINGLE -> RoundedCornerShape(topStart = tailRadius, topEnd = radius, bottomEnd = radius, bottomStart = radius)
-                        GroupPosition.FIRST -> RoundedCornerShape(topStart = tailRadius, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(topStart = radius, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
                         GroupPosition.MIDDLE -> RoundedCornerShape(topStart = sharpCorner, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
                         GroupPosition.LAST -> RoundedCornerShape(topStart = sharpCorner, topEnd = radius, bottomEnd = radius, bottomStart = radius)
                     }

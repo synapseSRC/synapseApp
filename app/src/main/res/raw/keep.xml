@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Chat backgrounds are chosen by name at runtime: the picker enumerates the field names of R$raw
+  and every renderer resolves the saved value with resources.getIdentifier(name, "raw", ...).
+  No static reference exists for the shrinker to see, so without this it deletes the wallpapers.
+-->
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/pattern_*,@raw/wallpaper_*" />
