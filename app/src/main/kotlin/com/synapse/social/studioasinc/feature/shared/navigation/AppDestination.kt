@@ -6,6 +6,10 @@ sealed interface AppDestination {
     @Serializable
     data object Home : AppDestination
     @Serializable
+    data object PermissionOnboarding : AppDestination
+    @Serializable
+    data object PermissionManager : AppDestination
+    @Serializable
     data class Profile(val userId: String) : AppDestination
     @Serializable
     data object Inbox : AppDestination

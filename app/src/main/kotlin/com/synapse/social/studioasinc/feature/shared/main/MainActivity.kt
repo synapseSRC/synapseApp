@@ -166,7 +166,8 @@ class MainActivity : AppCompatActivity() {
                     AppNavigation(
                         navController = navController,
                         startDestination = startDestination,
-                        reelUploadManager = reelUploadManager
+                        reelUploadManager = reelUploadManager,
+                        postAuthDestination = viewModel::postAuthDestination
                     )
 
                     val isAtHome = currentDestination?.hasRoute<AppDestination.Home>() == true
@@ -183,7 +184,9 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     LaunchedEffect(Unit) {
-                        if (startDestination != AppDestination.Auth) {
+                        // Only an app that already belongs in Home may honour the inbox shortcut;
+                        // onboarding must not be skipped by a launch intent.
+                        if (startDestination == AppDestination.Home) {
                             val destination = this@MainActivity.intent.getStringExtra("destination")
                             if (destination == "inbox") {
                                 navController.navigate(AppDestination.Inbox)

@@ -263,9 +263,8 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
         })
 
         applicationScope.launch {
-            // Request permission first
-            OneSignal.Notifications.requestPermission(true)
-            
+            // Notification permission is requested from the permission onboarding and the permission
+            // manager, never during startup; OneSignal observes whatever the OS has already granted.
             // Login and sync with user ID if available
             try {
                 val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)

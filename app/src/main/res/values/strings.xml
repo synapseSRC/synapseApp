@@ -2460,4 +2460,60 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="call_debug_launch_incoming_video">Incoming video call</string>
     <string name="call_debug_sample_caller">Amara Okafor</string>
 
+    <!-- Permission onboarding, summary and manager -->
+    <string name="permission_onboarding_title">Permissions</string>
+    <string name="permission_onboarding_headline">A few things to set up</string>
+    <string name="permission_onboarding_subtitle">Choose what Synapse can use. You can change any of these later in Settings, and the rest of the app still works without them.</string>
+    <string name="permission_onboarding_continue">Continue</string>
+    <string name="permission_onboarding_skip">Skip</string>
+
+    <string name="permission_summary_title">You\'re all set</string>
+    <string name="permission_summary_headline">Here\'s what you chose</string>
+    <string name="permission_summary_subtitle">These choices only affect the features listed below. You can change them anytime in Settings.</string>
+    <string name="permission_summary_manage">Manage permissions</string>
+    <string name="permission_summary_continue">Continue</string>
+    <string name="permission_summary_count">%1$d of %2$d enabled</string>
+
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_purpose">New messages and incoming calls can reach you while Synapse is closed.</string>
+    <string name="permission_notifications_benefit">See message alerts and answer calls without opening the app first.</string>
+    <string name="permission_notifications_impact">Without notifications, new messages and calls only appear once you open Synapse.</string>
+
+    <string name="permission_microphone_title">Microphone</string>
+    <string name="permission_microphone_purpose">Voice notes and calls record audio with your microphone.</string>
+    <string name="permission_microphone_benefit">Record voice messages and be heard on voice or video calls.</string>
+    <string name="permission_microphone_impact">Without the microphone, voice notes and calls can\'t send your audio.</string>
+
+    <string name="permission_camera_title">Camera</string>
+    <string name="permission_camera_purpose">Video calls, stories and profile photos use your camera.</string>
+    <string name="permission_camera_benefit">Make video calls and capture photos for stories and your profile.</string>
+    <string name="permission_camera_impact">Without the camera, video calls, story capture and in-app photos are unavailable.</string>
+
+    <string name="permission_status_granted">Allowed</string>
+    <string name="permission_status_not_requested">Not allowed yet</string>
+    <string name="permission_status_denied">Not allowed</string>
+    <string name="permission_status_permanently_denied">Blocked</string>
+    <string name="permission_status_restricted">Off in system settings</string>
+
+    <string name="permission_action_allow">Allow</string>
+    <string name="permission_action_try_again">Try again</string>
+    <string name="permission_action_open_settings">Open settings</string>
+    <string name="permission_action_not_now">Not now</string>
+    <string name="permission_action_accessibility">%1$s, %2$s</string>
+
+    <string name="permission_hint_denied">You can ask again, or leave this one off.</string>
+    <string name="permission_hint_permanently_denied">Android won\'t show the prompt again. You can turn it on in system settings.</string>
+    <string name="permission_hint_restricted">This is turned off in Android settings.</string>
+
+    <string name="permission_rationale_title">%1$s permission</string>
+    <string name="permission_rationale_message">%1$s You can leave this off and still use the rest of Synapse.</string>
+    <string name="permission_rationale_confirm">Try again</string>
+    <string name="permission_rationale_dismiss">Not now</string>
+
+    <string name="permission_manager_intro">Choose what Synapse can use. Android controls these permissions, so the status shown here is read live from your device.</string>
+    <string name="permission_manager_footer">If something is blocked, open Android settings to turn it back on. Features that don\'t need it keep working normally.</string>
+
+    <string name="settings_permissions_title">Permissions</string>
+    <string name="settings_permissions_subtitle">Camera, microphone and notifications</string>
+
 </resources>

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+import com.synapse.social.studioasinc.data.permission.PermissionOnboardingStore
 import com.synapse.social.studioasinc.data.repository.UserRepositoryImpl
 import com.synapse.social.studioasinc.ui.navigation.AppDestination
 import com.synapse.social.studioasinc.domain.usecase.update.GetUpdateStateUseCase
@@ -29,7 +30,8 @@ class MainViewModel @Inject constructor(
     private val userRepository: UserRepositoryImpl,
     private val getUpdateStateUseCase: GetUpdateStateUseCase,
     private val shouldShowProfilePicSuggestionUseCase: ShouldShowProfilePicSuggestionUseCase,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val permissionOnboardingStore: PermissionOnboardingStore
 ) : ViewModel() {
     private val _updateState = MutableLiveData<UpdateState>()
     val updateState: LiveData<UpdateState> = _updateState
@@ -74,6 +76,22 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Where a signed-in user belongs right now.
+     *
+     * Called at navigation time rather than cached, so a sign-in that just finished is judged against the
+     * account that is actually signed in. The permission onboarding is shown once per account; a
+     * completed or skipped account goes straight home even if permissions were revoked later.
+     */
+    fun postAuthDestination(): Any {
+        val userId = authRepository.getCurrentUserId()
+        return if (userId != null && !permissionOnboardingStore.isCompleted(userId)) {
+            AppDestination.PermissionOnboarding
+        } else {
+            AppDestination.Home
+        }
+    }
+
     fun checkUserAuthentication() {
         viewModelScope.launch {
             try {
@@ -91,7 +109,7 @@ class MainViewModel @Inject constructor(
                                 if (user != null) {
                                     if (!user.banned) {
                                         _authState.value = AuthState.Authenticated
-                                        _startDestination.value = AppDestination.Home
+                                        _startDestination.value = postAuthDestination()
                                     } else {
                                         _authState.value = AuthState.Banned
 
@@ -99,12 +117,12 @@ class MainViewModel @Inject constructor(
                                     }
                                 } else {
                                     _authState.value = AuthState.Authenticated
-                                    _startDestination.value = AppDestination.Home
+                                    _startDestination.value = postAuthDestination()
                                 }
                             }
                             .onFailure {
                                 _authState.value = AuthState.Authenticated
-                                _startDestination.value = AppDestination.Home
+                                _startDestination.value = postAuthDestination()
                             }
                     } else {
                          _authState.value = AuthState.Unauthenticated
