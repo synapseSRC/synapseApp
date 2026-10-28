@@ -64,8 +64,8 @@ fun ApiKeySettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = SettingsColors.screenBackground,
+                    scrolledContainerColor = SettingsColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -204,7 +204,7 @@ fun ApiKeySettingsScreen(
                                     imageVector = Icons.Default.Key,
                                     contentDescription = null,
                                     modifier = Modifier.size(Sizes.IconGiant),
-                                    tint = SettingsColors.itemIcon.copy(alpha = 0.5f)
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                                 )
                                 Spacer(modifier = Modifier.height(Spacing.space16))
                                 Text(
@@ -216,7 +216,7 @@ fun ApiKeySettingsScreen(
                                 Text(
                                     text = stringResource(R.string.api_add_own_keys),
                                     style = SettingsTypography.itemSubtitle,
-                                    color = SettingsColors.itemIcon,
+                                    color = MaterialTheme.colorScheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(Spacing.space16))

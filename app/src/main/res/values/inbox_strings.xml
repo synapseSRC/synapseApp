@@ -12,6 +12,10 @@
     <string name="inbox_filter_unread">Unread</string>
     <string name="inbox_filter_favorites">Favorites</string>
     <string name="inbox_filter_groups">Groups</string>
+    <string name="inbox_section_pinned">Pinned</string>
+    <string name="inbox_section_today">Today</string>
+    <string name="inbox_section_yesterday">Yesterday</string>
+    <string name="inbox_section_earlier">Earlier</string>
     <string name="inbox_archived_title">Archived Conversations (%1$d)</string>
     <string name="inbox_archived_summary">Open archived conversations</string>
     <string name="inbox_search_placeholder">Search messages, people, links…</string>

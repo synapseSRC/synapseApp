@@ -233,6 +233,9 @@ private fun ProfileMenuItem(
                 modifier = Modifier.size(Sizes.IconLarge)
             )
         },
+        // The 72dp minimum is above the ListItem vertical-alignment breakpoint, whose default
+        // falls back to Alignment.Top, so the content is pinned explicitly to the row centre.
+        verticalAlignment = Alignment.CenterVertically,
         supportingContent = {
             Text(
                 text = supporting,

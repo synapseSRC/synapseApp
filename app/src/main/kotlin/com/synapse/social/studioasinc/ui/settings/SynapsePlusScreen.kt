@@ -38,6 +38,7 @@ fun SynapsePlusScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.synapse_plus_title)) },

@@ -27,16 +27,21 @@ import androidx.compose.material.icons.rounded.MicOff
 import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material.icons.rounded.SignalCellularConnectedNoInternet4Bar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
@@ -73,6 +78,7 @@ fun callMediaTextColor(): Color {
     return if (scheme.background.luminance() < 0.5f) scheme.onSurface else scheme.inverseOnSurface
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CallAvatar(
     session: CallSession,
@@ -86,35 +92,49 @@ fun CallAvatar(
     } else {
         MaterialTheme.typography.headlineMedium
     }
-    val pulse = if (showHalo) ringingHaloProgress() else 0f
+    val halo = if (showHalo) ringingHaloState() else null
+    val glowColor = scheme.primary
+    // M3 Expressive shape library: an organic cookie silhouette instead of a plain circle.
+    val portraitShape = MaterialShapes.Cookie9Sided.toShape()
 
     Box(
         modifier = modifier.clearAndSetSemantics { },
         contentAlignment = Alignment.Center
     ) {
-        if (showHalo) {
-            Box(
-                Modifier
-                    .size(size + CallDimens.HaloOverlap)
-                    .graphicsLayer {
-                        val scale = 1f + (CallDimens.HaloMaxScale - 1f) * pulse
-                        scaleX = scale
-                        scaleY = scale
-                        alpha = CallDimens.HaloMaxAlpha * (1f - pulse)
-                    }
-                    .background(scheme.primaryContainer, CircleShape)
-            )
-        }
+        Box(
+            Modifier
+                .size(size + CallDimens.HaloGlow)
+                .graphicsLayer {
+                    val beat = halo?.value ?: 0f
+                    val scale = 1f + (CallDimens.HaloMaxScale - 1f) * beat * 0.6f
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = if (halo != null) 1f - 0.55f * beat else 0.55f
+                }
+                .drawBehind {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                glowColor.copy(alpha = CallDimens.HaloAmbientAlpha),
+                                Color.Transparent
+                            ),
+                            center = center,
+                            radius = this.size.minDimension / 2f
+                        )
+                    )
+                }
+        )
         Box(
             Modifier
                 .size(size + CallDimens.AvatarRingGap * 2)
-                .border(CallDimens.BorderRing, scheme.outlineVariant, CircleShape)
+                .border(CallDimens.BorderRing, scheme.outlineVariant, portraitShape)
                 .padding(CallDimens.AvatarRingGap)
         ) {
             UserAvatar(
                 avatarUrl = session.participant.avatarUrl,
                 size = size,
                 displayName = session.participant.displayName,
+                shape = portraitShape,
                 initialsTextStyle = initialsStyle
             )
         }
@@ -369,10 +389,10 @@ fun CallChipView(chip: CallChip, overVideo: Boolean) {
 }
 
 @Composable
-private fun ringingHaloProgress(): Float {
-    if (AnimationUtil.rememberReducedMotion()) return 0f
+private fun ringingHaloState(): State<Float>? {
+    if (AnimationUtil.rememberReducedMotion()) return null
     val transition = rememberInfiniteTransition(label = "callRingingHalo")
-    val progress by transition.animateFloat(
+    return transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -381,7 +401,6 @@ private fun ringingHaloProgress(): Float {
         ),
         label = "callRingingHaloProgress"
     )
-    return progress
 }
 
 private fun Context.findActivity(): Activity? {

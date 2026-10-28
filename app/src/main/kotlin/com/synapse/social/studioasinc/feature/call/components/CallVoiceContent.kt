@@ -1,9 +1,12 @@
 package com.synapse.social.studioasinc.feature.call.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -11,9 +14,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.synapse.social.studioasinc.R
@@ -35,69 +40,98 @@ fun CallVoiceContent(
     modifier: Modifier = Modifier
 ) {
     val scheme = MaterialTheme.colorScheme
-    val avatarSize = if (isCompact) CallDimens.AvatarCompact else CallDimens.Avatar
+    val portraitSize = if (isCompact) CallDimens.PortraitCompact else CallDimens.Portrait
     val isRingingForAnswer = session.direction == CallDirection.INCOMING &&
         session.phase == CallPhase.RINGING
-    val showDuration = session.connectedAtMillis != null && session.phase != CallPhase.ENDED
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = Spacing.space24),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(Modifier.weight(1f))
+    Box(modifier = modifier.fillMaxSize()) {
+        CallAtmosphere()
 
-        CallAvatar(
-            session = session,
-            size = avatarSize,
-            showHalo = session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = Spacing.space24),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.height(if (isCompact) Spacing.space8 else Spacing.space24))
 
-        Spacer(Modifier.height(if (isCompact) Spacing.space16 else Spacing.space24))
-
-        Text(
-            text = session.participant.displayName,
-            style = MaterialTheme.typography.headlineSmall,
-            color = scheme.onSurface,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(Spacing.space8))
-
-        CallStatusText(
-            session = session,
-            elapsedMs = elapsedMs,
-            style = if (showDuration) MaterialTheme.typography.titleLarge
-            else MaterialTheme.typography.bodyLarge,
-            color = if (showDuration) scheme.onSurface else scheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            debugToolsEnabled = debugToolsEnabled,
-            onOpenDebug = actions.onOpenDebugSheet
-        )
-
-        Spacer(Modifier.height(Spacing.space16))
-
-        CallStatusChips(session = session, showReconnecting = true)
-
-        Spacer(Modifier.weight(1f))
-
-        if (isRingingForAnswer) {
-            IncomingCallActions(
-                onAccept = actions.onAccept,
-                onDecline = actions.onDecline
+            CallStatusText(
+                session = session,
+                elapsedMs = elapsedMs,
+                style = MaterialTheme.typography.titleSmall,
+                color = scheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                debugToolsEnabled = debugToolsEnabled,
+                onOpenDebug = actions.onOpenDebugSheet
             )
-            Spacer(Modifier.height(Spacing.space32))
-        } else {
-            CallControlRow {
-                VoiceCallControls(session = session, actions = actions)
+
+            Spacer(Modifier.height(Spacing.space8))
+
+            Text(
+                text = session.participant.displayName,
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = scheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(Spacing.space4))
+
+            Text(
+                text = stringResource(
+                    R.string.call_summary_line,
+                    stringResource(R.string.chat_action_voice_call),
+                    callAudioRouteLabel(session.audioRoute)
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CallAvatar(
+                    session = session,
+                    size = portraitSize,
+                    showHalo = session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING
+                )
+                CallStatusChips(
+                    session = session,
+                    modifier = Modifier.padding(top = Spacing.space16),
+                    showReconnecting = true
+                )
             }
-            Spacer(Modifier.height(if (isCompact) Spacing.space16 else Spacing.space32))
-            EndCallButton(onClick = actions.onEnd)
+
             Spacer(Modifier.height(Spacing.space16))
+
+            if (isRingingForAnswer) {
+                // Keyed to the call: a second incoming session can replace this one without the
+                // screen leaving composition, and it must start with an untouched slider.
+                key(session.id) {
+                    SlideToAnswerBar(
+                        onAccept = actions.onAccept,
+                        onDecline = actions.onDecline
+                    )
+                }
+                Spacer(Modifier.height(Spacing.space24))
+            } else {
+                CallControlPanel {
+                    CallControlRow {
+                        VoiceCallControls(session = session, actions = actions)
+                    }
+                }
+                Spacer(Modifier.height(if (isCompact) Spacing.space16 else Spacing.space24))
+                EndCallButton(onClick = actions.onEnd)
+                Spacer(Modifier.height(Spacing.space16))
+            }
         }
     }
 }

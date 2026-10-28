@@ -31,6 +31,7 @@ fun PrivacyCheckupScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_privacy_checkup_section)) },
@@ -44,8 +45,8 @@ fun PrivacyCheckupScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = SettingsColors.screenBackground,
+                    scrolledContainerColor = SettingsColors.cardBackground
                 )
             )
         }

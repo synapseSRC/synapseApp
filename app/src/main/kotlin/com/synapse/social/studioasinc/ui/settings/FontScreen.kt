@@ -37,6 +37,7 @@ fun FontScreen(
     }
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_font_title)) },
@@ -50,8 +51,8 @@ fun FontScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = SettingsColors.screenBackground,
+                    scrolledContainerColor = SettingsColors.cardBackground
                 )
             )
         },

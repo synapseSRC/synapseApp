@@ -6,7 +6,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
-import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun SettingsCard(
@@ -36,15 +35,11 @@ fun SettingsSection(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Spacing.space12)
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(
-            text = title,
-            style = SettingsTypography.sectionHeader,
-            color = SettingsColors.sectionTitle,
-            modifier = Modifier.padding(start = Spacing.space8)
-        )
+        // The header carries its own vertical padding, matching the hub's section labels.
+        SettingsHeaderItem(title = title)
+        // Contained-list gap: items touch across a 3dp seam instead of sitting in a card.
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)

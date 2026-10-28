@@ -1,25 +1,17 @@
 package com.synapse.social.studioasinc.ui.settings
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.graphics.shapes.CornerRounding
-import androidx.graphics.shapes.RoundedPolygon
-import androidx.graphics.shapes.toPath
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.asComposePath
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.Density
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -34,10 +26,11 @@ object SettingsColors {
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.surfaceContainerLow
 
+    /** Raised backdrop of the more-menu sheet, so the [cardBackground] rows read as recessed. */
     val screenBackground: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.background
+        get() = MaterialTheme.colorScheme.surfaceContainerHighest
 
     val cardBackgroundElevated: Color
         @Composable
@@ -57,22 +50,36 @@ object SettingsColors {
     val chevronIcon: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+        get() = MaterialTheme.colorScheme.onSurfaceVariant
 
     val divider: Color
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.outlineVariant
 
+    /** Icon tint of a contained-list leading badge. */
     val itemIcon: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.primary
+        get() = MaterialTheme.colorScheme.onPrimaryContainer
 
+    /** Container of a contained-list leading badge. */
     val iconContainerBackground: Color
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.colorScheme.surfaceContainerHigh
+        get() = MaterialTheme.colorScheme.primaryContainer
+
+    val itemContent: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = MaterialTheme.colorScheme.onSurface
+
+    val supportingText: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val disabledContentAlpha: Float = 0.38f
 }
 
 object SettingsShapes {
@@ -86,15 +93,17 @@ object SettingsShapes {
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.large
 
+    /** Shape of an ungrouped contained-list item; matches the 28dp outer stack corner. */
     val itemShape: Shape
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.shapes.large
+        get() = RoundedCornerShape(Sizes.CornerMassive)
 
+    /** Contained-list leading badges are circular. */
     val iconBadgeShape: Shape
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.shapes.medium
+        get() = CircleShape
 
     val inputShape: Shape
         @Composable
@@ -112,7 +121,8 @@ object SettingsSpacing {
 
     val sectionSpacing: Dp = Spacing.space12
 
-    val itemSpacing: Dp = Spacing.space4
+    /** Contained-list treatment: 3dp gaps between stacked items, 28/8dp stacked corners. */
+    val itemSpacing: Dp = 3.dp
 
     val itemPadding: PaddingValues = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space12)
 
@@ -123,6 +133,18 @@ object SettingsSpacing {
     val profileHeaderPadding: Dp = Spacing.space16
 
     val iconTextSpacing: Dp = Spacing.space16
+
+    /** Content padding of a contained-list row; height comes from [rowMinHeight]. */
+    val rowHorizontalPadding: Dp = Spacing.space16
+
+    val rowVerticalPadding: Dp = Spacing.space4
+
+    /** M3 two-line interactive container height used by the contained-list rows. */
+    val rowMinHeight: Dp = Sizes.HeightAvatarLarge
+
+    val iconBadgeSize: Dp = Sizes.IconMassive
+
+    val rowIconSize: Dp = Sizes.IconLarge
 }
 
 object SettingsTypography {
@@ -139,7 +161,7 @@ object SettingsTypography {
     val itemTitle: TextStyle
         @Composable
         @ReadOnlyComposable
-        get() = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+        get() = MaterialTheme.typography.bodyLarge
 
     val itemSubtitle: TextStyle
         @Composable
@@ -173,19 +195,9 @@ enum class SettingsItemPosition {
 
     @Composable
     fun getShape(): Shape = when (this) {
-        Single -> SettingsShapes.itemShape
-        Top -> RoundedCornerShape(
-            topStart = Sizes.CornerMassive,
-            topEnd = Sizes.CornerMassive,
-            bottomStart = Sizes.CornerSmall,
-            bottomEnd = Sizes.CornerSmall
-        )
-        Middle -> RoundedCornerShape(Sizes.CornerSmall)
-        Bottom -> RoundedCornerShape(
-            topStart = Sizes.CornerSmall,
-            topEnd = Sizes.CornerSmall,
-            bottomStart = Sizes.CornerMassive,
-            bottomEnd = Sizes.CornerMassive
-        )
+        Single -> GroupedItemPosition.Single.shape
+        Top -> GroupedItemPosition.Top.shape
+        Middle -> GroupedItemPosition.Middle.shape
+        Bottom -> GroupedItemPosition.Bottom.shape
     }
 }

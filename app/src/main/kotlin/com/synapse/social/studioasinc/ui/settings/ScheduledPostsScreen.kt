@@ -48,6 +48,7 @@ fun ScheduledPostsScreen(
     var cancelConfirmPostId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_scheduled_posts_title)) },
@@ -213,7 +214,7 @@ private fun ScheduledPostCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = SettingsShapes.cardShape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
     ) {
         Column(
             modifier = Modifier

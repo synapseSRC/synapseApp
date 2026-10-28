@@ -1,7 +1,10 @@
 package com.synapse.social.studioasinc.feature.call
 
+import android.app.Activity
 import android.view.accessibility.AccessibilityManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
@@ -37,6 +40,7 @@ import com.synapse.social.studioasinc.feature.call.components.CallDebugSheet
 import com.synapse.social.studioasinc.feature.call.components.CallDimens
 import com.synapse.social.studioasinc.feature.call.components.CallEndedContent
 import com.synapse.social.studioasinc.feature.call.components.CallEndConfirmationDialog
+import com.synapse.social.studioasinc.feature.call.components.CallPermissionContent
 import com.synapse.social.studioasinc.feature.call.components.CallStartFailedContent
 import com.synapse.social.studioasinc.feature.call.components.CallSystemBarEffect
 import com.synapse.social.studioasinc.feature.call.components.CallVideoContent
@@ -44,6 +48,7 @@ import com.synapse.social.studioasinc.feature.call.components.CallVoiceContent
 import com.synapse.social.studioasinc.shared.domain.model.call.CallDirection
 import com.synapse.social.studioasinc.shared.domain.model.call.CallMediaType
 import com.synapse.social.studioasinc.shared.domain.model.call.CallPhase
+import com.synapse.social.studioasinc.shared.domain.model.call.CallPermissionPlan
 import com.synapse.social.studioasinc.shared.domain.model.call.CallSession
 import kotlinx.coroutines.delay
 
@@ -68,7 +73,9 @@ fun CallScreen(
             onFlipCamera = viewModel::flipCamera,
             onSwitchMediaType = viewModel::switchMediaType,
             onSimulate = viewModel::simulate,
-            onRedial = viewModel::redial
+            onRedial = viewModel::redial,
+            onAskPermissions = viewModel::askPermissions,
+            onPermissionsAnswered = viewModel::permissionsAnswered
         )
     }
 
@@ -98,11 +105,39 @@ fun CallScreenContent(
         context.getSystemService(AccessibilityManager::class.java)?.isEnabled == true
     }
     val scheme = MaterialTheme.colorScheme
+    val prompt = state.permissionPrompt
+
+    // The plan the dialog was opened for, held here because the answer has to be read back against it:
+    // a launcher returns manifest names, and only the plan that asked can say which capability each one
+    // was, and whether a "no" was the kind that Settings can undo.
+    var askedPlan by remember { mutableStateOf<CallPermissionPlan?>(null) }
+    val activity = LocalContext.current as? Activity
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val plan = askedPlan
+        askedPlan = null
+        if (plan != null) {
+            actions.onPermissionsAnswered(
+                plan.mapOutcomes(results) { permission -> activity?.canAskAbout(permission) == true }
+            )
+        }
+    }
 
     val surfaceActions = actions.copy(
         onOpenAudioSheet = { showRouteSheet = true },
-        onOpenDebugSheet = { if (debugToolsEnabled) showDebugSheet = true }
+        onOpenDebugSheet = { if (debugToolsEnabled) showDebugSheet = true },
+        onOpenAppSettings = { context.openAppSettings() }
     )
+
+    // Keyed on the request, not the plan: an answer that has just been given re-publishes the same plan
+    // with the same key, and must not put the dialog back in front of a user who just closed it.
+    LaunchedEffect(prompt?.requestKey) {
+        val blocked = prompt ?: return@LaunchedEffect
+        if (!blocked.plan.canAsk) return@LaunchedEffect
+        askedPlan = blocked.plan
+        permissionLauncher.launch(blocked.plan.manifestNames())
+    }
 
     val isVideoSurface = session != null &&
         session.mediaType == CallMediaType.VIDEO &&
@@ -153,8 +188,17 @@ fun CallScreenContent(
     ) {
         val current = session
         if (current == null) {
-            if (state.startFailed) {
-                CallStartFailedContent(onDone = onClose)
+            when {
+                // Nothing was dialled yet and the call cannot be dialled until the user answers a
+                // permission question: say what is missing instead of showing a blank screen.
+                prompt != null -> CallPermissionContent(
+                    plan = prompt.plan,
+                    onTryAgain = surfaceActions.onAskPermissions,
+                    onOpenSettings = surfaceActions.onOpenAppSettings,
+                    onDone = onClose
+                )
+
+                state.startFailed -> CallStartFailedContent(onDone = onClose)
             }
         } else {
             BoxWithConstraints {
@@ -162,7 +206,7 @@ fun CallScreenContent(
                     LocalDensity.current.fontScale > CallDimens.LargeFontScale
                 val reducedMotion = AnimationUtil.rememberReducedMotion()
                 AnimatedContent(
-                    targetState = current.callVisualSurface(),
+                    targetState = current.callVisualSurface(prompt),
                     transitionSpec = { callSurfaceTransition(reducedMotion) },
                     label = "callSurface"
                 ) { surface ->
@@ -180,6 +224,16 @@ fun CallScreenContent(
                             elapsedMs = state.elapsedMs,
                             actions = surfaceActions,
                             debugToolsEnabled = debugToolsEnabled
+                        )
+
+                        // A live call stopped at a permission: the ringing or dialling UI cannot offer
+                        // an accept that would be refused, so the question takes the screen until it is
+                        // answered. "Done" leaves the call, which is the honest third option.
+                        CallVisualSurface.PERMISSION -> CallPermissionContent(
+                            plan = prompt?.plan ?: return@AnimatedContent,
+                            onTryAgain = surfaceActions.onAskPermissions,
+                            onOpenSettings = surfaceActions.onOpenAppSettings,
+                            onDone = onClose
                         )
 
                         CallVisualSurface.ENDED -> CallEndedContent(
@@ -220,14 +274,18 @@ fun CallScreenContent(
     }
 }
 
-private enum class CallVisualSurface { VOICE, VIDEO, ENDED }
+private enum class CallVisualSurface { VOICE, VIDEO, PERMISSION, ENDED }
 
-private fun CallSession.callVisualSurface(): CallVisualSurface =
-    when {
-        phase == CallPhase.ENDED -> CallVisualSurface.ENDED
-        mediaType == CallMediaType.VIDEO -> CallVisualSurface.VIDEO
-        else -> CallVisualSurface.VOICE
-    }
+private fun CallSession.callVisualSurface(prompt: CallPermissionPrompt?): CallVisualSurface = when {
+    // An ended call keeps its own surface: the summary of what happened outranks a question that can
+    // no longer change it.
+    phase == CallPhase.ENDED -> CallVisualSurface.ENDED
+
+    prompt != null -> CallVisualSurface.PERMISSION
+
+    mediaType == CallMediaType.VIDEO -> CallVisualSurface.VIDEO
+    else -> CallVisualSurface.VOICE
+}
 
 private fun callSurfaceTransition(reducedMotion: Boolean): ContentTransform =
     if (reducedMotion) {

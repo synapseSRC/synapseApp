@@ -76,17 +76,23 @@ fun AboutSupportScreen(
     val clipboard = LocalClipboardManager.current
     val appVersion by viewModel.appVersion.collectAsState()
     val buildNumber by viewModel.buildNumber.collectAsState()
+    val commitHash by viewModel.commitHash.collectAsState()
     val updateStatus by viewModel.updateStatus.collectAsState()
     val shownVersion = appVersion.substringBefore('-').ifBlank { context.getString(R.string.about_version_unknown) }
     val shownBuild = buildNumber.ifBlank { context.getString(R.string.about_version_unknown) }
-    val versionLabel = stringResource(R.string.about_version_build, shownVersion, shownBuild)
+    // Gradle stamps the commit into BuildConfig; without it the label falls back to version + build.
+    val versionLabel = if (commitHash.isBlank()) {
+        stringResource(R.string.about_version_build, shownVersion, shownBuild)
+    } else {
+        stringResource(R.string.about_version_build_commit, shownVersion, commitHash, shownBuild)
+    }
 
     // Keep the status truthful: the row is checked on entry and remains manually refreshable.
     LaunchedEffect(viewModel) { viewModel.checkForUpdates() }
 
     AboutAppTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SettingsColors.screenBackground,
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.about_app_title)) },
@@ -120,8 +126,8 @@ fun AboutSupportScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = SettingsColors.screenBackground,
+                        scrolledContainerColor = SettingsColors.cardBackground,
                         titleContentColor = MaterialTheme.colorScheme.onSurface,
                         navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                         actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -182,7 +188,7 @@ fun AboutSupportScreen(
                             ),
                             contentPadding = PaddingValues(horizontal = Spacing.space16)
                         ) {
-                            Text(stringResource(R.string.about_version_build, shownVersion, shownBuild))
+                            Text(versionLabel)
                         }
                     }
                 }
@@ -303,6 +309,7 @@ internal data class AboutLinkItem(
     val supportingText: String,
     val leadingIcon: androidx.compose.ui.graphics.vector.ImageVector,
     val trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    val description: String? = null,
     val onClick: (() -> Unit)? = null
 )
 
@@ -359,6 +366,14 @@ internal fun AboutListItem(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                item.description?.let { description ->
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = Spacing.space4)
+                    )
+                }
             }
             item.trailingIcon?.let { icon ->
                 Spacer(modifier = Modifier.width(Spacing.space8))
@@ -376,7 +391,7 @@ internal fun AboutListItem(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = SettingsColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { rowContent() }
     } else {
@@ -384,7 +399,7 @@ internal fun AboutListItem(
             onClick = item.onClick,
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = SettingsColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { rowContent() }
     }

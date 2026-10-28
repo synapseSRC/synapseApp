@@ -39,6 +39,7 @@ fun ChatFoldersScreen(
     var dialogName by remember { mutableStateOf("") }
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_chat_folders_title)) },
@@ -48,7 +49,7 @@ fun ChatFoldersScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = SettingsColors.screenBackground,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )

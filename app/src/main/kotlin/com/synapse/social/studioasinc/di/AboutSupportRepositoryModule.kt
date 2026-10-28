@@ -1,9 +1,11 @@
 package com.synapse.social.studioasinc.di
 
+import com.synapse.social.studioasinc.data.repository.AssetOpenSourceLicenseRepository
 import com.synapse.social.studioasinc.data.repository.FeedbackRepositoryImpl
 import com.synapse.social.studioasinc.data.repository.GitHubAppUpdateRepository
 import com.synapse.social.studioasinc.domain.repository.AppUpdateRepository
 import com.synapse.social.studioasinc.domain.repository.FeedbackRepository
+import com.synapse.social.studioasinc.domain.repository.OpenSourceLicenseRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -20,4 +22,10 @@ abstract class AboutSupportRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAppUpdateRepository(implementation: GitHubAppUpdateRepository): AppUpdateRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOpenSourceLicenseRepository(
+        implementation: AssetOpenSourceLicenseRepository
+    ): OpenSourceLicenseRepository
 }

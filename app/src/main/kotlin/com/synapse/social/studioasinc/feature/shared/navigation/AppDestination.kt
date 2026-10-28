@@ -64,7 +64,14 @@ sealed interface AppDestination {
         val peerAvatarUrl: String? = null,
         val chatId: String? = null,
         val isVideo: Boolean = false,
-        val isIncoming: Boolean = false
+        val isIncoming: Boolean = false,
+        /**
+         * Answer the ring as soon as it is on screen, instead of waiting for a tap.
+         *
+         * Set only when the user arrived here by pressing "Accept" in the incoming-call notification.
+         * The permission gate still applies, so this can open a dialog but never a microphone.
+         */
+        val autoAccept: Boolean = false
     ) : AppDestination
     @Serializable
     data class StoryViewer(val userId: String, val userIds: List<String> = emptyList()) : AppDestination

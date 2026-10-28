@@ -186,7 +186,7 @@ internal fun WallpaperTypeSelector(
 
                 val bgColor = when {
                     isSelected -> MaterialTheme.colorScheme.primaryContainer
-                    wallpaper == WallpaperType.SOLID_COLOR -> SettingsColors.iconContainerBackground
+                    wallpaper == WallpaperType.SOLID_COLOR -> MaterialTheme.colorScheme.surfaceContainerHigh
                     else -> MaterialTheme.colorScheme.surfaceVariant
                 }
 

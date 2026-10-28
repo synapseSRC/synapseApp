@@ -24,6 +24,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * A timer-driven call, for debug builds only.
+ *
+ * This file lives in `app/src/debug`, so no release binary contains it, and the release build cannot
+ * select it even by accident: only `DebugCallModule` can bind it, and that module is compiled into the
+ * debug variant alone. The binding is additionally opt-in — `call.simulation.enabled=true` in
+ * `gradle.properties` — so a debug build dials for real unless a developer asks for the simulator.
+ *
+ * What it is for: exercising the call *UI* — every phase, control, error surface and teardown path —
+ * without two devices, a signalling database or a TURN server. What it is not for: pretending a call
+ * happened. Every phase change goes through [CallStateMachine], so a simulated state has to be a legal
+ * state; the mock cannot reach [CallPhase.ACTIVE] except along an edge the production reducer accepts.
+ *
+ * Known limits, left in place because they are honest rather than cosmetic:
+ *  - audio routes other than earpiece and speaker are refused, because there is no hardware here to
+ *    route to (the real repository drives the actual device and accepts Bluetooth and wired headsets);
+ *  - nothing is persisted, so a simulated call leaves no backend row and no call history.
+ */
 @Singleton
 class MockCallRepository @Inject constructor(
     @Named("ApplicationScope") private val appScope: CoroutineScope
@@ -66,9 +84,9 @@ class MockCallRepository @Inject constructor(
         } else {
             progressionJob = appScope.launch {
                 delay(DIALING_DURATION_MS)
-                transition(session.id, CallPhase.DIALING, CallPhase.RINGING)
+                transition(session.id, CallPhase.RINGING)
                 delay(RINGING_DURATION_MS)
-                transition(session.id, CallPhase.RINGING, CallPhase.CONNECTING)
+                transition(session.id, CallPhase.CONNECTING)
                 delay(CONNECTING_DURATION_MS)
                 connect(session.id)
             }
@@ -120,12 +138,7 @@ class MockCallRepository @Inject constructor(
         if (current?.id != callId || current.phase == CallPhase.ENDED) {
             return@withLock Result.failure(IllegalStateException("No active call to end"))
         }
-        val reason = if (current.connectedAtMillis != null) {
-            CallEndReason.COMPLETED
-        } else {
-            CallEndReason.CANCELLED
-        }
-        sessionState.value = endSession(current, reason)
+        sessionState.value = endSession(current, CallStateMachine.claimEndReason(current))
         Result.success(Unit)
     }
 
@@ -136,6 +149,13 @@ class MockCallRepository @Inject constructor(
         Result.success(Unit)
     }
 
+    /**
+     * Simulated routing, limited on purpose.
+     *
+     * There is no audio device behind this repository, so a route it cannot demonstrate would be a
+     * checkbox rather than a test. The real repository reads the actual hardware and answers with
+     * whatever device the system settled on, including Bluetooth and wired headsets.
+     */
     override suspend fun setAudioRoute(callId: String, route: CallAudioRoute): Result<Unit> = mutex.withLock {
         if (route != CallAudioRoute.EARPIECE && route != CallAudioRoute.SPEAKER) {
             return@withLock Result.failure(IllegalArgumentException("Audio route is not connected"))
@@ -201,35 +221,38 @@ class MockCallRepository @Inject constructor(
 
                 when (action) {
                     CallSimulationAction.GOOD_CONNECTION ->
-                        if (current.phase.isLiveConnection()) {
+                        if (CallStateMachine.isLiveConnection(current.phase)) {
                             sessionState.value = current.copy(connectionQuality = CallConnectionQuality.GOOD)
                         }
 
                     CallSimulationAction.WEAK_CONNECTION ->
-                        if (current.phase.isLiveConnection()) {
+                        if (CallStateMachine.isLiveConnection(current.phase)) {
                             sessionState.value = current.copy(connectionQuality = CallConnectionQuality.FAIR)
                         }
 
                     CallSimulationAction.POOR_CONNECTION ->
-                        if (current.phase.isLiveConnection()) {
+                        if (CallStateMachine.isLiveConnection(current.phase)) {
                             sessionState.value = current.copy(connectionQuality = CallConnectionQuality.POOR)
                         }
 
                     CallSimulationAction.RECONNECT -> {
-                        if (current.phase == CallPhase.ACTIVE || current.phase == CallPhase.RECONNECTING) {
-                            sessionState.value = current.copy(
-                                phase = CallPhase.RECONNECTING,
-                                connectionQuality = CallConnectionQuality.POOR
-                            )
+                        val moved = CallStateMachine.move(
+                            current.copy(connectionQuality = CallConnectionQuality.POOR),
+                            CallPhase.RECONNECTING
+                        )
+                        if (moved.phase == CallPhase.RECONNECTING) {
+                            sessionState.value = moved
                             reconnectJob?.cancel()
                             reconnectJob = appScope.launch {
                                 delay(RECONNECT_DURATION_MS)
                                 mutex.withLock {
                                     val reconnecting = sessionState.value
-                                    if (reconnecting?.id == current.id && reconnecting.phase == CallPhase.RECONNECTING) {
-                                        sessionState.value = reconnecting.copy(
-                                            phase = CallPhase.ACTIVE,
-                                            connectionQuality = CallConnectionQuality.GOOD
+                                    if (reconnecting?.id == current.id &&
+                                        reconnecting.phase == CallPhase.RECONNECTING
+                                    ) {
+                                        sessionState.value = CallStateMachine.move(
+                                            reconnecting.copy(connectionQuality = CallConnectionQuality.GOOD),
+                                            CallPhase.ACTIVE
                                         )
                                     }
                                 }
@@ -238,12 +261,16 @@ class MockCallRepository @Inject constructor(
                     }
 
                     CallSimulationAction.REMOTE_VIDEO_OFF ->
-                        if (current.mediaType == CallMediaType.VIDEO && current.phase.isLiveConnection()) {
+                        if (current.mediaType == CallMediaType.VIDEO &&
+                            CallStateMachine.isLiveConnection(current.phase)
+                        ) {
                             sessionState.value = current.copy(isRemoteVideoEnabled = false)
                         }
 
                     CallSimulationAction.REMOTE_VIDEO_ON ->
-                        if (current.mediaType == CallMediaType.VIDEO && current.phase.isLiveConnection()) {
+                        if (current.mediaType == CallMediaType.VIDEO &&
+                            CallStateMachine.isLiveConnection(current.phase)
+                        ) {
                             sessionState.value = current.copy(isRemoteVideoEnabled = true)
                         }
 
@@ -276,20 +303,17 @@ class MockCallRepository @Inject constructor(
         }
     }
 
-    private suspend fun transition(callId: String, from: CallPhase, to: CallPhase) = mutex.withLock {
+    private suspend fun transition(callId: String, to: CallPhase) = mutex.withLock {
         val current = sessionState.value
-        if (current?.id == callId && current.phase == from) {
-            sessionState.value = current.copy(phase = to)
+        if (current?.id == callId) {
+            sessionState.value = CallStateMachine.move(current, to)
         }
     }
 
     private suspend fun connect(callId: String) = mutex.withLock {
         val current = sessionState.value
-        if (current?.id == callId && current.phase == CallPhase.CONNECTING) {
-            sessionState.value = current.copy(
-                phase = CallPhase.ACTIVE,
-                connectedAtMillis = System.currentTimeMillis()
-            )
+        if (current?.id == callId) {
+            sessionState.value = CallStateMachine.move(current, CallPhase.ACTIVE)
         }
     }
 
@@ -305,11 +329,7 @@ class MockCallRepository @Inject constructor(
 
     private fun endSession(current: CallSession, reason: CallEndReason): CallSession {
         cancelTimers()
-        return current.copy(
-            phase = CallPhase.ENDED,
-            endReason = reason,
-            endedAtMillis = System.currentTimeMillis()
-        )
+        return CallStateMachine.move(current.copy(endReason = reason), CallPhase.ENDED)
     }
 
     private fun cancelTimers() {
@@ -320,9 +340,6 @@ class MockCallRepository @Inject constructor(
         reconnectJob?.cancel()
         reconnectJob = null
     }
-
-    private fun CallPhase.isLiveConnection(): Boolean =
-        this == CallPhase.CONNECTING || this == CallPhase.ACTIVE || this == CallPhase.RECONNECTING
 
     private companion object {
         const val DIALING_DURATION_MS = 1_000L

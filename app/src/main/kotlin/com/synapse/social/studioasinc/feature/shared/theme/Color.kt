@@ -1,6 +1,10 @@
 package com.synapse.social.studioasinc.feature.shared.theme
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.synapse.social.studioasinc.shared.theme.SynapseColors
 
 // M3 role and shared preset values are sourced from the common palette.
@@ -81,7 +85,13 @@ val StatusOnline = SynapseColors.StatusOnline.toComposeColor()
 val StatusOffline = SynapseColors.StatusOffline.toComposeColor()
 val StatusRead = SynapseColors.StatusRead.toComposeColor()
 val LightSuccess = SynapseColors.Light.success.toComposeColor()
+val LightOnSuccess = SynapseColors.Light.onSuccess.toComposeColor()
+val LightSuccessContainer = SynapseColors.Light.successContainer.toComposeColor()
+val LightOnSuccessContainer = SynapseColors.Light.onSuccessContainer.toComposeColor()
 val DarkSuccess = SynapseColors.Dark.success.toComposeColor()
+val DarkOnSuccess = SynapseColors.Dark.onSuccess.toComposeColor()
+val DarkSuccessContainer = SynapseColors.Dark.successContainer.toComposeColor()
+val DarkOnSuccessContainer = SynapseColors.Dark.onSuccessContainer.toComposeColor()
 val LightWarning = SynapseColors.Light.warning.toComposeColor()
 val DarkWarning = SynapseColors.Dark.warning.toComposeColor()
 
@@ -141,3 +151,26 @@ fun safeParseColorHex(hex: String?, fallback: Color): Color {
         fallback
     }
 }
+
+/**
+ * Card surface for lists that sit on a `surfaceContainerLow` page.
+ *
+ * Light schemes place cards on the brightest container (white sheets). Dark schemes invert the
+ * tonal scale — the lowest container is nearly black — and express elevation with a *lighter*
+ * container instead, so a card steps up from the page rather than punching a hole in it.
+ */
+@Composable
+fun cardSurfaceColor(): Color {
+    val scheme = MaterialTheme.colorScheme
+    return if (scheme.isTonalScaleInverted()) scheme.surfaceContainerHigh else scheme.surfaceContainerLowest
+}
+
+/** Control surface that must stay distinct from a `surfaceContainerHigh` panel beneath it. */
+@Composable
+fun raisedControlColor(): Color {
+    val scheme = MaterialTheme.colorScheme
+    return if (scheme.isTonalScaleInverted()) scheme.surfaceContainerHighest else scheme.surfaceContainerLowest
+}
+
+private fun ColorScheme.isTonalScaleInverted(): Boolean =
+    surfaceContainerLowest.luminance() < surfaceContainerLow.luminance()

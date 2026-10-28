@@ -76,7 +76,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -101,79 +100,12 @@ import androidx.compose.animation.core.spring
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun AboutAppTheme(content: @Composable () -> Unit) {
-    val colorScheme = if (androidx.compose.foundation.isSystemInDarkTheme()) {
-        darkColorSchemeAbout()
-    } else {
-        lightColorSchemeAbout()
-    }
     MaterialExpressiveTheme(
-        colorScheme = colorScheme,
+        colorScheme = MaterialTheme.colorScheme,
         motionScheme = MotionScheme.expressive(),
         content = content
     )
 }
-
-private fun lightColorSchemeAbout() = androidx.compose.material3.lightColorScheme(
-    primary = Color(0xFF0B57D0),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD3E3FD),
-    onPrimaryContainer = Color(0xFF041E49),
-    secondary = Color(0xFF5A5C7C),
-    secondaryContainer = Color(0xFFDCE2F9),
-    onSecondaryContainer = Color(0xFF131C2B),
-    tertiaryContainer = Color(0xFFFFD8EE),
-    onTertiaryContainer = Color(0xFF2E1125),
-    surface = Color(0xFFFAF9FD),
-    surfaceContainerLow = Color(0xFFF3F3FA),
-    surfaceContainer = Color(0xFFEEEDF3),
-    surfaceContainerHigh = Color(0xFFE9E8EF),
-    surfaceContainerHighest = Color(0xFFE3E2E6),
-    onSurface = Color(0xFF1B1B1F),
-    onSurfaceVariant = Color(0xFF44474E),
-    outline = Color(0xFF74777F),
-    outlineVariant = Color(0xFFC4C6D0),
-    inverseSurface = Color(0xFF303034),
-    inverseOnSurface = Color(0xFFF2F0F4),
-    inversePrimary = Color(0xFFA8C7FA),
-    error = Color(0xFFB3261E),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFF9DEDC),
-    onErrorContainer = Color(0xFF410E0B),
-    background = Color(0xFFFAF9FD),
-    onBackground = Color(0xFF1B1B1F),
-    surfaceVariant = Color(0xFFE3E2E6)
-)
-
-private fun darkColorSchemeAbout() = androidx.compose.material3.darkColorScheme(
-    primary = Color(0xFFC0C2FD),
-    onPrimary = Color(0xFF042C71),
-    primaryContainer = Color(0xFF04409F),
-    onPrimaryContainer = Color(0xFFE0E0FC),
-    secondary = Color(0xFFC3C3E9),
-    secondaryContainer = Color(0xFF424463),
-    onSecondaryContainer = Color(0xFFE0E0FE),
-    tertiaryContainer = Color(0xFF6E334E),
-    onTertiaryContainer = Color(0xFFFFD8E7),
-    surface = Color(0xFF131317),
-    surfaceContainerLow = Color(0xFF1B1B1F),
-    surfaceContainer = Color(0xFF1F1F23),
-    surfaceContainerHigh = Color(0xFF2A2A2E),
-    surfaceContainerHighest = Color(0xFF343439),
-    onSurface = Color(0xFFE2E2E8),
-    onSurfaceVariant = Color(0xFFC6C5D2),
-    outline = Color(0xFF90909C),
-    outlineVariant = Color(0xFF464651),
-    inverseSurface = Color(0xFFE2E2E8),
-    inverseOnSurface = Color(0xFF303034),
-    inversePrimary = Color(0xFF3757BA),
-    error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC),
-    background = Color(0xFF131317),
-    onBackground = Color(0xFFE2E2E8),
-    surfaceVariant = Color(0xFF343439)
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -189,8 +121,8 @@ internal fun AboutDetailTopAppBar(title: String, onBackClick: () -> Unit) {
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = SettingsColors.screenBackground,
+            scrolledContainerColor = SettingsColors.cardBackground,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface
         )
@@ -237,7 +169,7 @@ fun WhatsNewScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SettingsColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_whats_new_screen_title),
@@ -352,14 +284,14 @@ private fun ReleaseHistoryItem(
                 stateDescription = expandedStateDescription
             },
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = SettingsColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { contents() }
     } else {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = SettingsColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { contents() }
     }
@@ -405,43 +337,11 @@ fun AboutOpenSourceScreen(
     val context = LocalContext.current
     var filterMenuOpen by remember { mutableStateOf(false) }
     val licenseState by viewModel.uiState.collectAsState()
-    val allEntries = listOf(
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_compose),
-            stringResource(R.string.about_license_compose_detail),
-            stringResource(R.string.about_author_android),
-            stringResource(R.string.about_license_url_android)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_coroutines),
-            stringResource(R.string.about_license_coroutines_detail),
-            stringResource(R.string.about_author_jetbrains),
-            stringResource(R.string.about_license_url_coroutines)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_coil),
-            stringResource(R.string.about_license_coil_detail),
-            stringResource(R.string.about_author_coil),
-            stringResource(R.string.about_license_url_coil)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_retrofit),
-            stringResource(R.string.about_license_retrofit_detail),
-            stringResource(R.string.about_author_square),
-            stringResource(R.string.about_license_url_retrofit)
-        ),
-        AboutLicenseEntry(
-            stringResource(R.string.about_license_lottie),
-            stringResource(R.string.about_license_lottie_detail),
-            stringResource(R.string.about_author_airbnb),
-            stringResource(R.string.about_license_url_lottie)
-        )
-    )
-    val visibleEntries = viewModel.visibleEntries(allEntries)
+    val visibleEntries = viewModel.visibleEntries()
 
     AboutAppTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SettingsColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_open_source_title),
@@ -532,25 +432,33 @@ fun AboutOpenSourceScreen(
                     }
                 }
 
-                if (visibleEntries.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.about_license_no_results),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space24),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                when {
+                    licenseState.isLoading -> item {
+                        AboutLicenseStatusMessage(stringResource(R.string.about_license_loading))
                     }
-                } else {
-                    item {
+
+                    licenseState.loadFailed -> item {
+                        AboutLicenseStatusMessage(stringResource(R.string.about_license_load_failed))
+                    }
+
+                    visibleEntries.isEmpty() -> item {
+                        AboutLicenseStatusMessage(stringResource(R.string.about_license_no_results))
+                    }
+
+                    else -> item {
                         AboutListGroup(
-                            items = visibleEntries.map { entry ->
+                            items = visibleEntries.map { license ->
                                 AboutLinkItem(
-                                    title = entry.name,
-                                    supportingText = entry.licenseAndAuthor,
+                                    title = license.name,
+                                    supportingText = stringResource(
+                                        R.string.about_license_row,
+                                        licenseLabel(license.licenseId),
+                                        license.author
+                                    ),
+                                    description = license.licenseNote,
                                     leadingIcon = Icons.Filled.Code,
                                     trailingIcon = Icons.Filled.OpenInNew,
-                                    onClick = { IntentUtils.openUrl(context, entry.repositoryUrl) }
+                                    onClick = { IntentUtils.openUrl(context, license.repositoryUrl) }
                                 )
                             }
                         )
@@ -559,6 +467,32 @@ fun AboutOpenSourceScreen(
             }
         }
     }
+}
+
+/** Status line shown while the licence list loads, fails, or matches no query. */
+@Composable
+private fun AboutLicenseStatusMessage(text: String) {
+    Text(
+        text = text,
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space24),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/**
+ * Maps a stable licence token from the bundled asset to its localised label.
+ * An unrecognised token is displayed verbatim rather than guessed at.
+ */
+@Composable
+private fun licenseLabel(licenseId: String): String = when (licenseId) {
+    "apache-2.0" -> stringResource(R.string.about_license_label_apache_2_0)
+    "mit" -> stringResource(R.string.about_license_label_mit)
+    "bsd-3-clause" -> stringResource(R.string.about_license_label_bsd_3_clause)
+    "agpl-3.0" -> stringResource(R.string.about_license_label_agpl_3_0)
+    "gpl-2.0-with-classpath-exception" -> stringResource(R.string.about_license_label_gpl_2_0_classpath_exception)
+    "google-play-services-tos" -> stringResource(R.string.about_license_label_play_services_terms)
+    else -> licenseId
 }
 
 private enum class FeedbackCategory(val labelRes: Int) {
@@ -599,7 +533,7 @@ fun FeedbackScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SettingsColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_feedback_screen_title),
@@ -774,7 +708,7 @@ fun FeedbackScreen(
 fun AboutEmptyScreen(onBackClick: () -> Unit) {
     AboutAppTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SettingsColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_screen_five_title),

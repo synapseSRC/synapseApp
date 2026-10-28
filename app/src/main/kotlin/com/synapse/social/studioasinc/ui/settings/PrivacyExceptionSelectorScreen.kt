@@ -45,6 +45,7 @@ fun PrivacyExceptionSelectorScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = SettingsColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(title) },
@@ -58,8 +59,8 @@ fun PrivacyExceptionSelectorScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = SettingsColors.screenBackground,
+                    scrolledContainerColor = SettingsColors.cardBackground
                 )
             )
         },
@@ -67,7 +68,7 @@ fun PrivacyExceptionSelectorScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 tonalElevation = 3.dp,
-                color = MaterialTheme.colorScheme.surface
+                color = SettingsColors.screenBackground
             ) {
                 Box(
                     modifier = Modifier

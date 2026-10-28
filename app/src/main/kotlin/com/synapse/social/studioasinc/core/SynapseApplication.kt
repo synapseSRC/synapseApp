@@ -26,6 +26,7 @@ import com.synapse.social.studioasinc.core.util.SupabaseStorageImageInterceptor
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.feature.shared.theme.ThemeManager
 import com.synapse.social.studioasinc.feature.settings.backup.SettingsCloudSyncScheduler
+import com.synapse.social.studioasinc.shared.domain.repository.IncomingCallWatcher
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StartPresenceTrackingUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StopPresenceTrackingUseCase
@@ -88,6 +89,15 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
     @Inject lateinit var stopPresenceTrackingUseCase: StopPresenceTrackingUseCase
     @Inject lateinit var updatePresenceUseCase: UpdatePresenceUseCase
     @Inject lateinit var settingsCloudSyncScheduler: SettingsCloudSyncScheduler
+
+    /**
+     * The watch for calls addressed to this user, started and stopped with the session below.
+     *
+     * The application owns it rather than a screen because a ring has to be noticed while no screen is
+     * looking: the app is backgrounded, the screen is off, or the process has only just come back for a
+     * push. It is the same lifetime the presence tracker has, for the same reason.
+     */
+    @Inject lateinit var incomingCallWatcher: IncomingCallWatcher
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -217,7 +227,14 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
 
         OneSignal.Notifications.addClickListener(object : INotificationClickListener {
             override fun onClick(event: INotificationClickEvent) {
-                NotificationNavigationCoordinator.onNotificationClick(event.notification.additionalData)
+                val data = event.notification.additionalData
+                // A call push is the one notification whose row may not be in this process's hands:
+                // on a cold start nothing has subscribed yet, so the watcher is asked to reconcile
+                // against the backend before navigation opens a screen that has to resolve it.
+                if (data?.optString("type") == "incoming_call") {
+                    incomingCallWatcher.start()
+                }
+                NotificationNavigationCoordinator.onNotificationClick(data)
             }
         })
 
@@ -299,6 +316,10 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                                     tag = "PresenceTracker"
                                 )
                                 managePresenceTracking()
+                                // Watches for a ring, and re-reads whatever is already open server-side —
+                                // which is the cold-start path for a call placed while this process was
+                                // not running.
+                                incomingCallWatcher.start()
 
                                 try {
                                     val rt = io.github.jan.supabase.realtime.Realtime
@@ -340,6 +361,9 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                                 tag = "PresenceTracker"
                             )
                             managePresenceTracking()
+                            // A ring belongs to the user who was signed in. Stopping the watch clears it,
+                            // so the next account on this device cannot be handed the previous one's call.
+                            incomingCallWatcher.stop()
 
                             try {
                                 val rt = io.github.jan.supabase.realtime.Realtime
