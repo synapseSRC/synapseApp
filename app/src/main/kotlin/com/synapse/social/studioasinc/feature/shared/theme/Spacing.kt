@@ -38,6 +38,7 @@ object Sizes {
     val IconSemiSmall = SynapseSizes.IconSemiSmall.dp
     val IconSemiMedium = SynapseSizes.IconSemiMedium.dp
     val IconMedium = SynapseSizes.IconMedium.dp
+    val IconSmallMedium = 22.dp
     val IconDefault = SynapseSizes.IconDefault.dp
     val IconLarge = SynapseSizes.IconLarge.dp
     val IconExtraLarge = SynapseSizes.IconExtraLarge.dp
@@ -58,6 +59,7 @@ object Sizes {
     // My design decision (not in M3): Border widths
     val StatusDotSmall = SynapseSizes.StatusDotSmall.dp
     val BorderThin = SynapseSizes.BorderThin.dp
+    val BorderThinAlt = 1.5.dp
     val BorderHairline = SynapseSizes.BorderHairline.dp
     val BorderDefault = SynapseSizes.BorderDefault.dp
     val BorderSelected = SynapseSizes.BorderSelected.dp

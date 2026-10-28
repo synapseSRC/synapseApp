@@ -184,8 +184,8 @@ enum class GroupPosition {
 
 fun isWithinTimeThreshold(timeStr1: String?, timeStr2: String?): Boolean {
     if (timeStr1 == null || timeStr2 == null) return false
-    val t1 = ChatMapper.parseEpochMillis(timeStr1) ?: return false
-    val t2 = ChatMapper.parseEpochMillis(timeStr2) ?: return false
+    val t1 = ChatMapper.parseInstant(timeStr1)?.toEpochMilliseconds() ?: return false
+    val t2 = ChatMapper.parseInstant(timeStr2)?.toEpochMilliseconds() ?: return false
     return abs(t1 - t2) <= 300_000L
 }
 
