@@ -6,7 +6,6 @@ import com.synapse.social.studioasinc.shared.domain.usecase.auth.GetCurrentUserE
 
 object AuthHelper {
     private val authRepository by lazy { SupabaseAuthRepository() }
-    
     private val getCurrentUserIdUseCase by lazy {
         GetCurrentUserIdUseCase(authRepository)
     }

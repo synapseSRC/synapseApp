@@ -34,6 +34,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Dispatchers
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.functions.functions
@@ -76,6 +77,10 @@ class SupabaseAuthRepository(
         }
     }
     private val TAG = "AuthRepository"
+
+    private companion object {
+        private const val SIGN_OUT_REVOKE_TIMEOUT_MS = 10_000L
+    }
 
     /**
      * Registers a new user account with the provided email and password.
@@ -231,7 +236,16 @@ class SupabaseAuthRepository(
                     offlineActionRepository = offlineActionRepository,
                     syncManager = syncManager
                 )
-                client.auth.signOut()
+                try {
+                    // Revoking server-side is best effort; a dead network must not trap the user in the session.
+                    withTimeoutOrNull(SIGN_OUT_REVOKE_TIMEOUT_MS) { client.auth.signOut() }
+                } catch (e: Exception) {
+                    Napier.w("Remote session revoke failed during sign-out", e, tag = TAG)
+                }
+                // signOut() keeps the persisted session when the revoke request fails, so clear it explicitly.
+                if (client.auth.currentSessionOrNull() != null) {
+                    client.auth.clearSession()
+                }
                 Napier.d("User signed out", tag = TAG)
                 Result.success(Unit)
             }

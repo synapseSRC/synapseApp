@@ -688,6 +688,7 @@ fun NavGraphBuilder.profileGraph(
                 )
             }
     composable<AppDestination.Settings> {
+                val signOutViewModel: com.synapse.social.studioasinc.ui.settings.SignOutViewModel = hiltViewModel()
                 SettingsNavHost(
                     onBackClick = { navController.popBackStack() },
                     onNavigateToProfileEdit = {
@@ -697,8 +698,10 @@ fun NavGraphBuilder.profileGraph(
                         // navController.navigate(AppDestination.ChatPrivacy)
                     },
                     onLogout = {
-                        navController.navigate(AppDestination.Auth) {
-                            popUpTo(0) { inclusive = true }
+                        signOutViewModel.signOut {
+                            navController.navigate(AppDestination.Auth) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     }
                 )
