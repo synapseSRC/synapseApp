@@ -1,43 +1,55 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "synapse-social-dummy",
-    "storage_bucket": "synapse-social-dummy.appspot.com"
+    "project_number": "999615440042",
+    "project_id": "realashik",
+    "storage_bucket": "realashik.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:999615440042:android:82e618c21595d7a0ad1cd3",
         "android_client_info": {
           "package_name": "com.synapse.social.studioasinc"
         }
       },
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "dummy-api-key"
+          "current_key": "AIzaSyC3m_uGevivMsonVQnM8tvnIHBt8-jnw58"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "999615440042-9s9he8resh1k2i6st0dnmg1fiogv0vm6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:0000000000000000000001",
+        "mobilesdk_app_id": "1:999615440042:android:5728f5fe5b045d18ad1cd3",
         "android_client_info": {
           "package_name": "com.synapse.social.studioasinc.debug"
         }
       },
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "dummy-api-key-debug"
+          "current_key": "AIzaSyC3m_uGevivMsonVQnM8tvnIHBt8-jnw58"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "999615440042-9s9he8resh1k2i6st0dnmg1fiogv0vm6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
