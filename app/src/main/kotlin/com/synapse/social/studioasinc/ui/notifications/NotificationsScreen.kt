@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.ui.notifications
 
 import com.synapse.social.studioasinc.R
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -28,6 +29,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.ui.settings.SettingsColors
 import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
 import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
 
@@ -73,7 +75,13 @@ fun NotificationsScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            // Same page backdrop as Settings: the cardBackground rows are only one tone
+            // step away from the app surface, so on the Home scaffold they vanish.
+            .background(SettingsColors.screenBackground)
+    ) {
         ErrorCard(
             error = uiState.error?.asString(),
             onDismiss = viewModel::clearError

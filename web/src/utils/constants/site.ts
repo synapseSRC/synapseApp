@@ -6,10 +6,17 @@ export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN
 
 export const SUPPORT_EMAIL = "support@synapse.app";
 
-// Placeholder repository links — replace with the real URLs before launch.
+export const GITHUB_REPOSITORY = {
+    owner: "synapseSRC",
+    name: "synapseApp",
+} as const;
+
+const REPOSITORY_URL = `https://github.com/${GITHUB_REPOSITORY.owner}/${GITHUB_REPOSITORY.name}`;
+
 export const PROJECT_LINKS = {
-    github: "#",
-    issues: "#",
+    github: REPOSITORY_URL,
+    issues: `${REPOSITORY_URL}/issues`,
+    // GitHub Discussions are not enabled on the repository yet.
     discussions: "#",
-    releases: "#",
+    releases: `${REPOSITORY_URL}/releases`,
 } as const;
