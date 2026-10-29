@@ -25,7 +25,7 @@ actual object SynapseConfig {
     actual val GITHUB_BUG_REPORT_URL: String = getEnvVar("GITHUB_BUG_REPORT_URL").ifBlank { "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md" }
     actual val DEFAULT_QUIET_HOURS_START: String = getEnvVar("DEFAULT_QUIET_HOURS_START").ifBlank { "22:00" }
     actual val DEFAULT_QUIET_HOURS_END: String = getEnvVar("DEFAULT_QUIET_HOURS_END").ifBlank { "08:00" }
-    actual val SUPABASE_REDIRECT_URL: String = getEnvVar("SUPABASE_REDIRECT_URL").ifBlank { "https://synapseofficial.vercel.app/" }
+    actual val SUPABASE_REDIRECT_URL: String = getEnvVar("SUPABASE_REDIRECT_URL").ifBlank { "https://synapsesocial.vercel.app/" }
     actual val X_BASE_URL: String = getEnvVar("X_BASE_URL").ifBlank { "https://x.com/" }
     actual val INSTAGRAM_BASE_URL: String = getEnvVar("INSTAGRAM_BASE_URL").ifBlank { "https://instagram.com/" }
     actual val FACEBOOK_BASE_URL: String = getEnvVar("FACEBOOK_BASE_URL").ifBlank { "https://facebook.com/" }

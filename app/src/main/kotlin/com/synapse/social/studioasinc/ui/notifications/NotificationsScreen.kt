@@ -1,12 +1,9 @@
 package com.synapse.social.studioasinc.ui.notifications
 
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.core.util.UiText
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,8 +14,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -30,23 +25,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.synapse.social.studioasinc.ui.home.FeedLoading
 import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-
-@Composable
-fun NotificationHeader(date: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
-    ) {
-        Text(
-            text = date,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
+import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -122,50 +105,33 @@ fun NotificationsScreen(
                     val groupedNotifications = uiState.groupedNotifications
 
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = SettingsSpacing.screenPadding),
                         contentPadding = contentPadding
                     ) {
                         groupedNotifications.forEach { (date, notifications) ->
                             item(key = "header_${date.hashCode()}") {
-                                NotificationHeader(date.asString())
+                                SettingsHeaderItem(title = date.asString())
                             }
                             itemsIndexed(
                                 items = notifications,
                                 key = { index, notification -> "${notification.id}_$index" }
                             ) { index, notification ->
-                                val position = when {
-                                    notifications.size == 1 -> NotificationGroupPosition.SINGLE
-                                    index == 0 -> NotificationGroupPosition.FIRST
-                                    index == notifications.lastIndex -> NotificationGroupPosition.LAST
-                                    else -> NotificationGroupPosition.MIDDLE
-                                }
-
-                                Column(modifier = Modifier.fillMaxWidth()) {
-                                    NotificationItem(
-                                        notification = notification,
-                                        position = position,
-                                        onNotificationClick = handleNotificationClick,
-                                        onUserClick = handleUserClick
-                                    )
-                                    if (index < notifications.lastIndex) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = Spacing.space16)
-                                                .background(
-                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-                                                )
-                                        ) {
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(horizontal = Spacing.space16),
-                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                                thickness = 0.5.dp
-                                            )
-                                        }
+                                NotificationItem(
+                                    notification = notification,
+                                    position = GroupedItemPosition.at(index, notifications.size),
+                                    onNotificationClick = handleNotificationClick,
+                                    onUserClick = handleUserClick,
+                                    modifier = if (index == 0) {
+                                        Modifier
                                     } else {
-                                        Spacer(modifier = Modifier.height(Spacing.space8))
+                                        Modifier.padding(top = GroupedListSpacing)
                                     }
-                                }
+                                )
+                            }
+                            item(key = "gap_${date.hashCode()}") {
+                                Spacer(modifier = Modifier.height(SettingsSpacing.sectionSpacing))
                             }
                         }
                     }

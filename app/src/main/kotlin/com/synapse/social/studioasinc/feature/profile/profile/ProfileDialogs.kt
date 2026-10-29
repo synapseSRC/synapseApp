@@ -42,7 +42,7 @@ internal fun ProfileMoreMenuSection(
     }
 }
 
-private const val PROFILE_LINK_FALLBACK_DOMAIN = "https://synapseofficial.vercel.app"
+private const val PROFILE_LINK_FALLBACK_DOMAIN = "https://synapsesocial.vercel.app"
 
 private fun shareProfile(context: Context, username: String?) {
     if (username.isNullOrBlank()) {
@@ -52,7 +52,7 @@ private fun shareProfile(context: Context, username: String?) {
     val domain = BuildConfig.APP_DOMAIN.ifBlank { PROFILE_LINK_FALLBACK_DOMAIN }.trimEnd('/')
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_profile_text, "$domain/profile/$username"))
+        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_profile_text, "$domain/u/$username"))
     }
     try {
         context.startActivity(Intent.createChooser(intent, context.getString(R.string.title_share_profile)))

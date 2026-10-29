@@ -213,7 +213,7 @@ android {
         buildConfigField("String", "GITHUB_BUG_REPORT_URL", "\"${System.getenv("GITHUB_BUG_REPORT_URL") ?: project.findProperty("GITHUB_BUG_REPORT_URL") ?: "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md"}\"")
         buildConfigField("String", "DEFAULT_QUIET_HOURS_START", "\"${System.getenv("DEFAULT_QUIET_HOURS_START") ?: project.findProperty("DEFAULT_QUIET_HOURS_START") ?: "22:00"}\"")
         buildConfigField("String", "DEFAULT_QUIET_HOURS_END", "\"${System.getenv("DEFAULT_QUIET_HOURS_END") ?: project.findProperty("DEFAULT_QUIET_HOURS_END") ?: "08:00"}\"")
-        buildConfigField("String", "SUPABASE_REDIRECT_URL", "\"${System.getenv("SUPABASE_REDIRECT_URL") ?: project.findProperty("SUPABASE_REDIRECT_URL") ?: "https://synapseofficial.vercel.app/"}\"")
+        buildConfigField("String", "SUPABASE_REDIRECT_URL", "\"${System.getenv("SUPABASE_REDIRECT_URL") ?: project.findProperty("SUPABASE_REDIRECT_URL") ?: "https://synapsesocial.vercel.app/"}\"")
         buildConfigField("String", "X_BASE_URL", "\"${System.getenv("X_BASE_URL") ?: project.findProperty("X_BASE_URL") ?: "https://x.com/"}\"")
         buildConfigField("String", "INSTAGRAM_BASE_URL", "\"${System.getenv("INSTAGRAM_BASE_URL") ?: project.findProperty("INSTAGRAM_BASE_URL") ?: "https://instagram.com/"}\"")
         buildConfigField("String", "FACEBOOK_BASE_URL", "\"${System.getenv("FACEBOOK_BASE_URL") ?: project.findProperty("FACEBOOK_BASE_URL") ?: "https://facebook.com/"}\"")
