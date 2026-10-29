@@ -81,31 +81,24 @@ fun CallsTabScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(contentPadding)
     ) {
         when {
             // A read that failed with nothing to fall back on: the retry is the only useful action.
             uiState.history.isEmpty() && uiState.error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding)
-                ) {
-                    InboxEmptyState(
-                        type = EmptyStateType.ERROR,
-                        message = loadFailedMessage,
-                        onActionClick = viewModel::retry,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                InboxEmptyState(
+                    type = EmptyStateType.ERROR,
+                    message = loadFailedMessage,
+                    onActionClick = viewModel::retry,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
 
             // Covers both the first read and a retry after a failure: until something has landed, a
             // spinner is honest and "no calls yet" is not.
             uiState.history.isEmpty() && (uiState.isLoading || !uiState.hasLoaded) -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -113,11 +106,7 @@ fun CallsTabScreen(
             }
 
             uiState.history.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding)
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
                     InboxEmptyState(
                         type = EmptyStateType.CALLS,
                         modifier = Modifier.fillMaxSize()
@@ -140,7 +129,7 @@ fun CallsTabScreen(
                     reloadFailedMessage = loadFailedMessage,
                     onRetry = viewModel::retry,
                     onCallClick = { onStartCall(it.toCallAgainRequest()) },
-                    contentPadding = contentPadding,
+                    contentPadding = PaddingValues(),
                     debugToolsEnabled = debugToolsEnabled,
                     onStartDebugCall = onStartCall
                 )

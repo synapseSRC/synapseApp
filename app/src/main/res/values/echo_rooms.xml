@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification -->
+    <string name="echo_notification_channel_name">Echo Rooms</string>
+    <string name="echo_notification_channel_description">Keeps the room audible while you are listening in the background</string>
+    <string name="echo_notification_title">In an Echo Room</string>
+    <string name="echo_notification_leave">Leave</string>
+    <string name="echo_notification_unknown_room">Echo Room</string>
+
+    <!-- Lobby -->
+    <string name="echo_lobby_title">Echo Rooms</string>
+    <string name="echo_lobby_subtitle">Live audio, open to anyone</string>
+    <string name="echo_lobby_start">Start a room</string>
+    <string name="echo_lobby_live">LIVE</string>
+    <string name="echo_lobby_empty_title">No live rooms</string>
+    <string name="echo_lobby_empty_body">No one is hosting an Echo Room right now. Start one and invite people in.</string>
+    <string name="echo_lobby_error_title">Rooms could not be loaded</string>
+    <string name="echo_lobby_refresh_failed">Could not refresh the rooms.</string>
+    <string name="echo_lobby_hosted_by">Hosted by %1$s</string>
+    <string name="echo_room_host_fallback">Host</string>
+    <string name="echo_lobby_following_count">%1$d you follow</string>
+    <plurals name="echo_lobby_stage_count">
+        <item quantity="one">%1$d on stage</item>
+        <item quantity="other">%1$d on stage</item>
+    </plurals>
+    <plurals name="echo_lobby_listener_count">
+        <item quantity="one">%1$d listening</item>
+        <item quantity="other">%1$d listening</item>
+    </plurals>
+
+    <!-- Create room sheet -->
+    <string name="echo_create_title">Start an Echo Room</string>
+    <string name="echo_create_name_label">Room name</string>
+    <string name="echo_create_name_placeholder">What is this room about?</string>
+    <string name="echo_create_name_counter">%1$d/%2$d</string>
+    <string name="echo_create_topic_label">Topic (optional)</string>
+    <string name="echo_create_topic_placeholder">Give listeners some context</string>
+    <string name="echo_create_visibility_label">Who can find it</string>
+    <string name="echo_visibility_public">Public</string>
+    <string name="echo_visibility_unlisted">Unlisted</string>
+    <string name="echo_visibility_public_hint">Listed in the Echo lobby</string>
+    <string name="echo_visibility_unlisted_hint">Only people with the link</string>
+    <string name="echo_create_speakers_label">Max speakers</string>
+    <string name="echo_create_speakers_value">%1$d</string>
+    <string name="echo_create_action">Create room</string>
+    <string name="echo_create_cancel">Cancel</string>
+
+    <!-- Errors -->
+    <string name="echo_error_not_authenticated">Sign in to use Echo Rooms.</string>
+    <string name="echo_error_forbidden">You cannot do that in this room.</string>
+    <string name="echo_error_blocked">You cannot join this room.</string>
+    <string name="echo_error_banned">You are not allowed in this room.</string>
+    <string name="echo_error_not_found">This room no longer exists.</string>
+    <string name="echo_error_ended">This room has ended.</string>
+    <string name="echo_error_stage_full">The stage is full.</string>
+    <string name="echo_error_not_audience">Only listeners can do that.</string>
+    <string name="echo_error_invalid_input">Check what you entered and try again.</string>
+    <string name="echo_error_backend_unreachable">Echo Rooms are unreachable right now.</string>
+    <string name="echo_error_audio_failed">The room audio could not connect.</string>
+    <string name="echo_error_unknown">Something went wrong.</string>
+
+    <!-- Room -->
+    <string name="echo_room_fallback_title">Echo Room</string>
+    <string name="echo_room_leave">Leave</string>
+    <string name="echo_room_end">End</string>
+    <string name="echo_room_leave_room">Leave room</string>
+    <string name="echo_room_end_room">End room</string>
+    <string name="echo_room_end_confirm_title">End the room?</string>
+    <string name="echo_room_end_confirm_body">Everyone will be disconnected and the room will close for good.</string>
+    <string name="echo_room_share">Share</string>
+    <string name="echo_room_share_chooser">Share this room</string>
+    <string name="echo_room_share_text">Join me in “%1$s” on Synapse: %2$s</string>
+    <string name="echo_room_you">You</string>
+    <string name="echo_room_member_fallback">Member</string>
+    <string name="echo_room_joining">Joining the room…</string>
+
+    <!-- Stage -->
+    <string name="echo_room_stage_title">On stage</string>
+    <string name="echo_room_stage_empty">The host is setting up the room.</string>
+    <string name="echo_room_speaking">%1$s is speaking</string>
+    <string name="echo_room_manage_participant">Manage %1$s</string>
+    <string name="echo_room_role_speaker">Speaker</string>
+    <string name="echo_room_role_listener">Listener</string>
+    <string name="echo_room_promote">Move to stage</string>
+    <string name="echo_room_demote">Move to audience</string>
+
+    <!-- Audience -->
+    <string name="echo_room_audience_title">Listeners</string>
+    <string name="echo_room_audience_empty">No listeners yet.</string>
+    <string name="echo_room_hand_raised">Hand raised</string>
+    <string name="echo_room_raise_hand">Raise hand</string>
+    <string name="echo_room_lower_hand">Lower hand</string>
+
+    <!-- Microphone and connection -->
+    <string name="echo_room_mic_mute">Mute microphone</string>
+    <string name="echo_room_mic_unmute">Unmute microphone</string>
+    <string name="echo_room_invited_title">You’re invited to speak</string>
+    <string name="echo_room_invited_body">The host moved you to the stage. Take the stage to turn your microphone on.</string>
+    <string name="echo_room_take_stage">Take the stage</string>
+    <string name="echo_room_mic_needed">Microphone access is needed to speak in this room.</string>
+    <string name="echo_room_mic_allow">Allow microphone</string>
+    <string name="echo_room_open_settings">Open settings</string>
+    <string name="echo_room_connection_lost">Connection lost. Reconnecting…</string>
+    <string name="echo_room_connect_action">Reconnect</string>
+    <string name="echo_room_react_with">React with %1$s</string>
+
+    <!-- Panels -->
+    <string name="echo_room_ended_title">This room has ended</string>
+    <string name="echo_room_ended_body">The host closed the room. Thanks for listening.</string>
+    <string name="echo_room_ended_body_host">This room is closed. Start a new one from the lobby.</string>
+    <string name="echo_room_back_to_lobby">Back to the lobby</string>
+    <string name="echo_room_failed_title">This room could not be opened</string>
+    <string name="echo_room_retry">Try again</string>
+    <string-array name="echo_reaction_emojis">
+        <item>👏</item>
+        <item>❤️</item>
+        <item>😂</item>
+        <item>🔥</item>
+        <item>🎉</item>
+        <item>🤯</item>
+    </string-array>
+</resources>

@@ -51,6 +51,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -574,11 +575,11 @@ class SupabaseChatRepository(
             val domainMessage = messageDto.toDomain()
             val finalMessage = if (senderPlaintext != null) {
                 val displayContent = try {
-                    Json.parseToJsonElement(senderPlaintext).jsonObject["content"]?.jsonPrimitive?.content ?: senderPlaintext
+                    Json.parseToJsonElement(senderPlaintext).jsonObject["content"]?.jsonPrimitive?.contentOrNull ?: senderPlaintext
                 } catch (_: Exception) { senderPlaintext }
 
                 val decryptedMediaUrl = try {
-                    Json.parseToJsonElement(senderPlaintext).jsonObject["mediaUrl"]?.jsonPrimitive?.content
+                    Json.parseToJsonElement(senderPlaintext).jsonObject["mediaUrl"]?.jsonPrimitive?.contentOrNull
                 } catch (_: Exception) { null }
                 val cachedMsg = domainMessage.copy(
                     content = displayContent,
@@ -628,10 +629,10 @@ class SupabaseChatRepository(
                 targetId = chatId,
                 payload = buildJsonObject {
                     put("content", content)
-                    put("mediaUrl", mediaUrl)
+                    if (mediaUrl != null) put("mediaUrl", mediaUrl)
                     put("messageType", messageType)
-                    put("expiresAt", expiresAt)
-                    put("replyToId", replyToId)
+                    if (expiresAt != null) put("expiresAt", expiresAt)
+                    if (replyToId != null) put("replyToId", replyToId)
                     if (attachmentsJson != null) put("attachments", attachmentsJson)
                     if (serializedMetadata != null) put("metadata", serializedMetadata)
                 }.toString()
@@ -986,6 +987,9 @@ class SupabaseChatRepository(
                             lastMessageTime = if (isNewest) domainMessage.createdAt else currentExisting.lastMessageTime,
                             unreadCount = when {
                                 !isNewest || domainMessage.senderId == userId -> currentExisting.unreadCount
+                                // The open chat already zeroes its badge via subscribeToMessages;
+                                // incrementing here would race and resurrect a phantom badge.
+                                domainMessage.chatId == _activeChatId.value -> currentExisting.unreadCount
                                 else -> currentExisting.unreadCount + 1
                             }
                         )
@@ -994,7 +998,7 @@ class SupabaseChatRepository(
                         Conversation(
                             chatId = domainMessage.chatId,
                             participantId = if (isGroup) domainMessage.chatId else domainMessage.senderId,
-                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else try { SupabaseUserDataSource(io.github.jan.supabase.SupabaseClient as SupabaseClientLib).getUserProfile(domainMessage.senderId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username } ?: "Unknown User" } catch (_: Exception) { "Unknown User" },
+                            participantName = if (isGroup) chatInfo?.name ?: "Group Chat" else try { SupabaseUserDataSource(client).getUserProfile(domainMessage.senderId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username } ?: "Unknown User" } catch (_: Exception) { "Unknown User" },
                             participantAvatar = if (isGroup) chatInfo?.avatarUrl else null,
                             lastMessage = conversationPreview(domainMessage),
                             lastMessageTime = domainMessage.createdAt,

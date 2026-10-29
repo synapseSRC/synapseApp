@@ -248,7 +248,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing realtime channel for messages: $channelId", tag = "Realtime")
             collector.cancel()
             statusMonitor.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -347,7 +347,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -487,7 +487,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -546,7 +546,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)

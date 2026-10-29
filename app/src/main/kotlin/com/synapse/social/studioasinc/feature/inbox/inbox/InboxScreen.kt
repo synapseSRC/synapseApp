@@ -45,6 +45,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Unarchive
@@ -135,6 +136,7 @@ fun InboxScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit = {},
     onStartCall: (CallLaunchRequest) -> Unit = {},
+    onOpenEchoRooms: () -> Unit = {},
     debugToolsEnabled: Boolean = false,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
@@ -144,6 +146,7 @@ fun InboxScreen(
         onNavigateToSearch = onNavigateToSearch,
         onNavigateToCreateGroup = onNavigateToCreateGroup,
         onStartCall = onStartCall,
+        onOpenEchoRooms = onOpenEchoRooms,
         debugToolsEnabled = debugToolsEnabled,
         viewModel = viewModel
     )
@@ -157,6 +160,7 @@ private fun InboxScreenContent(
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit,
     onStartCall: (CallLaunchRequest) -> Unit,
+    onOpenEchoRooms: () -> Unit,
     debugToolsEnabled: Boolean,
     viewModel: InboxViewModel
 ) {
@@ -438,6 +442,14 @@ private fun InboxScreenContent(
                         },
                         icon = { Icon(Icons.Rounded.Campaign, contentDescription = null) },
                         text = { Text(stringResource(R.string.inbox_fab_create_channel)) }
+                    )
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            showCreateMenu = false
+                            onOpenEchoRooms()
+                        },
+                        icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
+                        text = { Text(stringResource(R.string.inbox_fab_echo_room)) }
                     )
                 }
             }
