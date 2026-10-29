@@ -1,0 +1,135 @@
+[
+    {
+        "title": "Why we built Synapse in the open",
+        "slug": "why-we-built-synapse-in-the-open",
+        "description": "A social network is infrastructure. Here is what changed when we made every layer of it readable.",
+        "image": "/assets/blog/open-by-default.svg",
+        "author_name": "Synapse Team",
+        "author_role": "Core maintainers",
+        "date_published": "2026-10-22",
+        "reading_time": "6 min read",
+        "lede": "We did not start out wanting to publish a protocol. We started out wanting to fix the thing that annoyed us most about the tools we already used.",
+        "content": [
+            {
+                "heading": "The annoying part",
+                "body": [
+                    "Most team chat is a black box with a REST layer bolted on. You can post a message, but you cannot see how delivery actually works, so anything slightly outside the supported path becomes guesswork.",
+                    "Every integration we wrote carried that guesswork forward. When the vendor changed behaviour without telling us, we found out from users rather than from a diff."
+                ]
+            },
+            {
+                "heading": "What openness changed",
+                "body": [
+                    "Publishing the wire format moved debugging from inference to reading. A bug report now starts with a version number and a trace, not a description of symptoms.",
+                    "The second effect was harder to predict: people submitted fixes for platforms we had not planned to support, because they could trace a change from the client through the protocol to the server."
+                ]
+            },
+            {
+                "heading": "The cost",
+                "body": [
+                    "Open code is a liability you accept on purpose. Threat modelling happens in public, and a careless change is visible before it is reviewed.",
+                    "We pay for that with a slower merge policy and an explicit rule that wire-format changes go through a written RFC. It is a fair trade, provided the RFCs stay short enough that people read them."
+                ]
+            }
+        ]
+    },
+    {
+        "title": "Self-hosting your own social node",
+        "slug": "self-hosting-your-social-network",
+        "description": "One container, one Postgres database, one TLS certificate — what running Synapse for a community actually takes.",
+        "image": "/assets/blog/self-host-node.svg",
+        "author_name": "Synapse Team",
+        "author_role": "Infrastructure",
+        "date_published": "2026-10-08",
+        "reading_time": "8 min read",
+        "lede": "Self-hosting fails when it needs a specialist. So the target for the node was a machine you already own and a setup you can finish before coffee goes cold.",
+        "content": [
+            {
+                "heading": "Minimum viable node",
+                "body": [
+                    "A single small VPS handles a few hundred active members comfortably. The install is docker compose up, then synapse init with your domain, which provisions certificates and creates the first space.",
+                    "The only external dependency is Postgres. Nothing else needs to be co-located, and media can live on any S3-compatible bucket you already run."
+                ]
+            },
+            {
+                "heading": "Backups people actually restore",
+                "body": [
+                    "A nightly pg_dump plus an object-storage lifecycle rule is the whole plan. We deliberately avoided incremental replication because it is the part that silently breaks at three in the morning.",
+                    "Restoring is documented as a single command and tested in CI on every release, so the instructions cannot rot."
+                ]
+            },
+            {
+                "heading": "When to stay hosted",
+                "body": [
+                    "If your community is under twenty people, running a node is more work than it saves. Use the hosted network, keep the export handy, and move when the reasons to move are concrete rather than theoretical."
+                ]
+            }
+        ]
+    },
+    {
+        "title": "Designing offline-first sync",
+        "slug": "designing-offline-first-sync",
+        "description": "How a draft written on a train survives a merge with a reply typed on a laptop an hour later.",
+        "image": "/assets/blog/offline-first-sync.svg",
+        "author_name": "Synapse Team",
+        "author_role": "Clients",
+        "date_published": "2026-09-24",
+        "reading_time": "7 min read",
+        "lede": "Offline-first sounds like a caching problem. It is really a conflict problem, and the fix is to stop pretending there is only one timeline.",
+        "content": [
+            {
+                "heading": "Every device has a truth",
+                "body": [
+                    "Each client writes to a local store immediately and never blocks the interface on the network. Two devices can compose in the same thread at the same time, so the merge has to be meaningful instead of last-write-wins.",
+                    "Messages carry causal metadata rather than a clock. Order comes from what depended on what, which is why a reply never lands above the message it answers."
+                ]
+            },
+            {
+                "heading": "Drafts are the hard case",
+                "body": [
+                    "A draft is unsent, so it has no id. We give it a temporary one, then swap it when the first keystroke is sent, and the swap is what previously duplicated text.",
+                    "The fix was boring: the local store became authoritative for unsent state, and reconnect reconciles against it instead of overwriting it."
+                ]
+            },
+            {
+                "heading": "What we measurably gained",
+                "body": [
+                    "Compose latency on a saturated connection dropped to the same cost as a local write. Failed sends are now visible as failures rather than mystery hangs, which reduced related support tickets to nearly nothing."
+                ]
+            }
+        ]
+    },
+    {
+        "title": "Building a release bot with the Synapse CLI",
+        "slug": "building-a-bot-with-the-synapse-cli",
+        "description": "Forty lines of TypeScript, one signed webhook, and a channel that tells you the truth about your deploys.",
+        "image": "/assets/blog/cli-release-bot.svg",
+        "author_name": "Synapse Team",
+        "author_role": "Developer experience",
+        "date_published": "2026-09-03",
+        "reading_time": "5 min read",
+        "lede": "The bot we run for our own releases is small enough to paste into this post. It started as a shell alias and stayed that way.",
+        "content": [
+            {
+                "heading": "The pieces",
+                "body": [
+                    "A token scoped to one space, a webhook receiver that verifies the signature header, and one call to synapse send. That is the whole service.",
+                    "Because the CLI speaks the public API, the bot does not need a special integration path, and nothing about it breaks when a client ships."
+                ]
+            },
+            {
+                "heading": "Keeping the channel useful",
+                "body": [
+                    "We post on state changes only: queued, building, live, rolled back. A bot that narrates every log line gets muted within a week, and a muted bot is worse than none.",
+                    "Threads carry the detail. The top-level message stays one line with a link, so scrolling past it costs nothing."
+                ]
+            },
+            {
+                "heading": "Try it yourself",
+                "body": [
+                    "Install the CLI, create a space token, and point your CI at it after the deploy step. If the pipeline fails, send the same message with a different label — the channel becomes a build log you can read on your phone."
+                ]
+            }
+        ]
+    }
+]
