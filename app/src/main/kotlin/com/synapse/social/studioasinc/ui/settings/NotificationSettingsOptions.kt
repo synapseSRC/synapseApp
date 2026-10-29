@@ -12,6 +12,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -30,6 +31,7 @@ import androidx.compose.ui.semantics.Role
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
 
 private data class NotificationSettingsPickerConfig(
     val title: String,
@@ -216,6 +218,42 @@ internal fun GroupedNotificationSettingsSections(
                 activePickerKey = null
             },
             onDismiss = { activePickerKey = null }
+        )
+    }
+}
+
+/** The switches [com.synapse.social.studioasinc.shared.domain.usecase.sound.PlaySoundEffectUseCase] reads; the tone pickers around them are UI-local placeholders. */
+@Composable
+internal fun SoundEffectsSection(
+    soundPreferences: SoundPreferences,
+    onToggleSoundEffects: (Boolean) -> Unit,
+    onToggleMessageTones: (Boolean) -> Unit,
+    onToggleCallTones: (Boolean) -> Unit
+) {
+    SettingsSection(title = stringResource(R.string.settings_sound_effects_section_title)) {
+        SettingsToggleItem(
+            imageVector = Icons.Default.VolumeUp,
+            title = stringResource(R.string.settings_sound_effects_title),
+            subtitle = if (soundPreferences.masterEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+            checked = soundPreferences.masterEnabled,
+            onCheckedChange = onToggleSoundEffects,
+            position = SettingsItemPosition.Top
+        )
+        SettingsToggleItem(
+            title = stringResource(R.string.settings_sound_message_tones_title),
+            subtitle = stringResource(R.string.settings_sound_message_tones_subtitle),
+            checked = soundPreferences.messageTonesEnabled,
+            onCheckedChange = onToggleMessageTones,
+            enabled = soundPreferences.masterEnabled,
+            position = SettingsItemPosition.Middle
+        )
+        SettingsToggleItem(
+            title = stringResource(R.string.settings_sound_call_tones_title),
+            subtitle = stringResource(R.string.settings_sound_call_tones_subtitle),
+            checked = soundPreferences.callTonesEnabled,
+            onCheckedChange = onToggleCallTones,
+            enabled = soundPreferences.masterEnabled,
+            position = SettingsItemPosition.Bottom
         )
     }
 }

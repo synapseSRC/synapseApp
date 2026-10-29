@@ -4,6 +4,7 @@ import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class GetChatSettingsUseCase @Inject constructor(
@@ -20,4 +21,5 @@ class GetChatSettingsUseCase @Inject constructor(
     val chatAvatarDisabled: Flow<Boolean> = settingsRepository.chatAvatarDisabled
     val chatMessagePaginationLimit: Flow<Int> = settingsRepository.chatMessagePaginationLimit
     val typingIndicatorsEnabled: Flow<Boolean> = settingsRepository.typingIndicatorsEnabled
+    val readReceiptsEnabled: Flow<Boolean> = settingsRepository.privacySettings.map { it.readReceiptsEnabled }
 }

@@ -84,6 +84,7 @@ val DarkSurfaceContainerHighest = SynapseColors.Dark.surfaceContainerHighest.toC
 val StatusOnline = SynapseColors.StatusOnline.toComposeColor()
 val StatusOffline = SynapseColors.StatusOffline.toComposeColor()
 val StatusRead = SynapseColors.StatusRead.toComposeColor()
+val DarkStatusRead = SynapseColors.Dark.statusRead.toComposeColor()
 val LightSuccess = SynapseColors.Light.success.toComposeColor()
 val LightOnSuccess = SynapseColors.Light.onSuccess.toComposeColor()
 val LightSuccessContainer = SynapseColors.Light.successContainer.toComposeColor()

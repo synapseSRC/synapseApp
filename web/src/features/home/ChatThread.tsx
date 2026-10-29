@@ -201,7 +201,7 @@ const ChatAvatar: React.FC<{ title: string; url: string | null }> = ({ title, ur
 };
 
 const DeliveryIndicator: React.FC<{ state: MessageDeliveryState }> = ({ state }) => (
-  <span title={deliveryLabel[state]} aria-label={deliveryLabel[state]} className={`inline-flex items-center ${state === 'read' ? 'font-semibold' : ''}`}>
+  <span title={deliveryLabel[state]} aria-label={deliveryLabel[state]} className={`inline-flex items-center ${state === 'read' ? 'text-sky-400 dark:text-sky-600' : ''}`}>
     {state === 'sending' ? <Loader2 className="h-3 w-3 animate-[spin_0.65s_linear_infinite]" /> : state === 'failed' ? <AlertTriangle className="h-3 w-3" /> : state === 'sent' ? <Check className="h-3 w-3" /> : <CheckCheck className="h-3 w-3" />}
   </span>
 );

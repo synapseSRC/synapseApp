@@ -34,7 +34,8 @@ class ChatInputDelegate(
     private val isE2EEReadyProvider: () -> Boolean,
     private val disappearingModeProvider: () -> DisappearingMode,
     private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
-    private val isScreenVisibleProvider: () -> Boolean = { true }
+    private val isScreenVisibleProvider: () -> Boolean = { true },
+    private val onSendDispatched: () -> Unit = {}
 ) {
     // A stop is matched by identity, so new input cannot inherit an in-flight attempt.
     private class PendingStop {
@@ -211,6 +212,10 @@ class ChatInputDelegate(
         // Consume this draft now so repeated taps cannot enqueue it twice.
         _replyingToMessage.value = null
         _inputText.value = ""
+
+        // Past every "nothing to send" check, so this says the composer really did hand a message over —
+        // regardless of how many chunks it was split into.
+        onSendDispatched()
 
         sendChunks(chatId, chunks, expiresAt, replyToId)
     }

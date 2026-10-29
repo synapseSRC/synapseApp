@@ -290,6 +290,8 @@ dependencies {
 
     // AndroidX Core & UI Components
     implementation 'androidx.palette:palette-ktx:1.0.0'
+    // Material Color Utilities: HCT tone mapping for the avatar-derived call atmosphere
+    implementation 'studio.lunabee.compose:material-color-utilities:1.7.0'
     implementation 'androidx.core:core-splashscreen:1.2.0'
     implementation 'androidx.core:core-ktx:1.19.1'
     implementation 'androidx.appcompat:appcompat:1.8.0'

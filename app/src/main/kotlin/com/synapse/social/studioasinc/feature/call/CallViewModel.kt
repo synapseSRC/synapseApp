@@ -19,6 +19,7 @@ import com.synapse.social.studioasinc.shared.domain.model.call.CallPermissionPla
 import com.synapse.social.studioasinc.shared.domain.model.call.CallPhase
 import com.synapse.social.studioasinc.shared.domain.model.call.CallRequest
 import com.synapse.social.studioasinc.shared.domain.model.call.CallSession
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundEffect
 import com.synapse.social.studioasinc.shared.domain.usecase.call.AcceptCallUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.call.DeclineCallUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.call.EndCallUseCase
@@ -31,6 +32,8 @@ import com.synapse.social.studioasinc.shared.domain.usecase.call.StartCallUseCas
 import com.synapse.social.studioasinc.shared.domain.usecase.call.SwitchCallMediaTypeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.call.ToggleCallMuteUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.call.ToggleLocalVideoUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.sound.PlaySoundEffectUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.sound.ResolveCallSoundUseCase
 import com.synapse.social.studioasinc.ui.navigation.AppDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
@@ -71,7 +74,9 @@ class CallViewModel @Inject constructor(
     private val switchCallMediaType: SwitchCallMediaTypeUseCase,
     private val prepareCallPermissions: PrepareCallPermissionsUseCase,
     private val recordPermissionOutcome: RecordCallPermissionOutcomeUseCase,
-    private val simulationController: CallSimulationController
+    private val simulationController: CallSimulationController,
+    private val playSoundEffect: PlaySoundEffectUseCase,
+    private val resolveCallSound: ResolveCallSoundUseCase
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<AppDestination.Call>()
@@ -85,6 +90,11 @@ class CallViewModel @Inject constructor(
     private var callId: String? = null
     private var sessionJob: Job? = null
     private var tickerJob: Job? = null
+
+    /** The frame cues were last decided from: a cue is a difference between two frames, not a phase name. */
+    private var lastSoundedSession: CallSession? = null
+
+    private var ringbackWatchdog: Job? = null
 
     /** What the user was trying to do when a permission got in the way, so granting it can finish it. */
     private var pendingOp: PendingCallOp? = null
@@ -268,12 +278,23 @@ class CallViewModel @Inject constructor(
                 .onSuccess { session ->
                     callId = session.id
                     _uiState.value = CallUiState(session = session)
+                    // A dialled call is a fresh sequence: without this, a redial that lands on the same
+                    // phase it started on would look like no change at all and never ring again.
+                    lastSoundedSession = null
                     observe(session.id)
                 }
                 .onFailure { error ->
                     Napier.w("Call could not be placed: ${error.message}")
                     pendingOp = null
                     _uiState.value = CallUiState(startFailed = true)
+                    // No session was ever published, so no phase edge can report this; the failure is
+                    // only ever visible here.
+                    val cue = if (error is CallBackendException && error.kind == CallErrorKind.BUSY) {
+                        SoundEffect.CallBusy
+                    } else {
+                        SoundEffect.CallFailed
+                    }
+                    viewModelScope.launch { playSoundEffect(cue) }
                 }
         }
     }
@@ -296,10 +317,51 @@ class CallViewModel @Inject constructor(
         tickerJob = null
         sessionJob = viewModelScope.launch {
             observeCallSession(id).collect { session ->
+                val cues = resolveCallSound(lastSoundedSession, session)
+                lastSoundedSession = session
                 _uiState.update { it.copy(session = session) }
                 syncTicker(session)
+                armRingbackWatchdog(session)
                 maybeAutoAccept(session)
+                cues.forEach { playSoundEffect(it.effect, it.mode) }
             }
+        }
+    }
+
+    /**
+     * Kills the caller's own ringback.
+     *
+     * The only cue this screen can leave running without meaning to: by the time the platform clears a
+     * ViewModel its scope is already cancelled, so a suspend call to stop the loop would be dropped with
+     * the scope and the tone would outlive the screen it belonged to.
+     */
+    override fun onCleared() {
+        playSoundEffect.stop(SoundEffect.CallRingbackLoop)
+        super.onCleared()
+    }
+
+    /**
+     * Stops the ringback at the backend's own ring deadline, whatever the session stream does next.
+     *
+     * The phase machine usually ends the loop by moving out of dialling; this is the backstop for the
+     * frame that never arrives, because a stalled stream would otherwise leave the caller listening to
+     * a ringer for a call that has already stopped existing. Stopping an idle loop is a no-op, so an
+     * extra firing costs nothing.
+     */
+    private fun armRingbackWatchdog(session: CallSession?) {
+        val isRinging = session?.direction == CallDirection.OUTGOING &&
+            (session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING)
+        val deadline = session?.serverRingTimeoutAtMillis
+        if (!isRinging || deadline == null) {
+            ringbackWatchdog?.cancel()
+            ringbackWatchdog = null
+            return
+        }
+        if (ringbackWatchdog?.isActive == true) return
+        val waitMs = (deadline - System.currentTimeMillis() + RINGBACK_WATCHDOG_GRACE_MS).coerceAtLeast(0L)
+        ringbackWatchdog = viewModelScope.launch {
+            delay(waitMs)
+            playSoundEffect.stop(SoundEffect.CallRingbackLoop)
         }
     }
 
@@ -379,5 +441,9 @@ class CallViewModel @Inject constructor(
 
     private companion object {
         const val TICK_INTERVAL_MS = 1_000L
+
+        // The watchdog fires just after the backend's deadline, so a session frame that arrives with the
+        // answer at the same moment still gets to pick the closing cue.
+        const val RINGBACK_WATCHDOG_GRACE_MS = 2_000L
     }
 }

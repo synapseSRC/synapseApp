@@ -31,6 +31,11 @@
 -keep class com.synapse.social.studioasinc.data.call.webrtc.** { *; }
 -dontwarn org.webrtc.**
 
+# jni_zero ships with WebRTC M144 and is reachable only from native code: JNI_OnLoad does
+# FindClass("org/jni_zero/JniInit") at load time, so R8 sees the whole package as dead. When it was
+# stripped the CHECK failed into a SIGTRAP, killing the process on the first call attempt.
+-keep class org.jni_zero.** { *; }
+
 # ── Release minification guards ───────────────────────────────────────────────
 # Gson rebuilds generic types (List<PendingAction>) from erased signatures, so they must survive.
 -keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod

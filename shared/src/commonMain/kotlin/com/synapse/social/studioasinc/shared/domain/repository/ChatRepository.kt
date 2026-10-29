@@ -32,7 +32,8 @@ interface ChatRepository {
     suspend fun updateConversationPinnedStatus(chatId: String, isPinned: Boolean): Result<Unit>
     suspend fun updateConversationMutedStatus(chatId: String, isMuted: Boolean): Result<Unit>
     suspend fun deleteConversation(chatId: String): Result<Unit>
-    suspend fun markMessagesAsRead(chatId: String): Result<Unit>
+    /** [shareReceipt] = false reads the chat locally while telling the sender only that it arrived. */
+    suspend fun markMessagesAsRead(chatId: String, shareReceipt: Boolean = true): Result<Unit>
     suspend fun markMessagesAsDelivered(chatId: String): Result<Unit>
     suspend fun editMessage(messageId: String, newContent: String): Result<Unit>
     suspend fun deleteMessage(messageId: String): Result<Unit>

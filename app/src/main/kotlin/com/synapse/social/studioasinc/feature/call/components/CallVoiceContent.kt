@@ -43,9 +43,10 @@ fun CallVoiceContent(
     val portraitSize = if (isCompact) CallDimens.PortraitCompact else CallDimens.Portrait
     val isRingingForAnswer = session.direction == CallDirection.INCOMING &&
         session.phase == CallPhase.RINGING
+    val atmosphereColors = rememberCallAtmosphereColors(session.participant.avatarUrl)
 
     Box(modifier = modifier.fillMaxSize()) {
-        CallAtmosphere()
+        CallAtmosphere(colors = atmosphereColors)
 
         Column(
             modifier = Modifier
@@ -101,7 +102,8 @@ fun CallVoiceContent(
                 CallAvatar(
                     session = session,
                     size = portraitSize,
-                    showHalo = session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING
+                    showHalo = session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING,
+                    haloColor = atmosphereColors.primary
                 )
                 CallStatusChips(
                     session = session,

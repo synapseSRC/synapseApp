@@ -4,13 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onesignal.OneSignal
 import com.synapse.social.studioasinc.core.config.NotificationConfig
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
+import com.synapse.social.studioasinc.shared.domain.repository.SoundSettingsRepository
 import com.synapse.social.studioasinc.shared.domain.model.NotificationPreferences as DomainNotificationPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -23,10 +27,16 @@ import kotlinx.serialization.json.*
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val notificationRepository: NotificationRepository
+    private val notificationRepository: NotificationRepository,
+    private val soundSettingsRepository: SoundSettingsRepository
 ) : ViewModel() {
     private val _notificationPreferences = MutableStateFlow(NotificationPreferences())
     val notificationPreferences: StateFlow<NotificationPreferences> = _notificationPreferences.asStateFlow()
+
+    // Device-local, unlike the notification preferences above: these govern tones this hardware plays,
+    // so they live in DataStore and never sync to the backend.
+    val soundPreferences: StateFlow<SoundPreferences> = soundSettingsRepository.soundPreferences
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SoundPreferences())
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -80,6 +90,18 @@ class NotificationSettingsViewModel @Inject constructor(
 
     fun toggleQuietHours(enabled: Boolean) {
         updatePreferences { it.copy(quietHoursEnabled = enabled) }
+    }
+
+    fun toggleSoundEffects(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setMasterEnabled(enabled) }
+    }
+
+    fun toggleMessageTones(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setMessageTonesEnabled(enabled) }
+    }
+
+    fun toggleCallTones(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setCallTonesEnabled(enabled) }
     }
 
     fun setQuietHours(start: String, end: String) {

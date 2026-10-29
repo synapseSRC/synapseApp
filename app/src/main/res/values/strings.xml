@@ -846,6 +846,15 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="notification_in_app">In-App Notifications</string>
     <string name="notification_in_app_subtitle">Show notifications within the app</string>
 
+    <!-- Sound Effects -->
+    <string name="settings_sound_effects_section_title">Sound effects</string>
+    <string name="settings_sound_effects_title">In-app sound effects</string>
+    <string name="settings_sound_effects_subtitle">Tones while you use the app</string>
+    <string name="settings_sound_message_tones_title">Message tones</string>
+    <string name="settings_sound_message_tones_subtitle">Sending, receiving and recording messages</string>
+    <string name="settings_sound_call_tones_title">Call tones</string>
+    <string name="settings_sound_call_tones_subtitle">Ringback, connecting, answer and end</string>
+
     <!-- Chat Settings -->
     <string name="chat_settings_title_new">Chat Settings</string>
     <string name="chat_read_receipts">Read Receipts</string>

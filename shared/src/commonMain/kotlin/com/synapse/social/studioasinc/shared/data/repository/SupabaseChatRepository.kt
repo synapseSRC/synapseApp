@@ -700,10 +700,10 @@ class SupabaseChatRepository(
         }
     }
 
-    override suspend fun markMessagesAsRead(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) {
+    override suspend fun markMessagesAsRead(chatId: String, shareReceipt: Boolean): Result<Unit> = withContext(AppDispatchers.IO) {
         try {
             val deviceId = getCurrentDeviceId()
-            dataSource.markMessagesAsRead(chatId, deviceId)
+            dataSource.markMessagesAsRead(chatId, deviceId, shareReceipt)
             val currentUserId = getCurrentUserId()
             if (currentUserId != null) {
                 cachedMessageDao?.markRead(chatId, currentUserId)

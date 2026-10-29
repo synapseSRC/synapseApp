@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.raisedControlColor
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 
 /**
@@ -124,6 +126,10 @@ fun SlideToAnswerBar(
         val maxOffsetPx = with(density) {
             (((maxWidth - CallDimens.AnswerThumb) / 2) - CallDimens.AnswerTrackInset).toPx()
         }.coerceAtLeast(0f)
+        // The drag callbacks are remembered once and keep the travel of the composition that created
+        // them, so a size change would clamp the thumb to stale limits while the commit test used the
+        // new ones.
+        val latestTravel by rememberUpdatedState(maxOffsetPx)
 
         LaunchedEffect(maxOffsetPx) {
             if (maxOffsetPx > 0f) {
@@ -134,7 +140,9 @@ fun SlideToAnswerBar(
         val settle: AnimationSpec<Float> = if (reducedMotion) {
             snap()
         } else {
-            spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessMediumLow)
+            // Critically damped: a spring that overshoots pushes the thumb past the lip of the track
+            // and wobbles it back, which reads as the control losing the gesture.
+            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)
         }
 
         val progress = if (maxOffsetPx > 0f) (offset.value / maxOffsetPx).coerceIn(-1f, 1f) else 0f
@@ -143,8 +151,12 @@ fun SlideToAnswerBar(
 
         val dragState = rememberDraggableState { delta ->
             if (committed) return@rememberDraggableState
-            val next = (offset.value + delta).coerceIn(-maxOffsetPx, maxOffsetPx)
-            scope.launch { offset.snapTo(next) }
+            // Applied synchronously: a launched snapTo lets every delta that arrives before the next
+            // frame read the same pre-move value, so all but the last collapse and the thumb falls
+            // behind the finger — and the commit test then measures a position nobody ever saw.
+            runBlocking {
+                offset.snapTo((offset.value + delta).coerceIn(-latestTravel, latestTravel))
+            }
         }
 
         Box(
@@ -159,18 +171,22 @@ fun SlideToAnswerBar(
                     orientation = Orientation.Horizontal,
                     onDragStopped = { velocity ->
                         if (committed) return@draggable
-                        val threshold = maxOffsetPx * CallDimens.AnswerCommitFraction
+                        val position = offset.value
+                        val commitAt = latestTravel * CallDimens.AnswerCommitFraction
+                        // A flick answers only when it also carried the thumb partway to the end:
+                        // velocity on its own lets a swipe that never left the centre end a call.
+                        val flickAt = latestTravel * CallDimens.AnswerFlickTravelFraction
                         val direction = when {
-                            offset.value <= -threshold || velocity <= -FLING_VELOCITY_PX -> -1f
-                            offset.value >= threshold || velocity >= FLING_VELOCITY_PX -> 1f
+                            position >= commitAt -> 1f
+                            position <= -commitAt -> -1f
+                            position >= flickAt && velocity >= FLING_VELOCITY_PX -> 1f
+                            position <= -flickAt && velocity <= -FLING_VELOCITY_PX -> -1f
                             else -> 0f
                         }
-                        if (direction == 0f) {
-                            offset.animateTo(0f, settle)
-                        } else {
-                            offset.animateTo(direction * maxOffsetPx, settle)
-                            fire(if (direction < 0f) onDecline else onAccept)
-                        }
+                        // Committed before the settle starts: the glide is feedback, not a gate, and an
+                        // answer held behind it dies with a cancellation the moment the next touch lands.
+                        if (direction != 0f) fire(if (direction < 0f) onDecline else onAccept)
+                        scope.launch { offset.animateTo(direction * latestTravel, settle) }
                     }
                 )
                 .semantics {

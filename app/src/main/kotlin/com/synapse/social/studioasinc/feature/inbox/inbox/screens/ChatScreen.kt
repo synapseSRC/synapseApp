@@ -197,6 +197,7 @@ val currentUserId = currentUserIdState ?: ""
             voicePlayerManager = voicePlayerManager,
             getOutputFile = { File(context.cacheDir, "temp_voice_${System.currentTimeMillis()}.m4a") },
             onHapticPerform = { haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onSoundPerform = { viewModel.playRecordingCue() },
             onSendVoiceMessage = { audioFile, durationMs, onResult ->
                 viewModel.uploadVoiceMessage(audioFile, durationMs, onResult)
             },
@@ -561,7 +562,8 @@ typingStatus = typingStatus,
                         onOpenEvent = { eventId -> try { uriHandler.openUri("synapse://event/$eventId") } catch (_: Exception) {} },
                         onOpenProduct = { productId -> try { uriHandler.openUri("synapse://product/$productId") } catch (_: Exception) {} },
                         onOpenMap = { lat, lon -> try { uriHandler.openUri("https://maps.google.com/?q=$lat,$lon") } catch (_: Exception) {} },
-                        onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} }
+                        onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} },
+                        onRetryClick = viewModel::retrySendMessage
                     )
 
                     if (selectedMessageForMenu != null) {

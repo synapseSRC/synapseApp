@@ -211,7 +211,7 @@ private fun ColumnScope.MessageMetadataRow(
     contentColor: Color,
     onRetryClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
-    readTint: Color = MaterialTheme.colorScheme.primary,
+    readTint: Color = if (isSystemInDarkTheme()) DarkStatusRead else StatusRead,
     currentUserId: String = ""
 ) {
     Row(
@@ -401,7 +401,6 @@ fun MessageBubble(
                         message = message,
                         isFromMe = isFromMe,
                         contentColor = footerColor,
-                        readTint = footerColor,
                         onRetryClick = onRetryClick
                     )
                 }

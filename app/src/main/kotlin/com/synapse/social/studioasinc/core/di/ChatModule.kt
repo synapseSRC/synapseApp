@@ -84,6 +84,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseC
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkIncomingMessageAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsReadUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ResetE2EUseCase
@@ -224,6 +225,10 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideMarkMessagesAsDeliveredUseCase(chatRepository: ChatRepository): MarkMessagesAsDeliveredUseCase = MarkMessagesAsDeliveredUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideMarkIncomingMessageAsDeliveredUseCase(chatRepository: ChatRepository): MarkIncomingMessageAsDeliveredUseCase = MarkIncomingMessageAsDeliveredUseCase(chatRepository)
 
     @Provides
     @Singleton

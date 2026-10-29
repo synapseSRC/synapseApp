@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.window.Dialog
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
 
 private val SocialNotificationTypes = listOf(
     NotificationCategory.LIKES to R.string.settings_notification_likes_title,
@@ -35,6 +36,7 @@ fun NotificationSettingsScreen(
     onBackClick: () -> Unit
 ) {
     val notificationPreferences by viewModel.notificationPreferences.collectAsState()
+    val soundPreferences by viewModel.soundPreferences.collectAsState()
     val error by viewModel.error.collectAsState()
 
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -42,6 +44,7 @@ fun NotificationSettingsScreen(
 
     NotificationSettingsContent(
         notificationPreferences = notificationPreferences,
+        soundPreferences = soundPreferences,
         error = error,
         onBackClick = onBackClick,
         onClearError = viewModel::clearError,
@@ -49,6 +52,9 @@ fun NotificationSettingsScreen(
         onToggleCategory = viewModel::toggleNotificationCategory,
         onToggleQuietHours = viewModel::toggleQuietHours,
         onToggleDoNotDisturb = viewModel::toggleDoNotDisturb,
+        onToggleSoundEffects = viewModel::toggleSoundEffects,
+        onToggleMessageTones = viewModel::toggleMessageTones,
+        onToggleCallTones = viewModel::toggleCallTones,
         onShowStartTimePicker = { showStartTimePicker = true }
     )
 
@@ -84,6 +90,7 @@ fun NotificationSettingsScreen(
 @Composable
 fun NotificationSettingsContent(
     notificationPreferences: NotificationPreferences,
+    soundPreferences: SoundPreferences,
     error: String?,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
@@ -91,6 +98,9 @@ fun NotificationSettingsContent(
     onToggleCategory: (NotificationCategory, Boolean) -> Unit,
     onToggleQuietHours: (Boolean) -> Unit,
     onToggleDoNotDisturb: (Boolean) -> Unit,
+    onToggleSoundEffects: (Boolean) -> Unit,
+    onToggleMessageTones: (Boolean) -> Unit,
+    onToggleCallTones: (Boolean) -> Unit,
     onShowStartTimePicker: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -143,6 +153,15 @@ fun NotificationSettingsContent(
                 GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
                     onToggleGlobal = onToggleGlobal
+                )
+            }
+
+            item {
+                SoundEffectsSection(
+                    soundPreferences = soundPreferences,
+                    onToggleSoundEffects = onToggleSoundEffects,
+                    onToggleMessageTones = onToggleMessageTones,
+                    onToggleCallTones = onToggleCallTones
                 )
             }
 

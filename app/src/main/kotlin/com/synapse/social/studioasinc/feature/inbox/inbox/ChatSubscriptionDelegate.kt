@@ -35,6 +35,7 @@ class ChatSubscriptionDelegate(
     private val currentUserIdProvider: () -> String?,
     private val isScreenVisibleProvider: () -> Boolean,
     private val typingIndicatorsEnabledProvider: () -> Boolean = { true },
+    private val readReceiptsEnabledProvider: () -> Boolean = { true },
     private val onNewMessage: (Message) -> Unit,
     private val onReactionEvent: (MessageReaction) -> Unit,
     private val onSyncRequired: (suspend (String) -> Unit)? = null
@@ -115,7 +116,7 @@ class ChatSubscriptionDelegate(
                         if (!isReceiptCurrent(chatId, token)) return@withTimeoutOrNull false
                         // Current visibility decides whether a read acknowledgement is allowed, never a queued level.
                         val result = if (isScreenVisibleProvider()) {
-                            markMessagesAsReadUseCase(chatId)
+                            markMessagesAsReadUseCase(chatId, shareReceipt = readReceiptsEnabledProvider())
                         } else {
                             markMessagesAsDeliveredUseCase(chatId)
                         }

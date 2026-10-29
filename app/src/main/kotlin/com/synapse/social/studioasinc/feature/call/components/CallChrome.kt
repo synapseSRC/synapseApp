@@ -84,7 +84,8 @@ fun CallAvatar(
     session: CallSession,
     size: Dp,
     modifier: Modifier = Modifier,
-    showHalo: Boolean = false
+    showHalo: Boolean = false,
+    haloColor: Color? = null
 ) {
     val scheme = MaterialTheme.colorScheme
     val initialsStyle = if (size >= CallDimens.Avatar) {
@@ -93,7 +94,7 @@ fun CallAvatar(
         MaterialTheme.typography.headlineMedium
     }
     val halo = if (showHalo) ringingHaloState() else null
-    val glowColor = scheme.primary
+    val glowColor = haloColor ?: scheme.primary
     // M3 Expressive shape library: an organic cookie silhouette instead of a plain circle.
     val portraitShape = MaterialShapes.Cookie9Sided.toShape()
 

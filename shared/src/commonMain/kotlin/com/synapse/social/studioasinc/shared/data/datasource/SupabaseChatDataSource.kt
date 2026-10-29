@@ -132,8 +132,8 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun deleteExpiredMessages(chatId: String): Int =
         messages.deleteExpiredMessages(chatId)
 
-    suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null) =
-        messages.markMessagesAsRead(chatId, deviceId)
+    suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null, shareReceipt: Boolean = true) =
+        messages.markMessagesAsRead(chatId, deviceId, shareReceipt)
 
     suspend fun markMessagesAsDelivered(chatId: String, deviceId: String? = null) =
         messages.markMessagesAsDelivered(chatId, deviceId)

@@ -305,18 +305,23 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             client.postgrest.from("user_deleted_messages").insert(deletions)
         }
 
-    suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null) = withContext(AppDispatchers.IO) {
+    suspend fun markMessagesAsRead(chatId: String, deviceId: String? = null, shareReceipt: Boolean = true) = withContext(AppDispatchers.IO) {
         val currentUserId = getCurrentUserId()
             ?: throw NotAuthenticatedException("User not authenticated")
-        val rpcParams = mutableMapOf(
-            "p_chat_id" to chatId,
-            "p_user_id" to currentUserId
-        )
-        if (deviceId != null) rpcParams["p_device_id"] = deviceId
-        client.postgrest.rpc(
-            function = "mark_messages_as_read",
-            parameters = rpcParams
-        )
+        if (shareReceipt) {
+            val rpcParams = mutableMapOf(
+                "p_chat_id" to chatId,
+                "p_user_id" to currentUserId
+            )
+            if (deviceId != null) rpcParams["p_device_id"] = deviceId
+            client.postgrest.rpc(
+                function = "mark_messages_as_read",
+                parameters = rpcParams
+            )
+        } else {
+            // Receipts are off: acknowledge arrival only, so no read_by/read_at ever reaches the sender.
+            markMessagesAsDelivered(chatId, deviceId)
+        }
         val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString()
         client.postgrest.from("chat_participants").update({
             set("last_read_at", now)

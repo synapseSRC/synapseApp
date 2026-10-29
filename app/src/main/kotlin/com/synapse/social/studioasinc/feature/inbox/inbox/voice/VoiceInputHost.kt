@@ -198,23 +198,29 @@ fun VoiceInputHost(
                 // Keep the mic recognizer outside AnimatedContent across Normal/Pressing/Recording.
                 val isNormal = voiceState is VoiceState.Normal
                 if (isNormal && showSendButton) {
-                    Surface(
-                        modifier = Modifier.size(Sizes.SendButton),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    // Fixed 48dp slot matching the mic's layout box so typing doesn't shrink the composer.
+                    Box(
+                        modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                        Surface(
+                            modifier = Modifier.size(Sizes.SendButton),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
-                            IconButton(onClick = onSendMessage) {
-                                Icon(
-                                    imageVector = Icons.Default.ArrowUpward,
-                                    contentDescription = stringResource(R.string.chat_action_send),
-                                    modifier = Modifier.size(Sizes.IconLarge),
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                IconButton(onClick = onSendMessage) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowUpward,
+                                        contentDescription = stringResource(R.string.chat_action_send),
+                                        modifier = Modifier.size(Sizes.IconLarge),
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
                             }
                         }
                     }

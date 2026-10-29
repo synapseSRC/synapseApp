@@ -77,6 +77,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -196,6 +197,26 @@ private fun InboxScreenContent(
     val currentFolderLabel = assignedFolderNames.takeIf { it.isNotEmpty() }?.joinToString() ?: noFolderLabel
 
     LaunchedEffect(Unit) { viewModel.loadArchivedConversations() }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var isFirstResume by rememberSaveable { mutableStateOf(true) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
+                    viewModel.onVisibilityChanged(true)
+                    if (isFirstResume) {
+                        isFirstResume = false
+                    } else {
+                        viewModel.onAppResumed()
+                    }
+                }
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> viewModel.onVisibilityChanged(false)
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     LaunchedEffect(error) {
         if (!error.isNullOrBlank()) {
             snackbarHostState.showSnackbar(error.orEmpty())

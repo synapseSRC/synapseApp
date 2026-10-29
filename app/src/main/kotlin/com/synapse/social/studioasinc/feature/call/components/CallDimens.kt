@@ -62,6 +62,26 @@ object CallDimens {
     const val AtmosphereWashAlpha = 0.14f
     const val AtmosphereEdgeAlpha = 0.10f
 
+    /**
+     * A pale page tone swallows a low-alpha wash. Measured over background-only regions across a full
+     * cycle, the light theme's per-frame drift sits at roughly 4.9/255 on the accent roles — and an
+     * avatar-derived palette does not raise it, because tone-mapping to the accent tone preserves the
+     * same lightness whatever the photo. 1.8x lifts it to 7.9–9.3/255 while holding `onSurfaceVariant`
+     * at 5.2:1 and `onSurface` at 9.5:1 against the darkest point of any wash, both above the AA floor.
+     */
+    const val AtmosphereLightAlphaScale = 1.8f
+
+    /** Avatar pixels sampled for the backdrop palette — enough for quantization, small enough to stay off the critical path. */
+    const val AtmosphereAvatarSamplePx = 96
+
+    /**
+     * From M3: accent roles are drawn from tone 40 in a light scheme and tone 80 in a dark one.
+     * Taking the tone from the theme rather than the photo is what keeps an avatar-derived wash inside
+     * the contrast the roles already guarantee.
+     */
+    const val AtmosphereAccentToneLight = 40
+    const val AtmosphereAccentToneDark = 80
+
     /** Fraction of the screen an atmosphere wash travels across one cycle. */
     const val AtmospherePrimaryDriftX = 0.16f
     const val AtmospherePrimaryDriftY = 0.09f
@@ -77,6 +97,8 @@ object CallDimens {
     const val HaloCycleMillis = 1_600
     const val AtmosphereCycleMillis = 12_000
     const val AnswerCommitFraction = 0.55f
+    /** How near an end a flick has to carry the thumb before its velocity is allowed to commit. */
+    const val AnswerFlickTravelFraction = 0.30f
     const val LargeFontScale = 1.5f
     const val AutoDismissMillis = 2_400L
 }

@@ -20,6 +20,7 @@ class VoiceRecordingController(
     private val getOutputFile: () -> File,
     private val timeProvider: TimeProvider = SystemTimeProvider,
     private val onHapticPerform: () -> Unit = {},
+    private val onSoundPerform: () -> Unit = {},
     private var onSendVoiceMessage: (File, Long, (Boolean, String?) -> Unit) -> Job? = { _, _, cb -> cb(true, null); null },
     var gestureConfig: VoiceGestureConfig = VoiceGestureConfig(),
     var cancelThresholdPx: Float = 300f,
@@ -185,6 +186,7 @@ class VoiceRecordingController(
 
             _state.value = VoiceState.Recording()
             onHapticPerform()
+            onSoundPerform()
 
             startTimerAndAmplitudeTracking()
         } catch (e: Exception) {

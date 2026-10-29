@@ -13,7 +13,9 @@ import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
+import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundEffect
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
@@ -21,6 +23,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.sound.PlaySoundEffectUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.UpdateCurrentChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
@@ -49,7 +52,8 @@ private const val MESSAGE_SYNC_PAGE_SIZE = 50
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val dependencies: ChatDependencies
+    private val dependencies: ChatDependencies,
+    private val playSoundEffect: PlaySoundEffectUseCase
 ) : ViewModel() {
 
     // Extracted individual dependencies from ChatDependencies
@@ -187,6 +191,10 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     val typingIndicatorsEnabled = getChatSettingsUseCase.typingIndicatorsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+    // Eagerly shared: the receipt flush reads .value without a collector, so a lazy share would pin the default.
+    private val readReceiptsEnabled = getChatSettingsUseCase.readReceiptsEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     private val _selectedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedMessageIds: StateFlow<Set<String>> = _selectedMessageIds.asStateFlow()
 
@@ -306,6 +314,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         currentUserIdProvider = { currentUserId.value },
         isScreenVisibleProvider = { _isScreenVisible.value },
         typingIndicatorsEnabledProvider = { typingIndicatorsEnabled.value },
+        readReceiptsEnabledProvider = { readReceiptsEnabled.value },
         onNewMessage = { newMessage ->
             handleIncomingMessage(newMessage)
         },
@@ -446,7 +455,8 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         isE2EEReadyProvider = { _isE2EEReady.value },
         disappearingModeProvider = { _disappearingMode.value },
         typingIndicatorsEnabledProvider = { typingIndicatorsEnabled.value },
-        isScreenVisibleProvider = { _isScreenVisible.value }
+        isScreenVisibleProvider = { _isScreenVisible.value },
+        onSendDispatched = { playMessageCue(SoundEffect.MessageOutgoing) }
     )
 
     private val settingsDelegate = ChatSettingsDelegate(
@@ -783,6 +793,17 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             messagingDelegate.pendingTempIds.update { it - optimistic.id }
         }
 
+        // A cue only for what genuinely arrived as somebody else's message. Three things would otherwise
+        // make noise that describes nothing: the realtime stream reports the same row as an insert and
+        // then again as an update; this device's own sends come back down the same stream, so the sender
+        // would hear an incoming blip for a message they just heard the outgoing one for; and a call that
+        // ended writes its own log row into this chat, which voip_end has already announced.
+        val isFreshIncomingMessage = existing == null &&
+            matchingOptimisticMessage == null &&
+            newMessage.senderId != currentUserId.value &&
+            newMessage.messageType != MessageType.CALL &&
+            !incomingUndecryptable
+
         val effectiveReadBy = if (newMessage.senderId != currentUserId.value && _isScreenVisible.value) {
             val uid = currentUserId.value ?: ""
             if (uid.isNotBlank() && uid !in newMessage.readBy) newMessage.readBy + uid else newMessage.readBy
@@ -859,6 +880,8 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                 }
             }
         }
+        if (isFreshIncomingMessage) playMessageCue(SoundEffect.MessageIncoming)
+
         aiDelegate.generateSmartReplies(messages.value)
 
         // If the chat was empty before this message arrived, trigger a full sync to establish
@@ -940,6 +963,18 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     fun sendMessage() {
         inputDelegate.sendMessage()
     }
+
+    /**
+     * Cues are foreground-only: a backgrounded app already carries the message in a push, and a cue
+     * for something the user cannot see is a noise nobody asked for. What the sound switches allow
+     * is decided in `PlaySoundEffectUseCase`, not here.
+     */
+    private fun playMessageCue(effect: SoundEffect) {
+        if (!_isScreenVisible.value) return
+        viewModelScope.launch { playSoundEffect(effect) }
+    }
+
+    fun playRecordingCue() = playMessageCue(SoundEffect.RecordingStarted)
 
     fun clearToast() {
         _toastMessage.value = null
@@ -1091,6 +1126,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     ): Job {
         val replyToId = _replyingToMessage.value?.id
         inputDelegate.stopTyping()
+        playMessageCue(SoundEffect.MessageOutgoing)
         return viewModelScope.launch {
             ensureActive()
             val storageConfig: com.synapse.social.studioasinc.shared.domain.model.StorageConfig
@@ -1118,6 +1154,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
 
     fun sendMediaMessage(mediaUrl: String, fileName: String, contentType: String, messageType: String, caption: String? = null) {
         inputDelegate.stopTyping()
+        playMessageCue(SoundEffect.MessageOutgoing)
         mediaDelegate.sendMediaMessage(mediaUrl, fileName, contentType, messageType, caption)
     }
 
@@ -1130,6 +1167,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         quality: com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality = com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality.STANDARD
     ) {
         inputDelegate.stopTyping()
+        playMessageCue(SoundEffect.MessageOutgoing)
         mediaDelegate.uploadAndSendMedia(filePath, fileName, contentType, messageType, caption, quality)
     }
 
@@ -1139,6 +1177,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         quality: com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality = com.synapse.social.studioasinc.shared.domain.model.settings.MediaUploadQuality.STANDARD
     ) {
         inputDelegate.stopTyping()
+        playMessageCue(SoundEffect.MessageOutgoing)
         mediaDelegate.uploadAndSendMultipleMedia(files, caption, quality)
     }
 

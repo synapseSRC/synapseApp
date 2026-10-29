@@ -7,6 +7,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
+import com.synapse.social.studioasinc.core.media.AndroidSoundPlayer
 import com.synapse.social.studioasinc.shared.domain.model.call.CallAudioRoute
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aakira.napier.Napier
@@ -31,7 +32,8 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 @Singleton
 class AndroidCallAudioRouter @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val soundPlayer: AndroidSoundPlayer
 ) : CallAudioRouter {
 
     private val audioManager = context.getSystemService(AudioManager::class.java)
@@ -70,6 +72,10 @@ class AndroidCallAudioRouter @Inject constructor(
                 previousSpeaker = manager.isSpeakerphoneOn
                 inCall = true
                 requestFocus(manager)
+                // The interface stops talking the moment this device starts carrying a conversation: a
+                // notification blip out of the earpiece is close enough to the microphone to be picked up
+                // again, and the peer has no part in it.
+                soundPlayer.setInCallAudioMode(true)
             }
             runCatching { manager.mode = AudioManager.MODE_IN_COMMUNICATION }
                 .onFailure { Napier.w("Call audio mode refused: ${it.message}") }
@@ -90,6 +96,7 @@ class AndroidCallAudioRouter @Inject constructor(
         synchronized(this) {
             if (!inCall) return
             inCall = false
+            soundPlayer.setInCallAudioMode(false)
             // Released before the mode goes back: while the call is still the audio owner, giving
             // focus up is what lets the previous app (music, a podcast) resume.
             abandonFocus(manager)

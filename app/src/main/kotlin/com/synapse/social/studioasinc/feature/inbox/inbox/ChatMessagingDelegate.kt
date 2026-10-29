@@ -268,7 +268,8 @@ class ChatMessagingDelegate(
         message: Message,
         onError: (String?) -> Unit
     ) {
-        if (message.deliveryStatus != DeliveryStatus.FAILED) return
+        // Only text payloads are re-sent verbatim; media needs a fresh upload from the composer.
+        if (message.deliveryStatus != DeliveryStatus.FAILED || message.messageType != MessageType.TEXT) return
         performSendMessage(
             chatId = message.chatId,
             text = message.content,
