@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.featured
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,14 +73,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,10 +168,10 @@ fun FeaturedContentScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(
-                        horizontal = SettingsSpacing.screenPadding,
-                        vertical = SettingsSpacing.sectionSpacing
+                        horizontal = AppSpacing.screenPadding,
+                        vertical = AppSpacing.sectionSpacing
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // 1. Backend Boundary & Capability Notice
                     if (uiState.showBackendCapabilityNotice) {
@@ -233,7 +235,7 @@ fun FeaturedContentScreen(
                                         } else null
                                     )
                                     if (index < uiState.candidatePosts.lastIndex) {
-                                        Spacer(modifier = Modifier.height(SettingsSpacing.itemSpacing))
+                                        Spacer(modifier = Modifier.height(AppSpacing.itemSpacing))
                                     }
                                 }
                             }
@@ -284,7 +286,7 @@ private fun BackendCapabilityNoticeCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.space16),
             verticalAlignment = Alignment.Top
         ) {
             Icon(
@@ -293,9 +295,9 @@ private fun BackendCapabilityNoticeCard(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .size(24.dp)
-                    .padding(top = 2.dp)
+                    .padding(top = Spacing.space4)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(Spacing.space12))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.featured_backend_notice_title),
@@ -303,7 +305,7 @@ private fun BackendCapabilityNoticeCard(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.featured_backend_notice_body),
                     style = MaterialTheme.typography.bodyMedium,
@@ -341,7 +343,7 @@ private fun FeaturedContentPreviewCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(Spacing.space20)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -355,7 +357,7 @@ private fun FeaturedContentPreviewCard(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(
                         text = stringResource(R.string.featured_preview_header),
                         style = MaterialTheme.typography.titleMedium,
@@ -380,7 +382,7 @@ private fun FeaturedContentPreviewCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.space12))
 
             if (!uiState.hasSelectedContent) {
                 Text(
@@ -389,7 +391,7 @@ private fun FeaturedContentPreviewCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     if (uiState.selectedPosts.isNotEmpty()) {
                         Text(
                             text = stringResource(R.string.featured_selected_posts_header, uiState.selectedPosts.size),
@@ -403,7 +405,7 @@ private fun FeaturedContentPreviewCard(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(MaterialTheme.colorScheme.surface)
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    .padding(horizontal = Spacing.space12, vertical = Spacing.space8),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Surface(
@@ -420,7 +422,7 @@ private fun FeaturedContentPreviewCard(
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(Spacing.space8))
                                 Text(
                                     text = post.postText?.takeIf { it.isNotBlank() } ?: stringResource(R.string.post_media_attachment_label),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -433,7 +435,7 @@ private fun FeaturedContentPreviewCard(
                     }
 
                     if (uiState.selectedMedia.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(Spacing.space4))
                         Text(
                             text = stringResource(R.string.featured_selected_media_header, uiState.selectedMedia.size),
                             style = MaterialTheme.typography.labelLarge,
@@ -441,7 +443,7 @@ private fun FeaturedContentPreviewCard(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             uiState.selectedMedia.take(4).forEachIndexed { idx, mediaItem ->
@@ -460,7 +462,7 @@ private fun FeaturedContentPreviewCard(
                                     Surface(
                                         modifier = Modifier
                                             .align(Alignment.TopStart)
-                                            .padding(4.dp),
+                                            .padding(Spacing.space4),
                                         shape = CircleShape,
                                         color = MaterialTheme.colorScheme.primaryContainer
                                     ) {
@@ -469,7 +471,7 @@ private fun FeaturedContentPreviewCard(
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                         )
                                     }
                                 }
@@ -492,7 +494,7 @@ private fun FeaturedTabFilterRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
     ) {
         FilterChip(
             selected = selectedTab == FeaturedTab.POSTS,
@@ -581,7 +583,7 @@ private fun CandidatePostItemRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Selection Badge Checkbox
@@ -614,7 +616,7 @@ private fun CandidatePostItemRow(
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
             // Post Info
             Column(modifier = Modifier.weight(1f)) {
@@ -627,7 +629,7 @@ private fun CandidatePostItemRow(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (!post.postImage.isNullOrBlank() || !post.mediaItems.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = stringResource(R.string.post_contains_media_badge),
                         style = MaterialTheme.typography.labelSmall,
@@ -682,12 +684,12 @@ private fun CandidateMediaGrid(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
     ) {
         candidateMedia.chunked(3).forEach { rowMedia ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 rowMedia.forEach { item ->
                     val isSelected = selectedMediaUrls.contains(item.url)
@@ -731,7 +733,7 @@ private fun CandidateMediaGrid(
                                         MaterialTheme.colorScheme.scrim.copy(alpha = 0.4f),
                                         CircleShape
                                     )
-                                    .padding(4.dp)
+                                    .padding(Spacing.space4)
                             )
                         }
 
@@ -739,7 +741,7 @@ private fun CandidateMediaGrid(
                         Surface(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(8.dp),
+                                .padding(Spacing.space8),
                             shape = CircleShape,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
                         ) {
@@ -749,7 +751,7 @@ private fun CandidateMediaGrid(
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                 )
                             } else {
                                 Icon(
@@ -758,7 +760,7 @@ private fun CandidateMediaGrid(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
                                         .size(20.dp)
-                                        .padding(2.dp)
+                                        .padding(Spacing.space4)
                                 )
                             }
                         }
@@ -788,7 +790,7 @@ private fun EmptyCandidateContentCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(Spacing.space24),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -798,14 +800,14 @@ private fun EmptyCandidateContentCard(
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 modifier = Modifier.size(48.dp)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.space12))
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
@@ -828,7 +830,7 @@ private fun CapabilityBoundariesInfoCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(Spacing.space20)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -837,7 +839,7 @@ private fun CapabilityBoundariesInfoCard(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Spacing.space12))
                 Text(
                     text = stringResource(R.string.featured_collections_title),
                     style = MaterialTheme.typography.titleMedium,
@@ -845,7 +847,7 @@ private fun CapabilityBoundariesInfoCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             Text(
                 text = stringResource(R.string.featured_collections_body),
                 style = MaterialTheme.typography.bodyMedium,

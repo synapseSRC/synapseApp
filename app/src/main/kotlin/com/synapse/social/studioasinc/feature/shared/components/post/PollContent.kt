@@ -49,8 +49,6 @@ import kotlin.math.roundToInt
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
-
-
 @Stable
 data class PollOption(
     val id: String,
@@ -58,8 +56,6 @@ data class PollOption(
     val voteCount: Int,
     val isSelected: Boolean
 )
-
-
 
 @Composable
 fun PollContent(
@@ -75,19 +71,17 @@ fun PollContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+            .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
     ) {
-
         if (question.isNotBlank()) {
             Text(
                 text = question,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = Spacing.SmallMedium)
+                modifier = Modifier.padding(bottom = Spacing.space12)
             )
         }
-
 
         options.forEach { option ->
             AnimatedPollOptionItem(
@@ -99,19 +93,17 @@ fun PollContent(
                     onVote(option.id)
                 }
             )
-            Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.height(Spacing.space12))
         }
 
         Text(
             text = if (totalVotes == 1) "$totalVotes vote" else "$totalVotes votes",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.ExtraSmall)
+            modifier = Modifier.padding(top = Spacing.space4)
         )
     }
 }
-
-
 
 @Composable
 fun AnimatedPollOptionItem(
@@ -122,7 +114,6 @@ fun AnimatedPollOptionItem(
 ) {
     val percentage = if (totalVotes > 0) option.voteCount.toFloat() / totalVotes else 0f
     val percentageText = if (hasVoted && totalVotes > 0) "${(percentage * 100).roundToInt()}%" else ""
-
 
     var showProgress by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
@@ -162,11 +153,9 @@ fun AnimatedPollOptionItem(
         label = "checkScale"
     )
 
-
     LaunchedEffect(hasVoted) {
         showProgress = hasVoted
     }
-
 
     val progressGradient = Brush.horizontalGradient(
         colors = listOf(
@@ -202,7 +191,6 @@ fun AnimatedPollOptionItem(
                 onClick = onClick
             )
     ) {
-
         if (hasVoted) {
             Box(
                 modifier = Modifier
@@ -212,25 +200,22 @@ fun AnimatedPollOptionItem(
             )
         }
 
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-
                 if (option.isSelected) {
                     Box(
                         modifier = Modifier
                             .scale(checkIconScale)
-                            .padding(end = Spacing.SmallMedium)
+                            .padding(end = Spacing.space12)
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
@@ -249,10 +234,9 @@ fun AnimatedPollOptionItem(
                 )
             }
 
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 if (hasVoted && option.voteCount > 0) {
                     Text(
@@ -279,18 +263,3 @@ fun AnimatedPollOptionItem(
     }
 }
 
-
-
-@Composable
-fun PollOptionItem(
-    option: PollOption,
-    totalVotes: Int,
-    onClick: () -> Unit
-) {
-    AnimatedPollOptionItem(
-        option = option,
-        totalVotes = totalVotes,
-        hasVoted = totalVotes > 0,
-        onClick = onClick
-    )
-}

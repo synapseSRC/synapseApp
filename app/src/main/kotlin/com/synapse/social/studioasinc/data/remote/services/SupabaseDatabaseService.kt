@@ -14,17 +14,12 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.add
 
-
-
 class SupabaseDatabaseService : IDatabaseService {
-
     companion object {
         private const val TAG = "SupabaseDB"
     }
 
     private val client = SupabaseClient.client
-
-
 
     private fun extractJsonValue(element: JsonElement): Any? {
         return if (element is JsonNull) {
@@ -33,8 +28,6 @@ class SupabaseDatabaseService : IDatabaseService {
             element.toString().removeSurrounding("\"")
         }
     }
-
-
 
     private fun Any?.toJsonElement(): JsonElement = when (this) {
         null -> JsonNull
@@ -75,7 +68,6 @@ class SupabaseDatabaseService : IDatabaseService {
                 android.util.Log.d(TAG, "Data inserted successfully into table '$table'")
 
                 Result.success(Unit)
-
             } catch (e: Exception) {
                 android.util.Log.e(TAG, "Database insertion failed for table '$table'", e)
 
@@ -97,10 +89,7 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     private fun convertTimestampIfNeeded(key: String, value: Any?): Any? {
-
         val timestampFields = listOf(
             "created_at", "updated_at", "last_seen", "timestamp",
             "publish_date", "last_message_time", "joined_at",
@@ -109,7 +98,6 @@ class SupabaseDatabaseService : IDatabaseService {
 
         return when {
             key in timestampFields && value is Number -> {
-
                 try {
                     java.time.Instant.ofEpochMilli(value.toLong()).toString()
                 } catch (e: Exception) {
@@ -118,7 +106,6 @@ class SupabaseDatabaseService : IDatabaseService {
                 }
             }
             key in timestampFields && value is String -> {
-
                 try {
                     val longValue = value.toLongOrNull()
                     if (longValue != null && longValue > 1000000000000) {
@@ -134,13 +121,10 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     override suspend fun update(table: String, data: Map<String, Any?>, filter: String, value: Any): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 android.util.Log.d(TAG, "Updating data in table '$table' where $filter=$value")
-
 
                 val updateData = buildJsonObject {
                     data.forEach { (key, value) ->
@@ -163,10 +147,6 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
-
-
     override suspend fun select(table: String, columns: String): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
             try {
@@ -184,8 +164,6 @@ class SupabaseDatabaseService : IDatabaseService {
             }
         }
     }
-
-
 
     override suspend fun selectWhere(table: String, columns: String, filter: String, value: Any): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
@@ -208,8 +186,6 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     override suspend fun selectWhereIn(table: String, columns: String, filter: String, values: List<Any>): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
             try {
@@ -231,8 +207,6 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     override suspend fun delete(table: String, filter: String, value: Any): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
@@ -247,8 +221,6 @@ class SupabaseDatabaseService : IDatabaseService {
             }
         }
     }
-
-
 
     override suspend fun deleteWhere(table: String, filter: String, value: Any): Result<Unit> {
         return withContext(Dispatchers.IO) {
@@ -265,8 +237,6 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     override suspend fun count(table: String): Result<Long> {
         return withContext(Dispatchers.IO) {
             try {
@@ -278,8 +248,6 @@ class SupabaseDatabaseService : IDatabaseService {
             }
         }
     }
-
-
 
     override suspend fun exists(table: String, filter: String, value: Any): Result<Boolean> {
         return withContext(Dispatchers.IO) {
@@ -295,8 +263,6 @@ class SupabaseDatabaseService : IDatabaseService {
             }
         }
     }
-
-
 
     override suspend fun upsert(table: String, data: Map<String, Any?>): Result<Unit> {
         return withContext(Dispatchers.IO) {
@@ -314,8 +280,6 @@ class SupabaseDatabaseService : IDatabaseService {
             }
         }
     }
-
-
 
     suspend fun getSingle(table: String, filter: String, value: Any): Result<Map<String, Any?>?> {
         return withContext(Dispatchers.IO) {
@@ -336,8 +300,6 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     suspend fun updatePresence(userId: String, isOnline: Boolean): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
@@ -357,13 +319,9 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     suspend fun selectWithFilter(table: String, columns: String = "*", filter: String, value: Any): Result<List<Map<String, Any?>>> {
         return selectWhere(table, columns, filter, value)
     }
-
-
 
     suspend fun selectById(table: String, id: String, columns: String = "*"): Result<Map<String, Any?>?> {
         return withContext(Dispatchers.IO) {
@@ -382,13 +340,10 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     suspend fun searchPosts(query: String, limit: Int = 20): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
             try {
                 android.util.Log.d(TAG, "Searching posts with query: $query")
-
 
                 val sanitizedQuery = sanitizeSearchQuery(query)
 
@@ -415,13 +370,10 @@ class SupabaseDatabaseService : IDatabaseService {
         }
     }
 
-
-
     suspend fun searchUsers(query: String, limit: Int = 20): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
             try {
                 android.util.Log.d(TAG, "Searching users with query: $query")
-
 
                 val sanitizedQuery = sanitizeSearchQuery(query)
 
@@ -449,75 +401,6 @@ class SupabaseDatabaseService : IDatabaseService {
             }
         }
     }
-
-
-
-    suspend fun searchMedia(
-        query: String,
-        mediaType: com.synapse.social.studioasinc.domain.model.SearchResult.MediaType? = null,
-        limit: Int = 20
-    ): Result<List<Map<String, Any?>>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                android.util.Log.d(TAG, "Searching media with query: $query, type: $mediaType")
-
-                val sanitizedQuery = sanitizeSearchQuery(query)
-
-                val result = client.from("posts").select(columns = Columns.raw("*")) {
-                    filter {
-
-                        if (sanitizedQuery.isNotEmpty()) {
-                            ilike("post_text", "%$sanitizedQuery%")
-                        }
-
-
-                        when (mediaType) {
-                            com.synapse.social.studioasinc.domain.model.SearchResult.MediaType.PHOTO -> {
-
-                                or {
-
-
-
-
-                                    neq("post_image", "null")
-
-                                }
-                            }
-                            com.synapse.social.studioasinc.domain.model.SearchResult.MediaType.VIDEO -> {
-
-
-                                eq("post_type", "VIDEO")
-                            }
-                            null -> {
-
-                                or {
-                                    neq("post_image", "null")
-                                    eq("post_type", "VIDEO")
-                                    eq("post_type", "IMAGE")
-                                }
-                            }
-                        }
-                    }
-                    limit(limit.toLong())
-                    order(column = "timestamp", order = io.github.jan.supabase.postgrest.query.Order.DESCENDING)
-                }.decodeList<JsonObject>()
-
-                val mappedResult = result.map { jsonObject ->
-                    jsonObject.toMap().mapValues { (_, value) ->
-                        extractJsonValue(value)
-                    }
-                }
-
-                android.util.Log.d(TAG, "Found ${mappedResult.size} media items matching query")
-                Result.success(mappedResult)
-            } catch (e: Exception) {
-                android.util.Log.e(TAG, "Media search failed", e)
-                Result.failure(e)
-            }
-        }
-    }
-
-
 
     private fun sanitizeSearchQuery(query: String): String {
         return query

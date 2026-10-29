@@ -40,11 +40,11 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.ImageLoader
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -64,8 +64,8 @@ fun ProfileImageSection(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackgroundElevated,
-        tonalElevation = Spacing.Tiny
+        color = AppColors.cardBackgroundElevated,
+        tonalElevation = Sizes.ElevationLow
     ) {
         Column {
 
@@ -120,7 +120,7 @@ fun ProfileImageSection(
                                         modifier = Modifier.size(Sizes.IconHuge)
                                     )
                                     if (coverUploadState.canRetry) {
-                                        Spacer(modifier = Modifier.height(Spacing.Small))
+                                        Spacer(modifier = Modifier.height(Spacing.space8))
                                         androidx.compose.material3.TextButton(
                                             onClick = onRetryCoverUpload,
                                             colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
@@ -227,13 +227,13 @@ fun ProfileImageSection(
                                         modifier = Modifier.size(Sizes.IconDefault)
                                     )
                                     if (avatarUploadState.canRetry) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         androidx.compose.material3.TextButton(
                                             onClick = onRetryAvatarUpload,
                                             colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
                                                 contentColor = MaterialTheme.colorScheme.onPrimary
                                             ),
-                                            contentPadding = PaddingValues(horizontal = Spacing.Small, vertical = Spacing.Tiny)
+                                            contentPadding = PaddingValues(horizontal = Spacing.space8, vertical = Spacing.space4)
                                         ) {
                                             Text(stringResource(R.string.action_retry), style = MaterialTheme.typography.labelSmall)
                                         }

@@ -12,7 +12,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 class SupabaseStoryRepository(
     private val storyDao: StoryDao? = null

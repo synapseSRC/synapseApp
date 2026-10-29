@@ -7,13 +7,8 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
-
-
 object RetryHandler {
-
     private const val TAG = "RetryHandler"
-
-
 
     data class RetryConfig(
         val maxAttempts: Int = 3,
@@ -27,8 +22,6 @@ object RetryHandler {
         )
     )
 
-
-
     sealed class RetryResult<T> {
         data class Success<T>(val value: T, val attemptNumber: Int) : RetryResult<T>()
         data class Failure<T>(
@@ -37,8 +30,6 @@ object RetryHandler {
             val isRetryable: Boolean
         ) : RetryResult<T>()
     }
-
-
 
     suspend fun <T> executeWithRetry(
         config: RetryConfig = RetryConfig(),
@@ -65,12 +56,10 @@ object RetryHandler {
 
                 Log.w(TAG, "Operation failed - Attempt: $currentAttempt/${config.maxAttempts}, Retryable: $isRetryable, Error: ${e.message}")
 
-
                 if (!isRetryable || currentAttempt >= config.maxAttempts) {
                     Log.e(TAG, "Operation failed permanently after $currentAttempt attempts", e)
                     return RetryResult.Failure(e, currentAttempt, isRetryable)
                 }
-
 
                 val delayMs = calculateBackoffDelay(
                     attemptNumber = currentAttempt,
@@ -86,7 +75,6 @@ object RetryHandler {
             }
         }
 
-
         return RetryResult.Failure(
             lastException ?: Exception("Unknown error"),
             currentAttempt,
@@ -94,25 +82,10 @@ object RetryHandler {
         )
     }
 
-
-
-    suspend fun <T> executeWithRetryResult(
-        config: RetryConfig = RetryConfig(),
-        operation: suspend (attemptNumber: Int) -> T
-    ): Result<T> {
-        return when (val result = executeWithRetry(config, operation)) {
-            is RetryResult.Success -> Result.success(result.value)
-            is RetryResult.Failure -> Result.failure(result.exception)
-        }
-    }
-
-
-
     private fun isRetryableException(
         exception: Throwable,
         config: RetryConfig
     ): Boolean {
-
         val isRetryableType = config.retryableExceptions.any { retryableClass ->
             retryableClass.isInstance(exception)
         }
@@ -120,7 +93,6 @@ object RetryHandler {
         if (isRetryableType) {
             return true
         }
-
 
         val message = exception.message?.lowercase() ?: ""
         val retryableKeywords = listOf(
@@ -134,8 +106,6 @@ object RetryHandler {
         return retryableKeywords.any { keyword -> message.contains(keyword) }
     }
 
-
-
     fun calculateBackoffDelay(
         attemptNumber: Int,
         initialDelayMs: Long = 1000L,
@@ -146,22 +116,11 @@ object RetryHandler {
         return exponentialDelay.coerceAtMost(maxDelayMs)
     }
 
-
-
     fun shouldRetry(exception: Throwable, attemptNumber: Int, maxAttempts: Int = 3): Boolean {
         if (attemptNumber >= maxAttempts) {
             return false
         }
 
         return isRetryableException(exception, RetryConfig())
-    }
-
-
-
-    fun getRetryMessage(attemptNumber: Int, maxAttempts: Int): String {
-        return when {
-            attemptNumber < maxAttempts -> "Retrying... (Attempt $attemptNumber of $maxAttempts)"
-            else -> "All retry attempts failed"
-        }
     }
 }

@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +20,9 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 data class PrivacyOptionItem<T>(
     val value: T,
@@ -41,6 +46,7 @@ fun <T> PrivacySelectionScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(title) },
@@ -54,8 +60,8 @@ fun <T> PrivacySelectionScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         }
@@ -65,18 +71,18 @@ fun <T> PrivacySelectionScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             if (subtitle != null) {
                 item {
                     Text(
                         text = subtitle,
-                        style = SettingsTypography.itemSubtitle,
+                        style = AppTypography.itemSubtitle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(
-                            horizontal = SettingsSpacing.itemHorizontalPadding,
-                            vertical = Spacing.Small
+                            horizontal = AppSpacing.itemHorizontalPadding,
+                            vertical = Spacing.space8
                         )
                     )
                 }
@@ -85,7 +91,7 @@ fun <T> PrivacySelectionScreen(
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     options.forEachIndexed { index, option ->
                         val position = when {
@@ -101,7 +107,7 @@ fun <T> PrivacySelectionScreen(
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = position.getShape(),
-                            color = SettingsColors.cardBackground
+                            color = AppColors.cardBackground
                         ) {
                             Row(
                                 modifier = Modifier
@@ -121,10 +127,10 @@ fun <T> PrivacySelectionScreen(
                                         contentDescription = rowDescription
                                     }
                                     .padding(
-                                        horizontal = SettingsSpacing.itemHorizontalPadding,
-                                        vertical = SettingsSpacing.itemVerticalPadding
+                                        horizontal = AppSpacing.itemHorizontalPadding,
+                                        vertical = AppSpacing.itemVerticalPadding
                                     )
-                                    .heightIn(min = SettingsSpacing.minTouchTarget),
+                                    .heightIn(min = AccessibilitySizes.minimumTouchTarget),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(
@@ -132,22 +138,22 @@ fun <T> PrivacySelectionScreen(
                                 ) {
                                     Text(
                                         text = option.title,
-                                        style = SettingsTypography.itemTitle,
+                                        style = AppTypography.itemTitle,
                                         color = if (!isLoading) MaterialTheme.colorScheme.onSurface
                                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                     )
                                     if (option.subtitle != null) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = option.subtitle,
-                                            style = SettingsTypography.itemSubtitle,
+                                            style = AppTypography.itemSubtitle,
                                             color = if (!isLoading) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(Spacing.Medium))
+                                Spacer(modifier = Modifier.width(Spacing.space16))
 
                                 RadioButton(
                                     selected = isSelected,

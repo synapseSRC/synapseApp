@@ -18,10 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 enum class ProfileCategoryType {
     PROFILE_MEDIA,
@@ -48,11 +48,11 @@ fun ProfileCategorySection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_profile))
+        SectionHeader(title = stringResource(R.string.section_profile))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             // 1. Profile Media (Profile Photo History) - Top
             SettingsNavigationItem(
@@ -117,11 +117,11 @@ fun ProfessionalCategorySection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_professional))
+        SectionHeader(title = stringResource(R.string.section_professional))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             SettingsNavigationItem(
                 title = stringResource(R.string.nav_professional_profile),
@@ -140,11 +140,11 @@ fun CustomizationCategorySection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_customize))
+        SectionHeader(title = stringResource(R.string.section_customize))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             // Profile Appearance - Top
             SettingsNavigationItem(

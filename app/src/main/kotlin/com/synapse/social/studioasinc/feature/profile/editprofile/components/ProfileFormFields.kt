@@ -29,8 +29,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.presentation.editprofile.UsernameValidation
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -50,21 +50,19 @@ fun ProfileFormFields(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        color = AppColors.cardBackground,
+        tonalElevation = Sizes.ElevationNone
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16)
         ) {
-
             UsernameField(
                 value = username,
                 onValueChange = onUsernameChange,
                 validation = usernameValidation
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = nickname,
@@ -83,7 +81,7 @@ fun ProfileFormFields(
                 },
                 isError = nicknameError != null,
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape,
+                shape = AppShapes.inputShape,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     keyboardType = KeyboardType.Text
@@ -91,8 +89,7 @@ fun ProfileFormFields(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = bio,
@@ -108,7 +105,7 @@ fun ProfileFormFields(
                 },
                 isError = bioError != null,
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape,
+                shape = AppShapes.inputShape,
                 minLines = 3,
                 maxLines = 5,
                 keyboardOptions = KeyboardOptions(
@@ -171,7 +168,7 @@ fun UsernameField(
         },
         isError = isError,
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.inputShape,
+        shape = AppShapes.inputShape,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
             keyboardType = KeyboardType.Ascii
@@ -180,92 +177,3 @@ fun UsernameField(
     )
 }
 
-@Composable
-fun ProfileTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String,
-    icon: ImageVector? = null,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = { Text(placeholder) },
-        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } },
-        modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.inputShape,
-        singleLine = true
-    )
-}
-
-@Composable
-fun LocationFields(
-    currentCity: String, onCurrentCityChange: (String) -> Unit,
-    hometown: String, onHometownChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
-    ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
-            Text(stringResource(R.string.section_location), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
-            ProfileTextField(currentCity, onCurrentCityChange, "Current City", "e.g., New York, NY", Icons.Filled.LocationOn)
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-            ProfileTextField(hometown, onHometownChange, "Hometown", "e.g., Los Angeles, CA", Icons.Filled.LocationOn)
-        }
-    }
-}
-
-@Composable
-fun WorkAndEducationFields(
-    occupation: String, onOccupationChange: (String) -> Unit,
-    workplace: String, onWorkplaceChange: (String) -> Unit,
-    education: String, onEducationChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
-    ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
-            Text(stringResource(R.string.section_work_education), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
-            ProfileTextField(occupation, onOccupationChange, "Occupation", "e.g., Software Engineer")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-            ProfileTextField(workplace, onWorkplaceChange, "Workplace", "e.g., Google")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-            ProfileTextField(education, onEducationChange, "Education", "e.g., Stanford University")
-        }
-    }
-}
-
-@Composable
-fun SocialLinksFields(
-    discordTag: String, onDiscordTagChange: (String) -> Unit,
-    githubProfile: String, onGithubProfileChange: (String) -> Unit,
-    personalWebsite: String, onPersonalWebsiteChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
-    ) {
-        Column(modifier = Modifier.padding(Spacing.Medium)) {
-            Text(stringResource(R.string.section_social_web), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.Medium))
-            ProfileTextField(discordTag, onDiscordTagChange, "Discord Tag", "e.g., User#1234")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-            ProfileTextField(githubProfile, onGithubProfileChange, "GitHub", "e.g., github.com/username")
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-            ProfileTextField(personalWebsite, onPersonalWebsiteChange, "Website", "e.g., https://mysite.com")
-        }
-    }
-}

@@ -77,22 +77,22 @@ private fun ActivityLogScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            contentPadding = PaddingValues(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(Spacing.Medium)
+                        modifier = Modifier.padding(Spacing.space16)
                     ) {
                         Text(
                             text = stringResource(R.string.activity_log),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
                         Text(
                             text = stringResource(R.string.activity_log_empty_message),
                             style = MaterialTheme.typography.bodyMedium,

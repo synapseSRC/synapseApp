@@ -27,7 +27,7 @@ object SupabaseClient {
     const val BUCKET_USER_AVATARS = "avatars"
     const val BUCKET_USER_COVERS = "covers"
 
-    private val protectedMediaBuckets = setOf("posts", "covers", "story-media", "story-thumbnails", "reels")
+    private val protectedMediaBuckets = setOf("covers", "story-media", "story-thumbnails", "reels")
 
     @OptIn(SupabaseInternal::class)
     val client by lazy {
@@ -49,7 +49,18 @@ object SupabaseClient {
                     isLenient = true
                     coerceInputValues = true
                 })
-                install(Auth)
+                install(Auth) {
+                    sessionManager = try {
+                        io.github.jan.supabase.auth.SettingsSessionManager()
+                    } catch (e: Throwable) {
+                        io.github.jan.supabase.auth.MemorySessionManager()
+                    }
+                    codeVerifierCache = try {
+                        io.github.jan.supabase.auth.SettingsCodeVerifierCache()
+                    } catch (e: Throwable) {
+                        io.github.jan.supabase.auth.MemoryCodeVerifierCache()
+                    }
+                }
                 install(Postgrest)
                 install(Realtime)
                 install(Functions)
@@ -97,8 +108,21 @@ object SupabaseClient {
 
     fun constructStorageUrl(bucket: String, path: String): String {
         if (path.isBlank()) return ""
-        if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("private-media://")) {
+        if (path.startsWith("http://") || path.startsWith("https://")) {
             return path
+        }
+
+        // Convert private-media://bucket/object path to a public HTTPS storage URL
+        if (path.startsWith("private-media://")) {
+            val route = path.removePrefix("private-media://")
+            val segments = route.split('/', limit = 2)
+            if (segments.size == 2) {
+                val urlBucket = segments[0]
+                val objectPath = segments[1]
+                val cleanPath = if (objectPath.startsWith("/")) objectPath.substring(1) else objectPath
+                val cleanBaseUrl = if (validatedSupabaseUrl.endsWith("/")) validatedSupabaseUrl.dropLast(1) else validatedSupabaseUrl
+                return "$cleanBaseUrl/storage/v1/object/public/$urlBucket/$cleanPath"
+            }
         }
 
         // Remove leading slash if present to avoid double slashes
@@ -114,10 +138,6 @@ object SupabaseClient {
 
     fun constructAvatarUrl(storagePath: String): String {
         return constructStorageUrl(BUCKET_USER_AVATARS, storagePath)
-    }
-
-    fun constructCoverUrl(storagePath: String): String {
-        return constructStorageUrl(BUCKET_USER_COVERS, storagePath)
     }
 
     /** Signs a protected Storage object only after Storage RLS authorizes the current session. */

@@ -27,9 +27,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.request.videoFramePercent
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.video.videoFramePercent
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -99,14 +100,14 @@ fun BatchMediaGalleryDialog(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Medium),
+                            .padding(Spacing.space16),
                         shape = RoundedCornerShape(Sizes.CornerMedium)
                     ) {
                         Text(
                             text = caption,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(Spacing.Medium)
+                            modifier = Modifier.padding(Spacing.space16)
                         )
                     }
                 }
@@ -114,9 +115,9 @@ fun BatchMediaGalleryDialog(
                 // Grid of all batch media items in original selection order
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(Spacing.Medium),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.Small),
+                    contentPadding = PaddingValues(Spacing.space16),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.space8),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -169,7 +170,7 @@ fun BatchMediaGalleryDialog(
                                         shape = RoundedCornerShape(Sizes.CornerSmall),
                                         modifier = Modifier
                                             .align(Alignment.BottomStart)
-                                            .padding(Spacing.Small)
+                                            .padding(Spacing.space8)
                                     ) {
                                         val minutes = duration / 60
                                         val seconds = duration % 60
@@ -177,7 +178,7 @@ fun BatchMediaGalleryDialog(
                                             text = String.format("%02d:%02d", minutes, seconds),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = Color.White,
-                                            modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.Tiny)
+                                            modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space4)
                                         )
                                     }
                                 }
@@ -189,7 +190,7 @@ fun BatchMediaGalleryDialog(
                                 shape = CircleShape,
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(Spacing.Small)
+                                    .padding(Spacing.space8)
                                     .size(24.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {

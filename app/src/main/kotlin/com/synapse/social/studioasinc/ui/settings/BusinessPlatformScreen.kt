@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -17,6 +19,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.business.AccountType
 import com.synapse.social.studioasinc.shared.domain.model.business.AnalyticsData
 import com.synapse.social.studioasinc.shared.domain.model.business.VerificationStatus
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +38,7 @@ fun BusinessPlatformScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_business_platform_title)) },
@@ -44,15 +49,15 @@ fun BusinessPlatformScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -73,8 +78,8 @@ fun BusinessPlatformScreen(
                     .fillMaxSize()
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .padding(paddingValues)
-                    .padding(horizontal = SettingsSpacing.screenPadding),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Large)
+                    .padding(horizontal = AppSpacing.screenPadding),
+                verticalArrangement = Arrangement.spacedBy(Spacing.space24)
             ) {
                 item {
                     AccountTypeSection(state = state, onSwitchToBusiness = { viewModel.switchToBusinessAccount() })
@@ -102,7 +107,7 @@ fun BusinessPlatformScreen(
                         )
                     }
                 }
-                item { Spacer(modifier = Modifier.height(Spacing.Large)) }
+                item { Spacer(modifier = Modifier.height(Spacing.space24)) }
             }
         }
     }
@@ -115,14 +120,14 @@ private fun AccountTypeSection(
 ) {
     SettingsSection(title = stringResource(R.string.business_section_account_type)) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
-            modifier = Modifier.padding(vertical = SettingsSpacing.itemVerticalPadding)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
+            modifier = Modifier.padding(vertical = AppSpacing.itemVerticalPadding)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                    .padding(horizontal = AppSpacing.itemHorizontalPadding)
             ) {
                 Icon(
                     imageVector = when (state.accountType) {
@@ -132,10 +137,10 @@ private fun AccountTypeSection(
                     },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(SettingsSpacing.iconSize)
+                    modifier = Modifier.size(Sizes.IconLarge)
                 )
-                Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = state.accountType.name.lowercase()
                             .replaceFirstChar { it.uppercase() } + " " +
@@ -156,7 +161,7 @@ private fun AccountTypeSection(
                     onClick = onSwitchToBusiness,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                        .padding(horizontal = AppSpacing.itemHorizontalPadding)
                 ) {
                     Text(stringResource(R.string.action_switch_to_business))
                 }
@@ -171,15 +176,15 @@ private fun AnalyticsDashboardSection(analytics: AnalyticsData?) {
 
     SettingsSection(title = stringResource(R.string.business_section_analytics)) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
             modifier = Modifier.padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 AnalyticsCard(
                     title = stringResource(R.string.business_analytics_profile_views),
@@ -196,20 +201,20 @@ private fun AnalyticsDashboardSection(analytics: AnalyticsData?) {
             if (analytics.topPosts.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackgroundElevated)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBackgroundElevated)
                 ) {
-                    Column(modifier = Modifier.padding(Spacing.Medium)) {
+                    Column(modifier = Modifier.padding(Spacing.space16)) {
                         Text(
                             text = stringResource(R.string.business_analytics_top_content),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = Spacing.Medium)
+                            modifier = Modifier.padding(bottom = Spacing.space16)
                         )
                         analytics.topPosts.forEachIndexed { index, post ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = Spacing.Small),
+                                    .padding(vertical = Spacing.space8),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -218,7 +223,7 @@ private fun AnalyticsDashboardSection(analytics: AnalyticsData?) {
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(end = Spacing.Medium)
+                                        .padding(end = Spacing.space16)
                                 )
                                 Text(
                                     text = "${post.views} ${stringResource(R.string.business_analytics_views_suffix)}",
@@ -245,10 +250,10 @@ private fun AnalyticsCard(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackgroundElevated)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackgroundElevated)
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.Medium),
+            modifier = Modifier.padding(Spacing.space16),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -287,13 +292,13 @@ private fun MonetizationSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = SettingsSpacing.itemHorizontalPadding,
-                            vertical = SettingsSpacing.itemVerticalPadding
+                            horizontal = AppSpacing.itemHorizontalPadding,
+                            vertical = AppSpacing.itemVerticalPadding
                         ),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                         Text(
                             text = stringResource(R.string.business_monetization_total_earnings),
                             style = MaterialTheme.typography.bodyMedium
@@ -307,7 +312,7 @@ private fun MonetizationSection(
                     Icon(
                         imageVector = Icons.Default.AttachMoney,
                         contentDescription = null,
-                        modifier = Modifier.size(Spacing.Huge),
+                        modifier = Modifier.size(Sizes.IconGiant),
                         tint = MaterialTheme.colorScheme.tertiary
                     )
                 }
@@ -378,15 +383,15 @@ private fun VerificationSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.itemHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 Text(
                     text = stringResource(R.string.business_verification_title),
@@ -423,7 +428,7 @@ private fun VerificationSection(
                     )
                 }
                 VerificationStatus.PENDING -> {
-                    CircularProgressIndicator(modifier = Modifier.size(Spacing.Large))
+                    CircularProgressIndicator(modifier = Modifier.size(Sizes.IconLarge))
                 }
             }
         }

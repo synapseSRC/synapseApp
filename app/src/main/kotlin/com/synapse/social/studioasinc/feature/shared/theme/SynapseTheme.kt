@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.shared.theme
 
 import android.os.Build
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
+import androidx.core.content.ContextCompat
 
 val LightColorScheme = lightColorScheme(
     primary = LightPrimary,
@@ -109,17 +113,16 @@ fun SynapseTheme(
         else -> LightColorScheme
     }
 
-    val finalColorScheme = when {
-        increaseContrast || highContrastText -> {
-            baseScheme.copy(
-                outline = baseScheme.onSurface,
-                outlineVariant = baseScheme.outline,
-                onBackground = baseScheme.onBackground,
-                onSurface = baseScheme.onSurface,
-                onSurfaceVariant = baseScheme.onSurfaceVariant
-            )
-        }
-        else -> baseScheme
+    val contrastEnabled = increaseContrast || highContrastText || rememberSystemHighContrastTextEnabled()
+    val finalColorScheme = if (contrastEnabled) {
+        baseScheme.copy(
+            outline = baseScheme.onSurface,
+            outlineVariant = baseScheme.onSurfaceVariant,
+            onBackground = baseScheme.onSurface,
+            onSurfaceVariant = baseScheme.onSurface
+        )
+    } else {
+        baseScheme
     }
 
     CompositionLocalProvider(LocalUiAtmosphere provides atmosphereState) {
@@ -137,4 +140,33 @@ fun SynapseTheme(
             }
         }
     }
+}
+
+
+@Composable
+private fun rememberSystemHighContrastTextEnabled(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return false
+
+    val context = LocalContext.current
+    val accessibilityManager = remember(context) {
+        context.getSystemService(AccessibilityManager::class.java)
+    } ?: return false
+    val enabled = remember(accessibilityManager) {
+        mutableStateOf(accessibilityManager.isHighContrastTextEnabled)
+    }
+
+    DisposableEffect(accessibilityManager, context) {
+        val listener = AccessibilityManager.HighContrastTextStateChangeListener { isEnabled ->
+            enabled.value = isEnabled
+        }
+        accessibilityManager.addHighContrastTextStateChangeListener(
+            ContextCompat.getMainExecutor(context),
+            listener
+        )
+        onDispose {
+            accessibilityManager.removeHighContrastTextStateChangeListener(listener)
+        }
+    }
+
+    return enabled.value
 }

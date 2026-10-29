@@ -3,9 +3,11 @@ package com.synapse.social.studioasinc.ui.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.UserProfileManager
 import com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService
+import com.synapse.social.studioasinc.domain.usecase.release.GetReleaseFeedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.*
@@ -17,16 +19,14 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.HeroCard
 import com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction
 import com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository as DomainSettingsRepository
 
-
-
 @HiltViewModel
 class SettingsHubViewModel @Inject constructor(
     application: Application,
     private val searchSettingsUseCase: SearchSettingsUseCase,
     private val getContextualHeroCardsUseCase: GetContextualHeroCardsUseCase,
+    private val getReleaseFeedUseCase: GetReleaseFeedUseCase,
     private val settingsRepository: DomainSettingsRepository
 ) : AndroidViewModel(application) {
-
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
@@ -49,12 +49,33 @@ class SettingsHubViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    /** Ids of the rows that have something waiting behind them, e.g. an unread release. */
+    private val _unreadCategoryIds = MutableStateFlow<Set<String>>(emptySet())
+    val unreadCategoryIds: StateFlow<Set<String>> = _unreadCategoryIds.asStateFlow()
+
     init {
         loadUserProfile()
         loadSettingsCategories()
+        watchReleaseFeed()
     }
 
-
+    /**
+     * Keeps the What's new row flagged while a release is still waiting to be read.
+     *
+     * The flag comes off the stored list, so browsing Settings costs no request; the single read on
+     * entry is what lets the repository refresh once its copy has aged past the cache TTL, and it is
+     * also where a device that never opened the release list gets its last-read tag seeded.
+     */
+    private fun watchReleaseFeed() {
+        viewModelScope.launch {
+            getReleaseFeedUseCase(BuildConfig.VERSION_NAME, forceRefresh = false)
+            getReleaseFeedUseCase.observe().collect { feed ->
+                _unreadCategoryIds.update { ids ->
+                    if (feed.unreadTag != null) ids + WHATS_NEW_CATEGORY_ID else ids - WHATS_NEW_CATEGORY_ID
+                }
+            }
+        }
+    }
 
     private fun loadUserProfile() {
         viewModelScope.launch {
@@ -74,7 +95,6 @@ class SettingsHubViewModel @Inject constructor(
                         avatarUrl = currentUser.avatar
                     )
                 } else {
-
                     try {
                         val authService = SupabaseAuthenticationService.getInstance(getApplication())
                         val authUser = authService.getCurrentUser()
@@ -87,7 +107,6 @@ class SettingsHubViewModel @Inject constructor(
                                 avatarUrl = null
                             )
                         } else {
-
                             _userProfileSummary.value = UserProfileSummary(
                                 id = "",
                                 displayName = "User",
@@ -120,13 +139,9 @@ class SettingsHubViewModel @Inject constructor(
         }
     }
 
-
-
     private fun loadSettingsCategories() {
         _settingsGroups.value = SettingsDataProvider.getSettingsGroups()
     }
-
-
 
     fun onNavigateToCategory(destination: SettingsDestination) {
         android.util.Log.d("SettingsHubViewModel", "Navigating to: ${destination.route}")
@@ -167,12 +182,7 @@ class SettingsHubViewModel @Inject constructor(
             }
         }
     }
-
-
-
-    fun refreshUserProfile() {
-
-        UserProfileManager.clearCache()
-        loadUserProfile()
-    }
 }
+
+/** [SettingsDataProvider] id of the What's new row. */
+private const val WHATS_NEW_CATEGORY_ID = "whats_new"

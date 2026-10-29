@@ -57,6 +57,14 @@ object SettingsDataProvider {
                     keywords = listOf("block", "hide", "status", "last seen", "read receipts", "disappearing")
                 ),
                 SettingsCategory(
+                    id = "permissions",
+                    title = UiText.StringResource(R.string.settings_permissions_title),
+                    subtitle = UiText.StringResource(R.string.settings_permissions_subtitle),
+                    icon = Icons.Filled.Security,
+                    destination = SettingsDestination.Permissions,
+                    keywords = listOf("permission", "camera", "microphone", "notifications", "privacy")
+                ),
+                SettingsCategory(
                     id = "favourites",
                     title = UiText.StringResource(R.string.settings_favourites_title),
                     subtitle = UiText.StringResource(R.string.settings_favourites_subtitle),
@@ -145,6 +153,14 @@ object SettingsDataProvider {
                     icon = Icons.Filled.Language,
                     destination = SettingsDestination.Language,
                     keywords = listOf("language", "locale", "translate", "english", "spanish")
+                ),
+                SettingsCategory(
+                    id = "whats_new",
+                    title = UiText.StringResource(R.string.settings_whats_new_title),
+                    subtitle = UiText.StringResource(R.string.settings_whats_new_subtitle),
+                    icon = Icons.Filled.NewReleases,
+                    destination = SettingsDestination.WhatsNew,
+                    keywords = listOf("changelog", "release", "updates", "version", "news", "notes")
                 ),
                 SettingsCategory(
                     id = "about",

@@ -6,10 +6,13 @@ import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 class ChatAiDelegate(
     private val generateSmartRepliesUseCase: GenerateSmartRepliesUseCase,
@@ -36,37 +39,53 @@ class ChatAiDelegate(
     val _isSummarizingMessage = MutableStateFlow(false)
     val isSummarizingMessage: StateFlow<Boolean> = _isSummarizingMessage.asStateFlow()
 
+    private var smartRepliesJob: Job? = null
+    private var smartRepliesGeneration = 0L
+    private val activeJobs = ConcurrentHashMap<Job, Unit>()
+
+    fun cancelPendingSmartReplies() {
+        smartRepliesGeneration++
+        smartRepliesJob?.cancel()
+        smartRepliesJob = null
+        _smartReplies.value = emptyList()
+    }
+
     fun generateSmartReplies(currentMessages: List<Message>) {
-        viewModelScope.launch {
-            if (!messageSuggestionEnabledProvider()) {
-                _smartReplies.value = emptyList()
-                return@launch
-            }
+        smartRepliesJob?.cancel()
+        val generation = ++smartRepliesGeneration
+        val chatId = chatIdProvider()
 
-            if (currentMessages.isEmpty()) {
-                _smartReplies.value = emptyList()
-                return@launch
-            }
-
-            // Only consider recent messages to avoid prompt limits
-            val recentMessages = currentMessages.takeLast(10).map { msg ->
-                val senderName = if (msg.senderId == currentUserIdProvider()) "Me" else participantProfileProvider()?.displayName ?: "Them"
-                "$senderName: ${msg.content}"
-            }
-
-            generateSmartRepliesUseCase(recentMessages, chatIdProvider())
-                .onSuccess { replies ->
-                    _smartReplies.value = replies
-                }
-                .onFailure {
-                    // Ignore errors for smart replies
-                    _smartReplies.value = emptyList()
-                }
+        if (!messageSuggestionEnabledProvider() || currentMessages.isEmpty()) {
+            _smartReplies.value = emptyList()
+            return
         }
+
+        // Snapshot only the newest context. Realtime bursts cancel stale generations.
+        val recentMessages = currentMessages.takeLast(10).map { msg ->
+            val senderName = if (msg.senderId == currentUserIdProvider()) "Me" else participantProfileProvider()?.displayName ?: "Them"
+            "$senderName: ${msg.content}"
+        }
+
+        smartRepliesJob = viewModelScope.launch {
+            delay(SMART_REPLY_DEBOUNCE_MS)
+            val result = generateSmartRepliesUseCase(recentMessages, chatId)
+            if (generation != smartRepliesGeneration || chatId != chatIdProvider()) return@launch
+            result.onSuccess { replies ->
+                _smartReplies.value = replies
+            }.onFailure {
+                _smartReplies.value = emptyList()
+            }
+        }
+        activeJobs[smartRepliesJob!!] = Unit
+        smartRepliesJob!!.invokeOnCompletion { activeJobs.remove(smartRepliesJob!!) }
+    }
+
+    private companion object {
+        const val SMART_REPLY_DEBOUNCE_MS = 350L
     }
 
     fun summarizeChat(currentMessages: List<Message>) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             if (currentMessages.isEmpty()) {
                 _chatSummary.value = "No messages to summarize."
                 return@launch
@@ -90,6 +109,8 @@ class ChatAiDelegate(
                     onLoading(false)
                 }
         }
+        activeJobs[job] = Unit
+        job.invokeOnCompletion { activeJobs.remove(job) }
     }
 
     fun clearSummary() {
@@ -97,16 +118,24 @@ class ChatAiDelegate(
     }
 
     fun summarizeMessage(content: String) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             _isSummarizingMessage.value = true
             summarizeMessageUseCase(content, chatIdProvider())
                 .onSuccess { _messageSummary.value = it }
                 .onFailure { _messageSummary.value = "Failed to summarize: ${it.message}" }
             _isSummarizingMessage.value = false
         }
+        activeJobs[job] = Unit
+        job.invokeOnCompletion { activeJobs.remove(job) }
     }
 
     fun clearMessageSummary() {
         _messageSummary.value = null
+    }
+
+    fun cleanup() {
+        cancelPendingSmartReplies()
+        activeJobs.keys.forEach { it.cancel() }
+        activeJobs.clear()
     }
 }

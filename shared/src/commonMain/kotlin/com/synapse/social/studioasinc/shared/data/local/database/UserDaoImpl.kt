@@ -19,7 +19,12 @@ class UserDaoImpl(private val database: StorageDatabase) : UserDao {
             isVerified = user.isVerified,
             followersCount = user.followersCount,
             followingCount = user.followingCount,
-            postsCount = user.postsCount
+            postsCount = user.postsCount,
+            // Sync metadata — new rows start with defaults; existing rows will be migrated
+            updatedAt = 0L,
+            isLocallyDeleted = false,
+            lastSyncedAt = null,
+            syncVersion = 1
         )
     }
 

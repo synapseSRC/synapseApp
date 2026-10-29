@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
 
 
@@ -52,7 +53,7 @@ fun ChangeEmailDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 Text(
                     text = stringResource(R.string.change_email_dialog_message),
@@ -69,7 +70,7 @@ fun ChangeEmailDialog(
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
@@ -89,7 +90,7 @@ fun ChangeEmailDialog(
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     visualTransformation = if (passwordVisible) VisualTransformation.None
                                          else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -129,13 +130,13 @@ fun ChangeEmailDialog(
             FilledTonalButton(
                 onClick = { onConfirm(newEmail, password) },
                 enabled = !isLoading && newEmail.isNotBlank() && password.isNotBlank(),
-                shape = SettingsShapes.itemShape
+                shape = AppShapes.itemShape
             ) {
                 if (isLoading) {
                     ExpressiveLoadingIndicator(
                         modifier = Modifier.size(Sizes.IconSemiMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
                 Text(stringResource(R.string.action_change_email))
             }
@@ -148,7 +149,7 @@ fun ChangeEmailDialog(
                 Text(stringResource(R.string.cancel))
             }
         },
-        shape = SettingsShapes.cardShape
+        shape = AppShapes.cardShape
     )
 }
 
@@ -182,7 +183,7 @@ fun ChangePasswordDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 Text(
                     text = stringResource(R.string.change_password_dialog_message),
@@ -198,7 +199,7 @@ fun ChangePasswordDialog(
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     visualTransformation = if (currentPasswordVisible) VisualTransformation.None
                                          else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -227,7 +228,7 @@ fun ChangePasswordDialog(
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     visualTransformation = if (newPasswordVisible) VisualTransformation.None
                                          else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -262,7 +263,7 @@ fun ChangePasswordDialog(
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
                                          else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -304,14 +305,14 @@ fun ChangePasswordDialog(
                 onClick = { onConfirm(currentPassword, newPassword, confirmPassword) },
                 enabled = !isLoading && currentPassword.isNotBlank() &&
                          newPassword.length >= 8 && confirmPassword == newPassword,
-                shape = SettingsShapes.itemShape
+                shape = AppShapes.itemShape
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(Sizes.IconSemiMedium),
                         strokeWidth = Sizes.BorderDefault
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
                 Text(stringResource(R.string.action_change_password))
             }
@@ -324,7 +325,7 @@ fun ChangePasswordDialog(
                 Text(stringResource(R.string.settings_cancel))
             }
         },
-        shape = SettingsShapes.cardShape
+        shape = AppShapes.cardShape
     )
 }
 
@@ -333,17 +334,17 @@ fun ChangePasswordDialog(
 @Composable
 private fun PasswordStrengthIndicator(strength: Int) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
         ) {
             repeat(4) { index ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(Spacing.ExtraSmall)
+                        .height(Sizes.PasswordStrengthBarHeight)
                         .then(
                             if (index < strength) {
                                 Modifier.background(
@@ -354,12 +355,12 @@ private fun PasswordStrengthIndicator(strength: Int) {
                                         4 -> MaterialTheme.colorScheme.primary
                                         else -> MaterialTheme.colorScheme.surfaceVariant
                                     },
-                                    shape = SettingsShapes.chipShape
+                                    shape = AppShapes.chipShape
                                 )
                             } else {
                                 Modifier.background(
                                     color = MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = SettingsShapes.chipShape
+                                    shape = AppShapes.chipShape
                                 )
                             }
                         )
@@ -419,7 +420,7 @@ fun DeleteAccountDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
                 Text(
                     text = stringResource(R.string.delete_account_dialog_message),
@@ -435,7 +436,7 @@ fun DeleteAccountDialog(
 
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-                    shape = SettingsShapes.inputShape
+                    shape = AppShapes.inputShape
                 ) {
                     Text(
                         text = requiredText,
@@ -443,7 +444,7 @@ fun DeleteAccountDialog(
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         ),
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(Spacing.SmallMedium)
+                        modifier = Modifier.padding(Spacing.space12)
                     )
                 }
 
@@ -455,7 +456,7 @@ fun DeleteAccountDialog(
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done
                     ),
@@ -487,7 +488,7 @@ fun DeleteAccountDialog(
             Button(
                 onClick = { onConfirm(confirmationText) },
                 enabled = !isLoading && confirmationText == requiredText,
-                shape = SettingsShapes.itemShape,
+                shape = AppShapes.itemShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error,
                     contentColor = MaterialTheme.colorScheme.onError
@@ -498,7 +499,7 @@ fun DeleteAccountDialog(
                         modifier = Modifier.size(Sizes.IconSemiMedium),
                         color = MaterialTheme.colorScheme.onError
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
                 Text(stringResource(R.string.action_delete_account))
             }
@@ -511,6 +512,6 @@ fun DeleteAccountDialog(
                 Text(stringResource(R.string.settings_cancel))
             }
         },
-        shape = SettingsShapes.cardShape
+        shape = AppShapes.cardShape
     )
 }

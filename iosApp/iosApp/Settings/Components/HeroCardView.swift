@@ -9,12 +9,12 @@ struct HeroCardView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space12) {
                 Image(systemName: systemImage)
                     .font(.system(size: 24))
                     .foregroundColor(.white)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
                     Text(title)
                         .font(.headline)
                         .foregroundColor(.white)

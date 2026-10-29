@@ -22,6 +22,7 @@ class SearchSettingsUseCase(
             // Static categories (simplified)
             allNodes.add(SettingsNode("acc", "Account", "Security, change number", listOf("password", "delete"), SettingsAction.Navigate("settings_account")))
             allNodes.add(SettingsNode("priv", "Privacy", "Block contacts, disappearing messages", listOf("hide", "status"), SettingsAction.Navigate("settings_privacy")))
+            allNodes.add(SettingsNode("perm", "Permissions", "Camera, microphone and notifications", listOf("permission", "camera", "microphone", "notifications"), SettingsAction.Navigate("settings_permissions")))
 
             // Direct Actions
             allNodes.add(SettingsNode(

@@ -18,7 +18,7 @@ struct StoriesTrayView: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.space12) {
                 // "Your Story" Item
                 StoryAvatarView(
                     imageUrl: viewModel.myStory?.user.avatar.flatMap { URL(string: $0) },
@@ -40,7 +40,7 @@ struct StoriesTrayView: View {
                         showingDeleteActionSheet = true
                     }
                 }
-                .padding(.leading, 12)
+                .padding(.leading, AppTheme.Spacing.space12)
 
                 // Other Users' Stories
                 ForEach(Array(viewModel.stories.enumerated()), id: \.element.id) { index, group in
@@ -56,7 +56,7 @@ struct StoriesTrayView: View {
                     )
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, AppTheme.Spacing.space8)
         }
         .overlay(
             Group {
@@ -74,7 +74,7 @@ struct StoriesTrayView: View {
                                 .foregroundColor(.blue)
                         }
                     }
-                    .padding(8)
+                    .padding(AppTheme.Spacing.space8)
                     .background(Color.black.opacity(0.7).cornerRadius(8))
                 } else if viewModel.isLoading && viewModel.stories.isEmpty && viewModel.myStory == nil {
                     ProgressView()

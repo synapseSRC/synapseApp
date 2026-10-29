@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 fun StorageUsageSection(
@@ -42,7 +46,7 @@ fun StorageUsageSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(SettingsSpacing.itemHorizontalPadding)
+                    .padding(AppSpacing.itemHorizontalPadding)
             ) {
                 val usedGB = formatBytesToGB(storageUsage.usedSize)
                 val freeGB = formatBytesToGB(storageUsage.freeSize)
@@ -64,11 +68,11 @@ fun StorageUsageSection(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 StorageBar(usage = storageUsage)
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -76,19 +80,19 @@ fun StorageUsageSection(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Badge(color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(
                         text = stringResource(R.string.storage_synapse_media),
-                        style = SettingsTypography.itemSubtitle
+                        style = AppTypography.itemSubtitle
                     )
 
-                    Spacer(modifier = Modifier.width(Spacing.Large))
+                    Spacer(modifier = Modifier.width(Spacing.space24))
 
                     Badge(color = MaterialTheme.colorScheme.tertiary)
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(
                         text = stringResource(R.string.storage_apps_other),
-                        style = SettingsTypography.itemSubtitle
+                        style = AppTypography.itemSubtitle
                     )
                 }
             }
@@ -149,7 +153,7 @@ private fun Badge(color: androidx.compose.ui.graphics.Color) {
     val cdStorageBadge = stringResource(id = R.string.cd_storage_badge)
     Box(
         modifier = Modifier
-            .size(Spacing.Small)
+            .size(Sizes.StatusDotSmall)
             .background(color, CircleShape)
             .semantics { contentDescription = cdStorageBadge }
     )

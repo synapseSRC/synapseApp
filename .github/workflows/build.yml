@@ -2,38 +2,65 @@ name: 🔧 Build
 
 on:
   push:
-    paths-ignore:
-      - '**.md'
-      - '**.txt'
-      - '**.pdf'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
-      - 'app/src/test/**'
-      - '.github/workflows/**'
+    paths:
+      - 'app/**'
+      - 'shared/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'gradle.properties'
+      - 'local.properties'
   workflow_dispatch:
 
 jobs:
   build:
     name: 🔨 Build APKs
-    runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
+    runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'blacksmith-4vcpu-ubuntu-2404' }}
     outputs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
     steps:
       - name: 🛎️ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          # versionCode is `git rev-list --count HEAD`; a shallow clone would make it 1
+          # for every build, so each new APK would install as a downgrade.
+          fetch-depth: 0
 
       - name: ☕ Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: temurin
 
       - name: 🔑 Create google-services.json from secret
-        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GOOGLE_SERVICES_JSON:-}" ]; then
+            echo "::error title=google-services.json::GOOGLE_SERVICES_JSON is empty"
+            exit 1
+          fi
+          printf '%s\n' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          # The Gradle google-services plugin rejects malformed JSON; what it cannot catch is a
+          # valid file for the wrong project, which is how a deleted Firebase project shipped
+          # unnoticed. Pin the project number and both package clients here.
+          fail=0
+          for pattern in \
+            '"project_number"[[:space:]]*:[[:space:]]*"999615440042"' \
+            '"package_name"[[:space:]]*:[[:space:]]*"com\.synapse\.social\.studioasinc"' \
+            '"package_name"[[:space:]]*:[[:space:]]*"com\.synapse\.social\.studioasinc\.debug"'; do
+            if ! grep -Eq "$pattern" app/google-services.json; then
+              echo "::error title=google-services.json::pattern not found: $pattern"
+              fail=1
+            fi
+          done
+          exit "$fail"
 
       - name: 🐘 Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-disabled: true
 
@@ -52,22 +79,65 @@ jobs:
           GOOGLE_WEB_CLIENT_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
           GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          set +e
+          ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
+          gradle_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$gradle_status" -ne 0 ]; then
+          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|^> Task .* FAILED|^.* FAILED$|^.*AssertionError:|^.*error:|^.*AAPT2|^.*failed linking references)' "$RUNNER_TEMP/assembleRelease.log" | tail -n 25 || true)
+          if [ -z "$diagnostics" ]; then
+            diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/assembleRelease.log")
+          fi
+          if [ -z "$diagnostics" ]; then
+            diagnostics=$(tail -n 12 "$RUNNER_TEMP/assembleRelease.log")
+          fi
+          while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=Android release-build diagnostics::${line}"
+          done <<< "$diagnostics"
+          fi
+          exit "$gradle_status"
+
+      - name: 🔎 Verify shipped auth and push config
+        run: |
+          set -euo pipefail
+          build_config=app/build/generated/source/buildConfig/release/com/synapse/social/studioasinc/BuildConfig.java
+          if [ ! -f "$build_config" ]; then
+            echo "::error title=BuildConfig::missing $build_config"
+            exit 1
+          fi
+          fail=0
+          expect() {
+            field=$1
+            want=$2
+            got=$(grep -oP "(?<=String $field = \")[^\"]*" "$build_config" || true)
+            if [ "$got" != "$want" ]; then
+              echo "::error title=BuildConfig::$field resolved to '${got}', expected '$want' — check the org secret"
+              fail=1
+            fi
+          }
+          expect SUPABASE_URL "https://apqvyyphlrtmuyjnzmuq.supabase.co"
+          expect GOOGLE_WEB_CLIENT_ID "999615440042-9s9he8resh1k2i6st0dnmg1fiogv0vm6.apps.googleusercontent.com"
+          expect ONESIGNAL_APP_ID "e6b42d8e-8039-4042-9d49-f96a7b675ad3"
+          exit "$fail"
 
       - name: 🔖 Set short SHA
         id: set_sha
         run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      - name: ✏️ Rename APK with commit hash
+      - name: ✏️ Rename APKs with commit hash
         run: |
-          mv app/build/outputs/apk/release/app-release.apk \
-             app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
+          cd app/build/outputs/apk/release
+          for apk in app-*-release.apk; do
+            mv "$apk" "${apk%.apk}-${{ steps.set_sha.outputs.short_sha }}.apk"
+          done
+          ls -la
 
       - name: 📤 Upload Release APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: apk-release-${{ steps.set_sha.outputs.short_sha }}
-          path: app/build/outputs/apk/release/app-release-${{ steps.set_sha.outputs.short_sha }}.apk
+          path: app/build/outputs/apk/release/app-*-release-${{ steps.set_sha.outputs.short_sha }}.apk
 
   aggregateAndSend:
     name: 📣 Send APKs to Telegram
@@ -75,16 +145,16 @@ jobs:
     needs: build
     steps:
       - name: 🛎️ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 📥 Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: apk-release-${{ needs.build.outputs.short_sha }}
           path: ./downloaded-artifact
 
       - name: 🐍 Set up Python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
@@ -97,7 +167,7 @@ jobs:
           echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
 
       - name: 💾 Restore Telegram session cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: telegram_session_cache
         with:
           path: bot_session.session
@@ -110,7 +180,10 @@ jobs:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TOPIC_ID: ${{ secrets.TELEGRAM_TOPIC_ID }}
-          APK_PATH: ./downloaded-artifact/app-release-${{ needs.build.outputs.short_sha }}.apk
+          # arm64-v8a only: the split per ABI means an APK no longer runs on every device, and
+          # arm64 covers the test fleet. All three splits stay available in the uploaded artifact.
+          APK_PATH: ./downloaded-artifact/app-arm64-v8a-release-${{ needs.build.outputs.short_sha }}.apk
           GITHUB_ACTOR: ${{ github.actor }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: python ./.github/workflows/deploy_artifacts.py
         continue-on-error: true

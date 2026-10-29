@@ -98,7 +98,7 @@ private fun AuthHeader(title: String, subtitle: String) {
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyLarge,
@@ -179,7 +179,7 @@ private fun UnifiedAuthForm(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
             )
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
         }
     }
 
@@ -211,12 +211,12 @@ private fun UnifiedAuthForm(
     if (isSignUpMode && password.isNotEmpty() && state is AuthUiState.SignUp) {
         PasswordStrengthIndicator(
             strength = state.passwordStrength,
-            modifier = Modifier.padding(top = Spacing.Small)
+            modifier = Modifier.padding(top = Spacing.space8)
         )
     }
 
     if (!isSignUpMode) {
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
 
         Text(
             text = stringResource(R.string.forgot_password_link),
@@ -225,12 +225,12 @@ private fun UnifiedAuthForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onForgotPasswordClick() }
-                .padding(vertical = Spacing.ExtraSmall),
+                .padding(vertical = Spacing.space4),
             textAlign = TextAlign.End
         )
     }
 
-    Spacer(modifier = Modifier.height(Spacing.Medium))
+    Spacer(modifier = Modifier.height(Spacing.space16))
 
     AuthButton(
         text = if (isSignUpMode) stringResource(R.string.action_sign_up) else stringResource(R.string.action_sign_in),
@@ -248,7 +248,7 @@ private fun UnifiedAuthForm(
         onGitHubClick = { onOAuthClick("GitHub") }
     )
 
-    Spacer(modifier = Modifier.height(Spacing.Large))
+    Spacer(modifier = Modifier.height(Spacing.space24))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(

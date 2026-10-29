@@ -6,7 +6,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: AppTheme.Spacing.space16) {
                     Image(systemName: "person.circle.fill")
                         .resizable()
                         .frame(width: 100, height: 100)
@@ -24,7 +24,7 @@ struct ProfileView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
 
-                    HStack(spacing: 40) {
+                    HStack(spacing: AppTheme.Spacing.space40) {
                         NavigationLink(destination: FollowersFollowingView()) {
                             VStack {
                                 AnimatedCounter(
@@ -76,7 +76,7 @@ struct ProfileView: View {
                                 Circle()
                                     .fill(Color.orange.opacity(0.8))
                                     .frame(width: 60, height: 60)
-                                    .padding(4)
+                                    .padding(AppTheme.Spacing.space4)
                             }
                         }
                         .padding(.horizontal)
@@ -84,7 +84,7 @@ struct ProfileView: View {
                     .accessibilityLabel("User Stories")
 
                     // Media Grid
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2) {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: AppTheme.Spacing.space2) {
                         ForEach(0..<9) { _ in
                             Rectangle()
                                 .fill(Color.gray.opacity(0.3))

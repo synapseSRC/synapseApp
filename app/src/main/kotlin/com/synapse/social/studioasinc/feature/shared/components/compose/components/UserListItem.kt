@@ -18,8 +18,9 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.crossfade
+import coil3.request.ImageRequest
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.User
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -35,7 +36,7 @@ fun UserListItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space4)
             .clickable { onUserClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -44,7 +45,7 @@ fun UserListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -66,7 +67,7 @@ fun UserListItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = Spacing.SmallMedium)
+                    .padding(start = Spacing.space12)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -86,7 +87,7 @@ fun UserListItem(
                             contentDescription = "Verified",
                             modifier = Modifier
                                 .size(Sizes.IconSemiMedium)
-                                .padding(start = Spacing.ExtraSmall),
+                                .padding(start = Spacing.space4),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -101,7 +102,7 @@ fun UserListItem(
 
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 IconButton(
                     onClick = onMessageClick,

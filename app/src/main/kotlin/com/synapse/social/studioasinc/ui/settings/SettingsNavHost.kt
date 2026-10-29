@@ -2,6 +2,13 @@ package com.synapse.social.studioasinc.ui.settings
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,8 +32,8 @@ import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
-
-
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
 
 @Composable
 fun SettingsNavHost(
@@ -50,7 +57,6 @@ fun SettingsNavHost(
         popEnterTransition = { SettingsAnimations.popEnterTransition },
         popExitTransition = { SettingsAnimations.popExitTransition }
     ) {
-
         composable(route = SettingsDestination.ROUTE_HUB) {
             val viewModel: SettingsHubViewModel = hiltViewModel()
             SettingsHubScreen(
@@ -82,7 +88,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_ACCOUNT) {
             val viewModel: AccountSettingsViewModel = hiltViewModel()
             AccountSettingsScreen(
@@ -104,7 +109,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_REQUEST_ACCOUNT_INFO) {
             val viewModel: RequestAccountInfoViewModel = viewModel()
             RequestAccountInfoScreen(
@@ -114,8 +118,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
-
 
         composable(route = SettingsDestination.ROUTE_PRIVACY) {
             val viewModel: PrivacySecurityViewModel = viewModel()
@@ -131,10 +133,8 @@ fun SettingsNavHost(
                     navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS)
                 },
                 onNavigateToMutedUsers = {
-
                 },
                 onNavigateToActiveSessions = {
-
                 },
                 onNavigateToLastSeen = {
                     navController.navigate(SettingsDestination.ROUTE_PRIVACY_LAST_SEEN)
@@ -156,6 +156,16 @@ fun SettingsNavHost(
                 },
                 onNavigateToPrivacyCheckup = {
                     navController.navigate(SettingsDestination.ROUTE_PRIVACY_CHECKUP)
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_PERMISSIONS) {
+            val viewModel: PermissionManagerViewModel = hiltViewModel()
+            PermissionManagerScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -405,7 +415,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_APPEARANCE) {
             val viewModel: AppearanceViewModel = viewModel()
             AppearanceScreen(
@@ -414,7 +423,6 @@ fun SettingsNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToChatCustomization = {
-
                 },
                 onNavigateToFont = {
                     navController.navigate(SettingsDestination.ROUTE_FONT)
@@ -431,7 +439,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_BACKUP_RESTORE) {
             val viewModel: SettingsBackupViewModel = hiltViewModel()
@@ -451,9 +458,6 @@ fun SettingsNavHost(
             )
         }
 
-
-
-
         composable(route = SettingsDestination.ROUTE_STORAGE) {
             val viewModel: StorageDataViewModel = viewModel(
                 factory = StorageDataViewModelFactory(settingsRepository)
@@ -467,7 +471,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_MANAGE_STORAGE) {
             val viewModel: ManageStorageViewModel = hiltViewModel()
             ManageStorageScreen(
@@ -478,7 +481,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_NETWORK_USAGE) {
             val viewModel: NetworkUsageViewModel = hiltViewModel()
             NetworkUsageScreen(
@@ -488,7 +490,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_BUSINESS_PLATFORM) {
             val viewModel: BusinessPlatformViewModel = hiltViewModel()
@@ -530,7 +531,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_STORAGE_PROVIDER) {
             val viewModel: SettingsViewModel = hiltViewModel()
             StorageProviderScreen(
@@ -538,7 +538,6 @@ fun SettingsNavHost(
                 viewModel = viewModel
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_LANGUAGE) {
             val viewModel: LanguageRegionViewModel = viewModel()
@@ -550,9 +549,8 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_ABOUT) {
-            val viewModel: AboutSupportViewModel = viewModel()
+            val viewModel: AboutSupportViewModel = hiltViewModel()
             AboutSupportScreen(
                 onBackClick = {
                     navController.popBackStack()
@@ -560,20 +558,58 @@ fun SettingsNavHost(
                 onNavigateToLicenses = {
                     navController.navigate(SettingsDestination.ROUTE_LICENSES)
                 },
+                onNavigateToWhatsNew = {
+                    navController.navigate(SettingsDestination.ROUTE_WHATS_NEW)
+                },
+                onNavigateToFeedback = {
+                    navController.navigate(SettingsDestination.ROUTE_FEEDBACK)
+                },
                 viewModel = viewModel
             )
         }
 
+        composable(
+            route = SettingsDestination.ROUTE_LICENSES,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            AboutOpenSourceScreen(onBackClick = { navController.popBackStack() })
+        }
 
-        composable(route = SettingsDestination.ROUTE_LICENSES) {
-            LicensesScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
+        composable(
+            route = SettingsDestination.ROUTE_WHATS_NEW,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            WhatsNewScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(
+            route = SettingsDestination.ROUTE_FEEDBACK,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            FeedbackScreen(
+                onBackClick = { navController.popBackStack() },
+                onSubmitSuccess = { navController.popBackStack() }
             )
         }
 
-
+        composable(
+            route = SettingsDestination.ROUTE_ABOUT_EMPTY,
+            enterTransition = { aboutForwardEnter() },
+            exitTransition = { aboutForwardExit() },
+            popEnterTransition = { aboutBackEnter() },
+            popExitTransition = { aboutBackExit() }
+        ) {
+            AboutEmptyScreen(onBackClick = { navController.popBackStack() })
+        }
 
         composable(route = SettingsDestination.ROUTE_FLAGS) {
             val viewModel: FlagsViewModel = hiltViewModel()
@@ -595,7 +631,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_SYNAPSE_PLUS) {
             SynapsePlusScreen(
                 onBackClick = {
@@ -603,7 +638,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_AVATAR) {
             val viewModel: AvatarViewModel = hiltViewModel()
@@ -615,7 +649,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_FAVOURITES) {
             FavouritesScreen(
                 onBackClick = {
@@ -623,7 +656,6 @@ fun SettingsNavHost(
                 }
             )
         }
-
 
         composable(route = SettingsDestination.ROUTE_ACCESSIBILITY) {
             val viewModel: AccessibilityViewModel = hiltViewModel()
@@ -635,7 +667,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_BLOCKED_CONTACTS) {
             val viewModel: BlockingViewModel = hiltViewModel()
             BlockedContactsScreen(
@@ -646,7 +677,6 @@ fun SettingsNavHost(
             )
         }
 
-
         composable(route = SettingsDestination.ROUTE_SEARCH) {
             com.synapse.social.studioasinc.feature.settings.search.SettingsSearchScreen(
                 onBackClick = { navController.popBackStack() },
@@ -656,40 +686,26 @@ fun SettingsNavHost(
     }
 }
 
+private fun aboutForwardEnter(): EnterTransition =
+    slideInHorizontally(
+        initialOffsetX = { width -> width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeIn(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
 
+private fun aboutForwardExit(): ExitTransition =
+    slideOutHorizontally(
+        targetOffsetX = { width -> -width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeOut(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChatPlaceholderScreen(
-    title: String,
-    onBackClick: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.settings_chat_not_implemented),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
+private fun aboutBackEnter(): EnterTransition =
+    slideInHorizontally(
+        initialOffsetX = { width -> -width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeIn(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))
+
+private fun aboutBackExit(): ExitTransition =
+    slideOutHorizontally(
+        targetOffsetX = { width -> width },
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
+    ) + fadeOut(animationSpec = spring(dampingRatio = 1.0f, stiffness = 1600f))

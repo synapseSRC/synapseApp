@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.professional
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +51,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.business.AccountType
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
 import com.synapse.social.studioasinc.ui.settings.SettingsSection
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,8 +107,8 @@ fun ProfessionalProfileScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = SettingsSpacing.screenPadding),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Large)
+                    .padding(horizontal = AppSpacing.screenPadding),
+                verticalArrangement = Arrangement.spacedBy(Spacing.space24)
             ) {
                 item {
                     AccountTypeSection(
@@ -138,7 +140,7 @@ fun ProfessionalProfileScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(Spacing.Large))
+                    Spacer(modifier = Modifier.height(Spacing.space24))
                 }
             }
         }
@@ -154,14 +156,14 @@ private fun AccountTypeSection(
 ) {
     SettingsSection(title = stringResource(R.string.professional_section_account_type)) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
-            modifier = Modifier.padding(vertical = SettingsSpacing.itemVerticalPadding)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
+            modifier = Modifier.padding(vertical = AppSpacing.itemVerticalPadding)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                    .padding(horizontal = AppSpacing.itemHorizontalPadding)
                     .semantics(mergeDescendants = true) {
                         contentDescription = when (accountType) {
                             AccountType.PERSONAL -> "Personal"
@@ -178,10 +180,10 @@ private fun AccountTypeSection(
                     },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(SettingsSpacing.iconSize)
+                    modifier = Modifier.size(Sizes.IconLarge)
                 )
-                Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = when (accountType) {
                             AccountType.PERSONAL -> stringResource(R.string.professional_account_type_personal)
@@ -212,7 +214,7 @@ private fun AccountTypeSection(
                     onClick = onSwitchToBusiness,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                        .padding(horizontal = AppSpacing.itemHorizontalPadding)
                         .semantics { contentDescription = switchToBusinessLabel }
                 ) {
                     Text(text = switchToBusinessLabel)
@@ -224,7 +226,7 @@ private fun AccountTypeSection(
                     text = error,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                    modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
                 )
             }
         }
@@ -244,10 +246,10 @@ private fun ProfessionalIdentitySection(
     SettingsSection(title = stringResource(R.string.professional_section_identity)) {
         Column(
             modifier = Modifier.padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             ),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             OutlinedTextField(
                 value = occupation,

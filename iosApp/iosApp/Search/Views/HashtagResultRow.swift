@@ -6,7 +6,7 @@ struct HashtagResultRow: View {
     let isTrending: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: AppTheme.Spacing.space16) {
             // Icon
             ZStack {
                 Circle()
@@ -19,7 +19,7 @@ struct HashtagResultRow: View {
             }
 
             // Text Details
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
                 HStack {
                     Text("#\(hashtag.tag)")
                         .font(.headline)
@@ -50,7 +50,7 @@ struct HashtagResultRow: View {
                     .font(.system(size: 14))
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, AppTheme.Spacing.space10)
         .padding(.horizontal)
         .background(Color(.systemBackground))
     }

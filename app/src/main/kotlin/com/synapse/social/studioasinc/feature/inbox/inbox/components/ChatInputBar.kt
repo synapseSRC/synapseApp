@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
+import androidx.compose.ui.graphics.RectangleShape
+
 import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -7,6 +9,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,14 +26,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -41,14 +41,13 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceInputHost
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
-import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
-import com.synapse.social.studioasinc.feature.shared.components.picker.SynapseFilePicker
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ChatInputBar(
     replyingToMessage: Message?,
@@ -61,18 +60,26 @@ fun ChatInputBar(
     getLinkMetadataUseCase: GetLinkMetadataUseCase?,
     context: Context,
     voiceState: VoiceState = VoiceState.Normal,
+    reducedMotion: Boolean,
     onVoiceAction: (VoiceAction) -> Unit = {},
     onInputTextChange: (String) -> Unit,
     onSendMessage: () -> Unit,
     onCancelReply: () -> Unit,
     onCancelEditing: () -> Unit,
-    onUploadAndSendMedia: (filePath: String, fileName: String, contentType: String, messageType: String, caption: String?) -> Unit,
-    onFilesSelected: ((List<PickedFile>) -> Unit)? = null,
+    onAttachmentSelected: (ChatAttachmentCategory) -> Unit,
     replyingToSenderName: String? = null,
     fontScale: Float = 1f
 ) {
     var dismissedPreviewUrl by remember { mutableStateOf<String?>(null) }
     var showAttachmentMenu by remember { mutableStateOf(false) }
+    val attachmentInteraction = remember { MutableInteractionSource() }
+    val attachmentPressed by attachmentInteraction.collectIsPressedAsState()
+    // My design decision (not in M3): subtle press scale on the composer attachment action.
+    val attachmentScale by animateFloatAsState(
+        targetValue = if (attachmentPressed) 0.98f else 1f,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "chatAttachmentButtonPress"
+    )
     val focusRequester = remember { FocusRequester() }
 
     var isFocused by remember { mutableStateOf(false) }
@@ -89,8 +96,8 @@ fun ChatInputBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.ExtraSmall)
-            .padding(top = Spacing.ExtraSmall, bottom = Spacing.Medium)
+            .padding(horizontal = Spacing.space4)
+            .padding(top = Spacing.space4, bottom = Spacing.space16)
     ) {
         // Shared quote preview keeps the composer context consistent with sent reply bubbles.
         AnimatedVisibility(
@@ -131,15 +138,15 @@ fun ChatInputBar(
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = if (replyingToMessage == null) RoundedCornerShape(topStart = Sizes.CornerExtraLarge, topEnd = Sizes.CornerExtraLarge) else RoundedCornerShape(Spacing.None),
+                shape = if (replyingToMessage == null) RoundedCornerShape(topStart = Sizes.CornerExtraLarge, topEnd = Sizes.CornerExtraLarge) else RectangleShape,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                    modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(Sizes.IconSemiMedium))
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.editing_message_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Text(
@@ -166,8 +173,8 @@ fun ChatInputBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(Spacing.ExtraSmall),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    .padding(Spacing.space4),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 smartReplies.forEach { reply ->
                     AssistChip(
@@ -195,7 +202,7 @@ fun ChatInputBar(
                 url = firstUrl,
                 useCase = getLinkMetadataUseCase,
                 onRemove = { dismissedPreviewUrl = firstUrl },
-                modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = Spacing.ExtraSmallMedium).fillMaxWidth()
+                modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space8).fillMaxWidth()
             )
         }
 
@@ -204,6 +211,7 @@ fun ChatInputBar(
             voiceState = voiceState,
             onVoiceAction = onVoiceAction,
             showSendButton = inputText.isNotEmpty(),
+            reducedMotionOverride = reducedMotion,
             onSendMessage = {
                 onSendMessage()
                 dismissedPreviewUrl = null
@@ -217,56 +225,42 @@ fun ChatInputBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.ExtraSmall),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = Spacing.space4),
+                verticalAlignment = Alignment.Bottom
             ) {
-                Box {
+                Box(
+                    modifier = Modifier.padding(bottom = (Sizes.SendButton - 38.dp) / 2)
+                ) {
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(38.dp).graphicsLayer { scaleX = attachmentScale; scaleY = attachmentScale }
                     ) {
                         IconButton(
                             onClick = { showAttachmentMenu = true },
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            interactionSource = attachmentInteraction
                         ) {
                             Icon(
                                 Icons.Default.Add,
-                                contentDescription = "Attach file",
+                                contentDescription = stringResource(R.string.chat_attachment_open_action),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                     if (showAttachmentMenu) {
-                        SynapseFilePicker(
+                        ChatAttachmentSheet(
                             onDismissRequest = { showAttachmentMenu = false },
-                            onFilesSelected = { files ->
+                            onCategorySelected = { category ->
                                 showAttachmentMenu = false
-                                if (onFilesSelected != null) {
-                                    onFilesSelected(files)
-                                } else {
-                                    files.forEach { pickedFile ->
-                                        val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
-                                        if (filePath != null) {
-                                            val type = if (pickedFile.mimeType.startsWith("video/")) "video" else if (pickedFile.mimeType.startsWith("image/")) "image" else if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
-                                            onUploadAndSendMedia(
-                                                filePath,
-                                                pickedFile.fileName,
-                                                pickedFile.mimeType,
-                                                type,
-                                                null
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            maxSelection = 10
+                                onAttachmentSelected(category)
+                            }
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
 
                 BasicTextField(
                     value = inputText,
@@ -274,37 +268,10 @@ fun ChatInputBar(
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = Sizes.InputButtonCompact)
-                        .padding(horizontal = Spacing.ExtraSmall)
-                        .padding(vertical = Spacing.ExtraSmall)
+                        .padding(horizontal = Spacing.space4)
+                        .padding(vertical = Spacing.space4)
                         .focusRequester(focusRequester)
-                        .onFocusChanged { isFocused = it.isFocused }
-                        .graphicsLayer {
-                            compositingStrategy = if (size.height > Sizes.HeartSize.toPx()) {
-                                CompositingStrategy.Offscreen
-                            } else {
-                                CompositingStrategy.Auto
-                            }
-                        }
-                        .drawWithContent {
-                            drawContent()
-                            if (size.height > Sizes.HeartSize.toPx()) {
-                                val fadeSize = Spacing.Medium.toPx()
-                                drawRect(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, Color.Black),
-                                        startY = 0f, endY = fadeSize
-                                    ),
-                                    blendMode = BlendMode.DstIn
-                                )
-                                drawRect(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(Color.Black, Color.Transparent),
-                                        startY = size.height - fadeSize, endY = size.height
-                                    ),
-                                    blendMode = BlendMode.DstIn
-                                )
-                            }
-                        },
+                        .onFocusChanged { isFocused = it.isFocused },
                     enabled = canSendMessage,
                     maxLines = 4,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
@@ -332,7 +299,7 @@ fun ChatInputBar(
                 text = stringResource(R.string.only_admins_can_message_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = Spacing.ExtraSmall)
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = Spacing.space4)
             )
         }
     }

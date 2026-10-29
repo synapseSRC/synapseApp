@@ -45,15 +45,15 @@ fun UserSearchDialog(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = Spacing.ExtraSmall
+            tonalElevation = Sizes.ElevationMedium
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(Spacing.Medium)
+                    .padding(Spacing.space16)
             ) {
 
                 Row(
@@ -70,7 +70,7 @@ fun UserSearchDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
 
                 OutlinedTextField(
@@ -83,20 +83,20 @@ fun UserSearchDialog(
                     shape = MaterialTheme.shapes.medium
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                     ) {
                         if (searchResults.isEmpty() && query.isNotBlank() && !isSearching) {
                             item {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(Spacing.ExtraLarge),
+                                        .padding(Spacing.space32),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
@@ -139,7 +139,7 @@ fun UserSearchItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Spacing.Small),
+            .padding(Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -165,7 +165,7 @@ fun UserSearchItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
         Column {
             Text(

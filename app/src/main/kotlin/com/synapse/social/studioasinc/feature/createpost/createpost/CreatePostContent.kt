@@ -71,8 +71,8 @@ fun CreatePostContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding),
-        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small),
-        verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8),
+        verticalArrangement = Arrangement.spacedBy(Spacing.space16)
     ) {
 
         item {
@@ -132,12 +132,12 @@ fun CreatePostContent(
 
                     val firstUrl = UrlUtils.extractFirstUrl(uiState.postText)
                     if (firstUrl != null && firstUrl != dismissedPreviewUrl && uiState.mediaItems.isEmpty()) {
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
                         LinkPreviewCard(
                             url = firstUrl,
                             useCase = linkPreviewViewModel.getLinkMetadataUseCase,
                             onRemove = { dismissedPreviewUrl = firstUrl },
-                            modifier = Modifier.padding(top = Spacing.Small)
+                            modifier = Modifier.padding(top = Spacing.space8)
                         )
                     }
                 }
@@ -175,13 +175,13 @@ fun CreatePostContent(
 
         itemsIndexed(uiState.threadPosts) { index, threadPost ->
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = Spacing.Medium).height(IntrinsicSize.Min)
+                modifier = Modifier.fillMaxWidth().padding(top = Spacing.space16).height(IntrinsicSize.Min)
             ) {
                 // Thread connector visual
                 Box(
                     modifier = Modifier
-                        .padding(end = Spacing.Medium)
-                        .width(Spacing.Tiny)
+                        .padding(end = Spacing.space16)
+                        .width(Sizes.BorderDefault)
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
                 )
@@ -223,7 +223,7 @@ fun CreatePostContent(
                     }
 
                     if (threadPost.mediaItems.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
                         MediaPreviewGrid(
                             mediaItems = threadPost.mediaItems,
                             onRemove = { mediaIndex -> onRemoveThreadMedia(index, mediaIndex) },
@@ -249,14 +249,14 @@ fun CreatePostContent(
 
         item {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = Spacing.Medium),
+                modifier = Modifier.fillMaxWidth().padding(top = Spacing.space16),
                 contentAlignment = Alignment.CenterStart
             ) {
                 TextButton(onClick = onAddThreadPost) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add to thread",
-                        modifier = Modifier.padding(end = Spacing.Small)
+                        modifier = Modifier.padding(end = Spacing.space8)
                     )
                     Text(stringResource(R.string.action_add_to_thread))
                 }

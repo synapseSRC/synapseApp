@@ -57,13 +57,13 @@ fun PostOptionsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.Medium)
+                .padding(bottom = Spacing.space16)
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 QuickAction(
@@ -100,7 +100,7 @@ fun PostOptionsBottomSheet(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.Small))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.space8))
 
             val options = buildOptions(
                 isOwner = isOwner,
@@ -173,7 +173,7 @@ internal fun QuickAction(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+        Spacer(modifier = Modifier.height(Spacing.space4))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall
@@ -187,7 +187,7 @@ internal fun OptionItem(option: PostOption) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = option.action)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -196,7 +196,7 @@ internal fun OptionItem(option: PostOption) {
             tint = if (option.isDangerous) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(Sizes.IconLarge)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(
             text = option.label,
             style = MaterialTheme.typography.bodyLarge,

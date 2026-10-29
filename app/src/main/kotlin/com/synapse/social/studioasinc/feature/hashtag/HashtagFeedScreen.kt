@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.post.PostActions
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
+import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 
@@ -26,6 +27,10 @@ fun HashtagFeedScreen(
     onNavigateToProfile: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    var showMediaViewer by remember { mutableStateOf(false) }
+    var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedMediaIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(tag) {
         viewModel.init(tag)
@@ -66,7 +71,14 @@ fun HashtagFeedScreen(
                                 onOptionClick = { },
                                 onPollVote = viewModel::votePoll,
                                 onUserClick = { userId -> onNavigateToProfile(userId) },
-                                onMediaClick = { _ -> onNavigateToPost(post.id, null) },
+                                onMediaClick = { post, index ->
+                                    val urls = post.mediaItems?.mapNotNull { it.url } ?: listOfNotNull(post.postImage)
+                                    if (urls.isNotEmpty()) {
+                                        selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                        selectedMediaUrls = urls
+                                        showMediaViewer = true
+                                    }
+                                },
                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                             )
                         }
@@ -74,6 +86,13 @@ fun HashtagFeedScreen(
                     }
                 }
             }
+        }
+        if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
+            MediaViewer(
+                mediaUrls = selectedMediaUrls,
+                initialPage = selectedMediaIndex,
+                onDismiss = { showMediaViewer = false }
+            )
         }
     }
 }

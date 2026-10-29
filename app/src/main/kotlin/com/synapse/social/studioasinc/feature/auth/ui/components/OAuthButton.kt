@@ -56,20 +56,20 @@ fun OAuthButton(
         interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
-            .height(Spacing.Huge)
+            .height(Sizes.ButtonHeightLarge)
             .scale(scale),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
     ) {
         Image(
             painter = painterResource(id = iconRes),
             contentDescription = null,
             modifier = Modifier
                 .size(Sizes.IconLarge)
-                .padding(end = Spacing.Small)
+                .padding(end = Spacing.space8)
         )
         Text(
             text = label,

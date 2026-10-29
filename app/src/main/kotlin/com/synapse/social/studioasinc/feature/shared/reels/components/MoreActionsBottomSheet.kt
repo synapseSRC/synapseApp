@@ -25,7 +25,7 @@ fun MoreActionsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(bottom = Spacing.space32)
         ) {
             ActionItem(
                 icon = Icons.Default.Flag,
@@ -66,11 +66,11 @@ fun ActionItem(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
+            modifier = Modifier.padding(Spacing.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(imageVector = icon, contentDescription = title)
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
         }
     }

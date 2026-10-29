@@ -1,13 +1,17 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -17,12 +21,11 @@ import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithSt
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
+import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.User
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,16 +40,29 @@ fun ChatTopAppBar(
     isParticipantActive: Boolean,
     chatId: String,
     disappearingMode: DisappearingMode,
-    isLocked: Boolean,
+    isMuted: Boolean = false,
+    isMuteUpdating: Boolean = false,
     onClearSelection: () -> Unit,
     onDeleteSelectedMessages: () -> Unit,
     onNavigateBack: () -> Unit,
     onSummarizeChat: () -> Unit,
     onNavigateToGroupInfo: (String, String) -> Unit,
     onNavigateToChatInfo: (String, String) -> Unit,
-    onSetDisappearingMode: (DisappearingMode) -> Unit,
-    onLockChat: () -> Unit,
-    onUnlockChat: () -> Unit
+    onOpenDisappearingMessages: () -> Unit,
+    onStartVoiceCall: () -> Unit = {},
+    onStartVideoCall: () -> Unit = {},
+    showCallActions: Boolean = true,
+    onNewGroup: () -> Unit = {},
+    onSearchInChat: () -> Unit = {},
+    onOpenMediaLinksAndDocs: () -> Unit = {},
+    onToggleMuteNotifications: () -> Unit = {},
+    onOpenChatTheme: () -> Unit = {},
+    onReportChat: () -> Unit = {},
+    onBlockChat: () -> Unit = {},
+    onClearChat: () -> Unit = {},
+    onExportChat: () -> Unit = {},
+    onAddShortcut: () -> Unit = {},
+    onAddToFolder: () -> Unit = {}
 ) {
     @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
@@ -61,8 +77,16 @@ fun ChatTopAppBar(
             },
             actions = {
                 IconButton(onClick = {
-                    val selectedContent = messages.filter { it.id in selectedMessageIds }.joinToString("\n") { it.content }
-                    clipboard.setText(AnnotatedString(selectedContent))
+                    val selectedContent = messages
+                        .filter {
+                            it.id in selectedMessageIds &&
+                                !it.isDeleted &&
+                                it.contentStatus != ContentStatus.DELETED
+                        }
+                        .joinToString("\n") { it.content }
+                    if (selectedContent.isNotBlank()) {
+                        clipboard.setText(AnnotatedString(selectedContent))
+                    }
                     onClearSelection()
                 }) {
                     Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
@@ -88,7 +112,7 @@ fun ChatTopAppBar(
                         showActiveStatus = true,
                         displayName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
-                    Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+                    Spacer(modifier = Modifier.width(Spacing.space12))
                     Column {
                         Text(
                             text = participantProfile?.displayName
@@ -99,10 +123,12 @@ fun ChatTopAppBar(
                             fontWeight = FontWeight.Bold
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
                             val statusText = when {
                                 typingStatus?.isTyping == true -> "Typing..."
                                 isParticipantActive -> "Online"
-                                else -> participantProfile?.lastSeen?.let { "Last seen ${formatChatTimestamp(it)}" } ?: "Offline"
+                                formattedLastSeen != null -> "Last seen $formattedLastSeen"
+                                else -> "Offline"
                             }
                             val statusColor = when {
                                 typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
@@ -115,7 +141,7 @@ fun ChatTopAppBar(
                                 color = statusColor
                             )
                             if (disappearingMode != DisappearingMode.OFF) {
-                                Spacer(modifier = Modifier.width(Spacing.Small))
+                                Spacer(modifier = Modifier.width(Spacing.space8))
                                 Icon(
                                     Icons.Default.Timer,
                                     contentDescription = "Disappearing messages on",
@@ -133,58 +159,47 @@ fun ChatTopAppBar(
                 }
             },
             actions = {
-                IconButton(onClick = onSummarizeChat) {
-                    Icon(
-                        Icons.Default.AutoAwesome,
-                        contentDescription = "Summarize Chat with AI",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                IconButton(onClick = {
-                    if (participantProfile?.accountType != "group") {
-                        onNavigateToChatInfo(chatId, participantId ?: "")
-                    } else {
-                        onNavigateToGroupInfo(chatId, participantProfile?.displayName ?: initialParticipantName ?: "Group")
+                if (showCallActions) {
+                    IconButton(onClick = onStartVoiceCall) {
+                        Icon(
+                            Icons.Default.Call,
+                            contentDescription = stringResource(R.string.chat_action_voice_call)
+                        )
                     }
-                }) {
-                    Icon(Icons.Default.Info, contentDescription = "User/Group Info")
+                    IconButton(onClick = onStartVideoCall) {
+                        Icon(
+                            Icons.Default.Videocam,
+                            contentDescription = stringResource(R.string.chat_action_video_call)
+                        )
+                    }
                 }
-                var showMoreMenu by remember { mutableStateOf(false) }
-                IconButton(onClick = { showMoreMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                }
-                DropdownMenu(
-                    expanded = showMoreMenu,
-                    onDismissRequest = { showMoreMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.disappearing_messages_label, disappearingMode.name)) },
-                        leadingIcon = { Icon(Icons.Default.Timer, contentDescription = null) },
-                        onClick = {
-                            val nextMode = when (disappearingMode) {
-                                DisappearingMode.OFF -> DisappearingMode.TWENTY_FOUR_HOURS
-                                DisappearingMode.TWENTY_FOUR_HOURS -> DisappearingMode.SEVEN_DAYS
-                                DisappearingMode.SEVEN_DAYS -> DisappearingMode.OFF
-                                else -> DisappearingMode.OFF
-                            }
-                            onSetDisappearingMode(nextMode)
-                            showMoreMenu = false
+                ChatOverflowMenu(
+                    isMuted = isMuted,
+                    isMuteUpdating = isMuteUpdating,
+                    onSummarizeChat = onSummarizeChat,
+                    onNewGroup = onNewGroup,
+                    onViewContact = {
+                        if (participantProfile?.accountType != "group") {
+                            onNavigateToChatInfo(chatId, participantId ?: "")
+                        } else {
+                            onNavigateToGroupInfo(
+                                chatId,
+                                participantProfile.displayName ?: initialParticipantName ?: "Group"
+                            )
                         }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(if (isLocked) "Unlock Chat" else "Lock Chat") },
-                        leadingIcon = { Icon(if (isLocked) Icons.Default.LockOpen else Icons.Default.Lock, contentDescription = null) },
-                        onClick = {
-                            if (isLocked) onUnlockChat() else onLockChat()
-                            showMoreMenu = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.mute_notifications_label)) },
-                        leadingIcon = { Icon(Icons.Default.NotificationsOff, contentDescription = null) },
-                        onClick = { showMoreMenu = false }
-                    )
-                }
+                    },
+                    onSearch = onSearchInChat,
+                    onMediaLinksAndDocs = onOpenMediaLinksAndDocs,
+                    onMuteNotifications = onToggleMuteNotifications,
+                    onDisappearingMessages = onOpenDisappearingMessages,
+                    onChatTheme = onOpenChatTheme,
+                    onReport = onReportChat,
+                    onBlock = onBlockChat,
+                    onClearChat = onClearChat,
+                    onExportChat = onExportChat,
+                    onAddShortcut = onAddShortcut,
+                    onAddToFolder = onAddToFolder
+                )
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -194,15 +209,228 @@ fun ChatTopAppBar(
     }
 }
 
+@Composable
+private fun ChatOverflowMenu(
+    isMuted: Boolean = false,
+    isMuteUpdating: Boolean = false,
+    onSummarizeChat: () -> Unit,
+    onNewGroup: () -> Unit,
+    onViewContact: () -> Unit,
+    onSearch: () -> Unit,
+    onMediaLinksAndDocs: () -> Unit,
+    onMuteNotifications: () -> Unit,
+    onDisappearingMessages: () -> Unit,
+    onChatTheme: () -> Unit,
+    onReport: () -> Unit,
+    onBlock: () -> Unit,
+    onClearChat: () -> Unit,
+    onExportChat: () -> Unit,
+    onAddShortcut: () -> Unit,
+    onAddToFolder: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var moreExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.chat_action_more_options)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+                moreExpanded = false
+            }
+        ) {
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_summary,
+                icon = Icons.Default.AutoAwesome,
+                onClick = {
+                    expanded = false
+                    onSummarizeChat()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_new_group,
+                icon = Icons.Default.GroupAdd,
+                onClick = {
+                    expanded = false
+                    onNewGroup()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_view_contact,
+                icon = Icons.Default.Person,
+                onClick = {
+                    expanded = false
+                    onViewContact()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_search,
+                icon = Icons.Default.Search,
+                onClick = {
+                    expanded = false
+                    onSearch()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_media_links_docs,
+                icon = Icons.Default.PermMedia,
+                onClick = {
+                    expanded = false
+                    onMediaLinksAndDocs()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = if (isMuted) R.string.chat_menu_unmute_notifications else R.string.chat_menu_mute_notifications,
+                icon = if (isMuted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                enabled = !isMuteUpdating,
+                onClick = {
+                    expanded = false
+                    onMuteNotifications()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_disappearing_messages,
+                icon = Icons.Default.Timer,
+                onClick = {
+                    expanded = false
+                    onDisappearingMessages()
+                }
+            )
+            ChatDropdownMenuItem(
+                labelRes = R.string.chat_menu_chat_theme,
+                icon = Icons.Default.Palette,
+                onClick = {
+                    expanded = false
+                    onChatTheme()
+                }
+            )
+            Box {
+                ChatDropdownMenuItem(
+                    labelRes = R.string.chat_menu_more,
+                    icon = Icons.Default.MoreHoriz,
+                    trailingIcon = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        moreExpanded = true
+                    }
+                )
+                DropdownMenu(
+                    expanded = moreExpanded,
+                    onDismissRequest = { moreExpanded = false }
+                ) {
+                    ChatDropdownMenuItem(
+                        labelRes = R.string.chat_menu_report,
+                        icon = Icons.Default.Report,
+                        destructive = true,
+                        onClick = {
+                            moreExpanded = false
+                            expanded = false
+                            onReport()
+                        }
+                    )
+                    ChatDropdownMenuItem(
+                        labelRes = R.string.chat_menu_block,
+                        icon = Icons.Default.Block,
+                        destructive = true,
+                        onClick = {
+                            moreExpanded = false
+                            expanded = false
+                            onBlock()
+                        }
+                    )
+                    ChatDropdownMenuItem(
+                        labelRes = R.string.chat_menu_clear_chat,
+                        icon = Icons.Default.Delete,
+                        destructive = true,
+                        onClick = {
+                            moreExpanded = false
+                            expanded = false
+                            onClearChat()
+                        }
+                    )
+                    ChatDropdownMenuItem(
+                        labelRes = R.string.chat_menu_export_chat,
+                        icon = Icons.Default.Share,
+                        onClick = {
+                            moreExpanded = false
+                            expanded = false
+                            onExportChat()
+                        }
+                    )
+                    ChatDropdownMenuItem(
+                        labelRes = R.string.chat_menu_add_shortcut,
+                        icon = Icons.Default.Add,
+                        onClick = {
+                            moreExpanded = false
+                            expanded = false
+                            onAddShortcut()
+                        }
+                    )
+                    ChatDropdownMenuItem(
+                        labelRes = R.string.chat_menu_add_to_folder,
+                        icon = Icons.Default.Folder,
+                        onClick = {
+                            moreExpanded = false
+                            expanded = false
+                            onAddToFolder()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatDropdownMenuItem(
+    @StringRes labelRes: Int,
+    icon: ImageVector,
+    destructive: Boolean = false,
+    trailingIcon: (@Composable () -> Unit)? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    val contentColor = if (destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    DropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(labelRes),
+                color = contentColor
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor
+            )
+        },
+        trailingIcon = trailingIcon,
+        enabled = enabled,
+        onClick = onClick
+    )
+}
+
 /**
- * Formats an ISO timestamp for "last seen" display.
+ * Formats an ISO or DB timestamp for "last seen" display.
  */
 private fun formatChatTimestamp(isoTimestamp: String): String {
-    return try {
-        val instant = Instant.parse(isoTimestamp)
-        val formatter = DateTimeFormatter.ofPattern("MMM d, h:mm a").withZone(ZoneId.systemDefault())
-        formatter.format(instant)
-    } catch (e: Exception) {
-        ""
+    val formatted = TimestampFormatter.formatLastSeen(isoTimestamp)
+    return formatted.ifBlank {
+        TimestampFormatter.formatRelative(isoTimestamp)
     }
 }

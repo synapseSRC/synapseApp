@@ -123,7 +123,7 @@ data class CallMetadata(
     val callId: String,
     val isVideo: Boolean = false,
     val durationSeconds: Int = 0,
-    val callStatus: String // MISSED, COMPLETED, REJECTED, BUSY
+    val callStatus: String // A CallEndReason name, or MISSED; read back by callEndReasonFromRaw()
 )
 
 @Serializable

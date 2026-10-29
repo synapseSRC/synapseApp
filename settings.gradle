@@ -2,7 +2,7 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id.startsWith("org.jetbrains.kotlin")) {
-                useVersion("2.3.20")
+                useVersion("2.4.21")
             }
         }
     }
@@ -14,10 +14,13 @@ pluginManagement {
         maven { url = "https://jitpack.io" }
     }
     plugins {
-        id 'com.android.application' version '9.1.0' apply false
-        id 'com.android.library' version '9.1.0' apply false
-        id 'org.jetbrains.kotlin.android' version '2.3.20' apply false
+        id 'com.android.application' version '9.4.1' apply false
+        id 'com.android.library' version '9.4.1' apply false
+        id 'org.jetbrains.kotlin.android' version '2.4.21' apply false
     }
+}
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 dependencyResolutionManagement {
@@ -27,6 +30,10 @@ dependencyResolutionManagement {
         maven { url = "https://repo1.maven.org/maven2/" }
         mavenCentral()
         maven { url = "https://jitpack.io" }
+        maven {
+            name = "SignalBuildArtifacts"
+            url = "https://build-artifacts.signal.org/libraries/maven/"
+        }
 
         // Add flatDir for the app module
         flatDir {

@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -7,7 +7,6 @@ import com.synapse.social.studioasinc.data.local.AppSettingsManager
 import com.synapse.social.studioasinc.data.repository.*
 import com.synapse.social.studioasinc.data.repository.DomainProfileRepositoryAdapter
 import com.synapse.social.studioasinc.data.repository.DomainSettingsRepositoryAdapter
-import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.shared.core.media.AndroidMediaCompressor
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
@@ -52,8 +51,10 @@ import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepo
 import com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PlatformInfoProvider
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
+import com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository
 import com.synapse.social.studioasinc.shared.domain.repository.StorageRepository
 import com.synapse.social.studioasinc.shared.domain.repository.UserPreferencesRepository
+import com.synapse.social.studioasinc.domain.repository.ProfileRepository
 import com.synapse.social.studioasinc.shared.domain.service.MediaCompressor
 import com.synapse.social.studioasinc.shared.domain.usecase.CheckForUpdatesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
@@ -95,22 +96,6 @@ import kotlinx.serialization.json.Json
 @Module
 @InstallIn(SingletonComponent::class)
 object SettingsModule {
-
-    @Provides
-    @Singleton
-    fun provideSettingsRepositoryImpl(@ApplicationContext context: Context): SettingsRepositoryImpl {
-        return SettingsRepositoryImpl.getInstance(context)
-    }
-    @Provides
-    @Singleton
-    fun provideDataSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository {
-        return impl
-    }
-    @Provides
-    @Singleton
-    fun provideSettingsRepository(@ApplicationContext context: Context): com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository {
-        return DomainSettingsRepositoryAdapter(SettingsRepositoryImpl.getInstance(context))
-    }
     @Provides
     @Singleton
     fun provideShouldShowProfilePicSuggestionUseCase(
@@ -133,4 +118,43 @@ object SettingsModule {
         return AppSettingsManager.getInstance(context)
     }
 
+    @Provides
+    @Singleton
+    fun provideSignalProtocolManager(@ApplicationContext context: Context): SignalProtocolManager {
+        return AndroidSignalProtocolManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedDomainSettingsRepository(
+        settingsRepositoryImpl: com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
+    ): com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository {
+        return DomainSettingsRepositoryAdapter(settingsRepositoryImpl)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDataDomainSettingsRepository(
+        settingsRepositoryImpl: com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
+    ): com.synapse.social.studioasinc.data.repository.SettingsRepository {
+        return settingsRepositoryImpl
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedDomainProfileRepository(
+        profileRepository: com.synapse.social.studioasinc.data.repository.ProfileRepository
+    ): com.synapse.social.studioasinc.domain.repository.ProfileRepository {
+        return DomainProfileRepositoryAdapter(profileRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun providePasskeyRepository(
+        client: io.github.jan.supabase.SupabaseClient
+    ): PasskeyRepository {
+        return com.synapse.social.studioasinc.shared.data.repository.PasskeyRepositoryImpl(client)
+    }
+
 }
+

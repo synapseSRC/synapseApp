@@ -16,6 +16,10 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.auth.SocialProvider
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 
 
@@ -41,7 +45,7 @@ fun AccountSettingsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.account_settings_title)) },
@@ -55,15 +59,15 @@ fun AccountSettingsScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -80,8 +84,8 @@ fun AccountSettingsScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
 
             item {
@@ -263,20 +267,20 @@ private fun LinkedAccountItem(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.itemHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 ),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
 
                 val brandIconRes = getProviderIcon(provider)
@@ -284,14 +288,14 @@ private fun LinkedAccountItem(
                     Icon(
                         painter = painterResource(brandIconRes),
                         contentDescription = null,
-                        modifier = Modifier.size(SettingsSpacing.iconSize),
+                        modifier = Modifier.size(Sizes.IconLarge),
                         tint = androidx.compose.ui.graphics.Color.Unspecified
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Filled.Info,
                         contentDescription = null,
-                        modifier = Modifier.size(SettingsSpacing.iconSize)
+                        modifier = Modifier.size(Sizes.IconLarge)
                     )
                 }
 
@@ -299,14 +303,14 @@ private fun LinkedAccountItem(
                 Column {
                     Text(
                         text = provider.displayName,
-                        style = SettingsTypography.itemTitle,
+                        style = AppTypography.itemTitle,
                         color = if (enabled) MaterialTheme.colorScheme.onSurface
                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = if (isLinked) stringResource(R.string.settings_linked_accounts_connected) else stringResource(R.string.settings_linked_accounts_not_connected),
-                        style = SettingsTypography.itemSubtitle,
+                        style = AppTypography.itemSubtitle,
                         color = if (isLinked) MaterialTheme.colorScheme.primary
                                else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -317,7 +321,7 @@ private fun LinkedAccountItem(
             FilledTonalButton(
                 onClick = if (isLinked) onDisconnect else onConnect,
                 enabled = enabled,
-                shape = SettingsShapes.itemShape,
+                shape = AppShapes.itemShape,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = if (isLinked) MaterialTheme.colorScheme.errorContainer
                                    else MaterialTheme.colorScheme.primaryContainer,
@@ -327,7 +331,7 @@ private fun LinkedAccountItem(
             ) {
                 Text(
                     text = if (isLinked) stringResource(R.string.settings_linked_accounts_disconnect) else stringResource(R.string.settings_linked_accounts_connect),
-                    style = SettingsTypography.buttonText
+                    style = AppTypography.buttonText
                 )
             }
         }

@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
@@ -44,8 +44,7 @@ import com.synapse.social.studioasinc.domain.model.FeelingActivity
 import com.synapse.social.studioasinc.domain.model.FeelingType
 import com.synapse.social.studioasinc.domain.model.LocationData
 import androidx.compose.ui.res.stringResource
-import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
-import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
+import androidx.compose.ui.text.style.TextOverflow
 import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
 import com.synapse.social.studioasinc.feature.shared.theme.AccentYellow
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -105,14 +104,23 @@ fun CreatePostTopBar(
                 isScheduled -> stringResource(R.string.schedule)
                 else -> stringResource(R.string.post)
             }
-            ExpressiveButton(
+            Button(
                 onClick = onSubmitPost,
+                modifier = Modifier.height(Sizes.HeightMedium),
                 enabled = isEnabled,
-                text = buttonText,
-                variant = ButtonVariant.Filled,
-                modifier = Modifier.height(Sizes.HeightMedium)
-            )
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+                shapes = ButtonDefaults.shapesFor(Sizes.HeightMedium),
+                contentPadding = PaddingValues(
+                    horizontal = Spacing.space16,
+                    vertical = Spacing.space12
+                )
+            ) {
+                Text(
+                    text = buttonText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.width(Spacing.space16))
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,

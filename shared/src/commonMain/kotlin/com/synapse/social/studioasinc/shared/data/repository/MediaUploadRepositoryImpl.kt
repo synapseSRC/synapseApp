@@ -64,7 +64,7 @@ class MediaUploadRepositoryImpl(
             StorageProvider.DEFAULT -> throw IllegalStateException("Default provider should have been resolved")
             StorageProvider.IMGBB -> imgBBUploadService
             StorageProvider.CLOUDINARY -> cloudinaryUploadService
-            StorageProvider.SUPABASE -> supabaseUploadService
+            StorageProvider.PRIMARY -> supabaseUploadService
             StorageProvider.CLOUDFLARE_R2 -> r2UploadService
         }
     }

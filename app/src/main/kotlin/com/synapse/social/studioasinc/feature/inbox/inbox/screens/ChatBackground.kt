@@ -9,9 +9,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.decode.SvgDecoder
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.synapse.social.studioasinc.feature.shared.theme.safeParseColorHex
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
 
@@ -45,7 +45,6 @@ internal fun ChatBackground(
                     model = ImageRequest.Builder(context)
                         .data(resId)
                         .crossfade(false)
-                        .decoderFactory(SvgDecoder.Factory())
                         .build(),
                     contentDescription = "Background",
                     modifier = modifier
@@ -65,11 +64,6 @@ internal fun ChatBackground(
                         model = ImageRequest.Builder(context)
                             .data(resId)
                             .crossfade(false)
-                            .apply {
-                                if (chatWallpaperType == WallpaperType.PATTERN) {
-                                    decoderFactory(SvgDecoder.Factory())
-                                }
-                            }
                             .build(),
                         contentDescription = "Background",
                         modifier = modifier

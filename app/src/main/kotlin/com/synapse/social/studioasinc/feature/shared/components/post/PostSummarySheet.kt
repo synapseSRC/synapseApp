@@ -27,8 +27,8 @@ fun PostSummarySheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Large, vertical = Spacing.Medium)
-                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + Spacing.Medium),
+                .padding(horizontal = Spacing.space24, vertical = Spacing.space16)
+                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + Spacing.space16),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -37,13 +37,13 @@ fun PostSummarySheet(
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = stringResource(R.string.gemini_summary_title),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             when {
                 isSummarizing -> CircularProgressIndicator()
                 error != null -> Text(
@@ -57,7 +57,7 @@ fun PostSummarySheet(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
         }
     }
 }

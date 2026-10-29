@@ -37,7 +37,7 @@ fun ReportPostDialog(
                 Text(
                     text = stringResource(R.string.report_post_title),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = Spacing.Small)
+                    modifier = Modifier.padding(bottom = Spacing.space8)
                 )
 
                 reasons.forEach { reason ->
@@ -48,14 +48,14 @@ fun ReportPostDialog(
                                 selected = selectedReason == reason,
                                 onClick = { selectedReason = reason }
                             )
-                            .padding(vertical = Spacing.Small),
+                            .padding(vertical = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = selectedReason == reason,
                             onClick = { selectedReason = reason }
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(text = reason)
                     }
                 }

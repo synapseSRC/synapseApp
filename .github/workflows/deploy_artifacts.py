@@ -39,7 +39,7 @@ async def progress_callback(current, total):
     sys.stdout.write(f"\r{progress_percentage:.2f}% uploaded - {uploaded_size}/{total_size}")
     sys.stdout.flush()
 
-async def send_file(client, group_id, topic_id, file_path, commit_info, github_actor):
+async def send_file(client, group_id, topic_id, file_path, commit_info, github_actor, branch_name):
     """Sends the file to Telegram with the formatted caption."""
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
@@ -56,6 +56,7 @@ async def send_file(client, group_id, topic_id, file_path, commit_info, github_a
         author_display = author_name
 
     message = (
+        f"**Branch:** `{branch_name}`\n"
         f"**Commit by:** {author_display}\n"
         f"**Commit message:** {commit_message}\n"
         f"**Commit hash:** #{commit_hash_short}"
@@ -97,6 +98,7 @@ async def main():
     topic_id_str = os.getenv("TOPIC_ID")
     apk_path = os.getenv("APK_PATH")
     github_actor = os.getenv("GITHUB_ACTOR")
+    branch_name = os.getenv("BRANCH_NAME") or os.getenv("GITHUB_REF_NAME", "unknown")
 
     if not all([api_id_str, api_hash, bot_token, group_id_str, apk_path]):
         logger.error("Missing required environment variables.")
@@ -123,14 +125,14 @@ async def main():
     client = TelegramClient('bot_session', api_id, api_hash)
     try:
         await client.start(bot_token=bot_token)
-        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor)
+        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor, branch_name)
     except FloodWaitError as e:
         wait_time = e.seconds
         logger.warning(f"Rate limited during client start. Waiting {wait_time} seconds...")
         time.sleep(wait_time)
         # Retry client start after waiting
         await client.start(bot_token=bot_token)
-        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor)
+        await send_file(client, group_id, topic_id, apk_path, commit_info, github_actor, branch_name)
     finally:
         await client.disconnect()
 

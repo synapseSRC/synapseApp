@@ -14,6 +14,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import io.github.jan.supabase.SupabaseClient as SupabaseClientType
@@ -22,22 +23,14 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 @Serializable
-data class FollowInsert(
-    val follower_id: String,
-    val following_id: String
-)
-
-@Serializable
 private data class FollowingIdResponse(
     val following_id: String
 )
-
 
 class ProfileRepositoryImpl(
     private val client: SupabaseClientType,
     private val commentRepository: CommentRepositoryImpl
 ) : ProfileRepository {
-
     private val postsRepository = ProfilePostsRepositoryImpl(
         client = client,
         commentRepository = commentRepository,
@@ -47,7 +40,6 @@ class ProfileRepositoryImpl(
     )
 
     companion object {
-
         internal const val KEY_UID = "uid"
         internal const val KEY_USERNAME = "username"
         internal const val KEY_NICKNAME = "nickname"
@@ -80,11 +72,16 @@ class ProfileRepositoryImpl(
         internal const val KEY_PUBLIC_EMAIL = "public_email"
     }
 
-
-
     internal fun resolveUserId(userId: String): String? {
         return if (userId == "me") {
-            client.auth.currentUserOrNull()?.id
+            val authId = client.auth.currentUserOrNull()?.id ?: return null
+            // Resolve auth id to the public users.uid used by posts.author_uid
+            runBlocking {
+                client.from("users").select(columns = Columns.list("uid")) {
+                    filter { eq("id", authId) }
+                }.decodeSingleOrNull<JsonObject>()
+                    ?.get("uid")?.let { if (it is JsonPrimitive) it.contentOrNull else null }
+            } ?: authId
         } else {
             userId
         }
@@ -101,8 +98,31 @@ class ProfileRepositoryImpl(
             name = data.getNullableString(KEY_DISPLAY_NAME),
             nickname = data.getNullableString(KEY_NICKNAME),
             bio = data.getNullableString(KEY_BIO),
-            avatar = data.getNullableString(KEY_AVATAR)?.let { constructAvatarUrl(it) },
-            coverImageUrl = data.getNullableString(KEY_COVER_IMAGE)?.let { SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_COVERS, it) },
+            avatar = data.getNullableString(KEY_AVATAR)?.takeIf { it.isNotBlank() }?.let { avatarReference ->
+                if (!avatarReference.startsWith("private-media://")) {
+                    constructAvatarUrl(avatarReference)
+                } else {
+                    try {
+                        SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, avatarReference)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        android.util.Log.w("ProfileRepository", "Avatar image unavailable; loading profile without it", error)
+                        null
+                    }
+                }
+            },
+            coverImageUrl = data.getNullableString(KEY_COVER_IMAGE)?.takeIf { it.isNotBlank() }?.let { coverReference ->
+                // A missing or inaccessible cover should not prevent the profile from loading.
+                try {
+                    SupabaseClient.createSignedStorageUrl(SupabaseClient.BUCKET_USER_COVERS, coverReference)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    android.util.Log.w("ProfileRepository", "Cover image unavailable; loading profile without it", error)
+                    null
+                }
+            },
             isVerified = data.getBoolean(KEY_VERIFY),
             status = UserStatus.fromString(data.getNullableString(KEY_STATUS)),
             isPrivate = data.getBoolean(KEY_IS_PRIVATE),
@@ -152,7 +172,6 @@ class ProfileRepositoryImpl(
             if (response == null) {
                 android.util.Log.e("ProfileRepository", "Profile not found for userId: $actualUserId")
 
-
                 try {
                     val currentUser = client.auth.currentUserOrNull()
                     if (currentUser != null && currentUser.id == actualUserId) {
@@ -173,13 +192,11 @@ class ProfileRepositoryImpl(
                         client.from("users").insert(userMap)
                         android.util.Log.d("ProfileRepository", "Created missing profile, retrying query")
 
-
                         val retryResponse = client.from("users").select() {
                             filter { eq(KEY_UID, actualUserId) }
                         }.decodeSingleOrNull<JsonObject>()
 
                         if (retryResponse != null) {
-
                             val postCount = try {
                                 client.from("posts").select(columns = Columns.raw("count")) {
                                     filter { eq(ProfilePostsRepositoryImpl.KEY_AUTHOR_UID, actualUserId) }
@@ -195,6 +212,8 @@ class ProfileRepositoryImpl(
                             return@flow
                         }
                     }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
                 } catch (createError: Exception) {
                     android.util.Log.e("ProfileRepository", "Failed to create missing profile", createError)
                 }
@@ -202,7 +221,6 @@ class ProfileRepositoryImpl(
                 emit(Result.failure(Exception("Profile not found for user: $actualUserId")))
                 return@flow
             }
-
 
             val postCount = if (isLimitedPreview) {
                 response.getInt(KEY_POSTS_COUNT)
@@ -218,6 +236,8 @@ class ProfileRepositoryImpl(
             val profile = parseUserProfile(response, postCount.toInt())
             android.util.Log.d("ProfileRepository", "Profile loaded successfully for userId: $actualUserId")
             emit(Result.success(profile))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             android.util.Log.e("ProfileRepository", "Failed to load profile for userId: $actualUserId", e)
             emit(Result.failure(Exception("Failed to load profile: ${e.message}", e)))
@@ -265,7 +285,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("request_follow", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<String>()
+        }).decodeSingleOrNull<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -276,7 +296,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("unfollow_user", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<Boolean>()
+        }).decodeSingleOrNull<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -297,7 +317,6 @@ class ProfileRepositoryImpl(
     override suspend fun getFollowing(userId: String, limit: Int, offset: Int): Result<List<UserProfile>> = try {
         val actualUserId = resolveUserId(userId) ?: return Result.failure(Exception("User not authenticated"))
 
-
         val followingIds = client.from("follows").select(columns = Columns.raw("following_id")) {
             filter { eq("follower_id", actualUserId) }
             limit(limit.toLong())
@@ -309,7 +328,6 @@ class ProfileRepositoryImpl(
         if (followingIds.isEmpty()) {
             Result.success(emptyList())
         } else {
-
             val usersResponse = client.from("users").select {
                 filter { isIn(KEY_UID, followingIds) }
             }.decodeList<JsonObject>()

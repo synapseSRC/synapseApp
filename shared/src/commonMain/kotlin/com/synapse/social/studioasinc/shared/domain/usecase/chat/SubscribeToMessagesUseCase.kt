@@ -13,4 +13,7 @@ class SubscribeToMessagesUseCase(
         // so a second decryption attempt would fail and leave messages showing "Message is encrypted".
         return repository.subscribeToMessages(chatId)
     }
+
+    fun onConnected(chatId: String, onConnected: suspend () -> Unit): Flow<Message> =
+        repository.subscribeToMessages(chatId, onConnected)
 }

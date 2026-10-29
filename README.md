@@ -1,10 +1,4 @@
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
-[![Kotlin Version](https://img.shields.io/badge/kotlin-2.3.20-blue.svg)](https://kotlinlang.org/)
-[![Compose Version](https://img.shields.io/badge/compose-2026.03.00-orange.svg)](https://developer.android.com/jetpack/compose)
-[![Supabase](https://img.shields.io/badge/backend-Supabase-green.svg)](https://supabase.com/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-informational.svg)](#)
-
+<p align="center"><img src="assets/synapse_transparent_black_bg.png" alt="Synapse Logo" width="200"/></p>
 <h1 align="center">⚡ Synapse Social</h1>
 <p align="center"><i>Native UI. Shared Logic. Real-time everything.</i></p>
 
@@ -48,6 +42,7 @@ The backend runs on **Supabase** — handling real-time messaging, authenticatio
    GEMINI_API_KEY=your-gemini-api-key-here
    ```
 3. For Android, ensure `google-services.json` is present in the `app/` directory if required for specific Firebase features.
+4. **Calling (optional, real 1:1 voice/video):** calling needs the calling schema in Supabase (already applied to this project), a coturn TURN server, and the `turn-credentials` Edge Function configured with `TURN_SHARED_SECRET` and `TURN_URLS`. Set `TURN_FUNCTION_NAME` in `gradle.properties` and deploy the functions in `supabase/functions/` with their secrets before calls will connect. No TURN, service-role, or push secrets belong in the app or this repository.
 
 ### Running the App
 - **Android**: Run `./gradlew :app:installDebug` or use Android Studio.

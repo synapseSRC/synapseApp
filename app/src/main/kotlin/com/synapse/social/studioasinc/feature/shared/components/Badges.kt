@@ -26,7 +26,7 @@ fun VerifiedBadge(
         contentDescription = "Verified",
         modifier = modifier
             .size(Sizes.IconSemiMedium)
-            .padding(start = Spacing.ExtraSmall),
+            .padding(start = Spacing.space4),
         tint = MaterialTheme.colorScheme.primary
     )
 }
@@ -48,7 +48,7 @@ fun GenderBadge(
             contentDescription = gender,
             modifier = modifier
                 .size(Sizes.IconSemiMedium)
-                .padding(start = Spacing.ExtraSmall),
+                .padding(start = Spacing.space4),
             tint = MaterialTheme.colorScheme.secondary
         )
     }

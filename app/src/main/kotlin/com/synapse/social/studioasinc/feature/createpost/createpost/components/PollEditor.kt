@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
@@ -41,8 +41,6 @@ import com.synapse.social.studioasinc.domain.model.FeelingActivity
 import com.synapse.social.studioasinc.domain.model.FeelingType
 import com.synapse.social.studioasinc.domain.model.LocationData
 import androidx.compose.ui.res.stringResource
-import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
-import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
 import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
 import com.synapse.social.studioasinc.feature.shared.theme.AccentYellow
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -64,10 +62,10 @@ fun PollCreationSheet(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = Spacing.Large)
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(horizontal = Spacing.space24)
+                .padding(bottom = Spacing.space32)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             Text(stringResource(R.string.poll_create_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
@@ -102,7 +100,7 @@ fun PollCreationSheet(
                     modifier = Modifier.align(Alignment.Start)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(stringResource(R.string.poll_add_option))
                 }
             }
@@ -118,7 +116,7 @@ fun PollCreationSheet(
                 enabled = question.isNotBlank() && options.count { it.isNotBlank() } >= 2,
                 shape = RoundedCornerShape(Sizes.CornerDefault)
             ) {
-                Text(stringResource(R.string.poll_add_to_post), modifier = Modifier.padding(vertical = Spacing.ExtraSmallMedium))
+                Text(stringResource(R.string.poll_add_to_post), modifier = Modifier.padding(vertical = Spacing.space8))
             }
         }
     }

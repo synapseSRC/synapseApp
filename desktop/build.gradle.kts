@@ -11,18 +11,18 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(project(":shared"))
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-                implementation("io.insert-koin:koin-core:4.1.1")
-                implementation("io.insert-koin:koin-compose:4.1.1")
-                implementation("io.github.jan-tennert.supabase:postgrest-kt:3.4.1")
-                implementation("io.github.jan-tennert.supabase:auth-kt:3.4.1")
-                implementation("io.github.jan-tennert.supabase:realtime-kt:3.4.1")
-                implementation("io.github.jan-tennert.supabase:storage-kt:3.4.1")
-                implementation("io.github.jan-tennert.supabase:functions-kt:3.4.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+                implementation("io.insert-koin:koin-core:4.2.2")
+                implementation("io.insert-koin:koin-compose:4.2.2")
+                implementation("io.github.jan-tennert.supabase:postgrest-kt:3.8.0")
+                implementation("io.github.jan-tennert.supabase:auth-kt:3.8.0")
+                implementation("io.github.jan-tennert.supabase:realtime-kt:3.8.0")
+                implementation("io.github.jan-tennert.supabase:storage-kt:3.8.0")
+                implementation("io.github.jan-tennert.supabase:functions-kt:3.8.0")
                 implementation("io.github.aakira:napier:2.7.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
                 implementation(compose.desktop.currentOs)
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
@@ -37,7 +37,7 @@ configurations.all {
     resolutionStrategy {
         eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime")) {
-                useVersion("0.6.1")
+                useVersion("0.7.1")
             }
         }
     }

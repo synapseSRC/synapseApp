@@ -11,9 +11,9 @@ struct PostDetailView: View {
         ZStack {
             AppTheme.AmbientBackground()
 
-            VStack(spacing: 0) {
+            VStack(spacing: AppTheme.Spacing.space0) {
                 ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: AppTheme.Spacing.space0) {
                     // AI Summary Button for long threads
                     if viewModel.post.commentsCount > 5 {
                         Button(action: {
@@ -27,7 +27,7 @@ struct PostDetailView: View {
                         }
                         .buttonStyle(.bordered)
                         .padding(.horizontal)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, AppTheme.Spacing.space8)
                         .tint(.purple)
                     }
 
@@ -41,7 +41,7 @@ struct PostDetailView: View {
                     )
 
                     Divider()
-                        .padding(.vertical, 8)
+                        .padding(.vertical, AppTheme.Spacing.space8)
 
                     // Comments Header
                     HStack {
@@ -53,7 +53,7 @@ struct PostDetailView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, AppTheme.Spacing.space8)
 
                     // Comments List
                     if viewModel.isLoading {
@@ -65,19 +65,19 @@ struct PostDetailView: View {
                             .foregroundColor(.secondary)
                             .padding()
                     } else {
-                        LazyVStack(alignment: .leading, spacing: 16) {
+                        LazyVStack(alignment: .leading, spacing: AppTheme.Spacing.space16) {
                             ForEach(viewModel.comments) { comment in
-                                HStack(alignment: .top, spacing: 12) {
-                                    VStack(spacing: 0) {
+                                HStack(alignment: .top, spacing: AppTheme.Spacing.space12) {
+                                    VStack(spacing: AppTheme.Spacing.space0) {
                                         Circle().fill(Color.secondary.opacity(0.3)).frame(width: 40, height: 40)
-                                        Rectangle().fill(Color.secondary.opacity(0.5)).frame(width: 2).padding(.top, 4)
+                                        Rectangle().fill(Color.secondary.opacity(0.5)).frame(width: 2).padding(.top, AppTheme.Spacing.space4)
                                     }
                                     PostCardView(post: comment, onLike: {}, onComment: {}, onShare: {}, onBookmark: {})
                                 }
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, AppTheme.Spacing.space20)
                     }
                 }
             }
@@ -101,7 +101,7 @@ struct PostDetailView: View {
                     }
                 }
                 .disabled(viewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSubmittingComment)
-                .padding(10)
+                .padding(AppTheme.Spacing.space10)
                 .background(Color.accentColor)
                 .foregroundColor(.white)
                 .clipShape(Circle())

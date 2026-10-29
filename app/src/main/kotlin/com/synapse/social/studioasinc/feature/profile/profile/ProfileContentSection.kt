@@ -106,7 +106,7 @@ internal fun ProfileContent(
             },
             onUserClick = { userId -> currentOnNavigateToUserProfile(userId) },
             onOptionClick = { post -> currentOnShowPostOptions(post) },
-            onMediaClick = { index -> }
+            onMediaClick = { _, _ -> }
         )
     }
 
@@ -140,11 +140,11 @@ internal fun ProfileContent(
                     Column {
                         ProfileHeaderShimmer()
                         ProfileBioShimmer(displayName = state.viewAsUserName)
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                         ProfileStatsShimmer()
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                         ProfileActionsShimmer()
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                     }
                 } else {
                     if (profile != null) {
@@ -237,14 +237,14 @@ internal fun ProfileContent(
                 if (isDetailsLoading) {
                     Column {
                         ProfileDetailsShimmer()
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                         FollowingSectionShimmer()
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
                     }
                 } else {
                     if (profile != null) {
                         Column {
-                            Spacer(modifier = Modifier.height(Spacing.Medium))
+                            Spacer(modifier = Modifier.height(Spacing.space16))
                             UserDetailsSection(
                                 details = UserDetails(
                                     location = profile.location,
@@ -274,10 +274,10 @@ internal fun ProfileContent(
                                 onWebsiteClick = { url ->
                                     IntentUtils.openUrl(context, url)
                                 },
-                                modifier = Modifier.padding(horizontal = Spacing.Medium)
+                                modifier = Modifier.padding(horizontal = Spacing.space16)
                             )
 
-                            Spacer(modifier = Modifier.height(Spacing.Medium))
+                            Spacer(modifier = Modifier.height(Spacing.space16))
                         }
                     }
                 }
@@ -285,7 +285,7 @@ internal fun ProfileContent(
         }
 
         item {
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             ContentFilterBar(
                 selectedFilter = state.contentFilter,
                 onFilterSelected = { filter -> viewModel.switchContentFilter(filter) },
@@ -429,7 +429,7 @@ internal fun ProfileContent(
 
                 val postActions = remember(actions, post.id) {
                     actions.copy(
-                        onMediaClick = { idx ->
+                        onMediaClick = { _, idx ->
                             val urls = post.mediaItems?.mapNotNull { it.url } ?: listOfNotNull(post.postImage)
                             if (urls.isNotEmpty()) {
                                 currentOnOpenMediaViewer(urls, idx)
@@ -473,7 +473,7 @@ internal fun ProfileContent(
                     onPostClick = {
                         PostDetailActivity.start(context, comment.postId, comment.userId)
                     },
-                    onMediaClick = { idx ->
+                    onMediaClick = { _, idx ->
                         val urls = listOfNotNull(comment.mediaUrl)
                         if (urls.isNotEmpty()) {
                             onOpenMediaViewer(urls, idx)
@@ -483,13 +483,13 @@ internal fun ProfileContent(
                     onPollVote = { /* No polls in comments */ },
                     onReactionSelected = { reaction -> /* Handle reaction */ },
                     onQuoteClick = { },
-                    modifier = Modifier.padding(bottom = Spacing.Small)
+                    modifier = Modifier.padding(bottom = Spacing.space8)
                 )
             }
         }
 
         item {
-            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+            Spacer(modifier = Modifier.height(Spacing.space32))
         }
         }
     }
@@ -502,25 +502,25 @@ private fun PrivateProfileLockedNotice(
     statusError: Boolean,
     onRequest: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth().padding(Spacing.Large)) {
+    Card(modifier = Modifier.fillMaxWidth().padding(Spacing.space24)) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(Spacing.Large),
+            modifier = Modifier.fillMaxWidth().padding(Spacing.space24),
             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
         ) {
             Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             Text(stringResource(R.string.private_profile_title), style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
             Text(
                 stringResource(R.string.private_profile_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (statusError) {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 Text(stringResource(R.string.private_profile_status_error), color = MaterialTheme.colorScheme.error)
             }
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             Button(onClick = onRequest, enabled = !isLoading) {
                 if (isLoading) CircularProgressIndicator()
                 else Text(stringResource(if (isRequested) R.string.follow_requested else R.string.request_to_follow))
@@ -542,7 +542,7 @@ internal fun formatJoinedDate(timestamp: Long): String {
 private fun ProfilePostsShimmer() {
     Column {
         repeat(3) {
-            PostCardSkeleton(modifier = Modifier.padding(bottom = Spacing.Small))
+            PostCardSkeleton(modifier = Modifier.padding(bottom = Spacing.space8))
         }
     }
 }

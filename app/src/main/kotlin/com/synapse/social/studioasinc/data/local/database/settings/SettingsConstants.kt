@@ -54,6 +54,10 @@ object SettingsConstants {
     val KEY_NOTIFICATIONS_MENTIONS = booleanPreferencesKey("notifications_mentions")
     val KEY_IN_APP_NOTIFICATIONS = booleanPreferencesKey("in_app_notifications")
 
+    val KEY_SOUND_EFFECTS_MASTER = booleanPreferencesKey("sound_effects_master")
+    val KEY_SOUND_MESSAGE_TONES = booleanPreferencesKey("sound_message_tones")
+    val KEY_SOUND_CALL_TONES = booleanPreferencesKey("sound_call_tones")
+
     val KEY_READ_RECEIPTS_ENABLED = booleanPreferencesKey("read_receipts_enabled")
     val KEY_TYPING_INDICATORS_ENABLED = booleanPreferencesKey("typing_indicators_enabled")
     val KEY_MEDIA_AUTO_DOWNLOAD = stringPreferencesKey("media_auto_download")
@@ -106,7 +110,6 @@ object SettingsConstants {
     val KEY_REDUCE_ANIMATIONS_ENABLED = booleanPreferencesKey("reduce_animations_enabled")
     val KEY_AUTOPLAY_ANIMATIONS_ENABLED = booleanPreferencesKey("autoplay_animations_enabled")
 
-
     val DEFAULT_THEME_MODE = ThemeMode.SYSTEM
     val DEFAULT_DYNAMIC_COLOR_ENABLED = true
     val DEFAULT_FONT_SCALE = FontScale.MEDIUM
@@ -123,6 +126,7 @@ object SettingsConstants {
     val DEFAULT_TWO_FACTOR_ENABLED = false
     val DEFAULT_NOTIFICATIONS_ENABLED = true
     val DEFAULT_IN_APP_NOTIFICATIONS_ENABLED = true
+    val DEFAULT_SOUND_TONES_ENABLED = true
     val DEFAULT_READ_RECEIPTS_ENABLED = true
     val DEFAULT_TYPING_INDICATORS_ENABLED = true
     val DEFAULT_MEDIA_AUTO_DOWNLOAD = MediaAutoDownload.WIFI_ONLY
@@ -138,13 +142,8 @@ object SettingsConstants {
     val DEFAULT_CHAT_AVATAR_DISABLED = false
     const val DEFAULT_CHAT_MESSAGE_PAGINATION_LIMIT = 50
     val DEFAULT_DATA_SAVER_ENABLED = false
-    val DEFAULT_ENTER_IS_SEND_ENABLED = false
-    val DEFAULT_MEDIA_VISIBILITY_ENABLED = true
-    val DEFAULT_VOICE_TRANSCRIPTS_ENABLED = false
-    val DEFAULT_AUTO_BACKUP_ENABLED = true
     val DEFAULT_REMINDERS_ENABLED = false
     val DEFAULT_HIGH_PRIORITY_ENABLED = true
-    val DEFAULT_REACTION_NOTIFICATIONS_ENABLED = true
     val DEFAULT_APP_LOCK_ENABLED = false
     val DEFAULT_CHAT_LOCK_ENABLED = false
     val DEFAULT_ACCOUNT_REPORTS_AUTO_CREATE = false

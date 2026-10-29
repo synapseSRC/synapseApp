@@ -17,15 +17,12 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class FollowListActivity : AppCompatActivity() {
-
     @Inject
     lateinit var authRepository: AuthRepository
 
     companion object {
         const val EXTRA_USER_ID = "user_id"
         const val EXTRA_INITIAL_TAB = "initial_tab"
-        const val TYPE_FOLLOWERS = "followers"
-        const val TYPE_FOLLOWING = "following"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +68,6 @@ class FollowListActivity : AppCompatActivity() {
 
                 Toast.makeText(this@FollowListActivity, "Chat feature not implemented", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-
             }
         }
     }

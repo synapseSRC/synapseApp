@@ -11,6 +11,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -18,25 +19,22 @@ import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
-
 @Singleton
 class SupabaseFollowService @Inject constructor() {
-
     private val client = SupabaseClient.client
-    private val databaseService = SupabaseDatabaseService()
-
-
 
     @Suppress("UNUSED_PARAMETER")
     suspend fun followUser(followerId: String, followingId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
-            client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<String>()
+            android.util.Log.d("SupabaseFollowService", "Attempting to follow: followerId=$followerId, followingId=$followingId")
+            val response = client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
+            android.util.Log.d("SupabaseFollowService", "Follow request successful: $response")
             return@withContext Result.success(Unit)
         } catch (e: Exception) {
-            android.util.Log.e("SupabaseFollowService", "Failed to request follow", e)
+            android.util.Log.e("SupabaseFollowService", "Failed to request follow: ${e.message}", e)
+            android.util.Log.e("SupabaseFollowService", "Error details: ${e::class.simpleName} - ${e.stackTraceToString()}")
             Result.failure(e)
         }
     }
@@ -46,7 +44,7 @@ class SupabaseFollowService @Inject constructor() {
         try {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
-            client.postgrest.rpc("unfollow_user", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<Boolean>()
+            client.postgrest.rpc("unfollow_user", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SupabaseFollowService", "Failed to unfollow user", e)
@@ -83,15 +81,12 @@ class SupabaseFollowService @Inject constructor() {
     suspend fun isFollowing(followerId: String, followingId: String): Result<Boolean> =
         getFollowStatus(followingId).map { it == ProfileFollowStatus.FOLLOWING }
 
-
     suspend fun getFollowers(userId: String, limit: Int = 50): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
             try {
-
                 if (!SupabaseClient.isConfigured()) {
                     return@withContext Result.success(emptyList())
                 }
-
 
                 val followsResult = client.from("follows")
                     .select(columns = Columns.raw("follower_id")) {
@@ -107,7 +102,6 @@ class SupabaseFollowService @Inject constructor() {
                 if (followerIds.isEmpty()) {
                     return@withContext Result.success(emptyList())
                 }
-
 
                 val usersResult = client.from("users")
                     .select(columns = Columns.raw("uid, username, display_name, avatar, verify")) {
@@ -129,16 +123,12 @@ class SupabaseFollowService @Inject constructor() {
         }
     }
 
-
-
     suspend fun getFollowing(userId: String, limit: Int = 50): Result<List<Map<String, Any?>>> {
         return withContext(Dispatchers.IO) {
             try {
-
                 if (!SupabaseClient.isConfigured()) {
                     return@withContext Result.success(emptyList())
                 }
-
 
                 val followsResult = client.from("follows")
                     .select(columns = Columns.raw("following_id")) {
@@ -155,7 +145,6 @@ class SupabaseFollowService @Inject constructor() {
                     return@withContext Result.success(emptyList())
                 }
 
-
                 val usersResult = client.from("users")
                     .select(columns = Columns.raw("uid, username, display_name, avatar, verify")) {
                         filter { isIn("uid", followingIds) }
@@ -171,132 +160,6 @@ class SupabaseFollowService @Inject constructor() {
                 Result.success(following)
             } catch (e: Exception) {
                 android.util.Log.e("SupabaseFollowService", "Failed to get following", e)
-                Result.failure(e)
-            }
-        }
-    }
-
-
-
-    suspend fun getFollowStats(userId: String): Result<Map<String, Int>> {
-        return withContext(Dispatchers.IO) {
-            try {
-
-                if (!SupabaseClient.isConfigured()) {
-                    return@withContext Result.success(mapOf(
-                        "followers_count" to 0,
-                        "following_count" to 0
-                    ))
-                }
-
-
-                val userResult = databaseService.selectWhere("users", "followers_count, following_count", "uid", userId)
-
-                userResult.fold(
-                    onSuccess = { users ->
-                        val user = users.firstOrNull()
-                        if (user != null) {
-                            val stats = mapOf(
-                                "followers_count" to (user["followers_count"]?.toString()?.toIntOrNull() ?: 0),
-                                "following_count" to (user["following_count"]?.toString()?.toIntOrNull() ?: 0)
-                            )
-                            Result.success(stats)
-                        } else {
-                            Result.success(mapOf("followers_count" to 0, "following_count" to 0))
-                        }
-                    },
-                    onFailure = { error -> Result.failure(error) }
-                )
-            } catch (e: Exception) {
-                android.util.Log.e("SupabaseFollowService", "Failed to get follow stats", e)
-                Result.failure(e)
-            }
-        }
-    }
-
-
-
-    private suspend fun updateFollowerCounts(followerId: String, followingId: String, isFollow: Boolean) {
-        try {
-
-            val followerStats = getFollowStats(followerId).getOrNull()
-            if (followerStats != null) {
-                val currentFollowing = followerStats["following_count"] ?: 0
-                val newFollowingCount = if (isFollow) currentFollowing + 1 else maxOf(0, currentFollowing - 1)
-
-                databaseService.update(
-                    "users",
-                    mapOf("following_count" to newFollowingCount),
-                    "uid",
-                    followerId
-                )
-            }
-
-
-            val followingStats = getFollowStats(followingId).getOrNull()
-            if (followingStats != null) {
-                val currentFollowers = followingStats["followers_count"] ?: 0
-                val newFollowersCount = if (isFollow) currentFollowers + 1 else maxOf(0, currentFollowers - 1)
-
-                databaseService.update(
-                    "users",
-                    mapOf("followers_count" to newFollowersCount),
-                    "uid",
-                    followingId
-                )
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("SupabaseFollowService", "Failed to update follower counts", e)
-        }
-    }
-
-
-
-    suspend fun getSuggestedUsers(userId: String, limit: Int = 20): Result<List<Map<String, Any?>>> {
-        return withContext(Dispatchers.IO) {
-            try {
-
-                if (!SupabaseClient.isConfigured()) {
-                    return@withContext Result.success(emptyList())
-                }
-
-
-                val followingResult = client.from("follows")
-                    .select(columns = Columns.raw("following_id")) {
-                        filter { eq("follower_id", userId) }
-                    }
-                    .decodeList<JsonObject>()
-
-                val followingIds = followingResult.map {
-                    it["following_id"].toString().removeSurrounding("\"")
-                }.toMutableList()
-
-
-                followingIds.add(userId)
-
-
-
-                val allUsersResult = client.from("users")
-                    .select(columns = Columns.raw("uid, username, display_name, avatar, verify, followers_count")) {
-                        limit(100)
-                    }
-                    .decodeList<JsonObject>()
-
-
-                val suggestedResult = allUsersResult.filter { jsonObject ->
-                    val uid = jsonObject["uid"].toString().removeSurrounding("\"")
-                    !followingIds.contains(uid)
-                }.take(limit)
-
-                val suggested = suggestedResult.map { jsonObject ->
-                    jsonObject.toMap().mapValues { (_, value) ->
-                        value.toString().removeSurrounding("\"")
-                    }
-                }
-
-                Result.success(suggested)
-            } catch (e: Exception) {
-                android.util.Log.e("SupabaseFollowService", "Failed to get suggested users", e)
                 Result.failure(e)
             }
         }

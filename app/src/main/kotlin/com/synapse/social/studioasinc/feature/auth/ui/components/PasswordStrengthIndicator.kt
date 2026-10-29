@@ -74,7 +74,7 @@ fun PasswordStrengthIndicator(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraSmall),
+                .padding(bottom = Spacing.space4),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -83,13 +83,13 @@ fun PasswordStrengthIndicator(
                 tint = animatedColor,
                 modifier = Modifier.size(Sizes.IconSmall)
             )
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(id = R.string.password_strength),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.width(Spacing.Small))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Text(
                 text = stringResource(id = strength.labelResId),
                 style = MaterialTheme.typography.labelMedium,
@@ -101,7 +101,7 @@ fun PasswordStrengthIndicator(
             progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(Spacing.ExtraSmall),
+                .height(Sizes.PasswordStrengthBarHeight),
             color = animatedColor,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,

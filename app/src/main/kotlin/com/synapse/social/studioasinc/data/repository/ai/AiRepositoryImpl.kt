@@ -1,40 +1,86 @@
 package com.synapse.social.studioasinc.data.repository.ai
 
 import com.google.genai.Client
-import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.domain.repository.ai.AiRepository
 import com.synapse.social.studioasinc.settings.ApiKeySettingsService
+import com.synapse.social.studioasinc.shared.core.network.SupabaseClient as SynapseSupabaseClient
 import io.github.aakira.napier.Napier
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.functions.functions
+import io.ktor.client.call.body
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 
 private const val DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 
-class AiRepositoryImpl(private val apiKeySettingsService: ApiKeySettingsService) : AiRepository {
-    private suspend fun resolveModelAndKey(): Pair<String, String> {
+@Serializable
+private data class AiGenerateRequest(
+    val prompt: String,
+    val model: String? = null
+)
+
+@Serializable
+private data class AiGenerateResponse(
+    val text: String? = null,
+    val error: String? = null
+)
+
+class AiRepositoryImpl(
+    private val apiKeySettingsService: ApiKeySettingsService,
+    private val supabaseClient: SupabaseClient = SynapseSupabaseClient.client
+) : AiRepository {
+    private suspend fun resolveModelAndCustomKey(): Pair<String, String?> {
         val settings = apiKeySettingsService.getProviderSettings()
         val model = settings.customModel?.takeIf { it.isNotBlank() } ?: DEFAULT_MODEL
-        return when (settings.preferredProvider) {
-            "platform" -> Pair(BuildConfig.GEMINI_API_KEY, DEFAULT_MODEL)
-            "gemini" -> Pair(BuildConfig.GEMINI_API_KEY, model)
-            else -> if (settings.fallbackToPlatform) Pair(BuildConfig.GEMINI_API_KEY, DEFAULT_MODEL)
+        val customKey = when (settings.preferredProvider) {
+            "platform" -> null
+            "gemini" -> {
+                val keyInfo = apiKeySettingsService.apiKeys.value
+                    .firstOrNull { it.provider == "gemini" && it.isActive }
+                keyInfo?.let { apiKeySettingsService.getRawApiKey(it.id) }?.takeIf { it.isNotBlank() }
+            }
+            else -> if (settings.fallbackToPlatform) null
             else throw UnsupportedOperationException("Provider '" + settings.preferredProvider + "' is not yet supported")
         }
+        return Pair(model, customKey)
     }
 
     private suspend fun generateContent(prompt: String, conversationId: String? = null): Result<String> {
-        val (apiKey, model) = try { resolveModelAndKey() } catch (error: Exception) {
+        val (model, customKey) = try { resolveModelAndCustomKey() } catch (error: Exception) {
             Napier.e("Unable to resolve Gemini model configuration", error)
             SentryAgentTracing.captureSanitizedException(error)
             return Result.failure(error)
         }
         return withContext(Dispatchers.IO) {
             SentryAgentTracing.traceChat(provider = "google", model = model, conversationId = conversationId) {
-                val client = Client.builder().apiKey(apiKey).build()
-                val response = client.models.generateContent(model, prompt, null)
-                val text = response.text()
-                if (text.isNullOrBlank()) Result.failure(Exception("Empty response from Gemini"))
-                else Result.success(text.trim())
+                if (!customKey.isNullOrBlank()) {
+                    // User provided custom Gemini API key (BYOK)
+                    val client = Client.builder().apiKey(customKey).build()
+                    val response = client.models.generateContent(model, prompt, null)
+                    val text = response.text()
+                    if (text.isNullOrBlank()) Result.failure(Exception("Empty response from Gemini"))
+                    else Result.success(text.trim())
+                } else {
+                    // Platform managed: route through secure Supabase Edge Function without exposing key in APK
+                    try {
+                        val response = supabaseClient.functions.invoke(
+                            function = "ai-generate",
+                            body = AiGenerateRequest(prompt = prompt, model = model)
+                        )
+                        val responseBody = response.body<AiGenerateResponse>()
+                        val text = responseBody.text
+                        if (text.isNullOrBlank()) {
+                            val errorMsg = responseBody.error ?: "Empty response from Gemini Edge Function"
+                            Result.failure(Exception(errorMsg))
+                        } else {
+                            Result.success(text.trim())
+                        }
+                    } catch (e: Exception) {
+                        Napier.e("Error invoking ai-generate Edge Function", e)
+                        Result.failure(e)
+                    }
+                }
             }
         }
     }

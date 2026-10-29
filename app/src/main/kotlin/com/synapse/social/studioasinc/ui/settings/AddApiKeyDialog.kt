@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,14 +41,14 @@ fun AddApiKeyDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Large, vertical = Spacing.Medium)
-                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + Spacing.Medium)
+                .padding(horizontal = Spacing.space24, vertical = Spacing.space16)
+                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + Spacing.space16)
         ) {
             Text(
                 text = stringResource(R.string.api_add_key_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = Spacing.Medium)
+                modifier = Modifier.padding(bottom = Spacing.space16)
             )
 
             var expanded by remember { mutableStateOf(false) }
@@ -65,7 +66,7 @@ fun AddApiKeyDialog(
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
-                    shape = SettingsShapes.inputShape
+                    shape = AppShapes.inputShape
                 )
 
                 ExposedDropdownMenu(
@@ -84,7 +85,7 @@ fun AddApiKeyDialog(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = apiKey,
@@ -101,10 +102,10 @@ fun AddApiKeyDialog(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape
+                shape = AppShapes.inputShape
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = keyName,
@@ -112,10 +113,10 @@ fun AddApiKeyDialog(
                 label = { Text(stringResource(R.string.label_key_name_optional)) },
                 supportingText = { Text(stringResource(R.string.key_name_example)) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape
+                shape = AppShapes.inputShape
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             OutlinedTextField(
                 value = usageLimit,
@@ -124,10 +125,10 @@ fun AddApiKeyDialog(
                 supportingText = { Text(stringResource(R.string.usage_limit_supporting_text)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape
+                shape = AppShapes.inputShape
             )
 
-            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+            Spacer(modifier = Modifier.height(Spacing.space32))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -137,7 +138,7 @@ fun AddApiKeyDialog(
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.settings_cancel))
                 }
-                Spacer(modifier = Modifier.width(Spacing.Medium))
+                Spacer(modifier = Modifier.width(Spacing.space16))
                 Button(
                     onClick = {
                         onAdd(

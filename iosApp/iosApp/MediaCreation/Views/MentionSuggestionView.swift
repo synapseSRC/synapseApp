@@ -24,14 +24,14 @@ struct MentionSuggestionView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space0) {
             if users.isEmpty {
                 Text(String(localized: "mention_no_matching_users"))
                     .foregroundColor(.gray)
                     .padding()
             } else {
                 ScrollView {
-                    VStack(spacing: 0) {
+                    VStack(spacing: AppTheme.Spacing.space0) {
                         ForEach(users) { user in
                             Button(action: {
                                 onUserSelected(user)
@@ -64,8 +64,8 @@ struct MentionSuggestionView: View {
                                     }
                                     Spacer()
                                 }
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
+                                .padding(.vertical, AppTheme.Spacing.space8)
+                                .padding(.horizontal, AppTheme.Spacing.space16)
                             }
                             Divider()
                         }

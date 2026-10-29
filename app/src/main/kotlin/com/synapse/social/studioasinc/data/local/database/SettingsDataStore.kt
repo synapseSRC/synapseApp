@@ -21,6 +21,7 @@ class SettingsDataStore private constructor(
     private val chatStore: ChatStore = ChatStoreImpl(dataStore),
     private val privacyStore: PrivacyStore = PrivacyStoreImpl(dataStore),
     private val notificationStore: NotificationStore = NotificationStoreImpl(dataStore),
+    private val soundStore: SoundStore = SoundStoreImpl(dataStore),
     private val mediaStore: MediaStore = MediaStoreImpl(dataStore),
     private val aiStore: AiStore = AiStoreImpl(dataStore),
     private val generalStore: GeneralStore = GeneralStoreImpl(dataStore)
@@ -28,6 +29,7 @@ class SettingsDataStore private constructor(
     ChatStore by chatStore,
     PrivacyStore by privacyStore,
     NotificationStore by notificationStore,
+    SoundStore by soundStore,
     MediaStore by mediaStore,
     AiStore by aiStore,
     GeneralStore by generalStore {
@@ -79,6 +81,10 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MESSAGES)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MENTIONS)
             preferences.remove(SettingsConstants.KEY_IN_APP_NOTIFICATIONS)
+
+            preferences.remove(SettingsConstants.KEY_SOUND_EFFECTS_MASTER)
+            preferences.remove(SettingsConstants.KEY_SOUND_MESSAGE_TONES)
+            preferences.remove(SettingsConstants.KEY_SOUND_CALL_TONES)
 
             preferences.remove(SettingsConstants.KEY_READ_RECEIPTS_ENABLED)
             preferences.remove(SettingsConstants.KEY_TYPING_INDICATORS_ENABLED)

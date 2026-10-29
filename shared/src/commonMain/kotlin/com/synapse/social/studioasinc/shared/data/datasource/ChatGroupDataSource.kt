@@ -2,12 +2,19 @@ package com.synapse.social.studioasinc.shared.data.datasource
 import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.GroupInviteCodeDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.GroupInvitePreviewDto
+import com.synapse.social.studioasinc.shared.data.dto.chat.GroupJoinRequestDto
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupInvitePreview
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinOutcome
+import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
 import com.synapse.social.studioasinc.shared.domain.model.User
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.coroutines.Dispatchers
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.withContext
 
 internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
@@ -49,12 +56,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun removeGroupMember(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chat_participants").delete {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", userId)
-                }
-            }
+            client.postgrest.rpc("remove_group_member", mapOf("p_chat_id" to chatId, "p_user_id" to userId))
         } catch (e: Exception) {
             Napier.e("Error removing group member", e)
             throw e
@@ -63,14 +65,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun promoteToAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chat_participants").update({
-                set("is_admin", true)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", userId)
-                }
-            }
+            client.postgrest.rpc("set_group_member_admin", mapOf("p_chat_id" to chatId, "p_user_id" to userId, "p_is_admin" to true))
         } catch (e: Exception) {
             Napier.e("Error promoting member to admin", e)
             throw e
@@ -79,14 +74,7 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun demoteAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chat_participants").update({
-                set("is_admin", false)
-            }) {
-                filter {
-                    eq("chat_id", chatId)
-                    eq("user_id", userId)
-                }
-            }
+            client.postgrest.rpc("set_group_member_admin", mapOf("p_chat_id" to chatId, "p_user_id" to userId, "p_is_admin" to false))
         } catch (e: Exception) {
             Napier.e("Error demoting admin", e)
             throw e
@@ -110,16 +98,72 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.from("chats").update({
-                set("only_admins_can_message", enabled)
-            }) {
-                filter {
-                    eq("id", chatId)
-                }
-            }
+            client.postgrest.rpc("update_group_message_permission", mapOf("p_chat_id" to chatId, "p_only_admins_can_message" to enabled))
         } catch (e: Exception) {
             Napier.e("Error toggling only_admins_can_message", e)
             throw e
         }
     }
+
+    suspend fun getGroupInviteCode(chatId: String): String? = withContext(AppDispatchers.IO) {
+        val row = client.postgrest.from("chats").select(columns = Columns.list("invite_code")) {
+            filter { eq("id", chatId) }
+            limit(1)
+        }.decodeList<GroupInviteCodeDto>().firstOrNull()
+        row?.inviteCode
+    }
+
+    suspend fun rotateGroupInviteCode(chatId: String): String = withContext(AppDispatchers.IO) {
+        client.postgrest.rpc("rotate_group_invite_code", mapOf("p_chat_id" to chatId))
+            .decodeAsOrNull<String>()?.takeIf { it.isNotBlank() }
+            ?: throw IllegalStateException("The invite link could not be regenerated.")
+    }
+
+    suspend fun getPendingGroupJoinRequests(chatId: String): List<GroupJoinRequest> = withContext(AppDispatchers.IO) {
+        val pending = client.postgrest.from("group_join_requests").select {
+            filter {
+                eq("chat_id", chatId)
+                eq("status", "pending")
+            }
+        }.decodeList<GroupJoinRequestDto>()
+        if (pending.isEmpty()) return@withContext emptyList()
+        val users = client.postgrest.from("users").select {
+            filter { isIn("uid", pending.map { it.userId }.distinct()) }
+        }.decodeList<User>().associateBy { it.uid }
+        pending.mapNotNull { request ->
+            users[request.userId]?.let { user -> GroupJoinRequest(request.id, request.chatId, user, request.createdAt) }
+        }
+    }
+
+    suspend fun approveGroupJoinRequest(requestId: String) = withContext(AppDispatchers.IO) {
+        client.postgrest.rpc("approve_group_join_request", mapOf("p_request_id" to requestId))
+    }
+
+    suspend fun declineGroupJoinRequest(requestId: String) = withContext(AppDispatchers.IO) {
+        client.postgrest.rpc("decline_group_join_request", mapOf("p_request_id" to requestId))
+    }
+
+    suspend fun resolveGroupInvite(inviteCode: String): GroupInvitePreview? = withContext(AppDispatchers.IO) {
+        client.postgrest.rpc("resolve_group_invite", mapOf("p_invite_code" to inviteCode))
+            .decodeList<GroupInvitePreviewDto>().firstOrNull()?.let { dto ->
+                GroupInvitePreview(
+                    chatId = dto.chatId,
+                    name = dto.name,
+                    description = dto.description,
+                    avatarUrl = dto.avatarUrl,
+                    requireJoinApproval = dto.requireJoinApproval,
+                    memberCount = dto.memberCount.coerceAtLeast(0).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                )
+            }
+    }
+
+    suspend fun requestGroupJoinByInvite(inviteCode: String): GroupJoinOutcome = withContext(AppDispatchers.IO) {
+        when (client.postgrest.rpc("request_group_join_by_invite", mapOf("p_invite_code" to inviteCode)).decodeAsOrNull<String>()) {
+            "joined" -> GroupJoinOutcome.JOINED
+            "pending" -> GroupJoinOutcome.REQUESTED
+            "already_member" -> GroupJoinOutcome.ALREADY_MEMBER
+            else -> throw IllegalStateException("The invite response was not recognized.")
+        }
+    }
+
 }

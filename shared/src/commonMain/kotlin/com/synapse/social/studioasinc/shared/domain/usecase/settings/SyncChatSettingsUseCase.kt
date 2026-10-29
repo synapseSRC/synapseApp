@@ -8,7 +8,6 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.UserPreferencesRepository
 
-
 class SyncChatSettingsUseCase constructor(
     private val settingsRepository: SettingsRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
@@ -57,35 +56,5 @@ class SyncChatSettingsUseCase constructor(
     private suspend fun syncToRemote(update: (com.synapse.social.studioasinc.shared.domain.model.UserPreferences) -> com.synapse.social.studioasinc.shared.domain.model.UserPreferences) {
         val userId = authRepository.getCurrentUserId() ?: return
         userPreferencesRepository.updatePreferences(userId, update)
-    }
-
-    suspend fun syncFromRemote() {
-        val userId = authRepository.getCurrentUserId() ?: return
-        userPreferencesRepository.getPreferences(userId).onSuccess { preferences ->
-            preferences.chatFontScale?.let { settingsRepository.setChatFontScale(it) }
-            preferences.chatMessageCornerRadius?.let { settingsRepository.setChatMessageCornerRadius(it) }
-            preferences.chatThemePreset?.let {
-                runCatching { ChatThemePreset.valueOf(it) }.onSuccess { preset ->
-                    settingsRepository.setChatThemePreset(preset)
-                }
-            }
-            preferences.chatWallpaperType?.let {
-                runCatching { WallpaperType.valueOf(it) }.onSuccess { type ->
-                    settingsRepository.setChatWallpaperType(type)
-                }
-            }
-            preferences.chatWallpaperValue?.let { settingsRepository.setChatWallpaperValue(it) }
-            preferences.chatWallpaperBlur?.let { settingsRepository.setChatWallpaperBlur(it) }
-            preferences.chatListLayout?.let {
-                runCatching { ChatListLayout.valueOf(it) }.onSuccess { layout ->
-                    settingsRepository.setChatListLayout(layout)
-                }
-            }
-            preferences.chatSwipeGesture?.let {
-                runCatching { ChatSwipeGesture.valueOf(it) }.onSuccess { gesture ->
-                    settingsRepository.setChatSwipeGesture(gesture)
-                }
-            }
-        }
     }
 }

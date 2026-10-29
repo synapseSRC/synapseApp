@@ -36,9 +36,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.request.videoFramePercent
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.video.videoFramePercent
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.BatchMediaCardMetrics
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -322,14 +323,14 @@ fun StackedMediaCard(
                             shape = RoundedCornerShape(Sizes.CornerSmall),
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(start = Spacing.Medium, bottom = Spacing.Small)
+                                .padding(start = Spacing.space16, bottom = Spacing.space8)
                                 .semantics { contentDescription = durationDescription }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(
-                                    horizontal = Spacing.ExtraSmall,
-                                    vertical = Spacing.Tiny
+                                    horizontal = Spacing.space4,
+                                    vertical = Spacing.space4
                                 )
                             ) {
                                 Icon(
@@ -338,7 +339,7 @@ fun StackedMediaCard(
                                     tint = Color.White,
                                     modifier = Modifier.size(Sizes.IconSmall)
                                 )
-                                Spacer(modifier = Modifier.width(Spacing.Tiny))
+                                Spacer(modifier = Modifier.width(Spacing.space4))
                                 Text(
                                     text = durationLabel,
                                     style = MaterialTheme.typography.labelSmall,
@@ -354,13 +355,13 @@ fun StackedMediaCard(
                     shape = RoundedCornerShape(Sizes.CornerSmall),
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(Spacing.Small)
+                        .padding(Spacing.space8)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(
-                            horizontal = Spacing.ExtraSmall,
-                            vertical = Spacing.Tiny
+                            horizontal = Spacing.space4,
+                            vertical = Spacing.space4
                         )
                     ) {
                         Icon(
@@ -369,7 +370,7 @@ fun StackedMediaCard(
                             tint = Color.White,
                             modifier = Modifier.size(Sizes.IconSmall)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Tiny))
+                        Spacer(modifier = Modifier.width(Spacing.space4))
                         Text(
                             text = totalCount.toString(),
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),

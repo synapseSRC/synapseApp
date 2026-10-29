@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 
 
@@ -33,6 +35,7 @@ fun LanguageRegionScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_language_region_title)) },
@@ -46,8 +49,8 @@ fun LanguageRegionScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
@@ -58,7 +61,7 @@ fun LanguageRegionScreen(
 
             error?.let { errorMessage ->
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -74,9 +77,9 @@ fun LanguageRegionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(vertical = Spacing.Medium)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
+            contentPadding = PaddingValues(vertical = Spacing.space16)
         ) {
 
             item {
@@ -86,7 +89,7 @@ fun LanguageRegionScreen(
                         text = stringResource(R.string.language_current_format, currentLanguageName),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                        modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                     )
 
                     availableLanguages.forEachIndexed { index, languageOption ->
@@ -126,7 +129,7 @@ fun LanguageRegionScreen(
 
 
             item {
-                Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+                Spacer(modifier = Modifier.height(Spacing.space32))
             }
         }
     }
@@ -147,12 +150,12 @@ private fun LanguageSelectionItem(
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SettingsSpacing.itemPadding),
+                .padding(AppSpacing.itemPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -173,7 +176,7 @@ private fun LanguageSelectionItem(
 
 
                 if (languageOption.name != languageOption.nativeName) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = languageOption.name,
                         style = MaterialTheme.typography.bodyMedium,

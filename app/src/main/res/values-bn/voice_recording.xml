@@ -1,0 +1,6 @@
+<resources>
+    <string name="voice_recording_cancel">বাতিল করতে স্লাইড করুন</string>
+    <string name="voice_recording_lock_hint">লক করতে ওপরে স্লাইড করুন</string>
+    <string name="voice_recording_locked_state">লক করা · হাত-মুক্ত</string>
+    <string name="voice_recording_paused_state">রেকর্ডিং বিরতি দেওয়া হয়েছে</string>
+</resources>

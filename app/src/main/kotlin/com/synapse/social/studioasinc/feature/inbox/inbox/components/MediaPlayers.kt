@@ -47,9 +47,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.exoplayer.ExoPlayer
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.request.videoFramePercent
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.video.videoFramePercent
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceMessagePlayerViewModel
 import com.synapse.social.studioasinc.feature.shared.reels.VideoPlayerViewModel
@@ -138,13 +139,13 @@ fun VoiceMessagePlayer(
         color = Color.Transparent,
         modifier = modifier
             .widthIn(min = Sizes.ChatMaxWidth / 2, max = Sizes.ChatMaxWidth)
-            .padding(vertical = Spacing.ExtraSmall)
+            .padding(vertical = Spacing.space4)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                .padding(horizontal = Spacing.space8, vertical = Spacing.space4)
         ) {
             // Material 3 Expressive Substantial Play/Pause Button
             Box(
@@ -201,7 +202,7 @@ fun VoiceMessagePlayer(
                 }
             }
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
             // Waveform and Controls Column
             Column(
@@ -238,7 +239,7 @@ fun VoiceMessagePlayer(
                         val canvasHeight = size.height
                         val bars = if (amplitudes.isNotEmpty()) amplitudes else List(36) { 0.3f }
                         val barCount = bars.size
-                        val spacingPx = with(density) { Spacing.ExtraSmall.toPx() }
+                        val spacingPx = with(density) { Spacing.space4.toPx() }
                         val totalSpacing = spacingPx * (barCount - 1)
                         val barWidth = ((canvasWidth - totalSpacing) / barCount).coerceAtLeast(with(density) { Sizes.BorderDefault.toPx() })
 
@@ -266,7 +267,7 @@ fun VoiceMessagePlayer(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
 
                 // Time Display and Speed Chip Row
                 Row(
@@ -307,7 +308,7 @@ fun VoiceMessagePlayer(
                             text = formatSpeed(speed),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Tiny)
+                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                         )
                     }
                 }
@@ -428,7 +429,7 @@ fun VideoPlayerBox(
                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
                             shape = CircleShape
                         )
-                        .padding(Spacing.Small)
+                        .padding(Spacing.space8)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
@@ -445,7 +446,7 @@ fun VideoPlayerBox(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(Spacing.Small)
+                    .padding(Spacing.space8)
                     .align(Alignment.BottomEnd)
             ) {
                 Surface(
@@ -456,7 +457,7 @@ fun VideoPlayerBox(
                         text = formatDuration(state.duration),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Tiny)
+                        modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                     )
                 }
             }

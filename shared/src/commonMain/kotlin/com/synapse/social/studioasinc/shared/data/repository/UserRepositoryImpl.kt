@@ -144,7 +144,12 @@ class UserRepositoryImpl(
             isVerified = user.isVerified,
             followersCount = user.followersCount,
             followingCount = user.followingCount,
-            postsCount = user.postsCount
+            postsCount = user.postsCount,
+            // Sync metadata
+            updatedAt = 0L,
+            isLocallyDeleted = false,
+            lastSyncedAt = null,
+            syncVersion = 1
         )
     }
 }

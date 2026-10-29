@@ -10,11 +10,11 @@ struct LoginView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack(spacing: AppTheme.Spacing.space20) {
                 Text(String(localized: "auth_login_welcome_back"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, AppTheme.Spacing.space20)
 
                 if let error = viewModel.errorMessage {
                     Text(error)
@@ -82,13 +82,13 @@ struct LoginView: View {
                     .font(.caption)
                     .foregroundColor(.gray)
 
-                HStack(spacing: 20) {
+                HStack(spacing: AppTheme.Spacing.space20) {
                     Image(systemName: "applelogo")
                         .font(.title)
                     Image(systemName: "g.circle")
                         .font(.title)
                 }
-                .padding(.bottom, 30)
+                .padding(.bottom, 30) // component-specific footer inset; kept outside the foundation scale
 
                 HStack {
                     Text(String(localized: "auth_login_no_account"))

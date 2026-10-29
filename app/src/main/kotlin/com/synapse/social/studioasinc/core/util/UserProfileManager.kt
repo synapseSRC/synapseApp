@@ -9,18 +9,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-
-
 object UserProfileManager {
-
     private val dbService = SupabaseDatabaseService()
     private val authService = SupabaseAuthenticationService()
     private val profileCache = java.util.concurrent.ConcurrentHashMap<String, User>()
 
-
-
     suspend fun getUserProfile(uid: String): User? {
-
         profileCache[uid]?.let { return it }
 
         return try {
@@ -53,8 +47,6 @@ object UserProfileManager {
         }
     }
 
-
-
     suspend fun updateUserProfile(uid: String, updates: Map<String, Any?>): Boolean {
         return try {
             dbService.update("users", updates, "uid", uid)
@@ -66,21 +58,10 @@ object UserProfileManager {
         }
     }
 
-
-
     suspend fun getCurrentUserProfile(): User? {
         val currentUid = authService.getCurrentUserId() ?: return null
         return getUserProfile(currentUid)
     }
-
-
-
-    suspend fun updateCurrentUserProfile(updates: Map<String, Any?>): Boolean {
-        val currentUid = authService.getCurrentUserId() ?: return false
-        return updateUserProfile(currentUid, updates)
-    }
-
-
 
     suspend fun searchUsers(query: String, limit: Int = 20): List<User> {
         return try {
@@ -112,79 +93,9 @@ object UserProfileManager {
         }
     }
 
-
-
-    suspend fun getUserProfiles(uids: List<String>): List<User> {
-        if (uids.isEmpty()) return emptyList()
-
-
-        val cachedUsers = uids.mapNotNull { profileCache[it] }
-        val missingUids = uids.filter { !profileCache.containsKey(it) }
-
-        if (missingUids.isEmpty()) {
-            return cachedUsers
-        }
-
-        return try {
-
-            val results = dbService.selectWhereIn("users", "*", "uid", missingUids).getOrNull() ?: emptyList()
-
-            val fetchedUsers = results.mapNotNull { result ->
-                try {
-                    val avatarPath = result["avatar"] as? String
-                    val avatarUrl = avatarPath?.let { 
-                        if (it.startsWith("http")) it else SupabaseClient.constructAvatarUrl(it)
-                    }
-                    val user = User(
-                        uid = result["uid"] as? String ?: "",
-                        username = result["username"] as? String ?: "",
-                        email = result["email"] as? String ?: "",
-                        displayName = result["display_name"] as? String ?: "",
-                        avatar = avatarUrl,
-                        bio = result["bio"] as? String,
-                        followersCount = (result["followers_count"] as? String)?.toIntOrNull() ?: 0,
-                        followingCount = (result["following_count"] as? String)?.toIntOrNull() ?: 0,
-                        postsCount = (result["posts_count"] as? String)?.toIntOrNull() ?: 0
-                    )
-
-                    profileCache[user.uid] = user
-                    user
-                } catch (e: Exception) {
-                    null
-                }
-            }
-
-
-            cachedUsers + fetchedUsers
-        } catch (e: Exception) {
-            cachedUsers
-        }
-    }
-
-
-
     fun clearCache() {
         profileCache.clear()
     }
-
-
-
-    fun clearUserCache(uid: String) {
-        profileCache.remove(uid)
-    }
-
-
-
-    suspend fun userExists(uid: String): Boolean {
-        return try {
-            val result = dbService.getSingle("users", "uid", uid).getOrNull()
-            result != null
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-
 
     suspend fun isUsernameAvailable(username: String): Boolean {
         return try {

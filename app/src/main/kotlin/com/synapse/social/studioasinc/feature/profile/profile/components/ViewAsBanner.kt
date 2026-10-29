@@ -26,7 +26,7 @@ fun ViewAsBanner(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -46,7 +46,7 @@ fun ViewAsBanner(
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
             }
-            TextButton(onClick = onExitViewAs, modifier = Modifier.defaultMinSize(minWidth = Spacing.Huge, minHeight = Spacing.Huge)) {
+            TextButton(onClick = onExitViewAs, modifier = Modifier.defaultMinSize(minWidth = Spacing.space48, minHeight = Spacing.space48)) {
                 Text(stringResource(R.string.action_exit))
             }
         }

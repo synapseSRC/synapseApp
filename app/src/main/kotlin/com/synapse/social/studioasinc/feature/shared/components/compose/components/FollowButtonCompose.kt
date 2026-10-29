@@ -4,9 +4,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -16,13 +14,21 @@ import com.synapse.social.studioasinc.feature.shared.viewmodel.FollowButtonViewM
 fun FollowButtonCompose(
     targetUserId: String,
     modifier: Modifier = Modifier,
-    viewModel: FollowButtonViewModel = hiltViewModel()
+    viewModel: FollowButtonViewModel = hiltViewModel(key = "follow-button-$targetUserId")
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var lastClickTime by remember { mutableLongStateOf(0L) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(targetUserId) {
         viewModel.initialize(targetUserId)
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { errorMessage ->
+            snackbarHostState.showSnackbar(errorMessage)
+            viewModel.clearError()
+        }
     }
 
     val handleClick = {
@@ -54,7 +60,7 @@ fun FollowButtonCompose(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
-                Text(stringResource(if (uiState.isFollowing) R.string.following else R.string.follow_requested))
+                Text(stringResource(if (uiState.isFollowing) R.string.unfollow else R.string.follow_requested))
             }
         }
 
@@ -67,4 +73,6 @@ fun FollowButtonCompose(
             }
         }
     }
+
+    SnackbarHost(hostState = snackbarHostState)
 }

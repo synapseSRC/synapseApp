@@ -183,6 +183,8 @@ class DomainSettingsRepositoryAdapter @Inject constructor(
     override suspend fun setReduceAnimationsEnabled(enabled: Boolean) = delegate.setReduceAnimationsEnabled(enabled)
     override val autoplayAnimationsEnabled: Flow<Boolean> = delegate.autoplayAnimationsEnabled
     override suspend fun setAutoplayAnimationsEnabled(enabled: Boolean) = delegate.setAutoplayAnimationsEnabled(enabled)
+    override val typingIndicatorsEnabled: Flow<Boolean> = delegate.typingIndicatorsEnabled
+    override suspend fun setTypingIndicatorsEnabled(enabled: Boolean) = delegate.setTypingIndicatorsEnabled(enabled)
 }
 
 // --- Mappers ---

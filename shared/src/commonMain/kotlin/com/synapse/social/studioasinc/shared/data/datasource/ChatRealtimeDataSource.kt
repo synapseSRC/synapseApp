@@ -16,16 +16,22 @@ import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.isActive
+import kotlin.time.Clock
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.booleanOrNull
@@ -39,6 +45,52 @@ import kotlin.coroutines.cancellation.CancellationException
  * Presence for user state tracking, and Broadcast for ephemeral messaging.
  */
 internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
+    private class TypingChannel(val channel: RealtimeChannel, var collectors: Int = 0)
+    private val typingMutex = kotlinx.coroutines.sync.Mutex()
+    private val activeTypingChannels = mutableMapOf<String, TypingChannel>()
+
+    private fun typingTopic(chatId: String) = "broadcast-typing-${chatId.trim().lowercase()}"
+
+    private fun typingChannel(topic: String): TypingChannel =
+        activeTypingChannels.getOrPut(topic) {
+            TypingChannel(client.realtime.channel(topic) {
+                broadcast { acknowledgeBroadcasts = true }
+            })
+        }
+
+    private suspend fun subscribeTypingChannel(channel: RealtimeChannel) {
+        if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
+            kotlinx.coroutines.withTimeout(5000) {
+                client.realtime.connect()
+                channel.subscribe(blockUntilSubscribed = true)
+            }
+        }
+    }
+
+    private suspend fun removeTypingChannel(topic: String, entry: TypingChannel) {
+        if (entry.collectors != 0 || activeTypingChannels[topic] !== entry) return
+        // Removal is serialized with acquisition: Supabase registers channels by topic, not identity.
+        withContext(NonCancellable) {
+            try {
+                kotlinx.coroutines.withTimeout(5000) { client.realtime.removeChannel(entry.channel) }
+            } finally {
+                activeTypingChannels.remove(topic)
+            }
+        }
+    }
+
+    suspend fun releaseTypingChannel(chatId: String) {
+        typingMutex.withLock {
+            val topic = typingTopic(chatId)
+            activeTypingChannels[topic]?.let { removeTypingChannel(topic, it) }
+        }
+    }
+
+
+    // realtime.channel(id) returns the still-registered channel for a reused topic, so a restarted
+    // subscription would share the old one and its async unsubscribe/removeChannel would silently
+    // drop the new subscription. Postgres-change routing ignores the topic, so a unique suffix is safe.
+    private fun uniqueTopic(prefix: String): String = "${prefix}_${UUIDUtils.randomUUID().take(8)}"
 
     /**
      * Retrieves the current authenticated user's unique identifier.
@@ -48,29 +100,29 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     /**
      * Sends an ephemeral typing status update to other participants in a specific chat.
      * Uses Supabase Broadcast to ensure low-latency delivery without persisting to the database.
+     *
+     * The broadcast channel is subscribed before sending. If subscription fails after retries,
+     * the broadcast is aborted rather than silently failing on an unsubscribed channel.
      */
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean) =
         withContext(AppDispatchers.IO) {
-            try {
-                val currentUserId = getCurrentUserId() ?: return@withContext
-                val channelId = "broadcast-typing-$chatId"
-                val channel = client.realtime.channel(channelId)
-
-                if (channel.status.value != RealtimeChannel.Status.SUBSCRIBED) {
-                    try {
-                        client.realtime.connect()
-                        yield()
-                        channel.subscribe(blockUntilSubscribed = true)
-                    } catch (e: Exception) {
-                        Napier.e("Error subscribing to typing broadcast channel", e)
+            val currentUserId = getCurrentUserId()
+                ?: throw NotAuthenticatedException("User not authenticated")
+            typingMutex.withLock {
+                val topic = typingTopic(chatId)
+                val entry = typingChannel(topic)
+                try {
+                    subscribeTypingChannel(entry.channel)
+                    val payload = buildJsonObject {
+                        put("user_id", currentUserId)
+                        put("is_typing", isTyping)
                     }
+                    kotlinx.coroutines.withTimeout(5000) {
+                        entry.channel.broadcast(event = "typing", message = payload)
+                    }
+                } finally {
+                    removeTypingChannel(topic, entry)
                 }
-                channel.track(buildJsonObject {
-                    put("user_id", currentUserId)
-                    put("is_typing", isTyping)
-                })
-            } catch (e: Exception) {
-                Napier.e("Error broadcasting typing status", e)
             }
         }
 
@@ -84,8 +136,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * is finalized. This prevents a race condition where messages sent immediately after
      * entering a chat are missed.
      */
-    fun subscribeToMessages(chatId: String): Flow<MessageDto> = callbackFlow {
-        val channelId = "msgs_flow_${chatId}_${UUIDUtils.randomUUID()}"
+    fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit = {}): Flow<MessageDto> = callbackFlow {
+        val normalizedChatId = chatId.trim().lowercase()
+        val channelId = uniqueTopic("msgs_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for messages: $channelId", tag = "Realtime")
 
         try {
@@ -98,34 +151,94 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         // Register the postgres change listener BEFORE subscribing.
         // postgresChangeFlow only registers the filter — it does not start the WebSocket
-        val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+        val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "messages"
-            filter("chat_id", FilterOperator.EQ, chatId)
+            filter("chat_id", FilterOperator.EQ, normalizedChatId)
         }
 
         val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            changeFlow
-                .onStart { subscriptionReady.complete(Unit) }
-                .collect { action ->
-                    try {
-                        val record = action.decodeRecord<MessageDto>()
-                        Napier.d("Realtime message received in channel $channelId: ${record.id} for chat $chatId", tag = "Realtime")
-                        send(record)
-                    } catch (e: Exception) {
-                        Napier.e("Error decoding realtime message", e, tag = "Realtime")
+            try {
+                changeFlow
+                    .onStart { subscriptionReady.complete(Unit) }
+                    .collect { action ->
+                        try {
+                            when (action) {
+                                is PostgresAction.Insert -> {
+                                    val record = action.decodeRecord<MessageDto>()
+                                    Napier.d("Realtime message INSERT received in channel $channelId: ${record.id} for chat $normalizedChatId", tag = "Realtime")
+                                    send(record)
+                                }
+                                is PostgresAction.Update -> {
+                                    val record = action.decodeRecord<MessageDto>()
+                                    Napier.d("Realtime message UPDATE received in channel $channelId: ${record.id} for chat $normalizedChatId, status=${record.deliveryStatus}", tag = "Realtime")
+                                    send(record)
+                                }
+                                else -> {}
+                            }
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            Napier.e("Error decoding realtime message action", e, tag = "Realtime")
+                        }
+                    }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.e("Collector terminated unexpectedly for channel $channelId", e, tag = "Realtime")
+                    close(e)
+                }
+            }
+        }
+
+        val statusMonitor = launch(AppDispatchers.IO) {
+            try {
+                var wasSubscribed = false
+                launch {
+                    channel.status.collect { status ->
+                        if (status == RealtimeChannel.Status.SUBSCRIBED) {
+                            wasSubscribed = true
+                        } else if (wasSubscribed && status != RealtimeChannel.Status.SUBSCRIBED) {
+                            Napier.w("Channel $channelId lost subscription (status=$status), closing flow to trigger re-subscription", tag = "Realtime")
+                            close(IllegalStateException("Realtime channel unsubscribed"))
+                        }
                     }
                 }
+                launch {
+                    var wasConnected = false
+                    client.realtime.status.collect { rStatus ->
+                        if (rStatus == io.github.jan.supabase.realtime.Realtime.Status.CONNECTED) {
+                            if (wasConnected && wasSubscribed) {
+                                Napier.w("Realtime socket reconnected, refreshing subscription for channel $channelId", tag = "Realtime")
+                                close(IllegalStateException("Realtime socket reconnected"))
+                            }
+                            wasConnected = true
+                        } else if (rStatus == io.github.jan.supabase.realtime.Realtime.Status.DISCONNECTED && wasConnected) {
+                            Napier.w("Realtime socket disconnected for channel $channelId", tag = "Realtime")
+                            close(IllegalStateException("Realtime socket disconnected"))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.w("Status monitor terminated for channel $channelId: ${e.message}", tag = "Realtime")
+                }
+            }
         }
 
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
                 yield()
-                channel.subscribe(blockUntilSubscribed = true)
+                kotlinx.coroutines.withTimeout(10_000) {
+                    channel.subscribe(blockUntilSubscribed = true)
+                }
                 Napier.d("Successfully subscribed to messages channel: $channelId", tag = "Realtime")
+                onConnected()
             } catch (e: Exception) {
-                if (e !is CancellationException) {
+                if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    close(IllegalStateException("Message subscription timed out", e))
+                } else if (e is CancellationException) {
+                    throw e
+                } else {
                     Napier.e("Failed to subscribe to messages channel: $channelId", e, tag = "Realtime")
                     close(e)
                 }
@@ -134,9 +247,9 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         awaitClose {
             Napier.d("Closing realtime channel for messages: $channelId", tag = "Realtime")
             collector.cancel()
-            launch {
+            statusMonitor.cancel()
+            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
                 try {
-                    yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {
@@ -144,14 +257,16 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                 }
             }
         }
-    }
+    }.buffer(Channel.BUFFERED)
 
     /**
      * Monitors for any new messages across the entire 'messages' table to update the user's inbox.
      * Note: Server-side RLS (Row Level Security) ensures the user only receives messages they are authorized to see.
      */
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
-        val channelId = "inbox_flow_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
+        // Chat ids are not part of the topic: Supabase rejects topics over 100 bytes.
+        // Row visibility is enforced by RLS, not the topic.
+        val channelId = uniqueTopic("inbox_flow")
         Napier.d("Creating realtime channel for inbox: $channelId", tag = "Realtime")
 
         try {
@@ -159,30 +274,69 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         } catch (e: Exception) {}
 
         val channel = client.realtime.channel(channelId)
-        val flow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+        val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "messages"
         }
 
         val subscriptionReady = CompletableDeferred<Unit>()
         val collector = launch(AppDispatchers.IO) {
-            flow
-                .onStart { subscriptionReady.complete(Unit) }
-                .collect { action ->
-                    try {
-                        val message = action.decodeRecord<MessageDto>()
-                        Napier.d("Realtime inbox update received: ${message.id}", tag = "Realtime")
-                        send(message)
-                    } catch (e: Exception) {
-                        Napier.e("Error decoding real-time message in inbox", e, tag = "Realtime")
+            try {
+                flow
+                    .onStart { subscriptionReady.complete(Unit) }
+                    .collect { action ->
+                        try {
+                            when (action) {
+                                is PostgresAction.Insert -> {
+                                    val message = action.decodeRecord<MessageDto>()
+                                    Napier.d("Realtime inbox INSERT received: ${message.id}", tag = "Realtime")
+                                    trySend(message)
+                                }
+                                is PostgresAction.Update -> {
+                                    val message = action.decodeRecord<MessageDto>()
+                                    Napier.d("Realtime inbox UPDATE received: ${message.id}", tag = "Realtime")
+                                    trySend(message)
+                                }
+                                else -> {}
+                            }
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            Napier.e("Error decoding real-time message in inbox", e, tag = "Realtime")
+                        }
                     }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.e("Inbox flow collector terminated unexpectedly", e, tag = "Realtime")
+                    close(e)
                 }
+            }
         }
 
         launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
                 yield()
-                channel.subscribe(blockUntilSubscribed = true)
+                var subscribed = false
+                var attempts = 0
+                while (!subscribed && attempts < 3 && isActive) {
+                    try {
+                        channel.subscribe(blockUntilSubscribed = true)
+                        subscribed = true
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        attempts++
+                        if (attempts < 3) delay(1000L * attempts)
+                    }
+                }
+                if (!subscribed && isActive) {
+                    try {
+                        channel.subscribe(blockUntilSubscribed = false)
+                    } catch (e: Exception) {
+                        if (e !is CancellationException) {
+                            Napier.e("Failed to subscribe to inbox channel after retries", e, tag = "Realtime")
+                            close(e)
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     Napier.e("Failed to subscribe to inbox channel", e, tag = "Realtime")
@@ -193,9 +347,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            launch {
+            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
                 try {
-                    yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {}
@@ -204,84 +357,97 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
     }
 
     /**
-     * Subscribes to typing indicators from all participants in a chat using Presence.
-     * Presence provides a shared state that tracks who is currently 'online' or 'typing' in a channel.
+     * Subscribes to typing indicators from all participants in a chat using Supabase Broadcast.
+     *
+     * Broadcast-only implementation: presence was previously used alongside broadcast on the
+     * same channel, which can conflict in supabase-kt realtime-kt. Broadcast messages are
+     * delivered to every subscriber of the channel, so presence is unnecessary.
+     *
+     * The collector is registered and signals readiness via [CompletableDeferred] before the
+     * WebSocket subscription is finalized, preventing a race where typing events sent
+     * immediately after entering a chat are missed.
      */
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> = callbackFlow {
-        val channelId = "typing_flow_${chatId}_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
-        Napier.d("Creating realtime channel for typing status: $channelId", tag = "Realtime")
-
-        try {
-            client.realtime.connect()
-        } catch (e: Exception) {}
-
-        val channel = client.realtime.channel(channelId)
-        val presenceFlow = channel.presenceChangeFlow()
-
-        val subscriptionReady = CompletableDeferred<Unit>()
-        val collector = launch(AppDispatchers.IO) {
-            presenceFlow
-                .onStart { subscriptionReady.complete(Unit) }
-                .collect { presenceChange ->
-                    presenceChange.joins.values.forEach { presence ->
+        val topic = typingTopic(chatId)
+        var entry: TypingChannel? = null
+        var collector: kotlinx.coroutines.Job? = null
+        var statusMonitor: kotlinx.coroutines.Job? = null
+        val setup = launch(AppDispatchers.IO) {
+            try {
+                typingMutex.withLock {
+                    val acquired = typingChannel(topic)
+                    entry = acquired
+                    acquired.collectors++
+                    val channel = acquired.channel
+                    val broadcasts = channel.broadcastFlow<kotlinx.serialization.json.JsonObject>("typing")
+                    collector = this@callbackFlow.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
                         try {
-                            val state = presence.state
-                            val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
-                            val isTyping = state["is_typing"]?.jsonPrimitive?.booleanOrNull
-
-                            if (userId != null && isTyping != null) {
-                                send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                            broadcasts.collect { json ->
+                                val userId = (json["user_id"] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull
+                                val isTyping = (json["is_typing"] as? kotlinx.serialization.json.JsonPrimitive)?.booleanOrNull
+                                if (!userId.isNullOrBlank() && isTyping != null) {
+                                    send(mapOf("user_id" to userId, "is_typing" to isTyping))
+                                }
                             }
+                            close(IllegalStateException("Typing broadcast stream ended"))
                         } catch (e: Exception) {
-                            Napier.e("Error decoding presence state", e, tag = "Realtime")
+                            if (e is CancellationException) throw e
+                            close(e)
                         }
                     }
-
-                    presenceChange.leaves.values.forEach { presence ->
-                        try {
-                            val state = presence.state
-                            val userId = state["user_id"]?.jsonPrimitive?.contentOrNull
-
-                            if (userId != null) {
-                                send(mapOf("user_id" to userId, "is_typing" to false))
+                    subscribeTypingChannel(channel)
+                    statusMonitor = this@callbackFlow.launch {
+                        launch {
+                            channel.status.collect { status ->
+                                if (status != RealtimeChannel.Status.SUBSCRIBED) {
+                                    close(IllegalStateException("Typing channel lost subscription"))
+                                }
                             }
-                        } catch (e: Exception) {
-                            Napier.e("Error decoding presence leave state", e, tag = "Realtime")
+                        }
+                        launch {
+                            client.realtime.status.collect { status ->
+                                if (status != Realtime.Status.CONNECTED) {
+                                    close(IllegalStateException("Typing socket disconnected"))
+                                }
+                            }
                         }
                     }
                 }
-        }
-
-        launch(AppDispatchers.IO) {
-            try {
-                subscriptionReady.await()
-                yield()
-                channel.subscribe(blockUntilSubscribed = true)
             } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    Napier.e("Failed to subscribe to chat presence", e, tag = "Realtime")
+                if (e is CancellationException) {
+                    if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                        close(IllegalStateException("Typing subscription timed out", e))
+                    } else throw e
+                } else {
                     close(e)
                 }
             }
         }
-
         awaitClose {
-            collector.cancel()
-            launch {
+            setup.cancel()
+            collector?.cancel()
+            statusMonitor?.cancel()
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
-                    yield()
-                    channel.unsubscribe()
-                    client.realtime.removeChannel(channel)
-                } catch (e: Exception) {}
+                    typingMutex.withLock {
+                        entry?.let {
+                            it.collectors--
+                            removeTypingChannel(topic, it)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Napier.w("Error releasing typing channel", e, tag = "Realtime")
+                }
             }
         }
-    }
+    }.buffer(Channel.BUFFERED)
 
     /**
      * Listens for updates to existing messages (e.g., status changes to 'read' or 'delivered').
      */
     fun subscribeToReadReceipts(chatId: String): Flow<MessageDto> = callbackFlow {
-        val channelId = "read_flow_${chatId}_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
+        val normalizedChatId = chatId.trim().lowercase()
+        val channelId = uniqueTopic("read_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for read receipts: $channelId", tag = "Realtime")
 
         try {
@@ -291,7 +457,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction.Update>(schema = "public") {
             table = "messages"
-            filter("chat_id", FilterOperator.EQ, chatId)
+            filter("chat_id", FilterOperator.EQ, normalizedChatId)
         }
 
         val subscriptionReady = CompletableDeferred<Unit>()
@@ -321,9 +487,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            launch {
+            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
                 try {
-                    yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {}
@@ -335,7 +500,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Tracks additions and removals of emoji reactions for a specific chat.
      */
     fun subscribeToMessageReactions(chatId: String): Flow<MessageReactionDto> = callbackFlow {
-        val channelId = "react_flow_${chatId}_${UUIDUtils.randomUUID()}_${com.synapse.social.studioasinc.shared.util.TimeProvider.nowMillis()}"
+        val normalizedChatId = chatId.trim().lowercase()
+        val channelId = uniqueTopic("react_flow_${normalizedChatId}")
         Napier.d("Creating realtime channel for reactions: $channelId", tag = "Realtime")
 
         try {
@@ -345,7 +511,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "message_reactions"
-            filter("chat_id", FilterOperator.EQ, chatId)
+            filter("chat_id", FilterOperator.EQ, normalizedChatId)
         }
 
         val subscriptionReady = CompletableDeferred<Unit>()
@@ -380,9 +546,8 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            launch {
+            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
                 try {
-                    yield()
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {}

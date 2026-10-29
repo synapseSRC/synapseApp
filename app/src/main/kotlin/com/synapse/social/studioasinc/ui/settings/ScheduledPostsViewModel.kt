@@ -1,10 +1,11 @@
 package com.synapse.social.studioasinc.ui.settings
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
 import com.synapse.social.studioasinc.domain.repository.ScheduledPostRepository
+import com.synapse.social.studioasinc.feature.createpost.scheduling.ScheduledPostPublisherWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,10 +23,11 @@ data class ScheduledPostsUiState(
 
 @HiltViewModel
 class ScheduledPostsViewModel @Inject constructor(
+    application: Application,
     private val scheduledPostRepository: ScheduledPostRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
-    private val authService = SupabaseAuthenticationService()
+    private val authService = com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService.getInstance(application)
 
     private val _uiState = MutableStateFlow(ScheduledPostsUiState())
     val uiState: StateFlow<ScheduledPostsUiState> = _uiState.asStateFlow()
@@ -80,8 +82,10 @@ class ScheduledPostsViewModel @Inject constructor(
 
     fun retryScheduledPost(id: String) {
         viewModelScope.launch {
+            val post = _uiState.value.posts.find { it.id == id }
             scheduledPostRepository.retryScheduledPost(id)
                 .onSuccess {
+                    post?.let { ScheduledPostPublisherWorker.scheduleAt(getApplication(), it.scheduledAt) }
                     loadScheduledPosts()
                 }
                 .onFailure { error ->
@@ -95,6 +99,7 @@ class ScheduledPostsViewModel @Inject constructor(
             val post = _uiState.value.posts.find { it.id == id } ?: return@launch
             scheduledPostRepository.updateScheduledPost(id, newScheduledAt, post.postRequest)
                 .onSuccess {
+                    ScheduledPostPublisherWorker.scheduleAt(getApplication(), newScheduledAt)
                     loadScheduledPosts()
                 }
                 .onFailure { error ->

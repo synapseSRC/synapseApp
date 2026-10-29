@@ -11,7 +11,7 @@ struct AuthView: View {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 80))
                     .foregroundColor(.blue)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, AppTheme.Spacing.space20)
 
                 Text(String(localized: "app_name"))
                     .font(.largeTitle)
@@ -20,7 +20,7 @@ struct AuthView: View {
                 Text(String(localized: "auth_tagline"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, AppTheme.Spacing.space40)
 
                 Button(action: {
                     navigator.navigate(to: .login)
@@ -34,7 +34,7 @@ struct AuthView: View {
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 10)
+                .padding(.bottom, AppTheme.Spacing.space10)
 
                 Button(action: {
                     navigator.navigate(to: .register)

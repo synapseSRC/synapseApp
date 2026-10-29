@@ -22,7 +22,6 @@ import kotlinx.serialization.json.jsonPrimitive
 
 @OptIn(InternalAPI::class)
 class ImgBBUploadService(private val client: HttpClient) : UploadService {
-
     private suspend fun ByteReadChannel.toByteArray(): ByteArray {
         val buffer = mutableListOf<Byte>()
         val temp = ByteArray(8192)
@@ -124,10 +123,6 @@ class ImgBBUploadService(private val client: HttpClient) : UploadService {
                 // Best-effort cleanup; continue with remaining images.
             }
         }
-    }
-
-    suspend fun deleteImage(deleteUrl: String): Result<Unit> {
-        return deleteImgBbImage(client, deleteUrl)
     }
 
     suspend fun deleteImages(deleteUrls: List<String>) {

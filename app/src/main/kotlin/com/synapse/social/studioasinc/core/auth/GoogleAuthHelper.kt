@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.core.auth
 
 import android.content.Context
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -43,10 +44,20 @@ class GoogleAuthHelper(private val context: Context) {
             
             val credential = result.credential
             
-            if (credential is GoogleIdTokenCredential) {
-                val idToken = credential.idToken
+            // Google Credential Manager returns CustomCredential when the Play Services
+            // version predates the typed GoogleIdTokenCredential marshalling.
+            val googleCredential = when (credential) {
+                is GoogleIdTokenCredential -> credential
+                is CustomCredential ->
+                    if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                        GoogleIdTokenCredential.createFrom(credential.data)
+                    } else null
+                else -> null
+            }
+            
+            if (googleCredential != null) {
                 Napier.d("Google Sign-In successful", tag = TAG)
-                Result.success(idToken)
+                Result.success(googleCredential.idToken)
             } else {
                 val error = "Unexpected credential type: ${credential::class.simpleName}"
                 Napier.e(error, tag = TAG)

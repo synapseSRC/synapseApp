@@ -24,8 +24,10 @@ import com.synapse.social.studioasinc.domain.usecase.search.SearchUsersForPostUs
 import com.synapse.social.studioasinc.domain.usecase.search.SearchLocationsUseCase
 import com.synapse.social.studioasinc.domain.usecase.search.SearchFeelingsUseCase
 import com.synapse.social.studioasinc.domain.repository.ScheduledPostRepository
+import com.synapse.social.studioasinc.domain.repository.MediaUploadHandler
+import com.synapse.social.studioasinc.feature.createpost.scheduling.ScheduledPostPublisherWorker
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.Instant
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager
@@ -116,9 +118,9 @@ class CreatePostViewModel @Inject constructor(
     private val searchLocationsUseCase: SearchLocationsUseCase,
     private val searchFeelingsUseCase: SearchFeelingsUseCase,
     private val submitPostUseCase: SubmitPostUseCase,
+    private val mediaUploadHandler: MediaUploadHandler,
     private val scheduledPostRepository: ScheduledPostRepository
 ) : AndroidViewModel(application) {
-
     private val authService = SupabaseAuthenticationService()
 
     private val _uiState = MutableStateFlow(CreatePostUiState())
@@ -240,14 +242,6 @@ class CreatePostViewModel @Inject constructor(
         _uiState.update { it.copy(threadPosts = currentThreads) }
     }
 
-    fun removeThreadPost(index: Int) {
-        val currentThreads = _uiState.value.threadPosts.toMutableList()
-        if (index in currentThreads.indices) {
-            currentThreads.removeAt(index)
-            _uiState.update { it.copy(threadPosts = currentThreads) }
-        }
-    }
-
     fun updateThreadPostText(index: Int, text: String) {
         val currentThreads = _uiState.value.threadPosts.toMutableList()
         if (index in currentThreads.indices) {
@@ -287,27 +281,6 @@ class CreatePostViewModel @Inject constructor(
         }
     }
 
-    fun updateThreadMediaItem(postIndex: Int, mediaIndex: Int, uri: Uri) {
-        val currentThreads = _uiState.value.threadPosts.toMutableList()
-        if (postIndex in currentThreads.indices) {
-            val currentMedia = currentThreads[postIndex].mediaItems.toMutableList()
-            if (mediaIndex in currentMedia.indices) {
-                val context = getApplication<Application>()
-                UriUtils.getPathFromUri(context, uri)?.let { path ->
-                    val oldItem = currentMedia[mediaIndex]
-                    val newItem = oldItem.copy(
-                        url = path,
-                        mimeType = context.contentResolver.getType(uri)
-                    )
-                    currentMedia[mediaIndex] = newItem
-                    currentThreads[postIndex] = currentThreads[postIndex].copy(mediaItems = currentMedia)
-                    _uiState.update { it.copy(threadPosts = currentThreads) }
-                }
-            }
-        }
-    }
-
-
     fun addTaggedPerson(user: User) {
         val current = _uiState.value.taggedPeople.toMutableList()
 
@@ -334,10 +307,6 @@ class CreatePostViewModel @Inject constructor(
 
     fun setFeelingActivity(feeling: FeelingActivity?) {
         _uiState.update { it.copy(feeling = feeling) }
-    }
-
-    fun setTextBackgroundColor(color: Long?) {
-        _uiState.update { it.copy(textBackgroundColor = color) }
     }
 
     fun addMedia(uris: List<Uri>) {
@@ -400,10 +369,6 @@ class CreatePostViewModel @Inject constructor(
 
     fun setPrivacy(privacy: String) {
         _uiState.update { it.copy(privacy = privacy) }
-    }
-
-    fun updateSettings(settings: PostSettings) {
-        _uiState.update { it.copy(settings = settings) }
     }
 
     fun setScheduledAt(scheduledAt: String?) {
@@ -516,6 +481,16 @@ class CreatePostViewModel @Inject constructor(
         }
     }
 
+    /**
+     * A scheduled post is published by a worker in a later process, where the photo
+     * picker's content:// URIs may no longer be readable, so media is uploaded upfront.
+     */
+    private suspend fun resolveMediaForScheduling(mediaItems: List<MediaItem>): List<MediaItem> {
+        val local = mediaItems.filter { !it.url.startsWith("http") }
+        if (local.isEmpty()) return mediaItems
+        return mediaItems.filter { it.url.startsWith("http") } + mediaUploadHandler.uploadMedia(local) {}
+    }
+
     fun submitPost() {
         if (_uiState.value.isLoading) return
 
@@ -529,9 +504,10 @@ class CreatePostViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, uploadProgress = 0f) }
 
             val state = _uiState.value
+            val isScheduling = state.scheduledAt != null
             val request = com.synapse.social.studioasinc.domain.model.CreatePostRequest(
                 postText = state.postText,
-                mediaItems = state.mediaItems,
+                mediaItems = if (isScheduling) resolveMediaForScheduling(state.mediaItems) else state.mediaItems,
                 privacy = state.privacy,
                 pollQuestion = state.pollData?.question,
                 pollOptions = state.pollData?.options,
@@ -577,6 +553,7 @@ class CreatePostViewModel @Inject constructor(
                 }
 
                 scheduledResult.onSuccess {
+                    ScheduledPostPublisherWorker.scheduleAt(getApplication(), state.scheduledAt)
                     clearDraft()
                     _uiState.update { s ->
                         s.copy(

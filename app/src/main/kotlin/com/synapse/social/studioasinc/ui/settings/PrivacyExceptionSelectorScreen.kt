@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,10 +27,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +49,7 @@ fun PrivacyExceptionSelectorScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(title) },
@@ -56,8 +63,8 @@ fun PrivacyExceptionSelectorScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
@@ -65,20 +72,20 @@ fun PrivacyExceptionSelectorScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 tonalElevation = 3.dp,
-                color = MaterialTheme.colorScheme.surface
+                color = AppColors.screenBackground
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(SettingsSpacing.screenPadding)
+                        .padding(AppSpacing.screenPadding)
                 ) {
                     Button(
                         onClick = onSaveClicked,
                         enabled = !uiState.isSaving && !uiState.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = SettingsSpacing.minTouchTarget),
-                        shape = SettingsShapes.itemShape
+                            .heightIn(min = AccessibilitySizes.minimumTouchTarget),
+                        shape = AppShapes.itemShape
                     ) {
                         if (uiState.isSaving) {
                             CircularProgressIndicator(
@@ -89,7 +96,7 @@ fun PrivacyExceptionSelectorScreen(
                         } else {
                             Text(
                                 text = stringResource(R.string.privacy_save_exception_list, uiState.selectedUserIds.size),
-                                style = SettingsTypography.buttonText
+                                style = AppTypography.buttonText
                             )
                         }
                     }
@@ -109,7 +116,7 @@ fun PrivacyExceptionSelectorScreen(
                 onValueChange = onSearchQueryChanged,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = SettingsSpacing.screenPadding, vertical = Spacing.Small),
+                    .padding(horizontal = AppSpacing.screenPadding, vertical = Spacing.space8),
                 placeholder = { Text(stringResource(R.string.settings_search_settings_placeholder)) },
                 leadingIcon = {
                     Icon(
@@ -129,7 +136,7 @@ fun PrivacyExceptionSelectorScreen(
                     }
                 },
                 singleLine = true,
-                shape = SettingsShapes.inputShape,
+                shape = AppShapes.inputShape,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline
@@ -140,7 +147,7 @@ fun PrivacyExceptionSelectorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(Spacing.Large),
+                        .padding(Spacing.space24),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -149,12 +156,12 @@ fun PrivacyExceptionSelectorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(Spacing.Large),
+                        .padding(Spacing.space24),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = if (uiState.searchQuery.isEmpty()) stringResource(R.string.privacy_no_contacts_found) else stringResource(R.string.privacy_no_matching_contacts),
-                        style = SettingsTypography.itemSubtitle,
+                        style = AppTypography.itemSubtitle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -162,9 +169,9 @@ fun PrivacyExceptionSelectorScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = SettingsSpacing.screenPadding),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing),
-                    contentPadding = PaddingValues(bottom = Spacing.Large)
+                        .padding(horizontal = AppSpacing.screenPadding),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing),
+                    contentPadding = PaddingValues(bottom = Spacing.space24)
                 ) {
                     itemsIndexed(
                         items = uiState.filteredContacts,
@@ -186,7 +193,7 @@ fun PrivacyExceptionSelectorScreen(
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = position.getShape(),
-                            color = SettingsColors.cardBackground
+                            color = AppColors.cardBackground
                         ) {
                             Row(
                                 modifier = Modifier
@@ -200,10 +207,10 @@ fun PrivacyExceptionSelectorScreen(
                                         contentDescription = cd
                                     }
                                     .padding(
-                                        horizontal = SettingsSpacing.itemHorizontalPadding,
-                                        vertical = SettingsSpacing.itemVerticalPadding
+                                        horizontal = AppSpacing.itemHorizontalPadding,
+                                        vertical = AppSpacing.itemVerticalPadding
                                     )
-                                    .heightIn(min = SettingsSpacing.minTouchTarget),
+                                    .heightIn(min = AccessibilitySizes.minimumTouchTarget),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // Avatar
@@ -221,39 +228,39 @@ fun PrivacyExceptionSelectorScreen(
                                         modifier = Modifier
                                             .size(40.dp)
                                             .clip(CircleShape)
-                                            .background(SettingsColors.iconContainerBackground),
+                                            .background(AppColors.iconContainerBackground),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Filled.Person,
                                             contentDescription = null,
-                                            tint = SettingsColors.itemIcon,
+                                            tint = AppColors.itemIcon,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+                                Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
 
                                 Column(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
                                         text = displayName,
-                                        style = SettingsTypography.itemTitle,
+                                        style = AppTypography.itemTitle,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     if (handle.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = handle,
-                                            style = SettingsTypography.itemSubtitle,
+                                            style = AppTypography.itemSubtitle,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(Spacing.Medium))
+                                Spacer(modifier = Modifier.width(Spacing.space16))
 
                                 Checkbox(
                                     checked = isSelected,

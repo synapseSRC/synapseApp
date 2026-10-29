@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- M3 Expressive component geometry and explicit screen requirements. -->
+    <dimen name="about_connected_button_height">40dp</dimen>
+    <dimen name="about_list_item_gap">3dp</dimen>
+    <dimen name="about_list_item_min_height">72dp</dimen>
+    <dimen name="about_release_item_min_height">88dp</dimen>
+    <dimen name="about_release_bullet_size">8dp</dimen>
+    <dimen name="about_release_heading_icon_size">20dp</dimen>
+    <dimen name="about_release_action_icon_size">18dp</dimen>
+    <dimen name="about_release_accent_size">48dp</dimen>
+    <dimen name="about_skeleton_hero_height">200dp</dimen>
+    <dimen name="about_icon_container_size">40dp</dimen>
+    <dimen name="about_icon_size">24dp</dimen>
+    <dimen name="about_list_outer_corner">28dp</dimen>
+    <dimen name="about_list_inner_corner">8dp</dimen>
+    <dimen name="about_divider_thickness">1dp</dimen>
+    <dimen name="about_releases_fab_height">64dp</dimen>
+    <dimen name="about_search_height">56dp</dimen>
+    <dimen name="about_menu_corner">4dp</dimen>
+    <dimen name="about_submit_button_height">56dp</dimen>
+    <dimen name="about_touch_target_min_height">48dp</dimen>
+</resources>

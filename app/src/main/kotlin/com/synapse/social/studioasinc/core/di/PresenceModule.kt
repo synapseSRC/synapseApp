@@ -1,8 +1,9 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.data.repository.SupabasePresenceRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PresenceRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StartPresenceTrackingUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StopPresenceTrackingUseCase
@@ -17,10 +18,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object PresenceModule {
-    
-    @Provides
-    @Singleton
-    fun providePresenceRepository(): PresenceRepository = SupabasePresenceRepository()
     
     @Provides
     @Singleton
@@ -41,8 +38,13 @@ object PresenceModule {
     @Provides
     @Singleton
     fun provideObserveUserActiveStatusUseCase(repository: PresenceRepository) = ObserveUserActiveStatusUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideObserveUserPresenceDetailUseCase(repository: PresenceRepository) = ObserveUserPresenceDetailUseCase(repository)
     
     @Provides
     @Singleton
     fun provideUpdateCurrentChatUseCase(repository: PresenceRepository) = UpdateCurrentChatUseCase(repository)
 }
+

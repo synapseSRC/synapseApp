@@ -52,8 +52,9 @@ import com.synapse.social.studioasinc.presentation.editprofile.components.Gender
 import com.synapse.social.studioasinc.presentation.editprofile.components.ProfileFormFields
 import com.synapse.social.studioasinc.presentation.editprofile.components.ProfileImageSection
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -194,6 +195,7 @@ fun EditProfileScreen(
     SynapseTheme {
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = AppColors.screenBackground,
             topBar = {
                 EditProfileTopBar(
                     isSaving = uiState.isSaving,

@@ -1,24 +1,33 @@
 package com.synapse.social.studioasinc.core
 
 import android.app.Application
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import coil.ImageLoader
-import coil.ImageLoaderFactory
-import coil.decode.VideoFrameDecoder
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.asImage
+import coil3.svg.SvgDecoder
+import coil3.video.VideoFrameDecoder
 import dagger.hilt.android.HiltAndroidApp
 import com.synapse.social.studioasinc.data.remote.services.SupabaseAuthenticationService
 import com.synapse.social.studioasinc.data.remote.services.AuthDevelopmentUtils
 import com.onesignal.OneSignal
+import com.onesignal.notifications.INotificationClickEvent
+import com.onesignal.notifications.INotificationClickListener
 import com.onesignal.debug.LogLevel
 import com.synapse.social.studioasinc.core.config.NotificationConfig
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
 import com.synapse.social.studioasinc.core.util.MediaCacheCleanupManager
 import com.synapse.social.studioasinc.core.util.SupabaseStorageImageInterceptor
+import com.synapse.social.studioasinc.feature.createpost.scheduling.ScheduledPostPublisherWorker
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.feature.shared.theme.ThemeManager
+import com.synapse.social.studioasinc.feature.settings.backup.SettingsCloudSyncScheduler
+import com.synapse.social.studioasinc.shared.domain.repository.IncomingCallWatcher
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StartPresenceTrackingUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StopPresenceTrackingUseCase
@@ -42,7 +51,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.SupervisorJob
 
 @HiltAndroidApp
-class SynapseApplication : Application(), ImageLoaderFactory {
+class SynapseApplication : Application(), SingletonImageLoader.Factory {
 
     companion object {
         lateinit var instance: SynapseApplication
@@ -51,11 +60,7 @@ class SynapseApplication : Application(), ImageLoaderFactory {
 
     @Inject lateinit var notificationRepository: NotificationRepository
 
-    override fun newImageLoader(): ImageLoader {
-        val placeholder = BitmapDrawable(
-            resources,
-            BitmapFactory.decodeResource(resources, R.raw.placeholder)
-        )
+    override fun newImageLoader(context: Context): ImageLoader {
         val okHttpClient = okhttp3.OkHttpClient.Builder()
             .addInterceptor(
                 SupabaseStorageImageInterceptor(
@@ -72,16 +77,28 @@ class SynapseApplication : Application(), ImageLoaderFactory {
             )
             .build()
 
-        return ImageLoader.Builder(this)
-            .okHttpClient(okHttpClient)
-            .placeholder(placeholder)
-            .components { add(VideoFrameDecoder.Factory()) }
+        return ImageLoader.Builder(context)
+            .components {
+                add(coil3.network.okhttp.OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
+                add(VideoFrameDecoder.Factory())
+                add(SvgDecoder.Factory())
+            }
             .build()
     }
 
     @Inject lateinit var startPresenceTrackingUseCase: StartPresenceTrackingUseCase
     @Inject lateinit var stopPresenceTrackingUseCase: StopPresenceTrackingUseCase
     @Inject lateinit var updatePresenceUseCase: UpdatePresenceUseCase
+    @Inject lateinit var settingsCloudSyncScheduler: SettingsCloudSyncScheduler
+
+    /**
+     * The watch for calls addressed to this user, started and stopped with the session below.
+     *
+     * The application owns it rather than a screen because a ring has to be noticed while no screen is
+     * looking: the app is backgrounded, the screen is off, or the process has only just come back for a
+     * push. It is the same lifetime the presence tracker has, for the same reason.
+     */
+    @Inject lateinit var incomingCallWatcher: IncomingCallWatcher
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -120,6 +137,7 @@ class SynapseApplication : Application(), ImageLoaderFactory {
 
         setupAuthSessionObserver()
 
+        settingsCloudSyncScheduler.start()
 
         initializeMaintenanceServices()
 
@@ -137,6 +155,19 @@ class SynapseApplication : Application(), ImageLoaderFactory {
             override fun onStart(owner: LifecycleOwner) {
                 isAppInForeground = true
                 managePresenceTracking()
+                settingsCloudSyncScheduler.requestSyncIfEligible()
+                // Reconnect Realtime on foreground resume (e.g. after screen-off/Doze)
+                if (isAuthenticated) {
+                    applicationScope.launch(Dispatchers.IO) {
+                        try {
+                            val rt = io.github.jan.supabase.realtime.Realtime
+                            SupabaseClient.client.pluginManager.getPlugin(rt).connect()
+                            Napier.d("✅ Supabase Realtime reconnected on foreground resume", tag = "SynapseApplication")
+                        } catch (e: Exception) {
+                            Napier.e("❌ Failed to reconnect Supabase Realtime on resume", e, tag = "SynapseApplication")
+                        }
+                    }
+                }
             }
 
             override fun onStop(owner: LifecycleOwner) {
@@ -195,6 +226,19 @@ class SynapseApplication : Application(), ImageLoaderFactory {
 
         OneSignal.initWithContext(this, appId)
 
+        OneSignal.Notifications.addClickListener(object : INotificationClickListener {
+            override fun onClick(event: INotificationClickEvent) {
+                val data = event.notification.additionalData
+                // A call push is the one notification whose row may not be in this process's hands:
+                // on a cold start nothing has subscribed yet, so the watcher is asked to reconcile
+                // against the backend before navigation opens a screen that has to resolve it.
+                if (data?.optString("type") == "incoming_call") {
+                    incomingCallWatcher.start()
+                }
+                NotificationNavigationCoordinator.onNotificationClick(data)
+            }
+        })
+
         // Listen for subscription changes
         OneSignal.User.pushSubscription.addObserver(object : com.onesignal.user.subscriptions.IPushSubscriptionObserver {
             override fun onPushSubscriptionChange(state: com.onesignal.user.subscriptions.PushSubscriptionChangedState) {
@@ -220,9 +264,8 @@ class SynapseApplication : Application(), ImageLoaderFactory {
         })
 
         applicationScope.launch {
-            // Request permission first
-            OneSignal.Notifications.requestPermission(true)
-            
+            // Notification permission is requested from the permission onboarding and the permission
+            // manager, never during startup; OneSignal observes whatever the OS has already granted.
             // Login and sync with user ID if available
             try {
                 val authService = SupabaseAuthenticationService.getInstance(this@SynapseApplication)
@@ -273,6 +316,10 @@ class SynapseApplication : Application(), ImageLoaderFactory {
                                     tag = "PresenceTracker"
                                 )
                                 managePresenceTracking()
+                                // Watches for a ring, and re-reads whatever is already open server-side —
+                                // which is the cold-start path for a call placed while this process was
+                                // not running.
+                                incomingCallWatcher.start()
 
                                 try {
                                     val rt = io.github.jan.supabase.realtime.Realtime
@@ -314,6 +361,9 @@ class SynapseApplication : Application(), ImageLoaderFactory {
                                 tag = "PresenceTracker"
                             )
                             managePresenceTracking()
+                            // A ring belongs to the user who was signed in. Stopping the watch clears it,
+                            // so the next account on this device cannot be handed the previous one's call.
+                            incomingCallWatcher.stop()
 
                             try {
                                 val rt = io.github.jan.supabase.realtime.Realtime
@@ -360,9 +410,17 @@ class SynapseApplication : Application(), ImageLoaderFactory {
     }
 
     private fun initializeMaintenanceServices() {
-
-        mediaCacheCleanupManager = MediaCacheCleanupManager(this)
-        mediaCacheCleanupManager.initialize()
+        try {
+            mediaCacheCleanupManager = MediaCacheCleanupManager(this)
+            mediaCacheCleanupManager.initialize()
+        } catch (e: Exception) {
+            Napier.w("Skipping maintenance services initialization: ${e.message}", e, tag = "SynapseApplication")
+        }
+        try {
+            ScheduledPostPublisherWorker.ensurePeriodicPublish(this)
+        } catch (e: Exception) {
+            Napier.w("Skipping scheduled post publisher initialization: ${e.message}", e, tag = "SynapseApplication")
+        }
     }
 
     override fun onTerminate() {

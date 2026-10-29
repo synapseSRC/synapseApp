@@ -31,7 +31,10 @@ import io.github.jan.supabase.postgrest.query.Count
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Dispatchers
 import io.github.aakira.napier.Napier
 import io.github.jan.supabase.functions.functions
@@ -39,6 +42,13 @@ import kotlin.time.ExperimentalTime
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
+
+private fun diceBearInitialsAvatarUrl(name: String): String {
+    val seed = name.trim().lowercase().ifBlank { "member" }
+    return URLBuilder("https://api.dicebear.com/9.x/initials/svg").apply {
+        parameters.append("seed", seed)
+    }.buildString()
+}
 
 /**
  * Implementation of [AuthRepository] that utilizes Supabase Auth for session management
@@ -49,7 +59,15 @@ import io.ktor.http.appendPathSegments
  *
  * @property client The [SupabaseClientLib] instance used for authentication and database operations.
  */
-class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseClient.client) : AuthRepository {
+class SupabaseAuthRepository(
+    private val client: SupabaseClientLib = SupabaseClient.client,
+    private val cachedMessageDao: com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao? = null,
+    private val cachedConversationDao: com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao? = null,
+    private val postDao: com.synapse.social.studioasinc.shared.data.local.database.PostDao? = null,
+    private val storyDao: com.synapse.social.studioasinc.shared.data.local.database.StoryDao? = null,
+    private val offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository? = null,
+    private val syncManager: com.synapse.social.studioasinc.shared.data.sync.SyncManager? = null
+) : AuthRepository {
     override val sessionStatus: Flow<AuthSessionStatus> get() = client.auth.sessionStatus.map {
         when (it) {
             is SessionStatus.Authenticated -> AuthSessionStatus.AUTHENTICATED
@@ -60,17 +78,32 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
     private val TAG = "AuthRepository"
 
+    private companion object {
+        private const val SIGN_OUT_REVOKE_TIMEOUT_MS = 10_000L
+    }
+
     /**
      * Registers a new user account with the provided email and password.
      *
      * @return A [Result] containing the new user's ID if successful.
      */
-    override suspend fun signUp(email: String, password: String): Result<String> {
+    override suspend fun signUp(email: String, password: String): Result<String> =
+        createAuthUser(email, password, username = null)
+
+    private suspend fun createAuthUser(email: String, password: String, username: String?): Result<String> {
+        val normalizedUsername = username?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        val avatarSeed = normalizedUsername
+            ?: email.substringBefore("@").trim().lowercase().ifBlank { "member" }
+
         return try {
             withContext(AppDispatchers.IO) {
                 val user = client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
+                    data = buildJsonObject {
+                        normalizedUsername?.let { put("username", it) }
+                        put("avatar_url", diceBearInitialsAvatarUrl(avatarSeed))
+                    }
                 }
                 val userId = user?.id ?: client.auth.currentUserOrNull()?.id
                     ?: throw Exception("User ID not found")
@@ -92,7 +125,7 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
      */
     override suspend fun signUpWithProfile(email: String, password: String, username: String): Result<String> {
         return try {
-            val signUpResult = signUp(email, password)
+            val signUpResult = createAuthUser(email, password, username)
             if (signUpResult.isSuccess) {
                 val userId = signUpResult.getOrThrow()
                 ensureProfileExists(userId, email, username).map { userId }
@@ -120,34 +153,39 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
         return try {
             withContext(AppDispatchers.IO) {
                 Napier.d("Checking if user profile exists for userId: $userId", tag = TAG)
-                val count = client.from("users").select(columns = Columns.list("id")) {
+                val count = client.from("users").select(columns = Columns.list("uid")) {
                     count(Count.EXACT)
                     filter {
-                        eq("id", userId)
+                        eq("uid", userId)
                     }
                 }.countOrNull()
                 Napier.d("User profile count for $userId: $count", tag = TAG)
 
+                val actualUsername = username ?: email.substringBefore("@")
                 if (count == null || count == 0L) {
                     Napier.d("Profile does not exist for $userId, creating new profile...", tag = TAG)
-                    val actualUsername = username ?: email.substringBefore("@")
-
                     // SECURITY: Do not include sensitive fields (account_premium, verify, banned) here. They must be handled server-side.
                     val profileInsert = UserProfileInsert(
-                        uid = userId, // Ensure ID is passed if model requires it
+                        uid = userId,
                         username = actualUsername
                     )
                     Napier.d("Inserting user profile for $userId into users table...", tag = TAG)
                     client.from("users").insert(profileInsert)
                     Napier.d("Successfully inserted user profile for $userId.", tag = TAG)
-
-                    // Note: user_settings and user_presence are automatically created by database trigger
-                    // when the user signs up via Supabase Auth (see handle_new_auth_user trigger)
-                    // No need to manually insert them here
-
-                    Napier.d("User profile created: $userId", tag = TAG)
                 } else {
                     Napier.d("Profile already exists for $userId.", tag = TAG)
+                    // If a custom username was provided during sign up, ensure it is synchronized on the existing profile
+                    if (!username.isNullOrBlank()) {
+                        try {
+                            client.from("users").update(mapOf("username" to actualUsername)) {
+                                filter {
+                                    eq("uid", userId)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Napier.w("Failed to update username for existing profile $userId", e, tag = TAG)
+                        }
+                    }
                 }
                 Result.success(Unit)
             }
@@ -183,12 +221,31 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
     }
 
     /**
-     * Terminates the current user session and clears local authentication state.
+     * Terminates the current user session and clears all local data so no
+     * account-scoped data leaks into the next session.
      */
     override suspend fun signOut(): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
-                client.auth.signOut()
+                // Clear all local data first so it doesn't appear briefly after sign-out
+                com.synapse.social.studioasinc.shared.data.sync.AccountSyncManager.clearAllLocalData(
+                    cachedMessageDao = cachedMessageDao,
+                    cachedConversationDao = cachedConversationDao,
+                    postDao = postDao,
+                    storyDao = storyDao,
+                    offlineActionRepository = offlineActionRepository,
+                    syncManager = syncManager
+                )
+                try {
+                    // Revoking server-side is best effort; a dead network must not trap the user in the session.
+                    withTimeoutOrNull(SIGN_OUT_REVOKE_TIMEOUT_MS) { client.auth.signOut() }
+                } catch (e: Exception) {
+                    Napier.w("Remote session revoke failed during sign-out", e, tag = TAG)
+                }
+                // signOut() keeps the persisted session when the revoke request fails, so clear it explicitly.
+                if (client.auth.currentSessionOrNull() != null) {
+                    client.auth.clearSession()
+                }
                 Napier.d("User signed out", tag = TAG)
                 Result.success(Unit)
             }
@@ -439,9 +496,10 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
                 
                 // Retrieve the user from the established session
                 val user = client.auth.currentUserOrNull()
-                val userId = user?.id
+                    ?: throw Exception("User not found after Google sign-in")
+                val userId = user.id
                     ?: throw Exception("User ID not found after Google sign-in")
-                val email = user?.email
+                val email = user.email
                     ?: throw Exception("Email not found after Google sign-in")
                 
                 ensureProfileExists(userId, email, null)
@@ -558,13 +616,6 @@ class SupabaseAuthRepository(private val client: SupabaseClientLib = SupabaseCli
             SocialProvider.SPOTIFY -> Spotify
             SocialProvider.SLACK -> Slack
         }
-    }
-
-    // Compatibility alias
-    fun getCurrentUserUid(): String? = getCurrentUserId()
-
-    fun getCurrentUserIdentities(): List<io.github.jan.supabase.auth.user.Identity>? {
-        return client.auth.currentUserOrNull()?.identities
     }
 
     private fun logSafeError(message: String, e: Throwable) {

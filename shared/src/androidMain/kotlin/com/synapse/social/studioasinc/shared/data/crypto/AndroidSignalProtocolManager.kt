@@ -8,18 +8,24 @@ import com.synapse.social.studioasinc.shared.data.crypto.models.SignalIdentityKe
 import com.synapse.social.studioasinc.shared.data.crypto.models.SignalOneTimePreKey
 import com.synapse.social.studioasinc.shared.data.crypto.store.AndroidSignalStore
 import com.synapse.social.studioasinc.shared.util.Logger
-import org.whispersystems.libsignal.IdentityKey
-import org.whispersystems.libsignal.IdentityKeyPair
-import org.whispersystems.libsignal.SessionBuilder
-import org.whispersystems.libsignal.SessionCipher
-import org.whispersystems.libsignal.SignalProtocolAddress
-import org.whispersystems.libsignal.protocol.CiphertextMessage
-import org.whispersystems.libsignal.protocol.PreKeySignalMessage
-import org.whispersystems.libsignal.protocol.SignalMessage
-import org.whispersystems.libsignal.state.PreKeyRecord
-import org.whispersystems.libsignal.state.SignedPreKeyRecord
-import org.whispersystems.libsignal.util.KeyHelper
-import org.whispersystems.libsignal.state.PreKeyBundle as SignalNativePreKeyBundle
+import kotlinx.coroutines.CancellationException
+
+// ── libsignal-android (org.signal:libsignal-android) ─────────────────────────
+// Replaces the archived org.whispersystems:signal-protocol-android:2.8.x.
+// Package root changed from org.whispersystems.libsignal.* → org.signal.libsignal.protocol.*
+// All method signatures and the Signal wire format are identical.
+import org.signal.libsignal.protocol.IdentityKey
+import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.SessionBuilder
+import org.signal.libsignal.protocol.SessionCipher
+import org.signal.libsignal.protocol.SignalProtocolAddress
+import org.signal.libsignal.protocol.message.CiphertextMessage
+import org.signal.libsignal.protocol.message.PreKeySignalMessage
+import org.signal.libsignal.protocol.message.SignalMessage
+import org.signal.libsignal.protocol.state.PreKeyRecord
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord
+import org.signal.libsignal.protocol.util.KeyHelper
+import org.signal.libsignal.protocol.state.PreKeyBundle as SignalNativePreKeyBundle
 
 class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
 
@@ -36,19 +42,29 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
             identityKeyPair = store.identityKeyPair
             registrationId = store.getLocalRegistrationId()
         } else {
-            // Fresh generation
+            // Fresh generation using libsignal API
             Logger.d("E2EE_INIT: Generating new identity key pair", tag = "E2EE")
-            identityKeyPair = KeyHelper.generateIdentityKeyPair()
+            identityKeyPair = IdentityKeyPair.generate()
             registrationId = KeyHelper.generateRegistrationId(false)
             store.storeLocalIdentity(identityKeyPair, registrationId)
         }
 
-        // Generate a signed pre-key. Using an ID derived from current time to avoid overwriting issues
-        // while staying within the expected Int range for Signal protocols.
+        // Generate a signed pre-key. Using an ID derived from current time to avoid overwriting
+        // issues while staying within the expected Int range for Signal protocols.
         val signedPreKeyId = (System.currentTimeMillis() / 1000 % 0x00FFFFFF).toInt()
-        val signedPreKey = KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId)
+        val signedPreKeyPair = org.signal.libsignal.protocol.ecc.Curve.generateKeyPair()
+        val signedPreKeySignature = identityKeyPair.privateKey.calculateSignature(signedPreKeyPair.publicKey.serialize())
+        val signedPreKey = SignedPreKeyRecord(
+            signedPreKeyId,
+            System.currentTimeMillis(),
+            signedPreKeyPair,
+            signedPreKeySignature
+        )
         store.storeSignedPreKey(signedPreKey.id, signedPreKey)
-        Logger.d("E2EE_INIT: Stored identity and signed pre-key locally (regId: $registrationId, signedKeyId: $signedPreKeyId)", tag = "E2EE")
+        Logger.d(
+            "E2EE_INIT: Stored identity and signed pre-key locally (regId: $registrationId, signedKeyId: $signedPreKeyId)",
+            tag = "E2EE"
+        )
 
         return SignalIdentityKeys(
             registrationId = registrationId,
@@ -61,9 +77,11 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
 
     override suspend fun generateOneTimePreKeys(startId: Int, count: Int): List<SignalOneTimePreKey> {
         Logger.d("E2EE_INIT: Generating $count one-time pre-keys starting from ID $startId", tag = "E2EE")
-        val preKeys = KeyHelper.generatePreKeys(startId, count)
         val resultList = mutableListOf<SignalOneTimePreKey>()
-        for (preKey in preKeys) {
+        for (i in 0 until count) {
+            val keyId = (startId + i) % 0xFFFFFF
+            val keyPair = org.signal.libsignal.protocol.ecc.Curve.generateKeyPair()
+            val preKey = PreKeyRecord(keyId, keyPair)
             store.storePreKey(preKey.id, preKey)
             resultList.add(
                 SignalOneTimePreKey(
@@ -80,15 +98,20 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
         val address = SignalProtocolAddress(userId, DEVICE_ID)
         val sessionBuilder = SessionBuilder(store, address)
 
+        // Note: new libsignal IdentityKey constructor takes only the byte array (no offset).
         val nativeBundle = SignalNativePreKeyBundle(
             bundle.registrationId,
             bundle.deviceId,
             bundle.preKeyId ?: -1,
-            bundle.preKeyPublic?.let { org.whispersystems.libsignal.ecc.Curve.decodePoint(Base64.decode(it, Base64.DEFAULT), 0) },
+            bundle.preKeyPublic?.let {
+                org.signal.libsignal.protocol.ecc.Curve.decodePoint(Base64.decode(it, Base64.DEFAULT), 0)
+            },
             bundle.signedPreKeyId,
-            org.whispersystems.libsignal.ecc.Curve.decodePoint(Base64.decode(bundle.signedPreKeyPublic, Base64.DEFAULT), 0),
+            org.signal.libsignal.protocol.ecc.Curve.decodePoint(
+                Base64.decode(bundle.signedPreKeyPublic, Base64.DEFAULT), 0
+            ),
             Base64.decode(bundle.signedPreKeySignature, Base64.DEFAULT),
-            IdentityKey(Base64.decode(bundle.identityKey, Base64.DEFAULT), 0)
+            IdentityKey(Base64.decode(bundle.identityKey, Base64.DEFAULT))
         )
 
         sessionBuilder.process(nativeBundle)
@@ -144,9 +167,14 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
         val decrypted = if (message.type == CiphertextMessage.PREKEY_TYPE) {
             try {
                 sessionCipher.decrypt(PreKeySignalMessage(decodedBody))
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
                 if (store.containsSession(address)) {
-                    Logger.w("E2EE_DECRYPT: PreKey decrypt failed, trying standard SignalMessage decrypt", tag = "E2EE", throwable = e)
+                    Logger.w(
+                        "E2EE_DECRYPT: PreKey decrypt failed, trying standard SignalMessage decrypt",
+                        tag = "E2EE",
+                        throwable = e
+                    )
                     sessionCipher.decrypt(SignalMessage(decodedBody))
                 } else {
                     throw e

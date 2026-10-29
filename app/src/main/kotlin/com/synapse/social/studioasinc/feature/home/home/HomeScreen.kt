@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -55,6 +56,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.ui.navigation.HomeDestinations
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
 import com.synapse.social.studioasinc.ui.navigation.HomeNavGraph
 import com.synapse.social.studioasinc.ui.settings.NavigationPlacement
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
@@ -76,6 +78,42 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+    val pendingNotificationNavigation by NotificationNavigationCoordinator.pendingHomeNavigation.collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingNotificationNavigation) {
+        val request = pendingNotificationNavigation ?: return@LaunchedEffect
+        fun navigateToNotifications() {
+            navController.navigate(HomeDestinations.Notifications) { launchSingleTop = true }
+        }
+
+        try {
+            when (request.target) {
+                "POST" -> {
+                    val postId = request.postId?.takeIf { it.isNotBlank() }
+                    if (postId != null) {
+                        navController.navigate(HomeDestinations.PostDetail(postId)) { launchSingleTop = true }
+                    } else {
+                        navigateToNotifications()
+                    }
+                }
+                "POST_COMMENT" -> {
+                    val postId = request.postId?.takeIf { it.isNotBlank() }
+                    if (postId != null) {
+                        navController.navigate(HomeDestinations.PostDetail(postId, request.commentId?.takeIf { it.isNotBlank() })) {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        navigateToNotifications()
+                    }
+                }
+                else -> navigateToNotifications()
+            }
+        } catch (_: IllegalArgumentException) {
+            navigateToNotifications()
+        } finally {
+            NotificationNavigationCoordinator.consumeHomeNavigation(request)
+        }
+    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val isPostDetail = currentDestination?.hasRoute<HomeDestinations.PostDetail>() == true
@@ -138,13 +176,13 @@ fun HomeScreen(
                                         imageUrl = userAvatarUrl,
                                         contentDescription = stringResource(R.string.profile),
                                         size = Sizes.AvatarTiny,
-                                        modifier = Modifier.padding(start = Spacing.ExtraSmall, end = Spacing.Small),
+                                        modifier = Modifier.padding(start = Spacing.space4, end = Spacing.space8),
                                         onClick = { onNavigateToProfile("me") }
                                     )
                                 } else {
                                     IconButton(
                                         onClick = { onNavigateToProfile("me") },
-                                        modifier = Modifier.padding(start = Spacing.ExtraSmall, end = Spacing.Small)
+                                        modifier = Modifier.padding(start = Spacing.space4, end = Spacing.space8)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Person,
@@ -239,7 +277,7 @@ fun HomeScreen(
                 onNavigateToCreateReel = onNavigateToCreateReel,
                 onNavigateToCreatePost = { onNavigateToCreatePost(null) },
                 modifier = Modifier.padding(innerPadding),
-                bottomPadding = if (isBottomMode) Sizes.HeightLarge else Spacing.None
+                bottomPadding = if (isBottomMode) Sizes.HeightLarge else Spacing.space0
             )
         }
 
@@ -263,8 +301,8 @@ fun HomeScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(
-                            end = Spacing.Medium,
-                            bottom = if (isBottomMode) Sizes.HeightLarge else Spacing.Medium
+                            end = Spacing.space16,
+                            bottom = if (isBottomMode) Sizes.HeightLarge else Spacing.space16
                         )
                         .graphicsLayer {
                             translationY = if (isBottomMode) navBarTranslationY * size.height else 0f

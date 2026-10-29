@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.models
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Serializable
 data class ChatMessage(
@@ -52,10 +53,22 @@ data class ChatParticipantDto(
     @SerialName("updated_at") val updatedAt: String? = null
 )
 
+class MessageEntranceRequest(val createdAtEpochMs: Long = System.currentTimeMillis()) {
+    private val pending = AtomicBoolean(true)
+    val isPending: Boolean get() = pending.get()
+    val isExpired: Boolean get() = (System.currentTimeMillis() - createdAtEpochMs) > ENTRANCE_EXPIRY_MS
+    fun consume(): Boolean = pending.compareAndSet(true, false)
+
+    companion object {
+        const val ENTRANCE_EXPIRY_MS = 1500L
+    }
+}
+
 sealed class ChatListItem {
-    data class MessageItem(val message: Message) : ChatListItem()
+    data class MessageItem(val message: Message, val entrance: MessageEntranceRequest? = null) : ChatListItem()
     data class DateDivider(val label: String) : ChatListItem()
     data class UnreadDivider(val count: Int) : ChatListItem()
+    data class SystemHistoryItem(val message: Message) : ChatListItem()
 }
 
 @Serializable

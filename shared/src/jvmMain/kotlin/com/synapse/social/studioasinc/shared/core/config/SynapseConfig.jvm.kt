@@ -69,7 +69,7 @@ actual object SynapseConfig {
     actual val GITHUB_BUG_REPORT_URL: String = getVal("GITHUB_BUG_REPORT_URL", "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md")
     actual val DEFAULT_QUIET_HOURS_START: String = getVal("DEFAULT_QUIET_HOURS_START", "22:00")
     actual val DEFAULT_QUIET_HOURS_END: String = getVal("DEFAULT_QUIET_HOURS_END", "08:00")
-    actual val SUPABASE_REDIRECT_URL: String = getVal("SUPABASE_REDIRECT_URL", "https://synapseofficial.vercel.app/")
+    actual val SUPABASE_REDIRECT_URL: String = getVal("SUPABASE_REDIRECT_URL", "https://synapsesocial.vercel.app/")
     actual val X_BASE_URL: String = getVal("X_BASE_URL", "https://x.com/")
     actual val INSTAGRAM_BASE_URL: String = getVal("INSTAGRAM_BASE_URL", "https://instagram.com/")
     actual val FACEBOOK_BASE_URL: String = getVal("FACEBOOK_BASE_URL", "https://facebook.com/")

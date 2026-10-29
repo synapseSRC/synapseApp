@@ -22,10 +22,10 @@ fun QuotedPostCard(
         shape = MaterialTheme.shapes.medium,
         tonalElevation = 1.dp
     ) {
-        Column(modifier = Modifier.padding(Spacing.SmallMedium)) {
+        Column(modifier = Modifier.padding(Spacing.space12)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 Text(
                     text = quotedPost.username ?: "Unknown",
@@ -40,7 +40,7 @@ fun QuotedPostCard(
             }
             
             quotedPost.postText?.let { text ->
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium,
@@ -49,7 +49,7 @@ fun QuotedPostCard(
             }
             
             quotedPost.mediaItems?.firstOrNull()?.let {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 Text(
                     text = "📷 Media attached",
                     style = MaterialTheme.typography.labelSmall,

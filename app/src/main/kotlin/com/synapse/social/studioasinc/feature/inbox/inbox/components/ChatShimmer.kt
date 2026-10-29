@@ -28,8 +28,8 @@ fun ChatShimmer(
         modifier = modifier
             .wrapContentHeight(),
         state = listState,
-        contentPadding = PaddingValues(Spacing.Medium),
-        verticalArrangement = Arrangement.spacedBy(Spacing.Small),
+        contentPadding = PaddingValues(Spacing.space16),
+        verticalArrangement = Arrangement.spacedBy(Spacing.space8),
         reverseLayout = true
     ) {
         items(messageCount) { index ->
@@ -51,7 +51,7 @@ private fun MessageBubbleShimmer(
         if (!isFromMe) {
             ShimmerCircle(
                 size = Sizes.IconHuge,
-                modifier = Modifier.padding(end = Spacing.Small)
+                modifier = Modifier.padding(end = Spacing.space8)
             )
         }
         
@@ -71,7 +71,7 @@ private fun MessageBubbleShimmer(
                 )
             )
             
-            Spacer(modifier = Modifier.height(Spacing.Tiny))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             
             ShimmerBox(
                 modifier = Modifier
@@ -84,7 +84,7 @@ private fun MessageBubbleShimmer(
         if (isFromMe) {
             ShimmerCircle(
                 size = Sizes.IconHuge,
-                modifier = Modifier.padding(start = Spacing.Small)
+                modifier = Modifier.padding(start = Spacing.space8)
             )
         }
     }

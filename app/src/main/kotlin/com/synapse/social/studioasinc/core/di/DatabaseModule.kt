@@ -25,6 +25,8 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDa
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedMessageDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCachedConversationDao
+import com.synapse.social.studioasinc.shared.data.local.database.StoryDao
+import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightStoryDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDaoImpl
 import com.synapse.social.studioasinc.shared.security.SecurityCipher
@@ -72,6 +74,11 @@ object DatabaseModule {
     }
 
     @Provides
+    fun provideStoryDao(db: StorageDatabase): StoryDao {
+        return SqlDelightStoryDao(db)
+    }
+
+    @Provides
     @Singleton
     fun provideSecurityCipher(): SecurityCipher {
         return AndroidSecurityCipher()
@@ -95,22 +102,26 @@ object DatabaseModule {
                 viewsCountAdapter = intAdapter,
                 resharesCountAdapter = intAdapter,
                 userPollVoteAdapter = intAdapter,
-                encryptedContentAdapter = stringMapAdapter
+                encryptedContentAdapter = stringMapAdapter,
+                syncVersionAdapter = intAdapter
             ),
             CommentAdapter = Comment.Adapter(
                 likesCountAdapter = intAdapter,
                 repliesCountAdapter = intAdapter,
                 linkPreviewAdapter = com.synapse.social.studioasinc.shared.data.database.linkPreviewAdapter,
-                viewsCountAdapter = intAdapter
+                viewsCountAdapter = intAdapter,
+                syncVersionAdapter = intAdapter
             ),
             UserAdapter = User.Adapter(
                 emailAdapter = EncryptedStringAdapter(securityCipher),
                 followersCountAdapter = intAdapter,
                 followingCountAdapter = intAdapter,
-                postsCountAdapter = intAdapter
+                postsCountAdapter = intAdapter,
+                syncVersionAdapter = intAdapter
             ),
             PendingActionAdapter = com.synapse.social.studioasinc.shared.data.database.PendingAction.Adapter(
-                retryCountAdapter = intAdapter
+                retryCountAdapter = intAdapter,
+                localVersionAdapter = intAdapter
             )
         )
     }

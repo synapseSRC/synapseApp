@@ -3,15 +3,23 @@ package com.synapse.social.studioasinc.ui.navigation
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,14 +28,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.synapse.social.studioasinc.core.auth.AuthHelper
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
+import com.synapse.social.studioasinc.core.navigation.NotificationNavigationRequest
 import com.synapse.social.studioasinc.feature.auth.ui.AuthScreen
 import com.synapse.social.studioasinc.ui.home.HomeScreen
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.InboxScreen
+import com.synapse.social.studioasinc.feature.call.CallScreen
+import com.synapse.social.studioasinc.feature.call.IncomingCallViewModel
 import com.synapse.social.studioasinc.ui.search.SearchScreen
 import com.synapse.social.studioasinc.ui.search.SearchViewModel
 import com.synapse.social.studioasinc.feature.post.postdetail.PostDetailScreen
@@ -55,6 +69,10 @@ import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileViewModel
 import com.synapse.social.studioasinc.feature.profile.lockprofile.LockProfileScreen
 import com.synapse.social.studioasinc.feature.profile.lockprofile.LockProfileViewModel
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
+import com.synapse.social.studioasinc.feature.permission.PermissionOnboardingScreen
+import com.synapse.social.studioasinc.feature.permission.PermissionOnboardingViewModel
 import com.synapse.social.studioasinc.ui.settings.SettingsNavHost
 import com.synapse.social.studioasinc.ui.settings.BusinessPlatformScreen
 import com.synapse.social.studioasinc.ui.settings.BusinessPlatformViewModel
@@ -66,6 +84,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.core.auth.GoogleAuthHelper
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -73,15 +92,91 @@ fun AppNavigation(
     navController: NavHostController,
     startDestination: Any = AppDestination.Auth,
     reelUploadManager: ReelUploadManager,
+    postAuthDestination: () -> Any = { AppDestination.Home },
     modifier: Modifier = Modifier
 ) {
+    var pendingNotificationRequest by remember { mutableStateOf<NotificationNavigationRequest?>(null) }
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(navController) {
+        NotificationNavigationCoordinator.requests.collect { request ->
+            pendingNotificationRequest = request
+        }
+    }
+
+    // A ring the watch noticed on its own — because nobody tapped anything, the call simply arrived. The
+    // call screen opened here is the same one a tap would have opened, so answering, declining and the
+    // permission gate all run through one path whichever way the user got here.
+    val incomingCalls: IncomingCallViewModel = hiltViewModel()
+    LaunchedEffect(incomingCalls, navController) {
+        incomingCalls.newInvitation.collect { invitation ->
+            navController.navigate(invitation.toDestination()) { launchSingleTop = true }
+        }
+    }
+
+    LaunchedEffect(pendingNotificationRequest, currentBackStackEntry) {
+        val request = pendingNotificationRequest ?: return@LaunchedEffect
+        val currentEntry = currentBackStackEntry ?: return@LaunchedEffect
+        if (currentEntry.destination.hasRoute<AppDestination.Auth>()) return@LaunchedEffect
+        // Onboarding owns the screen until the user finishes it; the pending request is routed afterwards.
+        if (currentEntry.destination.hasRoute<AppDestination.PermissionOnboarding>()) return@LaunchedEffect
+        if (currentEntry.destination.hasRoute<AppDestination.PermissionManager>()) return@LaunchedEffect
+
+        pendingNotificationRequest = null
+        val routedToRootDestination = when (request.target) {
+            "CHAT" -> request.chatId?.takeIf { it.isNotBlank() }?.let { chatId ->
+                navController.navigate(AppDestination.Chat(chatId = chatId, userId = request.userId?.takeIf { it.isNotBlank() }, messageId = request.messageId)) { launchSingleTop = true }
+                true
+            } ?: false
+            "PROFILE" -> request.userId?.takeIf { it.isNotBlank() }?.let { userId ->
+                navController.navigate(AppDestination.Profile(userId)) { launchSingleTop = true }
+                true
+            } ?: false
+            "FOLLOW_REQUESTS" -> {
+                navController.navigate(AppDestination.LockProfile) { launchSingleTop = true }
+                true
+            }
+            // A call tap opens the ringing screen rather than answering anything: the payload's identifiers
+            // only say which peer to look for, and the repository still has to find a ringing row that
+            // names this user as the callee before there is a call to show.
+            "CALL" -> request.userId?.takeIf { it.isNotBlank() }?.let { callerId ->
+                navController.navigate(
+                    AppDestination.Call(
+                        peerUserId = callerId,
+                        peerName = request.callerName.orEmpty(),
+                        chatId = request.chatId?.takeIf { it.isNotBlank() },
+                        isVideo = request.mediaType.equals("video", ignoreCase = true),
+                        isIncoming = true
+                    )
+                ) { launchSingleTop = true }
+                true
+            } ?: false
+            else -> false
+        }
+
+        if (!routedToRootDestination) {
+            if (request.target == "CHAT" || request.target == "PROFILE" || request.target == "CALL") {
+                android.util.Log.w("NotificationNavigation", "Push target is missing its required identifier; using Notifications")
+            }
+            val homeRequest = if (request.target in setOf("POST", "POST_COMMENT", "NOTIFICATIONS")) request
+                else request.copy(target = "NOTIFICATIONS", postId = null, commentId = null)
+            NotificationNavigationCoordinator.requestHomeNavigation(homeRequest)
+            if (!currentEntry.destination.hasRoute<AppDestination.Home>()) {
+                navController.navigate(AppDestination.Home) { launchSingleTop = true }
+            }
+        } else {
+            NotificationNavigationCoordinator.clearHomeNavigation()
+        }
+    }
+
     SharedTransitionLayout(modifier = modifier) {
         NavHost(
             navController = navController,
             startDestination = startDestination,
             modifier = Modifier.fillMaxSize()
         ) {
-            authGraph(navController, this@SharedTransitionLayout)
+            authGraph(navController, this@SharedTransitionLayout, postAuthDestination)
+            permissionGraph(navController)
             homeGraph(navController, reelUploadManager, this@SharedTransitionLayout)
             inboxGraph(navController, this@SharedTransitionLayout)
             postGraph(navController, this@SharedTransitionLayout)
@@ -95,7 +190,8 @@ fun AppNavigation(
 @OptIn(ExperimentalSharedTransitionApi::class)
 fun NavGraphBuilder.authGraph(
     navController: NavHostController,
-    sharedTransitionScope: SharedTransitionScope
+    sharedTransitionScope: SharedTransitionScope,
+    postAuthDestination: () -> Any = { AppDestination.Home }
 ) {
     composable<AppDestination.Auth> {
         val context = LocalContext.current
@@ -123,10 +219,40 @@ fun NavGraphBuilder.authGraph(
                 }
             },
             onNavigateToMain = {
-                navController.navigate(AppDestination.Home) {
+                navController.navigate(postAuthDestination()) {
                     popUpTo(AppDestination.Auth) { inclusive = true }
                 }
             }
+        )
+    }
+}
+
+/**
+ * First-run permission onboarding and the permanent permission manager.
+ *
+ * The manager is also mounted inside Settings, from where it is the same screen reading the same live
+ * state; this graph only gives it a root-level route for the onboarding summary.
+ */
+fun NavGraphBuilder.permissionGraph(navController: NavHostController) {
+    composable<AppDestination.PermissionOnboarding> {
+        val viewModel: PermissionOnboardingViewModel = hiltViewModel()
+        PermissionOnboardingScreen(
+            viewModel = viewModel,
+            onFinished = {
+                navController.navigate(AppDestination.Home) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            onManagePermissions = {
+                navController.navigate(AppDestination.PermissionManager) { launchSingleTop = true }
+            }
+        )
+    }
+    composable<AppDestination.PermissionManager> {
+        val viewModel: PermissionManagerViewModel = hiltViewModel()
+        PermissionManagerScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() }
         )
     }
 }
@@ -200,9 +326,27 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToSearch = {
                         navController.navigate(AppDestination.Search)
                     },
-                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) }
+                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
+                    onStartCall = { request -> navController.navigate(request.toDestination()) },
+                    debugToolsEnabled = BuildConfig.DEBUG
                 )
             }
+    composable<AppDestination.Call>(
+        enterTransition = { fadeIn(tween(CALL_TRANSITION_MILLIS)) },
+        exitTransition = { fadeOut(tween(CALL_TRANSITION_MILLIS)) },
+        popEnterTransition = { fadeIn(tween(CALL_TRANSITION_MILLIS)) },
+        popExitTransition = { fadeOut(tween(CALL_TRANSITION_MILLIS)) }
+    ) {
+        CallScreen(
+            debugToolsEnabled = BuildConfig.DEBUG,
+            onClose = {
+                // Only pop once so repeated dismissals can't skip past the call route.
+                if (navController.currentDestination?.hasRoute<AppDestination.Call>() == true) {
+                    navController.popBackStack()
+                }
+            }
+        )
+    }
     composable<AppDestination.Chat> { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.Chat>()
                 ChatScreen(
@@ -210,6 +354,7 @@ fun NavGraphBuilder.inboxGraph(
                     participantId = args.userId,
                     initialParticipantName = args.participantName,
                     initialParticipantAvatar = args.participantAvatar,
+                    initialMessageId = args.messageId,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToGroupInfo = { chatId, groupName ->
                         navController.navigate(AppDestination.GroupInfo(chatId, groupName))
@@ -219,7 +364,20 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
-                    }
+                    },
+                    onNavigateToNewGroup = {
+                        navController.navigate(AppDestination.CreateGroup)
+                    },
+                    onNavigateToSharedContent = { chatId, tab ->
+                        navController.navigate(AppDestination.SharedContent(chatId, tab))
+                    },
+                    onNavigateToChatSettings = { chatId ->
+                        navController.navigate(AppDestination.ChatSettings(chatId))
+                    },
+                    onNavigateToChatSearch = { chatId ->
+                        navController.navigate(AppDestination.ChatSearch(chatId))
+                    },
+                    onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
             }
     composable<AppDestination.CreateGroup> {
@@ -284,6 +442,19 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+    composable<AppDestination.ChatSettings> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.ChatSettings>()
+                navController.navigate(AppDestination.Settings) {
+                    popUpTo(AppDestination.Settings) { inclusive = true }
+                }
+    }
+    composable<AppDestination.ChatSearch> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.ChatSearch>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatSearchScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -517,6 +688,7 @@ fun NavGraphBuilder.profileGraph(
                 )
             }
     composable<AppDestination.Settings> {
+                val signOutViewModel: com.synapse.social.studioasinc.ui.settings.SignOutViewModel = hiltViewModel()
                 SettingsNavHost(
                     onBackClick = { navController.popBackStack() },
                     onNavigateToProfileEdit = {
@@ -526,8 +698,10 @@ fun NavGraphBuilder.profileGraph(
                         // navController.navigate(AppDestination.ChatPrivacy)
                     },
                     onLogout = {
-                        navController.navigate(AppDestination.Auth) {
-                            popUpTo(0) { inclusive = true }
+                        signOutViewModel.signOut {
+                            navController.navigate(AppDestination.Auth) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     }
                 )
@@ -636,3 +810,5 @@ fun NavGraphBuilder.storyGraph(
                 )
             }
 }
+
+private const val CALL_TRANSITION_MILLIS = 200

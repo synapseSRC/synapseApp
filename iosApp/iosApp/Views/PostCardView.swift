@@ -8,9 +8,9 @@ struct PostCardView: View {
     var onBookmark: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space12) {
             // Header
-            HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.space10) {
                 // Avatar Placeholder
                 Circle()
                     .fill(Color.gray.opacity(0.3))
@@ -20,8 +20,8 @@ struct PostCardView: View {
                             .foregroundColor(.gray)
                     )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.space2) {
+                    HStack(spacing: AppTheme.Spacing.space4) {
                         Text(post.displayName ?? post.username ?? "Unknown")
                             .font(.headline)
                             .foregroundColor(.primary)
@@ -85,7 +85,7 @@ struct PostCardView: View {
 
             // Poll
             if post.hasPoll == true, let options = post.pollOptions {
-                VStack(spacing: 8) {
+                VStack(spacing: AppTheme.Spacing.space8) {
                     ForEach(options) { option in
                         HStack {
                             Text(option.text)
@@ -107,7 +107,7 @@ struct PostCardView: View {
             }
 
             // Footer Action Buttons
-            HStack(spacing: 20) {
+            HStack(spacing: AppTheme.Spacing.space20) {
                 actionButton(
                     icon: post.userReaction == .like ? "heart.fill" : "heart",
                     color: post.userReaction == .like ? .red : .secondary,
@@ -139,19 +139,19 @@ struct PostCardView: View {
                 )
             }
             .padding(.horizontal)
-            .padding(.top, 4)
+            .padding(.top, AppTheme.Spacing.space4)
 
             Divider()
-                .padding(.top, 8)
+                .padding(.top, AppTheme.Spacing.space8)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.space8)
         .background(Color(UIColor.systemBackground))
     }
 
     @ViewBuilder
     private func actionButton(icon: String, color: Color, count: Int?, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.space4) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
                 if let count = count, count > 0 {

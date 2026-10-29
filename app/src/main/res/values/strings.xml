@@ -385,6 +385,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="delete_messages_confirmation">Delete %d messages?</string>
     <string name="delete_for_me">Delete for me</string>
     <string name="delete_for_me_explanation">This message will only be removed from your device. Other participants will still see it.</string>
+    <string name="delete_messages_for_me_explanation">These messages will only be removed from your device. Other participants will still see them.</string>
     <string name="delete_for_everyone">Delete for everyone</string>
     <string name="delete_for_everyone_explanation">This message will be removed for all participants in this conversation. This action cannot be undone.</string>
     <string name="delete">Delete</string>
@@ -845,6 +846,15 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="notification_in_app">In-App Notifications</string>
     <string name="notification_in_app_subtitle">Show notifications within the app</string>
 
+    <!-- Sound Effects -->
+    <string name="settings_sound_effects_section_title">Sound effects</string>
+    <string name="settings_sound_effects_title">In-app sound effects</string>
+    <string name="settings_sound_effects_subtitle">Tones while you use the app</string>
+    <string name="settings_sound_message_tones_title">Message tones</string>
+    <string name="settings_sound_message_tones_subtitle">Sending, receiving and recording messages</string>
+    <string name="settings_sound_call_tones_title">Call tones</string>
+    <string name="settings_sound_call_tones_subtitle">Ringback, connecting, answer and end</string>
+
     <!-- Chat Settings -->
     <string name="chat_settings_title_new">Chat Settings</string>
     <string name="chat_read_receipts">Read Receipts</string>
@@ -1073,8 +1083,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_back_description">Navigate back</string>
     <string name="settings_profile_avatar_description">Profile picture</string>
     <string name="settings_category_icon_description">Category icon</string>
-    <string name="settings_chevron_description">Navigate to details</string>
-    <string name="settings_toggle_description">Toggle setting</string>
     <string name="settings_dropdown_description">Select option</string>
     <string name="settings_slider_description">Adjust value</string>
     <string name="settings_loading_description">Loading content</string>
@@ -1704,6 +1712,30 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="mute_notifications_label">Mute Notifications</string>
     <string name="disappearing_messages_label">Disappearing Messages (%1$s)</string>
     <string name="disappearing_messages_title">Disappearing messages</string>
+    <string name="chat_action_voice_call">Voice call</string>
+    <string name="chat_action_video_call">Video call</string>
+    <string name="chat_action_more_options">More options</string>
+    <string name="chat_menu_summary">Summary</string>
+    <string name="chat_menu_new_group">New group</string>
+    <string name="chat_menu_view_contact">View contact</string>
+    <string name="chat_menu_search">Search</string>
+    <string name="chat_menu_media_links_docs">Media, links, and docs</string>
+    <string name="chat_menu_mute_notifications">Mute notifications</string>
+    <string name="chat_menu_unmute_notifications">Unmute notifications</string>
+    <string name="chat_menu_disappearing_messages">Disappearing messages</string>
+    <string name="chat_menu_chat_theme">Chat theme</string>
+    <string name="chat_menu_more">More</string>
+    <string name="chat_menu_report">Report</string>
+    <string name="chat_menu_block">Block</string>
+    <string name="chat_menu_clear_chat">Clear chat</string>
+    <string name="chat_menu_export_chat">Export chat</string>
+    <string name="chat_menu_add_shortcut">Add shortcut</string>
+    <string name="chat_menu_add_to_folder">Add to folder</string>
+    <string name="search_messages_hint">Search messages</string>
+    <string name="search_messages_empty">Type to search messages</string>
+    <string name="no_search_results">No results found</string>
+    <string name="select_folder_title">Select folder</string>
+    <string name="create_new_folder">Create new folder</string>
     <string name="disappearing_mode_off">Off</string>
     <string name="disappearing_mode_24_hours">24 hours</string>
     <string name="disappearing_mode_7_days">7 days</string>
@@ -1948,6 +1980,9 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_app_language_subtitle">Language selection (e.g., English)</string>
     <string name="settings_about_app_title">About App</string>
     <string name="settings_about_app_subtitle">Help center, contact us, privacy policy</string>
+    <string name="settings_whats_new_title">What\'s new</string>
+    <string name="settings_whats_new_subtitle">Release notes and version history</string>
+    <string name="settings_unread_indicator">New release available</string>
     <string name="settings_flags_title">Flags</string>
     <string name="settings_flags_subtitle">Toggle experimental features</string>
     <string name="settings_navigation_placement_title">Navigation placement</string>
@@ -2202,6 +2237,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="tab_links">Links</string>
     <string name="tab_files">Docs</string>
     <string name="empty_shared_content">No shared media, links, or docs found</string>
+    <string name="empty_shared_media">No media shared yet</string>
+    <string name="empty_shared_links">No links shared yet</string>
+    <string name="empty_shared_files">No files shared yet</string>
+    <string name="shared_content_error">Failed to load shared content</string>
     <string name="chat_privacy_title">Advanced chat privacy</string>
     <string name="encryption_status_title">Encryption</string>
     <string name="encryption_status_desc">Messages and calls are end-to-end encrypted. Tap to verify.</string>
@@ -2212,6 +2251,12 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="chat_info_error_clear_chat">Failed to clear chat history</string>
     <string name="chat_info_msg_blocked">Contact blocked</string>
     <string name="chat_info_msg_unblocked">Contact unblocked</string>
+    <!-- System message strings for disappearing messages -->
+    <string name="system_disappearing_messages_turned_on">Disappearing messages turned on</string>
+    <string name="system_disappearing_messages_turned_off">Disappearing messages turned off</string>
+    <string name="system_disappearing_messages_set_24h">Disappearing messages set to 24 hours</string>
+    <string name="system_disappearing_messages_set_7d">Disappearing messages set to 7 days</string>
+    <string name="system_disappearing_messages_set_90d">Disappearing messages set to 90 days</string>
     <string name="chat_info_msg_cleared">Chat history cleared</string>
     <string name="unmuted">Unmuted</string>
     <string name="user">User</string>
@@ -2313,5 +2358,174 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="featured_collections_body">Creating story highlights and custom content collections requires a persistent backend highlight data model.</string>
     <string name="post_media_attachment_label">Media Post</string>
     <string name="post_contains_media_badge">Includes Media</string>
+
+    <!-- Call experience -->
+    <string name="call_phase_calling">Calling…</string>
+    <string name="call_phase_ringing">Ringing…</string>
+    <string name="call_phase_connecting">Connecting…</string>
+    <string name="call_phase_reconnecting">Reconnecting…</string>
+    <string name="call_incoming_voice">Incoming voice call</string>
+    <string name="call_incoming_video">Incoming video call</string>
+
+    <string name="call_control_speaker">Speaker</string>
+    <string name="call_control_mute">Mute</string>
+    <string name="call_control_audio">Audio</string>
+    <string name="call_control_audio_output">Audio output</string>
+    <string name="call_control_video">Video</string>
+    <string name="call_control_switch_to_video">Switch to video</string>
+    <string name="call_control_camera">Camera</string>
+    <string name="call_control_flip_camera">Flip camera</string>
+    <string name="call_control_end">End call</string>
+    <string name="call_control_answer">Answer</string>
+    <string name="call_answer_slider">Slide to answer or decline</string>
+    <string name="call_control_decline">Decline</string>
+    <string name="call_control_switch_to_voice">Switch to voice</string>
+
+    <string name="call_state_muted">Muted</string>
+    <string name="call_state_camera_off">Camera off</string>
+    <string name="call_state_weak_connection">Weak connection</string>
+    <string name="call_state_poor_connection">Poor connection</string>
+    <string name="call_state_microphone_on">Microphone on</string>
+    <string name="call_state_microphone_muted">Microphone muted</string>
+    <string name="call_state_speaker_on">Speaker on</string>
+    <string name="call_state_speaker_off">Speaker off</string>
+    <string name="call_state_camera_on">Camera on</string>
+    <string name="call_state_front_camera">Front camera</string>
+    <string name="call_state_rear_camera">Rear camera</string>
+    <string name="call_state_on">On</string>
+    <string name="call_state_off">Off</string>
+
+    <string name="call_audio_route_title">Audio output</string>
+    <string name="call_audio_route_earpiece">Earpiece</string>
+    <string name="call_audio_route_speaker">Speaker</string>
+    <string name="call_audio_route_bluetooth">Bluetooth</string>
+    <string name="call_audio_route_wired">Wired headset</string>
+    <string name="call_audio_route_not_connected">Not connected</string>
+
+    <string name="call_ended_title">Call ended</string>
+    <string name="call_ended_declined">Call declined</string>
+    <string name="call_ended_no_answer">No answer</string>
+    <string name="call_ended_missed">Missed call</string>
+    <string name="call_ended_cancelled">Call cancelled</string>
+    <string name="call_ended_unavailable">Call unavailable</string>
+    <string name="call_ended_failed">Call failed</string>
+    <string name="call_history_load_failed">We couldn\'t load your calls. Please try again.</string>
+    <string name="call_action_call_again">Call again</string>
+    <string name="call_action_done">Done</string>
+    <string name="call_end_dialog_title">End this call?</string>
+    <string name="call_end_dialog_message">The call will end and you’ll return to your chat.</string>
+    <string name="call_end_dialog_confirm">End call</string>
+    <string name="call_end_dialog_dismiss">Cancel</string>
+    <string name="call_summary_line">%1$s · %2$s</string>
+    <string name="call_direction_incoming">Incoming</string>
+    <string name="call_direction_outgoing">Outgoing</string>
+    <string name="call_history_today">Today</string>
+    <string name="call_history_yesterday">Yesterday</string>
+    <string name="call_history_earlier">Earlier</string>
+
+    <string name="call_duration_spoken_hours">Call duration: %1$d hours, %2$d minutes, %3$d seconds</string>
+    <string name="call_duration_spoken_minutes">Call duration: %1$d minutes, %2$d seconds</string>
+    <string name="call_duration_spoken_seconds">Call duration: %1$d seconds</string>
+    <string name="call_pip_description">Your camera preview</string>
+    <string name="call_pip_camera_off_description">Your camera is off</string>
+
+    <string name="call_permission_required_title">Permission needed</string>
+    <string name="call_permission_required_microphone">Synapse needs your microphone to make calls.</string>
+    <string name="call_permission_required_camera">Synapse needs your microphone and camera to make video calls.</string>
+    <string name="call_permission_settings_hint">Turn the permissions on for Synapse in Settings, then come back to this call.</string>
+    <string name="call_permission_try_again">Try again</string>
+    <string name="call_permission_open_settings">Open settings</string>
+
+    <string name="call_notification_incoming_voice">%1$s is calling</string>
+    <string name="call_notification_incoming_video">%1$s is video calling</string>
+    <string name="call_notification_incoming_hint">Tap to open the call and answer</string>
+    <string name="call_notification_unknown_caller">Someone</string>
+    <string name="call_notification_action_accept">Accept</string>
+    <string name="call_notification_action_decline">Decline</string>
+    <string name="call_notification_active_title">Call in progress</string>
+    <string name="call_notification_active_voice">Voice call with %1$s</string>
+    <string name="call_notification_active_video">Video call with %1$s</string>
+    <string name="call_notification_channel_incoming_name">Incoming calls</string>
+    <string name="call_notification_channel_incoming_description">Rings for calls people place to you, with accept and decline buttons.</string>
+    <string name="call_notification_channel_active_name">Ongoing calls</string>
+    <string name="call_notification_channel_active_description">Shows that a call is still running while Synapse is in the background. Silent.</string>
+
+    <string name="call_debug_open">Open call simulation</string>
+
+    <string name="call_debug_tools_title">Call simulation</string>
+    <string name="call_debug_tools_subtitle">Debug builds only. No real call is placed.</string>
+    <string name="call_debug_quality_good">Good connection</string>
+    <string name="call_debug_quality_weak">Weak connection</string>
+    <string name="call_debug_quality_poor">Poor connection</string>
+    <string name="call_debug_reconnect">Simulate reconnecting</string>
+    <string name="call_debug_remote_video_off">Remote camera off</string>
+    <string name="call_debug_remote_video_on">Remote camera on</string>
+    <string name="call_debug_remote_declines">Remote declines</string>
+    <string name="call_debug_no_answer">No answer</string>
+    <string name="call_debug_unavailable">Call unavailable</string>
+    <string name="call_debug_remote_ends">Remote ends call</string>
+    <string name="call_debug_hint">Long-press the call status for simulation controls.</string>
+    <string name="call_debug_badge">Debug</string>
+    <string name="call_debug_launch_title">Simulated calls</string>
+    <string name="call_debug_launch_subtitle">Debug builds only. No real call is placed.</string>
+    <string name="call_debug_launch_incoming_voice">Incoming voice call</string>
+    <string name="call_debug_launch_incoming_video">Incoming video call</string>
+    <string name="call_debug_sample_caller">Amara Okafor</string>
+
+    <!-- Permission onboarding, summary and manager -->
+    <string name="permission_onboarding_title">Permissions</string>
+    <string name="permission_onboarding_headline">A few things to set up</string>
+    <string name="permission_onboarding_subtitle">Choose what Synapse can use. You can change any of these later in Settings, and the rest of the app still works without them.</string>
+    <string name="permission_onboarding_continue">Continue</string>
+    <string name="permission_onboarding_skip">Skip</string>
+
+    <string name="permission_summary_title">You\'re all set</string>
+    <string name="permission_summary_headline">Here\'s what you chose</string>
+    <string name="permission_summary_subtitle">These choices only affect the features listed below. You can change them anytime in Settings.</string>
+    <string name="permission_summary_manage">Manage permissions</string>
+    <string name="permission_summary_continue">Continue</string>
+    <string name="permission_summary_count">%1$d of %2$d enabled</string>
+
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_purpose">New messages and incoming calls can reach you while Synapse is closed.</string>
+    <string name="permission_notifications_benefit">See message alerts and answer calls without opening the app first.</string>
+    <string name="permission_notifications_impact">Without notifications, new messages and calls only appear once you open Synapse.</string>
+
+    <string name="permission_microphone_title">Microphone</string>
+    <string name="permission_microphone_purpose">Voice notes and calls record audio with your microphone.</string>
+    <string name="permission_microphone_benefit">Record voice messages and be heard on voice or video calls.</string>
+    <string name="permission_microphone_impact">Without the microphone, voice notes and calls can\'t send your audio.</string>
+
+    <string name="permission_camera_title">Camera</string>
+    <string name="permission_camera_purpose">Video calls, stories and profile photos use your camera.</string>
+    <string name="permission_camera_benefit">Make video calls and capture photos for stories and your profile.</string>
+    <string name="permission_camera_impact">Without the camera, video calls, story capture and in-app photos are unavailable.</string>
+
+    <string name="permission_status_granted">Allowed</string>
+    <string name="permission_status_not_requested">Not allowed yet</string>
+    <string name="permission_status_denied">Not allowed</string>
+    <string name="permission_status_permanently_denied">Blocked</string>
+    <string name="permission_status_restricted">Off in system settings</string>
+
+    <string name="permission_action_allow">Allow</string>
+    <string name="permission_action_try_again">Try again</string>
+    <string name="permission_action_open_settings">Open settings</string>
+    <string name="permission_action_not_now">Not now</string>
+    <string name="permission_action_accessibility">%1$s, %2$s</string>
+
+    <string name="permission_hint_denied">You can ask again, or leave this one off.</string>
+    <string name="permission_hint_permanently_denied">Android won\'t show the prompt again. You can turn it on in system settings.</string>
+    <string name="permission_hint_restricted">This is turned off in Android settings.</string>
+
+    <string name="permission_rationale_title">%1$s permission</string>
+    <string name="permission_rationale_message">%1$s You can leave this off and still use the rest of Synapse.</string>
+    <string name="permission_rationale_confirm">Try again</string>
+    <string name="permission_rationale_dismiss">Not now</string>
+
+    <string name="permission_manager_intro">Choose what Synapse can use. Android controls these permissions, so the status shown here is read live from your device.</string>
+    <string name="permission_manager_footer">If something is blocked, open Android settings to turn it back on. Features that don\'t need it keep working normally.</string>
+
+    <string name="settings_permissions_title">Permissions</string>
+    <string name="settings_permissions_subtitle">Camera, microphone and notifications</string>
 
 </resources>

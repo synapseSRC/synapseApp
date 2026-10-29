@@ -5,6 +5,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -31,9 +32,6 @@ import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.components.AnimatedCounter
-import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
-import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
-import com.synapse.social.studioasinc.feature.shared.components.animatedShape
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.domain.model.UserStatus
@@ -75,8 +73,8 @@ fun ProfileHeader(
     val contentPaddingTop = coverHeight - overlap
     val avatarSize = Sizes.AvatarHuge
     val avatarPaddingTop = contentPaddingTop - (avatarSize * 0.20f)
-    val textSpacerTop = (avatarSize * 0.80f) + Spacing.SmallMedium
-    val avatarBorderWidth = Spacing.ExtraSmall
+    val textSpacerTop = (avatarSize * 0.80f) + Spacing.space12
+    val avatarBorderWidth = Sizes.AvatarBorder
 
     Box(
         modifier = modifier.fillMaxWidth()
@@ -99,7 +97,7 @@ fun ProfileHeader(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium)
+                    .padding(horizontal = Spacing.space16)
             ) {
                 Spacer(modifier = Modifier.height(textSpacerTop))
 
@@ -108,7 +106,7 @@ fun ProfileHeader(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
                     ) {
                         Text(
                             text = name ?: username,
@@ -139,7 +137,7 @@ fun ProfileHeader(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                    Spacer(modifier = Modifier.height(Spacing.space16))
 
                     InlineStatsText(
                         postsCount = postsCount,
@@ -150,7 +148,7 @@ fun ProfileHeader(
                 }
 
                 // Add spacing before bio
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 if (!bio.isNullOrBlank()) {
                     ExpandableBio(
@@ -158,7 +156,7 @@ fun ProfileHeader(
                         expanded = bioExpanded,
                         onToggle = onToggleBio
                     )
-                    Spacer(modifier = Modifier.height(Spacing.Medium))
+                    Spacer(modifier = Modifier.height(Spacing.space16))
                 }
 
 
@@ -176,14 +174,14 @@ fun ProfileHeader(
                     onMoreClick = onMoreClick
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
             }
         }
 
         // Avatar overlapping equally
         Box(
             modifier = Modifier
-                .padding(start = Spacing.Medium)
+                .padding(start = Spacing.space16)
                 .padding(top = avatarPaddingTop)
         ) {
             ProfileImageWithRing(
@@ -261,7 +259,7 @@ private fun ExpandableBio(
         }
 
         if (shouldCollapse) {
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = if (expanded) stringResource(R.string.show_less) else stringResource(R.string.see_more),
                 style = MaterialTheme.typography.labelLarge,
@@ -287,48 +285,151 @@ private fun ProfileActionButtons(
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    val buttonShapes = ButtonDefaults.shapesFor(Sizes.ButtonHeight)
+    val buttonContentPadding = PaddingValues(
+        horizontal = Spacing.space16,
+        vertical = Spacing.space12
+    )
+    val addStoryInteractionSource = remember { MutableInteractionSource() }
+    val editProfileInteractionSource = remember { MutableInteractionSource() }
+    val followInteractionSource = remember { MutableInteractionSource() }
+    val messageInteractionSource = remember { MutableInteractionSource() }
+    val haptic = LocalHapticFeedback.current
+
+    ButtonGroup(
+        overflowIndicator = { menuState ->
+            ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+        },
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isOwnProfile) {
-            ExpressiveButton(
-                onClick = onAddStoryClick,
-                text = stringResource(R.string.add_story),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(Spacing.ButtonHeight),
-                variant = ButtonVariant.Filled
+            customItem(
+                buttonGroupContent = {
+                    Button(
+                        onClick = onAddStoryClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .animateWidth(addStoryInteractionSource)
+                            .height(Sizes.ButtonHeight),
+                        shapes = buttonShapes,
+                        interactionSource = addStoryInteractionSource,
+                        contentPadding = buttonContentPadding
+                    ) {
+                        Text(
+                            text = stringResource(R.string.add_story),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
+                menuContent = { menuState ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.add_story)) },
+                        onClick = {
+                            menuState.dismiss()
+                            onAddStoryClick()
+                        }
+                    )
+                }
             )
 
-            ExpressiveButton(
-                onClick = onEditProfileClick,
-                text = stringResource(R.string.edit_profile),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(Spacing.ButtonHeight),
-                variant = ButtonVariant.FilledTonal
+            customItem(
+                buttonGroupContent = {
+                    FilledTonalButton(
+                        onClick = onEditProfileClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .animateWidth(editProfileInteractionSource)
+                            .height(Sizes.ButtonHeight),
+                        shapes = buttonShapes,
+                        interactionSource = editProfileInteractionSource,
+                        contentPadding = buttonContentPadding
+                    ) {
+                        Text(
+                            text = stringResource(R.string.edit_profile),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
+                menuContent = { menuState ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.edit_profile)) },
+                        onClick = {
+                            menuState.dismiss()
+                            onEditProfileClick()
+                        }
+                    )
+                }
             )
         } else {
-            AnimatedFollowButton(
-                isFollowing = isFollowing,
-                isFollowRequested = isFollowRequested,
-                isPrivate = isPrivate,
-                isLoading = isFollowLoading,
-                onClick = onFollowClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(Spacing.ButtonHeight)
+            customItem(
+                buttonGroupContent = {
+                    AnimatedFollowButton(
+                        isFollowing = isFollowing,
+                        isFollowRequested = isFollowRequested,
+                        isPrivate = isPrivate,
+                        isLoading = isFollowLoading,
+                        onClick = onFollowClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .animateWidth(followInteractionSource)
+                            .height(Sizes.ButtonHeight),
+                        interactionSource = followInteractionSource
+                    )
+                },
+                menuContent = { menuState ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = when {
+                                    isFollowing -> stringResource(R.string.unfollow)
+                                    isFollowRequested -> stringResource(R.string.follow_requested)
+                                    isPrivate -> stringResource(R.string.request_to_follow)
+                                    else -> stringResource(R.string.follow)
+                                }
+                            )
+                        },
+                        enabled = !isFollowLoading,
+                        onClick = {
+                            menuState.dismiss()
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onFollowClick()
+                        }
+                    )
+                }
             )
 
-            ExpressiveButton(
-                onClick = onMessageClick,
-                text = stringResource(R.string.m_message),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(Spacing.ButtonHeight),
-                variant = ButtonVariant.Outlined
+            customItem(
+                buttonGroupContent = {
+                    OutlinedButton(
+                        onClick = onMessageClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .animateWidth(messageInteractionSource)
+                            .height(Sizes.ButtonHeight),
+                        shapes = buttonShapes,
+                        interactionSource = messageInteractionSource,
+                        contentPadding = buttonContentPadding
+                    ) {
+                        Text(
+                            text = stringResource(R.string.m_message),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
+                menuContent = { menuState ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.m_message)) },
+                        onClick = {
+                            menuState.dismiss()
+                            onMessageClick()
+                        }
+                    )
+                }
             )
         }
     }
@@ -342,7 +443,8 @@ fun AnimatedFollowButton(
     isPrivate: Boolean = false,
     isLoading: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource? = null
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -373,7 +475,8 @@ fun AnimatedFollowButton(
         },
         modifier = modifier,
         enabled = !isLoading,
-        shape = ButtonDefaults.animatedShape(),
+        shapes = ButtonDefaults.shapesFor(Sizes.ButtonHeight),
+        interactionSource = interactionSource,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
@@ -399,7 +502,7 @@ fun AnimatedFollowButton(
                  ) { (following, requested, privateProfile) ->
                     Text(
                         text = when {
-                            following -> stringResource(R.string.following)
+                            following -> stringResource(R.string.unfollow)
                             requested -> stringResource(R.string.follow_requested)
                             privateProfile -> stringResource(R.string.request_to_follow)
                             else -> stringResource(R.string.follow)
@@ -472,7 +575,7 @@ private fun InlineStatsText(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.followers).lowercase(),
                 style = MaterialTheme.typography.bodyMedium,
@@ -499,7 +602,7 @@ private fun InlineStatsText(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.following).lowercase(),
                 style = MaterialTheme.typography.bodyMedium,
@@ -524,7 +627,7 @@ private fun InlineStatsText(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.posts).lowercase(),
                 style = MaterialTheme.typography.bodyMedium,

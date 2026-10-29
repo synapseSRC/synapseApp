@@ -12,7 +12,7 @@ class GetNotificationsUseCase(
     private val notificationRepository: NotificationRepository,
     private val authRepository: AuthRepository
 ) {
-    operator fun invoke(): Flow<Result<List<Notification>>> = flow {
+    operator fun invoke(limit: Long = 50, before: String? = null, beforeId: String? = null): Flow<Result<List<Notification>>> = flow {
         val userId = authRepository.getCurrentUserId()
         if (userId == null) {
             emit(Result.failure(NotificationError.Unauthorized))
@@ -20,7 +20,7 @@ class GetNotificationsUseCase(
         }
 
         try {
-            val notifications = notificationRepository.fetchNotifications(userId)
+            val notifications = notificationRepository.fetchNotifications(userId, limit, before, beforeId)
             emit(Result.success(notifications))
         } catch (e: Exception) {
             Napier.e("Failed to get notifications", e)

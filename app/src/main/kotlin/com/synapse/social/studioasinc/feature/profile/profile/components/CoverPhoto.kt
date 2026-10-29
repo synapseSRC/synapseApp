@@ -27,13 +27,11 @@ import com.synapse.social.studioasinc.R
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.StatusOnline
 import com.synapse.social.studioasinc.domain.model.UserStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
-
-
 
 @Composable
 fun CoverPhoto(
@@ -119,57 +117,6 @@ private fun CoverPlaceholder(
     }
 }
 
-
-
-@Composable
-fun CoverPhotoWithProfile(
-    coverImageUrl: String?,
-    avatar: String?,
-    status: UserStatus? = null,
-    scrollOffsetProvider: () -> Float = { 0f },
-    isOwnProfile: Boolean = false,
-    hasStory: Boolean = false,
-    displayName: String? = null,
-    onProfileImageClick: () -> Unit = {},
-    onCoverClick: () -> Unit = {},
-    coverHeight: Dp = Sizes.HeightExtraLarge,
-    profileImageSize: Dp = Sizes.ShimmerWidthLarge,
-    modifier: Modifier = Modifier
-) {
-    val profileImageOffset = profileImageSize / 2
-
-    Box(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        CoverPhoto(
-            coverImageUrl = coverImageUrl,
-            scrollOffsetProvider = scrollOffsetProvider,
-            isOwnProfile = isOwnProfile,
-            onCoverClick = onCoverClick,
-            height = coverHeight
-        )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = Spacing.Medium)
-                .offset(y = profileImageOffset)
-        ) {
-            ProfileImageWithRing(
-                avatar = avatar,
-                size = profileImageSize,
-                status = status,
-                hasStory = hasStory,
-                isOwnProfile = isOwnProfile,
-                displayName = displayName,
-                onClick = onProfileImageClick
-            )
-        }
-    }
-}
-
-
-
 @Composable
 fun ProfileImageWithRing(
     avatar: String?,
@@ -205,7 +152,7 @@ fun ProfileImageWithRing(
         label = "storyRotation"
     )
 
-    val ringWidth = Spacing.ExtraSmall
+    val ringWidth = Sizes.AvatarBorder
     val ringPadding = Sizes.BorderSelected
 
     Box(
@@ -247,7 +194,7 @@ fun ProfileImageWithRing(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (hasStory) ringWidth else Spacing.None)
+                .padding(if (hasStory) ringWidth else Spacing.space0)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surface)
         )
@@ -255,7 +202,7 @@ fun ProfileImageWithRing(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (hasStory) ringWidth + ringPadding else Spacing.ExtraSmall)
+                .padding(if (hasStory) ringWidth + ringPadding else Spacing.space4)
                 .clip(shape),
             contentAlignment = Alignment.Center
         ) {
@@ -275,7 +222,7 @@ fun ProfileImageWithRing(
                     .size(size * 0.25f)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(Spacing.Tiny)
+                    .padding(Spacing.space4)
                     .clip(CircleShape)
                     .background(StatusOnline)
                     .semantics {
@@ -302,8 +249,8 @@ private fun CoverPhotoPreview() {
 private fun ProfileImageWithRingPreview() {
     MaterialTheme {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             ProfileImageWithRing(
                 avatar = null,

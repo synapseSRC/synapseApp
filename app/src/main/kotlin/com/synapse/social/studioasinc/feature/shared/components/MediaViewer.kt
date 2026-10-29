@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -52,7 +52,7 @@ fun MediaViewer(
             onClick = onDismiss,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -68,7 +68,7 @@ fun MediaViewer(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = Sizes.PaddingTopClose)
+                    .padding(top = Spacing.space32)
             )
         }
     }

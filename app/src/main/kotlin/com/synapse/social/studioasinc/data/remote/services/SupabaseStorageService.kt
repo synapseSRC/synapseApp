@@ -7,14 +7,15 @@ import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlin.time.Duration.Companion.minutes
+import javax.inject.Inject
+import com.synapse.social.studioasinc.shared.domain.model.UploadError
 import java.io.File
 import java.util.*
 import kotlin.math.pow
 
-
-
-class SupabaseStorageService {
-
+class SupabaseStorageService @Inject constructor() {
     companion object {
         private const val TAG = "SupabaseStorageService"
     }
@@ -22,25 +23,13 @@ class SupabaseStorageService {
     private val client = SupabaseClient.client
     private val storage = client.storage
 
-
-
     suspend fun uploadAvatar(userId: String, filePath: String): Result<String> {
         return uploadImage(SupabaseClient.BUCKET_USER_AVATARS, userId, filePath)
     }
 
-
-
     suspend fun uploadCover(userId: String, filePath: String): Result<String> {
         return uploadImage(SupabaseClient.BUCKET_USER_COVERS, userId, filePath)
     }
-
-
-
-    suspend fun uploadPostImage(userId: String, filePath: String): Result<String> {
-        return uploadImage(SupabaseClient.BUCKET_POST_MEDIA, userId, filePath)
-    }
-
-
 
     private suspend fun uploadImage(bucket: String, userId: String, filePath: String): Result<String> {
         return withContext(Dispatchers.IO) {
@@ -70,7 +59,6 @@ class SupabaseStorageService {
                 // Sanitized log: Removed path
                 android.util.Log.d("SupabaseStorage", "Uploading image...")
 
-
                 var uploadSuccess = false
                 var lastException: Exception? = null
 
@@ -80,6 +68,8 @@ class SupabaseStorageService {
                         storage.from(bucket).upload(path, file) { upsert = true }
                         uploadSuccess = true
                         break
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
                     } catch (e: Exception) {
                         lastException = e
                         android.util.Log.w("SupabaseStorage", "Upload attempt $attempt failed", e)
@@ -94,8 +84,22 @@ class SupabaseStorageService {
                     return@withContext Result.failure(lastException ?: Exception("Upload failed after retries"))
                 }
 
+                // Covers are private. Verify the owner-scoped object is readable before saving its reference.
+                if (bucket == SupabaseClient.BUCKET_USER_COVERS) {
+                    try {
+                        storage.from(bucket).createSignedUrl(path = path, expiresIn = 15.minutes)
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (verificationError: Exception) {
+                        return@withContext Result.failure(
+                            UploadError.StorageVerificationError(
+                                "Cover uploaded, but private Storage signing failed: ${verificationError.message ?: "unknown error"}"
+                            )
+                        )
+                    }
+                }
 
-                val mediaReference = if (bucket in setOf("posts", "covers", "story-media", "story-thumbnails", "reels")) {
+                val mediaReference = if (bucket in setOf("covers", "story-media", "story-thumbnails", "reels")) {
                     "private-media://$bucket/$path"
                 } else {
                     storage.from(bucket).publicUrl(path)
@@ -112,30 +116,13 @@ class SupabaseStorageService {
                 // Let's be safe and log just success.
                 android.util.Log.d("SupabaseStorage", "Upload successful")
                 Result.success(mediaReference)
-
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 android.util.Log.e("SupabaseStorage", "Upload failed", e)
-                Result.failure(Exception("Upload failed: ${e.message}"))
-            }
-        }
-    }
-
-
-
-    suspend fun deleteImage(bucket: String, path: String): Result<Unit> {
-        return withContext(Dispatchers.IO) {
-            try {
-                storage.from(bucket).delete(path)
-                Result.success(Unit)
-            } catch (e: Exception) {
                 Result.failure(e)
             }
         }
     }
-
-
-
 }
-
-
 

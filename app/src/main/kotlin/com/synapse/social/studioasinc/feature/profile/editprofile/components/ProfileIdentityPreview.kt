@@ -40,11 +40,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.ImageLoader
 import com.synapse.social.studioasinc.presentation.editprofile.UploadState
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -70,12 +70,12 @@ fun ProfileIdentityPreview(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
-        tonalElevation = Spacing.None
+        color = AppColors.cardBackground,
+        tonalElevation = Sizes.ElevationNone
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(bottom = Spacing.Medium)
+            modifier = Modifier.padding(bottom = Spacing.space16)
         ) {
             // Cover / Banner Section
             Box(
@@ -132,7 +132,7 @@ fun ProfileIdentityPreview(
                                     modifier = Modifier.size(Sizes.IconHuge)
                                 )
                                 if (coverUploadState.canRetry) {
-                                    Spacer(modifier = Modifier.height(Spacing.Small))
+                                    Spacer(modifier = Modifier.height(Spacing.space8))
                                     TextButton(
                                         onClick = onRetryCoverUpload,
                                         colors = ButtonDefaults.textButtonColors(
@@ -266,15 +266,15 @@ fun ProfileIdentityPreview(
                                         modifier = Modifier.size(Sizes.IconDefault)
                                     )
                                     if (avatarUploadState.canRetry) {
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         TextButton(
                                             onClick = onRetryAvatarUpload,
                                             colors = ButtonDefaults.textButtonColors(
                                                 contentColor = MaterialTheme.colorScheme.onPrimary
                                             ),
                                             contentPadding = PaddingValues(
-                                                horizontal = Spacing.Small,
-                                                vertical = Spacing.Tiny
+                                                horizontal = Spacing.space8,
+                                                vertical = Spacing.space4
                                             )
                                         ) {
                                             Text(
@@ -296,7 +296,7 @@ fun ProfileIdentityPreview(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .offset(y = (-28).dp)
-                    .padding(horizontal = Spacing.Medium)
+                    .padding(horizontal = Spacing.space16)
             ) {
                 Text(
                     text = nickname.ifBlank { stringResource(R.string.display_name) },
@@ -307,7 +307,7 @@ fun ProfileIdentityPreview(
                 )
 
                 if (username.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = "@$username",
                         style = MaterialTheme.typography.bodyMedium,
@@ -317,7 +317,7 @@ fun ProfileIdentityPreview(
                 }
 
                 if (bio.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
                     Text(
                         text = bio,
                         style = MaterialTheme.typography.bodySmall,

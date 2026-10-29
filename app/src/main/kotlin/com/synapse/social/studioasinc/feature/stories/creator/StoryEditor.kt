@@ -140,8 +140,8 @@ internal fun StoryEditor(
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = Spacing.Small),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    .padding(end = Spacing.space8),
+                verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 drawingColors.forEach { color ->
                     Box(
@@ -157,7 +157,7 @@ internal fun StoryEditor(
                             .clickable { currentColor = color }
                     )
                 }
-                Spacer(Modifier.height(Spacing.Small))
+                Spacer(Modifier.height(Spacing.space8))
                 // Undo button
                 IconButton(
                     onClick = { viewModel.undoDrawing() },
@@ -183,8 +183,8 @@ internal fun StoryEditor(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(Sizes.CornerLarge))
-                        .padding(Spacing.Medium),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                        .padding(Spacing.space16),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
                 ) {
                     items(stickerEmojis) { emoji ->
                         Text(
@@ -201,7 +201,7 @@ internal fun StoryEditor(
         }
 
         // Privacy menu
-        Box(modifier = Modifier.align(Alignment.BottomStart).padding(Spacing.Medium)) {
+        Box(modifier = Modifier.align(Alignment.BottomStart).padding(Spacing.space16)) {
             TextButton(onClick = { showPrivacyMenu = true }) {
                 Text(
                     text = state.selectedPrivacy.name.replace('_', ' '),

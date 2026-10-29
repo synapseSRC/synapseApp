@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -63,6 +65,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import java.util.Date
 import android.text.format.DateFormat as AndroidDateFormat
 import android.text.format.Formatter
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,7 +103,7 @@ fun SettingsBackupScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
@@ -113,8 +117,8 @@ fun SettingsBackupScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -124,31 +128,31 @@ fun SettingsBackupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-            contentPadding = PaddingValues(vertical = Spacing.Small)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
+            contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
                 ) {
-                    Column(Modifier.padding(SettingsSpacing.itemPadding)) {
+                    Column(Modifier.padding(AppSpacing.itemPadding)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Filled.Backup,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(SettingsSpacing.iconSize)
+                                modifier = Modifier.size(Sizes.IconLarge)
                             )
-                            Spacer(Modifier.size(Spacing.Medium))
+                            Spacer(Modifier.size(Spacing.space16))
                             Text(
-                                text = stringResource(R.string.backup_restore_title),
-                                style = MaterialTheme.typography.titleLarge,
+                                text = stringResource(R.string.backup_restore_subtitle),
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        Spacer(Modifier.height(Spacing.SmallMedium))
+                        Spacer(Modifier.height(Spacing.space12))
                         Text(
                             text = stringResource(R.string.backup_restore_intro),
                             style = MaterialTheme.typography.bodyLarge,
@@ -159,7 +163,7 @@ fun SettingsBackupScreen(
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = stringResource(R.string.backup_destination_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -167,7 +171,7 @@ fun SettingsBackupScreen(
                     )
                     PrimaryTabRow(
                         selectedTabIndex = if (state.mode == BackupDestinationMode.LOCAL) 0 else 1,
-                        containerColor = SettingsColors.screenBackground,
+                        containerColor = AppColors.screenBackground,
                         contentColor = MaterialTheme.colorScheme.primary
                     ) {
                         Tab(
@@ -236,7 +240,7 @@ fun SettingsBackupScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         stringResource(
                             R.string.backup_restore_preview_message,
@@ -245,7 +249,11 @@ fun SettingsBackupScreen(
                             pending.backup.version
                         )
                     )
-                    Text(stringResource(R.string.backup_restore_warning))
+                    Text(
+                        stringResource(R.string.backup_restore_warning),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             },
             confirmButton = {
@@ -266,7 +274,7 @@ fun SettingsBackupScreen(
             onDismissRequest = { viewModel.dismissConflict() },
             title = { Text(stringResource(R.string.backup_conflict_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.Small)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(stringResource(R.string.backup_conflict_message))
                     Text(
                         stringResource(
@@ -316,13 +324,18 @@ private fun LocalBackupSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            modifier = Modifier.padding(AppSpacing.itemPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_local_status_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.backup_local_cache_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             val metadata = state.localBackup
             if (metadata == null) {
                 Text(
@@ -338,26 +351,33 @@ private fun LocalBackupSection(
                 )
                 Text(stringResource(R.string.backup_created_at, formatTimestamp(LocalContext.current, metadata.backup.timestamp)))
                 Text(stringResource(R.string.backup_size_version, Formatter.formatFileSize(LocalContext.current, metadata.sizeBytes), metadata.backup.version))
+                if (state.localBackupStale) {
+                    Text(
+                        stringResource(R.string.backup_local_stale),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
             state.localErrorResource?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
             Button(onClick = onCreate, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Backup, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_create_local))
             }
             OutlinedButton(onClick = onRestore, enabled = !state.isBusy && metadata != null, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Restore, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_restore))
             }
             OutlinedButton(onClick = onExport, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.FileDownload, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_export_file))
             }
             OutlinedButton(onClick = onImport, enabled = !state.isBusy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.FileUpload, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_import_file))
             }
         }
@@ -374,24 +394,33 @@ private fun CloudBackupSection(
     val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            modifier = Modifier.padding(AppSpacing.itemPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Cloud, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_status_title), style = MaterialTheme.typography.titleMedium)
             }
-            Text(
-                text = cloudStatusText(state.cloudStatus),
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (state.cloudStatus == CloudBackupUiStatus.ERROR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            state.cloudErrorResource?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+            val errorResource = state.cloudErrorResource
+            if (errorResource != null) {
+                Text(
+                    text = stringResource(errorResource),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            } else {
+                Text(
+                    text = cloudStatusText(state.cloudStatus),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.cloudStatus == CloudBackupUiStatus.ERROR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (state.cloudBackupExists == true && state.cloudBackupTimestamp != null && state.cloudBackupVersion != null) {
                 Text(stringResource(R.string.backup_cloud_created_at, formatTimestamp(context, state.cloudBackupTimestamp), state.cloudBackupVersion))
             }
@@ -402,14 +431,26 @@ private fun CloudBackupSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            if (state.cloudPendingChanges) {
+                Text(
+                    stringResource(R.string.backup_cloud_pending_changes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             Text(
                 stringResource(R.string.backup_cloud_overwrite_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Text(
+                stringResource(R.string.backup_auto_sync_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Button(onClick = onBackup, enabled = state.canUseCloud, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Backup, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_backup_now))
             }
             OutlinedButton(
@@ -418,12 +459,12 @@ private fun CloudBackupSection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Filled.Restore, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_cloud_restore))
             }
             OutlinedButton(onClick = onSync, enabled = state.canUseCloud, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Sync, contentDescription = null)
-                Spacer(Modifier.size(Spacing.Small))
+                Spacer(Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.backup_sync_now))
             }
         }
@@ -443,11 +484,11 @@ private fun IncludedSettingsSection() {
     )
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            modifier = Modifier.padding(AppSpacing.itemPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_scope_title), style = MaterialTheme.typography.titleMedium)
             categories.forEach { category ->
@@ -468,8 +509,8 @@ private fun PrivacyAndRestoreNote() {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            modifier = Modifier.padding(AppSpacing.itemPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_privacy_title), style = MaterialTheme.typography.titleMedium)
             Text(

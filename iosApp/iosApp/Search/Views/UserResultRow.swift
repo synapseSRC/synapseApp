@@ -5,7 +5,7 @@ struct UserResultRow: View {
     let user: SearchAccount
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.space12) {
             // Avatar Placeholder
             Circle()
                 .fill(Color.gray.opacity(0.3))
@@ -16,8 +16,8 @@ struct UserResultRow: View {
                         .font(.headline)
                 )
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .center, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
+                HStack(alignment: .center, spacing: AppTheme.Spacing.space4) {
                     Text(user.displayName ?? user.handle ?? "Unknown User")
                         .font(.headline)
                         .lineLimit(1)
@@ -39,7 +39,7 @@ struct UserResultRow: View {
                         .font(.caption)
                         .foregroundColor(.primary)
                         .lineLimit(2)
-                        .padding(.top, 2)
+                        .padding(.top, AppTheme.Spacing.space2)
                 }
             }
 
@@ -51,8 +51,8 @@ struct UserResultRow: View {
             }) {
                 Text(user.isFollowing ? "Following" : "Follow")
                     .font(.system(size: 14, weight: .semibold))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, AppTheme.Spacing.space16)
+                    .padding(.vertical, AppTheme.Spacing.space6)
                     .background(user.isFollowing ? Color.clear : Color.blue)
                     .foregroundColor(user.isFollowing ? .primary : .white)
                     .overlay(
@@ -62,7 +62,7 @@ struct UserResultRow: View {
                     .cornerRadius(16)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.space8)
         .padding(.horizontal)
     }
 }

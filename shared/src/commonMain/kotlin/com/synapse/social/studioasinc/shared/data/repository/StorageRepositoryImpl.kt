@@ -67,6 +67,7 @@ class StorageRepositoryImpl(
         val supabaseKeyDeferred = async(AppDispatchers.IO) {
             secureStorage.getString(KEY_SUPABASE)?.takeIf { it.isNotBlank() }
                 ?: row.supabase_key.takeIf { it.isNotBlank() }
+                ?: SynapseConfig.SUPABASE_ANON_KEY.takeIf { it.isNotBlank() }
                 ?: ""
         }
 
@@ -85,7 +86,7 @@ class StorageRepositoryImpl(
         val cloudinaryCloudName = row.cloudinary_cloud_name
         val cloudinaryUploadPreset = row.cloudinary_upload_preset
 
-        val supabaseUrl = row.supabase_url
+        val supabaseUrl = row.supabase_url.takeIf { it.isNotBlank() } ?: SynapseConfig.SUPABASE_URL
 
         val r2AccountId = row.r2_account_id
         val r2BucketName = row.r2_bucket_name
@@ -99,9 +100,9 @@ class StorageRepositoryImpl(
             cloudinaryApiKey = cloudinaryApiKeyDeferred.await(),
             cloudinaryApiSecret = cloudinaryApiSecretDeferred.await(),
             cloudinaryUploadPreset = cloudinaryUploadPreset,
-            supabaseUrl = supabaseUrl,
-            supabaseKey = supabaseKeyDeferred.await(),
-            supabaseBucket = row.supabase_bucket,
+            primaryUrl = supabaseUrl,
+            primaryKey = supabaseKeyDeferred.await(),
+            primaryBucket = row.supabase_bucket,
             r2AccountId = r2AccountId,
             r2AccessKeyId = r2AccessKeyIdDeferred.await(),
             r2SecretAccessKey = r2SecretAccessKeyDeferred.await(),
@@ -115,7 +116,7 @@ class StorageRepositoryImpl(
         secureStorage.save(KEY_IMGBB, config.imgBBKey)
         secureStorage.save(KEY_CLOUDINARY_API_KEY, config.cloudinaryApiKey)
         secureStorage.save(KEY_CLOUDINARY_API_SECRET, config.cloudinaryApiSecret)
-        secureStorage.save(KEY_SUPABASE, config.supabaseKey)
+        secureStorage.save(KEY_SUPABASE, config.primaryKey)
         secureStorage.save(KEY_R2_ACCESS_KEY_ID, config.r2AccessKeyId)
         secureStorage.save(KEY_R2_SECRET_ACCESS_KEY, config.r2SecretAccessKey)
 
@@ -127,7 +128,7 @@ class StorageRepositoryImpl(
 
             queries.updateImgBB("", now)
             queries.updateCloudinary(config.cloudinaryCloudName, "", "", config.cloudinaryUploadPreset, now)
-            queries.updateSupabase(config.supabaseUrl, "", config.supabaseBucket, now)
+            queries.updateSupabase(config.primaryUrl, "", config.primaryBucket, now)
             queries.updateR2(config.r2AccountId, "", "", config.r2BucketName, now)
         }
     }
@@ -155,7 +156,7 @@ class StorageRepositoryImpl(
         queries.updateCloudinary(cloudName, "", "", uploadPreset, TimeProvider.nowMillis())
     }
 
-    override suspend fun updateSupabaseConfig(url: String, key: String, bucket: String): Unit = withContext(AppDispatchers.IO) {
+    override suspend fun updatePrimaryConfig(url: String, key: String, bucket: String): Unit = withContext(AppDispatchers.IO) {
         if (key.isBlank()) secureStorage.clear(KEY_SUPABASE) else secureStorage.save(KEY_SUPABASE, key)
         queries.updateSupabase(url, "", bucket, TimeProvider.nowMillis())
     }
@@ -198,7 +199,7 @@ class StorageRepositoryImpl(
                 secureStorage.clear(KEY_CLOUDINARY_API_SECRET)
                 queries.updateCloudinary("", "", "", "", now)
             }
-            StorageProvider.SUPABASE -> {
+            StorageProvider.PRIMARY -> {
                 secureStorage.clear(KEY_SUPABASE)
                 queries.updateSupabase("", "", "", now)
             }

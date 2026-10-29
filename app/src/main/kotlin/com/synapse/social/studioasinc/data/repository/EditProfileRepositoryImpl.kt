@@ -1,11 +1,10 @@
 package com.synapse.social.studioasinc.data.repository
 
 import android.content.Context
-import com.synapse.social.studioasinc.shared.domain.usecase.UploadMediaUseCase
 import javax.inject.Inject
 import dagger.hilt.android.qualifiers.ApplicationContext
-import com.synapse.social.studioasinc.shared.domain.model.MediaType
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
+import com.synapse.social.studioasinc.data.remote.services.SupabaseStorageService
 import com.synapse.social.studioasinc.core.network.SupabaseErrorHandler
 import com.synapse.social.studioasinc.shared.core.util.EducationSanitizer
 
@@ -18,19 +17,17 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import com.synapse.social.studioasinc.core.util.toJsonObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 
 class EditProfileRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val uploadMediaUseCase: UploadMediaUseCase
+    private val supabaseStorageService: SupabaseStorageService
 ) {
 
     private val client by lazy { SupabaseClient.client }
@@ -56,8 +53,14 @@ class EditProfileRepositoryImpl @Inject constructor(
                         ?: result["nickname"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     email = result["email"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     bio = result["bio"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
-                    avatar = result["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
-                    profileCoverImage = result["profile_cover_image"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
+                    avatar = resolveProfileMediaUrl(
+                        result["avatar"]?.let { (it as? JsonPrimitive)?.contentOrNull },
+                        SupabaseClient.BUCKET_USER_AVATARS
+                    ),
+                    profileCoverImage = resolveProfileMediaUrl(
+                        result["profile_cover_image"]?.let { (it as? JsonPrimitive)?.contentOrNull },
+                        SupabaseClient.BUCKET_USER_COVERS
+                    ),
                     gender = Gender.fromString(result["gender"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull),
                     region = result["region"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull,
                     status = UserStatus.fromString(result["status"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull),
@@ -114,6 +117,8 @@ class EditProfileRepositoryImpl @Inject constructor(
             } else {
                 emit(Result.failure(Exception("User not found")))
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             emit(SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to get user profile: $userId"))
         }
@@ -125,7 +130,25 @@ class EditProfileRepositoryImpl @Inject constructor(
                 client.from("users").update(updateData.toJsonObject()) {
                     filter { eq("uid", userId) }
                 }
+                val persisted = client.from("users")
+                    .select(columns = Columns.raw("uid, avatar, profile_cover_image")) {
+                        filter { eq("uid", userId) }
+                    }
+                    .decodeSingleOrNull<JsonObject>()
+                    ?: throw IllegalStateException("Profile update did not affect an accessible profile")
+
+                listOf("avatar", "profile_cover_image").forEach { field ->
+                    if (updateData.containsKey(field)) {
+                        val expected = updateData[field] as? String
+                        val actual = (persisted[field] as? JsonPrimitive)?.contentOrNull
+                        if (actual != expected) {
+                            throw IllegalStateException("Profile field '$field' was not persisted")
+                        }
+                    }
+                }
                 Result.success(Unit)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to update profile: $userId")
             }
@@ -135,18 +158,13 @@ class EditProfileRepositoryImpl @Inject constructor(
     suspend fun syncUsernameChange(oldUsername: String, newUsername: String, userId: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                client.from("usernames").delete {
-                    filter { eq("username", oldUsername) }
+                val usernameData = buildJsonObject {
+                    put("uid", userId)
+                    put("username", newUsername)
                 }
-
-                val email = client.auth.currentUserOrNull()?.email
-
-                val usernameData = mapOf(
-                    "uid" to userId,
-                    "email" to email,
-                    "username" to newUsername
-                )
-                client.from("usernames").upsert(usernameData)
+                client.from("usernames").upsert(usernameData) {
+                    onConflict = "uid"
+                }
                 Result.success(Unit)
             } catch (e: Exception) {
                 SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to sync username: $newUsername")
@@ -178,20 +196,31 @@ class EditProfileRepositoryImpl @Inject constructor(
     }
 
     suspend fun uploadAvatar(userId: String, imagePath: String): Result<String> {
-        return uploadFile(imagePath, SupabaseClient.BUCKET_USER_AVATARS)
+        if (userId.isBlank()) return Result.failure(IllegalArgumentException("User ID is required for avatar upload"))
+        return supabaseStorageService.uploadAvatar(userId, imagePath)
     }
 
     suspend fun uploadCover(userId: String, imagePath: String): Result<String> {
-        return uploadFile(imagePath, SupabaseClient.BUCKET_USER_COVERS)
+        if (userId.isBlank()) return Result.failure(IllegalArgumentException("User ID is required for cover upload"))
+        return supabaseStorageService.uploadCover(userId, imagePath)
     }
 
-    private suspend fun uploadFile(filePath: String, bucketName: String): Result<String> {
-        return uploadMediaUseCase(
-            filePath = filePath,
-            mediaType = MediaType.PHOTO,
-            bucketName = bucketName,
-            onProgress = {}
-        ).map { it.url }
+    private suspend fun resolveProfileMediaUrl(reference: String?, bucket: String): String? {
+        val value = reference?.takeIf { it.isNotBlank() } ?: return null
+        return try {
+            when {
+                value.startsWith("private-media://") ||
+                    value.startsWith("http://") ||
+                    value.startsWith("https://") -> SupabaseClient.createSignedStorageUrl(bucket, value)
+                bucket == SupabaseClient.BUCKET_USER_AVATARS -> SupabaseClient.constructAvatarUrl(value)
+                else -> SupabaseClient.createSignedStorageUrl(bucket, value)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            android.util.Log.w("EditProfileRepository", "Profile media unavailable; displaying without it", error)
+            null
+        }
     }
 
     suspend fun addToProfileHistory(userId: String, imageUrl: String): Result<Unit> {

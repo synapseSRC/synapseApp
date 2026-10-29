@@ -16,72 +16,6 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SharePostBottomSheet(
-    onDismiss: () -> Unit,
-    onCopyLink: () -> Unit,
-    onShareToStory: () -> Unit,
-    onShareViaMessage: () -> Unit,
-    onShareExternal: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Spacing.Medium)
-        ) {
-            Text(
-                text = stringResource(R.string.share_post),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
-            )
-
-            ShareOption(
-                icon = Icons.Default.Link,
-                text = stringResource(R.string.copy_link),
-                onClick = {
-                    onCopyLink()
-                    onDismiss()
-                }
-            )
-
-            ShareOption(
-                icon = Icons.Default.AddCircle,
-                text = stringResource(R.string.share_to_story),
-                onClick = {
-                    onShareToStory()
-                    onDismiss()
-                }
-            )
-
-            ShareOption(
-                icon = Icons.AutoMirrored.Filled.Send,
-                text = stringResource(R.string.share_via_message),
-                onClick = {
-                    onShareViaMessage()
-                    onDismiss()
-                }
-            )
-
-            ShareOption(
-                icon = Icons.Default.Share,
-                text = stringResource(R.string.share_to_other_apps),
-                onClick = {
-                    onShareExternal()
-                    onDismiss()
-                }
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.Medium))
-        }
-    }
-}
-
 @Composable
 private fun ShareOption(
     icon: ImageVector,
@@ -92,7 +26,7 @@ private fun ShareOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -100,7 +34,7 @@ private fun ShareOption(
             contentDescription = null,
             modifier = Modifier.size(Sizes.IconLarge)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge

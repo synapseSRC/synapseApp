@@ -1,143 +1,116 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.app.Application
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.synapse.social.studioasinc.BuildConfig
+import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.domain.model.AppUpdateCheckResult
+import com.synapse.social.studioasinc.domain.usecase.about.CheckForUpdatesUseCase
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
+sealed interface AboutUpdateStatus {
+    data object Idle : AboutUpdateStatus
+    data object Checking : AboutUpdateStatus
+    data object UpToDate : AboutUpdateStatus
+    data object Unavailable : AboutUpdateStatus
+    data class UpdateAvailable(val version: String, val releaseUrl: String) : AboutUpdateStatus
+}
 
-
-class AboutSupportViewModel(
-    application: Application
+@HiltViewModel
+class AboutSupportViewModel @Inject constructor(
+    application: Application,
+    private val checkForUpdatesUseCase: CheckForUpdatesUseCase
 ) : AndroidViewModel(application) {
-
-
-
-
-
     private val _appVersion = MutableStateFlow("")
     val appVersion: StateFlow<String> = _appVersion.asStateFlow()
 
     private val _buildNumber = MutableStateFlow("")
     val buildNumber: StateFlow<String> = _buildNumber.asStateFlow()
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    /** Short commit hash stamped into [BuildConfig] at build time; blank when git was unavailable. */
+    private val _commitHash = MutableStateFlow(BuildConfig.GIT_COMMIT_HASH.trim())
+    val commitHash: StateFlow<String> = _commitHash.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _updateStatus = MutableStateFlow<AboutUpdateStatus>(AboutUpdateStatus.Idle)
+    val updateStatus: StateFlow<AboutUpdateStatus> = _updateStatus.asStateFlow()
 
-    init {
-        loadAppInfo()
-    }
-
-
-
-
-
-
+    init { loadAppInfo() }
 
     private fun loadAppInfo() {
         viewModelScope.launch {
             try {
-                val context = getApplication<Application>()
-                val packageInfo = context.packageManager.getPackageInfo(
-                    context.packageName,
-                    0
-                )
-
-                _appVersion.value = packageInfo.versionName ?: "Unknown"
-
-
-                val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    packageInfo.longVersionCode.toString()
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageInfo.versionCode.toString()
-                }
-
-                _buildNumber.value = versionCode
-
-                android.util.Log.d(
-                    "AboutSupportViewModel",
-                    "App version: ${_appVersion.value}, Build: ${_buildNumber.value}"
-                )
-            } catch (e: PackageManager.NameNotFoundException) {
-                android.util.Log.e("AboutSupportViewModel", "Failed to load app info", e)
-                _appVersion.value = "Unknown"
-                _buildNumber.value = "Unknown"
+                val (version, build) = readAppInfo()
+                _appVersion.value = version
+                _buildNumber.value = build
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                val unknown = getApplication<Application>().getString(R.string.about_version_unknown)
+                _appVersion.value = unknown
+                _buildNumber.value = unknown
             }
         }
     }
 
-
-
-
-
-
-
-    fun getTermsOfServiceUrl(): String {
-        return URL_TERMS_OF_SERVICE
+    private suspend fun readAppInfo(): Pair<String, String> = withContext(Dispatchers.IO) {
+        val context = getApplication<Application>()
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        val version = info.versionName ?: context.getString(R.string.about_version_unknown)
+        val build = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.longVersionCode.toString()
+        } else {
+            @Suppress("DEPRECATION")
+            info.versionCode.toString()
+        }
+        version to build
     }
 
-
-
-    fun getPrivacyPolicyUrl(): String {
-        return URL_PRIVACY_POLICY
+    fun checkForUpdates() {
+        if (_updateStatus.value == AboutUpdateStatus.Checking) return
+        _updateStatus.value = AboutUpdateStatus.Checking
+        viewModelScope.launch {
+            try {
+                val installedVersion = _appVersion.value.ifBlank {
+                    readAppInfo().also { (version, build) ->
+                        _appVersion.value = version
+                        _buildNumber.value = build
+                    }.first
+                }
+                _updateStatus.value = checkForUpdatesUseCase(installedVersion).fold(
+                    onSuccess = { result ->
+                        when (result) {
+                            AppUpdateCheckResult.UpToDate -> AboutUpdateStatus.UpToDate
+                            is AppUpdateCheckResult.UpdateAvailable -> AboutUpdateStatus.UpdateAvailable(
+                                version = result.release.version,
+                                releaseUrl = result.release.releaseUrl
+                            )
+                        }
+                    },
+                    onFailure = { AboutUpdateStatus.Unavailable }
+                )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _updateStatus.value = AboutUpdateStatus.Unavailable
+            }
+        }
     }
 
-
-
-    fun navigateToHelpCenter() {
-        android.util.Log.d("AboutSupportViewModel", "Navigate to Help Center")
-
-    }
-
-
-
-    fun getHelpCenterUrl(): String {
-        return URL_HELP_CENTER
-    }
-
-
-
-    fun navigateToLicenses() {
-        android.util.Log.d("AboutSupportViewModel", "Navigate to Open Source Licenses")
-
-    }
-
-
-
-
-
-
-
-    fun clearError() {
-        _error.value = null
-    }
-
-
-
-    fun clearMessage() {
-        _message.value = null
-    }
-
-
-
-    fun getFullVersionString(): String {
-        return "${_appVersion.value} (${_buildNumber.value})"
-    }
+    fun getTermsOfServiceUrl(): String = "$APP_WEBSITE_URL/reference/terms/"
+    fun getPrivacyPolicyUrl(): String = "$APP_WEBSITE_URL/reference/privacy/"
 
     companion object {
-        private val URL_TERMS_OF_SERVICE = "${SynapseConfig.APP_WEBSITE_URL}/reference/terms/"
-        private val URL_PRIVACY_POLICY = "${SynapseConfig.APP_WEBSITE_URL}/reference/privacy/"
-        private val URL_HELP_CENTER = SynapseConfig.APP_WEBSITE_URL
+        val APP_WEBSITE_URL: String = SynapseConfig.APP_WEBSITE_URL
     }
-
 }

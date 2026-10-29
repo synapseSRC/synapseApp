@@ -17,8 +17,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.crossfade
+import coil3.request.ImageRequest
 import com.synapse.social.studioasinc.shared.domain.model.SearchNews
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -32,7 +33,7 @@ fun NewsCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium)
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12)
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -49,7 +50,7 @@ fun NewsCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             Text(
                 text = news.headline,
@@ -62,7 +63,7 @@ fun NewsCard(
         }
 
         if (!news.imageUrl.isNullOrBlank()) {
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Spacer(modifier = Modifier.width(Spacing.space16))
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(news.imageUrl)

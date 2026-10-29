@@ -1,14 +1,17 @@
 package com.synapse.social.studioasinc.core.util
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.text.Spanned
 import android.widget.TextView
-import coil.ImageLoader
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.Disposable
-import coil.target.Target
+import coil3.Image as CoilImage
+import coil3.ImageLoader
+import coil3.asDrawable
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.Disposable
+import coil3.target.Target
 import io.noties.markwon.AbstractMarkwonPlugin
 import io.noties.markwon.MarkwonConfiguration
 import io.noties.markwon.MarkwonSpansFactory
@@ -23,7 +26,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class CoilImagesPlugin private constructor(
     private val coilStore: CoilStore,
-    private val imageLoader: ImageLoader
+    private val imageLoader: ImageLoader,
+    private val resources: Resources
 ) : AbstractMarkwonPlugin() {
 
     interface CoilStore {
@@ -31,7 +35,7 @@ class CoilImagesPlugin private constructor(
         fun cancel(disposable: Disposable)
     }
 
-    private val coilAsyncDrawableLoader = CoilAsyncDrawableLoader(coilStore, imageLoader)
+    private val coilAsyncDrawableLoader = CoilAsyncDrawableLoader(coilStore, imageLoader, resources)
 
     override fun configureSpansFactory(builder: MarkwonSpansFactory.Builder) {
         builder.setFactory(Image::class.java, ImageSpanFactory())
@@ -55,7 +59,7 @@ class CoilImagesPlugin private constructor(
         }
 
         fun create(context: Context, imageLoader: ImageLoader): CoilImagesPlugin {
-            return create(object : CoilStore {
+            return CoilImagesPlugin(object : CoilStore {
                 override fun load(drawable: AsyncDrawable): ImageRequest {
                     return ImageRequest.Builder(context)
                         .data(drawable.destination)
@@ -65,24 +69,25 @@ class CoilImagesPlugin private constructor(
                 override fun cancel(disposable: Disposable) {
                     disposable.dispose()
                 }
-            }, imageLoader)
+            }, imageLoader, context.resources)
         }
 
         fun create(coilStore: CoilStore, imageLoader: ImageLoader): CoilImagesPlugin {
-            return CoilImagesPlugin(coilStore, imageLoader)
+            return CoilImagesPlugin(coilStore, imageLoader, Resources.getSystem())
         }
     }
 
     private class CoilAsyncDrawableLoader(
         private val coilStore: CoilStore,
-        private val imageLoader: ImageLoader
+        private val imageLoader: ImageLoader,
+        private val resources: Resources
     ) : AsyncDrawableLoader() {
 
         private val cache = ConcurrentHashMap<AsyncDrawable, Disposable>()
 
         override fun load(drawable: AsyncDrawable) {
             val loaded = AtomicBoolean(false)
-            val target = AsyncDrawableTarget(drawable, loaded, cache)
+            val target = AsyncDrawableTarget(drawable, loaded, cache, resources)
             val request = coilStore.load(drawable).newBuilder()
                 .target(target)
                 .build()
@@ -111,31 +116,35 @@ class CoilImagesPlugin private constructor(
     private class AsyncDrawableTarget(
         private val drawable: AsyncDrawable,
         private val loaded: AtomicBoolean,
-        private val cache: ConcurrentHashMap<AsyncDrawable, Disposable>
+        private val cache: ConcurrentHashMap<AsyncDrawable, Disposable>,
+        private val resources: Resources
     ) : Target {
 
-        override fun onSuccess(result: Drawable) {
+        override fun onSuccess(result: CoilImage) {
+            val resultDrawable = result.asDrawable(resources)
             if (cache.remove(drawable) != null || !loaded.get()) {
                 loaded.set(true)
                 if (drawable.isAttached) {
-                    DrawableUtils.applyIntrinsicBoundsIfEmpty(result)
-                    drawable.result = result
+                    DrawableUtils.applyIntrinsicBoundsIfEmpty(resultDrawable)
+                    drawable.result = resultDrawable
                 }
             }
         }
 
-        override fun onStart(placeholder: Drawable?) {
-            if (placeholder != null && drawable.isAttached) {
-                DrawableUtils.applyIntrinsicBoundsIfEmpty(placeholder)
-                drawable.result = placeholder
+        override fun onStart(placeholder: CoilImage?) {
+            val placeholderDrawable = placeholder?.asDrawable(resources)
+            if (placeholderDrawable != null && drawable.isAttached) {
+                DrawableUtils.applyIntrinsicBoundsIfEmpty(placeholderDrawable)
+                drawable.result = placeholderDrawable
             }
         }
 
-        override fun onError(error: Drawable?) {
+        override fun onError(error: CoilImage?) {
+            val errorDrawable = error?.asDrawable(resources)
             if (cache.remove(drawable) != null) {
-                if (error != null && drawable.isAttached) {
-                    DrawableUtils.applyIntrinsicBoundsIfEmpty(error)
-                    drawable.result = error
+                if (errorDrawable != null && drawable.isAttached) {
+                    DrawableUtils.applyIntrinsicBoundsIfEmpty(errorDrawable)
+                    drawable.result = errorDrawable
                 }
             }
         }

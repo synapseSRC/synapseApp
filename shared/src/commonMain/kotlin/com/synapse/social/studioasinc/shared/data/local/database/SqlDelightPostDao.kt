@@ -180,7 +180,12 @@ class SqlDelightPostDao(
             metadata = entity.metadata,
             quotedPostId = entity.quotedPostId,
             isQuote = entity.isQuote,
-            rootPostId = entity.rootPostId
+            rootPostId = entity.rootPostId,
+            // Sync metadata
+            updatedAt = 0L,
+            isLocallyDeleted = false,
+            lastSyncedAt = null,
+            syncVersion = 1
         )
     }
 }

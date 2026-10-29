@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -37,6 +40,7 @@ fun FontScreen(
     }
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_font_title)) },
@@ -50,8 +54,8 @@ fun FontScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
@@ -71,7 +75,7 @@ fun FontScreen(
         snackbarHost = {
             if (uiState.error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -88,8 +92,8 @@ fun FontScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             items(uiState.fonts, key = { it.id }) { font ->
                 FontCard(
@@ -121,13 +125,13 @@ private fun FontCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = SettingsShapes.cardShape,
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else SettingsColors.cardBackground,
+        shape = AppShapes.cardShape,
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else AppColors.cardBackground,
         border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Row(
             modifier = Modifier
-                .padding(Spacing.Medium)
+                .padding(Spacing.space16)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -140,7 +144,7 @@ private fun FontCard(
                     fontFamily = font.fontFamily,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.settings_font_preview),
                     style = MaterialTheme.typography.bodyMedium,

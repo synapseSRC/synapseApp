@@ -31,22 +31,22 @@ fun ReplyingToBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.Medium)
-                .padding(bottom = Spacing.Large)
+                .padding(horizontal = Spacing.space16)
+                .padding(bottom = Spacing.space24)
         ) {
             Text(
                 text = stringResource(R.string.post_replying_to),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = Spacing.Small)
+                modifier = Modifier.padding(vertical = Spacing.space8)
             )
 
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = Spacing.Small),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
-                verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    .padding(top = Spacing.space8),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
                 usernames.forEach { username ->
                     AssistChip(

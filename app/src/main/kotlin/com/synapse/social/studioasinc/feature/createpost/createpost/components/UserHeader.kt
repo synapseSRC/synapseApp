@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
@@ -41,8 +41,6 @@ import com.synapse.social.studioasinc.domain.model.FeelingActivity
 import com.synapse.social.studioasinc.domain.model.FeelingType
 import com.synapse.social.studioasinc.domain.model.LocationData
 import androidx.compose.ui.res.stringResource
-import com.synapse.social.studioasinc.feature.shared.components.ExpressiveButton
-import com.synapse.social.studioasinc.feature.shared.components.ButtonVariant
 import com.synapse.social.studioasinc.feature.shared.theme.AccentBlue
 import com.synapse.social.studioasinc.feature.shared.theme.AccentYellow
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -62,7 +60,7 @@ fun UserHeader(
         verticalAlignment = Alignment.Top,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Medium)
+            .padding(vertical = Spacing.space16)
     ) {
 
         com.synapse.social.studioasinc.ui.components.CircularAvatar(
@@ -73,7 +71,7 @@ fun UserHeader(
             displayName = user?.displayName ?: user?.username
         )
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
 
         Column {
@@ -144,7 +142,7 @@ fun UserHeader(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Tiny))
+            Spacer(modifier = Modifier.height(Spacing.space4))
 
 
             Surface(
@@ -155,7 +153,7 @@ fun UserHeader(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = Spacing.ExtraSmall)
+                    modifier = Modifier.padding(horizontal = Spacing.space4)
                 ) {
                     Icon(
                         imageVector = when(privacy) {
@@ -167,13 +165,13 @@ fun UserHeader(
                         modifier = Modifier.size(Sizes.IconSmall),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Text(
                         text = privacy.replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Tiny))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Icon(
                         Icons.Default.ArrowDropDown,
                         contentDescription = null,

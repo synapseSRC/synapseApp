@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,6 +14,9 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 fun ChatRadioItem(
@@ -28,7 +33,7 @@ fun ChatRadioItem(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Row(
             modifier = Modifier
@@ -43,10 +48,10 @@ fun ChatRadioItem(
                     contentDescription = radioDescription
                 }
                 .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.itemHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
+                .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
@@ -59,22 +64,22 @@ fun ChatRadioItem(
                 )
             )
 
-            Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+            Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = title,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurface
                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = subtitle,
-                        style = SettingsTypography.itemSubtitle,
+                        style = AppTypography.itemSubtitle,
                         color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                     )

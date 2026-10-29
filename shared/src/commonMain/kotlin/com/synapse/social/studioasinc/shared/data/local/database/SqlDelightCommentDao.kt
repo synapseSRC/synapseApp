@@ -60,7 +60,12 @@ class SqlDelightCommentDao(
             username = username,
             avatarUrl = avatarUrl,
             linkPreview = linkPreview,
-            viewsCount = viewsCount
+            viewsCount = viewsCount,
+            // Sync metadata
+            updatedAt = 0L,
+            isLocallyDeleted = false,
+            lastSyncedAt = null,
+            syncVersion = 1
         )
     }
 }

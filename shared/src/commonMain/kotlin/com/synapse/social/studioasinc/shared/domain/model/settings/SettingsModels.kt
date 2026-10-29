@@ -4,12 +4,6 @@ enum class ThemeMode { LIGHT, DARK, SYSTEM }
 
 enum class FontScale {
     SMALL, MEDIUM, LARGE, EXTRA_LARGE;
-    fun scaleFactor(): Float = when (this) {
-        SMALL -> 0.85f
-        MEDIUM -> 1.0f
-        LARGE -> 1.15f
-        EXTRA_LARGE -> 1.3f
-    }
     fun displayName(): String = name.lowercase().replaceFirstChar { it.uppercase() }
 }
 

@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -93,15 +93,6 @@ import kotlinx.serialization.json.Json
 @Module
 @InstallIn(SingletonComponent::class)
 object StorageModule {
-
-    @Provides
-    @Singleton
-    fun provideStorageRepository(
-        db: StorageDatabase,
-        secureStorage: SecureStorage
-    ): StorageRepository {
-        return StorageRepositoryImpl(db, secureStorage)
-    }
     @Provides
     @Singleton
     fun provideFileUploader(@ApplicationContext context: Context): FileUploader {
@@ -153,23 +144,6 @@ object StorageModule {
     }
     @Provides
     @Singleton
-    fun provideMediaUploadRepository(
-        fileUploader: FileUploader,
-        imgBBUploadService: ImgBBUploadService,
-        cloudinaryUploadService: CloudinaryUploadService,
-        supabaseUploadService: SupabaseUploadService,
-        r2UploadService: R2UploadService
-    ): MediaUploadRepository {
-        return MediaUploadRepositoryImpl(
-            fileUploader,
-            imgBBUploadService,
-            cloudinaryUploadService,
-            supabaseUploadService,
-            r2UploadService
-        )
-    }
-    @Provides
-    @Singleton
     fun provideUploadMediaUseCase(
         repository: StorageRepository,
         settingsRepository: com.synapse.social.studioasinc.shared.domain.repository.SettingsRepository,
@@ -185,3 +159,4 @@ object StorageModule {
     }
 
 }
+

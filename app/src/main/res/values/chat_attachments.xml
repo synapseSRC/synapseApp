@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_attachment_share_content">Share content</string>
+    <string name="chat_attachment_close">Close attachment options</string>
+    <string name="chat_attachment_open_action">Open attachment options</string>
+    <string name="chat_attachment_photos_videos">Photos &amp; Videos</string>
+    <string name="chat_attachment_photos_videos_supporting">Select images and videos from gallery</string>
+    <string name="chat_attachment_documents">Documents</string>
+    <string name="chat_attachment_documents_supporting">Choose PDFs, spreadsheets, presentations</string>
+    <string name="chat_attachment_audio">Audio</string>
+    <string name="chat_attachment_audio_supporting">Share audio tracks and voice recordings</string>
+    <string name="chat_attachment_files">Files</string>
+    <string name="chat_attachment_files_supporting">Browse device storage and downloads</string>
+    <string name="chat_attachment_contacts">Contacts</string>
+    <string name="chat_attachment_contacts_supporting">Share vCard contact information</string>
+    <string name="chat_attachment_default_file_name">attachment</string>
+    <string name="chat_attachment_read_failed">Could not read the selected item. Please choose it again.</string>
+    <string name="chat_attachment_contact_failed">Unable to prepare this contact card. Please choose the contact again.</string>
+</resources>

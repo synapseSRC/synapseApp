@@ -4,7 +4,10 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
 interface CachedMessageDao {
     suspend fun upsertAll(messages: List<Message>)
+    suspend fun getMessageById(id: String): Message?
     suspend fun getMessages(chatId: String, limit: Int): List<Message>
+    suspend fun getMessagesBefore(chatId: String, beforeCreatedAt: String, beforeId: String, limit: Int): List<Message>
+    suspend fun getMessagesAfter(chatId: String, afterCreatedAt: String, afterId: String, limit: Int): List<Message>
     suspend fun upsert(message: Message)
     suspend fun updateContent(id: String, content: String)
     suspend fun markDeleted(id: String)
@@ -15,4 +18,5 @@ interface CachedMessageDao {
     suspend fun deleteAll()
     suspend fun updateReactions(messageId: String, reactions: Map<com.synapse.social.studioasinc.shared.domain.model.ReactionType, Int>, userReaction: com.synapse.social.studioasinc.shared.domain.model.ReactionType?)
     suspend fun markRead(chatId: String, userId: String)
+    suspend fun deleteExpired(chatId: String, now: String)
 }

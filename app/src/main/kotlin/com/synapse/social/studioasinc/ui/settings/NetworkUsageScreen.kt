@@ -28,6 +28,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,13 +56,13 @@ fun NetworkUsageScreen(
         topBar = {
             LargeTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 title = {
                     Text(
                         text = stringResource(R.string.network_usage_title),
-                        style = SettingsTypography.screenTitle
+                        style = AppTypography.screenTitle
                     )
                 },
                 navigationIcon = {
@@ -73,7 +76,7 @@ fun NetworkUsageScreen(
                 scrollBehavior = scrollBehavior
             )
         },
-        containerColor = SettingsColors.screenBackground
+        containerColor = AppColors.screenBackground
     ) { padding ->
         if (isLoading) {
             Box(
@@ -89,9 +92,9 @@ fun NetworkUsageScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = SettingsSpacing.screenPadding),
-                contentPadding = PaddingValues(top = Spacing.Small, bottom = Spacing.ExtraLarge),
-                verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    .padding(horizontal = AppSpacing.screenPadding),
+                contentPadding = PaddingValues(top = Spacing.space8, bottom = Spacing.space32),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
             ) {
                 item {
                     SettingsSection(title = stringResource(R.string.network_usage_heading)) {
@@ -99,7 +102,7 @@ fun NetworkUsageScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(SettingsSpacing.itemHorizontalPadding)
+                                    .padding(AppSpacing.itemHorizontalPadding)
                             ) {
                                 val subtitleText = if (lastResetTime > 0) {
                                     val dateStr = SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(Date(lastResetTime))
@@ -110,14 +113,14 @@ fun NetworkUsageScreen(
 
                                 Text(
                                     text = subtitleText,
-                                    style = SettingsTypography.itemSubtitle,
+                                    style = AppTypography.itemSubtitle,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
-                                Spacer(modifier = Modifier.height(Spacing.Medium))
+                                Spacer(modifier = Modifier.height(Spacing.space16))
 
                                 Row(modifier = Modifier.fillMaxWidth()) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = Spacing.Medium)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = Spacing.space16)) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(
                                                 imageVector = Icons.Outlined.ArrowUpward,
@@ -125,14 +128,14 @@ fun NetworkUsageScreen(
                                                 modifier = Modifier.size(16.dp),
                                                 tint = MaterialTheme.colorScheme.primary
                                             )
-                                            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                            Spacer(modifier = Modifier.width(Spacing.space4))
                                             Text(
                                                 text = stringResource(R.string.network_usage_sent),
-                                                style = SettingsTypography.itemSubtitle,
+                                                style = AppTypography.itemSubtitle,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = formatBytes(totalSent),
                                             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
@@ -148,14 +151,14 @@ fun NetworkUsageScreen(
                                                 modifier = Modifier.size(16.dp),
                                                 tint = MaterialTheme.colorScheme.tertiary
                                             )
-                                            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                                            Spacer(modifier = Modifier.width(Spacing.space4))
                                             Text(
                                                 text = stringResource(R.string.network_usage_received),
-                                                style = SettingsTypography.itemSubtitle,
+                                                style = AppTypography.itemSubtitle,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = formatBytes(totalReceived),
                                             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
@@ -184,23 +187,23 @@ fun NetworkUsageScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(
-                                                horizontal = SettingsSpacing.itemHorizontalPadding,
-                                                vertical = SettingsSpacing.itemVerticalPadding
+                                                horizontal = AppSpacing.itemHorizontalPadding,
+                                                vertical = AppSpacing.itemVerticalPadding
                                             ),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         SettingsIconBadge(imageVector = icon)
 
-                                        Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+                                        Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 text = stringResource(item.labelRes),
-                                                style = SettingsTypography.itemTitle,
+                                                style = AppTypography.itemTitle,
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
 
-                                            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                            Spacer(modifier = Modifier.height(Spacing.space4))
 
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Icon(
@@ -209,14 +212,14 @@ fun NetworkUsageScreen(
                                                     modifier = Modifier.size(14.dp),
                                                     tint = MaterialTheme.colorScheme.primary
                                                 )
-                                                Spacer(modifier = Modifier.width(2.dp))
+                                                Spacer(modifier = Modifier.width(Spacing.space4))
                                                 Text(
                                                     text = formatBytes(item.sentBytes),
-                                                    style = SettingsTypography.itemSubtitle,
+                                                    style = AppTypography.itemSubtitle,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
 
-                                                Spacer(modifier = Modifier.width(Spacing.Medium))
+                                                Spacer(modifier = Modifier.width(Spacing.space16))
 
                                                 Icon(
                                                     imageVector = Icons.Outlined.ArrowDownward,
@@ -224,10 +227,10 @@ fun NetworkUsageScreen(
                                                     modifier = Modifier.size(14.dp),
                                                     tint = MaterialTheme.colorScheme.tertiary
                                                 )
-                                                Spacer(modifier = Modifier.width(2.dp))
+                                                Spacer(modifier = Modifier.width(Spacing.space4))
                                                 Text(
                                                     text = formatBytes(item.receivedBytes),
-                                                    style = SettingsTypography.itemSubtitle,
+                                                    style = AppTypography.itemSubtitle,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
@@ -244,7 +247,7 @@ fun NetworkUsageScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
                     SettingsButtonItem(
                         title = stringResource(R.string.network_reset_statistics),
                         isDestructive = true,

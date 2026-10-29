@@ -24,15 +24,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.delay
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
-
-
 
 @Composable
 fun ReelsGrid(
@@ -63,8 +61,6 @@ fun ReelsGrid(
                     animationDelay = (index % 9) * 50
                 )
             }
-
-
         }
     }
 }
@@ -111,7 +107,6 @@ private fun AnimatedReelItem(
             .clip(RoundedCornerShape(Sizes.CornerSmall))
             .clickable { onClick() }
     ) {
-
         AsyncImage(
             model = item.thumbnailUrl ?: item.url,
             contentDescription = null,
@@ -121,9 +116,6 @@ private fun AnimatedReelItem(
                 imageLoaded = state is AsyncImagePainter.State.Success
             }
         )
-
-
-
 
         Box(
             modifier = Modifier
@@ -140,11 +132,10 @@ private fun AnimatedReelItem(
                 )
         )
 
-
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(Spacing.Small),
+                .padding(Spacing.space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -153,7 +144,7 @@ private fun AnimatedReelItem(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(Sizes.IconSmall)
             )
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             Text(
                 text = stringResource(R.string.reel),
                 style = MaterialTheme.typography.labelSmall,
@@ -164,41 +155,17 @@ private fun AnimatedReelItem(
 }
 
 @Composable
-private fun ShimmerReelItem(animationDelay: Int = 0) {
-    var visible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(animationDelay.toLong())
-        visible = true
-    }
-
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 200),
-        label = "shimmerAlpha"
-    )
-
-    Box(
-        modifier = Modifier
-            .aspectRatio(9f / 16f)
-            .graphicsLayer { this.alpha = alpha }
-            .clip(RoundedCornerShape(Sizes.CornerSmall))
-            .shimmer()
-    )
-}
-
-@Composable
 private fun ReelsGridEmptyState(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(Sizes.HeightExtraLarge)
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Icon(
                 imageVector = Icons.Default.VideoLibrary,

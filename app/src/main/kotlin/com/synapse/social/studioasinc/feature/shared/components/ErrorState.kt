@@ -24,7 +24,7 @@ fun ErrorState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -34,14 +34,14 @@ fun ErrorState(
             modifier = Modifier.size(Sizes.AvatarExtraLarge),
             tint = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(Spacing.Medium))
+        Spacer(modifier = Modifier.height(Spacing.space16))
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
@@ -49,38 +49,13 @@ fun ErrorState(
             textAlign = TextAlign.Center
         )
         if (onRetry != null) {
-            Spacer(modifier = Modifier.height(Spacing.Large))
+            Spacer(modifier = Modifier.height(Spacing.space24))
             Button(onClick = onRetry) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(stringResource(R.string.action_retry))
             }
         }
     }
 }
 
-@Composable
-fun NetworkErrorState(
-    modifier: Modifier = Modifier,
-    onRetry: () -> Unit
-) {
-    ErrorState(
-        title = "Connection Error",
-        message = "Unable to connect to the server. Please check your internet connection and try again.",
-        modifier = modifier,
-        onRetry = onRetry
-    )
-}
-
-@Composable
-fun LoadErrorState(
-    modifier: Modifier = Modifier,
-    onRetry: () -> Unit
-) {
-    ErrorState(
-        title = "Failed to Load",
-        message = "Something went wrong while loading the profile. Please try again.",
-        modifier = modifier,
-        onRetry = onRetry
-    )
-}

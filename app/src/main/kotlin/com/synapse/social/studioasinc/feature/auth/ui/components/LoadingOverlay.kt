@@ -38,7 +38,7 @@ fun LoadingOverlay(
                 .fillMaxSize()
                 .then(
                     if (isLoading && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                         Modifier.blur(radius = Spacing.SmallPlus)
+                         Modifier.blur(radius = Sizes.LoadingOverlayBlurRadius)
                     } else {
                         Modifier
                     }

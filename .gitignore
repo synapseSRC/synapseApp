@@ -1,6 +1,13 @@
 # ---------------------------------------------------
 # General and Operating System Exclusions
-# ---------------------------------------------------
+#
+---------------------------------------------------
+
+
+.conda
+.kilo
+.playwright-mcp
+.kiro
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -60,7 +67,8 @@ jacoco*.exec
 *.jks
 *.keystore
 # Firebase Configuration (CRITICAL for security)
-# google-services.json (Removed from exclusion as requested)
+/app/google-services.json
+/app/google-services.json.example
 # Generated Room Database Schemas (often kept for migration, but excluded by default)
 # Remove the following lines if you explicitly track schemas for Room migrations:
 /app/schemas/

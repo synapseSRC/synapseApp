@@ -53,7 +53,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
 import androidx.compose.material.icons.filled.Crop
@@ -221,7 +221,7 @@ internal fun StoryTopControls(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -290,7 +290,7 @@ internal fun StoryBottomControls(
 ) {
     Button(
         onClick = onPost,
-        modifier = modifier.padding(Spacing.Medium)
+        modifier = modifier.padding(Spacing.space16)
     ) {
         if (isPosting) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))

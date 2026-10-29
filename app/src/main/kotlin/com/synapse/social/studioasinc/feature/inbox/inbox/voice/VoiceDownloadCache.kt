@@ -9,6 +9,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,6 +37,35 @@ open class VoiceDownloadCache @Inject constructor(
         return "voice_$hex.m4a"
     }
 
+    private fun extractCarrierPayload(bytes: ByteArray): ByteArray {
+        val pngSignature = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
+        val isPngCarrier = bytes.size >= pngSignature.size &&
+            bytes.copyOfRange(0, pngSignature.size).contentEquals(pngSignature)
+        if (!isPngCarrier) return bytes
+        return VoiceEncoder.decode(bytes).also {
+            require(it.isNotEmpty()) { "Voice media carrier does not contain an audio payload." }
+        }
+    }
+
+    private suspend fun download(url: String): ByteArray {
+        val isSupabase = isSupabaseUrl(url)
+        return if (isSupabase) {
+            val sessionToken = try {
+                SupabaseClient.client.auth.currentSessionOrNull()?.accessToken
+            } catch (e: Exception) {
+                null
+            }
+            val anonKey = try { SynapseConfig.SUPABASE_ANON_KEY } catch (e: Exception) { "" }
+            val response = httpClient.get(url) {
+                if (!sessionToken.isNullOrBlank()) header("Authorization", "Bearer $sessionToken")
+                if (anonKey.isNotBlank()) header("apikey", anonKey)
+            }
+            response.body()
+        } else {
+            httpClient.get(url).body()
+        }
+    }
+
     open suspend fun getLocalPath(url: String): Result<String> = withContext(Dispatchers.IO) {
         try {
             // Check if local file path or uri directly
@@ -47,50 +77,26 @@ open class VoiceDownloadCache @Inject constructor(
                 }
             }
 
+            val encryptedReference = VoiceMediaCrypto.parseReference(url)
             val filename = getCacheFilename(url)
             val cachedFile = File(context.cacheDir, filename)
-
-            // If already downloaded and cached, return it
             if (cachedFile.exists() && cachedFile.length() > 0) {
                 return@withContext Result.success(cachedFile.absolutePath)
             }
 
-            val isSupabase = isSupabaseUrl(url)
-            val downloadedBytes: ByteArray = if (isSupabase) {
-                val sessionToken = try {
-                    SupabaseClient.client.auth.currentSessionOrNull()?.accessToken
-                } catch (e: Exception) {
-                    null
-                }
-                val anonKey = try { SynapseConfig.SUPABASE_ANON_KEY } catch (e: Exception) { "" }
-
-                val response = httpClient.get(url) {
-                    if (!sessionToken.isNullOrBlank()) {
-                        header("Authorization", "Bearer $sessionToken")
-                    }
-                    if (anonKey.isNotBlank()) {
-                        header("apikey", anonKey)
-                    }
-                }
-                response.body()
+            val downloadUrl = encryptedReference?.remoteUrl ?: url
+            val downloadedBytes = download(downloadUrl)
+            val extractedBytes = extractCarrierPayload(downloadedBytes)
+            val playbackBytes = if (encryptedReference != null) {
+                VoiceMediaCrypto.decrypt(extractedBytes, encryptedReference)
             } else {
-                val response = httpClient.get(url)
-                response.body()
+                extractedBytes
             }
-
-            // Decode to extract audio if carrier PNG (ImgBB legacy format)
-            val audioBytes = VoiceEncoder.decode(downloadedBytes)
-
-            if (audioBytes.isEmpty()) {
-                // Fallback to writing downloaded bytes directly
-                cachedFile.writeBytes(downloadedBytes)
-            } else {
-                cachedFile.writeBytes(audioBytes)
-            }
-
+            cachedFile.writeBytes(playbackBytes)
             Result.success(cachedFile.absolutePath)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            e.printStackTrace()
             Result.failure(e)
         }
     }

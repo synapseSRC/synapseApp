@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,13 +43,13 @@ fun EditProfileTopBar(
         actions = {
             if (isSaving) {
                 ExpressiveLoadingIndicator(
-                    modifier = Modifier.padding(end = Spacing.Medium).size(Sizes.IconLarge)
+                    modifier = Modifier.padding(end = Spacing.space16).size(Sizes.IconLarge)
                 )
             } else {
                 TextButton(
                     onClick = onSaveClick,
                     enabled = canSave,
-                    modifier = Modifier.padding(end = Spacing.Small)
+                    modifier = Modifier.padding(end = Spacing.space8)
                 ) {
                     Text(stringResource(R.string.action_save))
                 }
@@ -56,8 +57,10 @@ fun EditProfileTopBar(
         },
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = AppColors.screenBackground,
+            scrolledContainerColor = AppColors.cardBackground,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }

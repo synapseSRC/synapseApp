@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.res.stringResource
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -30,7 +30,7 @@ fun PostHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.SmallMedium),
+            .padding(Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -41,7 +41,7 @@ fun PostHeader(
                 .clickable(onClick = onUserClick)
         )
 
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -51,7 +51,7 @@ fun PostHeader(
                     fontWeight = FontWeight.Bold
                 )
                 if (isVerified) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Icon(
                         imageVector = Icons.Default.Verified,
                         contentDescription = stringResource(R.string.cd_selected),

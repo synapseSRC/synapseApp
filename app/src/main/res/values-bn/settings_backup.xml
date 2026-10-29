@@ -8,6 +8,8 @@
     <string name="backup_local_status_title">ডিভাইসের ব্যাকআপ</string>
     <string name="backup_local_empty">এখনও কোনো স্থানীয় ব্যাকআপ নেই। এই ডিভাইসে ব্যক্তিগত কপি রাখতে একটি তৈরি করুন।</string>
     <string name="backup_local_available">স্থানীয় সেটিংস ব্যাকআপ পাওয়া গেছে।</string>
+    <string name="backup_local_cache_note">প্রতিটি ক্লাউড সিঙ্কের পর এই স্ন্যাপশট স্বয়ংক্রিয়ভাবেও হালনাগাদ হয়, তাই এটি আপনার সর্বশেষ ক্লাউড কপি প্রতিফলিত করে।</string>
+    <string name="backup_local_stale">এই স্ন্যাপশট সংরক্ষণের পর সেটিংস পরিবর্তিত হয়েছে।</string>
     <string name="backup_created_at">তৈরির সময়: %1$s</string>
     <string name="backup_size_version">ফাইলের আকার: %1$s · সংস্করণ %2$d</string>
     <string name="backup_create_local">ব্যাকআপ তৈরি করুন</string>
@@ -39,6 +41,8 @@
     <string name="backup_cloud_created_at">ক্লাউড ব্যাকআপ তৈরির সময়: %1$s · সংস্করণ %2$d</string>
     <string name="backup_last_successful_sync">শেষ সফল সিঙ্ক: %1$s</string>
     <string name="backup_cloud_overwrite_note">এখনই ব্যাকআপ নিলে এই অ্যাকাউন্টের আগের ক্লাউড কপি প্রতিস্থাপিত হবে। ক্লাউড ডেটা শুধু সাইন-ইন করা অ্যাকাউন্টের জন্য ব্যক্তিগত।</string>
+    <string name="backup_auto_sync_note">প্রথম ক্লাউড ব্যাকআপ তৈরি হলে, অনলাইন থাকাকালীন স্বয়ংক্রিয় সিঙ্ক ব্যাকগ্রাউন্ডে আপনার ক্লাউড ব্যাকআপ হালনাগাদ রাখে। প্রথম ক্লাউড ব্যাকআপ তৈরি করতে “ক্লাউডে ব্যাকআপ নিন” চাপতে হবে।</string>
+    <string name="backup_cloud_pending_changes">এই ডিভাইসে এমন সেটিংস পরিবর্তন আছে যা এখনও ক্লাউডে সিঙ্ক হয়নি।</string>
     <string name="backup_cloud_backup_now">এখনই ব্যাকআপ নিন</string>
     <string name="backup_cloud_restore">ক্লাউড থেকে পুনরুদ্ধার</string>
     <string name="backup_sync_now">এখনই সিঙ্ক করুন</string>

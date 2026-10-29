@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.desktop.ui
 
+import com.synapse.social.studioasinc.desktop.theme.DesktopSpacing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,8 +10,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Person
@@ -59,7 +60,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.LocalDate
@@ -87,8 +88,8 @@ fun DesktopMainScreen(
         }
     }
 
-    val horizontalPaddingSmall = 12.dp
-    val verticalPaddingSmall = 8.dp
+    val horizontalPaddingSmall = DesktopSpacing.space12
+    val verticalPaddingSmall = DesktopSpacing.space8
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -106,7 +107,7 @@ fun DesktopMainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = verticalPaddingSmall),
+                            .padding(horizontal = DesktopSpacing.space16, vertical = verticalPaddingSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -148,8 +149,8 @@ fun DesktopMainScreen(
                     )
 
                     Row(
-                        modifier = Modifier.padding(horizontal = horizontalPaddingSmall, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(horizontal = horizontalPaddingSmall, vertical = DesktopSpacing.space4),
+                        horizontalArrangement = Arrangement.spacedBy(DesktopSpacing.space8)
                     ) {
                         FilterChip(
                             selected = activeFilter == ConversationFilter.ALL,
@@ -175,7 +176,7 @@ fun DesktopMainScreen(
                             CircularProgressIndicator()
                         }
                     } else if (error != null) {
-                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxSize().padding(DesktopSpacing.space16), contentAlignment = Alignment.Center) {
                             Text(
                                 text = error ?: "",
                                 color = MaterialTheme.colorScheme.error,
@@ -284,7 +285,7 @@ fun ContactAvatar(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
                     .align(Alignment.BottomEnd)
-                    .padding(1.5.dp)
+                    .padding(1.5.dp) // optical component inset, intentionally outside the foundation spacing scale
             ) {
                 Box(
                     modifier = Modifier
@@ -309,7 +310,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = DesktopSpacing.space8, vertical = DesktopSpacing.space4)
             .clip(RoundedCornerShape(12.dp))
             .background(backgroundColor)
             .pointerInput(Unit) {
@@ -324,7 +325,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                 }
             }
             .clickable(onClick = onClick)
-            .padding(12.dp),
+            .padding(DesktopSpacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ContactAvatar(
@@ -332,7 +333,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
             avatarUrl = conversation.participantAvatar,
             isOnline = conversation.isOnline
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(DesktopSpacing.space12))
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -359,14 +360,14 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                     conversation.lastMessage
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(DesktopSpacing.space4))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    modifier = Modifier.weight(1f).padding(end = DesktopSpacing.space8),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (!conversation.isGroup && conversation.lastMessage.isNotEmpty() && conversation.unreadCount == 0) {
@@ -376,7 +377,7 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                             tint = Color.Gray,
                             modifier = Modifier.size(14.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(DesktopSpacing.space4))
                     }
                     Text(
                         text = displayText,
@@ -389,13 +390,13 @@ fun ChatListItem(conversation: Conversation, isSelected: Boolean, onClick: () ->
                     Surface(
                         color = MaterialTheme.colorScheme.error,
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.padding(start = 4.dp)
+                        modifier = Modifier.padding(start = DesktopSpacing.space4)
                     ) {
                         Text(
                             text = conversation.unreadCount.toString(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onError,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = DesktopSpacing.space4, vertical = DesktopSpacing.space4),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -434,7 +435,7 @@ fun ChatDetailView(
             shadowElevation = 4.dp
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(DesktopSpacing.space16),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ContactAvatar(
@@ -442,7 +443,7 @@ fun ChatDetailView(
                     avatarUrl = conversation.participantAvatar,
                     isOnline = conversation.isOnline
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(DesktopSpacing.space16))
                 Column {
                     Text(
                         text = conversation.participantName,
@@ -506,7 +507,7 @@ fun ChatDetailView(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(DesktopSpacing.space16)
         ) {
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -535,7 +536,7 @@ fun ChatDetailView(
                                 }
                                 is ChatListEntry.MessageEntry -> {
                                     MessageItem(entry.message, currentUserId)
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(DesktopSpacing.space8))
                                 }
                             }
                         }
@@ -545,7 +546,7 @@ fun ChatDetailView(
                     if (!isAtBottom) {
                         FloatingActionButton(
                             onClick = { scope.launch { listState.animateScrollToItem(chatEntries.lastIndex) } },
-                            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(40.dp),
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(DesktopSpacing.space16).size(40.dp),
                             containerColor = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to latest")
@@ -561,7 +562,7 @@ fun ChatDetailView(
             shadowElevation = 8.dp
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(DesktopSpacing.space16),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TooltipBox(
@@ -582,7 +583,7 @@ fun ChatDetailView(
                         Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
                     }
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(DesktopSpacing.space4))
                 OutlinedTextField(
                     value = messageText,
                     onValueChange = { messageText = it },
@@ -603,7 +604,7 @@ fun ChatDetailView(
                     shape = RoundedCornerShape(24.dp),
                     maxLines = 5
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(DesktopSpacing.space8))
                 IconButton(
                     onClick = {
                         if (messageText.isNotBlank()) {
@@ -618,7 +619,7 @@ fun ChatDetailView(
                     if (messageText.isBlank()) {
                         Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.ArrowUpward, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -669,13 +670,13 @@ fun MessageItem(message: Message, currentUserId: String?) {
                 Surface(
                     color = bubbleColor,
                     shape = bubbleShape,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    modifier = Modifier.padding(horizontal = DesktopSpacing.space4)
                 ) {
                     Text(
                         text = if (isMe) "🚫 You deleted this message" else "🚫 This message was deleted",
                         color = textColor.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                        modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12)
                     )
                 }
             } else {
@@ -684,10 +685,10 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         Surface(
                             color = bubbleColor,
                             shape = bubbleShape,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = DesktopSpacing.space4)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -696,7 +697,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                                     tint = textColor,
                                     modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(DesktopSpacing.space8))
                                 Text(
                                     text = "Voice call - ${message.content}",
                                     color = textColor,
@@ -709,13 +710,13 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         Surface(
                             color = bubbleColor,
                             shape = bubbleShape,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = DesktopSpacing.space4)
                         ) {
                             Text(
                                 text = message.content,
                                 color = textColor,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12)
                             )
                         }
                     }
@@ -723,13 +724,13 @@ fun MessageItem(message: Message, currentUserId: String?) {
                         Surface(
                             color = bubbleColor,
                             shape = bubbleShape,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = DesktopSpacing.space4)
                         ) {
                             Text(
                                 text = "📎 [${message.messageType.name.lowercase()} attachment]",
                                 color = textColor,
                                 style = MaterialTheme.typography.bodyMedium.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                modifier = Modifier.padding(horizontal = DesktopSpacing.space16, vertical = DesktopSpacing.space12)
                             )
                         }
                     }
@@ -747,7 +748,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = DesktopSpacing.space8, vertical = DesktopSpacing.space4)
             ) {
                 Text(
                     text = formattedTime,
@@ -755,7 +756,7 @@ fun MessageItem(message: Message, currentUserId: String?) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 if (isMe) {
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(DesktopSpacing.space4))
                     when (message.deliveryStatus) {
                         com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus.SENDING -> {
                             Icon(
@@ -828,7 +829,7 @@ fun EmptyState(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
+        modifier = modifier.fillMaxSize().padding(DesktopSpacing.space32),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -838,7 +839,7 @@ fun EmptyState(
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(DesktopSpacing.space16))
         Text(
             text = headline,
             style = MaterialTheme.typography.titleMedium,
@@ -846,7 +847,7 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(DesktopSpacing.space8))
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
@@ -865,7 +866,7 @@ fun formatMessageDate(isoString: String): String {
     return try {
         val instant = Instant.parse(isoString)
         val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val today = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()).toLocalDateTime(TimeZone.currentSystemDefault()).date
         val msgDate = local.date
         when {
             msgDate == today -> "Today"
@@ -891,7 +892,7 @@ fun buildChatEntries(messages: List<Message>): List<ChatListEntry> {
 
 @Composable
 fun DateSeparator(label: String) {
-    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = DesktopSpacing.space8), contentAlignment = Alignment.Center) {
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
@@ -900,7 +901,7 @@ fun DateSeparator(label: String) {
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = DesktopSpacing.space12, vertical = DesktopSpacing.space4)
             )
         }
     }

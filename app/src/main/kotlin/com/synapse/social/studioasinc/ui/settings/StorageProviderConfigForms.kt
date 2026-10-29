@@ -50,6 +50,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlinx.coroutines.delay
 
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 internal fun ImgBBConfigContent(
@@ -61,7 +63,7 @@ internal fun ImgBBConfigContent(
     var localApiKey by remember(apiKey) { mutableStateOf(if (isUsingFallback) "" else apiKey) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         StorageSecureTextField(
             value = localApiKey,
             onValueChange = { localApiKey = it },
@@ -97,7 +99,7 @@ internal fun CloudinaryConfigContent(
     var localUploadPreset by remember(uploadPreset) { mutableStateOf(uploadPreset) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         OutlinedTextField(
             value = localCloudName,
             onValueChange = { localCloudName = it },
@@ -110,7 +112,7 @@ internal fun CloudinaryConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -155,7 +157,7 @@ internal fun SupabaseConfigContent(
     var localBucketName by remember(bucketName) { mutableStateOf(bucketName) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         OutlinedTextField(
             value = localUrl,
             onValueChange = { localUrl = it },
@@ -172,7 +174,7 @@ internal fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -195,7 +197,7 @@ internal fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         HelpText(text = stringResource(R.string.settings_help_supabase))
@@ -227,7 +229,7 @@ internal fun R2ConfigContent(
     var localBucketName by remember(bucketName) { mutableStateOf(bucketName) }
     var isSaving by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.Medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space16)) {
         OutlinedTextField(
             value = localAccountId,
             onValueChange = { localAccountId = it },
@@ -243,7 +245,7 @@ internal fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -271,7 +273,7 @@ internal fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         HelpText(text = stringResource(R.string.settings_help_cloudflare))
@@ -313,7 +315,7 @@ internal fun SaveConnectButton(
             .fillMaxWidth()
             .height(Sizes.AvatarLarge),
         enabled = !isLoading,
-        shape = SettingsShapes.itemShape
+        shape = AppShapes.itemShape
     ) {
         AnimatedContent(
             targetState = if (isLoading) (if (showSuccess) "success" else "loading") else "idle",
@@ -330,7 +332,7 @@ internal fun SaveConnectButton(
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = Sizes.BorderDefault
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Spacer(modifier = Modifier.width(Spacing.space16))
                         Text(stringResource(R.string.storage_connecting))
                     }
                 }
@@ -341,14 +343,14 @@ internal fun SaveConnectButton(
                             contentDescription = null,
                             modifier = Modifier.size(Sizes.IconDefault)
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Spacer(modifier = Modifier.width(Spacing.space16))
                         Text(stringResource(R.string.upload_complete))
                     }
                 }
                 else -> {
                     Text(
                         text = stringResource(R.string.storage_action_save_connect),
-                        style = SettingsTypography.buttonText
+                        style = AppTypography.buttonText
                     )
                 }
             }
@@ -362,17 +364,17 @@ internal fun HelpText(text: String) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Spacing.SmallMedium))
+            .clip(RoundedCornerShape(Sizes.CornerDefault))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(Spacing.Medium)
+            .padding(Spacing.space16)
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Outlined.Help,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(Spacing.MediumLarge)
+            modifier = Modifier.size(Sizes.IconDefault)
         )
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
@@ -424,7 +426,7 @@ internal fun StorageSecureTextField(
             )
         },
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.inputShape,
+        shape = AppShapes.inputShape,
         singleLine = true
     )
 }

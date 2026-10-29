@@ -823,8 +823,6 @@
     <string name="settings_back_description">পিছনে যান</string>
     <string name="settings_profile_avatar_description">প্রোফাইল ছবি</string>
     <string name="settings_category_icon_description">ক্যাটাগরি আইকন</string>
-    <string name="settings_chevron_description">বিস্তারিত দেখতে যান</string>
-    <string name="settings_toggle_description">সেটিং টগল করুন</string>
     <string name="settings_dropdown_description">অপশন নির্বাচন করুন</string>
     <string name="settings_slider_description">মান অ্যাডজাস্ট করুন</string>
     <string name="settings_loading_description">বিষয়বস্তু লোড হচ্ছে</string>

@@ -7,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.profile.profile.ProfileContentFilter
@@ -15,7 +14,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ContentFilterBar(
     selectedFilter: ProfileContentFilter,
@@ -23,13 +22,15 @@ fun ContentFilterBar(
     modifier: Modifier = Modifier,
     showLabels: Boolean = true
 ) {
+    val filterChipShapes = FilterChipDefaults.shapes()
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface
     ) {
         LazyRow(
-            modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium),
+            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space12),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items(ProfileContentFilter.values()) { filter ->
@@ -42,7 +43,7 @@ fun ContentFilterBar(
                             style = MaterialTheme.typography.labelLarge
                         )
                     },
-                    shape = CircleShape
+                    shapes = filterChipShapes
                 )
             }
         }

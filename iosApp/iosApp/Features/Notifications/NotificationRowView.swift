@@ -14,7 +14,7 @@ struct NotificationRowView: View {
     var onActorTap: (() -> Void)? = nil
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.space12) {
             // Avatar
             Button(action: { onActorTap?() }) {
                 if let avatarUrlString = notification.actorAvatar, let url = URL(string: avatarUrlString) {
@@ -43,8 +43,8 @@ struct NotificationRowView: View {
             .buttonStyle(.plain)
 
             // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
+                HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.space4) {
                     Button(action: { onActorTap?() }) {
                         Text(notification.actorName)
                             .font(.subheadline)
@@ -59,7 +59,7 @@ struct NotificationRowView: View {
                 }
                 .lineLimit(2)
 
-                HStack(spacing: 6) {
+                HStack(spacing: AppTheme.Spacing.space6) {
                     typeIcon
                         .foregroundColor(.secondary)
                         .font(.caption)
@@ -78,8 +78,8 @@ struct NotificationRowView: View {
                     .frame(width: 8, height: 8)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Spacing.space16)
+        .padding(.vertical, AppTheme.Spacing.space12)
         .background(
             notification.isRead
                 ? Color(uiColor: .tertiarySystemGroupedBackground)

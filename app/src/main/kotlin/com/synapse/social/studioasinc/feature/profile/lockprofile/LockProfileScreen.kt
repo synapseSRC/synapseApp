@@ -63,7 +63,7 @@ fun LockProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Large)
+                .padding(Spacing.space24)
         ) {
             Column(
                 modifier = Modifier
@@ -72,7 +72,7 @@ fun LockProfileScreen(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(Spacing.Huge))
+                Spacer(modifier = Modifier.height(Spacing.space48))
 
                 val lockIcon: ImageVector = if (uiState.isPrivate) {
                     Icons.Filled.Lock
@@ -87,7 +87,7 @@ fun LockProfileScreen(
                     tint = MaterialTheme.colorScheme.primary
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Large))
+                Spacer(modifier = Modifier.height(Spacing.space24))
 
                 Text(
                     text = if (uiState.isPrivate) {
@@ -99,7 +99,7 @@ fun LockProfileScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
 
                 Text(
                     text = stringResource(R.string.profile_privacy_screen_description),
@@ -108,7 +108,7 @@ fun LockProfileScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.Huge))
+                Spacer(modifier = Modifier.height(Spacing.space48))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -136,7 +136,7 @@ fun LockProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
 
             Button(
                 onClick = { viewModel.save() },
@@ -155,7 +155,7 @@ fun LockProfileScreen(
             }
 
             uiState.error?.let { error ->
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
                 Text(
                     text = error,
                     color = MaterialTheme.colorScheme.error,

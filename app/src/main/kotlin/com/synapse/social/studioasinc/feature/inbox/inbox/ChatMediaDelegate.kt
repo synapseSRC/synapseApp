@@ -16,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class ChatMediaDelegate(
     private val uploadMediaUseCase: UploadMediaUseCase,
@@ -35,6 +36,8 @@ class ChatMediaDelegate(
     private val onReplyConsumed: (String?) -> Unit = {}
 ) {
 
+    private val activeUploadJobs = ConcurrentHashMap<Job, Unit>()
+
     suspend fun uploadAndSendVoiceMessageSuspend(
         audioFile: java.io.File,
         durationMs: Long = 0L,
@@ -52,6 +55,14 @@ class ChatMediaDelegate(
 
         if (chatId.isNullOrBlank() || currentUserId.isNullOrBlank()) {
             val err = "Missing chat or user ID"
+            onError(err)
+            onResult?.invoke(false, err)
+            return
+        }
+
+        val encryptionResult = sendMessageUseCase.ensureE2EEReadyForChat(chatId)
+        if (encryptionResult.isFailure) {
+            val err = encryptionResult.exceptionOrNull()?.message ?: "End-to-end encryption is unavailable."
             onError(err)
             onResult?.invoke(false, err)
             return
@@ -88,16 +99,18 @@ class ChatMediaDelegate(
                 config = storageConfig
             )
 
-            uploadResult.onSuccess { mediaUrl ->
+            uploadResult.onSuccess { uploadedVoice ->
                 sendMessageUseCase(
                     chatId = chatId,
                     content = "",
-                    mediaUrl = mediaUrl,
+                    mediaUrl = uploadedVoice.mediaReference,
                     messageType = MessageType.AUDIO.name.lowercase(),
-                    attachments = listOf(audioAttachment.copy(url = mediaUrl, uploadProgress = 1.0f)),
-                    replyToId = selectedReplyToId
+                    attachments = null,
+                    replyToId = selectedReplyToId,
+                    requireE2EE = true
                 ).onSuccess { actualMessage ->
                     onOptimisticMessageSuccess(tempId, actualMessage)
+                    audioFile.delete()
                     if (clearReplySelection) onReplyConsumed(selectedReplyToId)
                     onResult?.invoke(true, null)
                 }.onFailure { e ->
@@ -133,7 +146,7 @@ class ChatMediaDelegate(
         onResult: ((Boolean, String?) -> Unit)? = null
     ): Job {
         val selectedReplyToId = replyToMessageIdProvider()
-        return viewModelScope.launch {
+        val job = viewModelScope.launch {
             uploadAndSendVoiceMessageSuspend(
                 audioFile = audioFile,
                 durationMs = durationMs,
@@ -147,6 +160,9 @@ class ChatMediaDelegate(
                 onResult = onResult
             )
         }
+        activeUploadJobs[job] = Unit
+        job.invokeOnCompletion { activeUploadJobs.remove(job) }
+        return job
     }
 
     fun sendMediaMessage(
@@ -158,7 +174,7 @@ class ChatMediaDelegate(
     ) {
         val chatId = chatIdProvider() ?: return
         val replyToId = replyToMessageIdProvider()
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             val tempId = UUID.randomUUID().toString()
             val type = when (messageType) {
                 "image" -> MessageType.IMAGE
@@ -190,6 +206,8 @@ class ChatMediaDelegate(
                 onOptimisticMessageFailed(tempId, "Failed to send: ${e.message}")
             }
         }
+        activeUploadJobs[job] = Unit
+        job.invokeOnCompletion { activeUploadJobs.remove(job) }
     }
 
     fun uploadAndSendMedia(
@@ -203,7 +221,7 @@ class ChatMediaDelegate(
         val chatId = chatIdProvider() ?: return
         val replyToId = replyToMessageIdProvider()
 
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             var uploadPath = filePath
             if (messageType == "image" && mediaCompressor != null) {
                 mediaCompressor.compress(filePath, quality).onSuccess { compressedPath ->
@@ -275,6 +293,8 @@ class ChatMediaDelegate(
                 onOptimisticMessageFailed(tempId, "Upload failed: ${e.message}")
             }
         }
+        activeUploadJobs[job] = Unit
+        job.invokeOnCompletion { activeUploadJobs.remove(job) }
     }
 
     fun uploadAndSendMultipleMedia(
@@ -304,7 +324,7 @@ class ChatMediaDelegate(
 
         val chatId = chatIdProvider() ?: return
         val replyToId = replyToMessageIdProvider()
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             val batchMediaGroupId = UUID.randomUUID().toString()
             val tempId = UUID.randomUUID().toString()
 
@@ -435,5 +455,12 @@ class ChatMediaDelegate(
                 onOptimisticMessageFailed(tempId, "Failed to send: ${e.message}")
             }
         }
+        activeUploadJobs[job] = Unit
+        job.invokeOnCompletion { activeUploadJobs.remove(job) }
+    }
+
+    fun cleanup() {
+        activeUploadJobs.keys.forEach { it.cancel() }
+        activeUploadJobs.clear()
     }
 }

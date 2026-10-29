@@ -11,7 +11,7 @@ struct SettingsView: View {
             // Hero Cards Section
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
+                    HStack(spacing: AppTheme.Spacing.space16) {
                         HeroCardView(
                             title: "Secure Account",
                             description: "Backup your encryption keys now.",
@@ -30,7 +30,7 @@ struct SettingsView: View {
                             // Action
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, AppTheme.Spacing.space8)
                 }
             }
             .listRowBackground(Color.clear)

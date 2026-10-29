@@ -77,22 +77,29 @@ val storageModule = module {
                 viewsCountAdapter = intAdapter,
                 resharesCountAdapter = intAdapter,
                 userPollVoteAdapter = intAdapter,
-                encryptedContentAdapter = stringMapAdapter
+                encryptedContentAdapter = stringMapAdapter,
+                // New sync columns
+                syncVersionAdapter = intAdapter
             ),
             CommentAdapter = Comment.Adapter(
                 likesCountAdapter = intAdapter,
                 repliesCountAdapter = intAdapter,
                 linkPreviewAdapter = com.synapse.social.studioasinc.shared.data.database.linkPreviewAdapter,
-                viewsCountAdapter = intAdapter
+                viewsCountAdapter = intAdapter,
+                // New sync column
+                syncVersionAdapter = intAdapter
             ),
             UserAdapter = User.Adapter(
                 emailAdapter = EncryptedStringAdapter(get()),
                 followersCountAdapter = intAdapter,
                 followingCountAdapter = intAdapter,
-                postsCountAdapter = intAdapter
+                postsCountAdapter = intAdapter,
+                // New sync column
+                syncVersionAdapter = intAdapter
             ),
             PendingActionAdapter = com.synapse.social.studioasinc.shared.data.database.PendingAction.Adapter(
-                retryCountAdapter = intAdapter
+                retryCountAdapter = intAdapter,
+                localVersionAdapter = intAdapter
             )
         )
     }

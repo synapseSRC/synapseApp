@@ -27,20 +27,20 @@ fun ViewAsBottomSheet(
     onViewAsSpecificUser: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(bottom = Spacing.Medium)) {
+        Column(modifier = Modifier.padding(bottom = Spacing.space16)) {
             Text(
                 stringResource(R.string.view_as_title),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
             )
             Text(
                 stringResource(R.string.see_how_your_profile_looks),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4)
             )
 
-            Spacer(modifier = Modifier.height(Spacing.Small))
+            Spacer(modifier = Modifier.height(Spacing.space8))
 
             ViewAsOption(
                 icon = Icons.Default.Public,
@@ -75,11 +75,11 @@ private fun ViewAsOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(Sizes.IconLarge))
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Column {
             Text(text, style = MaterialTheme.typography.bodyLarge)
             Text(

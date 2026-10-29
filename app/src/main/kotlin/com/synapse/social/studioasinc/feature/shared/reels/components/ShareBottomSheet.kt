@@ -29,12 +29,12 @@ fun ShareBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.ExtraLarge)
+                .padding(bottom = Spacing.space32)
         ) {
             Text(
                 text = stringResource(R.string.share_reel),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(Spacing.Medium).align(Alignment.CenterHorizontally)
+                modifier = Modifier.padding(Spacing.space16).align(Alignment.CenterHorizontally)
             )
 
             ActionItem(

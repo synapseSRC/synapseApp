@@ -63,7 +63,6 @@ import kotlinx.coroutines.flow.first
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-
     @Inject
     lateinit var authRepository: AuthRepository
 
@@ -167,7 +166,8 @@ class MainActivity : AppCompatActivity() {
                     AppNavigation(
                         navController = navController,
                         startDestination = startDestination,
-                        reelUploadManager = reelUploadManager
+                        reelUploadManager = reelUploadManager,
+                        postAuthDestination = viewModel::postAuthDestination
                     )
 
                     val isAtHome = currentDestination?.hasRoute<AppDestination.Home>() == true
@@ -184,7 +184,9 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     LaunchedEffect(Unit) {
-                        if (startDestination != AppDestination.Auth) {
+                        // Only an app that already belongs in Home may honour the inbox shortcut;
+                        // onboarding must not be skipped by a launch intent.
+                        if (startDestination == AppDestination.Home) {
                             val destination = this@MainActivity.intent.getStringExtra("destination")
                             if (destination == "inbox") {
                                 navController.navigate(AppDestination.Inbox)
@@ -243,212 +245,6 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun MainScreen(
-    viewModel: MainViewModel,
-    onNavigateToHome: () -> Unit,
-    onNavigateToAuth: () -> Unit,
-    onOpenUpdateLink: (String) -> Unit,
-    onShowToast: (String) -> Unit,
-    onSignOut: () -> Unit,
-    onFinishApp: () -> Unit,
-    onFinish: () -> Unit
-) {
-    val context = LocalContext.current
-    val updateState by viewModel.updateState.observeAsState()
-    val authState by viewModel.authState.observeAsState()
-
-    LaunchedEffect(updateState) {
-        when (updateState) {
-            is UpdateState.NoUpdate -> viewModel.checkUserAuthentication()
-            is UpdateState.Error -> {
-            }
-            else -> {  }
-        }
-    }
-
-    LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Authenticated -> onNavigateToHome()
-            is AuthState.Unauthenticated -> onNavigateToAuth()
-            is AuthState.Banned -> {
-                onShowToast("You are banned & Signed Out.")
-                onSignOut()
-                onFinish()
-            }
-            else -> {  }
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        MaterialTheme.colorScheme.surface
-                    )
-                )
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(Spacing.Medium),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "App Logo",
-                modifier = Modifier
-                    .size(Sizes.LogoSize)
-                    .clickable(
-                        onClick = onFinish,
-                        onClickLabel = "Long press to exit"
-                    ),
-                contentScale = ContentScale.Fit
-            )
-
-            Spacer(modifier = Modifier.weight(3f))
-
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Company Trademark",
-                modifier = Modifier
-                    .height(100.dp)
-                    .padding(bottom = Spacing.MediumLarge),
-                contentScale = ContentScale.Fit
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-        }
-
-        updateState?.let { state ->
-            when (state) {
-                is UpdateState.UpdateAvailable -> {
-                    UpdateDialog(
-                        title = state.title,
-                        versionName = state.versionName,
-                        changelog = state.changelog,
-                        updateLink = state.updateLink,
-                        isCancelable = state.isCancelable,
-                        onUpdate = { onOpenUpdateLink(state.updateLink) },
-                        onLater = {
-                            if (state.isCancelable) {
-                                viewModel.checkUserAuthentication()
-                            }
-                        }
-                    )
-                }
-                is UpdateState.Error -> {
-                    ErrorDialog(
-                        message = state.message,
-                        onDismiss = {
-                            if (!SupabaseClient.isConfigured()) {
-                                onFinishApp()
-                            } else {
-                                viewModel.checkUserAuthentication()
-                            }
-                        }
-                    )
-                }
-                else -> {  }
-            }
-        }
-
-        authState?.let { state ->
-            if (state is AuthState.Error) {
-                ErrorDialog(
-                    message = state.message,
-                    onDismiss = {
-                        if (!SupabaseClient.isConfigured()) {
-                            onFinishApp()
-                        } else {
-                            viewModel.checkUserAuthentication()
-                        }
-                    }
-                )
-            }
-        }
-
-        if (!SupabaseClient.isConfigured()) {
-            ErrorDialog(
-                message = "Supabase Configuration Missing\n\nThe app is not properly configured. Please contact the developer to set up the backend services.\n\nConfiguration needed:\n• Supabase URL\n• Supabase API Key\n\nThis is a development/deployment issue that needs to be resolved by the app developer.",
-                onDismiss = onFinishApp
-            )
-        }
-    }
-}
-
-@Composable
-fun UpdateDialog(
-    title: String,
-    versionName: String,
-    changelog: String,
-    updateLink: String,
-    isCancelable: Boolean,
-    onUpdate: () -> Unit,
-    onLater: () -> Unit
-) {
-    Dialog(onDismissRequest = { if (isCancelable) onLater() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.Medium),
-            shape = RoundedCornerShape(Sizes.CornerLarge),
-        ) {
-            Column(
-                modifier = Modifier.padding(Spacing.Large),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.Small))
-
-                Text(
-                    text = stringResource(R.string.version_prefix),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.Medium))
-
-                Text(
-                    text = changelog.replace("\\n", "\n"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.Large))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = if (isCancelable) Arrangement.SpaceBetween else Arrangement.Center
-                ) {
-                    if (isCancelable) {
-                        TextButton(onClick = onLater) {
-                            Text(stringResource(R.string.action_later))
-                        }
-                    }
-
-                    Button(onClick = onUpdate) {
-                        Text(stringResource(R.string.action_update))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun ProfilePicSuggestionDialog(
     onUpload: () -> Unit,
     onDismiss: (Boolean) -> Unit
@@ -461,7 +257,7 @@ fun ProfilePicSuggestionDialog(
         text = {
             Column {
                 Text(text = stringResource(R.string.add_profile_picture_message))
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { hideAgain = !hideAgain }
@@ -490,44 +286,3 @@ fun ProfilePicSuggestionDialog(
     )
 }
 
-@Composable
-fun ErrorDialog(
-    message: String,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.Medium),
-            shape = RoundedCornerShape(Sizes.CornerLarge),
-        ) {
-            Column(
-                modifier = Modifier.padding(Spacing.Large),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(R.string.error_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.Medium))
-
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.Large))
-
-                Button(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_ok))
-                }
-            }
-        }
-    }
-}

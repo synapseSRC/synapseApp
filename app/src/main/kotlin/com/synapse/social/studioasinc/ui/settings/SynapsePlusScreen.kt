@@ -25,6 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 
 
@@ -38,6 +42,7 @@ fun SynapsePlusScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.synapse_plus_title)) },
@@ -57,9 +62,9 @@ fun SynapsePlusScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Large),
-            contentPadding = PaddingValues(bottom = Spacing.Large)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space24),
+            contentPadding = PaddingValues(bottom = Spacing.space24)
         ) {
             item {
                 HeroCard()
@@ -68,9 +73,9 @@ fun SynapsePlusScreen(
             item {
                 Text(
                     text = stringResource(R.string.synapse_plus_section_features),
-                    style = SettingsTypography.sectionHeader,
-                    color = SettingsColors.sectionTitle,
-                    modifier = Modifier.padding(bottom = Spacing.Small)
+                    style = AppTypography.sectionHeader,
+                    color = AppColors.sectionTitle,
+                    modifier = Modifier.padding(bottom = Spacing.space8)
                 )
                 FeatureGrid()
             }
@@ -112,8 +117,8 @@ private fun HeroCard() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        elevation = CardDefaults.cardElevation(defaultElevation = Spacing.ExtraSmall)
+        shape = AppShapes.cardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = Sizes.ElevationMedium)
     ) {
         Box(
             modifier = Modifier
@@ -126,12 +131,12 @@ private fun HeroCard() {
                         )
                     )
                 )
-                .padding(Spacing.Large),
+                .padding(Spacing.space24),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                verticalArrangement = Arrangement.spacedBy(Spacing.space16)
             ) {
 
                 Icon(
@@ -145,7 +150,7 @@ private fun HeroCard() {
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.space4)
                 ) {
                     Text(
                         text = stringResource(R.string.synapse_plus_hero_title),
@@ -201,11 +206,11 @@ private fun FeatureGrid() {
         )
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space12)) {
         features.chunked(2).forEach { rowFeatures ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
             ) {
                 rowFeatures.forEach { feature ->
                     FeatureCard(
@@ -235,20 +240,20 @@ private fun FeatureCard(
 ) {
     ElevatedCard(
         modifier = modifier.height(140.dp),
-        shape = SettingsShapes.itemShape,
+        shape = AppShapes.itemShape,
         colors = CardDefaults.elevatedCardColors(
-            containerColor = SettingsColors.cardBackground
+            containerColor = AppColors.cardBackground
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(Spacing.Medium),
+                .padding(Spacing.space16),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.Start
         ) {
             Surface(
-                shape = SettingsShapes.chipShape,
+                shape = AppShapes.chipShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.size(40.dp)
             ) {
@@ -257,15 +262,15 @@ private fun FeatureCard(
                         imageVector = feature.icon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(Spacing.Large)
+                        modifier = Modifier.size(Sizes.IconLarge)
                     )
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.ExtraSmall)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                 Text(
                     text = feature.title,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -287,7 +292,7 @@ private fun UpgradeButton(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SettingsShapes.itemShape)
+            .clip(AppShapes.itemShape)
             .background(
                 brush = Brush.horizontalGradient(
                     colors = listOf(
@@ -297,7 +302,7 @@ private fun UpgradeButton(
                 )
             )
             .clickable(onClick = onClick)
-            .padding(vertical = Spacing.Medium),
+            .padding(vertical = Spacing.space16),
         contentAlignment = Alignment.Center
     ) {
         Column(

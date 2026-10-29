@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_menu_share_title">Share profile</string>
+    <string name="profile_menu_share_supporting">Send profile link to friends or other apps</string>
+    <string name="profile_menu_view_as_title">View as</string>
+    <string name="profile_menu_view_as_supporting">See what public visitors can view</string>
+    <string name="profile_menu_lock_title">Lock profile</string>
+    <string name="profile_menu_lock_supporting">Secure your posts and photos from non-friends</string>
+    <string name="profile_menu_settings_title">Settings</string>
+    <string name="profile_menu_settings_supporting">Account privacy, security, and preferences</string>
+
+    <string name="profile_menu_block_title">Block account</string>
+    <string name="profile_menu_block_supporting">Prevent this account from interacting with you</string>
+    <string name="profile_menu_report_title">Report account</string>
+    <string name="profile_menu_report_supporting">Let us know if this account breaks the rules</string>
+    <string name="profile_menu_mute_title">Mute account</string>
+    <string name="profile_menu_mute_supporting">Stop seeing posts and stories from this account</string>
+    <string name="profile_menu_share_unavailable">Unable to share this profile right now</string>
+</resources>

@@ -6,11 +6,11 @@ struct SearchMainView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            VStack(spacing: AppTheme.Spacing.space0) {
                 // Search Bar Custom Integration (or use standard .searchable if preferred)
                 SearchBar(text: $viewModel.searchQuery)
                     .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, AppTheme.Spacing.space8)
 
                 // Category Picker (only show if searching)
                 if !viewModel.searchQuery.isEmpty {
@@ -21,7 +21,7 @@ struct SearchMainView: View {
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, AppTheme.Spacing.space8)
                 }
 
                 Divider()
@@ -33,7 +33,7 @@ struct SearchMainView: View {
                             .progressViewStyle(CircularProgressViewStyle())
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else if let error = viewModel.errorMessage {
-                        VStack(spacing: 12) {
+                        VStack(spacing: AppTheme.Spacing.space12) {
                             Image(systemName: "exclamationmark.triangle")
                                 .font(.system(size: 40))
                                 .foregroundColor(.red)
@@ -52,7 +52,7 @@ struct SearchMainView: View {
                     } else {
                         // Results View
                         ScrollView {
-                            LazyVStack(spacing: 0) {
+                            LazyVStack(spacing: AppTheme.Spacing.space0) {
                                 switch viewModel.selectedCategory {
                                 case .users:
                                     if viewModel.userResults.isEmpty {
@@ -107,8 +107,8 @@ struct SearchBar: View {
     var body: some View {
         HStack {
             TextField("Search Synapse...", text: $text)
-                .padding(7)
-                .padding(.horizontal, 25)
+                .padding(7) // component-specific search-field inset; kept outside the foundation scale
+                .padding(.horizontal, 25) // component-specific wide-field inset
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
                 .overlay(
@@ -116,7 +116,7 @@ struct SearchBar: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 8)
+                            .padding(.leading, AppTheme.Spacing.space8)
 
                         if isEditing && !text.isEmpty {
                             Button(action: {
@@ -124,12 +124,12 @@ struct SearchBar: View {
                             }) {
                                 Image(systemName: "multiply.circle.fill")
                                     .foregroundColor(.gray)
-                                    .padding(.trailing, 8)
+                                    .padding(.trailing, AppTheme.Spacing.space8)
                             }
                         }
                     }
                 )
-                .padding(.horizontal, 10)
+                .padding(.horizontal, AppTheme.Spacing.space10)
                 .onTapGesture {
                     self.isEditing = true
                 }
@@ -144,7 +144,7 @@ struct SearchBar: View {
                 }) {
                     Text("Cancel")
                 }
-                .padding(.trailing, 10)
+                .padding(.trailing, AppTheme.Spacing.space10)
                 .transition(.move(edge: .trailing))
                 .animation(.default)
             }
@@ -158,7 +158,7 @@ struct EmptyStateView: View {
     let message: String
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.space16) {
             Spacer().frame(height: 60)
             Image(systemName: icon)
                 .font(.system(size: 48))
@@ -169,7 +169,7 @@ struct EmptyStateView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                .padding(.horizontal, AppTheme.Spacing.space40)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

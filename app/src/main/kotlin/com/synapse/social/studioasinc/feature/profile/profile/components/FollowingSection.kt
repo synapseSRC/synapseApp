@@ -37,7 +37,7 @@ fun FollowingSection(
             )
         ) {
             Column(
-                modifier = Modifier.padding(Spacing.Medium)
+                modifier = Modifier.padding(Spacing.space16)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -53,10 +53,10 @@ fun FollowingSection(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
                     FollowingFilter.values().forEach { filter ->
                         FilterChip(
@@ -67,10 +67,10 @@ fun FollowingSection(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.SmallMedium))
+                Spacer(modifier = Modifier.height(Spacing.space12))
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
                 ) {
                     items(users) { user ->
                         FollowingUserItem(
@@ -95,7 +95,7 @@ private fun EmptyFollowingState(modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.ExtraLarge),
+                .padding(Spacing.space32),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

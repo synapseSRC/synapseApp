@@ -6,6 +6,10 @@ sealed interface AppDestination {
     @Serializable
     data object Home : AppDestination
     @Serializable
+    data object PermissionOnboarding : AppDestination
+    @Serializable
+    data object PermissionManager : AppDestination
+    @Serializable
     data class Profile(val userId: String) : AppDestination
     @Serializable
     data object Inbox : AppDestination
@@ -54,12 +58,27 @@ sealed interface AppDestination {
         val chatId: String, 
         val userId: String? = null,
         val participantName: String? = null,
-        val participantAvatar: String? = null
+        val participantAvatar: String? = null,
+        val messageId: String? = null
+    ) : AppDestination
+    @Serializable
+    data class Call(
+        val peerUserId: String,
+        val peerName: String,
+        val peerAvatarUrl: String? = null,
+        val chatId: String? = null,
+        val isVideo: Boolean = false,
+        val isIncoming: Boolean = false,
+        /**
+         * Answer the ring as soon as it is on screen, instead of waiting for a tap.
+         *
+         * Set only when the user arrived here by pressing "Accept" in the incoming-call notification.
+         * The permission gate still applies, so this can open a dialog but never a microphone.
+         */
+        val autoAccept: Boolean = false
     ) : AppDestination
     @Serializable
     data class StoryViewer(val userId: String, val userIds: List<String> = emptyList()) : AppDestination
-    @Serializable
-    data object StoryCreator : AppDestination
     @Serializable
     data class ChatPrivacy(val chatId: String) : AppDestination
     @Serializable
@@ -74,6 +93,10 @@ sealed interface AppDestination {
     data class GroupInfo(val chatId: String, val groupName: String) : AppDestination
     @Serializable
     data class ChatInfo(val chatId: String, val userId: String) : AppDestination
+    @Serializable
+    data class ChatSettings(val chatId: String) : AppDestination
+    @Serializable
+    data class ChatSearch(val chatId: String) : AppDestination
     @Serializable
     data class HashtagFeed(val tag: String) : AppDestination
 }

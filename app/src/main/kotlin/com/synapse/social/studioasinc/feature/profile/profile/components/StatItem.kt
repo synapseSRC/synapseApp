@@ -51,7 +51,7 @@ fun StatItem(
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onClick()
             }
-            .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+            .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
             .minimumInteractiveComponentSize()
             .scale(scale)
             .semantics {
@@ -84,54 +84,13 @@ fun StatItem(
     }
 }
 
-@Composable
-fun StatsRow(
-    postsCount: Int,
-    followersCount: Int,
-    followingCount: Int,
-    onStatsClick: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    content: (@Composable RowScope.() -> Unit)? = null
-) {
-    Row(
-        horizontalArrangement = if (content != null) Arrangement.Start else Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        if (content != null) {
-            content()
-        } else {
-            StatItem(
-                count = postsCount,
-                label = stringResource(R.string.posts),
-                onClick = { onStatsClick("posts") },
-                modifier = Modifier.weight(1f)
-            )
-
-            StatItem(
-                count = followersCount,
-                label = stringResource(R.string.followers),
-                onClick = { onStatsClick("followers") },
-                modifier = Modifier.weight(1f)
-            )
-
-            StatItem(
-                count = followingCount,
-                label = stringResource(R.string.following),
-                onClick = { onStatsClick("following") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun StatItemPreview() {
     MaterialTheme {
         Row(
-            modifier = Modifier.padding(Spacing.Medium),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
+            modifier = Modifier.padding(Spacing.space16),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             StatItem(
                 count = 1234,

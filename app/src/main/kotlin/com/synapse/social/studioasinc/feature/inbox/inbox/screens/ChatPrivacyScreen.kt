@@ -48,8 +48,8 @@ fun ChatPrivacyScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium)
+                .padding(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -57,8 +57,8 @@ fun ChatPrivacyScreen(
                 color = MaterialTheme.colorScheme.surfaceContainer
             ) {
                 Column(
-                    modifier = Modifier.padding(Spacing.Medium),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                    modifier = Modifier.padding(Spacing.space16),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -66,7 +66,7 @@ fun ChatPrivacyScreen(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(
                             text = stringResource(R.string.encryption_status_title),
                             style = MaterialTheme.typography.titleMedium,
@@ -87,7 +87,7 @@ fun ChatPrivacyScreen(
                 color = MaterialTheme.colorScheme.surfaceContainerLow
             ) {
                 Row(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -97,7 +97,7 @@ fun ChatPrivacyScreen(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Medium))
+                        Spacer(modifier = Modifier.width(Spacing.space16))
                         Column {
                             Text(
                                 text = stringResource(R.string.chat_info_chat_lock),

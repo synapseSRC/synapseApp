@@ -22,7 +22,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -79,7 +79,7 @@ fun BatchMediaViewerDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
-                    .padding(horizontal = Spacing.Small, vertical = Spacing.Medium)
+                    .padding(horizontal = Spacing.space8, vertical = Spacing.space16)
                     .statusBarsPadding(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -106,7 +106,7 @@ fun BatchMediaViewerDialog(
                             text = "${pagerState.currentPage + 1} / ${attachments.size}",
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall)
+                            modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4)
                         )
                     }
                 } else {
@@ -127,7 +127,7 @@ fun BatchMediaViewerDialog(
                         text = caption,
                         color = Color.White,
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(Spacing.Medium)
+                        modifier = Modifier.padding(Spacing.space16)
                     )
                 }
             }

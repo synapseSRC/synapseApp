@@ -23,13 +23,16 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.ImageLoader
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileEvent
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @Composable
 private fun AvatarPreviewCard(
@@ -40,14 +43,14 @@ private fun AvatarPreviewCard(
     
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackgroundElevated,
+        shape = AppShapes.cardShape,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.Large),
+                .padding(Spacing.space24),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -57,7 +60,7 @@ private fun AvatarPreviewCard(
                 if (isUploading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(Sizes.IconGiant),
-                        strokeWidth = Spacing.ExtraSmall,
+                        strokeWidth = Sizes.ProgressIndicatorStrokeWidth,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else {
@@ -92,7 +95,7 @@ private fun AvatarPreviewCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(Spacing.Medium))
+            Spacer(modifier = Modifier.height(Spacing.space16))
             
             Text(
                 text = if (isUploading) stringResource(R.string.uploading) else stringResource(R.string.current_profile_photo_label),
@@ -101,7 +104,7 @@ private fun AvatarPreviewCard(
             )
             
             if (!isUploading) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.choose_option_below),
                     style = MaterialTheme.typography.bodyMedium,
@@ -204,6 +207,7 @@ fun AvatarScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.avatar_title)) },
@@ -223,11 +227,11 @@ fun AvatarScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 AvatarPreviewCard(
                     avatarUrl = uiState.currentAvatarUrl,
                     isUploading = uiState.isUploading

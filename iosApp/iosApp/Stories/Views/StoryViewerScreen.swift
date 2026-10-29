@@ -122,13 +122,13 @@ private struct GroupView: View {
                                 .padding()
                                 .background(Color.black.opacity(0.5))
                                 .cornerRadius(10)
-                                .padding(.bottom, 50)
+                                .padding(.bottom, 50) // story control clearance, intentionally component-specific
                         }
                     }
 
                     // Tap Areas for Navigation
                     GeometryReader { geometry in
-                        HStack(spacing: 0) {
+                        HStack(spacing: AppTheme.Spacing.space0) {
                             Color.clear
                                 .contentShape(Rectangle())
                                 .onTapGesture {
@@ -156,7 +156,7 @@ private struct GroupView: View {
 
                 // Overlay Header
                 VStack {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.space4) {
                         ForEach(0..<viewModel.stories.count, id: \.self) { index in
                             GeometryReader { geo in
                                 Rectangle()
@@ -175,7 +175,7 @@ private struct GroupView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 50)
+                    .padding(.top, 50) // story header clearance, intentionally component-specific
 
                     HStack {
                         Spacer()
@@ -202,7 +202,7 @@ private struct GroupView: View {
                             .background(Color.black.opacity(0.4))
                             .cornerRadius(20)
                             .padding(.horizontal)
-                            .padding(.bottom, 20)
+                            .padding(.bottom, AppTheme.Spacing.space20)
 
                             Spacer()
                         } else {
@@ -212,7 +212,7 @@ private struct GroupView: View {
                                 .cornerRadius(20)
                                 .foregroundColor(.white)
                                 .padding(.horizontal)
-                                .padding(.bottom, 20)
+                                .padding(.bottom, AppTheme.Spacing.space20)
                         }
 
                         if currentStory.type == .video {

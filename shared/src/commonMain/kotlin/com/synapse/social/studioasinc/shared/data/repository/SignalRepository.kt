@@ -12,7 +12,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 class SignalRepository(private val supabase: SupabaseClient) {
-
     @Serializable
     data class IdentityKeyDto(
         @SerialName("user_id") val userId: String? = null,
@@ -31,32 +30,7 @@ class SignalRepository(private val supabase: SupabaseClient) {
         @SerialName("public_key") val publicKey: String
     )
 
-    suspend fun uploadIdentityKeys(userId: String, deviceId: Int = 1, keys: SignalIdentityKeys) {
-        val dto = IdentityKeyDto(
-            userId = userId,
-            deviceId = deviceId,
-            registrationId = keys.registrationId,
-            identityKey = keys.identityKey,
-            signedPreKeyId = keys.signedPreKeyId,
-            signedPreKey = keys.signedPreKey,
-            signedPreKeySignature = keys.signedPreKeySignature
-        )
-        supabase.postgrest.from("signal_identity_keys").upsert(dto)
-    }
-
-    suspend fun uploadOneTimePreKeys(userId: String, keys: List<SignalOneTimePreKey>) {
-        val dtos = keys.map { key ->
-            PreKeyDto(
-                userId = userId,
-                keyId = key.keyId,
-                publicKey = key.publicKey
-            )
-        }
-        supabase.postgrest.from("signal_one_time_pre_keys").insert(dtos)
-    }
-
     suspend fun fetchPreKeyBundle(userId: String): PreKeyBundle? {
-
         val identityKeyResult = try {
             supabase.postgrest.from("signal_identity_keys")
                 .select(columns = Columns.list("user_id", "device_id", "registration_id", "identity_key", "signed_pre_key_id", "signed_pre_key", "signed_pre_key_signature")) {
@@ -71,8 +45,6 @@ class SignalRepository(private val supabase: SupabaseClient) {
         }
 
         if (identityKeyResult == null) return null
-
-
 
         val preKeyResult = try {
             supabase.postgrest.rpc("claim_one_time_pre_key", mapOf("target_user_id" to userId))

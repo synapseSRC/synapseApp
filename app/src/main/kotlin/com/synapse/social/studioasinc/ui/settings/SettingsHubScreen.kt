@@ -25,6 +25,9 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.HeroCard
 import com.synapse.social.studioasinc.shared.domain.model.settings.SettingsNode
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,12 +42,13 @@ fun SettingsHubScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     val heroCards by viewModel.heroCards.collectAsState()
+    val unreadCategoryIds by viewModel.unreadCategoryIds.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_hub_title)) },
@@ -57,8 +61,8 @@ fun SettingsHubScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -77,9 +81,9 @@ fun SettingsHubScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = SettingsSpacing.screenPadding),
-                        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
-                        contentPadding = PaddingValues(vertical = Spacing.Small)
+                            .padding(horizontal = AppSpacing.screenPadding),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
+                        contentPadding = PaddingValues(vertical = Spacing.space8)
                     ) {
                         item {
                             SettingsSearchBar(
@@ -101,6 +105,7 @@ fun SettingsHubScreen(
                         item {
                             SettingsFlattenedContent(
                                 settingsGroups = settingsGroups,
+                                unreadCategoryIds = unreadCategoryIds,
                                 onNavigate = {
                                     viewModel.onNavigateToCategory(it)
                                     onNavigateToCategory(it)
@@ -109,7 +114,7 @@ fun SettingsHubScreen(
                         }
 
                         item {
-                            Spacer(modifier = Modifier.height(Spacing.ExtraLarge))
+                            Spacer(modifier = Modifier.height(Spacing.space32))
                         }
                     }
 
@@ -142,18 +147,18 @@ fun SettingsSearchBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         shape = CircleShape,
-        color = SettingsColors.cardBackground,
+        color = AppColors.cardBackground,
         tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
             Box(modifier = Modifier.weight(1f)) {
                 if (query.isEmpty()) {
                     Text(stringResource(R.string.settings_search_settings_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -176,43 +181,6 @@ fun SettingsSearchBar(
 }
 
 @Composable
-fun SettingsHeroCardsSection(
-    heroCards: List<HeroCard>,
-    onCardClick: (HeroCard) -> Unit
-) {
-    LazyRow(
-        contentPadding = PaddingValues(vertical = Spacing.Small),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.Medium)
-    ) {
-        items(heroCards) { card ->
-            Card(
-                onClick = { onCardClick(card) },
-                modifier = Modifier.width(280.dp),
-                shape = SettingsShapes.cardShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = com.synapse.social.studioasinc.feature.shared.theme.safeParseColorHex(
-                        card.backgroundColor,
-                        MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-            ) {
-                Column(modifier = Modifier.padding(Spacing.Medium)) {
-                    Icon(
-                        imageVector = if (card.id == "storage_cleanup") Icons.Filled.Storage else Icons.Filled.Shield,
-                        contentDescription = null,
-                        modifier = Modifier.size(Sizes.IconHuge)
-                    )
-                    Spacer(modifier = Modifier.height(Spacing.SmallMedium))
-                    Text(card.title, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
-                    Text(card.description, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun SettingsCommandPaletteResults(
     results: List<SettingsNode>,
     onActionClick: (com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction) -> Unit,
@@ -221,40 +189,41 @@ fun SettingsCommandPaletteResults(
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        color = MaterialTheme.colorScheme.background
+            .background(AppColors.screenBackground),
+        color = AppColors.screenBackground
     ) {
         LazyColumn(
-            modifier = Modifier.padding(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+            modifier = Modifier.padding(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             items(results) { node ->
                 val action = node.action
-                Card(
+                val navigateDestination =
+                    (action as? com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Navigate)?.destination
+                val toggleAction =
+                    action as? com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Toggle
+
+                SettingsListItem(
+                    title = node.title,
+                    subtitle = node.subtitle,
                     onClick = {
-                        if (action is com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Navigate) {
-                            onNavigate(action.destination)
-                        } else if (action != null) {
-                            onActionClick(action)
+                        when {
+                            toggleAction != null -> onActionClick(toggleAction)
+                            navigateDestination != null -> onNavigate(navigateDestination)
+                            action != null -> onActionClick(action)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.itemShape,
-                    colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(Spacing.Medium),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(node.title, style = MaterialTheme.typography.titleSmall)
-                            node.subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    trailingContent = if (toggleAction != null) {
+                        {
+                            Switch(
+                                checked = toggleAction.currentValue,
+                                onCheckedChange = { onActionClick(toggleAction) }
+                            )
                         }
-                        if (action is com.synapse.social.studioasinc.shared.domain.model.settings.SettingsAction.Toggle) {
-                            Switch(checked = action.currentValue, onCheckedChange = { onActionClick(action) })
-                        }
+                    } else {
+                        null
                     }
-                }
+                )
             }
         }
     }
@@ -263,20 +232,22 @@ fun SettingsCommandPaletteResults(
 @Composable
 fun SettingsFlattenedContent(
     settingsGroups: List<SettingsGroup>,
-    onNavigate: (SettingsDestination) -> Unit
+    onNavigate: (SettingsDestination) -> Unit,
+    unreadCategoryIds: Set<String> = emptySet()
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
+    val unreadDescription = stringResource(R.string.settings_unread_indicator)
+    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)) {
         settingsGroups.forEach { group ->
             Column {
                 if (group.title != null) {
-                    SettingsHeaderItem(
+                    SectionHeader(
                         title = group.title.asString()
                     )
                 }
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     group.categories.forEachIndexed { index, category ->
                         val position = when {
@@ -291,7 +262,12 @@ fun SettingsFlattenedContent(
                             subtitle = category.subtitle.asString(),
                             imageVector = category.icon,
                             onClick = { onNavigate(category.destination) },
-                            position = position
+                            position = position,
+                            indicator = if (category.id in unreadCategoryIds) {
+                                { SettingsUnreadDot(description = unreadDescription) }
+                            } else {
+                                null
+                            }
                         )
                     }
                 }

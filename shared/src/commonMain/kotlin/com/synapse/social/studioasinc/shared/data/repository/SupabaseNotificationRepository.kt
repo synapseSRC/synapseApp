@@ -40,7 +40,7 @@ class SupabaseNotificationRepository(
     private val externalScope: CoroutineScope
 ) : NotificationRepository {
 
-    override suspend fun fetchNotifications(userId: String, limit: Long): List<Notification> {
+    override suspend fun fetchNotifications(userId: String, limit: Long, before: String?, beforeId: String?): List<Notification> {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId) {
             Napier.e("IDOR attempt: User $currentUserId tried to fetch notifications for $userId")
@@ -51,8 +51,22 @@ class SupabaseNotificationRepository(
                 .select(Columns.raw("*, actor:sender_id(display_name, username, avatar)")) {
                     filter {
                         eq("recipient_id", userId)
+                        if (before != null && beforeId != null) {
+                            and {
+                                or {
+                                    lt("created_at", before)
+                                    and {
+                                        eq("created_at", before)
+                                        lt("id", beforeId)
+                                    }
+                                }
+                            }
+                        } else if (before != null) {
+                            lt("created_at", before)
+                        }
                     }
                     order("created_at", Order.DESCENDING)
+                    order("id", Order.DESCENDING)
                     limit(limit)
                 }
                 .decodeList<NotificationDto>()
@@ -159,8 +173,9 @@ class SupabaseNotificationRepository(
     override suspend fun fetchPreferences(userId: String): NotificationPreferences? {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId) {
-            Napier.e("IDOR attempt: User $currentUserId tried to fetch preferences for $userId")
-            return null
+            val error = IllegalStateException("Unauthorized access attempt detected")
+            Napier.e("IDOR attempt: User $currentUserId tried to fetch preferences for $userId", error)
+            throw error
         }
         return try {
             supabase.postgrest.from("notification_preferences")
@@ -169,23 +184,31 @@ class SupabaseNotificationRepository(
                 }
                 .decodeSingleOrNull<NotificationPreferencesDto>()
                 ?.toDomain()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Failed to fetch preferences for $userId", e)
-            null
+            throw e
         }
     }
 
     override suspend fun updatePreferences(userId: String, preferences: NotificationPreferences) {
         val currentUserId = supabase.auth.currentUserOrNull()?.id
         if (currentUserId != userId || userId != preferences.userId) {
-            Napier.e("IDOR attempt: User $currentUserId tried to update preferences for ${preferences.userId}")
-            return
+            val error = IllegalStateException("Unauthorized access attempt detected")
+            Napier.e("IDOR attempt: User $currentUserId tried to update preferences for ${preferences.userId}", error)
+            throw error
         }
         try {
             supabase.postgrest.from("notification_preferences")
-                .upsert(preferences.toDto())
+                .upsert(preferences.toDto()) {
+                    onConflict = "user_id"
+                }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Failed to update preferences for ${preferences.userId}", e)
+            throw e
         }
     }
 

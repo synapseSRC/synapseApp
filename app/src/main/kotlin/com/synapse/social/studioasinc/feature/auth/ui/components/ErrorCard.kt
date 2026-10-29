@@ -55,10 +55,10 @@ fun ErrorCard(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = Spacing.ExtraSmall),
+                elevation = CardDefaults.cardElevation(defaultElevation = Sizes.ElevationMedium),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                    .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                     .semantics {
                         liveRegion = LiveRegionMode.Assertive
                     }
@@ -66,9 +66,9 @@ fun ErrorCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.Medium),
+                        .padding(Spacing.space16),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Warning,

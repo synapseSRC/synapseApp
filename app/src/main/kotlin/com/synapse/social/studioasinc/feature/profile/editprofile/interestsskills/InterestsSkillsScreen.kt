@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.interestsskills
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -62,8 +64,8 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.ui.components.SectionHeader
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -118,7 +120,7 @@ fun InterestsSkillsScreen(
                         TextButton(
                             onClick = { viewModel.onEvent(InterestsSkillsEvent.SaveClicked) },
                             enabled = uiState.hasChanges && !uiState.isSaving && !uiState.isLoading,
-                            modifier = Modifier.padding(end = 8.dp)
+                            modifier = Modifier.padding(end = Spacing.space8)
                         ) {
                             if (uiState.isSaving) {
                                 ExpressiveLoadingIndicator(modifier = Modifier.size(18.dp))
@@ -143,30 +145,30 @@ fun InterestsSkillsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        start = SettingsSpacing.screenPadding,
-                        end = SettingsSpacing.screenPadding,
-                        top = paddingValues.calculateTopPadding() + 8.dp,
-                        bottom = paddingValues.calculateBottomPadding() + 24.dp
+                        start = AppSpacing.screenPadding,
+                        end = AppSpacing.screenPadding,
+                        top = paddingValues.calculateTopPadding() + Spacing.space8,
+                        bottom = paddingValues.calculateBottomPadding() + Spacing.space24
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // 1. Personal Interests Section
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            SettingsHeaderItem(title = stringResource(R.string.interests_section_title))
+                            SectionHeader(title = stringResource(R.string.interests_section_title))
 
                             Text(
                                 text = stringResource(R.string.interests_section_subtitle),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 12.dp)
+                                modifier = Modifier.padding(bottom = Spacing.space12)
                             )
 
                             SettingsCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp)
+                                        .padding(Spacing.space16)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -185,7 +187,7 @@ fun InterestsSkillsScreen(
                                             )
                                         )
 
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(Spacing.space8))
 
                                         Button(
                                             onClick = { viewModel.onEvent(InterestsSkillsEvent.AddInterest) },
@@ -211,18 +213,18 @@ fun InterestsSkillsScreen(
                                                 text = errorMsg,
                                                 color = MaterialTheme.colorScheme.error,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                                                modifier = Modifier.padding(top = Spacing.space4, start = Spacing.space4)
                                             )
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(Spacing.space16))
 
                                     if (uiState.interests.isEmpty()) {
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = 24.dp),
+                                                .padding(vertical = Spacing.space24),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Icon(
@@ -231,13 +233,13 @@ fun InterestsSkillsScreen(
                                                 modifier = Modifier.size(48.dp),
                                                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                                             )
-                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Spacer(modifier = Modifier.height(Spacing.space8))
                                             Text(
                                                 text = stringResource(R.string.empty_interests_title),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
-                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Spacer(modifier = Modifier.height(Spacing.space4))
                                             Text(
                                                 text = stringResource(R.string.empty_interests_subtitle),
                                                 style = MaterialTheme.typography.bodyMedium,
@@ -248,8 +250,8 @@ fun InterestsSkillsScreen(
                                         // Display Chips with Remove and Reorder Controls
                                         FlowRow(
                                             modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                                            verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                                         ) {
                                             uiState.interests.forEachIndexed { index, interest ->
                                                 InputChip(
@@ -279,12 +281,12 @@ fun InterestsSkillsScreen(
                                             }
                                         }
 
-                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Spacer(modifier = Modifier.height(Spacing.space16))
 
                                         // Detailed Reorder Control List
                                         Column(
                                             modifier = Modifier.fillMaxWidth(),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            verticalArrangement = Arrangement.spacedBy(Spacing.space4)
                                         ) {
                                             uiState.interests.forEachIndexed { index, interest ->
                                                 Surface(
@@ -295,7 +297,7 @@ fun InterestsSkillsScreen(
                                                     Row(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
-                                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                                            .padding(horizontal = Spacing.space12, vertical = Spacing.space4),
                                                         verticalAlignment = Alignment.CenterVertically,
                                                         horizontalArrangement = Arrangement.SpaceBetween
                                                     ) {
@@ -371,13 +373,13 @@ fun InterestsSkillsScreen(
                     // 2. Skills Section (Pending Backend Support Notice)
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            SettingsHeaderItem(title = stringResource(R.string.skills_section_title))
+                            SectionHeader(title = stringResource(R.string.skills_section_title))
 
                             SettingsCard(modifier = Modifier.fillMaxWidth()) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
+                                        .padding(Spacing.space16),
                                     verticalAlignment = Alignment.Top
                                 ) {
                                     Icon(
@@ -385,7 +387,7 @@ fun InterestsSkillsScreen(
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
-                                            .padding(top = 2.dp, end = 12.dp)
+                                            .padding(top = Spacing.space4, end = Spacing.space12)
                                             .size(24.dp)
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
@@ -394,7 +396,7 @@ fun InterestsSkillsScreen(
                                             style = MaterialTheme.typography.titleSmall,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = stringResource(R.string.skills_pending_description),
                                             style = MaterialTheme.typography.bodySmall,
@@ -409,13 +411,13 @@ fun InterestsSkillsScreen(
                     // 3. Languages Section (Pending Backend Support Notice)
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            SettingsHeaderItem(title = stringResource(R.string.languages_section_title))
+                            SectionHeader(title = stringResource(R.string.languages_section_title))
 
                             SettingsCard(modifier = Modifier.fillMaxWidth()) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
+                                        .padding(Spacing.space16),
                                     verticalAlignment = Alignment.Top
                                 ) {
                                     Icon(
@@ -423,7 +425,7 @@ fun InterestsSkillsScreen(
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
-                                            .padding(top = 2.dp, end = 12.dp)
+                                            .padding(top = Spacing.space4, end = Spacing.space12)
                                             .size(24.dp)
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
@@ -432,7 +434,7 @@ fun InterestsSkillsScreen(
                                             style = MaterialTheme.typography.titleSmall,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
                                         Text(
                                             text = stringResource(R.string.languages_pending_description),
                                             style = MaterialTheme.typography.bodySmall,

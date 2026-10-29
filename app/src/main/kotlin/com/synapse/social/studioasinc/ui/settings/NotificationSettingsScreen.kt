@@ -1,6 +1,5 @@
 package com.synapse.social.studioasinc.ui.settings
 
-import androidx.compose.foundation.clickable
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.window.Dialog
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 private val SocialNotificationTypes = listOf(
     NotificationCategory.LIKES to R.string.settings_notification_likes_title,
@@ -36,6 +38,7 @@ fun NotificationSettingsScreen(
     onBackClick: () -> Unit
 ) {
     val notificationPreferences by viewModel.notificationPreferences.collectAsState()
+    val soundPreferences by viewModel.soundPreferences.collectAsState()
     val error by viewModel.error.collectAsState()
 
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -43,6 +46,7 @@ fun NotificationSettingsScreen(
 
     NotificationSettingsContent(
         notificationPreferences = notificationPreferences,
+        soundPreferences = soundPreferences,
         error = error,
         onBackClick = onBackClick,
         onClearError = viewModel::clearError,
@@ -50,6 +54,9 @@ fun NotificationSettingsScreen(
         onToggleCategory = viewModel::toggleNotificationCategory,
         onToggleQuietHours = viewModel::toggleQuietHours,
         onToggleDoNotDisturb = viewModel::toggleDoNotDisturb,
+        onToggleSoundEffects = viewModel::toggleSoundEffects,
+        onToggleMessageTones = viewModel::toggleMessageTones,
+        onToggleCallTones = viewModel::toggleCallTones,
         onShowStartTimePicker = { showStartTimePicker = true }
     )
 
@@ -85,6 +92,7 @@ fun NotificationSettingsScreen(
 @Composable
 fun NotificationSettingsContent(
     notificationPreferences: NotificationPreferences,
+    soundPreferences: SoundPreferences,
     error: String?,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
@@ -92,13 +100,16 @@ fun NotificationSettingsContent(
     onToggleCategory: (NotificationCategory, Boolean) -> Unit,
     onToggleQuietHours: (Boolean) -> Unit,
     onToggleDoNotDisturb: (Boolean) -> Unit,
+    onToggleSoundEffects: (Boolean) -> Unit,
+    onToggleMessageTones: (Boolean) -> Unit,
+    onToggleCallTones: (Boolean) -> Unit,
     onShowStartTimePicker: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_notifications_title)) },
@@ -111,8 +122,8 @@ fun NotificationSettingsContent(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -120,7 +131,7 @@ fun NotificationSettingsContent(
         snackbarHost = {
             error?.let { errorMessage ->
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = onClearError) {
                             Text(stringResource(R.string.action_dismiss))
@@ -136,14 +147,23 @@ fun NotificationSettingsContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            contentPadding = PaddingValues(bottom = Spacing.ExtraLarge),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            contentPadding = PaddingValues(bottom = Spacing.space32),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
-                GlobalSettingsSection(
+                GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
-                    onToggle = onToggleGlobal
+                    onToggleGlobal = onToggleGlobal
+                )
+            }
+
+            item {
+                SoundEffectsSection(
+                    soundPreferences = soundPreferences,
+                    onToggleSoundEffects = onToggleSoundEffects,
+                    onToggleMessageTones = onToggleMessageTones,
+                    onToggleCallTones = onToggleCallTones
                 )
             }
 
@@ -177,22 +197,6 @@ fun NotificationSettingsContent(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun GlobalSettingsSection(
-    notificationPreferences: NotificationPreferences,
-    onToggle: (Boolean) -> Unit
-) {
-    SettingsSection(title = stringResource(R.string.settings_global_settings_title)) {
-        SettingsToggleItem(
-            imageVector = Icons.Default.Notifications,
-            title = stringResource(R.string.settings_enable_notifications_title),
-            subtitle = if (notificationPreferences.globalEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-            checked = notificationPreferences.globalEnabled,
-            onCheckedChange = onToggle
-        )
     }
 }
 
@@ -315,47 +319,22 @@ private fun QuietHoursItem(
     position: SettingsItemPosition = SettingsItemPosition.Single
 ) {
     val enabled = notificationPreferences.globalEnabled
+    val quietHoursSummary = if (notificationPreferences.quietHoursEnabled) {
+        "${notificationPreferences.quietHoursStart} - ${notificationPreferences.quietHoursEnd}"
+    } else {
+        stringResource(R.string.settings_disabled)
+    }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = position.getShape(),
-        color = SettingsColors.cardBackground
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(enabled = enabled, onClick = onShowStartTimePicker)
-                .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
-                )
-                .heightIn(min = SettingsSpacing.minTouchTarget),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Schedule,
-                contentDescription = null,
-                modifier = Modifier.size(SettingsSpacing.iconSize),
-                tint = SettingsColors.itemIcon
-            )
-            Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.settings_quiet_hours_title),
-                    style = SettingsTypography.itemTitle,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface
-                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                )
-                Text(
-                    text = if (notificationPreferences.quietHoursEnabled)
-                        "${notificationPreferences.quietHoursStart} - ${notificationPreferences.quietHoursEnd}"
-                    else stringResource(R.string.settings_disabled),
-                    style = SettingsTypography.itemSubtitle,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                           else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                )
-            }
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+    SettingsListItem(
+        title = stringResource(R.string.settings_quiet_hours_title),
+        subtitle = quietHoursSummary,
+        position = position,
+        enabled = enabled,
+        onClick = onShowStartTimePicker,
+        leadingContent = {
+            SettingsIconBadge(imageVector = Icons.Default.Schedule)
+        },
+        trailingContent = {
             Switch(
                 checked = notificationPreferences.quietHoursEnabled,
                 onCheckedChange = onToggleQuietHours,
@@ -368,7 +347,7 @@ private fun QuietHoursItem(
                 )
             )
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -389,11 +368,11 @@ private fun QuietHoursTimePickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card {
             Column(
-                modifier = Modifier.padding(Spacing.Medium),
+                modifier = Modifier.padding(Spacing.space16),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(Spacing.Medium))
+                Spacer(modifier = Modifier.height(Spacing.space16))
                 TimePicker(state = state)
                 Row(
                     modifier = Modifier.fillMaxWidth(),

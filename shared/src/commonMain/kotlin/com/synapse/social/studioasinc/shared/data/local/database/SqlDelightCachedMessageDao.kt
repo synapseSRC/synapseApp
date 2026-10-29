@@ -14,7 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataCo
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.serialization.json.Json
 
 class SqlDelightCachedMessageDao(
@@ -30,11 +30,22 @@ class SqlDelightCachedMessageDao(
         withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
             db.transaction {
-                messages.forEach { message ->
-                    db.cachedMessageQueries.upsertMessage(toCachedMessage(message, now))
-                }
+                messages.forEach { message -> upsertMerged(message, now) }
             }
         }
+    }
+
+    // Call inside a transaction so the read/merge/write cannot race another cache update.
+    private fun upsertMerged(message: Message, cachedAt: Long) {
+        val existing = db.cachedMessageQueries.selectActiveById(message.id).executeAsOneOrNull()
+        val merged = existing?.let { cached ->
+            with(ChatMapper) { toDomainMessage(cached).mergeMonotonic(message) }
+        } ?: message
+        db.cachedMessageQueries.upsertMessage(toCachedMessage(merged, cachedAt))
+    }
+
+    override suspend fun getMessageById(id: String): Message? = withContext(AppDispatchers.IO) {
+        db.cachedMessageQueries.selectActiveById(id).executeAsOneOrNull()?.let { toDomainMessage(it) }
     }
 
     override suspend fun getMessages(chatId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
@@ -56,10 +67,54 @@ class SqlDelightCachedMessageDao(
         }
     }
 
+    override suspend fun getMessagesBefore(chatId: String, beforeCreatedAt: String, beforeId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
+        db.cachedMessageQueries.selectActiveByChatIdBefore(
+            chatId = chatId,
+            beforeCreatedAt = beforeCreatedAt,
+            beforeId = beforeId,
+            limit = limit.toLong()
+        ).executeAsList().reversed().map { cached ->
+            val domain = toDomainMessage(cached)
+            try {
+                val reactions = db.messageReactionQueries.selectByMessageId(domain.id).executeAsList()
+                val summary = reactions
+                    .groupBy { it.reaction_emoji }
+                    .mapKeys { ReactionType.values().find { rt -> rt.emoji == it.key } ?: ReactionType.LIKE }
+                    .mapValues { it.value.size }
+                domain.copy(reactions = summary)
+            } catch (e: Exception) {
+                domain
+            }
+        }
+    }
+
+    override suspend fun getMessagesAfter(chatId: String, afterCreatedAt: String, afterId: String, limit: Int): List<Message> = withContext(AppDispatchers.IO) {
+        db.cachedMessageQueries.selectActiveByChatIdAfter(
+            chatId = chatId,
+            afterCreatedAt = afterCreatedAt,
+            afterId = afterId,
+            limit = limit.toLong()
+        ).executeAsList().map { cached ->
+            val domain = toDomainMessage(cached)
+            try {
+                val reactions = db.messageReactionQueries.selectByMessageId(domain.id).executeAsList()
+                val summary = reactions
+                    .groupBy { it.reaction_emoji }
+                    .mapKeys { ReactionType.values().find { rt -> rt.emoji == it.key } ?: ReactionType.LIKE }
+                    .mapValues { it.value.size }
+                domain.copy(reactions = summary)
+            } catch (e: Exception) {
+                domain
+            }
+        }
+    }
+
     override suspend fun upsert(message: Message) {
         withContext(AppDispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
-            db.cachedMessageQueries.upsertMessage(toCachedMessage(message, now))
+            db.transaction {
+                upsertMerged(message, now)
+            }
         }
     }
 
@@ -136,14 +191,16 @@ class SqlDelightCachedMessageDao(
             val allMessages = db.cachedMessageQueries.selectByChatId(chatId, 500).executeAsList()
             db.transaction {
                 allMessages.forEach { cached ->
-                    val readBy = cached.read_by?.split(",")?.toMutableSet() ?: mutableSetOf()
-                    if (userId !in readBy) {
-                        readBy.add(userId)
-                        db.cachedMessageQueries.updateReadBy(
-                            read_by = readBy.joinToString(","),
-                            readAt = nowStr,
-                            id = cached.id
-                        )
+                    if (cached.sender_id != userId) {
+                        val readBy = cached.read_by?.split(",")?.toMutableSet() ?: mutableSetOf()
+                        if (userId !in readBy) {
+                            readBy.add(userId)
+                            db.cachedMessageQueries.updateReadBy(
+                                read_by = readBy.joinToString(","),
+                                readAt = nowStr,
+                                id = cached.id
+                            )
+                        }
                     }
                 }
             }
@@ -195,7 +252,12 @@ class SqlDelightCachedMessageDao(
             is_deleted = if (domain.isDeleted || domain.contentStatus == ContentStatus.DELETED) 1L else 0L,
             is_edited = if (domain.isEdited || domain.contentStatus == ContentStatus.EDITED) 1L else 0L,
             cached_at = cachedAt,
-            metadata = metadataString
+            metadata = metadataString,
+            // Sync metadata — populated with current time so reconciliation can use it
+            updated_at = cachedAt,
+            is_locally_deleted = 0L,
+            last_synced_at = null,
+            sync_version = 1L
         )
     }
 
@@ -206,10 +268,14 @@ class SqlDelightCachedMessageDao(
             MessageType.TEXT
         }
 
-        val deliveryStatus = try {
-            DeliveryStatus.valueOf(cached.delivery_status)
-        } catch (e: Exception) {
-            DeliveryStatus.SENT
+        val rawDeliveryStatus = cached.delivery_status
+        val readByList = cached.read_by?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+        val deliveryStatus = when {
+            cached.read_at != null || readByList.any { it != cached.sender_id } || rawDeliveryStatus.equals("READ", ignoreCase = true) -> DeliveryStatus.READ
+            cached.delivered_at != null || rawDeliveryStatus.equals("DELIVERED", ignoreCase = true) -> DeliveryStatus.DELIVERED
+            rawDeliveryStatus.equals("FAILED", ignoreCase = true) -> DeliveryStatus.FAILED
+            rawDeliveryStatus.equals("SENDING", ignoreCase = true) -> DeliveryStatus.SENDING
+            else -> DeliveryStatus.SENT
         }
 
         val contentStatus = try {
@@ -249,16 +315,18 @@ class SqlDelightCachedMessageDao(
         val isForwarded = parsedMetadata?.forwarded != null
         val forwardedFromMessageId = parsedMetadata?.forwarded?.originalMessageId
 
+        val isDeletedMessage = cached.is_deleted == 1L || contentStatus == ContentStatus.DELETED
+
         return Message(
             id = cached.id,
             chatId = cached.chat_id,
             senderId = cached.sender_id,
-            content = cached.content,
+            content = if (isDeletedMessage) "" else cached.content,
             messageType = finalMessageType,
-            mediaUrl = resolvedMediaUrl,
+            mediaUrl = if (isDeletedMessage) null else resolvedMediaUrl,
             deliveryStatus = deliveryStatus,
             contentStatus = contentStatus,
-            isDeleted = cached.is_deleted == 1L || contentStatus == ContentStatus.DELETED,
+            isDeleted = isDeletedMessage,
             isEdited = cached.is_edited == 1L || contentStatus == ContentStatus.EDITED,
             isForwarded = isForwarded,
             replyToId = cached.reply_to_id,
@@ -268,15 +336,24 @@ class SqlDelightCachedMessageDao(
             readAt = cached.read_at,
             editedAt = cached.edited_at,
             deletedAt = cached.deleted_at,
-            failureReason = cached.failure_reason,
+            failureReason = cached.failure_reason.takeIf { deliveryStatus == DeliveryStatus.FAILED },
             createdAt = cached.created_at,
             expiresAt = cached.expires_at,
-            readBy = cached.read_by?.split(",") ?: emptyList(),
+            readBy = readByList,
             reactions = emptyMap(),
             userReaction = null,
-            attachments = attachmentsList,
+            attachments = if (isDeletedMessage) emptyList() else attachmentsList,
             mediaGroupId = attachmentsList.firstOrNull()?.mediaGroupId,
-            metadataContainer = parsedMetadata
+            metadataContainer = if (isDeletedMessage) null else parsedMetadata
         )
+    }
+
+    override suspend fun deleteExpired(chatId: String, now: String) {
+        withContext(AppDispatchers.IO) {
+            db.cachedMessageQueries.deleteExpired(
+                chatId = chatId,
+                now = now
+            )
+        }
     }
 }

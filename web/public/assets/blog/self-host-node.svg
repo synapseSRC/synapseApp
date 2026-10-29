@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="A central server node connected to five client devices">
+  <defs>
+    <linearGradient id="shn-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <radialGradient id="shn-glow" cx="50%" cy="48%" r="55%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.22"/>
+      <stop offset="75%" stop-color="#0A0A0A" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="shn-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="800" fill="#0A0A0A"/>
+  <rect width="1200" height="800" fill="url(#shn-grid)"/>
+  <rect width="1200" height="800" fill="url(#shn-glow)"/>
+
+  <g stroke="url(#shn-grad)" stroke-width="2.5" fill="none" stroke-dasharray="7 9" stroke-linecap="round" opacity="0.75">
+    <path d="M600 400L290 250"/>
+    <path d="M600 400L910 250"/>
+    <path d="M600 400L250 560"/>
+    <path d="M600 400L950 560"/>
+    <path d="M600 400L600 660"/>
+  </g>
+
+  <circle cx="600" cy="400" r="140" fill="none" stroke="#27272A" stroke-width="2"/>
+  <circle cx="600" cy="400" r="196" fill="none" stroke="#1F1F23" stroke-width="2"/>
+
+  <g>
+    <rect x="520" y="330" width="160" height="140" rx="18" fill="#161616" stroke="url(#shn-grad)" stroke-width="2.5"/>
+    <g stroke="#52525B" stroke-width="6" stroke-linecap="round">
+      <path d="M548 366h104"/>
+      <path d="M548 400h104"/>
+      <path d="M548 434h70"/>
+    </g>
+    <circle cx="666" cy="434" r="8" fill="#22D3EE"/>
+  </g>
+
+  <g fill="#131313" stroke="#3F3F46" stroke-width="2">
+    <rect x="252" y="222" width="76" height="56" rx="10"/>
+    <rect x="872" y="222" width="76" height="56" rx="10"/>
+    <rect x="212" y="534" width="76" height="56" rx="10"/>
+    <rect x="912" y="534" width="76" height="56" rx="10"/>
+    <rect x="562" y="634" width="76" height="56" rx="10"/>
+  </g>
+  <g font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="15" fill="#71717A" text-anchor="middle">
+    <text x="290" y="255">android</text>
+    <text x="910" y="255">ios</text>
+    <text x="250" y="567">windows</text>
+    <text x="950" y="567">linux</text>
+    <text x="600" y="667">cli</text>
+  </g>
+
+  <g font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" letter-spacing="6">
+    <text x="100" y="112" fill="#71717A" font-size="22">ONE NODE · YOUR DOMAIN</text>
+    <text x="100" y="176" fill="#E4E4E7" font-size="40" font-weight="600" letter-spacing="0">Self-host the whole thing</text>
+  </g>
+</svg>

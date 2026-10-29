@@ -11,6 +11,9 @@ import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.settings.ApiKeyInfo
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 fun ApiKeyItem(
@@ -22,7 +25,7 @@ fun ApiKeyItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(SettingsSpacing.itemPadding),
+            .padding(AppSpacing.itemPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -31,14 +34,14 @@ fun ApiKeyItem(
         ) {
             Text(
                 text = apiKey.keyName,
-                style = SettingsTypography.itemTitle,
+                style = AppTypography.itemTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = "${apiKey.provider.uppercase()} • ${apiKey.usageCount}/${apiKey.usageLimit ?: "∞"} used",
-                style = SettingsTypography.itemSubtitle,
-                color = SettingsColors.itemIcon
+                style = AppTypography.itemSubtitle,
+                color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -48,7 +51,7 @@ fun ApiKeyItem(
             Icon(
                 Icons.Default.Delete,
                 contentDescription = "Delete",
-                tint = SettingsColors.destructiveButton
+                tint = AppColors.destructiveButton
             )
         }
     }
@@ -64,7 +67,7 @@ fun ApiKeyItem(
                         onDelete(apiKey.id)
                         showDeleteConfirm = false
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = SettingsColors.destructiveButton)
+                    colors = ButtonDefaults.textButtonColors(contentColor = AppColors.destructiveButton)
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }

@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.personalinfo
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.data.model.RelationshipStatus
 import com.synapse.social.studioasinc.domain.model.Gender
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -69,14 +71,14 @@ fun PronounsDialog(
                             .clickable {
                                 selectedPreset = preset
                             }
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = selectedPreset == preset,
                             onClick = { selectedPreset = preset }
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(text = preset, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
@@ -85,25 +87,25 @@ fun PronounsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { selectedPreset = "custom" }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
                         selected = selectedPreset == "custom",
                         onClick = { selectedPreset = "custom" }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(text = stringResource(R.string.custom_pronouns), style = MaterialTheme.typography.bodyLarge)
                 }
 
                 if (selectedPreset == "custom") {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
                     OutlinedTextField(
                         value = customText,
                         onValueChange = { customText = it },
                         placeholder = { Text("e.g. ze/zir") },
                         singleLine = true,
-                        shape = SettingsShapes.inputShape,
+                        shape = AppShapes.inputShape,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -130,7 +132,7 @@ fun PronounsDialog(
                 ) {
                     Text(stringResource(R.string.clear))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 TextButton(onClick = onDismissRequest) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -193,7 +195,7 @@ fun BirthdayDatePickerDialog(
                 ) {
                     Text(stringResource(R.string.clear))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 TextButton(onClick = onDismissRequest) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -229,7 +231,7 @@ fun GenderDialog(
                                 onGenderSelected(gender)
                                 onDismissRequest()
                             }
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = Spacing.space12),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -239,7 +241,7 @@ fun GenderDialog(
                                 onDismissRequest()
                             }
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(Spacing.space12))
                         Text(text = label, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
@@ -277,7 +279,7 @@ fun RelationshipStatusDialog(
                                 onStatusSelected(status)
                                 onDismissRequest()
                             }
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
@@ -287,7 +289,7 @@ fun RelationshipStatusDialog(
                                 onDismissRequest()
                             }
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(Spacing.space12))
                         Text(text = status.displayName, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
@@ -304,7 +306,7 @@ fun RelationshipStatusDialog(
                 ) {
                     Text(stringResource(R.string.clear))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 TextButton(onClick = onDismissRequest) {
                     Text(stringResource(R.string.cancel))
                 }

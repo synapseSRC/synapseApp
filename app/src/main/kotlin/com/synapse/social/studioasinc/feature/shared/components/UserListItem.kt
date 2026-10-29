@@ -24,7 +24,7 @@ fun UserListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         UserAvatarWithStatus(
@@ -35,7 +35,7 @@ fun UserListItem(
             displayName = user.displayName ?: user.username
         )
         
-        Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+        Spacer(modifier = Modifier.width(Spacing.space12))
         
         Column(modifier = Modifier.weight(1f)) {
             Text(

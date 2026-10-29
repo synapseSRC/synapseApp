@@ -26,6 +26,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +40,7 @@ fun ChatFoldersScreen(
     var dialogName by remember { mutableStateOf("") }
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_chat_folders_title)) },
@@ -48,7 +50,7 @@ fun ChatFoldersScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = AppColors.screenBackground,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
@@ -121,13 +123,13 @@ private fun EmptyFoldersPlaceholder(modifier: Modifier = Modifier) {
             modifier = Modifier.size(Sizes.AvatarSemiLarge),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         )
-        Spacer(Modifier.height(Spacing.Medium))
+        Spacer(Modifier.height(Spacing.space16))
         Text(
             text = stringResource(R.string.no_folders_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(Modifier.height(Spacing.Small))
+        Spacer(Modifier.height(Spacing.space8))
         Text(
             text = stringResource(R.string.no_folders_subtitle),
             style = MaterialTheme.typography.bodyMedium,
@@ -150,8 +152,8 @@ private fun FolderList(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Spacing.Medium),
-        verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+        contentPadding = PaddingValues(Spacing.space16),
+        verticalArrangement = Arrangement.spacedBy(Spacing.space8)
     ) {
         itemsIndexed(folders, key = { _, f -> f.id }) { index, folder ->
             val elevation by animateDpAsState(
@@ -180,14 +182,14 @@ private fun FolderList(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+                        .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.DragHandle,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        modifier = Modifier.padding(end = Spacing.Small)
+                        modifier = Modifier.padding(end = Spacing.space8)
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(

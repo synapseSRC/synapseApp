@@ -4,31 +4,50 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onesignal.OneSignal
 import com.synapse.social.studioasinc.core.config.NotificationConfig
+import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
+import com.synapse.social.studioasinc.shared.domain.repository.SoundSettingsRepository
 import com.synapse.social.studioasinc.shared.domain.model.NotificationPreferences as DomainNotificationPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicLong
+import com.synapse.social.studioasinc.shared.core.util.getCurrentIsoTime
 import javax.inject.Inject
 import kotlinx.serialization.json.*
 
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val notificationRepository: NotificationRepository
+    private val notificationRepository: NotificationRepository,
+    private val soundSettingsRepository: SoundSettingsRepository
 ) : ViewModel() {
-
     private val _notificationPreferences = MutableStateFlow(NotificationPreferences())
     val notificationPreferences: StateFlow<NotificationPreferences> = _notificationPreferences.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
+    // Device-local, unlike the notification preferences above: these govern tones this hardware plays,
+    // so they live in DataStore and never sync to the backend.
+    val soundPreferences: StateFlow<SoundPreferences> = soundSettingsRepository.soundPreferences
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SoundPreferences())
+
+    private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val preferencesUpdateMutex = Mutex()
+    private var persistedPreferences = NotificationPreferences()
+    private var preferencesLoaded = false
+    private val latestPreferenceUpdateVersion = AtomicLong(0L)
 
     init {
         loadNotificationPreferences()
@@ -36,16 +55,19 @@ class NotificationSettingsViewModel @Inject constructor(
 
     private fun loadNotificationPreferences() {
         viewModelScope.launch {
-            val userId = authRepository.getCurrentUserId() ?: return@launch
             _isLoading.value = true
             try {
+                val userId = authRepository.getCurrentUserId()
+                    ?: throw IllegalStateException("User is not authenticated")
                 val domainPrefs = notificationRepository.fetchPreferences(userId)
-                if (domainPrefs != null) {
-                    val prefs = mapDomainToPreferences(domainPrefs)
-                    _notificationPreferences.value = prefs
-
-                    updateOneSignalTags(prefs)
-                }
+                val prefs = domainPrefs?.let(::mapDomainToPreferences) ?: NotificationPreferences()
+                _notificationPreferences.value = prefs
+                persistedPreferences = prefs
+                preferencesLoaded = true
+                updateOneSignalTags(prefs)
+                _error.value = null
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 android.util.Log.e("NotificationSettingsViewModel", "Failed to load notification preferences", e)
                 _error.value = "Failed to load notification preferences"
@@ -54,17 +76,12 @@ class NotificationSettingsViewModel @Inject constructor(
             }
         }
     }
-
     fun toggleGlobalNotifications(enabled: Boolean) {
         updatePreferences { it.copy(globalEnabled = enabled) }
     }
 
     fun toggleNotificationCategory(category: NotificationCategory, enabled: Boolean) {
         updatePreferences { it.withCategory(category, enabled) }
-    }
-
-    fun toggleInAppNotifications(enabled: Boolean) {
-        updatePreferences { it.copy(inAppNotificationsEnabled = enabled) }
     }
 
     fun toggleDoNotDisturb(enabled: Boolean) {
@@ -75,26 +92,56 @@ class NotificationSettingsViewModel @Inject constructor(
         updatePreferences { it.copy(quietHoursEnabled = enabled) }
     }
 
+    fun toggleSoundEffects(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setMasterEnabled(enabled) }
+    }
+
+    fun toggleMessageTones(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setMessageTonesEnabled(enabled) }
+    }
+
+    fun toggleCallTones(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setCallTonesEnabled(enabled) }
+    }
+
     fun setQuietHours(start: String, end: String) {
         updatePreferences { it.copy(quietHoursStart = start, quietHoursEnd = end) }
     }
 
     private fun updatePreferences(updateBlock: (NotificationPreferences) -> NotificationPreferences) {
+        if (!preferencesLoaded) {
+            _error.value = "Notification preferences are not ready yet"
+            return
+        }
+
+        val newPreferences = updateBlock(_notificationPreferences.value)
+        _notificationPreferences.value = newPreferences
+        val requestVersion = latestPreferenceUpdateVersion.incrementAndGet()
+
         viewModelScope.launch {
-            val userId = authRepository.getCurrentUserId() ?: return@launch
-            val currentPrefs = _notificationPreferences.value
-            val newPrefs = updateBlock(currentPrefs)
-
-            _notificationPreferences.value = newPrefs
-
             try {
-                notificationRepository.updatePreferences(userId, mapPreferencesToDomain(userId, newPrefs))
-
-                updateOneSignalTags(newPrefs)
+                val userId = authRepository.getCurrentUserId()
+                    ?: throw IllegalStateException("User is not authenticated")
+                preferencesUpdateMutex.withLock {
+                    val preferencesToPersist = _notificationPreferences.value
+                    val versionBeingPersisted = latestPreferenceUpdateVersion.get()
+                    if (preferencesToPersist != persistedPreferences) {
+                        notificationRepository.updatePreferences(userId, mapPreferencesToDomain(userId, preferencesToPersist))
+                        persistedPreferences = preferencesToPersist
+                        updateOneSignalTags(preferencesToPersist)
+                    }
+                    if (latestPreferenceUpdateVersion.get() == versionBeingPersisted) _error.value = null
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 android.util.Log.e("NotificationSettingsViewModel", "Failed to update preferences", e)
                 _error.value = "Failed to sync preferences"
-                _notificationPreferences.value = currentPrefs
+                preferencesUpdateMutex.withLock {
+                    if (latestPreferenceUpdateVersion.get() == requestVersion) {
+                        _notificationPreferences.value = persistedPreferences
+                    }
+                }
             }
         }
     }
@@ -110,6 +157,7 @@ class NotificationSettingsViewModel @Inject constructor(
             globalEnabled = domainPrefs.enabled,
             likesEnabled = social["likes"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_LIKES_ENABLED,
             commentsEnabled = social["comments"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_COMMENTS_ENABLED,
+            messagesEnabled = social["messages"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_MESSAGES_ENABLED,
             repliesEnabled = social["replies"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_REPLIES_ENABLED,
             followsEnabled = social["follows"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_FOLLOWS_ENABLED,
             mentionsEnabled = social["mentions"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_MENTIONS_ENABLED,
@@ -133,6 +181,7 @@ class NotificationSettingsViewModel @Inject constructor(
                 put("social", buildJsonObject {
                     put("likes", prefs.likesEnabled)
                     put("comments", prefs.commentsEnabled)
+                    put("messages", prefs.messagesEnabled)
                     put("replies", prefs.repliesEnabled)
                     put("follows", prefs.followsEnabled)
                     put("mentions", prefs.mentionsEnabled)
@@ -153,12 +202,8 @@ class NotificationSettingsViewModel @Inject constructor(
             },
             doNotDisturb = prefs.doNotDisturb,
             dndUntil = prefs.dndUntil,
-            updatedAt = null // Or current time
+            updatedAt = getCurrentIsoTime()
         )
-    }
-
-    fun isCategoryEnabled(category: NotificationCategory): Boolean {
-        return _notificationPreferences.value.isEnabled(category)
     }
 
     private fun updateOneSignalTags(prefs: NotificationPreferences) {
@@ -173,7 +218,11 @@ class NotificationSettingsViewModel @Inject constructor(
         tags[NotificationConfig.TAG_MESSAGES] = prefs.messagesEnabled.toString()
         tags[NotificationConfig.TAG_GLOBAL_ENABLED] = prefs.globalEnabled.toString()
 
-        OneSignal.User.addTags(tags)
+        try {
+            OneSignal.User.addTags(tags)
+        } catch (e: Exception) {
+            android.util.Log.w("NotificationSettingsViewModel", "Failed to sync OneSignal preference tags", e)
+        }
     }
 
     fun clearError() {

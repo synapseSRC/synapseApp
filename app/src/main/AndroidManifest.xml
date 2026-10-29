@@ -16,9 +16,22 @@
 	<uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
 	<uses-permission android:name="android.permission.CAMERA" />
 	<uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+	<!-- Calling. MODIFY_AUDIO_SETTINGS and the Bluetooth pair are what route a call to a headset;
+	     WAKE_LOCK keeps the screen awake while the ring is waiting; USE_FULL_SCREEN_INTENT is what lets
+	     an incoming call light up a locked screen — Android 14 does not grant it to a non-default dialer,
+	     so CallNotificationHelper falls back to a heads-up notification when it is refused. -->
+	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+	<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+	<uses-feature android:name="android.hardware.microphone" android:required="false" />
 
 	<uses-feature android:name="android.hardware.camera" android:required="false" />
 	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
@@ -231,6 +244,23 @@
 			android:excludeFromRecents="true"
 			android:exported="false" />
 
+		<!--
+			The host for a call reached from outside the app: an incoming-call notification, its
+			full-screen intent, or the accept/decline actions. Not exported and given no deep link on
+			purpose — every way into it is an explicit intent this app built, so nothing external can put
+			a call screen over the user's screen. Deliberately not portrait-locked the way MainActivity is:
+			a video call should follow how the phone is being held.
+		-->
+		<activity
+			android:name=".feature.call.CallActivity"
+			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale|uiMode"
+			android:hardwareAccelerated="true"
+			android:launchMode="singleTask"
+			android:supportsPictureInPicture="true"
+			android:theme="@style/AppTheme.FullScreen"
+			android:windowSoftInputMode="stateHidden"
+			android:exported="false" />
+
 		<activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
@@ -272,6 +302,23 @@
 			android:exported="false"
 			android:foregroundServiceType="dataSync" />
 
+		<!--
+			Holds the microphone (and the camera, once a call turns to video) while the call's screen is
+			not on top. The types are declared as both because a voice call can become a video call
+			without the manifest changing; the service only ever asks for the type its media justifies.
+		-->
+		<service
+			android:name=".service.call.CallForegroundService"
+			android:enabled="true"
+			android:exported="false"
+			android:foregroundServiceType="microphone|camera" />
+
+		<!-- The incoming-call notification's decline and swipe-away buttons. Explicit broadcasts only. -->
+		<receiver
+			android:name=".service.call.CallActionReceiver"
+			android:enabled="true"
+			android:exported="false" />
+
 <provider
   android:name="androidx.core.content.FileProvider"
   android:authorities="com.synapse.social.studioasinc.fileprovider"
@@ -289,5 +336,17 @@
 				android:name="autoStoreLocales"
 				android:value="true" />
 		</service>
+			<activity
+			android:name=".feature.inbox.inbox.GroupInviteActivity"
+			android:screenOrientation="portrait"
+			android:windowSoftInputMode="adjustResize"
+			android:exported="true">
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="https" android:host="synapse.chat" android:pathPrefix="/g/" />
+			</intent-filter>
+		</activity>
 	</application>
 </manifest>

@@ -95,9 +95,9 @@ object InboxShapes {
         @ReadOnlyComposable
         get() = MaterialTheme.shapes.large
 
-    val GroupedListTopShape = RoundedCornerShape(topStart = Spacing.Medium, topEnd = Spacing.Medium, bottomStart = Spacing.ExtraSmall, bottomEnd = Spacing.ExtraSmall)
-    val GroupedListMiddleShape = RoundedCornerShape(Spacing.ExtraSmall)
-    val GroupedListBottomShape = RoundedCornerShape(topStart = Spacing.ExtraSmall, topEnd = Spacing.ExtraSmall, bottomStart = Spacing.Medium, bottomEnd = Spacing.Medium)
+    val GroupedListTopShape = RoundedCornerShape(topStart = Sizes.CornerLarge, topEnd = Sizes.CornerLarge, bottomStart = Sizes.CornerSmall, bottomEnd = Sizes.CornerSmall)
+    val GroupedListMiddleShape = RoundedCornerShape(Sizes.CornerSmall)
+    val GroupedListBottomShape = RoundedCornerShape(topStart = Sizes.CornerSmall, topEnd = Sizes.CornerSmall, bottomStart = Sizes.CornerLarge, bottomEnd = Sizes.CornerLarge)
     val GroupedListSingleShape: androidx.compose.ui.graphics.Shape
         @Composable
         @ReadOnlyComposable
@@ -120,6 +120,15 @@ object InboxAnimations {
         easing = FastOutSlowInEasing
     )
 
+    const val MessageEntranceDurationMs = 200
+    val MessageEntranceOffset = (Spacing.space8 + Spacing.space12) / 2
+
+    // M3 emphasized-decelerate easing: most of the motion lands early, so it reads as snappy.
+    val MessageEntranceSpec: AnimationSpec<Float> = tween(
+        durationMillis = MessageEntranceDurationMs,
+        easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+    )
+
     val PulseSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = tween(
             durationMillis = 1500,
@@ -128,13 +137,32 @@ object InboxAnimations {
         repeatMode = RepeatMode.Reverse
     )
 
-    val TypingBounceSpec: InfiniteRepeatableSpec<Float> = infiniteRepeatable(
+    const val TypingCycleDurationMs = 1200
+    const val TypingDotStaggerMs = 160
+    const val TypingRiseDurationMs = 180
+    const val TypingFallDurationMs = 180
+
+    /**
+     * Per-dot bounce spec for the typing indicator. The stagger is baked into
+     * the keyframe timings so a single InfiniteTransition can drive all three
+     * dots and the motion is stable across recompositions.
+     *
+     * Produces a normalized 0f..1f wave progress where 0f is rest and 1f is peak bounce.
+     *
+     * @param dotIndex 0-based dot index (0, 1, or 2); delays the wave phase by
+     *   [dotIndex] * 160 ms.
+     */
+    fun typingBounceSpec(dotIndex: Int): InfiniteRepeatableSpec<Float> = infiniteRepeatable(
         animation = keyframes {
-            durationMillis = 600
+            durationMillis = TypingCycleDurationMs
+            val delayMs = dotIndex * TypingDotStaggerMs
             0f at 0 using LinearEasing
-            -6f at 150 using FastOutSlowInEasing
-            0f at 300 using FastOutSlowInEasing
-            0f at 600 using LinearEasing
+            if (delayMs > 0) {
+                0f at delayMs using FastOutSlowInEasing
+            }
+            1f at (delayMs + TypingRiseDurationMs) using FastOutSlowInEasing
+            0f at (delayMs + TypingRiseDurationMs + TypingFallDurationMs) using FastOutSlowInEasing
+            0f at TypingCycleDurationMs using LinearEasing
         },
         repeatMode = RepeatMode.Restart
     )
@@ -160,9 +188,9 @@ object InboxDimens {
     val UnreadBadgeSize = Sizes.IconSmallMedium
     val UnreadBadgeSizeSmall = Sizes.IconMedium
     val StoryRingWidth = Sizes.BorderSelected
-    val ChatItemPadding = Spacing.Medium
-    val ChatItemVerticalSpacing = Spacing.Small
-    val GroupedItemGap = Sizes.BorderDefault
+    val ChatItemPadding = Spacing.space16
+    val ChatItemVerticalSpacing = Spacing.space8
+    val GroupedItemGap = Spacing.space4
     val SectionHeaderHeight = Sizes.AvatarSmall
     val SwipeActionIconSize = Sizes.IconExtraLarge
     val FABSize = Sizes.AvatarLarge

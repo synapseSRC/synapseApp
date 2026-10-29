@@ -23,7 +23,7 @@ actual object SynapseConfig {
     actual val GITHUB_BUG_REPORT_URL: String = "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md"
     actual val DEFAULT_QUIET_HOURS_START: String = "22:00"
     actual val DEFAULT_QUIET_HOURS_END: String = "08:00"
-    actual val SUPABASE_REDIRECT_URL: String = "https://synapseofficial.vercel.app/"
+    actual val SUPABASE_REDIRECT_URL: String = "https://synapsesocial.vercel.app/"
     actual val X_BASE_URL: String = "https://x.com/"
     actual val INSTAGRAM_BASE_URL: String = "https://instagram.com/"
     actual val FACEBOOK_BASE_URL: String = "https://facebook.com/"

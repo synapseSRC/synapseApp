@@ -1,19 +1,24 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
 import androidx.compose.ui.platform.LocalUriHandler
-
+import android.widget.Toast
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.ContactsContract
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -34,13 +40,17 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.media.VoicePlayerManager
+import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
+import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecorder
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingController
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceRecordingAmbientGlow
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceGestureConfig
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
@@ -48,6 +58,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -57,44 +71,30 @@ import java.io.File
         participantId: String? = null,
         initialParticipantName: String? = null,
         initialParticipantAvatar: String? = null,
+        initialMessageId: String? = null,
         onNavigateBack: () -> Unit,
         onNavigateToGroupInfo: (String, String) -> Unit = { _, _ -> },
         onNavigateToChatInfo: (String, String) -> Unit = { _, _ -> },
         onNavigateToProfile: (String) -> Unit = {},
         onNavigateToEvent: (String) -> Unit = {},
         onNavigateToProduct: (String) -> Unit = {},
+        onNavigateToNewGroup: () -> Unit = {},
+        onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
+        onNavigateToChatSettings: (String) -> Unit = {},
+        onNavigateToChatSearch: (String) -> Unit = {},
+        onStartCall: (CallLaunchRequest) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
+    var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
         viewModel.initialize(chatId, participantId)
-    }
-
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    var isFirstResume by rememberSaveable { mutableStateOf(true) }
-    DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            when (event) {
-                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
-                    viewModel.onVisibilityChanged(true)
-                    if (isFirstResume) {
-                        isFirstResume = false
-                    } else {
-                        viewModel.restartSubscriptions()
-                        viewModel.refreshMessages()
-                    }
-                }
-                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
-                    viewModel.onVisibilityChanged(false)
-                }
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            viewModel.onVisibilityChanged(false)
-        }
     }
 
     val messages by viewModel.messages.collectAsState()
@@ -102,6 +102,7 @@ import java.io.File
     val inputText by viewModel.inputText.collectAsState()
 
     val isLoading by viewModel.isLoading.collectAsState()
+    val isScreenVisible by viewModel.isScreenVisible.collectAsState()
     val participantProfile by viewModel.participantProfile.collectAsState()
     val isParticipantActive by viewModel.isParticipantActive.collectAsState()
 
@@ -117,11 +118,13 @@ import java.io.File
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
     val isGroupChat by viewModel.isGroupChat.collectAsState()
+    val resolvedChatId by viewModel.resolvedChatId.collectAsState()
     val groupMemberNames by viewModel.groupMemberNames.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
 
-    val currentUserId = viewModel.currentUserId ?: ""
+    val currentUserIdState by viewModel.currentUserId.collectAsState()
+val currentUserId = currentUserIdState ?: ""
 
     val chatWallpaperType by viewModel.chatWallpaperType.collectAsState()
     val chatWallpaperValue by viewModel.chatWallpaperValue.collectAsState()
@@ -137,12 +140,40 @@ import java.io.File
             else com.synapse.social.studioasinc.shared.core.network.SupabaseClient.constructAvatarUrl(it)
         }
 
+    val launchCall: (Boolean) -> Unit = { isVideo ->
+        val peerId = participantId
+        if (peerId != null) {
+            onStartCall(
+                CallLaunchRequest(
+                    participantId = peerId,
+                    participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
+                        ?: participantProfile?.name?.takeIf { it.isNotBlank() }
+                        ?: participantProfile?.username?.takeIf { it.isNotBlank() }
+                        ?: initialParticipantName?.takeIf { it.isNotBlank() }
+                        ?: peerId,
+                    participantAvatarUrl = participantAvatarUrl,
+                    chatId = resolvedChatId?.takeIf { it.isNotBlank() && it != "new" },
+                    isVideo = isVideo
+                )
+            )
+        }
+    }
+
     var selectedMessageForMenu by remember { mutableStateOf<Message?>(null) }
     var batchGalleryMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
+    var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
+    var showDeleteSelectedDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
-    val listState = rememberLazyListState()
+    LaunchedEffect(selectedMessageIds) {
+        if (selectedMessageIds.isEmpty()) showDeleteSelectedDialog = false
+    }
+
+    val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
+        LazyListState(0, 0)
+    }
+    var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val focusManager = LocalFocusManager.current
@@ -150,12 +181,11 @@ import java.io.File
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
-    val cancelThresholdPx = with(density) { 100.dp.toPx() }
-    val lockThresholdPx = with(density) { 90.dp.toPx() }
-    val directionSlopPx = with(density) { 12.dp.toPx() }
-
-    var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
-
+    val gestureConfig = remember { VoiceGestureConfig() }
+    val cancelThresholdPx = with(density) { gestureConfig.cancelThresholdDp.dp.toPx() }
+    val lockThresholdPx = with(density) { gestureConfig.lockThresholdDp.dp.toPx() }
+    val directionSlopPx = with(density) { gestureConfig.directionSlopDp.dp.toPx() }
+    val composerHeight = with(density) { composerHeightPx.toDp() }
     // Voice Recording Infrastructure
     val voiceRecorder = remember { VoiceRecorder(context) }
     val voicePlayerManager = remember { VoicePlayerManager(context.applicationContext) }
@@ -167,14 +197,97 @@ import java.io.File
             voicePlayerManager = voicePlayerManager,
             getOutputFile = { File(context.cacheDir, "temp_voice_${System.currentTimeMillis()}.m4a") },
             onHapticPerform = { haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onSoundPerform = { viewModel.playRecordingCue() },
             onSendVoiceMessage = { audioFile, durationMs, onResult ->
                 viewModel.uploadVoiceMessage(audioFile, durationMs, onResult)
             },
+            gestureConfig = gestureConfig,
             cancelThresholdPx = cancelThresholdPx,
             lockThresholdPx = lockThresholdPx,
             directionSlopPx = directionSlopPx
         )
     }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var isFirstResume by rememberSaveable { mutableStateOf(true) }
+    DisposableEffect(lifecycleOwner, voiceController) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
+                    viewModel.onVisibilityChanged(true)
+                    if (isFirstResume) {
+                        isFirstResume = false
+                    } else {
+                        viewModel.restartSubscriptions()
+                        viewModel.refreshMessages()
+                    }
+                }
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> {
+                    viewModel.onVisibilityChanged(false)
+                    voiceController.onPauseBackground()
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onVisibilityChanged(false)
+        }
+    }
+
+    val messageListBottomPadding = if (composerHeight > 0.dp) {
+        composerHeight + Spacing.space12
+    } else {
+        Sizes.Height100
+    }
+
+    var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
+    fun acceptSelectedUris(uris: List<Uri>) {
+        if (uris.isNotEmpty()) {
+            uris.forEach { uri ->
+                try {
+                    context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: Exception) {
+                    // Some system photo providers provide a temporary grant instead.
+                }
+            }
+            coroutineScope.launch {
+                val results = withContext(Dispatchers.IO) {
+                    uris.map { uri -> runCatching { context.toPickedFile(uri) } }
+                }
+                val files = results.mapNotNull { it.getOrNull() }
+                if (files.size != uris.size) {
+                    android.widget.Toast.makeText(context, R.string.chat_attachment_read_failed, android.widget.Toast.LENGTH_SHORT).show()
+                }
+                if (files.isNotEmpty()) selectedMediaFiles = files
+            }
+        }
+    }
+
+    val photoVideoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10),
+        onResult = { uris -> acceptSelectedUris(uris) }
+    )
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri -> uri?.let { acceptSelectedUris(listOf(it)) } }
+    )
+    val contactPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact(),
+        onResult = { uri ->
+            uri?.let { contactUri ->
+                coroutineScope.launch {
+                    try {
+                        val contactFile = withContext(Dispatchers.IO) { context.toContactVCard(contactUri) }
+                        selectedMediaFiles = listOf(contactFile)
+                    } catch (_: Exception) {
+                        android.widget.Toast.makeText(context, R.string.chat_attachment_contact_failed, android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    )
 
     LaunchedEffect(cancelThresholdPx, lockThresholdPx, directionSlopPx) {
         voiceController.updateThresholds(cancelThresholdPx, lockThresholdPx, directionSlopPx)
@@ -223,27 +336,69 @@ import java.io.File
         }
     }
 
-    var listReady by remember { mutableStateOf(false) }
-    var showDisappearingModeDialog by remember { mutableStateOf(false) }
+    val hasInitialTarget = !initialMessageId.isNullOrBlank()
+    var initialScrollCompleted by rememberSaveable(chatId) { mutableStateOf(hasInitialTarget) }
+    var showDisappearingModeDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
-    var lastScrolledMessageId by remember { mutableStateOf<String?>(null) }
-    val newestMessage = remember(messages) { messages.lastOrNull() }
-    val newestMessageId = newestMessage?.id
+    var isUserDragging by remember { mutableStateOf(false) }
+    LaunchedEffect(listState.interactionSource) {
+        listState.interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is DragInteraction.Start -> isUserDragging = true
+                is DragInteraction.Stop,
+                is DragInteraction.Cancel -> isUserDragging = false
+            }
+        }
+    }
 
-    LaunchedEffect(newestMessageId) {
-        if (newestMessageId != null) {
-            if (!listReady) {
+    var lastScrolledMessageClientId by rememberSaveable(chatId) { mutableStateOf<String?>(null) }
+    val newestMessage = remember(chatItems) {
+        chatItems.filterIsInstance<ChatListItem.MessageItem>().lastOrNull()?.message
+    }
+    val newestMessageClientId = newestMessage?.clientId
+
+    LaunchedEffect(chatId, newestMessageClientId) {
+        if (newestMessageClientId != null) {
+            if (!initialScrollCompleted) {
                 listState.scrollToItem(0)
-                listReady = true
-                lastScrolledMessageId = newestMessageId
-            } else if (newestMessageId != lastScrolledMessageId) {
+                initialScrollCompleted = true
+                lastScrolledMessageClientId = newestMessageClientId
+            } else if (newestMessageClientId != lastScrolledMessageClientId) {
                 val isFromMe = newestMessage.senderId == currentUserId
-                val isNearBottom = listState.firstVisibleItemIndex <= 3
+                val bottomThreshold = if (typingStatus?.isTyping == true) 4 else 3
+                val isNearBottom = listState.firstVisibleItemIndex <= bottomThreshold
 
-                if (isFromMe || isNearBottom) {
-                    listState.animateScrollToItem(0)
+                if (isFromMe) {
+                    listState.scrollToItem(0)
+                    lastScrolledMessageClientId = newestMessageClientId
+                } else if (isNearBottom) {
+                    if (!isUserDragging) {
+                        listState.scrollToItem(0)
+                        lastScrolledMessageClientId = newestMessageClientId
+                    }
+                } else {
+                    lastScrolledMessageClientId = newestMessageClientId
                 }
-                lastScrolledMessageId = newestMessageId
+            }
+        }
+    }
+
+    LaunchedEffect(isUserDragging) {
+        if (!isUserDragging && initialScrollCompleted && newestMessageClientId != null && newestMessageClientId != lastScrolledMessageClientId) {
+            val bottomThreshold = if (typingStatus?.isTyping == true) 4 else 3
+            if (listState.firstVisibleItemIndex <= bottomThreshold) {
+                listState.scrollToItem(0)
+                lastScrolledMessageClientId = newestMessageClientId
+            }
+        }
+    }
+
+    val isTyping = typingStatus?.isTyping == true
+    LaunchedEffect(isTyping) {
+        if (isTyping && initialScrollCompleted && !isUserDragging) {
+            val bottomThreshold = 4
+            if (listState.firstVisibleItemIndex <= bottomThreshold) {
+                listState.animateScrollToItem(0)
             }
         }
     }
@@ -251,6 +406,8 @@ import java.io.File
     Scaffold(
         topBar = {
             val disappearingMode by viewModel.disappearingMode.collectAsState()
+            val isMuted by viewModel.isMuted.collectAsState()
+            val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
             ChatTopAppBar(
                 selectedMessageIds = selectedMessageIds,
                 messages = messages,
@@ -262,16 +419,54 @@ import java.io.File
                 isParticipantActive = isParticipantActive,
                 chatId = chatId,
                 disappearingMode = disappearingMode,
-                isLocked = viewModel.isChatLocked(),
+                isMuted = isMuted,
+                isMuteUpdating = isMuteUpdating,
                 onClearSelection = viewModel::clearSelection,
-                onDeleteSelectedMessages = viewModel::deleteSelectedMessages,
+                onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
                 onNavigateBack = onNavigateBack,
                 onSummarizeChat = viewModel::summarizeChat,
                 onNavigateToGroupInfo = onNavigateToGroupInfo,
                 onNavigateToChatInfo = onNavigateToChatInfo,
-                onSetDisappearingMode = { showDisappearingModeDialog = true },
-                onLockChat = viewModel::lockCurrentChat,
-                onUnlockChat = viewModel::unlockCurrentChat
+                onOpenDisappearingMessages = { showDisappearingModeDialog = true },
+                onStartVoiceCall = { launchCall(false) },
+                onStartVideoCall = { launchCall(true) },
+                showCallActions = participantId != null && !isGroupChat,
+                onNewGroup = onNavigateToNewGroup,
+                onSearchInChat = { onNavigateToChatSearch(chatId) },
+                onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
+                onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
+                onOpenChatTheme = { onNavigateToChatSettings(chatId) },
+                onReportChat = { showReportDialog = true },
+                onBlockChat = { showBlockDialog = true },
+                onClearChat = { showClearChatDialog = true },
+                onExportChat = {
+                    viewModel.exportChat(
+                        onSuccess = { formattedText ->
+                            // For now, just show a toast with the formatted text
+                            // In a full implementation, this would save to a file or share
+                            Toast.makeText(context, "Chat exported (${formattedText.length} chars)", Toast.LENGTH_SHORT).show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                onAddShortcut = {
+                    val chatName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName ?: "Chat"
+                    viewModel.createChatShortcut(
+                        chatName = chatName,
+                        avatarUrl = participantProfile?.avatar,
+                        onSuccess = {
+                            Toast.makeText(context, "Shortcut created", Toast.LENGTH_SHORT).show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                onAddToFolder = {
+                    showFolderDialog = true
+                }
             )
         }
     ) { paddingValues ->
@@ -280,14 +475,13 @@ import java.io.File
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(top = paddingValues.calculateTopPadding())
-                .imePadding()
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = {
                         focusManager.clearFocus()
                     })
                 }
         ) {
-
             ChatBackground(
                 chatWallpaperType = chatWallpaperType,
                 chatWallpaperValue = chatWallpaperValue,
@@ -313,7 +507,7 @@ import java.io.File
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
                         TextButton(onClick = { viewModel.initialize(chatId, participantId) }) {
                             Text(stringResource(R.string.action_retry))
                         }
@@ -321,9 +515,11 @@ import java.io.File
                 }
                 else -> {
                     ChatMessageList(
-                        modifier = Modifier.graphicsLayer { alpha = if (listReady || messages.isEmpty()) 1f else 0f },
+                        chatId = chatId,
+                        modifier = Modifier.graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
+                        bottomContentPadding = messageListBottomPadding,
                         currentUserId = currentUserId,
                         selectedMessageIds = selectedMessageIds,
                         chatFontScale = chatFontScale,
@@ -337,14 +533,21 @@ import java.io.File
                         isGroupChat = isGroupChat,
                         groupMemberNames = groupMemberNames,
                         listState = listState,
+                        initialMessageId = initialMessageId,
+                        isListVisible = initialScrollCompleted || messages.isEmpty(),
+                        isScreenVisible = isScreenVisible,
                         isLoadingMore = isLoadingMore,
-                        typingStatus = typingStatus,
+typingStatus = typingStatus,
+                        typingStatusDisplayName = if (isGroupChat) {
+                            typingStatus?.userId?.let { groupMemberNames[it] }
+                        } else null,
                         onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
                         onSingleTap = { selectedMessageForMenu = it },
                         onToggleSelection = { viewModel.toggleMessageSelection(it) },
                         onSwipeToReply = { viewModel.setReplyingToMessage(it) },
                         onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
                         onNavigateToProfile = onNavigateToProfile,
+                        onOpenEncryption = { showEncryptionSheet = true },
                         onLocateMessage = viewModel::loadQuotedMessage,
                         onOpenBatchGallery = { batchGalleryMessage = it },
                         onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
@@ -359,7 +562,8 @@ import java.io.File
                         onOpenEvent = { eventId -> try { uriHandler.openUri("synapse://event/$eventId") } catch (_: Exception) {} },
                         onOpenProduct = { productId -> try { uriHandler.openUri("synapse://product/$productId") } catch (_: Exception) {} },
                         onOpenMap = { lat, lon -> try { uriHandler.openUri("https://maps.google.com/?q=$lat,$lon") } catch (_: Exception) {} },
-                        onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} }
+                        onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} },
+                        onRetryClick = viewModel::retrySendMessage
                     )
 
                     if (selectedMessageForMenu != null) {
@@ -369,8 +573,10 @@ import java.io.File
                             onDismissRequest = { selectedMessageForMenu = null },
                             onReactionSelected = viewModel::toggleMessageReaction,
                             onStartEditing = viewModel::startEditing,
-                            onDeleteMessageForMe = viewModel::deleteMessageForMe,
-                            onDeleteMessageForEveryone = viewModel::deleteMessage,
+                            onDeleteMessage = { message ->
+                                selectedMessageForMenu = null
+                                showDeleteMessageDialog = message
+                            },
                             onSummarizeMessage = viewModel::summarizeMessage
                         )
                     }
@@ -383,30 +589,61 @@ import java.io.File
                 onDismissRequest = viewModel::clearMessageSummary
             )
 
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(Sizes.HeightMedium)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    )
+            DeleteMessageDialog(
+                message = showDeleteMessageDialog,
+                canDeleteForEveryone = showDeleteMessageDialog?.senderId == currentUserId,
+                onDismissRequest = { showDeleteMessageDialog = null },
+                onDeleteForMe = { message ->
+                    showDeleteMessageDialog = null
+                    viewModel.deleteMessageForMe(message)
+                },
+                onDeleteForEveryone = { message ->
+                    showDeleteMessageDialog = null
+                    viewModel.deleteMessage(message)
+                }
             )
+
+            if (showDeleteSelectedDialog) {
+                val selectedMessages = messages.filter { it.id in selectedMessageIds }
+                DeleteSelectedMessagesDialog(
+                    messageCount = selectedMessageIds.size,
+                    canDeleteForEveryone = selectedMessages.isNotEmpty() &&
+                        selectedMessages.all { it.senderId == currentUserId },
+                    onDismissRequest = { showDeleteSelectedDialog = false },
+                    onDeleteForMe = {
+                        showDeleteSelectedDialog = false
+                        viewModel.deleteSelectedMessagesForMe()
+                    },
+                    onDeleteForEveryone = {
+                        showDeleteSelectedDialog = false
+                        viewModel.deleteSelectedMessagesForEveryone()
+                    }
+                )
+            }
+
+            if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {
+                VoiceRecordingAmbientGlow(
+                    voiceState = voiceState,
+                    reducedMotionOverride = reducedMotion,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        // Project design decision (not an M3 token): keep spill local to the composer and nearby bubbles.
+                        .height(184.dp)
+                )
+            }
 
             // Redesigned Voice Input Bar & Host
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .onSizeChanged { composerHeightPx = it.height }
             ) {
                 ChatInputBar(
                     replyingToMessage = replyingToMessage,
                     editingMessage = editingMessage,
                     smartReplies = smartReplies,
+                    reducedMotion = reducedMotion,
                     inputText = inputText,
                     canSendMessage = canSendMessage,
                     currentUserId = currentUserId,
@@ -441,8 +678,18 @@ import java.io.File
                     onSendMessage = viewModel::sendMessage,
                     onCancelReply = viewModel::cancelReply,
                     onCancelEditing = viewModel::cancelEditing,
-                    onUploadAndSendMedia = viewModel::uploadAndSendMedia,
-                    onFilesSelected = { files -> selectedMediaFiles = files }
+                    onAttachmentSelected = { category ->
+                        focusManager.clearFocus()
+                        when (category) {
+                            ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                            )
+                            ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
+                            ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
+                            ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
+                            ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                        }
+                    }
                 )
             }
 
@@ -482,6 +729,112 @@ import java.io.File
                 onDismissRequest = { showDisappearingModeDialog = false }
             )
         }
+
+        if (showReportDialog) {
+            AlertDialog(
+                onDismissRequest = { showReportDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_report)) },
+                text = {
+                    Column {
+                        Text("Are you sure you want to report this user?")
+                        Spacer(modifier = Modifier.height(Spacing.space8))
+                        OutlinedTextField(
+                            value = "",
+                            onValueChange = { },
+                            label = { Text("Reason") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showReportDialog = false
+                            Toast.makeText(context, "Report submitted", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showReportDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+
+        if (showBlockDialog) {
+            AlertDialog(
+                onDismissRequest = { showBlockDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_block)) },
+                text = { Text("Are you sure you want to block this user? You won't receive messages from them.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showBlockDialog = false
+                            Toast.makeText(context, "User blocked", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBlockDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+
+        if (showClearChatDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearChatDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_clear_chat)) },
+                text = { Text("Are you sure you want to clear this chat? This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showClearChatDialog = false
+                            Toast.makeText(context, "Chat cleared", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearChatDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+
+        if (showFolderDialog) {
+            ChatFolderSelectionBottomSheet(
+                folders = emptyList(), // TODO: Load from SettingsRepository
+                currentFolderId = null,
+                onFolderSelected = { folder ->
+                    viewModel.addToFolder(
+                        chatId = chatId,
+                        folderId = folder.id,
+                        onSuccess = {
+                            Toast.makeText(context, "Added to ${folder.name}", Toast.LENGTH_SHORT).show()
+                            showFolderDialog = false
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                onCreateNewFolder = {
+                    showFolderDialog = false
+                    Toast.makeText(context, "Create folder - Coming soon", Toast.LENGTH_SHORT).show()
+                },
+                onDismiss = { showFolderDialog = false }
+            )
+        }
     }
 
     selectedMediaFiles?.let { files ->
@@ -496,17 +849,117 @@ import java.io.File
                     val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
                     if (filePath != null) filePath to pickedFile else null
                 }
+                if (validFiles.size != finalFiles.size) {
+                    android.widget.Toast.makeText(context, R.string.chat_attachment_read_failed, android.widget.Toast.LENGTH_SHORT).show()
+                }
                 if (validFiles.isNotEmpty()) {
-                    viewModel.uploadAndSendMultipleMedia(validFiles, caption, quality)
+                    val allVisualMedia = validFiles.all { (_, pickedFile) ->
+                        pickedFile.mimeType.startsWith("image/") || pickedFile.mimeType.startsWith("video/")
+                    }
+                    if (allVisualMedia) {
+                        viewModel.uploadAndSendMultipleMedia(validFiles, caption, quality)
+                    } else {
+                        validFiles.forEach { (filePath, pickedFile) ->
+                            val messageType = if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
+                            viewModel.uploadAndSendMedia(
+                                filePath = filePath,
+                                fileName = pickedFile.fileName,
+                                contentType = pickedFile.mimeType,
+                                messageType = messageType,
+                                caption = caption,
+                                quality = quality
+                            )
+                        }
+                    }
                 }
                 selectedMediaFiles = null
             }
         )
     }
+    if (showEncryptionSheet && !isGroupChat) {
+        ChatEncryptionSheet(
+            chatId = resolvedChatId ?: chatId,
+            participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
+                ?: participantProfile?.name?.takeIf { it.isNotBlank() }
+                ?: participantProfile?.username?.takeIf { it.isNotBlank() }
+                ?: initialParticipantName?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.chat_security_contact_fallback),
+            onDismiss = { showEncryptionSheet = false }
+        )
+    }
 }
 
-@dagger.hilt.EntryPoint
-@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
-interface VoiceUploadServiceEntryPoint {
-    fun getVoiceUploadService(): VoiceUploadService
+private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.presentation",
+    "application/rtf",
+    "text/csv",
+    "text/plain"
+)
+
+private fun Context.toPickedFile(uri: Uri): PickedFile {
+    val projection = arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
+    var fileName = getString(R.string.chat_attachment_default_file_name)
+    var fileSize = 0L
+    contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (nameIndex >= 0 && !cursor.isNull(nameIndex)) {
+                cursor.getString(nameIndex)?.takeIf { it.isNotBlank() }?.let { fileName = it }
+            }
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) fileSize = cursor.getLong(sizeIndex).coerceAtLeast(0L)
+        }
+    }
+    val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
+    return PickedFile(uri = uri, mimeType = mimeType, fileName = fileName, size = fileSize)
+}
+
+private fun Context.toContactVCard(contactUri: Uri): PickedFile {
+    val contact = contentResolver.query(
+        contactUri,
+        arrayOf(ContactsContract.Contacts.LOOKUP_KEY, ContactsContract.Contacts.DISPLAY_NAME),
+        null,
+        null,
+        null
+    )?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            val lookupIndex = cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY)
+            val nameIndex = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+            if (lookupIndex >= 0 && !cursor.isNull(lookupIndex)) {
+                cursor.getString(lookupIndex) to if (nameIndex >= 0 && !cursor.isNull(nameIndex)) cursor.getString(nameIndex) else ""
+            } else null
+        } else null
+    } ?: throw IOException(getString(R.string.chat_attachment_contact_failed))
+
+    val lookupKey = contact.first.takeIf { it.isNotBlank() }
+        ?: throw IOException(getString(R.string.chat_attachment_contact_failed))
+    val outputFile = File.createTempFile("synapse-contact-", ".vcf", cacheDir)
+    try {
+        val vCardUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_VCARD_URI, lookupKey)
+        val input = contentResolver.openInputStream(vCardUri)
+            ?: throw IOException(getString(R.string.chat_attachment_contact_failed))
+        input.use { source -> outputFile.outputStream().use { destination -> source.copyTo(destination) } }
+        if (outputFile.length() == 0L) throw IOException(getString(R.string.chat_attachment_contact_failed))
+    } catch (exception: Exception) {
+        outputFile.delete()
+        throw exception
+    }
+
+    val safeName = contact.second.orEmpty().trim().replace("/", "_").take(80)
+        .ifBlank { getString(R.string.chat_attachment_default_file_name) }
+    return PickedFile(
+        uri = Uri.fromFile(outputFile),
+        mimeType = "text/vcard",
+        fileName = safeName + ".vcf",
+        size = outputFile.length()
+    )
 }

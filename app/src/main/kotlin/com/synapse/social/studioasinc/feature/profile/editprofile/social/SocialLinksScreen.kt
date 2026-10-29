@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.presentation.editprofile.social
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,10 +52,10 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsClickableItem
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 enum class EditableSocialField {
     GITHUB,
@@ -151,7 +153,7 @@ fun SocialLinksScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.error
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(Spacing.space16))
                             Button(onClick = { viewModel.onEvent(SocialLinksEvent.RetryClicked) }) {
                                 Text(text = stringResource(R.string.retry))
                             }
@@ -162,20 +164,20 @@ fun SocialLinksScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
-                            start = SettingsSpacing.screenPadding,
-                            end = SettingsSpacing.screenPadding,
-                            top = paddingValues.calculateTopPadding() + SettingsSpacing.itemSpacing,
-                            bottom = paddingValues.calculateBottomPadding() + SettingsSpacing.itemSpacing
+                            start = AppSpacing.screenPadding,
+                            end = AppSpacing.screenPadding,
+                            top = paddingValues.calculateTopPadding() + AppSpacing.itemSpacing,
+                            bottom = paddingValues.calculateBottomPadding() + AppSpacing.itemSpacing
                         ),
-                        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                     ) {
                         // Section 1: Social Profiles
                         item {
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                SettingsHeaderItem(title = stringResource(R.string.social_profiles_section))
+                                SectionHeader(title = stringResource(R.string.social_profiles_section))
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                                 ) {
                                     // GitHub - Top
                                     SettingsClickableItem(
@@ -210,10 +212,10 @@ fun SocialLinksScreen(
                         // Section 2: Public Contact
                         item {
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                SettingsHeaderItem(title = stringResource(R.string.public_contact_section))
+                                SectionHeader(title = stringResource(R.string.public_contact_section))
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                                 ) {
                                     // Public Email - Single
                                     SettingsClickableItem(
@@ -292,7 +294,7 @@ fun SocialLinksScreen(
                                 }
                             },
                             singleLine = true,
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = when (field) {
                                 EditableSocialField.PUBLIC_EMAIL -> KeyboardOptions(keyboardType = KeyboardType.Email, capitalization = KeyboardCapitalization.None)

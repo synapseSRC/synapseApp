@@ -57,7 +57,7 @@ class UploadMediaUseCase(
                 val provider = getProviderForMediaType(config, mediaType)
 
                 val providersToTry = if (requirePrivateStorage) {
-                    if (config.isProviderConfigured(StorageProvider.SUPABASE)) listOf(StorageProvider.SUPABASE) else emptyList()
+                    if (config.isProviderConfigured(StorageProvider.PRIMARY)) listOf(StorageProvider.PRIMARY) else emptyList()
                 } else {
                     getProvidersToTry(
                         selectedProvider = provider,
@@ -128,7 +128,7 @@ class UploadMediaUseCase(
         return buildList {
             if (config.isProviderConfigured(StorageProvider.CLOUDFLARE_R2)) add(StorageProvider.CLOUDFLARE_R2)
             if (config.isProviderConfigured(StorageProvider.CLOUDINARY)) add(StorageProvider.CLOUDINARY)
-            if (config.isProviderConfigured(StorageProvider.SUPABASE)) add(StorageProvider.SUPABASE)
+            if (config.isProviderConfigured(StorageProvider.PRIMARY)) add(StorageProvider.PRIMARY)
             
             // ImgBB only supports images
             if ((mediaType == MediaType.PHOTO || mediaType == MediaType.IMAGE) && 

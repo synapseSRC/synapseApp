@@ -6,7 +6,7 @@ struct RegisterView: View {
 
     var body: some View {
         ZStack {
-            VStack(spacing: 20) {
+            VStack(spacing: AppTheme.Spacing.space20) {
                 Text(String(localized: "action_create_account"))
                     .font(.largeTitle)
                     .fontWeight(.bold)

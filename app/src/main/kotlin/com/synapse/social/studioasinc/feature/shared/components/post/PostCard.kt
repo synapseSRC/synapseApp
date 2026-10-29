@@ -91,7 +91,7 @@ fun PostCard(
     onBookmarkClick: () -> Unit,
     onUserClick: () -> Unit,
     onPostClick: () -> Unit,
-    onMediaClick: (Int) -> Unit,
+    onMediaClick: (Post, Int) -> Unit,
     onOptionsClick: () -> Unit,
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,
@@ -111,16 +111,16 @@ fun PostCard(
         if (state.repostedBy != null) {
             Row(
                 modifier = Modifier
-                    .padding(start = Sizes.AvatarDefault, top = Spacing.Small, bottom = Spacing.ExtraSmall),
+                    .padding(start = Sizes.AvatarDefault, top = Spacing.space8, bottom = Spacing.space4),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Outlined.Repeat,
                     contentDescription = null,
-                    modifier = Modifier.size(Spacing.Medium),
+                    modifier = Modifier.size(Sizes.IconSemiMedium),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.width(Spacing.Small))
+                Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
                     text = "${state.repostedBy} reposted",
                     style = MaterialTheme.typography.labelMedium,
@@ -141,8 +141,8 @@ fun PostCard(
                 .fillMaxWidth()
                 .drawBehind {
                     val strokeWidth = Sizes.BorderDefault.toPx()
-                    val paddingX = Spacing.SmallMedium.toPx()
-                    val paddingY = Spacing.Small.toPx()
+                    val paddingX = Spacing.space12.toPx()
+                    val paddingY = Spacing.space8.toPx()
                     val avatarRadius = (avatarSize / 2).toPx()
                     val centerX = paddingX + avatarRadius
                     val avatarCenterY = paddingY + avatarRadius
@@ -167,7 +167,7 @@ fun PostCard(
                         )
                     }
                 }
-                .padding(horizontal = Spacing.SmallMedium, vertical = Spacing.Small)
+                .padding(horizontal = Spacing.space12, vertical = Spacing.space8)
         ) {
             // Left Column: Avatar
             Box(
@@ -184,7 +184,7 @@ fun PostCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(Spacing.SmallMedium))
+            Spacer(modifier = Modifier.width(Spacing.space12))
 
             // Right Column: Header, Content
             Column(modifier = Modifier.weight(1f)) {
@@ -245,9 +245,9 @@ fun PostCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.SmallMedium)
+                    .padding(horizontal = Spacing.space12)
             ) {
-                Spacer(modifier = Modifier.height(Spacing.Small))
+                Spacer(modifier = Modifier.height(Spacing.space8))
                 // Timestamp on its own line
                 if (state.formattedTimestamp.isNotBlank()) {
                     Text(
@@ -255,9 +255,9 @@ fun PostCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(
-                            start = avatarSize + Spacing.SmallMedium,
-                            top = Spacing.ExtraSmall,
-                            bottom = Spacing.ExtraSmall
+                            start = avatarSize + Spacing.space12,
+                            top = Spacing.space4,
+                            bottom = Spacing.space4
                         )
                     )
                 }
@@ -271,7 +271,7 @@ fun PostCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Spacing.Small),
+                        .padding(vertical = Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -280,7 +280,7 @@ fun PostCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(Sizes.IconMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(
                         text = stringResource(R.string.view_post_activity),
                         style = MaterialTheme.typography.bodyMedium,
@@ -319,7 +319,7 @@ fun PostCard(
 
         if (!state.showThreadLine && !isReply) {
             HorizontalDivider(
-                modifier = Modifier.padding(horizontal = Spacing.SmallMedium),
+                modifier = Modifier.padding(horizontal = Spacing.space12),
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                 thickness = Sizes.BorderHairline
             )

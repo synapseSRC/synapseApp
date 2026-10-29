@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +51,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostActions
 import com.synapse.social.studioasinc.feature.shared.components.post.PostOptionsBottomSheet
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
+import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.core.ui.animation.SkeletonMorphedContent
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
@@ -80,6 +82,9 @@ fun SearchScreen(
     val postLinkLabel = stringResource(R.string.clip_label_post_link)
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
+    var showMediaViewer by remember { mutableStateOf(false) }
+    var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedMediaIndex by remember { mutableIntStateOf(0) }
 
 
     val pagerState = rememberPagerState(
@@ -179,30 +184,30 @@ fun SearchScreen(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                            .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                     ) {
                         if (uiState.trendingHashtags.isNotEmpty()) {
                             Text(
                                 text = stringResource(R.string.trending),
                                 style = MaterialTheme.typography.labelMedium,
                                 modifier = Modifier.padding(
-                                    horizontal = Spacing.Medium,
-                                    vertical = Spacing.Small
+                                    horizontal = Spacing.space16,
+                                    vertical = Spacing.space8
                                 )
                             )
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = Spacing.Small),
-                                contentPadding = PaddingValues(horizontal = Spacing.Medium),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                                    .padding(bottom = Spacing.space8),
+                                contentPadding = PaddingValues(horizontal = Spacing.space16),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                             ) {
                                 items(uiState.trendingHashtags, key = { it.id }) { hashtag ->
                                     FilterChip(
                                         selected = false,
                                         onClick = { viewModel.onSearch("#${hashtag.tag}") },
                                         label = { Text(stringResource(R.string.common_hashtag_format, hashtag.tag)) },
-                                        shape = RoundedCornerShape(Spacing.Medium),
+                                        shape = RoundedCornerShape(Sizes.CornerLarge),
                                         colors = FilterChipDefaults.filterChipColors(
                                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
                                             labelColor = MaterialTheme.colorScheme.primary
@@ -219,15 +224,15 @@ fun SearchScreen(
                                 text = stringResource(R.string.recent_searches),
                                 style = MaterialTheme.typography.labelMedium,
                                 modifier = Modifier.padding(
-                                    horizontal = Spacing.Medium,
-                                    vertical = Spacing.Small
+                                    horizontal = Spacing.space16,
+                                    vertical = Spacing.space8
                                 )
                             )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = Spacing.Medium),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+                                    .padding(horizontal = Spacing.space16),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                             ) {
                                 history.forEach { query ->
                                     FilterChip(
@@ -259,7 +264,7 @@ fun SearchScreen(
                         selectedTabIndex = pagerState.currentPage,
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.primary,
-                        edgePadding = Spacing.Small,
+                        edgePadding = Spacing.space8,
                         divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
                     ) {
                         SearchTab.entries.forEach { tab ->
@@ -302,14 +307,12 @@ fun SearchScreen(
                                         )
                                     } else {
                                         LazyColumn(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentPadding = PaddingValues(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
-                                            verticalArrangement = Arrangement.spacedBy(Spacing.Small)
+                                            modifier = Modifier.fillMaxSize()
                                         ) {
                                             items(uiState.hashtags) { hashtag ->
                                                 Card(
                                                     modifier = Modifier.fillMaxWidth(),
-                                                    shape = RoundedCornerShape(Spacing.Medium),
+                                                    shape = RoundedCornerShape(Sizes.CornerLarge),
                                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                                                 ) {
                                                     HashtagCard(
@@ -321,7 +324,7 @@ fun SearchScreen(
                                             items(uiState.accounts) { account ->
                                                 Card(
                                                     modifier = Modifier.fillMaxWidth(),
-                                                    shape = RoundedCornerShape(Spacing.Medium),
+                                                    shape = RoundedCornerShape(Sizes.CornerLarge),
                                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                                                 ) {
                                                     AccountCard(
@@ -342,21 +345,22 @@ fun SearchScreen(
                                                         onBookmark = viewModel::bookmarkPost,
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
-                                                        onUserClick = { userId -> onNavigateToProfile(userId) },
-                                                        onMediaClick = { _ -> onNavigateToPost(post.id) },
-                                                        onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
+                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
+                                                                  onMediaClick = { post, index ->
+                                                                      val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
+                                                                      if (urls.isNotEmpty()) {
+                                                                         selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                                                         selectedMediaUrls = urls
+                                                                         showMediaViewer = true
+                                                                     }
+                                                                 },
+                                                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                     )
                                                 }
-                                                Card(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    shape = RoundedCornerShape(Spacing.Medium),
-                                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                                                ) {
-                                                    SharedPostItem(
-                                                        post = post,
-                                                        actions = actions
-                                                    )
-                                                }
+                                                SharedPostItem(
+                                                    post = post,
+                                                    actions = actions
+                                                )
                                             }
                                         }
                                     }
@@ -364,8 +368,6 @@ fun SearchScreen(
                                 else -> {
                                     LazyColumn(
                                         modifier = Modifier.fillMaxSize(),
-                                        contentPadding = PaddingValues(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall),
-                                        verticalArrangement = Arrangement.spacedBy(Spacing.Small)
                                     ) {
                                         when (tab) {
                                             SearchTab.FOR_YOU -> {}
@@ -462,7 +464,14 @@ fun SearchScreen(
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
-                                                                onMediaClick = { _ -> onNavigateToPost(post.id) },
+onMediaClick = { post, index ->
+                                                            val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
+                                                            if (urls.isNotEmpty()) {
+                                                                selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                                                selectedMediaUrls = urls
+                                                                showMediaViewer = true
+                                                            }
+                                                        },
                                                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                             )
                                                         }
@@ -546,27 +555,35 @@ fun SearchScreen(
             }
         )
     }
+
+    if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
+        MediaViewer(
+            mediaUrls = selectedMediaUrls,
+            initialPage = selectedMediaIndex,
+            onDismiss = { showMediaViewer = false }
+        )
+    }
 }
 
 @Composable
 fun SearchLoadingShimmer() {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Spacing.Medium)
+        contentPadding = PaddingValues(Spacing.space16)
     ) {
         items(5) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = Spacing.SmallMedium),
+                    .padding(vertical = Spacing.space12),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ShimmerCircle(size = Spacing.Huge)
-                Spacer(modifier = Modifier.width(Spacing.Medium))
+                ShimmerCircle(size = Sizes.AvatarDefault)
+                Spacer(modifier = Modifier.width(Spacing.space16))
                 Column {
-                    ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthLarge).height(Spacing.Medium))
-                    Spacer(modifier = Modifier.height(Spacing.Small))
-                    ShimmerBox(modifier = Modifier.width(Sizes.WidthLarge).height(Spacing.SmallMedium))
+                    ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthLarge).height(Sizes.ShimmerLineHeight))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
+                    ShimmerBox(modifier = Modifier.width(Sizes.WidthLarge).height(Sizes.ShimmerLineHeightSmall))
                 }
             }
             HorizontalDivider(

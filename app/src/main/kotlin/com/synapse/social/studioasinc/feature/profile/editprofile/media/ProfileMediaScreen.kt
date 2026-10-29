@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.media
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -62,7 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -71,10 +73,10 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.presentation.editprofile.UploadState
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,10 +206,10 @@ fun ProfileMediaScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(
-                        horizontal = SettingsSpacing.screenPadding,
-                        vertical = SettingsSpacing.sectionSpacing
+                        horizontal = AppSpacing.screenPadding,
+                        vertical = AppSpacing.sectionSpacing
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // Profile Media Visual Live Preview Header
                     item {
@@ -337,7 +339,7 @@ private fun ProfileMediaVisualPreview(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = Spacing.space16)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Cover Banner Preview
@@ -377,14 +379,14 @@ private fun ProfileMediaVisualPreview(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.space48))
             }
 
             // Overlapping Avatar Preview
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 20.dp)
+                    .padding(start = Spacing.space20)
                     .offset(y = 8.dp)
             ) {
                 Box(
@@ -438,11 +440,11 @@ private fun ProfilePhotoGroup(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_profile_photo))
+        SectionHeader(title = stringResource(R.string.section_profile_photo))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             if (uploadState is UploadState.Error) {
                 Surface(
@@ -453,7 +455,7 @@ private fun ProfilePhotoGroup(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Spacing.space16),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -517,11 +519,11 @@ private fun CoverPhotoGroup(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_cover_photo))
+        SectionHeader(title = stringResource(R.string.section_cover_photo))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             if (uploadState is UploadState.Error) {
                 Surface(
@@ -532,7 +534,7 @@ private fun CoverPhotoGroup(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Spacing.space16),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

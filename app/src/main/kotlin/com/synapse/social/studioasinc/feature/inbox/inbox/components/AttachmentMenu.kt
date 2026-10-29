@@ -13,7 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material3.*
@@ -24,10 +24,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -128,13 +131,13 @@ fun MediaPreviewDialog(
                             Surface(
                                 shape = RoundedCornerShape(Sizes.CornerSmall),
                                 color = if (quality == MediaUploadQuality.HD) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.padding(Spacing.Tiny)
+                                modifier = Modifier.padding(Spacing.space4)
                             ) {
                                 Text(
                                     text = if (quality == MediaUploadQuality.HD) stringResource(R.string.media_quality_hd) else stringResource(R.string.media_quality_standard),
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                     color = if (quality == MediaUploadQuality.HD) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                                    modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                 )
                             }
                         }
@@ -190,12 +193,26 @@ fun MediaPreviewDialog(
                             VoiceMessagePlayer(mediaUrl = activeFile.uri.toString(), tintColor = MaterialTheme.colorScheme.primary, isFromMe = true)
                         }
                         else -> {
-                            Icon(
-                                Icons.AutoMirrored.Filled.InsertDriveFile,
-                                contentDescription = "File",
-                                modifier = Modifier.size(Sizes.ShimmerWidthLarge),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Column(
+                                modifier = Modifier.padding(horizontal = Spacing.space16),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.InsertDriveFile,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(Sizes.ShimmerWidthLarge),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(Spacing.space8))
+                                Text(
+                                    text = activeFile.fileName,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Default),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
@@ -204,8 +221,8 @@ fun MediaPreviewDialog(
                     LazyRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Spacing.Medium, vertical = Spacing.Small),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.Small),
+                            .padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         itemsIndexed(mediaItems, key = { _, item -> item.uri.toString() }) { index, file ->
@@ -231,7 +248,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
-                                        .padding(Spacing.Tiny)
+                                        .padding(Spacing.space4)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.primary, CircleShape),
                                     contentAlignment = Alignment.Center
@@ -246,7 +263,7 @@ fun MediaPreviewDialog(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(Spacing.Tiny)
+                                        .padding(Spacing.space4)
                                         .size(Sizes.IconSmall)
                                         .background(MaterialTheme.colorScheme.error, CircleShape)
                                         .clickable {
@@ -261,7 +278,7 @@ fun MediaPreviewDialog(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Remove media",
                                         tint = MaterialTheme.colorScheme.onError,
-                                        modifier = Modifier.size(Spacing.Small)
+                                        modifier = Modifier.size(Sizes.IconExtraSmall)
                                     )
                                 }
                             }
@@ -272,7 +289,7 @@ fun MediaPreviewDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.Medium)
+                        .padding(Spacing.space16)
                         .imePadding(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -291,7 +308,7 @@ fun MediaPreviewDialog(
                         ),
                         shape = RoundedCornerShape(Sizes.CornerExtraLarge)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     BadgedBox(
                         badge = {
                             if (mediaItems.size > 1) {
@@ -311,7 +328,7 @@ fun MediaPreviewDialog(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                            Icon(Icons.Default.ArrowUpward, contentDescription = "Send")
                         }
                     }
                 }

@@ -8,11 +8,16 @@ object AuthErrorMapper {
         val message = exception.message?.lowercase() ?: ""
         
         return when {
-            // User already exists / duplicate email
+            // User already exists / duplicate email or username
+            message.contains("users_username_key") ||
+            (message.contains("duplicate") && message.contains("username")) -> {
+                AuthError.UserCollision("This username is already taken")
+            }
             message.contains("user already registered") ||
             message.contains("email already exists") ||
             message.contains("duplicate") && message.contains("email") ||
             message.contains("user_email_key") ||
+            message.contains("users_uid_key") ||
             message.contains("already in use") -> {
                 AuthError.UserCollision("This email is already registered")
             }

@@ -21,6 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +35,7 @@ fun PrivacyCheckupScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_privacy_checkup_section)) },
@@ -44,8 +49,8 @@ fun PrivacyCheckupScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         }
@@ -55,20 +60,20 @@ fun PrivacyCheckupScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.cardShape,
-                    color = SettingsColors.cardBackgroundElevated,
+                    shape = AppShapes.cardShape,
+                    color = AppColors.cardBackgroundElevated,
                     tonalElevation = Sizes.ElevationLow
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Large),
+                            .padding(Spacing.space24),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Surface(
@@ -89,7 +94,7 @@ fun PrivacyCheckupScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
 
                         Text(
                             text = "Your privacy matters",
@@ -98,7 +103,7 @@ fun PrivacyCheckupScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
 
                         Text(
                             text = "Control your privacy settings and set up the privacy options that match how you want to use the app.",
@@ -113,7 +118,7 @@ fun PrivacyCheckupScreen(
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     SettingsNavigationItem(
                         title = "Choose who can contact you",
@@ -149,12 +154,12 @@ fun PrivacyCheckupScreen(
             item {
                 Text(
                     text = "Privacy Checkup helps you review your existing privacy settings.",
-                    style = SettingsTypography.itemSubtitle,
+                    style = AppTypography.itemSubtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Spacing.Small)
+                        .padding(vertical = Spacing.space8)
                 )
             }
         }

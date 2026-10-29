@@ -26,50 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PostOptionsMenu(
-    isOwner: Boolean,
-    onDelete: () -> Unit,
-    onReport: () -> Unit,
-    onBlock: () -> Unit,
-    onCopyLink: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState()
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(modifier = Modifier.padding(bottom = Spacing.Medium)) {
-            if (isOwner) {
-                OptionItem(
-                    icon = Icons.Outlined.Delete,
-                    label = "Delete Post",
-                    onClick = onDelete
-                )
-            } else {
-                OptionItem(
-                    icon = Icons.Outlined.Flag,
-                    label = "Report Post",
-                    onClick = onReport
-                )
-                OptionItem(
-                    icon = Icons.Outlined.Block,
-                    label = "Block User",
-                    onClick = onBlock
-                )
-            }
-            OptionItem(
-                icon = Icons.Outlined.Link,
-                label = "Copy Link",
-                onClick = onCopyLink
-            )
-        }
-    }
-}
-
 @Composable
 fun OptionItem(
     icon: ImageVector,
@@ -80,11 +36,11 @@ fun OptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(Spacing.Medium),
+            .padding(Spacing.space16),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(imageVector = icon, contentDescription = null)
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
     }
 }

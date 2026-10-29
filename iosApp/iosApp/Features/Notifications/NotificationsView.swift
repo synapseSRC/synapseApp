@@ -12,7 +12,7 @@ struct NotificationsView: View {
                 if viewModel.isLoading && viewModel.notifications.isEmpty {
                     ProgressView("Loading notifications...")
                 } else if let errorMessage = viewModel.errorMessage, viewModel.notifications.isEmpty {
-                    VStack(spacing: 16) {
+                    VStack(spacing: AppTheme.Spacing.space16) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
                             .foregroundColor(.red)
@@ -30,7 +30,7 @@ struct NotificationsView: View {
                     }
                     .padding()
                 } else if viewModel.notifications.isEmpty {
-                    VStack(spacing: 16) {
+                    VStack(spacing: AppTheme.Spacing.space16) {
                         Image(systemName: "bell.slash")
                             .font(.largeTitle)
                             .foregroundColor(.secondary)
@@ -43,14 +43,14 @@ struct NotificationsView: View {
                     .padding()
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        LazyVStack(spacing: AppTheme.Spacing.space0, pinnedViews: [.sectionHeaders]) {
                             let notificationGroups = Dictionary(grouping: viewModel.notifications, by: { $0.timestamp })
                             let sortedKeys = notificationGroups.keys.sorted(by: >)
 
                             ForEach(sortedKeys, id: \.self) { dateGroup in
                                 Section(header: sectionHeaderView(title: dateGroup)) {
                                     if let groupItems = notificationGroups[dateGroup] {
-                                        VStack(spacing: 0) {
+                                        VStack(spacing: AppTheme.Spacing.space0) {
                                             ForEach(Array(groupItems.enumerated()), id: \.element.id) { index, notification in
                                                 let pos: GroupPosition = {
                                                     if groupItems.count == 1 { return .single }
@@ -59,7 +59,7 @@ struct NotificationsView: View {
                                                     return .middle
                                                 }()
 
-                                                VStack(spacing: 0) {
+                                                VStack(spacing: AppTheme.Spacing.space0) {
                                                     NotificationRowView(
                                                         notification: notification,
                                                         position: pos,
@@ -79,14 +79,14 @@ struct NotificationsView: View {
 
                                                     if index < groupItems.count - 1 {
                                                         Divider()
-                                                            .padding(.horizontal, 16)
+                                                            .padding(.horizontal, AppTheme.Spacing.space16)
                                                             .background(Color(uiColor: .tertiarySystemGroupedBackground))
                                                     }
                                                 }
                                             }
                                         }
-                                        .padding(.horizontal, 16)
-                                        .padding(.bottom, 12)
+                                        .padding(.horizontal, AppTheme.Spacing.space16)
+                                        .padding(.bottom, AppTheme.Spacing.space12)
                                     }
                                 }
                             }
@@ -127,8 +127,8 @@ struct NotificationsView: View {
                 .foregroundColor(.accentColor)
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, AppTheme.Spacing.space16)
+        .padding(.vertical, AppTheme.Spacing.space8)
         .background(Color(uiColor: .systemBackground))
     }
 

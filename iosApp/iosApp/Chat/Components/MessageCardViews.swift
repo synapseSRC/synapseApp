@@ -48,7 +48,7 @@ struct PollCardView: View {
     let onVote: (optionId: String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space8) {
             HStack {
                 Image(systemName: "dot.radiation")
                     .foregroundColor(.primary)
@@ -76,8 +76,8 @@ struct PollCardView: View {
                             Text("\(option.voteCount)")
                                 .font(.caption)
                         }
-                        .padding(.leading, 8)
-                        .padding(.trailing, 8)
+                        .padding(.leading, AppTheme.Spacing.space8)
+                        .padding(.trailing, AppTheme.Spacing.space8)
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -96,7 +96,7 @@ struct ContactCardView: View {
     let message: SwiftMessage
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space8) {
             HStack {
                 Image(systemName: "person.circle.fill")
                     .font(.system(size: 32))
@@ -123,7 +123,7 @@ struct LocationCardView: View {
     let onOpenMap: (Double, Double) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space8) {
             HStack {
                 Image(systemName: "map")
                     .foregroundColor(.primary)
@@ -157,7 +157,7 @@ struct ViewOnceCardView: View {
     let onOpen: () -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.space8) {
             HStack {
                 Image(systemName: isConsumed ? "eye.slash" : "eye")
                     .foregroundColor(isConsumed ? .secondary : .primary)
@@ -184,7 +184,7 @@ struct EventCardView: View {
     let onNavigateToEvent: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space8) {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(.primary)
@@ -215,7 +215,7 @@ struct ProductCardView: View {
     let onNavigateToProduct: (String) -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.space12) {
             if let imageUrl = message.metadataContainer?.product?.imageUrl {
                 AsyncImage(url: URL(string: imageUrl)) { image in
                     image.resizable().scaledToFit()
@@ -225,7 +225,7 @@ struct ProductCardView: View {
                 .frame(width: 60, height: 60)
                 .cornerRadius(8)
             }
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
                 Text(message.metadataContainer?.product?.title ?? "Product")
                     .font(.headline)
                 Text(message.metadataContainer?.product?.price ?? "0.00")
@@ -247,7 +247,7 @@ struct ForwardedMessageCardView: View {
     let message: SwiftMessage
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.space4) {
             Image(systemName: "arrowshape.turn.up.left")
                 .font(.caption)
                 .foregroundColor(.secondary)

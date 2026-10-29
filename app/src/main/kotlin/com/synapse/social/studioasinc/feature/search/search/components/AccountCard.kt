@@ -45,7 +45,7 @@ fun AccountCard(
                 .fillMaxWidth()
             .height(Sizes.HeightLarge)
             .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
@@ -54,7 +54,7 @@ fun AccountCard(
             size = Sizes.IconGiant
         )
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -67,7 +67,7 @@ fun AccountCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (account.isVerified) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Icon(
                         imageVector = Icons.Outlined.Verified,
                         contentDescription = stringResource(R.string.verified_badge_content_description),
@@ -84,7 +84,7 @@ fun AccountCard(
                 overflow = TextOverflow.Ellipsis
             )
             if (!account.bio.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = account.bio ?: "",
                     style = MaterialTheme.typography.bodySmall,
@@ -93,7 +93,7 @@ fun AccountCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = stringResource(R.string.common_followers_count, formatCount(account.followersCount)),
                 style = MaterialTheme.typography.labelSmall,
@@ -101,14 +101,14 @@ fun AccountCard(
             )
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Small))
+        Spacer(modifier = Modifier.width(Spacing.space8))
 
 
         if (account.isFollowing) {
              OutlinedButton(
                  onClick = onFollowClick,
                  modifier = Modifier.height(Sizes.AvatarSmall),
-                 contentPadding = PaddingValues(horizontal = Spacing.Medium)
+                 contentPadding = PaddingValues(horizontal = Spacing.space16)
              ) {
                  Text(stringResource(R.string.action_following))
              }
@@ -116,7 +116,7 @@ fun AccountCard(
             Button(
                 onClick = onFollowClick,
                 modifier = Modifier.height(Sizes.AvatarSmall),
-                contentPadding = PaddingValues(horizontal = Spacing.Medium)
+                contentPadding = PaddingValues(horizontal = Spacing.space16)
             ) {
                 Text(stringResource(R.string.action_follow))
             }

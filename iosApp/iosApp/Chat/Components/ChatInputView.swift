@@ -11,9 +11,9 @@ struct ChatInputView: View {
     @State private var selectedItem: PhotosPickerItem? = nil
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: AppTheme.Spacing.space0) {
             Divider()
-            HStack(alignment: .bottom, spacing: 12) {
+            HStack(alignment: .bottom, spacing: AppTheme.Spacing.space12) {
                 // Attach Media Button
                 PhotosPicker(selection: $selectedItem, matching: .images) {
                     Image(systemName: "plus.circle.fill")
@@ -35,7 +35,7 @@ struct ChatInputView: View {
                 // Text Input
                 TextField(String(localized: "chat_message_placeholder"), text: $inputText, axis: .vertical)
                     .lineLimit(1...5)
-                    .padding(8)
+                    .padding(AppTheme.Spacing.space8)
                     .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(20)
                     .disabled(isSending)
@@ -48,7 +48,7 @@ struct ChatInputView: View {
                 // Send Button
                 if isSending {
                     ProgressView()
-                        .padding(.trailing, 4)
+                        .padding(.trailing, AppTheme.Spacing.space4)
                 } else {
                     Button(action: {
                         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -57,7 +57,7 @@ struct ChatInputView: View {
                             inputText = ""
                         }
                     }) {
-                        Image(systemName: "paperplane.fill")
+                        Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
                             .foregroundColor(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
                     }
@@ -65,7 +65,7 @@ struct ChatInputView: View {
                     .accessibilityLabel(String(localized: "accessibility_send_message"))
                 }
             }
-            .padding(12)
+            .padding(AppTheme.Spacing.space12)
             .background(Color(UIColor.systemBackground))
         }
     }

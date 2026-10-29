@@ -74,19 +74,6 @@ class CommentRemoteDataSource @Inject constructor(
             .mapNotNull { parsePostAsComment(it) }
     }
 
-    suspend fun fetchAllReplies(parentCommentId: String): List<CommentWithUser> = withContext(Dispatchers.IO) {
-        client.from("posts")
-            .select(Columns.raw(POST_COLUMNS)) {
-                filter {
-                    eq("in_reply_to_post_id", parentCommentId)
-                    eq("is_deleted", false)
-                }
-                order("created_at", Order.ASCENDING)
-            }
-            .decodeList<JsonObject>()
-            .mapNotNull { parsePostAsComment(it) }
-    }
-
     suspend fun fetchUserComments(userId: String, limit: Int, offset: Int): List<CommentWithUser> = withContext(Dispatchers.IO) {
         client.from("posts")
             .select(Columns.raw(POST_COLUMNS)) {

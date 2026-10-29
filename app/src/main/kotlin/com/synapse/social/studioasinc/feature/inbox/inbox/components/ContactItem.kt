@@ -28,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -51,7 +51,7 @@ fun ContactItem(
                 onClick = { onContactClick(contact) },
                 onLongClick = { onContactLongClick(contact) }
             )
-            .padding(horizontal = Spacing.Medium, vertical = Spacing.SmallMedium),
+            .padding(horizontal = Spacing.space16, vertical = Spacing.space12),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box {
@@ -75,11 +75,11 @@ fun ContactItem(
             }
         }
 
-        Spacer(modifier = Modifier.width(Spacing.Medium))
+        Spacer(modifier = Modifier.width(Spacing.space16))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = contact.displayName ?: contact.username ?: "Unknown User",
+                text = contact.displayName?.takeIf { it.isNotBlank() } ?: contact.name?.takeIf { it.isNotBlank() } ?: contact.nickname?.takeIf { it.isNotBlank() } ?: contact.username?.takeIf { it.isNotBlank() } ?: "Unknown User",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

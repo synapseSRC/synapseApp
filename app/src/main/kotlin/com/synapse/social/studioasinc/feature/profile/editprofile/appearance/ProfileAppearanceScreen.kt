@@ -1,5 +1,7 @@
 package com.synapse.social.studioasinc.feature.profile.editprofile.appearance
 
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -60,7 +62,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -68,10 +70,10 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.presentation.editprofile.UploadState
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,10 +182,10 @@ fun ProfileAppearanceScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(
-                        horizontal = SettingsSpacing.screenPadding,
-                        vertical = SettingsSpacing.sectionSpacing
+                        horizontal = AppSpacing.screenPadding,
+                        vertical = AppSpacing.sectionSpacing
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // 1. Live Interactive Profile Preview Header
                     item {
@@ -287,7 +289,7 @@ private fun ProfileAppearanceLivePreview(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = Spacing.space16)
             ) {
                 // Cover Background Banner
                 Box(
@@ -330,7 +332,7 @@ private fun ProfileAppearanceLivePreview(
                     Surface(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(12.dp),
+                            .padding(Spacing.space12),
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
                         tonalElevation = 2.dp
@@ -340,7 +342,7 @@ private fun ProfileAppearanceLivePreview(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                         )
                     }
                 }
@@ -349,7 +351,7 @@ private fun ProfileAppearanceLivePreview(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 20.dp)
+                        .padding(start = Spacing.space20)
                         .offset(y = 20.dp)
                 ) {
                     Box(
@@ -383,7 +385,7 @@ private fun ProfileAppearanceLivePreview(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp)
+                    .padding(start = Spacing.space20, end = Spacing.space20, top = Spacing.space12, bottom = Spacing.space20)
             ) {
                 Text(
                     text = displayName,
@@ -399,7 +401,7 @@ private fun ProfileAppearanceLivePreview(
                     )
                 }
                 if (!bio.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
                     Text(
                         text = bio,
                         style = MaterialTheme.typography.bodyMedium,
@@ -425,11 +427,11 @@ private fun ProfileBackgroundGroup(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_profile_background))
+        SectionHeader(title = stringResource(R.string.section_profile_background))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             if (uploadState is UploadState.Error) {
                 Surface(
@@ -440,7 +442,7 @@ private fun ProfileBackgroundGroup(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Spacing.space16),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -500,7 +502,7 @@ private fun AppearanceCapabilitiesInfoGroup(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_appearance_info))
+        SectionHeader(title = stringResource(R.string.section_appearance_info))
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -511,7 +513,7 @@ private fun AppearanceCapabilitiesInfoGroup(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(Spacing.space20),
                 verticalAlignment = Alignment.Top
             ) {
                 Icon(
@@ -520,9 +522,9 @@ private fun AppearanceCapabilitiesInfoGroup(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(24.dp)
-                        .padding(top = 2.dp)
+                        .padding(top = Spacing.space4)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(Spacing.space16))
                 Text(
                     text = stringResource(R.string.appearance_capabilities_info),
                     style = MaterialTheme.typography.bodyMedium,

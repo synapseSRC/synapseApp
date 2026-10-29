@@ -195,4 +195,50 @@ object VoiceWaveformExtractor {
             wave.coerceIn(MIN_AMPLITUDE, MAX_AMPLITUDE)
         }
     }
+
+    suspend fun extractDuration(filePath: String, dispatcher: CoroutineDispatcher = Dispatchers.IO): Long =
+        withContext(dispatcher) {
+            try {
+                val file = File(filePath)
+                if (!file.exists() || file.length() == 0L) {
+                    0L
+                } else {
+                    val extractor = MediaExtractor().apply { setDataSource(filePath) }
+                    var durationMs = 0L
+                    var trackIndex = -1
+
+                    for (i in 0 until extractor.trackCount) {
+                        val f = extractor.getTrackFormat(i)
+                        val mime = f.getString(MediaFormat.KEY_MIME) ?: ""
+                        if (mime.startsWith("audio/")) {
+                            trackIndex = i
+                            break
+                        }
+                    }
+
+                    if (trackIndex >= 0) {
+                        val format = extractor.getTrackFormat(trackIndex)
+                        val durationUs = format.getLong(MediaFormat.KEY_DURATION) ?: -1L
+                        
+                        if (durationUs > 0) {
+                            durationMs = durationUs / 1000
+                        } else {
+                            // Fallback: estimate duration from file size for compressed audio
+                            // Typical voice message bitrate: ~32kbps = ~4KB/s
+                            val bytesPerSecond = 4096L
+                            val estimatedMs = if (file.length() > 0) {
+                                (file.length() * 1000L / bytesPerSecond).coerceIn(1000L, 300000L)
+                            } else 0L
+                            durationMs = estimatedMs
+                        }
+                    }
+
+                    extractor.release()
+                    durationMs
+                }
+            } catch (e: Exception) {
+                println("Duration extraction error for $filePath: ${e.message}")
+                0L
+            }
+        }
 }

@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -48,8 +48,10 @@ import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
 import com.synapse.social.studioasinc.shared.domain.repository.LinkPreviewRepository
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
-import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
+import com.synapse.social.studioasinc.shared.data.local.InMemorySyncStateStorage
+import com.synapse.social.studioasinc.shared.data.sync.SyncManager
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PlatformInfoProvider
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
@@ -97,51 +99,14 @@ object UserModule {
 
     @Provides
     @Singleton
-    fun provideSharedAuthRepository(
-        client: SupabaseClientType
-    ): AuthRepository {
-        return SupabaseAuthRepository(client)
-    }
-    @Provides
-    @Singleton
-    fun provideAccountRepository(
-        client: SupabaseClientType
-    ): AccountRepository {
-        return AccountRepository(client)
-    }
-    @Provides
-    @Singleton
-    fun provideUserRepository(userDao: UserDao, client: SupabaseClientType): com.synapse.social.studioasinc.data.repository.UserRepositoryImpl {
-        return UserRepositoryImpl(userDao, client)
-    }
-    @Provides
-    @Singleton
-    fun provideSharedUserRepository(
-        storageDatabase: StorageDatabase,
-        client: SupabaseClientType
-    ): com.synapse.social.studioasinc.shared.domain.repository.UserRepository {
-        val userDataSource = SupabaseUserDataSource(client)
-        return UserRepositoryImpl(storageDatabase, userDataSource)
-    }
-    @Provides
-    @Singleton
-    fun provideUsernameRepository(): UsernameRepositoryImpl {
-        return UsernameRepositoryImpl()
-    }
-    @Provides
-    @Singleton
-    fun provideProfileRepository(
-        client: SupabaseClientType,
-        commentRepository: CommentRepositoryImpl
-    ): ProfileRepository {
-        return ProfileRepositoryImpl(client, commentRepository)
-    }
-    @Provides
-    @Singleton
-    fun provideDomainProfileRepository(
-        profileRepository: ProfileRepository
-    ): com.synapse.social.studioasinc.domain.repository.ProfileRepository {
-        return DomainProfileRepositoryAdapter(profileRepository)
+    fun provideSyncManager(
+        offlineActionRepository: com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+    ): com.synapse.social.studioasinc.shared.data.sync.SyncManager {
+        return com.synapse.social.studioasinc.shared.data.sync.SyncManager(
+            supabaseClient = SupabaseClient.client,
+            syncStateStorage = InMemorySyncStateStorage(),
+            offlineActionRepository = offlineActionRepository
+        )
     }
     @Provides
     @Singleton
@@ -173,13 +138,6 @@ object UserModule {
     }
     @Provides
     @Singleton
-    fun provideFollowRepository(
-        client: SupabaseClientType
-    ): FollowRepository {
-        return FollowRepositoryImpl(client)
-    }
-    @Provides
-    @Singleton
     fun provideGetFollowersUseCase(
         followRepository: FollowRepository
     ): GetFollowersUseCase {
@@ -191,13 +149,6 @@ object UserModule {
         followRepository: FollowRepository
     ): GetFollowingUseCase {
         return GetFollowingUseCase(followRepository)
-    }
-    @Provides
-    @Singleton
-    fun provideUserPreferencesRepository(
-        client: io.github.jan.supabase.SupabaseClient
-    ): UserPreferencesRepository {
-        return UserPreferencesRepositoryImpl(client)
     }
 
 }

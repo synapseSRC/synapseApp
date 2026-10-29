@@ -19,12 +19,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import com.synapse.social.studioasinc.core.util.ImageLoader
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 fun ProfileHeaderCard(
@@ -37,25 +41,24 @@ fun ProfileHeaderCard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackgroundElevated,
+        shape = AppShapes.cardShape,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SettingsSpacing.profileHeaderPadding),
+                .padding(AppSpacing.profileHeaderPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             Box(
-                modifier = Modifier.size(SettingsSpacing.avatarSize)
+                modifier = Modifier.size(Sizes.AvatarSemiLarge)
             ) {
                 com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
                     avatarUrl = avatarUrl,
                     displayName = displayName,
-                    size = SettingsSpacing.avatarSize,
+                    size = Sizes.AvatarSemiLarge,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -64,14 +67,13 @@ fun ProfileHeaderCard(
                     shape = CircleShape,
                     color = androidx.compose.ui.graphics.Color.Transparent,
                     border = androidx.compose.foundation.BorderStroke(
-                        width = Spacing.Tiny,
+                        width = Sizes.BorderDefault,
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                     )
                 ) {}
             }
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
-
+            Spacer(modifier = Modifier.width(Spacing.space16))
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -80,12 +82,12 @@ fun ProfileHeaderCard(
             ) {
                 Text(
                     text = displayName,
-                    style = SettingsTypography.profileName,
+                    style = AppTypography.profileName,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = email,
-                    style = SettingsTypography.profileEmail,
+                    style = AppTypography.profileEmail,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -93,72 +95,3 @@ fun ProfileHeaderCard(
     }
 }
 
-
-
-@Composable
-fun SettingsInfoItem(
-    title: String,
-    value: String,
-    icon: ImageVector? = null,
-    onCopy: (() -> Unit)? = null
-) {
-    val modifier = if (onCopy != null) {
-        Modifier
-            .clickable(onClick = onCopy)
-            .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
-            )
-    } else {
-        Modifier
-            .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
-            )
-    }
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsSpacing.iconSize),
-                    tint = SettingsColors.itemIcon
-                )
-            }
-
-            Column {
-                Text(
-                    text = title,
-                    style = SettingsTypography.itemTitle,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (value.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
-                    Text(
-                        text = value,
-                        style = SettingsTypography.itemSubtitle,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        if (onCopy != null) {
-             Icon(
-                imageVector = Icons.Filled.ContentCopy,
-                contentDescription = "Copy",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}

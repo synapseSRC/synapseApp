@@ -48,8 +48,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.crossfade
+import coil3.request.ImageRequest
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.AutoDownloadManager
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
@@ -93,7 +94,9 @@ internal fun QuotedMessagePreview(
         unavailableLabel = stringResource(R.string.chat_reply_unavailable_title)
     )
     val label = quotedKindLabel(preview.kind)
-    val detail = preview.excerpt?.takeIf(String::isNotBlank)
+    val detail = preview.excerpt?.takeIf(String::isNotBlank)?.let { excerpt ->
+        excerpt
+    }
     val duration = preview.durationSeconds?.let { seconds ->
         stringResource(R.string.chat_reply_duration, seconds / 60, seconds % 60)
     }
@@ -107,6 +110,7 @@ internal fun QuotedMessagePreview(
     val excerpt = when (preview.kind) {
         QuotedMessageKind.UNAVAILABLE -> stringResource(R.string.chat_reply_message_unavailable)
         QuotedMessageKind.DELETED -> stringResource(R.string.chat_reply_message_deleted)
+        QuotedMessageKind.UNDECRYPTABLE -> stringResource(R.string.chat_message_decryption_failed)
         QuotedMessageKind.TEXT -> detail ?: label
         QuotedMessageKind.POLL -> detail ?: label
         else -> listOfNotNull(label, detail?.takeUnless { it.equals(label, ignoreCase = true) }, duration, fileSize)
@@ -161,9 +165,9 @@ internal fun QuotedMessagePreview(
                         size = androidx.compose.ui.geometry.Size(indicatorWidth, size.height)
                     )
                 }
-                .padding(start = Spacing.Medium, end = Spacing.ExtraSmall, top = Spacing.ExtraSmall, bottom = Spacing.ExtraSmall),
+                .padding(start = Spacing.space16, end = Spacing.space4, top = Spacing.space4, bottom = Spacing.space4),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.Small)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             val thumbnailUrl = preview.thumbnailUrl?.takeIf { canLoadThumbnail }
             if (thumbnailUrl != null) {
@@ -227,6 +231,7 @@ internal fun QuotedMessagePreview(
 private fun quotedKindLabel(kind: QuotedMessageKind): String = when (kind) {
     QuotedMessageKind.UNAVAILABLE -> stringResource(R.string.chat_reply_unavailable_title)
     QuotedMessageKind.DELETED -> stringResource(R.string.chat_reply_message_deleted)
+    QuotedMessageKind.UNDECRYPTABLE -> stringResource(R.string.chat_message_decryption_failed)
     QuotedMessageKind.TEXT -> stringResource(R.string.chat_reply_type_text)
     QuotedMessageKind.PHOTO -> stringResource(R.string.chat_reply_type_photo)
     QuotedMessageKind.VIDEO -> stringResource(R.string.chat_reply_type_video)

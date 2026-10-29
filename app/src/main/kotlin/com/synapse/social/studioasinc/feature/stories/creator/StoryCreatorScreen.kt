@@ -47,7 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
 import com.synapse.social.studioasinc.domain.model.StoryPrivacy
@@ -112,7 +112,7 @@ private fun StoryCameraPreview(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(Spacing.Large)
+                .padding(Spacing.space24)
         ) {
             Button(onClick = onGalleryClick) {
                 Text(stringResource(R.string.story_open_gallery))

@@ -39,7 +39,7 @@ fun ReportUserDialog(
                     Text(
                         "Why are you reporting this user?",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = Spacing.Small)
+                        modifier = Modifier.padding(bottom = Spacing.space8)
                     )
                 }
                 items(reasons) { reason ->
@@ -47,13 +47,13 @@ fun ReportUserDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { selectedReason = reason }
-                            .padding(vertical = Spacing.Small)
+                            .padding(vertical = Spacing.space8)
                     ) {
                         RadioButton(
                             selected = selectedReason == reason,
                             onClick = { selectedReason = reason }
                         )
-                        Spacer(modifier = Modifier.width(Spacing.Small))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(reason, style = MaterialTheme.typography.bodyLarge)
                     }
                 }

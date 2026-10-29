@@ -18,6 +18,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 private data class CheckupCategoryConfig(
     val title: String,
@@ -73,6 +76,7 @@ fun PrivacyCheckupCategoryScreen(
     var silenceUnknownCallers by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(config.title) },
@@ -86,8 +90,8 @@ fun PrivacyCheckupCategoryScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         }
@@ -97,20 +101,20 @@ fun PrivacyCheckupCategoryScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = SettingsShapes.cardShape,
-                    color = SettingsColors.cardBackgroundElevated,
+                    shape = AppShapes.cardShape,
+                    color = AppColors.cardBackgroundElevated,
                     tonalElevation = Sizes.ElevationLow
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Spacing.Large),
+                            .padding(Spacing.space24),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Surface(
@@ -131,7 +135,7 @@ fun PrivacyCheckupCategoryScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
 
                         Text(
                             text = config.title,
@@ -141,7 +145,7 @@ fun PrivacyCheckupCategoryScreen(
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(Spacing.Small))
+                        Spacer(modifier = Modifier.height(Spacing.space8))
 
                         Text(
                             text = config.heroSubtitle,
@@ -156,7 +160,7 @@ fun PrivacyCheckupCategoryScreen(
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     when (categoryId) {
                         "contact" -> {

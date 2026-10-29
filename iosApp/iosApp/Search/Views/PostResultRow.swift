@@ -5,9 +5,9 @@ struct PostResultRow: View {
     let post: SearchPost
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.space12) {
             // Header: Author info
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.space10) {
                 // Avatar Placeholder
                 Circle()
                     .fill(Color.gray.opacity(0.3))
@@ -18,8 +18,8 @@ struct PostResultRow: View {
                             .font(.subheadline)
                     )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.space2) {
+                    HStack(spacing: AppTheme.Spacing.space4) {
                         Text(post.authorName ?? "Unknown")
                             .font(.headline)
                             .lineLimit(1)
@@ -49,7 +49,7 @@ struct PostResultRow: View {
             }
 
             // Interaction stats
-            HStack(spacing: 24) {
+            HStack(spacing: AppTheme.Spacing.space24) {
                 InteractionButton(icon: "bubble.right", count: post.commentsCount)
                 InteractionButton(icon: "arrow.2.squarepath", count: post.boostCount)
                 InteractionButton(icon: "heart", count: post.likesCount)
@@ -59,7 +59,7 @@ struct PostResultRow: View {
             .padding(.leading, 50) // align with text, considering avatar width + spacing
             .foregroundColor(.secondary)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, AppTheme.Spacing.space12)
         .padding(.horizontal)
         .background(Color(.systemBackground))
     }
@@ -74,7 +74,7 @@ struct InteractionButton: View {
     let count: Int32
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.space4) {
             Image(systemName: icon)
                 .font(.system(size: 16))
             if count > 0 {

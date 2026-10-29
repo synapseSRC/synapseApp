@@ -33,7 +33,7 @@ fun PostActionBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.ExtraSmall),
+                .padding(horizontal = Spacing.space4),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -81,7 +81,7 @@ private fun ActionButton(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = Spacing.ExtraSmall)
+        modifier = Modifier.padding(horizontal = Spacing.space4)
     ) {
         IconButton(onClick = onClick) {
             Icon(

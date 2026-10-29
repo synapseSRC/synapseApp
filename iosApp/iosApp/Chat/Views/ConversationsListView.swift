@@ -72,7 +72,7 @@ struct ConversationRow: View {
     let conversation: SwiftConversation
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.space12) {
             // Avatar Placeholder
             Circle()
                 .fill(Color(.systemGray4))
@@ -89,7 +89,7 @@ struct ConversationRow: View {
                         .offset(x: 17, y: 17)
                 )
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.space4) {
                 HStack {
                     Text(conversation.participantName)
                         .font(.headline)
@@ -121,7 +121,7 @@ struct ConversationRow: View {
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, AppTheme.Spacing.space4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(conversation.participantName), \(conversation.unreadCount) unread messages. Last message: \(conversation.lastMessage)")
         .accessibilityHint("Double tap to open chat")

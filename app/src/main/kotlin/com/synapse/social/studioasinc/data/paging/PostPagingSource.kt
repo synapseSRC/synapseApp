@@ -6,6 +6,7 @@ import androidx.paging.PagingState
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
 import com.synapse.social.studioasinc.data.repository.ReactionRepositoryImpl
 import com.synapse.social.studioasinc.domain.model.Post
+import com.synapse.social.studioasinc.data.repository.helpers.withSignedStorageMediaUrls
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
@@ -73,12 +74,17 @@ class PostPagingSource(
                 post
             }
 
-
             val postsWithReactions = reactionRepository.populatePostReactions(parsedPosts)
             val postsWithPolls = populatePostPolls(postsWithReactions)
 
+            // Posts bucket is public, so media URLs are already resolvable HTTPS URLs.
+            // This is a no-op for posts but kept for safety if buckets change in the future.
+            val signedPosts = postsWithPolls.map { post ->
+                post.withSignedStorageMediaUrls()
+            }
+
             LoadResult.Page(
-                data = postsWithPolls,
+                data = signedPosts,
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (postsWithReactions.isEmpty()) null else position + pageSize
             )

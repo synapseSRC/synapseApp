@@ -46,9 +46,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.synapse.social.studioasinc.feature.shared.components.AnimatedCounter
-import com.synapse.social.studioasinc.feature.shared.theme.InteractionIconDefault
-import com.synapse.social.studioasinc.feature.shared.theme.InteractionLikeActive
-import com.synapse.social.studioasinc.feature.shared.theme.InteractionRepostActive
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,15 +79,15 @@ fun PostInteractionBar(
 
     Column(modifier = modifier.fillMaxWidth()) {
 
-        val iconColor = InteractionIconDefault
-        val likeActiveColor = InteractionLikeActive
-        val repostActiveColor = InteractionRepostActive
+        val iconColor = MaterialTheme.colorScheme.onSurfaceVariant
+        val likeActiveColor = MaterialTheme.colorScheme.primary
+        val repostActiveColor = MaterialTheme.colorScheme.secondary
         val blueAlpha = 0.1f
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = Spacing.Small, bottom = Spacing.ExtraSmall),
+                .padding(top = Spacing.space8, bottom = Spacing.space4),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -99,7 +96,7 @@ fun PostInteractionBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clickable(onClick = onCommentClick)
-                    .padding(vertical = Spacing.ExtraSmall)
+                    .padding(vertical = Spacing.space4)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.Comment,
@@ -111,7 +108,7 @@ fun PostInteractionBar(
                     modifier = Modifier.size(Sizes.IconMedium)
                 )
                 if (commentCount > 0) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Text(
                         text = formatCount(commentCount),
                         style = MaterialTheme.typography.labelSmall,
@@ -126,7 +123,7 @@ fun PostInteractionBar(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clickable { showRepostMenu = true }
-                        .padding(vertical = Spacing.ExtraSmall)
+                        .padding(vertical = Spacing.space4)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Repeat,
@@ -135,7 +132,7 @@ fun PostInteractionBar(
                         modifier = Modifier.size(Sizes.IconMedium)
                     )
                     if (repostCount > 0) {
-                        Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                        Spacer(modifier = Modifier.width(Spacing.space4))
                         Text(
                             text = formatCount(repostCount),
                             style = MaterialTheme.typography.labelSmall,
@@ -244,7 +241,7 @@ fun PostInteractionBar(
                             onReactionLongPress?.invoke()
                         }
                     )
-                    .padding(vertical = Spacing.ExtraSmall)
+                    .padding(vertical = Spacing.space4)
             ) {
                 Icon(
                     imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -263,7 +260,7 @@ fun PostInteractionBar(
                         }
                 )
                 if (likeCount > 0 && !hideLikeCount) {
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     AnimatedCounter(count = likeCount) { targetCount ->
                         Text(
                             text = formatCount(targetCount),
@@ -279,7 +276,7 @@ fun PostInteractionBar(
             if (viewsCount > 0 && !hideViewsCount) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = Spacing.ExtraSmall)
+                    modifier = Modifier.padding(vertical = Spacing.space4)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.BarChart,
@@ -287,7 +284,7 @@ fun PostInteractionBar(
                         tint = iconColor,
                         modifier = Modifier.size(Sizes.IconMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+                    Spacer(modifier = Modifier.width(Spacing.space4))
                     Text(
                         text = formatCount(viewsCount),
                         style = MaterialTheme.typography.labelSmall,

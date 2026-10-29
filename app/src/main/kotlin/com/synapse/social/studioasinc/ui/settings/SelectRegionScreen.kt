@@ -31,6 +31,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.RegionItem
 import com.synapse.social.studioasinc.feature.shared.components.getRegionShapeForItem
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +56,7 @@ fun SelectRegionScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = AppColors.screenBackground,
         topBar = {
             if (isSearchActive) {
                 SearchBar(
@@ -93,12 +94,12 @@ fun SelectRegionScreen(
                         if (!active) searchQuery = ""
                     },
                     colors = SearchBarDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = AppColors.cardBackground,
                     )
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
                     ) {
                         itemsIndexed(filteredRegions) { index, region ->
                             val shape = getRegionShapeForItem(index, filteredRegions.size)
@@ -125,8 +126,8 @@ fun SelectRegionScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
                     )
                 )
             }
@@ -137,7 +138,7 @@ fun SelectRegionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(horizontal = Spacing.Medium, vertical = Spacing.Small)
+                contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
             ) {
                 itemsIndexed(filteredRegions) { index, region ->
                     val shape = getRegionShapeForItem(index, filteredRegions.size)

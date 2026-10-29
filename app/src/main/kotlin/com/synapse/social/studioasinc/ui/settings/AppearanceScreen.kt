@@ -4,20 +4,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppearanceScreen(
     viewModel: AppearanceViewModel,
@@ -33,6 +40,7 @@ fun AppearanceScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_appearance_title)) },
@@ -46,15 +54,15 @@ fun AppearanceScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
         snackbarHost = {
             if (error != null) {
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -71,8 +79,8 @@ fun AppearanceScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
 
             item {
@@ -152,52 +160,90 @@ fun AppearanceScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = SettingsSpacing.itemHorizontalPadding, vertical = SettingsSpacing.itemVerticalPadding)
+                            .padding(horizontal = AppSpacing.itemHorizontalPadding, vertical = AppSpacing.itemVerticalPadding)
                     ) {
                         Text(
                             text = stringResource(R.string.appearance_post_media_grid),
-                            style = SettingsTypography.itemTitle,
+                            style = AppTypography.itemTitle,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                        Spacer(modifier = Modifier.height(Spacing.space4))
                         Text(
                             text = stringResource(R.string.appearance_post_media_grid_subtitle),
-                            style = SettingsTypography.itemSubtitle,
+                            style = AppTypography.itemSubtitle,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(Spacing.Medium))
+                        Spacer(modifier = Modifier.height(Spacing.space16))
 
-                        SingleChoiceSegmentedButtonRow(
-                            modifier = Modifier.fillMaxWidth()
+                        val connectedLeadingShapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        val connectedMiddleShapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
+                        val connectedTrailingShapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+
+                        ButtonGroup(
+                            overflowIndicator = { menuState ->
+                                ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            expandedRatio = 0f,
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                         ) {
                             options.forEachIndexed { index, label ->
-                                SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                                    onClick = {
-                                        val style = viewModel.getPostViewStyleFromDisplayName(label)
-                                        viewModel.setPostViewStyle(style)
-                                    },
-                                    selected = label == selected,
-                                    label = {
-                                        Row(
-                                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
+                                val isSelected = label == selected
+                                val buttonShapes = when (index) {
+                                    0 -> connectedLeadingShapes
+                                    options.lastIndex -> connectedTrailingShapes
+                                    else -> connectedMiddleShapes
+                                }
+                                val selectStyle = {
+                                    val style = viewModel.getPostViewStyleFromDisplayName(label)
+                                    viewModel.setPostViewStyle(style)
+                                }
+
+                                customItem(
+                                    buttonGroupContent = {
+                                        ToggleButton(
+                                            checked = isSelected,
+                                            onCheckedChange = { checked ->
+                                                if (checked) selectStyle()
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .semantics { role = Role.RadioButton },
+                                            shapes = buttonShapes
                                         ) {
-                                            Text(label)
-                                            if (label == "Grid") {
-                                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-                                                Badge(
-                                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(R.string.appearance_beta),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        modifier = Modifier.padding(horizontal = Spacing.ExtraSmall, vertical = 0.dp)
-                                                    )
+                                            Row(
+                                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(label)
+                                                if (label == "Grid") {
+                                                    Spacer(modifier = Modifier.width(Spacing.space4))
+                                                    Badge(
+                                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.appearance_beta),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space0)
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
+                                    },
+                                    menuContent = { menuState ->
+                                        DropdownMenuItem(
+                                            text = { Text(label) },
+                                            trailingIcon = {
+                                                if (isSelected) Icon(Icons.Default.Check, contentDescription = null)
+                                            },
+                                            onClick = {
+                                                menuState.dismiss()
+                                                selectStyle()
+                                            }
+                                        )
                                     }
                                 )
                             }

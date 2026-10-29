@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
@@ -31,12 +33,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -56,17 +58,18 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import coil3.request.crossfade
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.AutoDownloadManager
 import com.synapse.social.studioasinc.core.util.DownloadManager
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.ui.settings.MediaType
-import androidx.compose.material.icons.filled.Download
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
 import com.synapse.social.studioasinc.feature.shared.theme.*
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.FileMessageBubble
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
@@ -75,6 +78,7 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
 import kotlinx.coroutines.launch
+import kotlinx.datetime.toLocalDateTime
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -85,7 +89,7 @@ fun RepliesIndicatorRow(count: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = Spacing.Small),
+            .padding(top = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -93,75 +97,29 @@ fun RepliesIndicatorRow(count: Int) {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        HorizontalDivider(modifier = Modifier.weight(1f).padding(start = Spacing.Small))
+        HorizontalDivider(modifier = Modifier.weight(1f).padding(start = Spacing.space8))
     }
 }
 
 @Composable
-fun SenderHeaderRow(
-    avatarUrl: String?,
-    displayName: String,
-    timestamp: String,
-    isStarred: Boolean,
-    showAvatar: Boolean
+fun DateDividerChip(
+    label: String,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = Spacing.Small),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showAvatar) {
-            AsyncImage(
-                model = avatarUrl,
-                contentDescription = "Sender Avatar",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(Sizes.AvatarSmall)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            )
-            Spacer(modifier = Modifier.width(Spacing.Small))
-        }
-        Column {
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = timestamp,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        if (isStarred) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = "Starred",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
-@Composable
-fun DateDividerChip(label: String) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            shape = RoundedCornerShape(Sizes.CornerDefault),
-            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = Sizes.BorderThin
         ) {
             Text(
                 text = label,
-                modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.ExtraSmall),
+                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space4),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -173,8 +131,8 @@ fun DateDividerChip(label: String) {
 private fun WavyDivider(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         val path = Path()
-        val waveLength = Spacing.Large.toPx()
-        val amplitude = Spacing.Tiny.toPx()
+        val waveLength = Sizes.MessageWaveLength.toPx()
+        val amplitude = Sizes.MessageWaveAmplitude.toPx()
 
         path.moveTo(0f, size.height / 2f)
         var currentX = 0f
@@ -199,21 +157,24 @@ private fun WavyDivider(modifier: Modifier, color: Color) {
 }
 
 @Composable
-fun UnreadDividerRow(count: Int) {
+fun UnreadDividerRow(
+    count: Int,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.Small),
+            .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        WavyDivider(modifier = Modifier.weight(1f).height(Spacing.ExtraSmallMedium), color = MaterialTheme.colorScheme.primary)
+        WavyDivider(modifier = Modifier.weight(1f).height(Sizes.WavyDividerHeight), color = MaterialTheme.colorScheme.primary)
         Text(
             text = stringResource(if (count == 1) R.string.chat_divider_unread_one else R.string.chat_divider_unread_other, count),
-            modifier = Modifier.padding(horizontal = Spacing.Medium),
+            modifier = Modifier.padding(horizontal = Spacing.space16),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        WavyDivider(modifier = Modifier.weight(1f).height(Spacing.ExtraSmallMedium), color = MaterialTheme.colorScheme.primary)
+        WavyDivider(modifier = Modifier.weight(1f).height(Sizes.WavyDividerHeight), color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -223,24 +184,24 @@ enum class GroupPosition {
 
 fun isWithinTimeThreshold(timeStr1: String?, timeStr2: String?): Boolean {
     if (timeStr1 == null || timeStr2 == null) return false
-    return try {
-        val t1 = Instant.parse(timeStr1).epochSecond
-        val t2 = Instant.parse(timeStr2).epochSecond
-        abs(t1 - t2) <= 300
-    } catch (e: Exception) {
-        false
-    }
+    val t1 = ChatMapper.parseInstant(timeStr1)?.toEpochMilliseconds() ?: return false
+    val t2 = ChatMapper.parseInstant(timeStr2)?.toEpochMilliseconds() ?: return false
+    return abs(t1 - t2) <= 300_000L
 }
 
 private fun formatMessageTime(isoTimestamp: String?): String {
     if (isoTimestamp == null) return ""
-    return try {
-        val instant = Instant.parse(isoTimestamp)
-        val formatter = DateTimeFormatter.ofPattern("h:mm a").withZone(ZoneId.systemDefault())
-        formatter.format(instant)
-    } catch (e: Exception) {
-        ""
+    val instant = com.synapse.social.studioasinc.shared.util.TimestampFormatter.parseInstant(isoTimestamp) ?: return ""
+    val local = instant.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val hour = local.hour
+    val minute = local.minute.toString().padStart(2, '0')
+    val amPm = if (hour >= 12) "PM" else "AM"
+    val displayHour = when {
+        hour == 0 -> 12
+        hour > 12 -> hour - 12
+        else -> hour
     }
+    return "$displayHour:$minute $amPm"
 }
 
 @Composable
@@ -250,12 +211,13 @@ private fun ColumnScope.MessageMetadataRow(
     contentColor: Color,
     onRetryClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    readTint: Color = if (isSystemInDarkTheme()) DarkStatusRead else StatusRead,
     currentUserId: String = ""
 ) {
     Row(
         modifier = modifier
-            .align(if (isFromMe) Alignment.End else Alignment.Start)
-            .padding(top = Spacing.ExtraSmall),
+            .align(Alignment.End)
+            .padding(top = Spacing.space4),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -265,7 +227,7 @@ private fun ColumnScope.MessageMetadataRow(
                 style = MaterialTheme.typography.labelSmall,
                 color = contentColor.copy(alpha = 0.7f),
                 fontStyle = FontStyle.Italic,
-                modifier = Modifier.padding(end = Spacing.ExtraSmall)
+                modifier = Modifier.padding(end = Spacing.space4)
             )
         }
 
@@ -276,54 +238,25 @@ private fun ColumnScope.MessageMetadataRow(
         )
 
         if (isFromMe && message.contentStatus != ContentStatus.DELETED && !message.isDeleted) {
-            Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
+            Spacer(modifier = Modifier.width(Spacing.space4))
             val statusModifier = if (onRetryClick != null && message.deliveryStatus == DeliveryStatus.FAILED) {
                 Modifier.clickable { onRetryClick() }
             } else {
                 Modifier
             }
-            when (message.deliveryStatus) {
-                DeliveryStatus.SENDING -> {
-                    Icon(
-                        imageVector = Icons.Filled.Timer,
-                        contentDescription = stringResource(R.string.msg_status_sending),
-                        tint = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.FAILED -> {
-                    Icon(
-                        imageVector = Icons.Filled.Warning,
-                        contentDescription = stringResource(R.string.msg_status_failed),
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = statusModifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.SENT -> {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = stringResource(R.string.msg_status_sent),
-                        tint = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.DELIVERED -> {
-                    Icon(
-                        imageVector = Icons.Filled.DoneAll,
-                        contentDescription = stringResource(R.string.msg_status_delivered),
-                        tint = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
-                DeliveryStatus.READ -> {
-                    Icon(
-                        imageVector = Icons.Filled.DoneAll,
-                        contentDescription = stringResource(R.string.msg_status_read),
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(Sizes.IconSemiSmall)
-                    )
-                }
+            val (icon, description, tint) = when (message.deliveryStatus) {
+                DeliveryStatus.SENDING -> Triple(Icons.Filled.Timer, stringResource(R.string.msg_status_sending), contentColor.copy(alpha = 0.7f))
+                DeliveryStatus.FAILED -> Triple(Icons.Filled.Warning, stringResource(R.string.msg_status_failed), MaterialTheme.colorScheme.error)
+                DeliveryStatus.SENT -> Triple(Icons.Filled.Check, stringResource(R.string.msg_status_sent), contentColor.copy(alpha = 0.7f))
+                DeliveryStatus.DELIVERED -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_delivered), contentColor.copy(alpha = 0.7f))
+                DeliveryStatus.READ -> Triple(Icons.Filled.DoneAll, stringResource(R.string.msg_status_read), readTint)
             }
+            Icon(
+                imageVector = icon,
+                contentDescription = description,
+                tint = tint,
+                modifier = statusModifier.size(Sizes.IconSemiSmall)
+            )
         }
     }
 }
@@ -352,7 +285,7 @@ fun MessageBubble(
     reactions: List<Pair<String, Int>> = emptyList(),
     replyCount: Int = 0,
     onQuoteClick: (messageId: String) -> Unit = {},
-        onOpenBatchGallery: (Message) -> Unit = {},
+    onOpenBatchGallery: (Message) -> Unit = {},
     onVoteOption: (pollId: String, optionId: String) -> Unit = { _, _ -> },
     onOpenPost: (String) -> Unit = {},
     onOpenStory: (String) -> Unit = {},
@@ -399,12 +332,169 @@ fun MessageBubble(
         }
     }
 
+    // A message whose payload could not be decrypted must never fall through to the
+    // type-specific renderers, which would print the raw envelope as ordinary text.
+    if (message.isUndecryptableMessage()) {
+        Box(
+            modifier = modifier.fillMaxWidth(),
+            contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            Surface(
+                color = containerColor,
+                contentColor = contentColor,
+                shape = RoundedCornerShape(Sizes.CornerMedium),
+                tonalElevation = Sizes.BorderThin
+            ) {
+                Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
+                    UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
+                    MessageMetadataRow(
+                        message = message,
+                        isFromMe = isFromMe,
+                        contentColor = contentColor,
+                        onRetryClick = onRetryClick
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    // SYSTEM messages render as centered pill without tails or metadata status row
+    if (message.messageType == MessageType.SYSTEM) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.space8),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = Sizes.BorderThin
+            ) {
+                Text(
+                    text = message.content,
+                    modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
+
+    // CALL messages get their own direction-aligned bubble, so no nested bubble surface
+    if (message.messageType == MessageType.CALL) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.space4),
+            contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            CallLogCardBubble(
+                metadata = message.metadataContainer?.call,
+                isFromMe = isFromMe,
+                cornerRadius = cornerRadius,
+                modifier = Modifier.widthIn(max = bubbleMaxWidth),
+                footer = { footerColor ->
+                    MessageMetadataRow(
+                        message = message,
+                        isFromMe = isFromMe,
+                        contentColor = footerColor,
+                        onRetryClick = onRetryClick
+                    )
+                }
+            )
+        }
+        return
+    }
+
+    // STICKER messages render image directly without an outer bubble background surface fill
+    if (message.messageType == MessageType.STICKER) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.space4),
+            contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            Column(horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start) {
+                message.mediaUrl?.let { url ->
+                    AsyncImage(
+                        model = url,
+                        contentDescription = "Sticker",
+                        modifier = Modifier
+                            .sizeIn(maxWidth = 160.dp, maxHeight = 160.dp)
+                            .clip(RoundedCornerShape(Sizes.CornerMedium))
+                            .clickable { onClick() }
+                    )
+                }
+                MessageMetadataRow(
+                    message = message,
+                    isFromMe = isFromMe,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    onRetryClick = onRetryClick
+                )
+            }
+        }
+        return
+    }
+
+    // GIF messages render inline with a thin outline border directly against the screen surface
+    if (message.messageType == MessageType.GIF) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.space4),
+            contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
+        ) {
+            Column(horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start) {
+                message.mediaUrl?.let { url ->
+                    Surface(
+                        shape = RoundedCornerShape(28.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        color = Color.Transparent,
+                        modifier = Modifier
+                            .widthIn(max = bubbleMaxWidth)
+                            .heightIn(max = Sizes.HeightExtraLarge)
+                    ) {
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "Animated GIF",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(28.dp))
+                                .clickable { onClick() }
+                        )
+                    }
+                }
+                MessageMetadataRow(
+                    message = message,
+                    isFromMe = isFromMe,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    onRetryClick = onRetryClick
+                )
+            }
+        }
+        return
+    }
+
     val radius = cornerRadius.dp
     val offsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val threshold = with(density) { Sizes.AvatarDefault.toPx() }
-    val shape = remember(position, isFromMe, radius) {
+
+    val isMediaBubble = message.messageType in listOf(
+        MessageType.IMAGE,
+        MessageType.VIDEO,
+        MessageType.MEDIA_GROUP,
+        MessageType.LOCATION,
+        MessageType.LIVE_LOCATION,
+        MessageType.MAP
+    )
+
+    val standardShape = remember(position, isFromMe, radius) {
         object : androidx.compose.ui.graphics.Shape {
             override fun createOutline(
                 size: androidx.compose.ui.geometry.Size,
@@ -412,25 +502,29 @@ fun MessageBubble(
                 density: androidx.compose.ui.unit.Density
             ): androidx.compose.ui.graphics.Outline {
                 val sharpCorner = lerp(Sizes.CornerSharp, radius, (offsetX.value / threshold).coerceIn(0f, 1f))
+                // A group starts with both of its top corners at the full bubble radius; only the
+                // corner facing the next bubble in the run stays tight.
                 val delegate = if (isFromMe) {
                     when (position) {
-                        GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-                        GroupPosition.FIRST -> RoundedCornerShape(radius, radius, sharpCorner, radius)
-                        GroupPosition.MIDDLE -> RoundedCornerShape(radius, sharpCorner, sharpCorner, radius)
-                        GroupPosition.LAST -> RoundedCornerShape(radius, sharpCorner, radius, radius)
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(topStart = radius, topEnd = radius, bottomEnd = sharpCorner, bottomStart = radius)
+                        GroupPosition.MIDDLE -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = sharpCorner, bottomStart = radius)
+                        GroupPosition.LAST -> RoundedCornerShape(topStart = radius, topEnd = sharpCorner, bottomEnd = radius, bottomStart = radius)
                     }
                 } else {
                     when (position) {
-                        GroupPosition.SINGLE -> RoundedCornerShape(radius, radius, radius, radius)
-                        GroupPosition.FIRST -> RoundedCornerShape(radius, radius, radius, sharpCorner)
-                        GroupPosition.MIDDLE -> RoundedCornerShape(sharpCorner, radius, radius, sharpCorner)
-                        GroupPosition.LAST -> RoundedCornerShape(sharpCorner, radius, radius, radius)
+                        GroupPosition.SINGLE -> RoundedCornerShape(radius)
+                        GroupPosition.FIRST -> RoundedCornerShape(topStart = radius, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
+                        GroupPosition.MIDDLE -> RoundedCornerShape(topStart = sharpCorner, topEnd = radius, bottomEnd = radius, bottomStart = sharpCorner)
+                        GroupPosition.LAST -> RoundedCornerShape(topStart = sharpCorner, topEnd = radius, bottomEnd = radius, bottomStart = radius)
                     }
                 }
                 return delegate.createOutline(size, layoutDirection, density)
             }
         }
     }
+
+    val shape = if (isMediaBubble) RoundedCornerShape(28.dp) else standardShape
 
     Box(
         modifier = modifier
@@ -441,10 +535,6 @@ fun MessageBubble(
                 onClick = onClick,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            )
-            .padding(
-                top = if (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) Spacing.Small else Spacing.None,
-                bottom = Spacing.Tiny
             )
             .offset { IntOffset(offsetX.value.toInt(), 0) }
             .pointerInput(Unit) {
@@ -480,36 +570,23 @@ fun MessageBubble(
                 )
             },
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start
+            horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
         ) {
-            if (!isFromMe && showAvatar) {
-                if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
-                    com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
-                        avatarUrl = senderAvatarUrl,
-                        displayName = senderName,
-                        size = Sizes.AvatarSmall
-                    )
-                } else {
-                    Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
+            Row(verticalAlignment = Alignment.Bottom) {
+                if (!isFromMe && showAvatar) {
+                    if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
+                        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+                            avatarUrl = senderAvatarUrl,
+                            displayName = senderName,
+                            size = Sizes.AvatarSmall
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
+                    }
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
-                Spacer(modifier = Modifier.width(Spacing.Small))
-            }
-            Column(
-                horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
-            ) {
-                if (!isFromMe && (position == GroupPosition.FIRST || position == GroupPosition.SINGLE) && senderName != null) {
-                    SenderHeaderRow(
-                        avatarUrl = senderAvatarUrl,
-                        displayName = senderName,
-                        timestamp = formatMessageTime(message.sentAt ?: message.createdAt),
-                        isStarred = false,
-                        showAvatar = false
-                    )
-                }
-
                 Column(
                     horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
                 ) {
@@ -525,7 +602,7 @@ fun MessageBubble(
                         color = if (hasReplyPreview) containerColor else Color.Transparent,
                         contentColor = contentColor,
                         shape = if (hasReplyPreview) shape else androidx.compose.ui.graphics.RectangleShape,
-                        tonalElevation = if (hasReplyPreview) Sizes.BorderThin else Spacing.None
+                        tonalElevation = if (hasReplyPreview) Sizes.BorderThin else Sizes.ElevationNone
                     ) {
                         Column(horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start) {
                             if (hasReplyPreview) {
@@ -536,192 +613,193 @@ fun MessageBubble(
                                     originalSenderName = replyToSenderName,
                                     fontScale = fontScale,
                                     modifier = Modifier
-                                        .padding(horizontal = Spacing.Small, vertical = Spacing.ExtraSmall)
+                                        .padding(horizontal = Spacing.space8, vertical = Spacing.space4)
                                         .widthIn(max = bubbleMaxWidth),
-                                    shape = RoundedCornerShape((radius - Spacing.Small).coerceAtLeast(Sizes.CornerSmall)),
+                                    shape = RoundedCornerShape((radius - Sizes.CornerMedium).coerceAtLeast(Sizes.CornerSmall)),
                                     onClick = { message.replyToId?.let(onQuoteClick) }
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+                                Spacer(modifier = Modifier.height(Spacing.space4))
                             }
 
                             if ((message.isForwarded || message.forwardedFromMessageId != null) && !isDeletedMessage) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = Spacing.ExtraSmall)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.Send,
-                                    contentDescription = "Forwarded",
-                                    tint = contentColor.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(Sizes.IconSemiSmall)
-                                )
-                                Spacer(modifier = Modifier.width(Spacing.ExtraSmall))
-                                Text(
-                                    text = "Forwarded",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontStyle = FontStyle.Italic,
-                                    color = contentColor.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-
-                        if (isDeletedMessage) {
-                            Surface(
-                                color = containerColor.copy(alpha = 0.6f),
-                                contentColor = contentColor,
-                                shape = shape,
-                                tonalElevation = Sizes.BorderThin
-                            ) {
-                                Column(modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Block,
-                                            contentDescription = stringResource(R.string.cd_deleted_message),
-                                            tint = contentColor.copy(alpha = 0.6f),
-                                            modifier = Modifier.size(Sizes.IconSemiSmall).padding(end = Spacing.ExtraSmall)
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.msg_deleted),
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                color = contentColor.copy(alpha = 0.6f),
-                                                fontStyle = FontStyle.Italic,
-                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
-                                            )
-                                        )
-                                    }
-                                    MessageMetadataRow(
-                                        message = message,
-                                        isFromMe = isFromMe,
-                                        contentColor = contentColor,
-                                        onRetryClick = onRetryClick)
-                                }
-                            }
-                        } else if (isMedia) {
-                            val mediaType = when (message.messageType) {
-                                MessageType.VIDEO -> MediaType.VIDEO
-                                MessageType.AUDIO -> MediaType.AUDIO
-                                else -> MediaType.PHOTO
-                            }
-                            var isAutoDownloadAllowed by remember(message.id) { mutableStateOf<Boolean?>(null) }
-                            var userRequestedDownload by remember(message.id) { mutableStateOf(false) }
-
-                            val settingsRepo = remember(context) {
-                                com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl.getInstance(context.applicationContext)
-                            }
-
-                            LaunchedEffect(message.id) {
-                                settingsRepo.autoDownloadRules.collect { rules ->
-                                    isAutoDownloadAllowed = AutoDownloadManager.isAutoDownloadAllowed(context, rules, mediaType)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(bottom = Spacing.space4)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Send,
+                                        contentDescription = "Forwarded",
+                                        tint = contentColor.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(Sizes.IconSemiSmall)
+                                    )
+                                    Spacer(modifier = Modifier.width(Spacing.space4))
+                                    Text(
+                                        text = "Forwarded",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontStyle = FontStyle.Italic,
+                                        color = contentColor.copy(alpha = 0.7f)
+                                    )
                                 }
                             }
 
-                            val shouldShowMedia = isFromMe || (isAutoDownloadAllowed == true) || userRequestedDownload
-
-                            BoxWithConstraints(
-                                modifier = if (isBatchMedia) Modifier.wrapContentWidth() else Modifier.fillMaxWidth()
-                            ) {
-                                if (!shouldShowMedia) {
-                                    val placeholderModifier = if (isBatchMedia) {
-                                        val dimensions = stackedMediaCardDimensions(maxWidth)
-                                        Modifier
-                                            .width(dimensions.stackWidth)
-                                            .height(dimensions.stackHeight)
-                                    } else {
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .height(Sizes.HeightMediaSingle)
-                                    }
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = RoundedCornerShape(Sizes.CornerMedium),
-                                        modifier = placeholderModifier.clickable { userRequestedDownload = true }
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center,
-                                            modifier = Modifier.padding(Spacing.Medium)
-                                        ) {
+                            if (isDeletedMessage) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    shape = shape,
+                                    tonalElevation = Sizes.BorderThin
+                                ) {
+                                    Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(
-                                                imageVector = Icons.Default.Download,
-                                                contentDescription = "Tap to download media",
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(Sizes.IconLarge)
+                                                imageVector = Icons.Filled.Block,
+                                                contentDescription = stringResource(R.string.cd_deleted_message),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                modifier = Modifier.size(Sizes.IconSemiSmall).padding(end = Spacing.space4)
                                             )
-                                            Spacer(modifier = Modifier.height(Spacing.Small))
                                             Text(
-                                                text = "Tap to load media",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                text = stringResource(R.string.msg_deleted),
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                    fontStyle = FontStyle.Italic,
+                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+                                                )
                                             )
                                         }
+                                        MessageMetadataRow(
+                                            message = message,
+                                            isFromMe = isFromMe,
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            onRetryClick = onRetryClick
+                                        )
                                     }
-                                } else {
-                                    when {
-                                        isBatchMedia -> {
-                                            StackedMediaCard(
-                                                attachments = message.attachments,
-                                                onClick = { onOpenBatchGallery(message) }
-                                            )
+                                }
+                            } else if (isMedia) {
+                                val mediaType = when (message.messageType) {
+                                    MessageType.VIDEO -> MediaType.VIDEO
+                                    MessageType.AUDIO -> MediaType.AUDIO
+                                    else -> MediaType.PHOTO
+                                }
+                                var isAutoDownloadAllowed by remember(message.id) { mutableStateOf<Boolean?>(null) }
+                                var userRequestedDownload by remember(message.id) { mutableStateOf(false) }
+
+                                val settingsRepo = remember(context) {
+                                    com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl.getInstance(context.applicationContext)
+                                }
+
+                                LaunchedEffect(message.id) {
+                                    settingsRepo.autoDownloadRules.collect { rules ->
+                                        isAutoDownloadAllowed = AutoDownloadManager.isAutoDownloadAllowed(context, rules, mediaType)
+                                    }
+                                }
+
+                                val shouldShowMedia = isFromMe || (isAutoDownloadAllowed == true) || userRequestedDownload
+
+                                BoxWithConstraints(
+                                    modifier = if (isBatchMedia) Modifier.wrapContentWidth() else Modifier.fillMaxWidth()
+                                ) {
+                                    if (!shouldShowMedia) {
+                                        val placeholderModifier = if (isBatchMedia) {
+                                            val dimensions = stackedMediaCardDimensions(maxWidth)
+                                            Modifier
+                                                .width(dimensions.stackWidth)
+                                                .height(dimensions.stackHeight)
+                                        } else {
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .height(Sizes.HeightMediaSingle)
                                         }
-                                        message.messageType == MessageType.IMAGE -> {
-                                            AsyncImage(
-                                                model = coil.request.ImageRequest.Builder(LocalContext.current)
-                                                    .data(message.mediaUrl)
-                                                    .crossfade(true)
-                                                    .build(),
-                                                contentDescription = stringResource(R.string.cd_post_image),
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .heightIn(max = Sizes.HeightExtraLarge)
-                                                    .clip(RoundedCornerShape(Sizes.CornerMedium))
-                                                    .clickable {
-                                                        message.mediaUrl?.let { uriHandler.openUri(it) }
-                                                    }
-                                            )
+                                        Surface(
+                                            color = MaterialTheme.colorScheme.surfaceVariant,
+                                            shape = RoundedCornerShape(28.dp),
+                                            modifier = placeholderModifier.clickable { userRequestedDownload = true }
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier.padding(Spacing.space16)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Download,
+                                                    contentDescription = "Tap to download media",
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(Sizes.IconLarge)
+                                                )
+                                                Spacer(modifier = Modifier.height(Spacing.space8))
+                                                Text(
+                                                    text = "Tap to load media",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
-                                        message.messageType == MessageType.VIDEO -> {
-                                            message.mediaUrl?.let {
-                                                VideoPlayerBox(mediaUrl = it)
+                                    } else {
+                                        when {
+                                            isBatchMedia -> {
+                                                StackedMediaCard(
+                                                    attachments = message.attachments,
+                                                    onClick = { onOpenBatchGallery(message) }
+                                                )
+                                            }
+                                            message.messageType == MessageType.IMAGE -> {
+                                                AsyncImage(
+                                                    model = coil3.request.ImageRequest.Builder(LocalContext.current)
+                                                        .data(message.mediaUrl)
+                                                        .crossfade(true)
+                                                        .build(),
+                                                    contentDescription = stringResource(R.string.cd_post_image),
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .heightIn(max = Sizes.HeightExtraLarge)
+                                                        .clip(RoundedCornerShape(28.dp))
+                                                        .clickable {
+                                                            message.mediaUrl?.let { uriHandler.openUri(it) }
+                                                        }
+                                                )
+                                            }
+                                            message.messageType == MessageType.VIDEO -> {
+                                                message.mediaUrl?.let {
+                                                    VideoPlayerBox(mediaUrl = it)
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            if (message.content.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(Spacing.ExtraSmall))
+if (message.content.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(Spacing.space4))
+                                        Surface(
+                                            color = if (hasReplyPreview) Color.Transparent else containerColor,
+                                            contentColor = contentColor,
+                                            shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
+                                            tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
+                                        ) {
+                                            Text(
+                                                text = message.content,
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    color = contentColor,
+                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
+                                                ),
+                                                modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
+                                            )
+                                        }
+                                }
+                                MessageMetadataRow(
+                                    message = message,
+                                    isFromMe = isFromMe,
+                                    contentColor = contentColor,
+                                    onRetryClick = onRetryClick
+                                )
+                            } else {
                                 Surface(
                                     color = if (hasReplyPreview) Color.Transparent else containerColor,
                                     contentColor = contentColor,
                                     shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
-                                    tonalElevation = if (hasReplyPreview) Spacing.None else Sizes.BorderThin
+                                    tonalElevation = if (hasReplyPreview) Sizes.ElevationNone else Sizes.BorderThin
                                 ) {
-                                    Text(
-                                        text = message.content,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            color = contentColor,
-                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
-                                        ),
-                                        modifier = Modifier.padding(horizontal = Spacing.Medium, vertical = Spacing.Small)
-                                    )
-                                }
-                            }
-                            MessageMetadataRow(
-                                message = message,
-                                isFromMe = isFromMe,
-                                contentColor = contentColor,
-                                onRetryClick = onRetryClick)
-                        } else {
-                            Surface(
-                                color = if (hasReplyPreview) Color.Transparent else containerColor,
-                                contentColor = contentColor,
-                                shape = if (hasReplyPreview) androidx.compose.ui.graphics.RectangleShape else shape,
-                                tonalElevation = if (hasReplyPreview) Spacing.None else Sizes.BorderThin
-                            ) {
-                                Column(modifier = Modifier.padding(horizontal = Spacing.Small, vertical = Spacing.Small)) {
                                     Column(
-                                        modifier = Modifier.padding(horizontal = Spacing.Small),
+                                        modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8),
                                         horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
                                     ) {
                                         when (message.messageType) {
@@ -739,16 +817,14 @@ fun MessageBubble(
                                                     } else {
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
-                                                            modifier = Modifier
-                                                                .height(Spacing.ExtraLarge)
-                                                                .padding(horizontal = Spacing.Small)
+                                                            modifier = Modifier.height(Sizes.AudioFallbackRowHeight)
                                                         ) {
                                                             CircularProgressIndicator(
                                                                 modifier = Modifier.size(Sizes.IconSemiMedium),
                                                                 color = contentColor,
                                                                 strokeWidth = Sizes.BorderDefault
                                                             )
-                                                            Spacer(modifier = Modifier.width(Spacing.Small))
+                                                            Spacer(modifier = Modifier.width(Spacing.space8))
                                                             Text(
                                                                 text = message.content.ifBlank { stringResource(R.string.chat_media_audio_voice) },
                                                                 style = MaterialTheme.typography.bodyMedium,
@@ -760,7 +836,8 @@ fun MessageBubble(
                                                         message = message,
                                                         isFromMe = isFromMe,
                                                         contentColor = contentColor,
-                                                        onRetryClick = onRetryClick)
+                                                        onRetryClick = onRetryClick
+                                                    )
                                                 }
                                             }
 
@@ -774,17 +851,9 @@ fun MessageBubble(
                                                             url,
                                                             fileName,
                                                             object : DownloadManager.DownloadCallback {
-                                                                override fun onSuccess(savedUri: Uri, fileName: String) {
-                                                                    // File saved successfully
-                                                                }
-
-                                                                override fun onProgress(progress: Int) {
-                                                                    // Download progress
-                                                                }
-
-                                                                override fun onError(error: String) {
-                                                                    // Handle download error
-                                                                }
+                                                                override fun onSuccess(savedUri: Uri, fileName: String) {}
+                                                                override fun onProgress(progress: Int) {}
+                                                                override fun onError(error: String) {}
                                                             }
                                                         )
                                                     },
@@ -794,9 +863,9 @@ fun MessageBubble(
                                                     message = message,
                                                     isFromMe = isFromMe,
                                                     contentColor = contentColor,
-                                                    onRetryClick = onRetryClick)
+                                                    onRetryClick = onRetryClick
+                                                )
                                             }
-
 
                                             MessageType.CONTACT -> {
                                                 Column {
@@ -882,13 +951,6 @@ fun MessageBubble(
                                                 }
                                             }
 
-                                            MessageType.CALL -> {
-                                                Column {
-                                                    CallLogCardBubble(metadata = message.metadataContainer?.call, contentColor = contentColor)
-                                                    MessageMetadataRow(message = message, isFromMe = isFromMe, contentColor = contentColor, onRetryClick = onRetryClick)
-                                                }
-                                            }
-
                                             MessageType.EPHEMERAL_MEDIA -> {
                                                 Column {
                                                     ViewOnceCardBubble(metadata = message.metadataContainer?.viewOnce, mediaUrl = message.mediaUrl, contentColor = contentColor, onOpenEphemeralMedia = onOpenEphemeralMedia)
@@ -896,85 +958,136 @@ fun MessageBubble(
                                                 }
                                             }
 
-                                            MessageType.GIF, MessageType.STICKER -> {
-                                                Column {
-                                                    message.mediaUrl?.let { url ->
-                                                        AsyncImage(
-                                                            model = url,
-                                                            contentDescription = "Sticker or GIF",
-                                                            modifier = Modifier.size(150.dp).padding(4.dp)
-                                                        )
-                                                    }
-                                                    MessageMetadataRow(message = message, isFromMe = isFromMe, contentColor = contentColor, onRetryClick = onRetryClick)
-                                                }
-                                            }
-                            else -> {
+                                            else -> {
                                                 Column {
                                                     val firstUrl = UrlUtils.extractFirstUrl(message.content)
-                                                    if (firstUrl != null && getLinkMetadataUseCase != null) {
-                                                        LinkPreviewCard(
-                                                            url = firstUrl,
-                                                            useCase = getLinkMetadataUseCase,
-                                                            modifier = Modifier.padding(bottom = Spacing.Small)
-                                                        )
-                                                    }
-
-                                                    val annotatedString = buildAnnotatedString {
-                                                        val urlRegex = Regex("(https?://[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)|(www\\.[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)")
-                                                        var lastIndex = 0
-
-                                                        urlRegex.findAll(message.content).forEach { matchResult ->
-                                                            append(message.content.substring(lastIndex, matchResult.range.first))
-
-                                                            val url = matchResult.value
-                                                            val fullUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                                                                "https://$url"
-                                                            } else {
-                                                                url
-                                                            }
-
-                                                            pushStringAnnotation(tag = "URL", annotation = fullUrl)
-                                                            withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-                                                                append(url)
-                                                            }
-                                                            pop()
-
-                                                            lastIndex = matchResult.range.last + 1
-                                                        }
-                                                        append(message.content.substring(lastIndex))
-                                                    }
-
-                                                    var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-                                                    Text(
-                                                        text = annotatedString,
-                                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                                            color = contentColor,
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
-                                                        ),
-                                                        onTextLayout = { layoutResult = it },
-                                                        modifier = Modifier.pointerInput(Unit) {
-                                                            detectTapGestures(
-                                                                onLongPress = { onLongClick() },
-                                                                onTap = { pos ->
-                                                                    var urlHandled = false
-                                                                    layoutResult?.let { lResult ->
-                                                                        val offset = lResult.getOffsetForPosition(pos)
-                                                                        annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                                                                            .firstOrNull()?.let { annotation ->
-                                                                                IntentUtils.openUrl(context, annotation.item)
-                                                                                urlHandled = true
-                                                                            }
-                                                                    }
-                                                                    if (!urlHandled) onClick()
-                                                                }
+                                                        if (firstUrl != null && getLinkMetadataUseCase != null) {
+                                                            LinkPreviewCard(
+                                                                url = firstUrl,
+                                                                useCase = getLinkMetadataUseCase,
+                                                                modifier = Modifier.padding(bottom = Spacing.space8)
                                                             )
                                                         }
+
+                                                        val annotatedString = buildAnnotatedString {
+                                                            val urlRegex = Regex("(https?://[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)|(www\\.[a-zA-Z0-9-._~:/?#\\[\\]@!$&'()*+,;=%]+)")
+                                                            var lastIndex = 0
+
+                                                            urlRegex.findAll(message.content).forEach { matchResult ->
+                                                                append(message.content.substring(lastIndex, matchResult.range.first))
+
+                                                                val url = matchResult.value
+                                                                val fullUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                                                                    "https://$url"
+                                                                } else {
+                                                                    url
+                                                                }
+
+                                                                pushStringAnnotation(tag = "URL", annotation = fullUrl)
+                                                                withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
+                                                                    append(url)
+                                                                }
+                                                                pop()
+
+                                                                lastIndex = matchResult.range.last + 1
+                                                            }
+                                                            append(message.content.substring(lastIndex))
+                                                        }
+
+                                                        var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                                                        Text(
+                                                            text = annotatedString,
+                                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                                color = contentColor,
+                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
+                                                            ),
+                                                            onTextLayout = { layoutResult = it },
+                                                            modifier = Modifier.pointerInput(Unit) {
+                                                                detectTapGestures(
+                                                                    onLongPress = { onLongClick() },
+                                                                    onTap = { pos ->
+                                                                        var urlHandled = false
+                                                                        layoutResult?.let { lResult ->
+                                                                            val offset = lResult.getOffsetForPosition(pos)
+                                                                            annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                                                                                .firstOrNull()?.let { annotation ->
+                                                                                    IntentUtils.openUrl(context, annotation.item)
+                                                                                    urlHandled = true
+                                                                                }
+                                                                        }
+                                                                        if (!urlHandled) onClick()
+                                                                    }
+                                                                )
+                                                            }
+                                                        )
+                                                        MessageMetadataRow(
+                                                            message = message,
+                                                            isFromMe = isFromMe,
+                                                            contentColor = contentColor,
+                                                            onRetryClick = onRetryClick
                                                     )
-                                                    MessageMetadataRow(
-                                                        message = message,
-                                                        isFromMe = isFromMe,
-                                                        contentColor = contentColor,
-                                                        onRetryClick = onRetryClick)
+                                                }
+                                            }
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            if (reactions.isNotEmpty() || replyCount > 0) {
+                Row(
+                    horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start
+                ) {
+                    if (!isFromMe && showAvatar) {
+                        Spacer(modifier = Modifier.width(Sizes.AvatarSmall + Spacing.space8))
+                    }
+                    Column(
+                        horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
+                    ) {
+                        if (reactions.isNotEmpty()) {
+                            @OptIn(ExperimentalLayoutApi::class)
+                            FlowRow(
+                                modifier = Modifier.padding(top = Spacing.space4),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.space4, if (isFromMe) Alignment.End else Alignment.Start),
+                                verticalArrangement = Arrangement.spacedBy(Spacing.space4)
+                            ) {
+                                reactions.forEach { (emoji, count) ->
+                                    val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
+                                    Box(
+                                        modifier = Modifier
+                                            .sizeIn(minWidth = AccessibilitySizes.minimumTouchTarget)
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = ripple(bounded = false, radius = 24.dp),
+                                                role = Role.Button,
+                                                onClick = { onReactionSelected(type) }
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = if (message.userReaction == type)
+                                                MaterialTheme.colorScheme.primaryContainer
+                                            else
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                            tonalElevation = Sizes.ElevationLow
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
+                                            ) {
+                                                Text(text = emoji, fontSize = FontSizes.Small)
+                                                if (count > 1) {
+                                                    Text(
+                                                        text = count.toString(),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontSize = FontSizes.Small
+                                                    )
                                                 }
                                             }
                                         }
@@ -982,49 +1095,11 @@ fun MessageBubble(
                                 }
                             }
                         }
-                    }
-                    }
 
-                    @OptIn(ExperimentalLayoutApi::class)
-                    FlowRow(
-                        modifier = Modifier
-                            .padding(top = Spacing.Tiny)
-                            .padding(horizontal = Spacing.ExtraSmall),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny, if (isFromMe) Alignment.End else Alignment.Start),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.Tiny)
-                    ) {
-                        reactions.forEach { (emoji, count) ->
-                            val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
-                            Surface(
-                                shape = CircleShape,
-                                color = if (message.userReaction == type)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                tonalElevation = Spacing.Tiny,
-                                modifier = Modifier.clickable { onReactionSelected(type) }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = Spacing.ExtraSmallMedium, vertical = Spacing.Tiny),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(Spacing.Tiny)
-                                ) {
-                                    Text(text = emoji, fontSize = FontSizes.Small)
-                                    if (count > 1) {
-                                        Text(
-                                            text = count.toString(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontSize = FontSizes.Small
-                                        )
-                                    }
-                                }
-                            }
+                        if (replyCount > 0) {
+                            RepliesIndicatorRow(count = replyCount)
                         }
                     }
-                }
-
-                if (replyCount > 0) {
-                    RepliesIndicatorRow(count = replyCount)
                 }
             }
         }

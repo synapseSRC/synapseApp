@@ -170,7 +170,7 @@ class VoiceRecorder(private val context: Context) {
                 } else {
                     _amplitudeFlow.value = 0
                 }
-                delay(100)
+                delay(50)
             }
         }
     }

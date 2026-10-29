@@ -21,6 +21,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.settings.ApiKeyInfo
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +58,7 @@ fun ApiKeySettingsScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_api_key_title)) },
@@ -64,8 +68,8 @@ fun ApiKeySettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -73,7 +77,7 @@ fun ApiKeySettingsScreen(
         snackbarHost = {
             error?.let { errorMessage ->
                 Snackbar(
-                    modifier = Modifier.padding(Spacing.Medium),
+                    modifier = Modifier.padding(Spacing.space16),
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
                             Text(stringResource(R.string.action_dismiss))
@@ -89,15 +93,15 @@ fun ApiKeySettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            contentPadding = PaddingValues(bottom = Spacing.ExtraLarge),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            contentPadding = PaddingValues(bottom = Spacing.space32),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 SettingsSection(title = stringResource(R.string.api_provider_settings)) {
                     var expanded by remember { mutableStateOf(false) }
 
-                    Box(modifier = Modifier.padding(SettingsSpacing.itemPadding)) {
+                    Box(modifier = Modifier.padding(AppSpacing.itemPadding)) {
                         ExposedDropdownMenuBox(
                             expanded = expanded,
                             onExpandedChange = { expanded = !expanded }
@@ -111,7 +115,7 @@ fun ApiKeySettingsScreen(
                                 modifier = Modifier
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                     .fillMaxWidth(),
-                                shape = SettingsShapes.inputShape
+                                shape = AppShapes.inputShape
                             )
 
                             ExposedDropdownMenu(
@@ -131,7 +135,7 @@ fun ApiKeySettingsScreen(
                         }
                     }
 
-                    Box(modifier = Modifier.padding(SettingsSpacing.itemPadding)) {
+                    Box(modifier = Modifier.padding(AppSpacing.itemPadding)) {
                         OutlinedTextField(
                             value = customModelText,
                             onValueChange = { customModelText = it },
@@ -139,7 +143,7 @@ fun ApiKeySettingsScreen(
                             placeholder = { Text(stringResource(R.string.api_custom_model_hint)) },
                             supportingText = { Text(stringResource(R.string.api_custom_model_support)) },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             singleLine = true,
                             trailingIcon = {
                                 if (customModelText.isNotBlank()) {
@@ -168,26 +172,26 @@ fun ApiKeySettingsScreen(
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.SmallMedium)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.space12)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = Spacing.Small),
+                            .padding(start = Spacing.space8),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = stringResource(R.string.api_your_keys),
-                            style = SettingsTypography.sectionHeader,
-                            color = SettingsColors.sectionTitle
+                            style = AppTypography.sectionHeader,
+                            color = AppColors.sectionTitle
                         )
 
                         TextButton(
                             onClick = { showAddKeyDialog = true }
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Add API Key")
-                            Spacer(modifier = Modifier.width(Spacing.Small))
+                            Spacer(modifier = Modifier.width(Spacing.space8))
                             Text(stringResource(R.string.action_add_key))
                         }
                     }
@@ -197,40 +201,40 @@ fun ApiKeySettingsScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = Spacing.ExtraLarge, horizontal = Spacing.Medium),
+                                    .padding(vertical = Spacing.space32, horizontal = Spacing.space16),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Key,
                                     contentDescription = null,
                                     modifier = Modifier.size(Sizes.IconGiant),
-                                    tint = SettingsColors.itemIcon.copy(alpha = 0.5f)
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.Medium))
+                                Spacer(modifier = Modifier.height(Spacing.space16))
                                 Text(
                                     text = stringResource(R.string.api_no_keys),
-                                    style = SettingsTypography.itemTitle,
+                                    style = AppTypography.itemTitle,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.Small))
+                                Spacer(modifier = Modifier.height(Spacing.space8))
                                 Text(
                                     text = stringResource(R.string.api_add_own_keys),
-                                    style = SettingsTypography.itemSubtitle,
-                                    color = SettingsColors.itemIcon,
+                                    style = AppTypography.itemSubtitle,
+                                    color = MaterialTheme.colorScheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.Medium))
+                                Spacer(modifier = Modifier.height(Spacing.space16))
                                 Button(
                                     onClick = { showAddKeyDialog = true }
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(Sizes.IconMedium))
-                                    Spacer(modifier = Modifier.width(Spacing.Small))
+                                    Spacer(modifier = Modifier.width(Spacing.space8))
                                     Text(stringResource(R.string.action_add_api_key))
                                 }
                             }
                         }
                     } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)) {
                             apiKeys.forEachIndexed { index, apiKey ->
                                 val position = when {
                                     apiKeys.size == 1 -> SettingsItemPosition.Single
@@ -241,7 +245,7 @@ fun ApiKeySettingsScreen(
                                 Surface(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = position.getShape(),
-                                    color = SettingsColors.cardBackground
+                                    color = AppColors.cardBackground
                                 ) {
                                     ApiKeyItem(
                                         apiKey = apiKey,
@@ -257,7 +261,7 @@ fun ApiKeySettingsScreen(
             if (isLoading) {
                 item {
                     Box(
-                        modifier = Modifier.fillMaxWidth().padding(Spacing.Medium),
+                        modifier = Modifier.fillMaxWidth().padding(Spacing.space16),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()

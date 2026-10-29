@@ -98,18 +98,16 @@ fun InboxEmptyState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Spacing.ExtraLarge),
+            .padding(Spacing.space32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-
         Box(
             modifier = Modifier
                 .size(Sizes.EmptyStateIcon)
                 .scale(iconScale),
             contentAlignment = Alignment.Center
         ) {
-
             Surface(
                 modifier = Modifier.size(Sizes.EmptyStateIconSmall),
                 shape = androidx.compose.foundation.shape.CircleShape,
@@ -134,7 +132,7 @@ fun InboxEmptyState(
             modifier = Modifier.alpha(contentAlpha)
         )
 
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        Spacer(modifier = Modifier.height(Spacing.space8))
 
         Text(
             text = description,
@@ -143,7 +141,7 @@ fun InboxEmptyState(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .alpha(contentAlpha)
-                .padding(horizontal = Spacing.Large)
+                .padding(horizontal = Spacing.space24)
         )
 
         if (actionText != null) {
@@ -163,7 +161,7 @@ fun InboxEmptyState(
                         contentDescription = null,
                         modifier = Modifier.size(Sizes.IconMedium)
                     )
-                    Spacer(modifier = Modifier.width(Spacing.Small))
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(actionText)
                 }
             }
@@ -178,32 +176,3 @@ private data class EmptyStateContent(
     val actionText: String?
 )
 
-@Composable
-fun CompactEmptyState(
-    icon: ImageVector,
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(Spacing.Large),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(Sizes.IconGiant),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.SmallMedium))
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
-}

@@ -10,14 +10,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ScheduledPostDto(
     val id: String? = null,
-    @SerialName("user_id") val userId: String,
-    @SerialName("post_data") val postData: CreatePostRequestDto,
+    @SerialName("owner_uid") val ownerUid: String,
+    @SerialName("payload") val payload: CreatePostRequestDto,
     @SerialName("scheduled_at") val scheduledAt: String,
-    val status: String = "scheduled",
-    @SerialName("error_message") val errorMessage: String? = null,
+    val status: String = ScheduledPost.STATUS_PENDING,
+    @SerialName("last_error") val lastError: String? = null,
     @SerialName("published_post_id") val publishedPostId: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null
+    @SerialName("published_at") val publishedAt: String? = null
 )
 
 @Serializable
@@ -105,12 +105,12 @@ fun CreatePostRequestDto.toDomain(): CreatePostRequest = CreatePostRequest(
 
 fun ScheduledPostDto.toDomain(): ScheduledPost = ScheduledPost(
     id = this.id ?: "",
-    userId = this.userId,
-    postRequest = this.postData.toDomain(),
+    userId = this.ownerUid,
+    postRequest = this.payload.toDomain(),
     scheduledAt = this.scheduledAt,
     status = this.status,
-    errorMessage = this.errorMessage,
+    errorMessage = this.lastError,
     publishedPostId = this.publishedPostId,
     createdAt = this.createdAt,
-    updatedAt = this.updatedAt
+    publishedAt = this.publishedAt
 )

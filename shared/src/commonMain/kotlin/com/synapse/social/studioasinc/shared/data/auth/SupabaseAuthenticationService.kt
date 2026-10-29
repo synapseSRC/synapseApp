@@ -36,7 +36,7 @@ class SupabaseAuthenticationService(
 
     private val allowedRedirectUrls = setOf(
         "synapse://login",
-        "https://synapseofficial.vercel.app",
+        "https://synapsesocial.vercel.app",
         "https://www.synapse.com/auth"
     )
 
@@ -95,10 +95,10 @@ class SupabaseAuthenticationService(
     override suspend fun ensureProfileExists(userId: String, email: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
-                val count = client.from("users").select(columns = Columns.list("id")) {
+                val count = client.from("users").select(columns = Columns.list("uid")) {
                     count(Count.EXACT)
                     filter {
-                        eq("id", userId)
+                        eq("uid", userId)
                     }
                 }.countOrNull()
 

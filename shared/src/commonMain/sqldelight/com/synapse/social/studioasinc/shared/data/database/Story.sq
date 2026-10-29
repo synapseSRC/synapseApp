@@ -19,7 +19,12 @@ CREATE TABLE StoryEntity (
     isReported INTEGER AS kotlin.Boolean,
     moderationStatus TEXT,
     createdAt TEXT,
-    expiresAt TEXT
+    expiresAt TEXT,
+    -- Sync metadata
+    updatedAt INTEGER NOT NULL DEFAULT 0,
+    isLocallyDeleted INTEGER AS kotlin.Boolean DEFAULT 0,
+    lastSyncedAt INTEGER DEFAULT 0,
+    syncVersion INTEGER NOT NULL DEFAULT 1
 );
 
 insertStory:

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,7 @@ fun ChangeNumberScreen(
     }
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_change_number_title)) },
@@ -69,8 +71,8 @@ fun ChangeNumberScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(Spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.Medium),
+                .padding(Spacing.space16),
+            verticalArrangement = Arrangement.spacedBy(Spacing.space16),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
