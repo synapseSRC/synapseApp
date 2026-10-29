@@ -155,6 +155,14 @@ object SettingsDataProvider {
                     keywords = listOf("language", "locale", "translate", "english", "spanish")
                 ),
                 SettingsCategory(
+                    id = "whats_new",
+                    title = UiText.StringResource(R.string.settings_whats_new_title),
+                    subtitle = UiText.StringResource(R.string.settings_whats_new_subtitle),
+                    icon = Icons.Filled.NewReleases,
+                    destination = SettingsDestination.WhatsNew,
+                    keywords = listOf("changelog", "release", "updates", "version", "news", "notes")
+                ),
+                SettingsCategory(
                     id = "about",
                     title = UiText.StringResource(R.string.settings_about_app_title),
                     subtitle = UiText.StringResource(R.string.settings_about_app_subtitle),

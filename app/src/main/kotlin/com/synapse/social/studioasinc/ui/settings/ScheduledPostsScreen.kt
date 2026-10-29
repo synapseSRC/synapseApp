@@ -349,8 +349,7 @@ private fun ScheduledPostCard(
 @Composable
 private fun StatusBadge(status: String) {
     val (bgColor, textColor, label) = when (status) {
-        ScheduledPost.STATUS_SCHEDULED -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, "SCHEDULED")
-        ScheduledPost.STATUS_PUBLISHING -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, "PUBLISHING")
+        ScheduledPost.STATUS_PENDING -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, "SCHEDULED")
         ScheduledPost.STATUS_PUBLISHED -> Triple(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, "PUBLISHED")
         ScheduledPost.STATUS_FAILED -> Triple(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer, "FAILED")
         else -> Triple(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.colorScheme.onSurface, status.uppercase())

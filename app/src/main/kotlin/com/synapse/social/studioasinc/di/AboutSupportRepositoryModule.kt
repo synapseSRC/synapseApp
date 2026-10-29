@@ -3,6 +3,8 @@ package com.synapse.social.studioasinc.di
 import com.synapse.social.studioasinc.data.repository.AssetOpenSourceLicenseRepository
 import com.synapse.social.studioasinc.data.repository.FeedbackRepositoryImpl
 import com.synapse.social.studioasinc.data.repository.GitHubAppUpdateRepository
+import com.synapse.social.studioasinc.data.repository.GitHubReleaseRepository
+import com.synapse.social.studioasinc.domain.repository.AppReleaseRepository
 import com.synapse.social.studioasinc.domain.repository.AppUpdateRepository
 import com.synapse.social.studioasinc.domain.repository.FeedbackRepository
 import com.synapse.social.studioasinc.domain.repository.OpenSourceLicenseRepository
@@ -28,4 +30,8 @@ abstract class AboutSupportRepositoryModule {
     abstract fun bindOpenSourceLicenseRepository(
         implementation: AssetOpenSourceLicenseRepository
     ): OpenSourceLicenseRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppReleaseRepository(implementation: GitHubReleaseRepository): AppReleaseRepository
 }

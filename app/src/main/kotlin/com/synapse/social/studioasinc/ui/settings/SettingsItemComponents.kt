@@ -1,9 +1,11 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.*
@@ -19,6 +21,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 /**
@@ -57,6 +60,20 @@ fun SettingsNavigationChevron(
         contentDescription = null,
         modifier = modifier.size(SettingsSpacing.rowIconSize),
         tint = SettingsColors.chevronIcon
+    )
+}
+
+/** Flag that the row has something unread behind it; [description] carries that to TalkBack. */
+@Composable
+fun SettingsUnreadDot(
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(Sizes.StatusDotSmall)
+            .background(MaterialTheme.colorScheme.primary, CircleShape)
+            .semantics { contentDescription = description }
     )
 }
 
@@ -248,7 +265,8 @@ fun SettingsNavigationItem(
     imageVector: ImageVector? = null,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    position: SettingsItemPosition = SettingsItemPosition.Single
+    position: SettingsItemPosition = SettingsItemPosition.Single,
+    indicator: (@Composable () -> Unit)? = null
 ) {
     SettingsListItem(
         title = title,
@@ -261,7 +279,15 @@ fun SettingsNavigationItem(
                 SettingsIconBadge(imageVector = it)
             }
         },
-        trailingContent = { SettingsNavigationChevron() }
+        trailingContent = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                indicator?.invoke()
+                SettingsNavigationChevron()
+            }
+        }
     )
 }
 

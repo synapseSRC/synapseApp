@@ -1980,6 +1980,9 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_app_language_subtitle">Language selection (e.g., English)</string>
     <string name="settings_about_app_title">About App</string>
     <string name="settings_about_app_subtitle">Help center, contact us, privacy policy</string>
+    <string name="settings_whats_new_title">What\'s new</string>
+    <string name="settings_whats_new_subtitle">Release notes and version history</string>
+    <string name="settings_unread_indicator">New release available</string>
     <string name="settings_flags_title">Flags</string>
     <string name="settings_flags_subtitle">Toggle experimental features</string>
     <string name="settings_navigation_placement_title">Navigation placement</string>

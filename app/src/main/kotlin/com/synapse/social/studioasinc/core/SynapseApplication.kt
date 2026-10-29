@@ -23,6 +23,7 @@ import com.synapse.social.studioasinc.core.config.NotificationConfig
 import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
 import com.synapse.social.studioasinc.core.util.MediaCacheCleanupManager
 import com.synapse.social.studioasinc.core.util.SupabaseStorageImageInterceptor
+import com.synapse.social.studioasinc.feature.createpost.scheduling.ScheduledPostPublisherWorker
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.feature.shared.theme.ThemeManager
 import com.synapse.social.studioasinc.feature.settings.backup.SettingsCloudSyncScheduler
@@ -414,6 +415,11 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
             mediaCacheCleanupManager.initialize()
         } catch (e: Exception) {
             Napier.w("Skipping maintenance services initialization: ${e.message}", e, tag = "SynapseApplication")
+        }
+        try {
+            ScheduledPostPublisherWorker.ensurePeriodicPublish(this)
+        } catch (e: Exception) {
+            Napier.w("Skipping scheduled post publisher initialization: ${e.message}", e, tag = "SynapseApplication")
         }
     }
 
