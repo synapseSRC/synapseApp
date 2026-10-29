@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
+import { SignOutButton } from "@/components/synapse/app-nav";
 import { PostCard } from "@/components/synapse/post-card";
 import { ProfileHeader } from "@/components/synapse/profile-header";
 import { getPostsByAuthor, type FeedEntry } from "@/lib/synapse/posts";
 import { resolveCoverUrl } from "@/lib/synapse/profile-media";
 import { getOrCreateOwnProfile } from "@/lib/synapse/profiles";
 import { requireCurrentUser } from "@/lib/synapse/session";
-import { generateMetadata as buildMetadata } from "@/utils";
+import { cn, generateMetadata as buildMetadata } from "@/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,7 @@ const ProfileScreenPage = async () => {
                         >
                             Edit profile
                         </Link>
+                        <SignOutButton className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 rounded-lg")} />
                     </>
                 }
             />
