@@ -570,26 +570,23 @@ fun MessageBubble(
                 )
             },
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start
+            horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
         ) {
-            if (!isFromMe && showAvatar) {
-                if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
-                    com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
-                        avatarUrl = senderAvatarUrl,
-                        displayName = senderName,
-                        size = Sizes.AvatarSmall
-                    )
-                } else {
-                    Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
+            Row(verticalAlignment = Alignment.Bottom) {
+                if (!isFromMe && showAvatar) {
+                    if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
+                        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
+                            avatarUrl = senderAvatarUrl,
+                            displayName = senderName,
+                            size = Sizes.AvatarSmall
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
+                    }
+                    Spacer(modifier = Modifier.width(Spacing.space8))
                 }
-                Spacer(modifier = Modifier.width(Spacing.space8))
-            }
-            Column(
-                horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
-            ) {
                 Column(
                     horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
                 ) {
@@ -1038,62 +1035,71 @@ if (message.content.isNotBlank()) {
                         }
                     }
 
-                    if (reactions.isNotEmpty()) {
-                        @OptIn(ExperimentalLayoutApi::class)
-                        FlowRow(
-                            modifier = Modifier
-                                .padding(top = Spacing.space4)
-                                .padding(horizontal = Spacing.space4),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.space4, if (isFromMe) Alignment.End else Alignment.Start),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.space4)
-                        ) {
-                            reactions.forEach { (emoji, count) ->
-                                val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
-                                Box(
-                                    modifier = Modifier
-                                        .sizeIn(
-                                            minWidth = AccessibilitySizes.minimumTouchTarget,
-                                            minHeight = AccessibilitySizes.minimumTouchTarget
-                                        )
-                                        .clickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = ripple(bounded = false, radius = 24.dp),
-                                            role = Role.Button,
-                                            onClick = { onReactionSelected(type) }
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = if (message.userReaction == type)
-                                            MaterialTheme.colorScheme.primaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.surfaceVariant,
-                                        tonalElevation = Sizes.ElevationLow
+                }
+            }
+
+            if (reactions.isNotEmpty() || replyCount > 0) {
+                Row(
+                    horizontalArrangement = if (isFromMe) Arrangement.End else Arrangement.Start
+                ) {
+                    if (!isFromMe && showAvatar) {
+                        Spacer(modifier = Modifier.width(Sizes.AvatarSmall + Spacing.space8))
+                    }
+                    Column(
+                        horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
+                    ) {
+                        if (reactions.isNotEmpty()) {
+                            @OptIn(ExperimentalLayoutApi::class)
+                            FlowRow(
+                                modifier = Modifier.padding(top = Spacing.space4),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.space4, if (isFromMe) Alignment.End else Alignment.Start),
+                                verticalArrangement = Arrangement.spacedBy(Spacing.space4)
+                            ) {
+                                reactions.forEach { (emoji, count) ->
+                                    val type = SharedReactionType.values().find { it.emoji == emoji } ?: SharedReactionType.LIKE
+                                    Box(
+                                        modifier = Modifier
+                                            .sizeIn(minWidth = AccessibilitySizes.minimumTouchTarget)
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = ripple(bounded = false, radius = 24.dp),
+                                                role = Role.Button,
+                                                onClick = { onReactionSelected(type) }
+                                            ),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = if (message.userReaction == type)
+                                                MaterialTheme.colorScheme.primaryContainer
+                                            else
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                            tonalElevation = Sizes.ElevationLow
                                         ) {
-                                            Text(text = emoji, fontSize = FontSizes.Small)
-                                            if (count > 1) {
-                                                Text(
-                                                    text = count.toString(),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    fontSize = FontSizes.Small
-                                                )
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
+                                            ) {
+                                                Text(text = emoji, fontSize = FontSizes.Small)
+                                                if (count > 1) {
+                                                    Text(
+                                                        text = count.toString(),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontSize = FontSizes.Small
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                }
 
-                if (replyCount > 0) {
-                    RepliesIndicatorRow(count = replyCount)
+                        if (replyCount > 0) {
+                            RepliesIndicatorRow(count = replyCount)
+                        }
+                    }
                 }
             }
         }
