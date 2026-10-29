@@ -12,7 +12,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileEvent
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileUiState
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @Composable
 fun EditProfileContent(
@@ -33,12 +33,12 @@ fun EditProfileContent(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = SettingsSpacing.screenPadding,
-            end = SettingsSpacing.screenPadding,
+            start = AppSpacing.screenPadding,
+            end = AppSpacing.screenPadding,
             top = paddingValues.calculateTopPadding() + Spacing.space8,
             bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         // 1. Top Identity Preview
         item {

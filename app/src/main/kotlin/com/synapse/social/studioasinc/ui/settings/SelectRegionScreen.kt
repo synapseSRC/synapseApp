@@ -31,6 +31,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.RegionItem
 import com.synapse.social.studioasinc.feature.shared.components.getRegionShapeForItem
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +56,7 @@ fun SelectRegionScreen(
     }
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             if (isSearchActive) {
                 SearchBar(
@@ -93,7 +94,7 @@ fun SelectRegionScreen(
                         if (!active) searchQuery = ""
                     },
                     colors = SearchBarDefaults.colors(
-                        containerColor = SettingsColors.cardBackground,
+                        containerColor = AppColors.cardBackground,
                     )
                 ) {
                     LazyColumn(
@@ -125,8 +126,8 @@ fun SelectRegionScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = SettingsColors.screenBackground,
-                        scrolledContainerColor = SettingsColors.cardBackground
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
                     )
                 )
             }

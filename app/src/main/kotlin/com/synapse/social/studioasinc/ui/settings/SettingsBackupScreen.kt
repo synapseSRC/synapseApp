@@ -65,6 +65,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import java.util.Date
 import android.text.format.DateFormat as AndroidDateFormat
 import android.text.format.Formatter
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,7 +103,7 @@ fun SettingsBackupScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
@@ -115,8 +117,8 @@ fun SettingsBackupScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -126,16 +128,16 @@ fun SettingsBackupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
             contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
                 ) {
-                    Column(Modifier.padding(SettingsSpacing.itemPadding)) {
+                    Column(Modifier.padding(AppSpacing.itemPadding)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Filled.Backup,
@@ -169,7 +171,7 @@ fun SettingsBackupScreen(
                     )
                     PrimaryTabRow(
                         selectedTabIndex = if (state.mode == BackupDestinationMode.LOCAL) 0 else 1,
-                        containerColor = SettingsColors.screenBackground,
+                        containerColor = AppColors.screenBackground,
                         contentColor = MaterialTheme.colorScheme.primary
                     ) {
                         Tab(
@@ -322,10 +324,10 @@ private fun LocalBackupSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
+            modifier = Modifier.padding(AppSpacing.itemPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_local_status_title), style = MaterialTheme.typography.titleMedium)
@@ -392,10 +394,10 @@ private fun CloudBackupSection(
     val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
+            modifier = Modifier.padding(AppSpacing.itemPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -482,10 +484,10 @@ private fun IncludedSettingsSection() {
     )
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
+            modifier = Modifier.padding(AppSpacing.itemPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_scope_title), style = MaterialTheme.typography.titleMedium)
@@ -507,7 +509,7 @@ private fun PrivacyAndRestoreNote() {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(
-            modifier = Modifier.padding(SettingsSpacing.itemPadding),
+            modifier = Modifier.padding(AppSpacing.itemPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             Text(stringResource(R.string.backup_privacy_title), style = MaterialTheme.typography.titleMedium)

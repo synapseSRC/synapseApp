@@ -15,14 +15,17 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 
 @Composable
 private fun EmptyFavouritesCard() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackgroundElevated,
+        shape = AppShapes.cardShape,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Column(
@@ -67,7 +70,7 @@ fun FavouritesScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_favourites_title)) },
@@ -87,8 +90,8 @@ fun FavouritesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 Spacer(modifier = Modifier.height(Spacing.space8))

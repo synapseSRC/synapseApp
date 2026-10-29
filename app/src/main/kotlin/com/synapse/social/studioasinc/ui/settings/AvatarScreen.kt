@@ -30,6 +30,9 @@ import com.synapse.social.studioasinc.presentation.editprofile.EditProfileEvent
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @Composable
 private fun AvatarPreviewCard(
@@ -40,8 +43,8 @@ private fun AvatarPreviewCard(
     
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackgroundElevated,
+        shape = AppShapes.cardShape,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Column(
@@ -204,7 +207,7 @@ fun AvatarScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.avatar_title)) },
@@ -224,8 +227,8 @@ fun AvatarScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 Spacer(modifier = Modifier.height(Spacing.space8))

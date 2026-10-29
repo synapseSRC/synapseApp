@@ -25,6 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 
 
@@ -38,7 +42,7 @@ fun SynapsePlusScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.synapse_plus_title)) },
@@ -58,7 +62,7 @@ fun SynapsePlusScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
+                .padding(horizontal = AppSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space24),
             contentPadding = PaddingValues(bottom = Spacing.space24)
         ) {
@@ -69,8 +73,8 @@ fun SynapsePlusScreen(
             item {
                 Text(
                     text = stringResource(R.string.synapse_plus_section_features),
-                    style = SettingsTypography.sectionHeader,
-                    color = SettingsColors.sectionTitle,
+                    style = AppTypography.sectionHeader,
+                    color = AppColors.sectionTitle,
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
                 FeatureGrid()
@@ -113,7 +117,7 @@ private fun HeroCard() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
+        shape = AppShapes.cardShape,
         elevation = CardDefaults.cardElevation(defaultElevation = Sizes.ElevationMedium)
     ) {
         Box(
@@ -236,9 +240,9 @@ private fun FeatureCard(
 ) {
     ElevatedCard(
         modifier = modifier.height(140.dp),
-        shape = SettingsShapes.itemShape,
+        shape = AppShapes.itemShape,
         colors = CardDefaults.elevatedCardColors(
-            containerColor = SettingsColors.cardBackground
+            containerColor = AppColors.cardBackground
         )
     ) {
         Column(
@@ -249,7 +253,7 @@ private fun FeatureCard(
             horizontalAlignment = Alignment.Start
         ) {
             Surface(
-                shape = SettingsShapes.chipShape,
+                shape = AppShapes.chipShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.size(40.dp)
             ) {
@@ -266,7 +270,7 @@ private fun FeatureCard(
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                 Text(
                     text = feature.title,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -288,7 +292,7 @@ private fun UpgradeButton(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SettingsShapes.itemShape)
+            .clip(AppShapes.itemShape)
             .background(
                 brush = Brush.horizontalGradient(
                     colors = listOf(

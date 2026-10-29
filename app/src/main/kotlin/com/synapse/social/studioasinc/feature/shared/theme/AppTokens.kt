@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.ui.settings
+package com.synapse.social.studioasinc.feature.shared.theme
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape
@@ -11,11 +11,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
-import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
-object SettingsColors {
+/**
+ * App-wide semantic color roles for contained/grouped content — settings pages, profile editing,
+ * permission screens and notification lists all draw from this vocabulary. Keep using theme roles
+ * here rather than inventing scoped palettes; light/dark and dynamic color follow automatically.
+ */
+object AppColors {
     val sectionTitle: Color
         @Composable
         @ReadOnlyComposable
@@ -26,7 +28,7 @@ object SettingsColors {
         @ReadOnlyComposable
         get() = MaterialTheme.colorScheme.surfaceContainerLow
 
-    /** Raised backdrop of the more-menu sheet, so the [cardBackground] rows read as recessed. */
+    /** Raised page backdrop, so the [cardBackground] rows read as recessed. */
     val screenBackground: Color
         @Composable
         @ReadOnlyComposable
@@ -82,7 +84,7 @@ object SettingsColors {
     val disabledContentAlpha: Float = 0.38f
 }
 
-object SettingsShapes {
+object AppShapes {
     val cardShape: Shape
         @Composable
         @ReadOnlyComposable
@@ -116,7 +118,7 @@ object SettingsShapes {
         get() = MaterialTheme.shapes.small
 }
 
-object SettingsSpacing {
+object AppSpacing {
     val screenPadding: Dp = Spacing.space16
 
     val sectionSpacing: Dp = Spacing.space12
@@ -147,7 +149,7 @@ object SettingsSpacing {
     val rowIconSize: Dp = Sizes.IconLarge
 }
 
-object SettingsTypography {
+object AppTypography {
     val screenTitle: TextStyle
         @Composable
         @ReadOnlyComposable
@@ -182,22 +184,4 @@ object SettingsTypography {
         @Composable
         @ReadOnlyComposable
         get() = MaterialTheme.typography.labelLarge
-}
-
-enum class SettingsItemPosition {
-    Single,
-
-    Top,
-
-    Middle,
-
-    Bottom;
-
-    @Composable
-    fun getShape(): Shape = when (this) {
-        Single -> GroupedItemPosition.Single.shape
-        Top -> GroupedItemPosition.Top.shape
-        Middle -> GroupedItemPosition.Middle.shape
-        Bottom -> GroupedItemPosition.Bottom.shape
-    }
 }

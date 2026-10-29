@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -174,7 +174,7 @@ fun PhotoHistoryScreen(
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = Sizes.Height120),
-                    contentPadding = PaddingValues(SettingsSpacing.screenPadding),
+                    contentPadding = PaddingValues(AppSpacing.screenPadding),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                     verticalArrangement = Arrangement.spacedBy(Spacing.space8),
                     modifier = Modifier.fillMaxSize()

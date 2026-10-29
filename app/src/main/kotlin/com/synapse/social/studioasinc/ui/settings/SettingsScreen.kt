@@ -31,6 +31,9 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +53,7 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
@@ -64,8 +67,8 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground,
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
@@ -78,7 +81,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = Spacing.space16),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
             contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
@@ -130,7 +133,7 @@ fun SettingsScreen(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ),
-                    shape = SettingsShapes.itemShape
+                    shape = AppShapes.itemShape
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Logout,
@@ -169,7 +172,7 @@ private fun SettingRow(
         leadingContent = {
             if (imageUrl != null) {
                 Surface(
-                    modifier = Modifier.size(SettingsSpacing.iconBadgeSize),
+                    modifier = Modifier.size(AppSpacing.iconBadgeSize),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {

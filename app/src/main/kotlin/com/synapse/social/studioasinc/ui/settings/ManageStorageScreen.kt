@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 private const val KEEP_MEDIA_FOREVER_DAYS = 365
 private const val MAX_CACHE_NO_LIMIT_GB = 999
@@ -46,13 +50,13 @@ fun ManageStorageScreen(
         topBar = {
             LargeTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 title = {
                     Text(
                         text = stringResource(R.string.storage_manage_title),
-                        style = SettingsTypography.screenTitle
+                        style = AppTypography.screenTitle
                     )
                 },
                 navigationIcon = {
@@ -66,7 +70,7 @@ fun ManageStorageScreen(
                 scrollBehavior = scrollBehavior
             )
         },
-        containerColor = SettingsColors.screenBackground
+        containerColor = AppColors.screenBackground
     ) { padding ->
         if (isLoading && storageUsage == null) {
             Box(
@@ -82,9 +86,9 @@ fun ManageStorageScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = SettingsSpacing.screenPadding),
+                    .padding(horizontal = AppSpacing.screenPadding),
                 contentPadding = PaddingValues(top = Spacing.space8, bottom = Spacing.space32),
-                verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
             ) {
                 item {
                     storageUsage?.let { StorageUsageSection(storageUsage = it) }
@@ -171,7 +175,7 @@ fun ClearCacheSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = SettingsSpacing.itemVerticalPadding)
+                    .padding(vertical = AppSpacing.itemVerticalPadding)
             ) {
                 CacheCategoryRow(stringResource(R.string.storage_photos), formatBytes(storageUsage.photoSize))
                 SettingsDivider()
@@ -189,16 +193,16 @@ fun ClearCacheSection(
                     onClick = onClearCacheClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
-                    shape = SettingsShapes.itemShape,
+                        .padding(horizontal = AppSpacing.itemHorizontalPadding),
+                    shape = AppShapes.itemShape,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SettingsColors.destructiveButton,
-                        contentColor = SettingsColors.destructiveText
+                        containerColor = AppColors.destructiveButton,
+                        contentColor = AppColors.destructiveText
                     )
                 ) {
                     Text(
                         text = stringResource(R.string.storage_clear_entire_cache, totalCacheSize),
-                        style = SettingsTypography.buttonText
+                        style = AppTypography.buttonText
                     )
                 }
             }
@@ -212,7 +216,7 @@ private fun CacheCategoryRow(name: String, size: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
+                horizontal = AppSpacing.itemHorizontalPadding,
                 vertical = Spacing.space8
             ),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -220,12 +224,12 @@ private fun CacheCategoryRow(name: String, size: String) {
     ) {
         Text(
             text = name,
-            style = SettingsTypography.itemTitle,
+            style = AppTypography.itemTitle,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = size,
-            style = SettingsTypography.itemSubtitle,
+            style = AppTypography.itemSubtitle,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -244,8 +248,8 @@ fun LargeFilesSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(
-                                horizontal = SettingsSpacing.itemHorizontalPadding,
-                                vertical = SettingsSpacing.itemVerticalPadding
+                                horizontal = AppSpacing.itemHorizontalPadding,
+                                vertical = AppSpacing.itemVerticalPadding
                             ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -253,14 +257,14 @@ fun LargeFilesSection(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = file.fileName,
-                                style = SettingsTypography.itemTitle,
+                                style = AppTypography.itemTitle,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.height(Spacing.space4))
                             Text(
                                 text = formatBytes(file.size),
-                                style = SettingsTypography.itemSubtitle,
+                                style = AppTypography.itemSubtitle,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

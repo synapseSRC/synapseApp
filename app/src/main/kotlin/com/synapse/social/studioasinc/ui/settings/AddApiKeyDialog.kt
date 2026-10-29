@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +66,7 @@ fun AddApiKeyDialog(
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
-                    shape = SettingsShapes.inputShape
+                    shape = AppShapes.inputShape
                 )
 
                 ExposedDropdownMenu(
@@ -101,7 +102,7 @@ fun AddApiKeyDialog(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape
+                shape = AppShapes.inputShape
             )
 
             Spacer(modifier = Modifier.height(Spacing.space16))
@@ -112,7 +113,7 @@ fun AddApiKeyDialog(
                 label = { Text(stringResource(R.string.label_key_name_optional)) },
                 supportingText = { Text(stringResource(R.string.key_name_example)) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape
+                shape = AppShapes.inputShape
             )
 
             Spacer(modifier = Modifier.height(Spacing.space16))
@@ -124,7 +125,7 @@ fun AddApiKeyDialog(
                 supportingText = { Text(stringResource(R.string.usage_limit_supporting_text)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape
+                shape = AppShapes.inputShape
             )
 
             Spacer(modifier = Modifier.height(Spacing.space32))

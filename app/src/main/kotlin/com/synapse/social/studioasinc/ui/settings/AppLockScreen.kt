@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +59,7 @@ fun AppLockContent(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_app_lock_title)) },
@@ -71,8 +73,8 @@ fun AppLockContent(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
@@ -96,8 +98,8 @@ fun AppLockContent(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 SettingsSection(title = stringResource(R.string.settings_security_section)) {

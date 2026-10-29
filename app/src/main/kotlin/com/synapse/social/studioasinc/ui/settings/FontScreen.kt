@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -37,7 +40,7 @@ fun FontScreen(
     }
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_font_title)) },
@@ -51,8 +54,8 @@ fun FontScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
@@ -89,7 +92,7 @@ fun FontScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
+                .padding(horizontal = AppSpacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             items(uiState.fonts, key = { it.id }) { font ->
@@ -122,8 +125,8 @@ private fun FontCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = SettingsShapes.cardShape,
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else SettingsColors.cardBackground,
+        shape = AppShapes.cardShape,
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else AppColors.cardBackground,
         border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Row(

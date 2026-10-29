@@ -6,6 +6,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 
 @Composable
 fun SettingsCard(
@@ -14,8 +18,8 @@ fun SettingsCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.sectionShape,
-        color = SettingsColors.cardBackground,
+        shape = AppShapes.sectionShape,
+        color = AppColors.cardBackground,
         tonalElevation = 0.dp
     ) {
         Column(
@@ -38,11 +42,11 @@ fun SettingsSection(
         modifier = modifier.fillMaxWidth()
     ) {
         // The header carries its own vertical padding, matching the hub's section labels.
-        SettingsHeaderItem(title = title)
+        SectionHeader(title = title)
         // Contained-list gap: items touch across a 3dp seam instead of sitting in a card.
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             content()
         }
@@ -58,7 +62,7 @@ fun SettingsGroup(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
     ) {
         items()
     }
@@ -69,7 +73,7 @@ fun SettingsGroup(
 @Composable
 fun SettingsDivider() {
     HorizontalDivider(
-        color = SettingsColors.divider,
+        color = AppColors.divider,
         thickness = Sizes.BorderThin
     )
 }

@@ -32,6 +32,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.AccessibilitySizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 private data class NotificationSettingsPickerConfig(
     val title: String,
@@ -112,7 +113,7 @@ internal fun GroupedNotificationSettingsSections(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         GeneralNotificationSettingsSection(
             notificationPreferences = notificationPreferences,

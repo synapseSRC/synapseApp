@@ -43,8 +43,8 @@ import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.ImageLoader
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -64,7 +64,7 @@ fun ProfileImageSection(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackgroundElevated,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Column {

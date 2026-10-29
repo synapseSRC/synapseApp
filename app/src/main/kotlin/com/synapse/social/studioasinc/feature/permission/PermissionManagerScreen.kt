@@ -28,8 +28,8 @@ import com.synapse.social.studioasinc.feature.permission.components.PermissionCa
 import com.synapse.social.studioasinc.feature.permission.components.PermissionRationaleDialog
 import com.synapse.social.studioasinc.feature.permission.components.PermissionRequestEffect
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 /**
  * The permanent view of every permission the app uses, reachable from Settings and from the onboarding
@@ -80,8 +80,8 @@ fun PermissionManagerScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(
-                start = SettingsSpacing.screenPadding,
-                end = SettingsSpacing.screenPadding,
+                start = AppSpacing.screenPadding,
+                end = AppSpacing.screenPadding,
                 top = Spacing.space8,
                 bottom = Spacing.space24
             ),
@@ -109,7 +109,7 @@ fun PermissionManagerScreen(
                 Text(
                     text = stringResource(R.string.permission_manager_footer),
                     style = MaterialTheme.typography.bodySmall,
-                    color = SettingsColors.supportingText
+                    color = AppColors.supportingText
                 )
             }
         }

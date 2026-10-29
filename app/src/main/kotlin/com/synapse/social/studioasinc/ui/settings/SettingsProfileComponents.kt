@@ -25,6 +25,10 @@ import com.synapse.social.studioasinc.core.util.ImageLoader
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 fun ProfileHeaderCard(
@@ -37,14 +41,14 @@ fun ProfileHeaderCard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackgroundElevated,
+        shape = AppShapes.cardShape,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SettingsSpacing.profileHeaderPadding),
+                .padding(AppSpacing.profileHeaderPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -78,12 +82,12 @@ fun ProfileHeaderCard(
             ) {
                 Text(
                     text = displayName,
-                    style = SettingsTypography.profileName,
+                    style = AppTypography.profileName,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = email,
-                    style = SettingsTypography.profileEmail,
+                    style = AppTypography.profileEmail,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

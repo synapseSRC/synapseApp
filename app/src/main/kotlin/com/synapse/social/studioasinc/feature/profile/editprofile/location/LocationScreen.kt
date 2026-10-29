@@ -49,8 +49,8 @@ import com.synapse.social.studioasinc.ui.settings.SettingsCard
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
 import com.synapse.social.studioasinc.ui.settings.SettingsSection
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,19 +145,19 @@ fun LocationContent(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = SettingsSpacing.screenPadding,
-            end = SettingsSpacing.screenPadding,
+            start = AppSpacing.screenPadding,
+            end = AppSpacing.screenPadding,
             top = paddingValues.calculateTopPadding() + Spacing.space8,
             bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         // 1. LOCATION Section
         item {
             SettingsSection(title = stringResource(R.string.section_location)) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     // Country / Region Navigation Item
                     SettingsNavigationItem(
@@ -188,7 +188,7 @@ fun LocationContent(
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = SettingsShapes.inputShape,
+                                shape = AppShapes.inputShape,
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(
                                     capitalization = KeyboardCapitalization.Words,
@@ -222,7 +222,7 @@ fun LocationContent(
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Words,

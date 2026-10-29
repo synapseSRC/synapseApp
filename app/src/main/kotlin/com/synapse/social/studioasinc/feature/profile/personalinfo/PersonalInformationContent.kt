@@ -18,9 +18,9 @@ import com.synapse.social.studioasinc.data.model.RelationshipStatus
 import com.synapse.social.studioasinc.domain.model.Gender
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.settings.SettingsClickableItem
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @Composable
 fun PersonalInformationContent(
@@ -37,17 +37,17 @@ fun PersonalInformationContent(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = SettingsSpacing.screenPadding,
-            end = SettingsSpacing.screenPadding,
+            start = AppSpacing.screenPadding,
+            end = AppSpacing.screenPadding,
             top = paddingValues.calculateTopPadding() + Spacing.space8,
             bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         // Section 1: PERSONAL IDENTITY
         item {
             Column {
-                SettingsHeaderItem(title = stringResource(R.string.section_personal_identity))
+                SectionHeader(title = stringResource(R.string.section_personal_identity))
 
                 SettingsClickableItem(
                     title = stringResource(R.string.pronouns),
@@ -62,9 +62,9 @@ fun PersonalInformationContent(
         // Section 2: BASIC DETAILS
         item {
             Column(
-                verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
             ) {
-                SettingsHeaderItem(title = stringResource(R.string.section_basic_details))
+                SectionHeader(title = stringResource(R.string.section_basic_details))
 
                 val formattedBirthday = PersonalInformationViewModel.formatLocaleDate(uiState.birthday)
                 SettingsClickableItem(

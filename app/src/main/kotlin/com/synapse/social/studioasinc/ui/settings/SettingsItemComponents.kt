@@ -23,6 +23,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 /**
  * Contained-list treatment shared with the profile more menu sheet: 72dp rows, circular
@@ -35,16 +39,16 @@ fun SettingsIconBadge(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.size(SettingsSpacing.iconBadgeSize),
-        shape = SettingsShapes.iconBadgeShape,
-        color = SettingsColors.iconContainerBackground,
-        contentColor = SettingsColors.itemIcon
+        modifier = modifier.size(AppSpacing.iconBadgeSize),
+        shape = AppShapes.iconBadgeShape,
+        color = AppColors.iconContainerBackground,
+        contentColor = AppColors.itemIcon
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = imageVector,
                 contentDescription = contentDescription,
-                modifier = Modifier.size(SettingsSpacing.rowIconSize)
+                modifier = Modifier.size(AppSpacing.rowIconSize)
             )
         }
     }
@@ -58,8 +62,8 @@ fun SettingsNavigationChevron(
     Icon(
         imageVector = icon,
         contentDescription = null,
-        modifier = modifier.size(SettingsSpacing.rowIconSize),
-        tint = SettingsColors.chevronIcon
+        modifier = modifier.size(AppSpacing.rowIconSize),
+        tint = AppColors.chevronIcon
     )
 }
 
@@ -105,23 +109,23 @@ internal fun SettingsListItem(
 
     val rowModifier = modifier
         .fillMaxWidth()
-        .heightIn(min = SettingsSpacing.rowMinHeight)
+        .heightIn(min = AppSpacing.rowMinHeight)
         .graphicsLayer {
             scaleX = scale
             scaleY = scale
         }
 
     val contentPadding = PaddingValues(
-        start = SettingsSpacing.rowHorizontalPadding,
-        end = SettingsSpacing.rowHorizontalPadding,
-        top = SettingsSpacing.rowVerticalPadding,
-        bottom = SettingsSpacing.rowVerticalPadding
+        start = AppSpacing.rowHorizontalPadding,
+        end = AppSpacing.rowHorizontalPadding,
+        top = AppSpacing.rowVerticalPadding,
+        bottom = AppSpacing.rowVerticalPadding
     )
 
     val headline: @Composable () -> Unit = {
         Text(
             text = title,
-            style = SettingsTypography.itemTitle,
+            style = AppTypography.itemTitle,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -131,7 +135,7 @@ internal fun SettingsListItem(
         {
             Text(
                 text = text,
-                style = SettingsTypography.itemSubtitle,
+                style = AppTypography.itemSubtitle,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -139,13 +143,13 @@ internal fun SettingsListItem(
     }
 
     val colors = ListItemDefaults.colors(
-        containerColor = SettingsColors.cardBackground,
-        contentColor = SettingsColors.itemContent,
-        leadingContentColor = SettingsColors.itemIcon,
-        trailingContentColor = SettingsColors.chevronIcon,
-        supportingContentColor = SettingsColors.supportingText,
-        disabledContentColor = SettingsColors.itemContent.copy(alpha = SettingsColors.disabledContentAlpha),
-        disabledSupportingContentColor = SettingsColors.supportingText.copy(alpha = SettingsColors.disabledContentAlpha)
+        containerColor = AppColors.cardBackground,
+        contentColor = AppColors.itemContent,
+        leadingContentColor = AppColors.itemIcon,
+        trailingContentColor = AppColors.chevronIcon,
+        supportingContentColor = AppColors.supportingText,
+        disabledContentColor = AppColors.itemContent.copy(alpha = AppColors.disabledContentAlpha),
+        disabledSupportingContentColor = AppColors.supportingText.copy(alpha = AppColors.disabledContentAlpha)
     )
 
     // Stacked corners must not morph on press, so every state reuses the segment shape.
@@ -189,7 +193,7 @@ internal fun SettingsListItem(
 
 /** Colour a row's headline / supporting text carries when the row is disabled. */
 private fun settingsContentAlpha(enabled: Boolean, content: Color): Color =
-    if (enabled) content else content.copy(alpha = SettingsColors.disabledContentAlpha)
+    if (enabled) content else content.copy(alpha = AppColors.disabledContentAlpha)
 
 @Composable
 fun SettingsToggleItem(
@@ -309,7 +313,7 @@ fun SettingsSelectionItem(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Column(
             modifier = Modifier
@@ -318,8 +322,8 @@ fun SettingsSelectionItem(
                     contentDescription = "$title, $dropdownDescription, $selectedOption"
                 }
                 .padding(
-                    horizontal = SettingsSpacing.rowHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.rowHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 )
         ) {
             Row(
@@ -328,13 +332,13 @@ fun SettingsSelectionItem(
             ) {
                 if (icon != null) {
                     SettingsIconBadge(imageVector = icon)
-                    Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+                    Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
                 }
 
                 Text(
                     text = title,
-                    style = SettingsTypography.itemTitle,
-                    color = settingsContentAlpha(enabled, SettingsColors.itemContent),
+                    style = AppTypography.itemTitle,
+                    color = settingsContentAlpha(enabled, AppColors.itemContent),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -343,8 +347,8 @@ fun SettingsSelectionItem(
                 Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = subtitle,
-                    style = SettingsTypography.itemSubtitle,
-                    color = settingsContentAlpha(enabled, SettingsColors.supportingText),
+                    style = AppTypography.itemSubtitle,
+                    color = settingsContentAlpha(enabled, AppColors.supportingText),
                     modifier = Modifier.padding(start = if (icon != null) Spacing.space48 else Spacing.space0)
                 )
             }
@@ -367,12 +371,12 @@ fun SettingsSelectionItem(
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     ),
-                    textStyle = SettingsTypography.itemSubtitle
+                    textStyle = AppTypography.itemSubtitle
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -410,7 +414,7 @@ fun SettingsSliderItem(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Column(
             modifier = Modifier
@@ -419,8 +423,8 @@ fun SettingsSliderItem(
                     contentDescription = "$title, $sliderDescription, ${valueLabel(value)}"
                 }
                 .padding(
-                    horizontal = SettingsSpacing.rowHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.rowHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 )
         ) {
             Row(
@@ -431,16 +435,16 @@ fun SettingsSliderItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
-                        style = SettingsTypography.itemTitle,
-                        color = settingsContentAlpha(enabled, SettingsColors.itemContent)
+                        style = AppTypography.itemTitle,
+                        color = settingsContentAlpha(enabled, AppColors.itemContent)
                     )
 
                     if (subtitle != null) {
                         Spacer(modifier = Modifier.height(Spacing.space4))
                         Text(
                             text = subtitle,
-                            style = SettingsTypography.itemSubtitle,
-                            color = settingsContentAlpha(enabled, SettingsColors.supportingText)
+                            style = AppTypography.itemSubtitle,
+                            color = settingsContentAlpha(enabled, AppColors.supportingText)
                         )
                     }
                 }
@@ -449,7 +453,7 @@ fun SettingsSliderItem(
 
                 Text(
                     text = valueLabel(value),
-                    style = SettingsTypography.itemSubtitle.copy(fontWeight = FontWeight.SemiBold),
+                    style = AppTypography.itemSubtitle.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -486,38 +490,21 @@ fun SettingsButtonItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             ),
-        shape = SettingsShapes.itemShape,
+        shape = AppShapes.itemShape,
         colors = ButtonDefaults.filledTonalButtonColors(
-            containerColor = if (isDestructive) SettingsColors.destructiveButton
+            containerColor = if (isDestructive) AppColors.destructiveButton
                            else MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = if (isDestructive) SettingsColors.destructiveText
+            contentColor = if (isDestructive) AppColors.destructiveText
                           else MaterialTheme.colorScheme.onSecondaryContainer
         )
     ) {
         Text(
             text = title,
-            style = SettingsTypography.buttonText
+            style = AppTypography.buttonText
         )
     }
 }
 
-@Composable
-fun SettingsHeaderItem(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = title,
-        style = SettingsTypography.sectionHeader,
-        color = SettingsColors.sectionTitle,
-        modifier = modifier.padding(
-            start = Spacing.space8,
-            end = SettingsSpacing.itemHorizontalPadding,
-            top = Spacing.space8,
-            bottom = Spacing.space4
-        )
-    )
-}

@@ -29,11 +29,11 @@ import com.synapse.social.studioasinc.feature.permission.titleRes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.ui.settings.SettingsIconBadge
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
-import com.synapse.social.studioasinc.ui.settings.SettingsTypography
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 /**
  * One permission, its live state and the single action the state allows.
@@ -56,22 +56,22 @@ internal fun PermissionCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SettingsSpacing.itemPadding)
+                .padding(AppSpacing.itemPadding)
         ) {
             Row(verticalAlignment = Alignment.Top) {
                 SettingsIconBadge(imageVector = permission.icon())
-                Spacer(Modifier.width(SettingsSpacing.iconTextSpacing))
+                Spacer(Modifier.width(AppSpacing.iconTextSpacing))
                 Column(Modifier.weight(1f)) {
                     Text(
                         text = stringResource(permission.titleRes()),
-                        style = SettingsTypography.itemTitle,
-                        color = SettingsColors.itemContent
+                        style = AppTypography.itemTitle,
+                        color = AppColors.itemContent
                     )
                     Spacer(Modifier.height(Spacing.space4))
                     Text(
                         text = stringResource(permission.purposeRes()),
-                        style = SettingsTypography.itemSubtitle,
-                        color = SettingsColors.supportingText
+                        style = AppTypography.itemSubtitle,
+                        color = AppColors.supportingText
                     )
                 }
             }
@@ -81,7 +81,7 @@ internal fun PermissionCard(
             Text(
                 text = stringResource(permission.benefitRes()),
                 style = MaterialTheme.typography.bodyMedium,
-                color = SettingsColors.itemContent
+                color = AppColors.itemContent
             )
 
             status.hintRes()?.let { hint ->
@@ -89,7 +89,7 @@ internal fun PermissionCard(
                 Text(
                     text = stringResource(hint),
                     style = MaterialTheme.typography.bodySmall,
-                    color = SettingsColors.supportingText
+                    color = AppColors.supportingText
                 )
             }
 
@@ -138,17 +138,17 @@ private fun PermissionActionButton(
             onClick = onClick,
             enabled = enabled,
             modifier = buttonModifier,
-            shape = SettingsShapes.chipShape
+            shape = AppShapes.chipShape
         ) {
-            Text(text = labelText, style = SettingsTypography.buttonText)
+            Text(text = labelText, style = AppTypography.buttonText)
         }
         PermissionStatus.PERMANENTLY_DENIED, PermissionStatus.RESTRICTED -> OutlinedButton(
             onClick = onClick,
             enabled = enabled,
             modifier = buttonModifier,
-            shape = SettingsShapes.chipShape
+            shape = AppShapes.chipShape
         ) {
-            Text(text = labelText, style = SettingsTypography.buttonText)
+            Text(text = labelText, style = AppTypography.buttonText)
         }
         PermissionStatus.GRANTED -> Unit
     }

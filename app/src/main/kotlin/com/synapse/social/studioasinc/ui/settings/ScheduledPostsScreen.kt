@@ -34,6 +34,8 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
 import com.synapse.social.studioasinc.ui.createpost.ScheduleDateTimePickerDialog
 import kotlinx.datetime.Instant
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +50,7 @@ fun ScheduledPostsScreen(
     var cancelConfirmPostId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_scheduled_posts_title)) },
@@ -213,8 +215,8 @@ private fun ScheduledPostCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackground)
+        shape = AppShapes.cardShape,
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground)
     ) {
         Column(
             modifier = Modifier

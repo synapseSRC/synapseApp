@@ -29,9 +29,9 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.ui.components.SectionHeader
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -80,7 +80,7 @@ fun NotificationsScreen(
             .fillMaxSize()
             // Same page backdrop as Settings: the cardBackground rows are only one tone
             // step away from the app surface, so on the Home scaffold they vanish.
-            .background(SettingsColors.screenBackground)
+            .background(AppColors.screenBackground)
     ) {
         ErrorCard(
             error = uiState.error?.asString(),
@@ -115,12 +115,12 @@ fun NotificationsScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = SettingsSpacing.screenPadding),
+                            .padding(horizontal = AppSpacing.screenPadding),
                         contentPadding = contentPadding
                     ) {
                         groupedNotifications.forEach { (date, notifications) ->
                             item(key = "header_${date.hashCode()}") {
-                                SettingsHeaderItem(title = date.asString())
+                                SectionHeader(title = date.asString())
                             }
                             itemsIndexed(
                                 items = notifications,
@@ -139,7 +139,7 @@ fun NotificationsScreen(
                                 )
                             }
                             item(key = "gap_${date.hashCode()}") {
-                                Spacer(modifier = Modifier.height(SettingsSpacing.sectionSpacing))
+                                Spacer(modifier = Modifier.height(AppSpacing.sectionSpacing))
                             }
                         }
                     }

@@ -19,6 +19,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.business.AccountType
 import com.synapse.social.studioasinc.shared.domain.model.business.AnalyticsData
 import com.synapse.social.studioasinc.shared.domain.model.business.VerificationStatus
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +38,7 @@ fun BusinessPlatformScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_business_platform_title)) },
@@ -47,8 +49,8 @@ fun BusinessPlatformScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
@@ -76,7 +78,7 @@ fun BusinessPlatformScreen(
                     .fillMaxSize()
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .padding(paddingValues)
-                    .padding(horizontal = SettingsSpacing.screenPadding),
+                    .padding(horizontal = AppSpacing.screenPadding),
                 verticalArrangement = Arrangement.spacedBy(Spacing.space24)
             ) {
                 item {
@@ -119,13 +121,13 @@ private fun AccountTypeSection(
     SettingsSection(title = stringResource(R.string.business_section_account_type)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.space16),
-            modifier = Modifier.padding(vertical = SettingsSpacing.itemVerticalPadding)
+            modifier = Modifier.padding(vertical = AppSpacing.itemVerticalPadding)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                    .padding(horizontal = AppSpacing.itemHorizontalPadding)
             ) {
                 Icon(
                     imageVector = when (state.accountType) {
@@ -137,7 +139,7 @@ private fun AccountTypeSection(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(Sizes.IconLarge)
                 )
-                Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+                Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                     Text(
                         text = state.accountType.name.lowercase()
@@ -159,7 +161,7 @@ private fun AccountTypeSection(
                     onClick = onSwitchToBusiness,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                        .padding(horizontal = AppSpacing.itemHorizontalPadding)
                 ) {
                     Text(stringResource(R.string.action_switch_to_business))
                 }
@@ -176,8 +178,8 @@ private fun AnalyticsDashboardSection(analytics: AnalyticsData?) {
         Column(
             verticalArrangement = Arrangement.spacedBy(Spacing.space16),
             modifier = Modifier.padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             )
         ) {
             Row(
@@ -199,7 +201,7 @@ private fun AnalyticsDashboardSection(analytics: AnalyticsData?) {
             if (analytics.topPosts.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackgroundElevated)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBackgroundElevated)
                 ) {
                     Column(modifier = Modifier.padding(Spacing.space16)) {
                         Text(
@@ -248,7 +250,7 @@ private fun AnalyticsCard(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = SettingsColors.cardBackgroundElevated)
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBackgroundElevated)
     ) {
         Column(
             modifier = Modifier.padding(Spacing.space16),
@@ -290,8 +292,8 @@ private fun MonetizationSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = SettingsSpacing.itemHorizontalPadding,
-                            vertical = SettingsSpacing.itemVerticalPadding
+                            horizontal = AppSpacing.itemHorizontalPadding,
+                            vertical = AppSpacing.itemVerticalPadding
                         ),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -381,8 +383,8 @@ private fun VerificationSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.itemHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

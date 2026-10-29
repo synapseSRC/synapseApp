@@ -34,8 +34,8 @@ import com.synapse.social.studioasinc.feature.permission.components.PermissionRa
 import com.synapse.social.studioasinc.feature.permission.components.PermissionRequestEffect
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
-import com.synapse.social.studioasinc.ui.settings.SettingsTypography
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 /**
  * The one screen that introduces permissions after sign-in.
@@ -133,8 +133,8 @@ private fun PermissionOnboardingCards(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(
-                start = SettingsSpacing.screenPadding,
-                end = SettingsSpacing.screenPadding,
+                start = AppSpacing.screenPadding,
+                end = AppSpacing.screenPadding,
                 top = Spacing.space8,
                 bottom = Spacing.space24
             ),
@@ -174,7 +174,7 @@ private fun PermissionOnboardingCards(
                 ) {
                     Text(
                         text = stringResource(R.string.permission_onboarding_continue),
-                        style = SettingsTypography.buttonText
+                        style = AppTypography.buttonText
                     )
                 }
             }

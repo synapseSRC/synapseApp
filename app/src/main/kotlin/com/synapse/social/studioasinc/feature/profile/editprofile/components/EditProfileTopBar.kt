@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,8 +57,8 @@ fun EditProfileTopBar(
         },
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = SettingsColors.screenBackground,
-            scrolledContainerColor = SettingsColors.cardBackground,
+            containerColor = AppColors.screenBackground,
+            scrolledContainerColor = AppColors.cardBackground,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface
         )

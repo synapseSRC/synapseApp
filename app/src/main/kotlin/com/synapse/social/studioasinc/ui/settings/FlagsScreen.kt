@@ -20,6 +20,10 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -37,7 +41,7 @@ fun FlagsScreen(
     val focusManager = LocalFocusManager.current
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_flags_title)) },
@@ -50,8 +54,8 @@ fun FlagsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         }
@@ -60,39 +64,39 @@ fun FlagsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
             contentPadding = PaddingValues(vertical = Spacing.space8)
         ) {
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    SettingsHeaderItem(title = stringResource(R.string.settings_experimental_features_title))
+                    SectionHeader(title = stringResource(R.string.settings_experimental_features_title))
 
-                    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)) {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = SettingsItemPosition.Top.getShape(),
-                            color = SettingsColors.cardBackground
+                            color = AppColors.cardBackground
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
-                                        horizontal = SettingsSpacing.itemHorizontalPadding,
-                                        vertical = SettingsSpacing.itemVerticalPadding
+                                        horizontal = AppSpacing.itemHorizontalPadding,
+                                        vertical = AppSpacing.itemVerticalPadding
                                     )
                             ) {
                                 Text(
                                     text = stringResource(R.string.settings_navigation_placement_title),
-                                    style = SettingsTypography.itemTitle,
+                                    style = AppTypography.itemTitle,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(Spacing.space4))
                                 Text(
                                     text = stringResource(R.string.settings_navigation_placement_subtitle),
-                                    style = SettingsTypography.itemSubtitle,
+                                    style = AppTypography.itemSubtitle,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.height(Spacing.space16))
@@ -148,20 +152,20 @@ fun FlagsScreen(
 
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SettingsHeaderItem(title = stringResource(R.string.settings_performance_section))
+                    SectionHeader(title = stringResource(R.string.settings_performance_section))
 
                     SettingsCard {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = SettingsItemPosition.Single.getShape(),
-                            color = SettingsColors.cardBackground
+                            color = AppColors.cardBackground
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
-                                        horizontal = SettingsSpacing.itemHorizontalPadding,
-                                        vertical = SettingsSpacing.itemVerticalPadding
+                                        horizontal = AppSpacing.itemHorizontalPadding,
+                                        vertical = AppSpacing.itemVerticalPadding
                                     ),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -169,12 +173,12 @@ fun FlagsScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = stringResource(R.string.settings_message_pagination_limit_title),
-                                        style = SettingsTypography.itemTitle,
+                                        style = AppTypography.itemTitle,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = stringResource(R.string.settings_message_pagination_limit_subtitle),
-                                        style = SettingsTypography.itemSubtitle,
+                                        style = AppTypography.itemSubtitle,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -196,7 +200,7 @@ fun FlagsScreen(
                                         }
                                         focusManager.clearFocus()
                                     }),
-                                    textStyle = SettingsTypography.itemTitle.copy(
+                                    textStyle = AppTypography.itemTitle.copy(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 )

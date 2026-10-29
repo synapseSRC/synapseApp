@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Gender
 import com.synapse.social.studioasinc.presentation.editprofile.EditProfileUiState
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -90,7 +90,7 @@ fun ProfileCompletionCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
+        color = AppColors.cardBackground,
         tonalElevation = Sizes.ElevationNone
     ) {
         Column(

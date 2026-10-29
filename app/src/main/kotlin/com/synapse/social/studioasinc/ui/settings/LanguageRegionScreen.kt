@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 
 
@@ -33,7 +35,7 @@ fun LanguageRegionScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_language_region_title)) },
@@ -47,8 +49,8 @@ fun LanguageRegionScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground,
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
@@ -75,8 +77,8 @@ fun LanguageRegionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
+                .padding(horizontal = AppSpacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
             contentPadding = PaddingValues(vertical = Spacing.space16)
         ) {
 
@@ -148,12 +150,12 @@ private fun LanguageSelectionItem(
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SettingsSpacing.itemPadding),
+                .padding(AppSpacing.itemPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

@@ -62,6 +62,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +93,7 @@ fun AboutSupportScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = SettingsColors.screenBackground,
+            containerColor = AppColors.screenBackground,
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.about_app_title)) },
@@ -126,8 +127,8 @@ fun AboutSupportScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = SettingsColors.screenBackground,
-                        scrolledContainerColor = SettingsColors.cardBackground,
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground,
                         titleContentColor = MaterialTheme.colorScheme.onSurface,
                         navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                         actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -391,7 +392,7 @@ internal fun AboutListItem(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = SettingsColors.cardBackground,
+            color = AppColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { rowContent() }
     } else {
@@ -399,7 +400,7 @@ internal fun AboutListItem(
             onClick = item.onClick,
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = SettingsColors.cardBackground,
+            color = AppColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { rowContent() }
     }

@@ -64,8 +64,8 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.ui.components.SectionHeader
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -145,17 +145,17 @@ fun InterestsSkillsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        start = SettingsSpacing.screenPadding,
-                        end = SettingsSpacing.screenPadding,
+                        start = AppSpacing.screenPadding,
+                        end = AppSpacing.screenPadding,
                         top = paddingValues.calculateTopPadding() + Spacing.space8,
                         bottom = paddingValues.calculateBottomPadding() + Spacing.space24
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // 1. Personal Interests Section
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            SettingsHeaderItem(title = stringResource(R.string.interests_section_title))
+                            SectionHeader(title = stringResource(R.string.interests_section_title))
 
                             Text(
                                 text = stringResource(R.string.interests_section_subtitle),
@@ -373,7 +373,7 @@ fun InterestsSkillsScreen(
                     // 2. Skills Section (Pending Backend Support Notice)
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            SettingsHeaderItem(title = stringResource(R.string.skills_section_title))
+                            SectionHeader(title = stringResource(R.string.skills_section_title))
 
                             SettingsCard(modifier = Modifier.fillMaxWidth()) {
                                 Row(
@@ -411,7 +411,7 @@ fun InterestsSkillsScreen(
                     // 3. Languages Section (Pending Backend Support Notice)
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            SettingsHeaderItem(title = stringResource(R.string.languages_section_title))
+                            SectionHeader(title = stringResource(R.string.languages_section_title))
 
                             SettingsCard(modifier = Modifier.fillMaxWidth()) {
                                 Row(

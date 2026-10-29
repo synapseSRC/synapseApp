@@ -51,8 +51,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
 import com.synapse.social.studioasinc.ui.settings.SettingsSection
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,12 +145,12 @@ fun WorkEducationContent(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = SettingsSpacing.screenPadding,
-            end = SettingsSpacing.screenPadding,
+            start = AppSpacing.screenPadding,
+            end = AppSpacing.screenPadding,
             top = paddingValues.calculateTopPadding() + Spacing.space8,
             bottom = paddingValues.calculateBottomPadding() + Spacing.space24
         ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         // 1. Current Work Section
         item {
@@ -174,7 +174,7 @@ fun WorkEducationContent(
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Words,
@@ -194,7 +194,7 @@ fun WorkEducationContent(
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Words,
@@ -234,7 +234,7 @@ fun WorkEducationContent(
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Words,

@@ -81,6 +81,8 @@ import com.synapse.social.studioasinc.ui.components.shimmer
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 /** Inline markup the release-notes parser is allowed to hand over: bold, code and safe links. */
 private val inlineMarkup = Regex("\\*\\*(.+?)\\*\\*|`([^`]*)`|\\[([^]]+)]\\(([^)]*)\\)")
@@ -103,7 +105,7 @@ fun WhatsNewScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = SettingsColors.screenBackground,
+            containerColor = AppColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_whats_new_screen_title),
@@ -205,8 +207,8 @@ private fun ReleaseFeedList(
             item(key = "history-header") {
                 Text(
                     text = stringResource(R.string.whats_new_release_history),
-                    style = SettingsTypography.sectionHeader,
-                    color = SettingsColors.sectionTitle,
+                    style = AppTypography.sectionHeader,
+                    color = AppColors.sectionTitle,
                     modifier = Modifier.padding(top = Spacing.space4)
                 )
             }
@@ -234,7 +236,7 @@ private fun ReleaseHighlightCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        color = SettingsColors.cardBackgroundElevated,
+        color = AppColors.cardBackgroundElevated,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Box {
@@ -284,7 +286,7 @@ private fun ReleaseHighlightCard(
                                 formatReleaseDate(publishedAt)
                             ),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = SettingsColors.supportingText
+                            color = AppColors.supportingText
                         )
                     }
                 }
@@ -347,7 +349,7 @@ private fun ReleaseHistoryRow(
                         Text(
                             text = formatReleaseDate(publishedAt),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = SettingsColors.supportingText
+                            color = AppColors.supportingText
                         )
                     }
                 }
@@ -405,7 +407,7 @@ private fun ReleaseHistoryRow(
                 .fillMaxWidth()
                 .semantics { stateDescription = expandedStateDescription },
             shape = shape,
-            color = SettingsColors.cardBackground,
+            color = AppColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { contents() }
     } else {
@@ -413,7 +415,7 @@ private fun ReleaseHistoryRow(
             onClick = onOpenRelease,
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
-            color = SettingsColors.cardBackground,
+            color = AppColors.cardBackground,
             contentColor = MaterialTheme.colorScheme.onSurface
         ) { contents() }
     }
@@ -556,7 +558,7 @@ private fun StaleFeedNotice() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .background(SettingsColors.cardBackground)
+            .background(AppColors.cardBackground)
             .padding(Spacing.space12),
         horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
@@ -570,7 +572,7 @@ private fun StaleFeedNotice() {
         Text(
             text = stringResource(R.string.whats_new_offline_notice),
             style = MaterialTheme.typography.bodyMedium,
-            color = SettingsColors.supportingText
+            color = AppColors.supportingText
         )
     }
 }
@@ -588,7 +590,7 @@ private fun WhatsNewSkeleton() {
                 .fillMaxWidth()
                 .height(dimensionResource(R.dimen.about_skeleton_hero_height)),
             shape = MaterialTheme.shapes.extraLarge,
-            color = SettingsColors.cardBackgroundElevated
+            color = AppColors.cardBackgroundElevated
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.space12)) {
                 SkeletonLine(
@@ -619,7 +621,7 @@ private fun WhatsNewSkeleton() {
                     .fillMaxWidth()
                     .height(dimensionResource(R.dimen.about_release_item_min_height)),
                 shape = aboutListShape(index, 3),
-                color = SettingsColors.cardBackground
+                color = AppColors.cardBackground
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

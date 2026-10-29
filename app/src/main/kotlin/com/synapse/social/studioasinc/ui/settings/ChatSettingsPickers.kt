@@ -36,6 +36,10 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatListLayou
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 internal fun ThemePicker(
@@ -48,8 +52,8 @@ internal fun ThemePicker(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
             .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             ),
         horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
     ) {
@@ -104,7 +108,7 @@ internal fun ThemePicker(
                 Spacer(modifier = Modifier.height(Spacing.space8))
                 Text(
                     text = themeName,
-                    style = SettingsTypography.itemSubtitle,
+                    style = AppTypography.itemSubtitle,
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -128,27 +132,27 @@ internal fun WallpaperPicker(
 
         if (selectedWallpaper == WallpaperType.SOLID_COLOR) {
             HorizontalDivider(
-                color = SettingsColors.divider,
+                color = AppColors.divider,
                 thickness = Sizes.BorderThin,
-                modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
             )
             SolidColorSelector(selectedWallpaperValue, onWallpaperValueSelected)
         }
 
         if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.PRESET_IMAGE) {
             HorizontalDivider(
-                color = SettingsColors.divider,
+                color = AppColors.divider,
                 thickness = Sizes.BorderThin,
-                modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
             )
             PatternSelector(selectedWallpaper, selectedWallpaperValue, onWallpaperValueSelected)
         }
 
         if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.PRESET_IMAGE || selectedWallpaper == WallpaperType.DEFAULT) {
             HorizontalDivider(
-                color = SettingsColors.divider,
+                color = AppColors.divider,
                 thickness = Sizes.BorderThin,
-                modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
             )
             BlurSlider(blurIntensity, onBlurIntensityChanged)
         }
@@ -164,20 +168,20 @@ internal fun WallpaperTypeSelector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = SettingsSpacing.itemVerticalPadding)
+            .padding(vertical = AppSpacing.itemVerticalPadding)
     ) {
         Text(
             text = stringResource(R.string.settings_chat_background_title),
-            style = SettingsTypography.itemTitle,
+            style = AppTypography.itemTitle,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+            modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
         )
         Spacer(modifier = Modifier.height(Spacing.space12))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
+                .padding(horizontal = AppSpacing.itemHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(Spacing.space16)
         ) {
             wallpapers.forEach { wallpaper ->
@@ -205,12 +209,12 @@ internal fun WallpaperTypeSelector(
                     Box(
                         modifier = Modifier
                             .size(width = 64.dp, height = 80.dp)
-                            .clip(SettingsShapes.inputShape)
+                            .clip(AppShapes.inputShape)
                             .background(bgColor)
                             .border(
                                 width = if (isSelected) 2.dp else 1.dp,
                                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                                shape = SettingsShapes.inputShape
+                                shape = AppShapes.inputShape
                             ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -226,7 +230,7 @@ internal fun WallpaperTypeSelector(
                     Spacer(modifier = Modifier.height(Spacing.space4))
                     Text(
                         text = wallpaperName,
-                        style = SettingsTypography.itemSubtitle,
+                        style = AppTypography.itemSubtitle,
                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -252,18 +256,18 @@ internal fun SolidColorSelector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = SettingsSpacing.itemVerticalPadding)
+            .padding(vertical = AppSpacing.itemVerticalPadding)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
+                .padding(horizontal = AppSpacing.itemHorizontalPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = stringResource(R.string.settings_select_color),
-                style = SettingsTypography.itemTitle,
+                style = AppTypography.itemTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -286,7 +290,7 @@ internal fun SolidColorSelector(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
+                .padding(horizontal = AppSpacing.itemHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
         ) {
             // Custom Color Wheel Swatch
@@ -418,9 +422,9 @@ private fun ExpressiveColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
-                        .clip(SettingsShapes.cardShape)
+                        .clip(AppShapes.cardShape)
                         .background(parsedColor)
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, SettingsShapes.cardShape),
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, AppShapes.cardShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -481,7 +485,7 @@ private fun ExpressiveColorPickerDialog(
                     label = { Text("HEX Code (e.g. #1976D2)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-                    shape = SettingsShapes.inputShape,
+                    shape = AppShapes.inputShape,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -527,13 +531,13 @@ internal fun PatternSelector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = SettingsSpacing.itemVerticalPadding)
+            .padding(vertical = AppSpacing.itemVerticalPadding)
     ) {
         Text(
             text = stringResource(R.string.label_select_resource),
-            style = SettingsTypography.itemTitle,
+            style = AppTypography.itemTitle,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+            modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
         )
 
         Spacer(modifier = Modifier.height(Spacing.space12))
@@ -542,7 +546,7 @@ internal fun PatternSelector(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = SettingsSpacing.itemHorizontalPadding),
+                .padding(horizontal = AppSpacing.itemHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             items.forEach { item ->
@@ -552,7 +556,7 @@ internal fun PatternSelector(
                 Box(
                     modifier = Modifier
                         .size(width = 64.dp, height = 64.dp)
-                        .clip(SettingsShapes.inputShape)
+                        .clip(AppShapes.inputShape)
                         .clickable(
                             role = Role.RadioButton,
                             onClick = { onWallpaperValueSelected(item) }
@@ -560,7 +564,7 @@ internal fun PatternSelector(
                         .border(
                             width = if (isSelected) 3.dp else 1.dp,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                            shape = SettingsShapes.inputShape
+                            shape = AppShapes.inputShape
                         )
                 ) {
                     if (resId != 0) {
@@ -613,8 +617,8 @@ internal fun BlurSlider(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             )
     ) {
         Row(
@@ -624,12 +628,12 @@ internal fun BlurSlider(
         ) {
             Text(
                 text = "Blur Intensity",
-                style = SettingsTypography.itemTitle,
+                style = AppTypography.itemTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "${(localBlur * 100).toInt()}%",
-                style = SettingsTypography.itemSubtitle,
+                style = AppTypography.itemSubtitle,
                 color = MaterialTheme.colorScheme.primary
             )
         }

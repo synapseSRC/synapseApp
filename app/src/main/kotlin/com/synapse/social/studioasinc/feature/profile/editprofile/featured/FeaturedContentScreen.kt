@@ -78,9 +78,9 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -168,10 +168,10 @@ fun FeaturedContentScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(
-                        horizontal = SettingsSpacing.screenPadding,
-                        vertical = SettingsSpacing.sectionSpacing
+                        horizontal = AppSpacing.screenPadding,
+                        vertical = AppSpacing.sectionSpacing
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // 1. Backend Boundary & Capability Notice
                     if (uiState.showBackendCapabilityNotice) {
@@ -235,7 +235,7 @@ fun FeaturedContentScreen(
                                         } else null
                                     )
                                     if (index < uiState.candidatePosts.lastIndex) {
-                                        Spacer(modifier = Modifier.height(SettingsSpacing.itemSpacing))
+                                        Spacer(modifier = Modifier.height(AppSpacing.itemSpacing))
                                     }
                                 }
                             }

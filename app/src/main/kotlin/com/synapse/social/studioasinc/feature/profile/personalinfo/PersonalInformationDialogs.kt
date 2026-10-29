@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.data.model.RelationshipStatus
 import com.synapse.social.studioasinc.domain.model.Gender
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -105,7 +105,7 @@ fun PronounsDialog(
                         onValueChange = { customText = it },
                         placeholder = { Text("e.g. ze/zir") },
                         singleLine = true,
-                        shape = SettingsShapes.inputShape,
+                        shape = AppShapes.inputShape,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

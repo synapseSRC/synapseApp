@@ -84,6 +84,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import kotlinx.coroutines.flow.collectLatest
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -109,8 +110,8 @@ internal fun AboutDetailTopAppBar(title: String, onBackClick: () -> Unit) {
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = SettingsColors.screenBackground,
-            scrolledContainerColor = SettingsColors.cardBackground,
+            containerColor = AppColors.screenBackground,
+            scrolledContainerColor = AppColors.cardBackground,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface
         )
@@ -148,7 +149,7 @@ fun AboutOpenSourceScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = SettingsColors.screenBackground,
+            containerColor = AppColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_open_source_title),
@@ -340,7 +341,7 @@ fun FeedbackScreen(
 
     AboutAppTheme {
         Scaffold(
-            containerColor = SettingsColors.screenBackground,
+            containerColor = AppColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_feedback_screen_title),
@@ -515,7 +516,7 @@ fun FeedbackScreen(
 fun AboutEmptyScreen(onBackClick: () -> Unit) {
     AboutAppTheme {
         Scaffold(
-            containerColor = SettingsColors.screenBackground,
+            containerColor = AppColors.screenBackground,
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_screen_five_title),

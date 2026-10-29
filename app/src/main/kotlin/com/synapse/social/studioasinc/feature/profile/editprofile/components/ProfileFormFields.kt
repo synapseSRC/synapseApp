@@ -29,8 +29,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.presentation.editprofile.UsernameValidation
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -50,7 +50,7 @@ fun ProfileFormFields(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
-        color = SettingsColors.cardBackground,
+        color = AppColors.cardBackground,
         tonalElevation = Sizes.ElevationNone
     ) {
         Column(
@@ -81,7 +81,7 @@ fun ProfileFormFields(
                 },
                 isError = nicknameError != null,
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape,
+                shape = AppShapes.inputShape,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     keyboardType = KeyboardType.Text
@@ -105,7 +105,7 @@ fun ProfileFormFields(
                 },
                 isError = bioError != null,
                 modifier = Modifier.fillMaxWidth(),
-                shape = SettingsShapes.inputShape,
+                shape = AppShapes.inputShape,
                 minLines = 3,
                 maxLines = 5,
                 keyboardOptions = KeyboardOptions(
@@ -168,7 +168,7 @@ fun UsernameField(
         },
         isError = isError,
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.inputShape,
+        shape = AppShapes.inputShape,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
             keyboardType = KeyboardType.Ascii

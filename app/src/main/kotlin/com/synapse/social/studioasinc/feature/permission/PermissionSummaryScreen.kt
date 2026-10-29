@@ -34,10 +34,10 @@ import com.synapse.social.studioasinc.feature.permission.components.PermissionSt
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.ui.settings.SettingsIconBadge
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
-import com.synapse.social.studioasinc.ui.settings.SettingsTypography
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 /**
  * The last step of the onboarding: what the user chose, in plain terms, before the app opens.
@@ -75,8 +75,8 @@ internal fun PermissionSummaryScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(
-                start = SettingsSpacing.screenPadding,
-                end = SettingsSpacing.screenPadding,
+                start = AppSpacing.screenPadding,
+                end = AppSpacing.screenPadding,
                 top = Spacing.space8,
                 bottom = Spacing.space24
             ),
@@ -121,7 +121,7 @@ internal fun PermissionSummaryScreen(
                 ) {
                     Text(
                         text = stringResource(R.string.permission_summary_manage),
-                        style = SettingsTypography.buttonText
+                        style = AppTypography.buttonText
                     )
                 }
                 Spacer(Modifier.height(Spacing.space8))
@@ -134,7 +134,7 @@ internal fun PermissionSummaryScreen(
                 ) {
                     Text(
                         text = stringResource(R.string.permission_summary_continue),
-                        style = SettingsTypography.buttonText
+                        style = AppTypography.buttonText
                     )
                 }
             }
@@ -151,16 +151,16 @@ private fun PermissionSummaryRow(snapshot: PermissionSnapshot) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SettingsSpacing.itemPadding),
+                .padding(AppSpacing.itemPadding),
             verticalAlignment = Alignment.Top
         ) {
             SettingsIconBadge(imageVector = permission.icon())
-            Spacer(Modifier.width(SettingsSpacing.iconTextSpacing))
+            Spacer(Modifier.width(AppSpacing.iconTextSpacing))
             Column(Modifier.weight(1f)) {
                 Text(
                     text = stringResource(permission.titleRes()),
-                    style = SettingsTypography.itemTitle,
-                    color = SettingsColors.itemContent
+                    style = AppTypography.itemTitle,
+                    color = AppColors.itemContent
                 )
                 Spacer(Modifier.height(Spacing.space8))
                 PermissionStatusChip(status = status)
@@ -169,7 +169,7 @@ private fun PermissionSummaryRow(snapshot: PermissionSnapshot) {
                     Text(
                         text = stringResource(permission.impactRes()),
                         style = MaterialTheme.typography.bodySmall,
-                        color = SettingsColors.supportingText
+                        color = AppColors.supportingText
                     )
                 }
             }

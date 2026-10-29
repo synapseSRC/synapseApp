@@ -26,6 +26,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +40,7 @@ fun ChatFoldersScreen(
     var dialogName by remember { mutableStateOf("") }
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_chat_folders_title)) },
@@ -49,7 +50,7 @@ fun ChatFoldersScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
+                    containerColor = AppColors.screenBackground,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )

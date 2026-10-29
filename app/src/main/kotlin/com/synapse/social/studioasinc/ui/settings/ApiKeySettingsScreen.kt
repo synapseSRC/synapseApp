@@ -21,6 +21,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.settings.ApiKeyInfo
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +58,7 @@ fun ApiKeySettingsScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_api_key_title)) },
@@ -64,8 +68,8 @@ fun ApiKeySettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -89,15 +93,15 @@ fun ApiKeySettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = SettingsSpacing.screenPadding),
+                .padding(horizontal = AppSpacing.screenPadding),
             contentPadding = PaddingValues(bottom = Spacing.space32),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 SettingsSection(title = stringResource(R.string.api_provider_settings)) {
                     var expanded by remember { mutableStateOf(false) }
 
-                    Box(modifier = Modifier.padding(SettingsSpacing.itemPadding)) {
+                    Box(modifier = Modifier.padding(AppSpacing.itemPadding)) {
                         ExposedDropdownMenuBox(
                             expanded = expanded,
                             onExpandedChange = { expanded = !expanded }
@@ -111,7 +115,7 @@ fun ApiKeySettingsScreen(
                                 modifier = Modifier
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                     .fillMaxWidth(),
-                                shape = SettingsShapes.inputShape
+                                shape = AppShapes.inputShape
                             )
 
                             ExposedDropdownMenu(
@@ -131,7 +135,7 @@ fun ApiKeySettingsScreen(
                         }
                     }
 
-                    Box(modifier = Modifier.padding(SettingsSpacing.itemPadding)) {
+                    Box(modifier = Modifier.padding(AppSpacing.itemPadding)) {
                         OutlinedTextField(
                             value = customModelText,
                             onValueChange = { customModelText = it },
@@ -139,7 +143,7 @@ fun ApiKeySettingsScreen(
                             placeholder = { Text(stringResource(R.string.api_custom_model_hint)) },
                             supportingText = { Text(stringResource(R.string.api_custom_model_support)) },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = SettingsShapes.inputShape,
+                            shape = AppShapes.inputShape,
                             singleLine = true,
                             trailingIcon = {
                                 if (customModelText.isNotBlank()) {
@@ -179,8 +183,8 @@ fun ApiKeySettingsScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.api_your_keys),
-                            style = SettingsTypography.sectionHeader,
-                            color = SettingsColors.sectionTitle
+                            style = AppTypography.sectionHeader,
+                            color = AppColors.sectionTitle
                         )
 
                         TextButton(
@@ -209,13 +213,13 @@ fun ApiKeySettingsScreen(
                                 Spacer(modifier = Modifier.height(Spacing.space16))
                                 Text(
                                     text = stringResource(R.string.api_no_keys),
-                                    style = SettingsTypography.itemTitle,
+                                    style = AppTypography.itemTitle,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(Spacing.space8))
                                 Text(
                                     text = stringResource(R.string.api_add_own_keys),
-                                    style = SettingsTypography.itemSubtitle,
+                                    style = AppTypography.itemSubtitle,
                                     color = MaterialTheme.colorScheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
@@ -230,7 +234,7 @@ fun ApiKeySettingsScreen(
                             }
                         }
                     } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)) {
                             apiKeys.forEachIndexed { index, apiKey ->
                                 val position = when {
                                     apiKeys.size == 1 -> SettingsItemPosition.Single
@@ -241,7 +245,7 @@ fun ApiKeySettingsScreen(
                                 Surface(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = position.getShape(),
-                                    color = SettingsColors.cardBackground
+                                    color = AppColors.cardBackground
                                 ) {
                                     ApiKeyItem(
                                         apiKey = apiKey,

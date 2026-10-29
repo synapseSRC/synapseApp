@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.presentation.editprofile.UsernameValidation
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
@@ -36,7 +36,7 @@ fun BasicInformationSection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_basic_information))
+        SectionHeader(title = stringResource(R.string.section_basic_information))
 
         SettingsCard {
             Column(modifier = Modifier.padding(Spacing.space16)) {

@@ -14,8 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.ui.settings.SettingsDataProvider
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 data class SettingsSearchItem(
@@ -52,7 +52,7 @@ fun SettingsSearchScreen(
     }
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_search_title)) },
@@ -113,9 +113,9 @@ private fun SettingsSearchResultItem(
             .fillMaxWidth()
             .padding(vertical = Spacing.space4),
         colors = CardDefaults.cardColors(
-            containerColor = SettingsColors.cardBackground
+            containerColor = AppColors.cardBackground
         ),
-        shape = SettingsShapes.itemShape
+        shape = AppShapes.itemShape
     ) {
         Column(
             modifier = Modifier.padding(Spacing.space16)

@@ -61,6 +61,10 @@ import androidx.compose.ui.semantics.semantics
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +84,7 @@ fun RequestAccountInfoScreen(
     }
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.request_account_info_title)) },
@@ -94,8 +98,8 @@ fun RequestAccountInfoScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
@@ -103,7 +107,7 @@ fun RequestAccountInfoScreen(
             if (uiState.status !is RequestStatus.Ready) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = SettingsColors.screenBackground,
+                    color = AppColors.screenBackground,
                     tonalElevation = Sizes.ElevationLow
                 ) {
                     Button(
@@ -111,9 +115,9 @@ fun RequestAccountInfoScreen(
                         enabled = (uiState.isAccountInfoSelected || uiState.isChannelActivitySelected) && uiState.status is RequestStatus.Idle,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(SettingsSpacing.screenPadding)
+                            .padding(AppSpacing.screenPadding)
                             .height(Sizes.HeightDefault),
-                        shape = SettingsShapes.inputShape
+                        shape = AppShapes.inputShape
                     ) {
                         if (uiState.status is RequestStatus.Processing) {
                             CircularProgressIndicator(
@@ -121,7 +125,7 @@ fun RequestAccountInfoScreen(
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 strokeWidth = Sizes.BorderDefault
                             )
-                            Spacer(Modifier.width(SettingsSpacing.sectionSpacing))
+                            Spacer(Modifier.width(AppSpacing.sectionSpacing))
                             Text(stringResource(R.string.action_processing_request))
                         } else {
                             Icon(Icons.Default.Download, contentDescription = null)
@@ -139,16 +143,16 @@ fun RequestAccountInfoScreen(
                 .padding(paddingValues)
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = SettingsSpacing.screenPadding)
+                .padding(horizontal = AppSpacing.screenPadding)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             AccountInfoStatusBanner(uiState.status)
 
             SettingsSection(title = stringResource(R.string.request_account_info_select_data)) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     AccountInfoSelectionRow(
                         title = stringResource(R.string.account_information_section),
@@ -189,7 +193,7 @@ fun RequestAccountInfoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Sizes.HeightDefault),
-                    shape = SettingsShapes.inputShape
+                    shape = AppShapes.inputShape
                 ) {
                     Icon(Icons.Default.FileDownload, contentDescription = null)
                     Spacer(modifier = Modifier.width(Spacing.space8))
@@ -223,18 +227,18 @@ private fun AccountInfoStatusBanner(status: RequestStatus) {
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.cardShape,
-        color = SettingsColors.cardBackgroundElevated,
+        shape = AppShapes.cardShape,
+        color = AppColors.cardBackgroundElevated,
         tonalElevation = Sizes.ElevationLow
     ) {
         Row(
             modifier = Modifier
-                .padding(SettingsSpacing.itemPadding)
+                .padding(AppSpacing.itemPadding)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
             Surface(
-                shape = SettingsShapes.iconBadgeShape,
+                shape = AppShapes.iconBadgeShape,
                 color = if (content.isReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Icon(
@@ -246,17 +250,17 @@ private fun AccountInfoStatusBanner(status: RequestStatus) {
                     tint = if (content.isReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
-            Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+            Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = content.title,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = content.desc,
-                    style = SettingsTypography.itemSubtitle,
+                    style = AppTypography.itemSubtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -279,7 +283,7 @@ private fun AccountInfoSelectionRow(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = position.getShape(),
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Row(
             modifier = Modifier
@@ -294,14 +298,14 @@ private fun AccountInfoSelectionRow(
                     contentDescription = rowDescription
                 }
                 .padding(
-                    horizontal = SettingsSpacing.itemHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.itemHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 )
                 .heightIn(min = AccessibilitySizes.minimumTouchTarget),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = SettingsShapes.iconBadgeShape,
+                shape = AppShapes.iconBadgeShape,
                 color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
             ) {
                 Icon(
@@ -313,17 +317,17 @@ private fun AccountInfoSelectionRow(
                     tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+            Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = subtitle,
-                    style = SettingsTypography.itemSubtitle,
+                    style = AppTypography.itemSubtitle,
                     color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             }

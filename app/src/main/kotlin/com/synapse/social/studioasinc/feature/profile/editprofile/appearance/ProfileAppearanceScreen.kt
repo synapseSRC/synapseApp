@@ -70,10 +70,10 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.presentation.editprofile.UploadState
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
-import com.synapse.social.studioasinc.ui.settings.SettingsHeaderItem
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -182,10 +182,10 @@ fun ProfileAppearanceScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(
-                        horizontal = SettingsSpacing.screenPadding,
-                        vertical = SettingsSpacing.sectionSpacing
+                        horizontal = AppSpacing.screenPadding,
+                        vertical = AppSpacing.sectionSpacing
                     ),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
                 ) {
                     // 1. Live Interactive Profile Preview Header
                     item {
@@ -427,11 +427,11 @@ private fun ProfileBackgroundGroup(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_profile_background))
+        SectionHeader(title = stringResource(R.string.section_profile_background))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             if (uploadState is UploadState.Error) {
                 Surface(
@@ -502,7 +502,7 @@ private fun AppearanceCapabilitiesInfoGroup(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SettingsHeaderItem(title = stringResource(R.string.section_appearance_info))
+        SectionHeader(title = stringResource(R.string.section_appearance_info))
 
         Surface(
             modifier = Modifier.fillMaxWidth(),

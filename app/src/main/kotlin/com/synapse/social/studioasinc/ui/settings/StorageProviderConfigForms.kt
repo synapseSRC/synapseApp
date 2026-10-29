@@ -50,6 +50,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlinx.coroutines.delay
 
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @Composable
 internal fun ImgBBConfigContent(
@@ -110,7 +112,7 @@ internal fun CloudinaryConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -172,7 +174,7 @@ internal fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -195,7 +197,7 @@ internal fun SupabaseConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         HelpText(text = stringResource(R.string.settings_help_supabase))
@@ -243,7 +245,7 @@ internal fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         StorageSecureTextField(
@@ -271,7 +273,7 @@ internal fun R2ConfigContent(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = SettingsShapes.inputShape,
+            shape = AppShapes.inputShape,
             singleLine = true
         )
         HelpText(text = stringResource(R.string.settings_help_cloudflare))
@@ -313,7 +315,7 @@ internal fun SaveConnectButton(
             .fillMaxWidth()
             .height(Sizes.AvatarLarge),
         enabled = !isLoading,
-        shape = SettingsShapes.itemShape
+        shape = AppShapes.itemShape
     ) {
         AnimatedContent(
             targetState = if (isLoading) (if (showSuccess) "success" else "loading") else "idle",
@@ -348,7 +350,7 @@ internal fun SaveConnectButton(
                 else -> {
                     Text(
                         text = stringResource(R.string.storage_action_save_connect),
-                        style = SettingsTypography.buttonText
+                        style = AppTypography.buttonText
                     )
                 }
             }
@@ -424,7 +426,7 @@ internal fun StorageSecureTextField(
             )
         },
         modifier = Modifier.fillMaxWidth(),
-        shape = SettingsShapes.inputShape,
+        shape = AppShapes.inputShape,
         singleLine = true
     )
 }

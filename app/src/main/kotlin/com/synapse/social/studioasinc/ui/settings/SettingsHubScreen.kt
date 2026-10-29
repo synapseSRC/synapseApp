@@ -25,6 +25,9 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.HeroCard
 import com.synapse.social.studioasinc.shared.domain.model.settings.SettingsNode
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +48,7 @@ fun SettingsHubScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_hub_title)) },
@@ -58,8 +61,8 @@ fun SettingsHubScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 ),
                 scrollBehavior = scrollBehavior
             )
@@ -78,8 +81,8 @@ fun SettingsHubScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = SettingsSpacing.screenPadding),
-                        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing),
+                            .padding(horizontal = AppSpacing.screenPadding),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing),
                         contentPadding = PaddingValues(vertical = Spacing.space8)
                     ) {
                         item {
@@ -146,7 +149,7 @@ fun SettingsSearchBar(
             .fillMaxWidth()
             .padding(vertical = Spacing.space8),
         shape = CircleShape,
-        color = SettingsColors.cardBackground,
+        color = AppColors.cardBackground,
         tonalElevation = Sizes.ElevationLow
     ) {
         Row(
@@ -186,12 +189,12 @@ fun SettingsCommandPaletteResults(
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(SettingsColors.screenBackground),
-        color = SettingsColors.screenBackground
+            .background(AppColors.screenBackground),
+        color = AppColors.screenBackground
     ) {
         LazyColumn(
             modifier = Modifier.padding(Spacing.space16),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             items(results) { node ->
                 val action = node.action
@@ -233,18 +236,18 @@ fun SettingsFlattenedContent(
     unreadCategoryIds: Set<String> = emptySet()
 ) {
     val unreadDescription = stringResource(R.string.settings_unread_indicator)
-    Column(verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)) {
         settingsGroups.forEach { group ->
             Column {
                 if (group.title != null) {
-                    SettingsHeaderItem(
+                    SectionHeader(
                         title = group.title.asString()
                     )
                 }
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(SettingsSpacing.itemSpacing)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
                 ) {
                     group.categories.forEachIndexed { index, category ->
                         val position = when {

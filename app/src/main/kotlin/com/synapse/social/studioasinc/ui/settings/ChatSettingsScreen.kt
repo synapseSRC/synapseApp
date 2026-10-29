@@ -35,6 +35,10 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGest
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
 import kotlin.time.Clock
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 private const val MAX_BLUR_RADIUS = 50f
 
@@ -56,7 +60,7 @@ fun ChatSettingsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        containerColor = SettingsColors.screenBackground,
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_chat_title)) },
@@ -70,8 +74,8 @@ fun ChatSettingsScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         }
@@ -81,9 +85,9 @@ fun ChatSettingsScreen(
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(paddingValues)
-                .padding(horizontal = SettingsSpacing.screenPadding),
+                .padding(horizontal = AppSpacing.screenPadding),
             contentPadding = PaddingValues(bottom = Spacing.space32),
-            verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
                 ChatLivePreview(
@@ -112,18 +116,18 @@ fun ChatSettingsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = SettingsItemPosition.Middle.getShape(),
-                        color = SettingsColors.cardBackground
+                        color = AppColors.cardBackground
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = SettingsSpacing.itemVerticalPadding)
+                                .padding(vertical = AppSpacing.itemVerticalPadding)
                         ) {
                             Text(
                                 text = stringResource(R.string.settings_chat_color_theme_title),
-                                style = SettingsTypography.itemTitle,
+                                style = AppTypography.itemTitle,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(horizontal = SettingsSpacing.itemHorizontalPadding)
+                                modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
                             )
                             Spacer(modifier = Modifier.height(Spacing.space4))
                             ThemePicker(
@@ -151,7 +155,7 @@ fun ChatSettingsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = SettingsItemPosition.Single.getShape(),
-                        color = SettingsColors.cardBackground
+                        color = AppColors.cardBackground
                     ) {
                         WallpaperPicker(
                             selectedWallpaper = chatWallpaperType,
@@ -241,7 +245,7 @@ private fun ChatLivePreview(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
-            .clip(SettingsShapes.cardShape)
+            .clip(AppShapes.cardShape)
             .background(backgroundColor)
     ) {
         if (wallpaperType == WallpaperType.DEFAULT) {
@@ -280,7 +284,7 @@ private fun ChatLivePreview(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(SettingsSpacing.itemHorizontalPadding),
+                .padding(AppSpacing.itemHorizontalPadding),
             verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
             MessageBubble(

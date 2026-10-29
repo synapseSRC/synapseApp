@@ -24,8 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Gender
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -41,8 +41,8 @@ fun GenderSelector(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = SettingsShapes.sectionShape,
-        color = SettingsColors.cardBackground,
+        shape = AppShapes.sectionShape,
+        color = AppColors.cardBackground,
         tonalElevation = Sizes.ElevationNone
     ) {
         Column(
@@ -51,7 +51,7 @@ fun GenderSelector(
             Text(
                 text = stringResource(id = R.string.gender),
                 style = MaterialTheme.typography.titleMedium,
-                color = SettingsColors.sectionTitle
+                color = AppColors.sectionTitle
             )
 
             Spacer(modifier = Modifier.height(Spacing.space12))

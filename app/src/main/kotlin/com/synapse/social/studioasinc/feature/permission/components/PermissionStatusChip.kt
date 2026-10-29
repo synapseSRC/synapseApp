@@ -17,7 +17,7 @@ import com.synapse.social.studioasinc.feature.permission.icon
 import com.synapse.social.studioasinc.feature.permission.labelRes
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.settings.SettingsShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
 @Composable
 internal fun PermissionStatusChip(
@@ -37,7 +37,7 @@ internal fun PermissionStatusChip(
 
     Surface(
         modifier = modifier,
-        shape = SettingsShapes.chipShape,
+        shape = AppShapes.chipShape,
         color = containerColor,
         contentColor = contentColor
     ) {

@@ -26,8 +26,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.NotificationTarget
 import com.synapse.social.studioasinc.ui.components.CircularAvatar
-import com.synapse.social.studioasinc.ui.settings.SettingsColors
-import com.synapse.social.studioasinc.ui.settings.SettingsSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @Immutable
 data class UiNotification(
@@ -58,14 +58,14 @@ fun NotificationItem(
         onClick = { onNotificationClick(notification) },
         modifier = modifier.fillMaxWidth(),
         shape = position.shape,
-        color = SettingsColors.cardBackground
+        color = AppColors.cardBackground
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = SettingsSpacing.rowHorizontalPadding,
-                    vertical = SettingsSpacing.itemVerticalPadding
+                    horizontal = AppSpacing.rowHorizontalPadding,
+                    vertical = AppSpacing.itemVerticalPadding
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -86,7 +86,7 @@ fun NotificationItem(
                         text = actorNameString,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = SettingsColors.itemContent,
+                        color = AppColors.itemContent,
                         modifier = Modifier.clickable {
                             notification.actorId?.let { onUserClick(it) }
                         }
@@ -95,14 +95,14 @@ fun NotificationItem(
                     Text(
                         text = messageString,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = SettingsColors.supportingText
+                        color = AppColors.supportingText
                     )
                 }
                 Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = notification.timestamp,
                     style = MaterialTheme.typography.labelSmall,
-                    color = SettingsColors.supportingText
+                    color = AppColors.supportingText
                 )
             }
 

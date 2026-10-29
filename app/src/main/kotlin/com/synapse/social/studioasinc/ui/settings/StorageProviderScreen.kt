@@ -65,6 +65,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
 import com.synapse.social.studioasinc.shared.domain.model.StorageProvider
 import kotlinx.coroutines.launch
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,7 +88,7 @@ fun StorageProviderScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.settings_storage_providers_title),
-                        style = SettingsTypography.screenTitle
+                        style = AppTypography.screenTitle
                     )
                 },
                 navigationIcon = {
@@ -97,17 +101,17 @@ fun StorageProviderScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SettingsColors.screenBackground,
-                    scrolledContainerColor = SettingsColors.cardBackground
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },
-        containerColor = SettingsColors.screenBackground
+        containerColor = AppColors.screenBackground
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
             PrimaryTabRow(
                 selectedTabIndex = pagerState.currentPage,
-                containerColor = SettingsColors.screenBackground,
+                containerColor = AppColors.screenBackground,
                 divider = {}
             ) {
                 Tab(
@@ -143,10 +147,10 @@ private fun AssignProvidersTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = SettingsSpacing.screenPadding,
+            horizontal = AppSpacing.screenPadding,
             vertical = Spacing.space16
         ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         item {
             SettingsSection(title = stringResource(R.string.storage_tab_assign)) {
@@ -211,25 +215,25 @@ private fun MediaAssignmentRow(
             .fillMaxWidth()
             .clickable { showSheet = true }
             .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         SettingsIconBadge(imageVector = icon)
 
-        Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+        Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = SettingsTypography.itemTitle,
+                style = AppTypography.itemTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(Spacing.space4))
             Text(
                 text = selectedDisplayName,
-                style = SettingsTypography.itemSubtitle,
+                style = AppTypography.itemSubtitle,
                 color = MaterialTheme.colorScheme.primary
             )
         }
@@ -239,7 +243,7 @@ private fun MediaAssignmentRow(
         Icon(
             imageVector = Icons.Default.KeyboardArrowRight,
             contentDescription = null,
-            tint = SettingsColors.chevronIcon
+            tint = AppColors.chevronIcon
         )
     }
 
@@ -247,7 +251,7 @@ private fun MediaAssignmentRow(
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
-            containerColor = SettingsColors.cardBackgroundElevated
+            containerColor = AppColors.cardBackgroundElevated
         ) {
             ProviderSelectionList(
                 title = title,
@@ -293,7 +297,7 @@ private fun ProviderSelectionList(
     ) {
         Text(
             text = stringResource(R.string.storage_provider_selection) + " - $title",
-            style = SettingsTypography.sectionHeader,
+            style = AppTypography.sectionHeader,
             modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space12)
         )
 
@@ -311,7 +315,7 @@ private fun ProviderSelectionList(
             ) {
                 Text(
                     text = displayName,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                 )
 
@@ -343,10 +347,10 @@ private fun ProviderSetupTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = SettingsSpacing.screenPadding,
+            horizontal = AppSpacing.screenPadding,
             vertical = Spacing.space16
         ),
-        verticalArrangement = Arrangement.spacedBy(SettingsSpacing.sectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
     ) {
         item {
             SettingsSection(title = stringResource(R.string.storage_provider_config)) {
@@ -402,8 +406,8 @@ private fun ProviderRow(
             .fillMaxWidth()
             .clickable { showSheet = true }
             .padding(
-                horizontal = SettingsSpacing.itemHorizontalPadding,
-                vertical = SettingsSpacing.itemVerticalPadding
+                horizontal = AppSpacing.itemHorizontalPadding,
+                vertical = AppSpacing.itemVerticalPadding
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -411,18 +415,18 @@ private fun ProviderRow(
             imageVector = if (isConfigured) Icons.Default.CheckCircle else Icons.Outlined.Key
         )
 
-        Spacer(modifier = Modifier.width(SettingsSpacing.iconTextSpacing))
+        Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = displayName,
-                    style = SettingsTypography.itemTitle,
+                    style = AppTypography.itemTitle,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(Spacing.space8))
                 Surface(
-                    shape = SettingsShapes.chipShape,
+                    shape = AppShapes.chipShape,
                     color = if (isConfigured) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
                             else MaterialTheme.colorScheme.surfaceVariant
                 ) {
@@ -441,7 +445,7 @@ private fun ProviderRow(
                 Spacer(modifier = Modifier.height(Spacing.space4))
                 Text(
                     text = stringResource(R.string.storage_used_for, usage),
-                    style = SettingsTypography.itemSubtitle,
+                    style = AppTypography.itemSubtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -452,7 +456,7 @@ private fun ProviderRow(
         Icon(
             imageVector = Icons.Default.KeyboardArrowRight,
             contentDescription = null,
-            tint = SettingsColors.chevronIcon
+            tint = AppColors.chevronIcon
         )
     }
 
@@ -460,7 +464,7 @@ private fun ProviderRow(
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
-            containerColor = SettingsColors.cardBackgroundElevated
+            containerColor = AppColors.cardBackgroundElevated
         ) {
             Box(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space48)) {
                 when (provider) {
