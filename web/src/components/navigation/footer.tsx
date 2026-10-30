@@ -21,8 +21,12 @@ const RESOURCE_LINKS = [
 const PROJECT_LINKS_LIST = [
     { label: "GitHub", href: PROJECT_LINKS.github },
     { label: "Open Source", href: "/open-source" },
-    { label: "Privacy Policy", href: "/privacy" },
+];
+
+const LEGAL_LINKS = [
     { label: "Terms", href: "/terms" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Cookie Policy", href: "/cookies" },
 ];
 
 const Column = ({
@@ -96,14 +100,25 @@ const Footer = () => {
                 </div>
             </AnimationContainer>
 
-            <div className="mt-12 border-t border-border/40 pt-8 w-full md:flex md:items-center md:justify-between">
+            <div className="mt-12 border-t border-border/40 pt-8 w-full flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <AnimationContainer delay={0.6}>
                     <p className="text-sm text-muted-foreground">
                         &copy; {new Date().getFullYear()} {APP_NAME} contributors &middot; MIT licensed
                     </p>
                 </AnimationContainer>
+                <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                    {LEGAL_LINKS.map((link) => (
+                        <Link
+                            key={link.label}
+                            href={link.href}
+                            className="hover:text-foreground transition-colors duration-300"
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
+                </nav>
                 <AnimationContainer delay={0.7}>
-                    <p className="mt-3 text-sm text-muted-foreground md:mt-0">
+                    <p className="text-sm text-muted-foreground">
                         Made with an open roadmap —{" "}
                         <Link href="/changelog" className="text-foreground hover:text-cyan-300 transition-colors duration-300">
                             see what shipped

@@ -6,6 +6,12 @@ export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN
 
 export const SUPPORT_EMAIL = "support@synapse.app";
 
+// Set before launch so the legal pages name the entity that operates the hosted service.
+export const LEGAL_ENTITY = process.env.NEXT_PUBLIC_LEGAL_ENTITY || "the Synapse project";
+
+export const LEGAL_JURISDICTION =
+    process.env.NEXT_PUBLIC_LEGAL_JURISDICTION || "the operator's principal place of business";
+
 export const GITHUB_REPOSITORY = {
     owner: "synapseSRC",
     name: "synapseApp",
