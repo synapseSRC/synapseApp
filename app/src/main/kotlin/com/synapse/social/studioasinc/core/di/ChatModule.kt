@@ -92,6 +92,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesU
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SharePostToChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToTypingStatusUseCase
@@ -213,6 +214,10 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideSendMessageUseCase(chatRepository: ChatRepository, signalProtocolManager: SignalProtocolManager): SendMessageUseCase = SendMessageUseCase(chatRepository, signalProtocolManager)
+
+    @Provides
+    @Singleton
+    fun provideSharePostToChatUseCase(sendMessageUseCase: SendMessageUseCase): SharePostToChatUseCase = SharePostToChatUseCase(sendMessageUseCase)
 
     @Provides
     @Singleton

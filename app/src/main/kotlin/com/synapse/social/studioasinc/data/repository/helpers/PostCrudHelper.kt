@@ -129,12 +129,14 @@ internal class PostCrudHelper(
         try {
             val userId = client.auth.currentUserOrNull()?.id ?: return@withContext Result.failure(Exception("Not authenticated"))
 
-            client.from("reshares").insert(mapOf(
+            // trg_sync_reshares_count in the database keeps posts.reshares_count in sync.
+            client.from("reshares").upsert(mapOf(
                 "post_id" to postId,
                 "user_id" to userId
-            ))
-
-            client.postgrest.rpc("increment_post_reshares", mapOf("post_id" to postId))
+            )) {
+                onConflict = "post_id,user_id"
+                ignoreDuplicates = true
+            }
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
@@ -154,7 +156,6 @@ internal class PostCrudHelper(
                 }
             }
 
-            client.postgrest.rpc("decrement_post_reshares", mapOf("post_id" to postId))
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
