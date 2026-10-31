@@ -40,14 +40,15 @@ fun FollowListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val tabs = listOf(
         stringResource(R.string.followers),
         stringResource(R.string.following)
     )
 
-    var hasLoadedFollowers by remember { mutableStateOf(false) }
-    var hasLoadedFollowing by remember { mutableStateOf(false) }
+    var hasLoadedFollowers by remember(userId) { mutableStateOf(false) }
+    var hasLoadedFollowing by remember(userId) { mutableStateOf(false) }
 
     LaunchedEffect(userId, pagerState.currentPage) {
         if (pagerState.currentPage == 0 && !hasLoadedFollowers) {
@@ -61,6 +62,7 @@ fun FollowListScreen(
 
     Scaffold(
         containerColor = AppColors.screenBackground,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.users)) },
@@ -152,7 +154,10 @@ fun FollowListScreen(
                                             Modifier.padding(top = GroupedListSpacing)
                                         },
                                         onUserClick = { onUserClick(user.uid) },
-                                        onMessageClick = { onMessageClick(user.uid, user.displayName ?: user.username, user.avatar) }
+                                        onMessageClick = { onMessageClick(user.uid, user.displayName ?: user.username, user.avatar) },
+                                        onFollowError = { message ->
+                                            coroutineScope.launch { snackbarHostState.showSnackbar(message) }
+                                        }
                                     )
                                 }
                             }

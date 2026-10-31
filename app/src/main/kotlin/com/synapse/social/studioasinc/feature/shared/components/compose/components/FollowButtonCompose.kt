@@ -16,12 +16,12 @@ import com.synapse.social.studioasinc.feature.shared.viewmodel.FollowButtonViewM
 @Composable
 fun FollowButtonCompose(
     targetUserId: String,
+    onError: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FollowButtonViewModel = hiltViewModel(key = "follow-button-$targetUserId")
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var lastClickTime by remember { mutableLongStateOf(0L) }
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(targetUserId) {
         viewModel.initialize(targetUserId)
@@ -29,7 +29,7 @@ fun FollowButtonCompose(
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { errorMessage ->
-            snackbarHostState.showSnackbar(errorMessage)
+            onError(errorMessage)
             viewModel.clearError()
         }
     }
@@ -52,6 +52,4 @@ fun FollowButtonCompose(
         onClick = handleClick,
         modifier = modifier.height(Sizes.ButtonHeight)
     )
-
-    SnackbarHost(hostState = snackbarHostState)
 }

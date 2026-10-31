@@ -45,6 +45,7 @@ fun UserListItem(
     position: GroupedItemPosition,
     onUserClick: () -> Unit,
     onMessageClick: () -> Unit,
+    onFollowError: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val displayName = user.displayName ?: user.username ?: user.nickname ?: ""
@@ -130,7 +131,8 @@ fun UserListItem(
                 }
 
                 FollowButtonCompose(
-                    targetUserId = user.uid
+                    targetUserId = user.uid,
+                    onError = onFollowError
                 )
             }
         }
