@@ -16,10 +16,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.encodeURLPathPart
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.readAvailable
-
-import io.ktor.utils.io.readRemaining
-import io.ktor.utils.io.core.readBytes
+import io.ktor.utils.io.readBuffer
+import kotlinx.io.readByteArray
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 class R2UploadService(private val client: HttpClient) : UploadService {
@@ -61,7 +59,7 @@ class R2UploadService(private val client: HttpClient) : UploadService {
 
         try {
             val channel = fileProvider(0)
-            val bytes = channel.readRemaining().readBytes()
+            val bytes = channel.readBuffer().readByteArray()
             
             // Use UNSIGNED-PAYLOAD to avoid signature mismatches caused by Ktor chunking or modifying the payload stream
             val payloadHash = "UNSIGNED-PAYLOAD"

@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.model.chat.SharedContent
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.util.UUIDUtils
+import io.ktor.http.Url
 
 /**
  * Use case for fetching shared content (media, links, files) from a conversation.
@@ -250,8 +251,7 @@ class GetSharedContentUseCase(
 
     private fun extractDomain(url: String): String {
         return try {
-            val uri = java.net.URI(url)
-            uri.host ?: url
+            Url(url).host.ifBlank { url }
         } catch (e: Exception) {
             url
         }
@@ -259,9 +259,7 @@ class GetSharedContentUseCase(
 
     private fun extractFileName(url: String): String {
         return try {
-            val uri = java.net.URI(url)
-            val path = uri.path
-            path.substringAfterLast('/')
+            Url(url).rawSegments.lastOrNull().orEmpty()
         } catch (e: Exception) {
             url.substringAfterLast('/')
         }

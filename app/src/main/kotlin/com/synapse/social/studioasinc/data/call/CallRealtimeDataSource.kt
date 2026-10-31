@@ -24,7 +24,6 @@ import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -328,7 +327,7 @@ class CallRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing realtime channel $topic", tag = "Realtime")
             collector.cancel()
             statusMonitor.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)

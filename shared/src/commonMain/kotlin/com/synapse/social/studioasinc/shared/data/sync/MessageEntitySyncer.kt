@@ -1,7 +1,9 @@
 package com.synapse.social.studioasinc.shared.data.sync
 
 import com.synapse.social.studioasinc.shared.data.datasource.ChatMessageDataSource
+import com.synapse.social.studioasinc.shared.data.dto.chat.MessageAttachmentDto
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
@@ -9,6 +11,12 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.util.TimeProvider
 import io.github.aakira.napier.Napier
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Entity syncer for chat messages.
@@ -98,13 +106,39 @@ internal class MessageEntitySyncer(
 
     override suspend fun pushChange(action: PendingAction): Result<Unit> = runCatching {
         when (action.actionType) {
+            PendingAction.ActionType.SEND_MESSAGE ->
+                sendPendingMessage(action)
             PendingAction.ActionType.DELETE ->
                 messageDataSource.deleteMessage(action.targetId)
             PendingAction.ActionType.EDIT ->
                 messageDataSource.editMessage(action.targetId, action.payload ?: return@runCatching)
-            // SEND_MESSAGE retries are handled by SupabaseChatRepository; acknowledge here
             else -> Unit
         }
+    }
+
+    /**
+     * Replays a message queued while offline. The optimistic local row is stored under the
+     * pending action id, so it is replaced with the persisted row to avoid a duplicate bubble.
+     */
+    private suspend fun sendPendingMessage(action: PendingAction) {
+        val payload = Json.parseToJsonElement(action.payload ?: "{}").jsonObject
+        val attachments = payload["attachments"]
+            ?.takeIf { it !is JsonNull }
+            ?.let { Json.decodeFromJsonElement(ListSerializer(MessageAttachmentDto.serializer()), it) }
+
+        val sent = messageDataSource.sendMessage(
+            chatId = action.targetId,
+            content = payload["content"]?.jsonPrimitive?.contentOrNull ?: "",
+            mediaUrl = payload["mediaUrl"]?.jsonPrimitive?.contentOrNull,
+            messageType = payload["messageType"]?.jsonPrimitive?.contentOrNull ?: "text",
+            expiresAt = payload["expiresAt"]?.jsonPrimitive?.contentOrNull,
+            replyToId = payload["replyToId"]?.jsonPrimitive?.contentOrNull,
+            attachments = attachments,
+            metadata = payload["metadata"]?.jsonPrimitive?.contentOrNull
+        )
+
+        cachedMessageDao.delete(action.id)
+        cachedMessageDao.upsert(sent.toDomain())
     }
 
     override suspend fun clearLocal() {

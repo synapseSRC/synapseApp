@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.shared.data.sync
 
+import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 import com.synapse.social.studioasinc.shared.data.local.SyncStateStorage
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
@@ -12,8 +13,8 @@ import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.realtime
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -24,8 +25,11 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.concurrent.Volatile
 
 /**
  * Central coordinator for synchronizing the local SQLDelight database with Supabase.
@@ -50,11 +54,11 @@ class SyncManager(
         private const val MAX_RETRY_ATTEMPTS = 3
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + AppDispatchers.IO)
 
     private val entitySyncers = mutableMapOf<String, EntitySyncer<*>>()
     private val realtimeChannels = mutableMapOf<String, RealtimeChannel>()
-    private var reconnectJob: Job? = null
+    private val reconnectJobs = mutableMapOf<String, Job>()
 
     private val _syncStates = MutableStateFlow<Map<String, SyncState>>(emptyMap())
 
@@ -85,45 +89,51 @@ class SyncManager(
     suspend fun <T : SyncableEntity> syncEntity(
         entityType: String,
         forceFullSync: Boolean = false
-    ): SyncResult<T> = withContext(Dispatchers.IO) {
+    ): SyncResult<T> = withContext(AppDispatchers.IO) {
         val syncer = entitySyncers[entityType] as? EntitySyncer<T>
             ?: return@withContext SyncResult.Error("No syncer for $entityType")
 
-        val state = _syncStates.value[entityType] ?: SyncState(entityType)
-        updateState(entityType, state.copy(isSyncing = true, lastError = null))
+        updateState(entityType) { it.copy(isSyncing = true, lastError = null) }
 
         try {
             pushPendingFor(entityType, syncer)
 
-            val sinceMs = if (forceFullSync) 0L else state.lastSyncedAt
+            val sinceMs = if (forceFullSync) 0L else _syncStates.value[entityType]?.lastSyncedAt ?: 0L
             val result = syncer.pullFromRemote(sinceMs)
 
             when (result) {
                 is SyncResult.Success -> {
-                    updateState(entityType, state.copy(
-                        lastSyncedAt = TimeProvider.nowMillis(),
-                        isSyncing = false,
-                        lastError = null,
-                        pendingCount = 0
-                    ))
+                    updateState(entityType) {
+                        it.copy(
+                            lastSyncedAt = TimeProvider.nowMillis(),
+                            isSyncing = false,
+                            lastError = null,
+                            pendingCount = 0
+                        )
+                    }
                     _syncEvents.emit(SyncEvent.SyncCompleted(entityType, result.items.size, result.deletedIds))
                 }
                 is SyncResult.Error -> {
-                    updateState(entityType, state.copy(isSyncing = false, lastError = result.message))
+                    updateState(entityType) { it.copy(isSyncing = false, lastError = result.message) }
                     _syncEvents.emit(SyncEvent.SyncFailed(entityType, result.message))
                 }
                 is SyncResult.Partial -> {
-                    updateState(entityType, state.copy(
-                        lastSyncedAt = TimeProvider.nowMillis(),
-                        isSyncing = false,
-                        lastError = "Partial: ${result.failedIds.size} failed"
-                    ))
+                    updateState(entityType) {
+                        it.copy(
+                            lastSyncedAt = TimeProvider.nowMillis(),
+                            isSyncing = false,
+                            lastError = "Partial: ${result.failedIds.size} failed"
+                        )
+                    }
                     _syncEvents.emit(SyncEvent.SyncCompleted(entityType, result.items.size, result.deletedIds))
                 }
             }
             result
+        } catch (e: CancellationException) {
+            updateState(entityType) { it.copy(isSyncing = false) }
+            throw e
         } catch (e: Exception) {
-            updateState(entityType, state.copy(isSyncing = false, lastError = e.message))
+            updateState(entityType) { it.copy(isSyncing = false, lastError = e.message) }
             _syncEvents.emit(SyncEvent.SyncFailed(entityType, e.message ?: "Unknown"))
             SyncResult.Error(e.message ?: "Sync failed", e)
         }
@@ -181,22 +191,38 @@ class SyncManager(
         if (realtimeChannels.containsKey(entityType)) return
 
         scope.launch {
+            var channel: RealtimeChannel? = null
+            var registered = false
             try {
                 supabaseClient.realtime.connect()
-                val channel = supabaseClient.realtime.channel("sync_${entityType}_${tableName}")
+                channel = supabaseClient.realtime.channel("sync_${entityType}_${tableName}")
 
                 // Subscribe first, then start collecting events
                 channel.subscribe(blockUntilSubscribed = true)
                 realtimeChannels[entityType] = channel
+                registered = true
                 Napier.d("Subscribed to realtime: $entityType ($tableName)", tag = TAG)
 
                 // Collect Postgres CDC events for this table
                 channel.postgresChangeFlow<PostgresAction>(schema = "public") {
                     table = tableName
                 }.collect { action -> handleRealtimeAction(entityType, action) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Napier.e("Realtime subscribe failed for $entityType", e, TAG)
-                scheduleReconnect(entityType, tableName)
+            } finally {
+                val stillOurs = registered && realtimeChannels[entityType] === channel
+                if (stillOurs) {
+                    // The channel ended on its own. Evict it so future subscribes are not
+                    // short-circuited by a dead entry, then reconnect.
+                    realtimeChannels.remove(entityType)
+                }
+                // An explicit unsubscribeRealtime() removes the entry first, so a deliberate
+                // unsubscribe never lands here as an owner.
+                if (scope.isActive && (stillOurs || !registered)) {
+                    scheduleReconnect(entityType, tableName)
+                }
             }
         }
     }
@@ -237,8 +263,8 @@ class SyncManager(
     }
 
     private fun scheduleReconnect(entityType: String, tableName: String) {
-        reconnectJob?.cancel()
-        reconnectJob = scope.launch {
+        reconnectJobs.remove(entityType)?.cancel()
+        reconnectJobs[entityType] = scope.launch {
             delay(RECONNECT_DELAY_MS)
             if (!realtimeChannels.containsKey(entityType)) {
                 subscribeRealtime(entityType, tableName)
@@ -310,9 +336,11 @@ class SyncManager(
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    private fun updateState(entityType: String, state: SyncState) {
-        _syncStates.value = _syncStates.value + (entityType to state)
-        scope.launch { syncStateStorage.save(state) }
+    private fun updateState(entityType: String, transform: (SyncState) -> SyncState) {
+        val updated = _syncStates.updateAndGet { states ->
+            states + (entityType to transform(states[entityType] ?: SyncState(entityType)))
+        }
+        updated[entityType]?.let { state -> scope.launch { syncStateStorage.save(state) } }
     }
 }
 
