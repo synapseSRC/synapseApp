@@ -315,6 +315,7 @@ class EchoRoomViewModel @Inject constructor(
                 _uiState.update { it.copy(error = null) }
             } else {
                 Napier.w("Echo demotion reconnect failed: ${result.exceptionOrNull()?.message}", tag = TAG)
+                startRecovery()
             }
         }
     }
