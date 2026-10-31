@@ -252,6 +252,8 @@ class SyncManager(
     }
 
     fun unsubscribeRealtime(entityType: String) {
+        // A reconnect still waiting out its delay would re-subscribe what the caller just removed.
+        reconnectJobs.remove(entityType)?.cancel()
         val channel = realtimeChannels.remove(entityType) ?: return
         scope.launch {
             try {

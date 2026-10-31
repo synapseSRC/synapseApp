@@ -35,6 +35,7 @@ import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +44,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * The room screen's one source of truth.
@@ -90,8 +93,13 @@ class EchoRoomViewModel @Inject constructor(
     /** Whether the live token carries the publish grant, i.e. whether a mic can be opened at all. */
     private var tokenAllowsPublish = false
 
-    /** True while this ViewModel is itself reconnecting, so its own teardown is not read as a dropout. */
-    private var audioChangeInFlight = false
+    /**
+     * Reconnects this ViewModel started itself (recovery, demotion, promotion). They are serialized
+     * by [reconnectMutex] and counted so their own teardown is not read as a dropout. Only touched
+     * from viewModelScope (main thread).
+     */
+    private val reconnectMutex = Mutex()
+    private var selfReconnects = 0
 
     private var reactionSequence = 0L
 
@@ -124,6 +132,8 @@ class EchoRoomViewModel @Inject constructor(
                 )
             }
                 .onSuccess { role ->
+                    // leave() raced the join; its pending leave tears the connection down.
+                    if (closed) return@onSuccess
                     tokenAllowsPublish = role.canPublish
                     if (role.canPublish && !micReady) {
                         // The join connected with a publish-capable token; keep the mic shut until
@@ -168,6 +178,7 @@ class EchoRoomViewModel @Inject constructor(
     }
 
     private fun applyDetail(detail: EchoRoomDetail) {
+        if (closed) return
         val previousRole = _uiState.value.myRole
         val viewer = detail.viewerId
         _uiState.update { state ->
@@ -234,9 +245,11 @@ class EchoRoomViewModel @Inject constructor(
             )
         }
         when (connection) {
-            EchoAudioConnection.CONNECTED -> clearRecovery()
+            // A self-driven reconnect reports CONNECTED before connect() returns; cancelling the
+            // recovery job then would abort that very connect and tear it down again.
+            EchoAudioConnection.CONNECTED -> if (selfReconnects == 0) clearRecovery()
             EchoAudioConnection.DISCONNECTED -> {
-                if (!closed && !audioChangeInFlight && _uiState.value.phase == EchoRoomPhase.LIVE) {
+                if (!closed && selfReconnects == 0 && _uiState.value.phase == EchoRoomPhase.LIVE) {
                     startRecovery()
                 }
             }
@@ -258,15 +271,15 @@ class EchoRoomViewModel @Inject constructor(
             for (attempt in RECOVERY_DELAYS_MS.indices) {
                 delay(RECOVERY_DELAYS_MS[attempt])
                 if (closed || _uiState.value.phase != EchoRoomPhase.LIVE) return@launch
-                val role = _uiState.value.myRole ?: return@launch
-                val publish = role.canPublish && _uiState.value.micEnabled
-                audioChangeInFlight = true
-                val result = reconnectAudio(roomId, publish)
-                audioChangeInFlight = false
-                if (result.isSuccess) {
-                    tokenAllowsPublish = role.canPublish
-                    return@launch
-                }
+                // Read the role inside the lock: a demotion that ran while we waited changes it.
+                val result = selfReconnect {
+                    val role = _uiState.value.myRole ?: return@selfReconnect null
+                    ReconnectPlan(
+                        publish = role.canPublish && _uiState.value.micEnabled,
+                        grantsPublish = role.canPublish
+                    )
+                } ?: return@launch
+                if (result.isSuccess) return@launch
                 Napier.w("Echo audio recovery attempt ${attempt + 1} failed", tag = TAG)
             }
             if (!closed) {
@@ -283,6 +296,8 @@ class EchoRoomViewModel @Inject constructor(
     /** Manual retry from the connection banner: skips the first delay but keeps the backoff. */
     fun retryAudio() {
         if (closed || _uiState.value.phase != EchoRoomPhase.LIVE) return
+        // A reconnect is already in flight; cancelling it would tear down what it is building.
+        if (selfReconnects > 0) return
         clearRecovery()
         _uiState.update { it.copy(error = null) }
         startRecovery()
@@ -290,18 +305,38 @@ class EchoRoomViewModel @Inject constructor(
 
     private fun demoteConnection() {
         viewModelScope.launch {
-            audioChangeInFlight = true
-            val result = reconnectAudio(roomId, publish = false)
-            audioChangeInFlight = false
+            // Mute first so a failed reconnect cannot leave a demoted member on air.
+            audioEngine.setMicrophoneEnabled(false)
+            _uiState.update { it.copy(micEnabled = false) }
+            refreshHold()
+            val result = selfReconnect { ReconnectPlan(publish = false, grantsPublish = false) }
+                ?: return@launch
             if (result.isSuccess) {
-                tokenAllowsPublish = false
-                _uiState.update { it.copy(micEnabled = false, error = null) }
-                refreshHold()
+                _uiState.update { it.copy(error = null) }
             } else {
                 Napier.w("Echo demotion reconnect failed: ${result.exceptionOrNull()?.message}", tag = TAG)
             }
         }
     }
+
+    private class ReconnectPlan(val publish: Boolean, val grantsPublish: Boolean)
+
+    /**
+     * Runs one self-driven reconnect at a time. [plan] is evaluated under the lock so it sees the
+     * state left by any reconnect that ran before it; returning null skips the reconnect.
+     */
+    private suspend fun selfReconnect(plan: () -> ReconnectPlan?): Result<Unit>? =
+        reconnectMutex.withLock {
+            if (closed) return@withLock null
+            val next = plan() ?: return@withLock null
+            selfReconnects++
+            try {
+                reconnectAudio(roomId, next.publish)
+                    .onSuccess { tokenAllowsPublish = next.grantsPublish }
+            } finally {
+                selfReconnects--
+            }
+        }
 
     // ---- Microphone -------------------------------------------------------------
 
@@ -320,6 +355,11 @@ class EchoRoomViewModel @Inject constructor(
                 EchoMicPurpose.JOIN -> beginJoin()
                 EchoMicPurpose.SPEAK, EchoMicPurpose.UNMUTE -> enableMicrophone()
             }
+            return
+        }
+        if (purpose == EchoMicPurpose.JOIN && !plan.canAsk) {
+            // The gate never shows a prompt it cannot ask, so no answer would ever start the join.
+            beginJoin()
             return
         }
         publishPrompt(plan, purpose)
@@ -368,12 +408,14 @@ class EchoRoomViewModel @Inject constructor(
             val result = if (tokenAllowsPublish) {
                 audioEngine.setMicrophoneEnabled(true)
             } else {
-                // Promoted after connecting: the grant only exists in a new token.
-                audioChangeInFlight = true
-                val reconnected = reconnectAudio(roomId, publish = true)
-                audioChangeInFlight = false
-                if (reconnected.isSuccess) tokenAllowsPublish = true
-                reconnected
+                // Promoted after connecting: the grant only exists in a new token. connect()
+                // swallows a mic failure to keep listening, so open it explicitly for a real result.
+                val reconnected = selfReconnect { ReconnectPlan(publish = true, grantsPublish = true) }
+                if (reconnected == null) {
+                    _uiState.update { it.copy(busy = false) }
+                    return@launch
+                }
+                if (reconnected.isSuccess) audioEngine.setMicrophoneEnabled(true) else reconnected
             }
             result
                 .onSuccess {
@@ -390,6 +432,8 @@ class EchoRoomViewModel @Inject constructor(
                 .onFailure { error ->
                     Napier.w("Echo microphone could not be opened: ${error.message}", tag = TAG)
                     _uiState.update { it.copy(busy = false, error = error.toEchoErrorKind()) }
+                    // A failed promotion reconnect leaves no connection; startRecovery() no-ops otherwise.
+                    startRecovery()
                 }
         }
     }
@@ -495,8 +539,11 @@ class EchoRoomViewModel @Inject constructor(
         if (closed) return
         closed = true
         mediaHold.release()
+        val pendingJoin = joinJob
         _uiState.update { it.copy(closeRequested = true) }
         appScope.launch {
+            // Let an in-flight join settle first, or its membership write can land after the leave.
+            pendingJoin?.cancelAndJoin()
             leaveRoom(roomId).onFailure { error ->
                 Napier.w("Echo leave was refused: ${error.message}", tag = TAG)
             }
@@ -566,7 +613,7 @@ class EchoRoomViewModel @Inject constructor(
     private fun refreshHold() {
         val state = _uiState.value
         val detail = state.detail ?: return
-        if (state.phase != EchoRoomPhase.LIVE) return
+        if (closed || state.phase != EchoRoomPhase.LIVE) return
         mediaHold.acquire(
             EchoNotificationContent(
                 roomId = roomId,
@@ -605,9 +652,11 @@ class EchoRoomViewModel @Inject constructor(
         heartbeatJob?.cancel()
         detailJob?.cancel()
         recoveryJob?.cancel()
-        mediaHold.release()
         if (!closed) {
             closed = true
+            // leave() and finishEnded() already released the hold; releasing again here could drop
+            // one a newer screen for the same room has just taken.
+            mediaHold.release()
             // The ViewModel's own scope dies with the screen; a leave must outlive it or the
             // membership would linger until expiry.
             appScope.launch { leaveRoom(roomId) }
