@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.feature.shared.components.compose
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,6 +16,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.compose.components.UserListItem
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
+import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.viewmodel.FollowListViewModel
 import androidx.compose.foundation.pager.HorizontalPager
@@ -36,14 +40,15 @@ fun FollowListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val tabs = listOf(
         stringResource(R.string.followers),
         stringResource(R.string.following)
     )
 
-    var hasLoadedFollowers by remember { mutableStateOf(false) }
-    var hasLoadedFollowing by remember { mutableStateOf(false) }
+    var hasLoadedFollowers by remember(userId) { mutableStateOf(false) }
+    var hasLoadedFollowing by remember(userId) { mutableStateOf(false) }
 
     LaunchedEffect(userId, pagerState.currentPage) {
         if (pagerState.currentPage == 0 && !hasLoadedFollowers) {
@@ -56,6 +61,8 @@ fun FollowListScreen(
     }
 
     Scaffold(
+        containerColor = AppColors.screenBackground,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.users)) },
@@ -134,14 +141,23 @@ fun FollowListScreen(
 
                         else -> {
                             LazyColumn(
-                                contentPadding = PaddingValues(vertical = Spacing.space8),
-                                verticalArrangement = Arrangement.spacedBy(Spacing.space4)
+                                modifier = Modifier.padding(horizontal = AppSpacing.screenPadding),
+                                contentPadding = PaddingValues(vertical = Spacing.space8)
                             ) {
-                                items(users) { user ->
+                                itemsIndexed(users) { index, user ->
                                     UserListItem(
                                         user = user,
+                                        position = GroupedItemPosition.at(index, users.size),
+                                        modifier = if (index == 0) {
+                                            Modifier
+                                        } else {
+                                            Modifier.padding(top = GroupedListSpacing)
+                                        },
                                         onUserClick = { onUserClick(user.uid) },
-                                        onMessageClick = { onMessageClick(user.uid, user.displayName ?: user.username, user.avatar) }
+                                        onMessageClick = { onMessageClick(user.uid, user.displayName ?: user.username, user.avatar) },
+                                        onFollowError = { message ->
+                                            coroutineScope.launch { snackbarHostState.showSnackbar(message) }
+                                        }
                                     )
                                 }
                             }

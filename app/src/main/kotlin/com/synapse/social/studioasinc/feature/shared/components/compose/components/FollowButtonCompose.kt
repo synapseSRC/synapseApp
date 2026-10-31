@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.shared.components.compose.components
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -7,18 +8,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.profile.profile.components.AnimatedFollowButton
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.viewmodel.FollowButtonViewModel
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FollowButtonCompose(
     targetUserId: String,
+    onError: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FollowButtonViewModel = hiltViewModel(key = "follow-button-$targetUserId")
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var lastClickTime by remember { mutableLongStateOf(0L) }
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(targetUserId) {
         viewModel.initialize(targetUserId)
@@ -26,7 +29,7 @@ fun FollowButtonCompose(
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { errorMessage ->
-            snackbarHostState.showSnackbar(errorMessage)
+            onError(errorMessage)
             viewModel.clearError()
         }
     }
@@ -39,40 +42,14 @@ fun FollowButtonCompose(
         }
     }
 
-    when {
-        uiState.isLoading -> {
-            OutlinedButton(
-                onClick = { },
-                enabled = false,
-                modifier = modifier
-            ) {
-                CircularProgressIndicator(
-                    strokeWidth = Sizes.BorderDefault
-                )
-            }
-        }
-
-        uiState.isFollowing || uiState.isFollowRequested -> {
-            OutlinedButton(
-                onClick = handleClick,
-                modifier = modifier,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Text(stringResource(if (uiState.isFollowing) R.string.unfollow else R.string.follow_requested))
-            }
-        }
-
-        else -> {
-            Button(
-                onClick = handleClick,
-                modifier = modifier
-            ) {
-                Text(stringResource(if (uiState.isPrivate) R.string.request_to_follow else R.string.follow))
-            }
-        }
-    }
-
-    SnackbarHost(hostState = snackbarHostState)
+    // Same expressive follow control as the profile header: animated container colour,
+    // morphing M3 Expressive shapes, haptics and an in-button spinner.
+    AnimatedFollowButton(
+        isFollowing = uiState.isFollowing,
+        isFollowRequested = uiState.isFollowRequested,
+        isPrivate = uiState.isPrivate,
+        isLoading = uiState.isLoading,
+        onClick = handleClick,
+        modifier = modifier.height(Sizes.ButtonHeight)
+    )
 }
