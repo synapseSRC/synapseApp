@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="group_select_members_title">Add participants</string>
-    <string name="group_identity_title">Group Identity &amp; AI</string>
+    <string name="group_identity_title">Group Identity</string>
     <string name="group_permissions_title">Group Permissions</string>
     <string name="group_hub_title">Group members</string>
     <string name="group_search_placeholder">Search contacts by name or handle...</string>
@@ -11,20 +11,18 @@
     <string name="group_continue_identity">Continue to group identity</string>
     <string name="group_no_contacts_title">No contacts found</string>
     <string name="group_no_contacts_body">Follow people or search for members to start a group.</string>
-    <string name="group_ai_assistant_title">Synapse AI Assistant</string>
-    <string name="group_ai_assistant_body">Choose a purpose to generate a group name, description, guideline, and icon concept.</string>
-    <string name="group_purpose_study">Study Group</string>
-    <string name="group_purpose_project">Project Team</string>
-    <string name="group_purpose_social">Friends / Social</string>
+    <string name="group_no_results_title">No matches</string>
+    <string name="group_no_results_body">No one matches \"%1$s\". Try a different name or handle.</string>
     <string name="group_name_supporting">Choose a clear name members can recognize.</string>
     <string name="group_description_label">Group Description &amp; Rules</string>
     <string name="group_description_supporting">Add context and guidelines for the group.</string>
-    <string name="group_ai_icon_concept">AI icon concept</string>
-    <string name="group_regenerate_ai">Regenerate AI Concepts</string>
     <string name="group_permission_summary">Preset: %1$s • Disappearing: %2$s</string>
     <string name="group_permission_collaborative">Collaborative</string>
     <string name="group_permission_announcement">Announcement</string>
-    <string name="group_create_count">Create Group (%1$d Members)</string>
+    <plurals name="group_create_count">
+        <item quantity="one">Create Group (%1$d Member)</item>
+        <item quantity="other">Create Group (%1$d Members)</item>
+    </plurals>
     <string name="group_preset_collaborative">Collaborative</string>
     <string name="group_preset_announcement">Announcement</string>
     <string name="group_preset_private">Private Club</string>
@@ -72,7 +70,15 @@
     <string name="group_invite_preview_title">Group invitation</string>
     <string name="group_invite_invalid">This invite link is invalid or has expired.</string>
     <string name="group_invite_invalid_support">Ask a group admin for a new invitation link.</string>
-    <string name="group_invite_member_count">%1$d participants</string>
+    <plurals name="group_invite_member_count">
+        <item quantity="one">%1$d participant</item>
+        <item quantity="other">%1$d participants</item>
+    </plurals>
+    <plurals name="group_chat_member_count">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
+    <string name="group_chat_fallback_title">Group</string>
     <string name="group_join_request_sent">Your request was sent to the group admins.</string>
     <string name="group_request_to_join">Request to join</string>
     <string name="group_join_now">Join group</string>
@@ -83,7 +89,6 @@
     <string name="group_error_name">Add a group name before creating it.</string>
     <string name="group_error_members">Select at least one participant.</string>
     <string name="group_error_create">Group creation failed. Please try again.</string>
-    <string name="group_error_ai">AI concepts are unavailable right now. Your draft was kept.</string>
     <string name="group_error_invite">The group was created, but the invite link could not be loaded.</string>
     <string name="group_error_group_members">The group was created, but participant details could not be loaded.</string>
     <string name="group_error_requests">Pending requests could not be loaded.</string>

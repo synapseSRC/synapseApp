@@ -18,6 +18,7 @@
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 	<uses-permission android:name="android.permission.CAMERA" />
 	<uses-permission android:name="android.permission.READ_CONTACTS" />
 
@@ -100,6 +101,13 @@
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />
 				<data android:scheme="synapse" android:host="hashtag" />
+			</intent-filter>
+			<!-- A shared Echo Room link: synapse://echo/<roomId> belongs to the app's own graph. -->
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="synapse" android:host="echo" />
 			</intent-filter>
 		</activity>
 		<activity
@@ -269,7 +277,7 @@
 			android:theme="@style/Base.Theme.AppCompat" />
 		<provider
 			android:name="androidx.startup.InitializationProvider"
-			android:authorities="com.synapse.social.studioasinc.androidx-startup"
+			android:authorities="${applicationId}.androidx-startup"
 			android:exported="false"
 			tools:replace="android:authorities">
 			<meta-data
@@ -319,9 +327,25 @@
 			android:enabled="true"
 			android:exported="false" />
 
+		<!--
+			Keeps an Echo Room audible with the screen off. The service never asks for more than the
+			role justifies: a listener holds mediaPlayback, while a host or speaker adds microphone.
+		-->
+		<service
+			android:name=".service.echo.EchoRoomForegroundService"
+			android:enabled="true"
+			android:exported="false"
+			android:foregroundServiceType="mediaPlayback|microphone" />
+
+		<!-- The Echo Room notification's Leave button. Explicit broadcasts only. -->
+		<receiver
+			android:name=".service.echo.EchoRoomActionReceiver"
+			android:enabled="true"
+			android:exported="false" />
+
 <provider
   android:name="androidx.core.content.FileProvider"
-  android:authorities="com.synapse.social.studioasinc.fileprovider"
+  android:authorities="${applicationId}.fileprovider"
   android:exported="false"
   android:grantUriPermissions="true">
   <meta-data

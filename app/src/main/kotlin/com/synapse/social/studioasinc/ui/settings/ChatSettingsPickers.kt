@@ -164,7 +164,15 @@ internal fun WallpaperTypeSelector(
     selectedWallpaper: WallpaperType,
     onWallpaperSelected: (WallpaperType) -> Unit
 ) {
-    val wallpapers = WallpaperType.entries.toList()
+    val wallpapers = remember {
+        WallpaperType.entries.filter { wallpaper ->
+            when (wallpaper) {
+                WallpaperType.PATTERN -> rawResourceNames("pattern_").isNotEmpty()
+                WallpaperType.PRESET_IMAGE -> rawResourceNames("wallpaper_").isNotEmpty()
+                else -> true
+            }
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -511,20 +519,15 @@ internal fun PatternSelector(
     selectedWallpaperValue: String?,
     onWallpaperValueSelected: (String?) -> Unit
 ) {
-    val context = LocalContext.current
     val isPattern = selectedWallpaper == WallpaperType.PATTERN
+    val context = LocalContext.current
     val items = remember(isPattern) {
-        try {
-            val rawClass = Class.forName("${context.packageName}.R\$raw")
-            rawClass.fields
-                .map { it.name }
-                .filter { if (isPattern) it.startsWith("pattern_") else it.startsWith("wallpaper_") }
-                .sortedBy {
-                    val numStr = it.substringAfterLast("_").filter { c -> c.isDigit() }
-                    numStr.toIntOrNull() ?: 0
-                }
-        } catch (e: Exception) {
-            emptyList()
+        rawResourceNames(if (isPattern) "pattern_" else "wallpaper_")
+    }
+
+    LaunchedEffect(items) {
+        if (selectedWallpaperValue.isNullOrBlank() && items.isNotEmpty()) {
+            onWallpaperValueSelected(items.first())
         }
     }
 
@@ -657,6 +660,15 @@ internal fun BlurSlider(
 internal fun String?.toColor(): Color {
     return safeParseColorHex(this, LightSurfaceVariant)
 }
+
+private fun rawResourceNames(prefix: String): List<String> =
+    R.raw::class.java.fields
+        .map { it.name }
+        .filter { it.startsWith(prefix) }
+        .sortedBy {
+            val numStr = it.substringAfterLast("_").filter { c -> c.isDigit() }
+            numStr.toIntOrNull() ?: 0
+        }
 
 internal fun Color.luminance(): Float {
     return 0.299f * red + 0.587f * green + 0.114f * blue

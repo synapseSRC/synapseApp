@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.synapse.social.studioasinc.domain.usecase.chat.GenerateGroupIdentityUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.GroupCreationRepository
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
@@ -22,7 +21,7 @@ import javax.inject.Inject
 
 enum class GroupCreationError {
     AUTH_REQUIRED, LOAD_CONTACTS, SEARCH_FAILED, NAME_REQUIRED, MEMBER_REQUIRED,
-    CREATE_FAILED, AI_UNAVAILABLE, INVITE_UNAVAILABLE, LOAD_MEMBERS_FAILED,
+    CREATE_FAILED, INVITE_UNAVAILABLE, LOAD_MEMBERS_FAILED,
     LOAD_REQUESTS_FAILED, UPDATE_MEMBER_FAILED
 }
 
@@ -31,8 +30,7 @@ class CreateGroupViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val groupCreationRepository: GroupCreationRepository,
     private val searchUsersUseCase: SearchUsersUseCase,
-    private val getFollowingUseCase: GetFollowingUseCase,
-    private val generateGroupIdentityUseCase: GenerateGroupIdentityUseCase
+    private val getFollowingUseCase: GetFollowingUseCase
 ) : ViewModel() {
     private val _users = MutableStateFlow<List<User>>(emptyList())
     val users: StateFlow<List<User>> = _users.asStateFlow()
@@ -48,10 +46,6 @@ class CreateGroupViewModel @Inject constructor(
     val groupName: StateFlow<String> = _groupName.asStateFlow()
     private val _groupDescription = MutableStateFlow("")
     val groupDescription: StateFlow<String> = _groupDescription.asStateFlow()
-    private val _iconConcept = MutableStateFlow("")
-    val iconConcept: StateFlow<String> = _iconConcept.asStateFlow()
-    private val _purpose = MutableStateFlow("Study Group")
-    val purpose: StateFlow<String> = _purpose.asStateFlow()
 
     private val _options = MutableStateFlow(GroupCreationOptions())
     val options: StateFlow<GroupCreationOptions> = _options.asStateFlow()
@@ -62,8 +56,6 @@ class CreateGroupViewModel @Inject constructor(
     val isLoadingUsers: StateFlow<Boolean> = _isLoadingUsers.asStateFlow()
     private val _isCreating = MutableStateFlow(false)
     val isCreating: StateFlow<Boolean> = _isCreating.asStateFlow()
-    private val _isGeneratingIdentity = MutableStateFlow(false)
-    val isGeneratingIdentity: StateFlow<Boolean> = _isGeneratingIdentity.asStateFlow()
     private val _error = MutableStateFlow<GroupCreationError?>(null)
     val error: StateFlow<GroupCreationError?> = _error.asStateFlow()
 
@@ -147,9 +139,12 @@ class CreateGroupViewModel @Inject constructor(
         _selectedUsers.value = _selectedUsers.value.filterNot { it.uid == user.uid }
     }
 
+    fun clearSelection() {
+        _selectedUsers.value = emptyList()
+    }
+
     fun updateGroupName(name: String) { _groupName.value = name.take(60) }
     fun updateGroupDescription(description: String) { _groupDescription.value = description.take(240) }
-    fun updatePurpose(purpose: String) { _purpose.value = purpose }
     fun clearError() { _error.value = null }
 
     fun selectPreset(preset: String) {
@@ -166,25 +161,6 @@ class CreateGroupViewModel @Inject constructor(
     fun updateJoinApproval(enabled: Boolean) { _options.value = _options.value.copy(requireJoinApproval = enabled) }
     fun updateMemberInvites(enabled: Boolean) { _options.value = _options.value.copy(allowMemberInvites = enabled) }
     fun updateDisappearingMode(mode: DisappearingMode) { _options.value = _options.value.copy(disappearingMode = mode) }
-
-    fun generateIdentity() {
-        if (_selectedUsers.value.isEmpty()) {
-            _error.value = GroupCreationError.MEMBER_REQUIRED
-            return
-        }
-        viewModelScope.launch {
-            _isGeneratingIdentity.value = true
-            _error.value = null
-            generateGroupIdentityUseCase(_purpose.value, _selectedUsers.value.size)
-                .onSuccess { suggestion ->
-                    _groupName.value = suggestion.name
-                    _groupDescription.value = suggestion.description
-                    _iconConcept.value = suggestion.iconConcept
-                }
-                .onFailure { _error.value = GroupCreationError.AI_UNAVAILABLE }
-            _isGeneratingIdentity.value = false
-        }
-    }
 
     fun createGroup() {
         val name = _groupName.value.trim()

@@ -51,6 +51,7 @@ interface ChatRepository {
     suspend fun ensureSession(userId: String)
     fun getCurrentUserId(): String?
     suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): Result<String>
+    suspend fun reportChat(chatId: String, reason: String): Result<Unit>
     suspend fun getParticipantIds(chatId: String): Result<List<String>>
     suspend fun getGroupMembers(chatId: String): Result<List<Pair<com.synapse.social.studioasinc.shared.domain.model.User, Boolean>>>
     suspend fun addGroupMembers(chatId: String, userIds: List<String>): Result<Unit>

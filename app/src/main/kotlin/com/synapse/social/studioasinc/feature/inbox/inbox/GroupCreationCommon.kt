@@ -109,7 +109,6 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
-import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
 import kotlinx.coroutines.launch
@@ -123,7 +122,6 @@ internal fun GroupErrorMessage(error: GroupCreationError, onDismiss: () -> Unit)
         GroupCreationError.NAME_REQUIRED -> stringResource(R.string.group_error_name)
         GroupCreationError.MEMBER_REQUIRED -> stringResource(R.string.group_error_members)
         GroupCreationError.CREATE_FAILED -> stringResource(R.string.group_error_create)
-        GroupCreationError.AI_UNAVAILABLE -> stringResource(R.string.group_error_ai)
         GroupCreationError.INVITE_UNAVAILABLE -> stringResource(R.string.group_error_invite)
         GroupCreationError.LOAD_MEMBERS_FAILED -> stringResource(R.string.group_error_group_members)
         GroupCreationError.LOAD_REQUESTS_FAILED -> stringResource(R.string.group_error_requests)
@@ -139,16 +137,6 @@ internal fun userDisplayName(user: User): String =
     user.displayName?.takeIf { it.isNotBlank() && it != "null" }
         ?: user.username?.takeIf { it.isNotBlank() && it != "null" }
         ?: stringResource(R.string.unknown_user_name)
-
-@Composable
-internal fun userContactContext(user: User): String {
-    val handle = user.username?.takeIf { it.isNotBlank() }?.let { "@$it" }
-    val status = when (user.status) {
-        UserStatus.ONLINE -> stringResource(R.string.online)
-        UserStatus.OFFLINE -> stringResource(R.string.offline)
-    }
-    return listOfNotNull(handle, status.ifBlank { user.bio?.takeIf { it.isNotBlank() } }).joinToString(" • ")
-}
 
 @Composable
 internal fun disappearingLabel(mode: DisappearingMode): String = when (mode) {

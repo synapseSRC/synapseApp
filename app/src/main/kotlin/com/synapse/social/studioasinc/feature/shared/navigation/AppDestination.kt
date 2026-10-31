@@ -96,7 +96,19 @@ sealed interface AppDestination {
     @Serializable
     data class ChatSettings(val chatId: String) : AppDestination
     @Serializable
-    data class ChatSearch(val chatId: String) : AppDestination
-    @Serializable
     data class HashtagFeed(val tag: String) : AppDestination
+    @Serializable
+    data object EchoLobby : AppDestination
+    @Serializable
+    data class EchoRoom(
+        val roomId: String,
+        /**
+         * Ask for the microphone on entry.
+         *
+         * Set by the create flow, where the caller is the host and therefore publishes. A lobby
+         * join or a shared link leaves it false: an audience member must never see a microphone
+         * prompt, and a promoted speaker is offered the stage after the role arrives.
+         */
+        val speakOnEntry: Boolean = false
+    ) : AppDestination
 }

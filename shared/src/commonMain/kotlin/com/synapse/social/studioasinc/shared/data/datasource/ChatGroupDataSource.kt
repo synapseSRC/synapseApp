@@ -16,10 +16,22 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     private fun getCurrentUserId(): String? = client.auth.currentUserOrNull()?.id
+
+    suspend fun reportChat(chatId: String, reason: String) = withContext(AppDispatchers.IO) {
+        val currentUserId = getCurrentUserId() ?: throw NotAuthenticatedException("User not authenticated")
+        client.postgrest.from("reports").insert(buildJsonObject {
+            put("reporter_id", currentUserId)
+            put("target_id", chatId)
+            put("target_type", "chat")
+            put("reason", reason)
+        })
+    }
 
     suspend fun getGroupMembers(chatId: String): List<Pair<User, Boolean>> = withContext(AppDispatchers.IO) {
         try {
@@ -65,7 +77,11 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun promoteToAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.rpc("set_group_member_admin", mapOf("p_chat_id" to chatId, "p_user_id" to userId, "p_is_admin" to true))
+            client.postgrest.rpc("set_group_member_admin", buildJsonObject {
+                put("p_chat_id", chatId)
+                put("p_user_id", userId)
+                put("p_is_admin", true)
+            })
         } catch (e: Exception) {
             Napier.e("Error promoting member to admin", e)
             throw e
@@ -74,7 +90,11 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun demoteAdmin(chatId: String, userId: String) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.rpc("set_group_member_admin", mapOf("p_chat_id" to chatId, "p_user_id" to userId, "p_is_admin" to false))
+            client.postgrest.rpc("set_group_member_admin", buildJsonObject {
+                put("p_chat_id", chatId)
+                put("p_user_id", userId)
+                put("p_is_admin", false)
+            })
         } catch (e: Exception) {
             Napier.e("Error demoting admin", e)
             throw e
@@ -98,7 +118,10 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
 
     suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) = withContext(AppDispatchers.IO) {
         try {
-            client.postgrest.rpc("update_group_message_permission", mapOf("p_chat_id" to chatId, "p_only_admins_can_message" to enabled))
+            client.postgrest.rpc("update_group_message_permission", buildJsonObject {
+                put("p_chat_id", chatId)
+                put("p_only_admins_can_message", enabled)
+            })
         } catch (e: Exception) {
             Napier.e("Error toggling only_admins_can_message", e)
             throw e

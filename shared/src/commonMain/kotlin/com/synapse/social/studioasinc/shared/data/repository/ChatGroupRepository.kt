@@ -14,6 +14,14 @@ internal class ChatGroupRepository(
         Result.failure(e)
     }
 
+    suspend fun reportChat(chatId: String, reason: String): Result<Unit> = try {
+        dataSource.reportChat(chatId, reason)
+        Result.success(Unit)
+    } catch (e: Exception) {
+        io.github.aakira.napier.Napier.e("Error reporting chat", e)
+        Result.failure(e)
+    }
+
     suspend fun getParticipantIds(chatId: String): Result<List<String>> = try {
         val ids = dataSource.getParticipantIds(chatId)
         Result.success(ids)

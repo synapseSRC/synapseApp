@@ -60,6 +60,7 @@
     <string name="inbox_fab_create_group">Create group</string>
     <string name="inbox_fab_create_channel">Create channel</string>
     <string name="inbox_fab_create_channel_coming_soon">Channel creation is coming soon.</string>
+    <string name="inbox_fab_echo_room">Echo room</string>
     <string name="inbox_messages_tab">Messages</string>
     <string name="inbox_calls_tab">Calls</string>
     <string name="inbox_contacts_tab">Contacts</string>

@@ -52,12 +52,13 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -84,14 +85,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -114,7 +111,6 @@ import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
-import kotlinx.coroutines.launch
 
 private const val FLOW_MEMBERS = 0
 private const val FLOW_IDENTITY = 1
@@ -133,18 +129,13 @@ fun CreateGroupScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val groupName by viewModel.groupName.collectAsStateWithLifecycle()
     val groupDescription by viewModel.groupDescription.collectAsStateWithLifecycle()
-    val iconConcept by viewModel.iconConcept.collectAsStateWithLifecycle()
-    val purpose by viewModel.purpose.collectAsStateWithLifecycle()
     val options by viewModel.options.collectAsStateWithLifecycle()
     val preset by viewModel.selectedPreset.collectAsStateWithLifecycle()
     val loadingUsers by viewModel.isLoadingUsers.collectAsStateWithLifecycle()
     val creating by viewModel.isCreating.collectAsStateWithLifecycle()
-    val generating by viewModel.isGeneratingIdentity.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val createdChatId by viewModel.createdChatId.collectAsStateWithLifecycle()
     var stage by rememberSaveable { mutableStateOf(FLOW_MEMBERS) }
-    val scope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
 
     fun goBack() {
         if (stage == FLOW_MEMBERS) onNavigateBack()
@@ -176,24 +167,39 @@ fun CreateGroupScreen(
                         IconButton(onClick = ::goBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
-                    },
-                    actions = {
-                        if (stage == FLOW_MEMBERS) {
-                            IconButton(onClick = { scope.launch { focusRequester.requestFocus() } }) {
-                                Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
-                            }
-                        }
                     }
                 )
             },
             floatingActionButton = {
                 when (stage) {
-                    FLOW_MEMBERS -> FloatingActionButton(
-                        onClick = { if (selectedUsers.isNotEmpty()) stage = FLOW_IDENTITY },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Filled.ArrowForward, contentDescription = stringResource(R.string.group_continue_identity))
+                    FLOW_MEMBERS -> {
+                        val hasSelection = selectedUsers.isNotEmpty()
+                        BadgedBox(
+                            badge = {
+                                if (hasSelection) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ) { Text(selectedUsers.size.toString()) }
+                                }
+                            }
+                        ) {
+                            FloatingActionButton(
+                                onClick = { if (hasSelection) stage = FLOW_IDENTITY },
+                                containerColor = if (hasSelection) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                },
+                                contentColor = if (hasSelection) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            ) {
+                                Icon(Icons.Filled.ArrowForward, contentDescription = stringResource(R.string.group_continue_identity))
+                            }
+                        }
                     }
                     FLOW_HUB -> FloatingActionButton(
                         onClick = { createdChatId?.let(onGroupCreated) },
@@ -230,28 +236,23 @@ fun CreateGroupScreen(
                         searchQuery = searchQuery,
                         isLoading = loadingUsers,
                         error = error,
-                        focusRequester = focusRequester,
                         onSearch = viewModel::onSearchQueryChange,
                         onToggleUser = viewModel::toggleUserSelection,
                         onRemoveUser = viewModel::removeMember,
+                        onClearSelection = viewModel::clearSelection,
                         onClearError = viewModel::clearError
                     )
                     FLOW_IDENTITY -> IdentityStage(
                         selectedCount = selectedUsers.size,
                         preset = preset,
                         hasCreatedGroup = createdChatId != null,
-                        purpose = purpose,
                         groupName = groupName,
                         description = groupDescription,
-                        iconConcept = iconConcept,
                         permissions = options,
-                        isGenerating = generating,
                         isCreating = creating,
                         error = error,
-                        onPurposeChange = viewModel::updatePurpose,
                         onGroupNameChange = viewModel::updateGroupName,
                         onDescriptionChange = viewModel::updateGroupDescription,
-                        onRegenerate = viewModel::generateIdentity,
                         onOpenPermissions = { stage = FLOW_PERMISSIONS },
                         onCreate = viewModel::createGroup,
                         onReturnToHub = { stage = FLOW_HUB },

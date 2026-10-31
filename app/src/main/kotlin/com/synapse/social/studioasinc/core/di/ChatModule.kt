@@ -71,6 +71,9 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.BroadcastTyping
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistoryUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.ReportChatUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase
@@ -177,6 +180,10 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideClearChatHistoryUseCase(chatRepository: ChatRepository): ClearChatHistoryUseCase = ClearChatHistoryUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideReportChatUseCase(chatRepository: ChatRepository): ReportChatUseCase = ReportChatUseCase(chatRepository)
 
     @Provides
     @Singleton
@@ -322,7 +329,11 @@ object ChatModule {
         voteInPollUseCase: VoteInPollUseCase,
         markViewOnceConsumedUseCase: MarkViewOnceConsumedUseCase,
         searchMessagesUseCase: SearchMessagesUseCase,
-        exportChatUseCase: ExportChatUseCase
+        exportChatUseCase: ExportChatUseCase,
+        reportChatUseCase: ReportChatUseCase,
+        clearChatHistoryUseCase: ClearChatHistoryUseCase,
+        blockUserUseCase: BlockUserUseCase,
+        reportUserUseCase: ReportUserUseCase
     ): ChatDependencies = ChatDependencies(
         messaging = messaging,
         subscription = subscription,
@@ -341,7 +352,11 @@ object ChatModule {
         voteInPollUseCase = voteInPollUseCase,
         markViewOnceConsumedUseCase = markViewOnceConsumedUseCase,
         searchMessagesUseCase = searchMessagesUseCase,
-        exportChatUseCase = exportChatUseCase
+        exportChatUseCase = exportChatUseCase,
+        reportChatUseCase = reportChatUseCase,
+        clearChatHistoryUseCase = clearChatHistoryUseCase,
+        blockUserUseCase = blockUserUseCase,
+        reportUserUseCase = reportUserUseCase
     )
 
     // Messaging dependencies group

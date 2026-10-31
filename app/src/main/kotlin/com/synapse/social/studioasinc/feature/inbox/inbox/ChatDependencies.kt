@@ -6,6 +6,8 @@ import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.service.MediaCompressor
 import com.synapse.social.studioasinc.shared.domain.usecase.ai.GenerateSmartRepliesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.UpdateCurrentChatUseCase
@@ -100,4 +102,8 @@ data class ChatDependencies(
     val markViewOnceConsumedUseCase: MarkViewOnceConsumedUseCase,
     val searchMessagesUseCase: SearchMessagesUseCase,
     val exportChatUseCase: ExportChatUseCase,
+    val reportChatUseCase: ReportChatUseCase,
+    val clearChatHistoryUseCase: ClearChatHistoryUseCase,
+    val blockUserUseCase: BlockUserUseCase,
+    val reportUserUseCase: ReportUserUseCase,
 )

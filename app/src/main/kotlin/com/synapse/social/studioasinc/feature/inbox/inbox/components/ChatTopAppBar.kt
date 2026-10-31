@@ -2,6 +2,8 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -11,11 +13,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -40,6 +48,10 @@ fun ChatTopAppBar(
     isParticipantActive: Boolean,
     chatId: String,
     disappearingMode: DisappearingMode,
+    isGroupChat: Boolean = false,
+    groupTitle: String? = null,
+    groupAvatarUrl: String? = null,
+    groupMemberCount: Int = 0,
     isMuted: Boolean = false,
     isMuteUpdating: Boolean = false,
     onClearSelection: () -> Unit,
@@ -52,7 +64,6 @@ fun ChatTopAppBar(
     onStartVoiceCall: () -> Unit = {},
     onStartVideoCall: () -> Unit = {},
     showCallActions: Boolean = true,
-    onNewGroup: () -> Unit = {},
     onSearchInChat: () -> Unit = {},
     onOpenMediaLinksAndDocs: () -> Unit = {},
     onToggleMuteNotifications: () -> Unit = {},
@@ -60,9 +71,7 @@ fun ChatTopAppBar(
     onReportChat: () -> Unit = {},
     onBlockChat: () -> Unit = {},
     onClearChat: () -> Unit = {},
-    onExportChat: () -> Unit = {},
-    onAddShortcut: () -> Unit = {},
-    onAddToFolder: () -> Unit = {}
+    onExportChat: () -> Unit = {}
 ) {
     @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
@@ -106,40 +115,63 @@ fun ChatTopAppBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // Participant avatar
                     UserAvatarWithStatus(
-                        userId = participantId ?: "",
-                        avatarUrl = participantProfile?.avatar ?: initialParticipantAvatar,
+                        userId = if (isGroupChat) "" else participantId ?: "",
+                        avatarUrl = if (isGroupChat) groupAvatarUrl ?: initialParticipantAvatar
+                            else participantProfile?.avatar ?: initialParticipantAvatar,
                         size = Sizes.IconMassive,
-                        showActiveStatus = true,
-                        displayName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
+                        showActiveStatus = !isGroupChat,
+                        displayName = if (isGroupChat) groupTitle ?: initialParticipantName
+                            else participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
                     Spacer(modifier = Modifier.width(Spacing.space12))
                     Column {
                         Text(
-                            text = participantProfile?.displayName
-                                ?: participantProfile?.username
-                                ?: initialParticipantName
-                                ?: participantId ?: "Chat",
+                            text = if (isGroupChat) {
+                                groupTitle ?: initialParticipantName
+                                    ?: stringResource(R.string.group_chat_fallback_title)
+                            } else {
+                                participantProfile?.displayName
+                                    ?: participantProfile?.username
+                                    ?: initialParticipantName
+                                    ?: participantId ?: "Chat"
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
-                            val statusText = when {
-                                typingStatus?.isTyping == true -> "Typing..."
-                                isParticipantActive -> "Online"
-                                formattedLastSeen != null -> "Last seen $formattedLastSeen"
-                                else -> "Offline"
+                            if (isGroupChat) {
+                                Text(
+                                    text = if (groupMemberCount > 0) {
+                                        pluralStringResource(
+                                            R.plurals.group_chat_member_count,
+                                            groupMemberCount,
+                                            groupMemberCount
+                                        )
+                                    } else {
+                                        stringResource(R.string.group_chat_fallback_title)
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
+                                val statusText = when {
+                                    typingStatus?.isTyping == true -> "Typing..."
+                                    isParticipantActive -> "Online"
+                                    formattedLastSeen != null -> "Last seen $formattedLastSeen"
+                                    else -> "Offline"
+                                }
+                                val statusColor = when {
+                                    typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
+                                    isParticipantActive -> StatusOnline
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                                Text(
+                                    text = statusText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = statusColor
+                                )
                             }
-                            val statusColor = when {
-                                typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
-                                isParticipantActive -> StatusOnline
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                            Text(
-                                text = statusText,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = statusColor
-                            )
                             if (disappearingMode != DisappearingMode.OFF) {
                                 Spacer(modifier = Modifier.width(Spacing.space8))
                                 Icon(
@@ -174,18 +206,19 @@ fun ChatTopAppBar(
                     }
                 }
                 ChatOverflowMenu(
+                    isGroupChat = isGroupChat,
+                    canBlock = !isGroupChat && participantId != null,
                     isMuted = isMuted,
                     isMuteUpdating = isMuteUpdating,
                     onSummarizeChat = onSummarizeChat,
-                    onNewGroup = onNewGroup,
                     onViewContact = {
-                        if (participantProfile?.accountType != "group") {
-                            onNavigateToChatInfo(chatId, participantId ?: "")
-                        } else {
+                        if (isGroupChat || participantProfile?.accountType == "group") {
                             onNavigateToGroupInfo(
                                 chatId,
-                                participantProfile.displayName ?: initialParticipantName ?: "Group"
+                                groupTitle ?: participantProfile?.displayName ?: initialParticipantName ?: "Group"
                             )
+                        } else {
+                            onNavigateToChatInfo(chatId, participantId ?: "")
                         }
                     },
                     onSearch = onSearchInChat,
@@ -196,9 +229,7 @@ fun ChatTopAppBar(
                     onReport = onReportChat,
                     onBlock = onBlockChat,
                     onClearChat = onClearChat,
-                    onExportChat = onExportChat,
-                    onAddShortcut = onAddShortcut,
-                    onAddToFolder = onAddToFolder
+                    onExportChat = onExportChat
                 )
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -209,12 +240,68 @@ fun ChatTopAppBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatSearchTopAppBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onCloseSearch: () -> Unit
+) {
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    TopAppBar(
+        title = {
+            TextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                placeholder = { Text(stringResource(R.string.search_messages_hint)) },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null)
+                },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear))
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.extraLarge,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                textStyle = MaterialTheme.typography.bodyLarge,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                )
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onCloseSearch) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
+}
+
 @Composable
 private fun ChatOverflowMenu(
+    isGroupChat: Boolean,
+    canBlock: Boolean,
     isMuted: Boolean = false,
     isMuteUpdating: Boolean = false,
     onSummarizeChat: () -> Unit,
-    onNewGroup: () -> Unit,
     onViewContact: () -> Unit,
     onSearch: () -> Unit,
     onMediaLinksAndDocs: () -> Unit,
@@ -224,9 +311,7 @@ private fun ChatOverflowMenu(
     onReport: () -> Unit,
     onBlock: () -> Unit,
     onClearChat: () -> Unit,
-    onExportChat: () -> Unit,
-    onAddShortcut: () -> Unit,
-    onAddToFolder: () -> Unit
+    onExportChat: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var moreExpanded by remember { mutableStateOf(false) }
@@ -254,16 +339,8 @@ private fun ChatOverflowMenu(
                 }
             )
             ChatDropdownMenuItem(
-                labelRes = R.string.chat_menu_new_group,
-                icon = Icons.Default.GroupAdd,
-                onClick = {
-                    expanded = false
-                    onNewGroup()
-                }
-            )
-            ChatDropdownMenuItem(
-                labelRes = R.string.chat_menu_view_contact,
-                icon = Icons.Default.Person,
+                labelRes = if (isGroupChat) R.string.chat_menu_group_info else R.string.chat_menu_contact_info,
+                icon = if (isGroupChat) Icons.Default.Groups else Icons.Default.Person,
                 onClick = {
                     expanded = false
                     onViewContact()
@@ -303,7 +380,7 @@ private fun ChatOverflowMenu(
                 }
             )
             ChatDropdownMenuItem(
-                labelRes = R.string.chat_menu_chat_theme,
+                labelRes = R.string.chat_menu_chat_settings,
                 icon = Icons.Default.Palette,
                 onClick = {
                     expanded = false
@@ -342,6 +419,7 @@ private fun ChatOverflowMenu(
                         labelRes = R.string.chat_menu_block,
                         icon = Icons.Default.Block,
                         destructive = true,
+                        hidden = !canBlock,
                         onClick = {
                             moreExpanded = false
                             expanded = false
@@ -367,24 +445,6 @@ private fun ChatOverflowMenu(
                             onExportChat()
                         }
                     )
-                    ChatDropdownMenuItem(
-                        labelRes = R.string.chat_menu_add_shortcut,
-                        icon = Icons.Default.Add,
-                        onClick = {
-                            moreExpanded = false
-                            expanded = false
-                            onAddShortcut()
-                        }
-                    )
-                    ChatDropdownMenuItem(
-                        labelRes = R.string.chat_menu_add_to_folder,
-                        icon = Icons.Default.Folder,
-                        onClick = {
-                            moreExpanded = false
-                            expanded = false
-                            onAddToFolder()
-                        }
-                    )
                 }
             }
         }
@@ -396,10 +456,12 @@ private fun ChatDropdownMenuItem(
     @StringRes labelRes: Int,
     icon: ImageVector,
     destructive: Boolean = false,
+    hidden: Boolean = false,
     trailingIcon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    if (hidden) return
     val contentColor = if (destructive) {
         MaterialTheme.colorScheme.error
     } else {

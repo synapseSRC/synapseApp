@@ -14,7 +14,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,15 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -95,6 +89,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -120,18 +115,13 @@ internal fun IdentityStage(
     selectedCount: Int,
     preset: String,
     hasCreatedGroup: Boolean,
-    purpose: String,
     groupName: String,
     description: String,
-    iconConcept: String,
     permissions: com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOptions,
-    isGenerating: Boolean,
     isCreating: Boolean,
     error: GroupCreationError?,
-    onPurposeChange: (String) -> Unit,
     onGroupNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
-    onRegenerate: () -> Unit,
     onOpenPermissions: () -> Unit,
     onCreate: () -> Unit,
     onReturnToHub: () -> Unit,
@@ -143,30 +133,6 @@ internal fun IdentityStage(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space12),
             verticalArrangement = Arrangement.spacedBy(Spacing.space12)
         ) {
-            item {
-                Card(
-                    shape = MaterialTheme.shapes.largeIncreased,
-                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(Spacing.space20)) {
-                        Text(stringResource(R.string.group_ai_assistant_title), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                        Spacer(Modifier.height(Spacing.space4))
-                        Text(stringResource(R.string.group_ai_assistant_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    }
-                }
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8), modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                    listOf(
-                        stringResource(R.string.group_purpose_study),
-                        stringResource(R.string.group_purpose_project),
-                        stringResource(R.string.group_purpose_social)
-                    ).forEach { value ->
-                        FilterChip(selected = purpose == value, enabled = !hasCreatedGroup, onClick = { onPurposeChange(value) }, label = { Text(value) })
-                    }
-                }
-            }
             item {
                 OutlinedTextField(
                     value = groupName,
@@ -193,32 +159,6 @@ internal fun IdentityStage(
                     supportingText = { Text(stringResource(R.string.group_description_supporting)) },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                 )
-            }
-            if (iconConcept.isNotBlank()) {
-                item {
-                    Card(
-                        shape = MaterialTheme.shapes.medium,
-                        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(Modifier.padding(Spacing.space16), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Book, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
-                            Spacer(Modifier.width(Spacing.space12))
-                            Column {
-                                Text(stringResource(R.string.group_ai_icon_concept), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onTertiaryContainer)
-                                Text(iconConcept, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onTertiaryContainer)
-                            }
-                        }
-                    }
-                }
-            }
-            item {
-                Button(onClick = onRegenerate, enabled = !isGenerating && !hasCreatedGroup, modifier = Modifier.fillMaxWidth().height(Sizes.ButtonHeightM3Medium)) {
-                    if (isGenerating) CircularProgressIndicator(modifier = Modifier.size(Sizes.IconDefault), strokeWidth = 2.dp)
-                    else Icon(Icons.Filled.AutoAwesome, contentDescription = null)
-                    Spacer(Modifier.width(Spacing.space8))
-                    Text(stringResource(R.string.group_regenerate_ai))
-                }
             }
             item {
                 ListItem(
@@ -253,7 +193,7 @@ internal fun IdentityStage(
             if (isCreating) CircularProgressIndicator(modifier = Modifier.size(Sizes.IconDefault), strokeWidth = 2.dp)
             else Icon(if (hasCreatedGroup) Icons.Filled.ArrowForward else Icons.Filled.Check, contentDescription = null)
             Spacer(Modifier.width(Spacing.space8))
-            Text(if (hasCreatedGroup) stringResource(R.string.group_return_to_hub) else stringResource(R.string.group_create_count, selectedCount))
+            Text(if (hasCreatedGroup) stringResource(R.string.group_return_to_hub) else pluralStringResource(R.plurals.group_create_count, selectedCount, selectedCount))
         }
     }
 }

@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.OpenableColumns
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -60,6 +61,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -78,10 +80,8 @@ import kotlinx.coroutines.withContext
         onNavigateToProfile: (String) -> Unit = {},
         onNavigateToEvent: (String) -> Unit = {},
         onNavigateToProduct: (String) -> Unit = {},
-        onNavigateToNewGroup: () -> Unit = {},
         onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
         onNavigateToChatSettings: (String) -> Unit = {},
-        onNavigateToChatSearch: (String) -> Unit = {},
         onStartCall: (CallLaunchRequest) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
@@ -90,7 +90,6 @@ import kotlinx.coroutines.withContext
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
-    var showFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
@@ -118,10 +117,23 @@ import kotlinx.coroutines.withContext
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
     val isGroupChat by viewModel.isGroupChat.collectAsState()
+    val groupTitle by viewModel.groupTitle.collectAsState()
+    val groupAvatarUrl by viewModel.groupAvatarUrl.collectAsState()
+    val chatDisplayName = if (isGroupChat) {
+        groupTitle ?: initialParticipantName
+    } else {
+        participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
+    }
     val resolvedChatId by viewModel.resolvedChatId.collectAsState()
     val groupMemberNames by viewModel.groupMemberNames.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
+
+    var isSearchActive by rememberSaveable(chatId) { mutableStateOf(false) }
+    var searchQuery by rememberSaveable(chatId) { mutableStateOf("") }
+    var searchJumpMessageId by rememberSaveable(chatId) { mutableStateOf<String?>(null) }
+    val searchResults by viewModel.searchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
 
     val currentUserIdState by viewModel.currentUserId.collectAsState()
 val currentUserId = currentUserIdState ?: ""
@@ -180,6 +192,26 @@ val currentUserId = currentUserIdState ?: ""
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
+
+    val closeMessageSearch: () -> Unit = {
+        isSearchActive = false
+        searchQuery = ""
+        viewModel.clearMessageSearch()
+        focusManager.clearFocus()
+    }
+
+    LaunchedEffect(isSearchActive, searchQuery) {
+        if (!isSearchActive) return@LaunchedEffect
+        val query = searchQuery.trim()
+        if (query.isEmpty()) {
+            viewModel.clearMessageSearch()
+            return@LaunchedEffect
+        }
+        delay(SEARCH_DEBOUNCE_MILLIS)
+        viewModel.searchMessages(chatId, query)
+    }
+
+    BackHandler(enabled = isSearchActive, onBack = closeMessageSearch)
 
     val gestureConfig = remember { VoiceGestureConfig() }
     val cancelThresholdPx = with(density) { gestureConfig.cancelThresholdDp.dp.toPx() }
@@ -405,69 +437,81 @@ val currentUserId = currentUserIdState ?: ""
 
     Scaffold(
         topBar = {
-            val disappearingMode by viewModel.disappearingMode.collectAsState()
-            val isMuted by viewModel.isMuted.collectAsState()
-            val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
-            ChatTopAppBar(
-                selectedMessageIds = selectedMessageIds,
-                messages = messages,
-                participantId = participantId,
-                participantProfile = participantProfile,
-                initialParticipantName = initialParticipantName,
-                initialParticipantAvatar = initialParticipantAvatar,
-                typingStatus = typingStatus,
-                isParticipantActive = isParticipantActive,
-                chatId = chatId,
-                disappearingMode = disappearingMode,
-                isMuted = isMuted,
-                isMuteUpdating = isMuteUpdating,
-                onClearSelection = viewModel::clearSelection,
-                onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
-                onNavigateBack = onNavigateBack,
-                onSummarizeChat = viewModel::summarizeChat,
-                onNavigateToGroupInfo = onNavigateToGroupInfo,
-                onNavigateToChatInfo = onNavigateToChatInfo,
-                onOpenDisappearingMessages = { showDisappearingModeDialog = true },
-                onStartVoiceCall = { launchCall(false) },
-                onStartVideoCall = { launchCall(true) },
-                showCallActions = participantId != null && !isGroupChat,
-                onNewGroup = onNavigateToNewGroup,
-                onSearchInChat = { onNavigateToChatSearch(chatId) },
-                onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
-                onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
-                onOpenChatTheme = { onNavigateToChatSettings(chatId) },
-                onReportChat = { showReportDialog = true },
-                onBlockChat = { showBlockDialog = true },
-                onClearChat = { showClearChatDialog = true },
-                onExportChat = {
-                    viewModel.exportChat(
-                        onSuccess = { formattedText ->
-                            // For now, just show a toast with the formatted text
-                            // In a full implementation, this would save to a file or share
-                            Toast.makeText(context, "Chat exported (${formattedText.length} chars)", Toast.LENGTH_SHORT).show()
-                        },
-                        onError = { error ->
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                },
-                onAddShortcut = {
-                    val chatName = participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName ?: "Chat"
-                    viewModel.createChatShortcut(
-                        chatName = chatName,
-                        avatarUrl = participantProfile?.avatar,
-                        onSuccess = {
-                            Toast.makeText(context, "Shortcut created", Toast.LENGTH_SHORT).show()
-                        },
-                        onError = { error ->
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                },
-                onAddToFolder = {
-                    showFolderDialog = true
-                }
-            )
+            if (isSearchActive) {
+                ChatSearchTopAppBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    onCloseSearch = closeMessageSearch
+                )
+            } else {
+                val disappearingMode by viewModel.disappearingMode.collectAsState()
+                val isMuted by viewModel.isMuted.collectAsState()
+                val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
+                ChatTopAppBar(
+                    selectedMessageIds = selectedMessageIds,
+                    messages = messages,
+                    participantId = participantId,
+                    participantProfile = participantProfile,
+                    initialParticipantName = initialParticipantName,
+                    initialParticipantAvatar = initialParticipantAvatar,
+                    typingStatus = typingStatus,
+                    isParticipantActive = isParticipantActive,
+                    chatId = chatId,
+                    disappearingMode = disappearingMode,
+                    isGroupChat = isGroupChat,
+                    groupTitle = groupTitle,
+                    groupAvatarUrl = groupAvatarUrl,
+                    groupMemberCount = groupMemberNames.size,
+                    isMuted = isMuted,
+                    isMuteUpdating = isMuteUpdating,
+                    onClearSelection = viewModel::clearSelection,
+                    onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
+                    onNavigateBack = onNavigateBack,
+                    onSummarizeChat = viewModel::summarizeChat,
+                    onNavigateToGroupInfo = onNavigateToGroupInfo,
+                    onNavigateToChatInfo = onNavigateToChatInfo,
+                    onOpenDisappearingMessages = { showDisappearingModeDialog = true },
+                    onStartVoiceCall = { launchCall(false) },
+                    onStartVideoCall = { launchCall(true) },
+                    showCallActions = participantId != null && !isGroupChat,
+                    onSearchInChat = {
+                        searchJumpMessageId = null
+                        isSearchActive = true
+                    },
+                    onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
+                    onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
+                    onOpenChatTheme = { onNavigateToChatSettings(chatId) },
+                    onReportChat = { showReportDialog = true },
+                    onBlockChat = {
+                        if (participantId != null) showBlockDialog = true
+                    },
+                    onClearChat = { showClearChatDialog = true },
+                    onExportChat = {
+                        viewModel.exportChat(
+                            onSuccess = { formattedText ->
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, formattedText)
+                                    putExtra(Intent.EXTRA_SUBJECT, chatDisplayName.orEmpty())
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        shareIntent,
+                                        context.getString(R.string.chat_menu_export_chat)
+                                    )
+                                )
+                            },
+                            onError = {
+                                Toast.makeText(
+                                    context,
+                                    R.string.chat_info_error_export_chat,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -476,9 +520,9 @@ val currentUserId = currentUserIdState ?: ""
                 .background(MaterialTheme.colorScheme.background)
                 .padding(top = paddingValues.calculateTopPadding())
                 .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
-                .pointerInput(Unit) {
+                .pointerInput(isSearchActive) {
                     detectTapGestures(onTap = {
-                        focusManager.clearFocus()
+                        if (!isSearchActive) focusManager.clearFocus()
                     })
                 }
         ) {
@@ -533,7 +577,7 @@ val currentUserId = currentUserIdState ?: ""
                         isGroupChat = isGroupChat,
                         groupMemberNames = groupMemberNames,
                         listState = listState,
-                        initialMessageId = initialMessageId,
+                        initialMessageId = searchJumpMessageId ?: initialMessageId,
                         isListVisible = initialScrollCompleted || messages.isEmpty(),
                         isScreenVisible = isScreenVisible,
                         isLoadingMore = isLoadingMore,
@@ -621,75 +665,98 @@ typingStatus = typingStatus,
                 )
             }
 
-            if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {
-                VoiceRecordingAmbientGlow(
-                    voiceState = voiceState,
-                    reducedMotionOverride = reducedMotion,
+            if (!isSearchActive) {
+                if (voiceState is VoiceState.Recording || voiceState is VoiceState.Locked) {
+                    VoiceRecordingAmbientGlow(
+                        voiceState = voiceState,
+                        reducedMotionOverride = reducedMotion,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            // Project design decision (not an M3 token): keep spill local to the composer and nearby bubbles.
+                            .height(184.dp)
+                    )
+                }
+
+                // Redesigned Voice Input Bar & Host
+                Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        // Project design decision (not an M3 token): keep spill local to the composer and nearby bubbles.
-                        .height(184.dp)
-                )
-            }
-
-            // Redesigned Voice Input Bar & Host
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .onSizeChanged { composerHeightPx = it.height }
-            ) {
-                ChatInputBar(
-                    replyingToMessage = replyingToMessage,
-                    editingMessage = editingMessage,
-                    smartReplies = smartReplies,
-                    reducedMotion = reducedMotion,
-                    inputText = inputText,
-                    canSendMessage = canSendMessage,
-                    currentUserId = currentUserId,
-                    participantDisplayName = participantProfile?.displayName
-                        ?: participantProfile?.name
-                        ?: participantProfile?.username
-                        ?: initialParticipantName?.takeUnless { isGroupChat },
-                    replyingToSenderName = quotedSenderDisplayName(
-                        message = replyingToMessage,
+                        .onSizeChanged { composerHeightPx = it.height }
+                ) {
+                    ChatInputBar(
+                        replyingToMessage = replyingToMessage,
+                        editingMessage = editingMessage,
+                        smartReplies = smartReplies,
+                        reducedMotion = reducedMotion,
+                        inputText = inputText,
+                        canSendMessage = canSendMessage,
                         currentUserId = currentUserId,
-                        isGroupChat = isGroupChat,
-                        groupMemberNames = groupMemberNames,
                         participantDisplayName = participantProfile?.displayName
                             ?: participantProfile?.name
-                            ?: participantProfile?.username,
-                        initialParticipantName = initialParticipantName
-                    ),
-                    fontScale = chatFontScale,
-                    getLinkMetadataUseCase = linkPreviewViewModel.getLinkMetadataUseCase,
-                    context = context,
-                    voiceState = voiceState,
-                    onVoiceAction = { action ->
-                        val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                        if (action is VoiceAction.StartRecording && !hasPermission) {
-                            voiceController.requestPermissionAndRecord()
-                            recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        } else {
-                            voiceController.handleAction(action)
+                            ?: participantProfile?.username
+                            ?: initialParticipantName?.takeUnless { isGroupChat },
+                        replyingToSenderName = quotedSenderDisplayName(
+                            message = replyingToMessage,
+                            currentUserId = currentUserId,
+                            isGroupChat = isGroupChat,
+                            groupMemberNames = groupMemberNames,
+                            participantDisplayName = participantProfile?.displayName
+                                ?: participantProfile?.name
+                                ?: participantProfile?.username,
+                            initialParticipantName = initialParticipantName
+                        ),
+                        fontScale = chatFontScale,
+                        getLinkMetadataUseCase = linkPreviewViewModel.getLinkMetadataUseCase,
+                        context = context,
+                        voiceState = voiceState,
+                        onVoiceAction = { action ->
+                            val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                            if (action is VoiceAction.StartRecording && !hasPermission) {
+                                voiceController.requestPermissionAndRecord()
+                                recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            } else {
+                                voiceController.handleAction(action)
+                            }
+                        },
+                        onInputTextChange = viewModel::onInputTextChange,
+                        onSendMessage = viewModel::sendMessage,
+                        onCancelReply = viewModel::cancelReply,
+                        onCancelEditing = viewModel::cancelEditing,
+                        onAttachmentSelected = { category ->
+                            focusManager.clearFocus()
+                            when (category) {
+                                ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                                )
+                                ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
+                                ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
+                                ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
+                                ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                            }
                         }
+                    )
+                }
+            }
+
+            if (isSearchActive) {
+                ChatSearchResults(
+                    query = searchQuery,
+                    isSearching = isSearching,
+                    results = searchResults,
+                    currentUserId = currentUserId,
+                    onResultClick = { message ->
+                        closeMessageSearch()
+                        searchJumpMessageId = message.id
                     },
-                    onInputTextChange = viewModel::onInputTextChange,
-                    onSendMessage = viewModel::sendMessage,
-                    onCancelReply = viewModel::cancelReply,
-                    onCancelEditing = viewModel::cancelEditing,
-                    onAttachmentSelected = { category ->
-                        focusManager.clearFocus()
-                        when (category) {
-                            ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                            )
-                            ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
-                            ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
-                            ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
-                            ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
-                        }
-                    }
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    senderName = participantProfile?.displayName
+                        ?: participantProfile?.name
+                        ?: participantProfile?.username
+                        ?: initialParticipantName,
+                    senderAvatarUrl = participantAvatarUrl
                 )
             }
 
@@ -731,36 +798,22 @@ typingStatus = typingStatus,
         }
 
         if (showReportDialog) {
-            AlertDialog(
-                onDismissRequest = { showReportDialog = false },
-                title = { Text(stringResource(R.string.chat_menu_report)) },
-                text = {
-                    Column {
-                        Text("Are you sure you want to report this user?")
-                        Spacer(modifier = Modifier.height(Spacing.space8))
-                        OutlinedTextField(
-                            value = "",
-                            onValueChange = { },
-                            label = { Text("Reason") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showReportDialog = false
-                            Toast.makeText(context, "Report submitted", Toast.LENGTH_SHORT).show()
+            ChatReportDialog(
+                isGroupChat = isGroupChat,
+                targetName = chatDisplayName,
+                onDismiss = { showReportDialog = false },
+                onReport = { reason ->
+                    viewModel.reportCurrentChat(
+                        participantUserId = participantId,
+                        reason = reason,
+                        onResult = { result ->
+                            Toast.makeText(
+                                context,
+                                if (result.isSuccess) R.string.chat_info_msg_reported else R.string.chat_report_error,
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                    ) {
-                        Text(stringResource(R.string.action_ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showReportDialog = false }) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
+                    )
                 }
             )
         }
@@ -769,12 +822,25 @@ typingStatus = typingStatus,
             AlertDialog(
                 onDismissRequest = { showBlockDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_block)) },
-                text = { Text("Are you sure you want to block this user? You won't receive messages from them.") },
+                text = {
+                    Text(
+                        stringResource(
+                            R.string.chat_info_block_user_confirm,
+                            chatDisplayName ?: stringResource(R.string.user)
+                        )
+                    )
+                },
                 confirmButton = {
                     TextButton(
                         onClick = {
                             showBlockDialog = false
-                            Toast.makeText(context, "User blocked", Toast.LENGTH_SHORT).show()
+                            viewModel.blockCurrentChatParticipant(participantId.orEmpty()) { result ->
+                                Toast.makeText(
+                                    context,
+                                    if (result.isSuccess) R.string.chat_info_msg_blocked else R.string.chat_info_error_block,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     ) {
                         Text(stringResource(R.string.action_ok))
@@ -792,12 +858,18 @@ typingStatus = typingStatus,
             AlertDialog(
                 onDismissRequest = { showClearChatDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_clear_chat)) },
-                text = { Text("Are you sure you want to clear this chat? This action cannot be undone.") },
+                text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
                             showClearChatDialog = false
-                            Toast.makeText(context, "Chat cleared", Toast.LENGTH_SHORT).show()
+                            viewModel.clearCurrentChat { result ->
+                                Toast.makeText(
+                                    context,
+                                    if (result.isSuccess) R.string.chat_info_msg_cleared else R.string.chat_info_error_clear_chat,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     ) {
                         Text(stringResource(R.string.action_ok))
@@ -808,31 +880,6 @@ typingStatus = typingStatus,
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
-            )
-        }
-
-        if (showFolderDialog) {
-            ChatFolderSelectionBottomSheet(
-                folders = emptyList(), // TODO: Load from SettingsRepository
-                currentFolderId = null,
-                onFolderSelected = { folder ->
-                    viewModel.addToFolder(
-                        chatId = chatId,
-                        folderId = folder.id,
-                        onSuccess = {
-                            Toast.makeText(context, "Added to ${folder.name}", Toast.LENGTH_SHORT).show()
-                            showFolderDialog = false
-                        },
-                        onError = { error ->
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                },
-                onCreateNewFolder = {
-                    showFolderDialog = false
-                    Toast.makeText(context, "Create folder - Coming soon", Toast.LENGTH_SHORT).show()
-                },
-                onDismiss = { showFolderDialog = false }
             )
         }
     }
@@ -888,6 +935,8 @@ typingStatus = typingStatus,
         )
     }
 }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 300L
 
 private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(
     "application/pdf",

@@ -87,6 +87,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getParticipantIds(chatId: String): List<String> =
         conversations.getParticipantIds(chatId)
 
+    suspend fun reportChat(chatId: String, reason: String) =
+        groups.reportChat(chatId, reason)
+
     suspend fun getGroupMembers(chatId: String): List<Pair<User, Boolean>> =
         groups.getGroupMembers(chatId)
 

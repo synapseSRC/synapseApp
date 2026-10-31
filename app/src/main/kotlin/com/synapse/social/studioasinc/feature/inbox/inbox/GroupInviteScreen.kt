@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -85,7 +86,7 @@ fun GroupInviteScreen(
                                 preview.description?.takeIf { it.isNotBlank() }?.let {
                                     Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                                 }
-                                Text(stringResource(R.string.group_invite_member_count, preview.memberCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(pluralStringResource(R.plurals.group_invite_member_count, preview.memberCount, preview.memberCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 if (state.outcome == GroupJoinOutcome.REQUESTED) {
                                     Icon(Icons.Filled.GroupAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Text(stringResource(R.string.group_join_request_sent), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)

@@ -38,6 +38,8 @@ class ChatInitializationDelegate(
     private val _participantProfile: MutableStateFlow<User?>,
     private val _isE2EEReady: MutableStateFlow<Boolean>,
     private val _isGroupChat: MutableStateFlow<Boolean>,
+    private val _groupTitle: MutableStateFlow<String?>,
+    private val _groupAvatarUrl: MutableStateFlow<String?>,
     private val _onlyAdminsCanMessage: MutableStateFlow<Boolean>,
     private val _isCurrentUserAdmin: MutableStateFlow<Boolean>,
     private val _isParticipantActive: MutableStateFlow<Boolean>,
@@ -66,6 +68,8 @@ class ChatInitializationDelegate(
         _participantProfile.value = null
         _isParticipantActive.value = false
         _isGroupChat.value = false
+        _groupTitle.value = null
+        _groupAvatarUrl.value = null
         _onlyAdminsCanMessage.value = false
         _isCurrentUserAdmin.value = false
         _disappearingMode.value = com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
@@ -88,6 +92,8 @@ class ChatInitializationDelegate(
         _participantProfile.value = null
         _isParticipantActive.value = false
         _isGroupChat.value = false
+        _groupTitle.value = null
+        _groupAvatarUrl.value = null
         _onlyAdminsCanMessage.value = false
         _isCurrentUserAdmin.value = false
         _disappearingMode.value = com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
@@ -96,7 +102,7 @@ class ChatInitializationDelegate(
         _error.value = null
 
         activeJob = viewModelScope.launch {
-            val actualChatId = if ((chatId == "new" || chatId == participantId) && participantId != null) {
+            val actualChatId = if (chatId == "new" && participantId != null) {
                 getOrCreateChatUseCase(participantId).getOrElse { error ->
                     if (token == initializationToken) {
                         val detail = error.message?.takeIf { it.isNotBlank() }
@@ -183,6 +189,8 @@ class ChatInitializationDelegate(
                     if (!isCurrent(token, actualChatId)) return@onSuccess
                     _isGroupChat.value = chatDto?.isGroup == true
                     if (chatDto?.isGroup == true) {
+                        _groupTitle.value = chatDto.name
+                        _groupAvatarUrl.value = chatDto.avatarUrl
                         _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
                         getGroupMembersUseCase(actualChatId).onSuccess { members ->
                             if (!isCurrent(token, actualChatId)) return@onSuccess
