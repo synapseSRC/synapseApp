@@ -22,6 +22,10 @@ const AuthLayout = ({ children }: { children: ReactNode }) => (
             and{" "}
             <Link href="/privacy" className="underline underline-offset-2 hover:text-neutral-300">
                 Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link href="/cookies" className="underline underline-offset-2 hover:text-neutral-300">
+                Cookie Policy
             </Link>
             .
         </p>
