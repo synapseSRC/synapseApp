@@ -233,7 +233,10 @@ class FeedViewModel @Inject constructor(
                 repostPostUseCase(post.id)
             }
 
-            result.onFailure {
+            result.onSuccess {
+                // The own-repost row is a new feed item; pull a fresh page to surface it.
+                refresh()
+            }.onFailure {
                 // Revert on failure
                 cacheModifiedPost(post)
                 PostEventBus.emit(PostEvent.Updated(post))
@@ -270,10 +273,6 @@ class FeedViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun sharePost(post: Post) {
-        // UI action
     }
 
     fun copyPostLink(post: Post) {

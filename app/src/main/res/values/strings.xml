@@ -2528,4 +2528,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_permissions_title">Permissions</string>
     <string name="settings_permissions_subtitle">Camera, microphone and notifications</string>
 
+    <!-- Share Post to Chat Strings -->
+    <string name="share_post_chat_preview">%1$s shared a post</string>
+    <string name="shared_to_chat">Shared to %1$s</string>
+    <string name="share_to_chat_failed">Failed to share post</string>
+    <string name="failed_to_load_conversations">Failed to load conversations</string>
+
 </resources>

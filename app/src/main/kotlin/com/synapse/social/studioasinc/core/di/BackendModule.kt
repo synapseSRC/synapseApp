@@ -198,10 +198,6 @@ object BackendModule {
 
     @Provides
     @Singleton
-    fun provideReshareRepository(client: SupabaseClientType): ReshareRepositoryImpl = ReshareRepositoryImpl(client)
-
-    @Provides
-    @Singleton
     fun provideReportRepository(client: SupabaseClientType): com.synapse.social.studioasinc.domain.repository.ReportRepository = ReportRepositoryImpl(client)
 
     @Provides
