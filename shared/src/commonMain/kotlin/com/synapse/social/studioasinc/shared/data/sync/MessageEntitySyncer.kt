@@ -137,8 +137,12 @@ internal class MessageEntitySyncer(
             metadata = payload["metadata"]?.jsonPrimitive?.contentOrNull
         )
 
-        cachedMessageDao.delete(action.id)
-        cachedMessageDao.upsert(sent.toDomain())
+        // The message is already on the server: a cache failure must not fail the push, or the
+        // retry would send it a second time.
+        runCatching {
+            cachedMessageDao.delete(action.id)
+            cachedMessageDao.upsert(sent.toDomain())
+        }.onFailure { Napier.w("Sent message ${action.id} but could not update the cache", it, TAG) }
     }
 
     override suspend fun clearLocal() {

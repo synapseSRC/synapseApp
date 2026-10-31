@@ -259,7 +259,7 @@ class GetSharedContentUseCase(
 
     private fun extractFileName(url: String): String {
         return try {
-            Url(url).rawSegments.lastOrNull().orEmpty()
+            Url(url).segments.lastOrNull().orEmpty()
         } catch (e: Exception) {
             url.substringAfterLast('/')
         }

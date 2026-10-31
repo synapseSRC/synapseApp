@@ -60,24 +60,25 @@ class EchoRoomForegroundService : Service() {
     }
 
     private fun promote(content: EchoNotificationContent): Boolean {
-        val type = if (content.isPublishing) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+        val playback = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+        // Android 14 refuses the microphone type while the app is in the background (e.g. a
+        // promotion arriving with the screen off). Falling back to playback keeps the room audible
+        // instead of dropping the whole hold.
+        val types = if (content.isPublishing) {
+            listOf(playback or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE, playback)
         } else {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            listOf(playback)
         }
-        return try {
-            ServiceCompat.startForeground(
-                this,
-                notifications.activeNotificationId(),
-                notifications.buildActiveRoomNotification(content),
-                type
-            )
-            true
-        } catch (e: Exception) {
-            Napier.w("Echo startForeground refused: ${e.message}")
-            false
+        val notification = notifications.buildActiveRoomNotification(content)
+        for (type in types) {
+            try {
+                ServiceCompat.startForeground(this, notifications.activeNotificationId(), notification, type)
+                return true
+            } catch (e: Exception) {
+                Napier.w("Echo startForeground($type) refused: ${e.message}")
+            }
         }
+        return false
     }
 
     companion object {

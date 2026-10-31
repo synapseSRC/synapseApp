@@ -40,8 +40,8 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters):
                 when (action.actionType) {
                     PendingAction.ActionType.LIKE -> {
                         val payload = Json.parseToJsonElement(action.payload ?: "{}").jsonObject
-                        val reactionType = ReactionType.valueOf(payload["reactionType"]?.jsonPrimitive?.content ?: "LIKE")
-                        val oldReaction = payload["oldReaction"]?.jsonPrimitive?.content?.let { ReactionType.valueOf(it) }
+                        val reactionType = ReactionType.valueOf(payload["reactionType"]?.jsonPrimitive?.contentOrNull ?: "LIKE")
+                        val oldReaction = payload["oldReaction"]?.jsonPrimitive?.contentOrNull?.let { ReactionType.valueOf(it) }
 
                         postRepository.toggleReaction(
                             postId = action.targetId,
