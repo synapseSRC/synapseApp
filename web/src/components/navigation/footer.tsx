@@ -2,6 +2,7 @@ import AnimationContainer from "@/components/global/animation-container";
 import { Icons } from "@/components/global/icons";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect"
 import { APP_NAME, PLATFORMS } from "@/utils";
+import { LEGAL_DOCS } from "@/utils/constants/legal";
 import { PROJECT_LINKS } from "@/utils/constants/site";
 import Link from 'next/link';
 
@@ -21,12 +22,6 @@ const RESOURCE_LINKS = [
 const PROJECT_LINKS_LIST = [
     { label: "GitHub", href: PROJECT_LINKS.github },
     { label: "Open Source", href: "/open-source" },
-];
-
-const LEGAL_LINKS = [
-    { label: "Terms", href: "/terms" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Cookie Policy", href: "/cookies" },
 ];
 
 const Column = ({
@@ -107,9 +102,9 @@ const Footer = () => {
                     </p>
                 </AnimationContainer>
                 <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                    {LEGAL_LINKS.map((link) => (
+                    {LEGAL_DOCS.map((link) => (
                         <Link
-                            key={link.label}
+                            key={link.id}
                             href={link.href}
                             className="hover:text-foreground transition-colors duration-300"
                         >

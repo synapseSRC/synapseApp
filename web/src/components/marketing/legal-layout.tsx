@@ -73,11 +73,19 @@ const LegalLayout = ({ title, updated, intro, sections, closing }: LegalLayoutPr
 
 export default LegalLayout;
 
-export const LegalLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <Link href={href} className="text-foreground underline underline-offset-4 transition-colors hover:text-cyan-300">
-        {children}
-    </Link>
-);
+export const LegalLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+    const external = /^https?:/.test(href);
+    return (
+        <Link
+            href={href}
+            target={external ? "_blank" : undefined}
+            rel={external ? "noreferrer noopener" : undefined}
+            className="text-foreground underline underline-offset-4 transition-colors hover:text-cyan-300"
+        >
+            {children}
+        </Link>
+    );
+};
 
 export const LegalList = ({ items }: { items: React.ReactNode[] }) => (
     <ul className="my-4 list-disc space-y-2 pl-8 marker:text-neutral-700">
