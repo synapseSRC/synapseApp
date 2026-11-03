@@ -37,8 +37,7 @@ class PostDetailRepositoryImpl @Inject constructor(
                 .select(
                     columns = Columns.raw("""
                         *,
-                        users!author_uid(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned),
-                        quoted_post:posts!quoted_post_id(*, users!author_uid(uid, username, display_name, avatar, verify))
+                        users!author_uid(uid, username, display_name, email, bio, avatar, followers_count, following_count, posts_count, status, account_type, verify, banned)
                     """.trimIndent())
                 ) {
                     filter {
@@ -54,6 +53,16 @@ class PostDetailRepositoryImpl @Inject constructor(
             }
 
             val post = parsePostFromJson(response).withSignedStorageMediaUrls()
+
+            // Resolve the quoted post by its stored quoted_post_id. The `quoted_post:posts!quoted_post_id`
+            // embed is unreliable: `posts` has several self-referencing FKs (quoted_post_id,
+            // in_reply_to_post_id, root_post_id), so PostgREST returns the reverse (children) direction
+            // as an array — the post that quotes this one — instead of the parent post we actually quote.
+            val resolvedPost = if (post.quotedPost == null && !post.quotedPostId.isNullOrBlank()) {
+                fetchPostById(post.quotedPostId)?.let { post.copy(quotedPost = it) } ?: post
+            } else {
+                post
+            }
             val usersNode = response["users"]
             val usersObject = when {
                 usersNode is JsonObject -> usersNode
@@ -85,7 +94,7 @@ class PostDetailRepositoryImpl @Inject constructor(
             }
 
             val postDetail = PostDetail(
-                post = post,
+                post = resolvedPost,
                 author = author,
                 reactionSummary = reactionSummary,
                 userReaction = userReaction,
@@ -103,6 +112,30 @@ class PostDetailRepositoryImpl @Inject constructor(
             Log.e(TAG, "Failed to fetch post details: ${e.message}", e)
             Result.failure(Exception(mapSupabaseError(e)))
         }
+    }
+
+    /**
+     * Fetches a single post by id with its author, used to forward-resolve a quoted post.
+     * Deliberately does not embed `quoted_post`, so it never recurses into the reverse relationship.
+     */
+    private suspend fun fetchPostById(postId: String): Post? = try {
+        val data = client.from("posts")
+            .select(
+                columns = Columns.raw("""
+                    *,
+                    users!author_uid(uid, username, display_name, avatar, verify)
+                """.trimIndent())
+            ) {
+                filter {
+                    eq("id", postId)
+                    eq("is_deleted", false)
+                }
+            }
+            .decodeSingleOrNull<JsonObject>()
+        data?.let { parsePostFromJson(it).withSignedStorageMediaUrls() }
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to fetch quoted post: $postId", e)
+        null
     }
 
     suspend fun incrementViewCount(postId: String): Result<Unit> = withContext(Dispatchers.IO) {

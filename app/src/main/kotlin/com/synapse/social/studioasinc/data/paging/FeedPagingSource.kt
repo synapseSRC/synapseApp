@@ -54,6 +54,14 @@ class FeedPagingSource(
                 if (localPostsEntity.size == pageSize || (localPostsEntity.isNotEmpty() && position + localPostsEntity.size >= totalCached.toInt() && totalCached.toInt() > 0)) {
                 Log.d("FeedPagingSource", "Cache hit: Loaded ${localPostsEntity.size} feed items from local DB (offset: $position)")
                 val localPosts = localPostsEntity.map { PostMapper.toModel(it) }
+                    .map { post ->
+                        // quotedPost is @Transient and never stored on the row; resolve it from cache.
+                        if (post.quotedPost == null && !post.quotedPostId.isNullOrBlank()) {
+                            postDao.getPostById(post.quotedPostId)
+                                ?.let { post.copy(quotedPost = PostMapper.toModel(it)) }
+                                ?: post
+                        } else post
+                    }
                 val feedItems = localPosts.map { FeedItem.PostItem(it) }
 
                 return LoadResult.Page(
@@ -116,8 +124,7 @@ class FeedPagingSource(
                             columns = Columns.raw("""
                                 *,
                                 users!author_uid(username, display_name, avatar, verify),
-                                latest_comments:posts!in_reply_to_post_id(id, post_text, author_uid, created_at, users!author_uid(username)),
-                                quoted_post:posts!quoted_post_id(*, users!author_uid(username, display_name, avatar, verify))
+                                latest_comments:posts!in_reply_to_post_id(id, post_text, author_uid, created_at, users!author_uid(username))
                             """.trimIndent())
                         ) {
                             filter { isIn("id", postIds) }
@@ -202,6 +209,17 @@ class FeedPagingSource(
             val postsWithInteractions = populateUserInteractions(postsWithPolls)
             val enrichedPostsMap = postsWithInteractions.associateBy { it.id }
 
+            // Resolve quoted posts by their stored quoted_post_id. The `quoted_post` embed is
+            // unreliable here: `posts` has several self-referencing FKs, so PostgREST returns the
+            // reverse (children) direction as an array instead of the parent post we actually quote.
+            val hydratedPostsMap = enrichedPostsMap.mapValues { (_, post) ->
+                if (post.quotedPost == null && !post.quotedPostId.isNullOrBlank()) {
+                    val quoted = enrichedPostsMap[post.quotedPostId]
+                        ?: postDao.getPostById(post.quotedPostId)?.let { PostMapper.toModel(it) }
+                    if (quoted != null) post.copy(quotedPost = quoted) else post
+                } else post
+            }
+
             // 2. Map Comments from timeline response
             val commentsMap = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
                 val id = timelineItem["id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
@@ -267,11 +285,11 @@ class FeedPagingSource(
                 val type = item["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
                 if (type == "post") {
                     val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: id
-                    enrichedPostsMap[postId]?.let { FeedItem.PostItem(it) }
+                    hydratedPostsMap[postId]?.let { FeedItem.PostItem(it) }
                 } else if (type == "reshare") {
                     val postId = item["post_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
                     val resharerId = item["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: return@mapNotNull null
-                    val post = enrichedPostsMap[postId] ?: return@mapNotNull null
+                    val post = hydratedPostsMap[postId] ?: return@mapNotNull null
                     val resharerUsername = userMap[resharerId]?.get("username")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
 
                     val resharedPost = post.copy(resharedByUsername = resharerUsername)

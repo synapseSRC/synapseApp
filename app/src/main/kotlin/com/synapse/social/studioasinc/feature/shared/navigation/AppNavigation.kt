@@ -263,7 +263,9 @@ fun NavGraphBuilder.homeGraph(
     reelUploadManager: ReelUploadManager,
     sharedTransitionScope: SharedTransitionScope
 ) {
-    composable<AppDestination.Home> {
+    composable<AppDestination.Home>(
+        deepLinks = listOf(navDeepLink<AppDestination.Home>(basePath = "synapse://home"))
+    ) {
         HomeScreen(
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = this@composable,
@@ -347,7 +349,9 @@ fun NavGraphBuilder.inboxGraph(
             }
         )
     }
-    composable<AppDestination.Chat> { backStackEntry ->
+    composable<AppDestination.Chat>(
+        deepLinks = listOf(navDeepLink<AppDestination.Chat>(basePath = "synapse://chat"))
+    ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.Chat>()
                 ChatScreen(
                     chatId = args.chatId,
@@ -737,7 +741,9 @@ fun NavGraphBuilder.postGraph(
             onNavigateUp = { navController.popBackStack() }
         )
     }
-    composable<AppDestination.PostDetail> { backStackEntry ->
+    composable<AppDestination.PostDetail>(
+        deepLinks = listOf(navDeepLink<AppDestination.PostDetail>(basePath = "synapse://post"))
+    ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.PostDetail>()
                 PostDetailScreen(
                     postId = args.postId,

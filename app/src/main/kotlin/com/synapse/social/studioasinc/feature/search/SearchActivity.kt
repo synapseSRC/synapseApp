@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Intent
 import android.os.Bundle
@@ -34,7 +35,7 @@ class SearchActivity : BaseComposeActivity() {
                         if (chatMode) {
                             Toast.makeText(this@SearchActivity, "Chat feature not implemented", Toast.LENGTH_SHORT).show()
                         } else {
-                            IntentUtils.openUrl(this@SearchActivity, "synapse://profile/$uid")
+                            IntentUtils.openUrl(this@SearchActivity, DeepLink.profile(uid))
                         }
                     },
                     onNavigateToPost = { postId ->

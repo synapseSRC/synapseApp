@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import androidx.compose.ui.platform.LocalUriHandler
 import android.widget.Toast
@@ -551,7 +552,7 @@ typingStatus = typingStatus,
                         onLocateMessage = viewModel::loadQuotedMessage,
                         onOpenBatchGallery = { batchGalleryMessage = it },
                         onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
-                        onOpenPost = { postId -> try { uriHandler.openUri("synapse://post/$postId") } catch (_: Exception) {} },
+                        onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
                         onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
                         onOpenEphemeralMedia = { mediaUrl -> 
                         try { 

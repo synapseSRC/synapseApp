@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.styling
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Context
 import com.synapse.social.studioasinc.core.di.DatabaseEntryPoint
@@ -115,7 +116,7 @@ class MarkdownRenderer private constructor(private val markwon: Markwon) {
                                     onSuccess = { user ->
                                         if (user != null) {
                                             CoroutineScope(Dispatchers.Main).launch {
-                                                IntentUtils.openUrl(ctx, "synapse://profile/${user.uid}")
+                                                IntentUtils.openUrl(ctx, DeepLink.profile(user.uid))
                                             }
                                         }
                                     },
@@ -137,7 +138,7 @@ class MarkdownRenderer private constructor(private val markwon: Markwon) {
                     override fun onClick(widget: View) {
                         val ctx = widget.context
                         val tag = full.substring(1)
-                        IntentUtils.openUrl(ctx, "synapse://hashtag/$tag")
+                        IntentUtils.openUrl(ctx, DeepLink.hashtag(tag))
                     }
                     override fun updateDrawState(ds: TextPaint) {
                         ds.color = ContextCompat.getColor(textView.context, R.color.primary)

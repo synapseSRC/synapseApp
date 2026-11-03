@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.post.postdetail
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.app.Application
 import android.content.ClipData
@@ -454,7 +455,7 @@ class PostDetailViewModel @Inject constructor(
 
     fun copyLink(postId: String, context: Context) {
         val clipboard = context.getSystemService(ClipboardManager::class.java)
-        val clip = ClipData.newPlainText(application.getString(R.string.clip_label_post_link), "synapse://post/$postId")
+        val clip = ClipData.newPlainText(application.getString(R.string.clip_label_post_link), DeepLink.post(postId))
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
     }

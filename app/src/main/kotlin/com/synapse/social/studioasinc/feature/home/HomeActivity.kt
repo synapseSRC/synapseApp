@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Intent
 import android.os.Build
@@ -82,7 +83,7 @@ class HomeActivity : AppCompatActivity() {
                             onNavigateToProfile = { userId ->
                                 val targetUid = if (userId == "me") getCurrentUserIdUseCase() else userId
                                 if (targetUid != null) {
-                                    IntentUtils.openUrl(this@HomeActivity, "synapse://profile/$targetUid")
+                                    IntentUtils.openUrl(this@HomeActivity, DeepLink.profile(targetUid))
                                 }
                             },
                             onNavigateToInbox = {

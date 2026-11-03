@@ -28,7 +28,10 @@ class PostDetailActivity : BaseComposeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val postId = intent.getStringExtra(EXTRA_POST_ID)
+        // Direct launches (e.g. profile comments) pass an extra; deep links such as
+        // `synapse://post/{id}` (chat shared posts, quoted-post embeds) carry the id in the URI
+        // path instead, so fall back to it before bailing out.
+        val postId = intent.getStringExtra(EXTRA_POST_ID) ?: intent.data?.lastPathSegment
         val commentId = intent.getStringExtra(EXTRA_COMMENT_ID)
 
         if (postId == null) {
