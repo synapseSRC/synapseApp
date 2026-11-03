@@ -52,7 +52,6 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -64,12 +63,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -87,6 +84,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -108,6 +106,8 @@ import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
+import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
+import com.synapse.social.studioasinc.ui.settings.SettingsToggleItem
 import kotlinx.coroutines.launch
 
 @Composable
@@ -161,25 +161,20 @@ internal fun IdentityStage(
                 )
             }
             item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.group_permissions_title)) },
-                    supportingContent = {
-                        Text(
-                            stringResource(
-                                R.string.group_permission_summary,
-                                when (preset) {
-                                    "announcement" -> stringResource(R.string.group_preset_announcement)
-                                    "private" -> stringResource(R.string.group_preset_private)
-                                    else -> stringResource(R.string.group_preset_collaborative)
-                                },
-                                disappearingLabel(permissions.disappearingMode)
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    leadingContent = { Icon(Icons.Filled.Tune, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                    trailingContent = { Icon(Icons.Filled.ArrowForward, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth().clickable(enabled = !hasCreatedGroup, onClick = onOpenPermissions)
+                SettingsNavigationItem(
+                    title = stringResource(R.string.group_permissions_title),
+                    subtitle = stringResource(
+                        R.string.group_permission_summary,
+                        when (preset) {
+                            "announcement" -> stringResource(R.string.group_preset_announcement)
+                            "private" -> stringResource(R.string.group_preset_private)
+                            else -> stringResource(R.string.group_preset_collaborative)
+                        },
+                        disappearingLabel(permissions.disappearingMode)
+                    ),
+                    imageVector = Icons.Filled.Tune,
+                    onClick = onOpenPermissions,
+                    enabled = !hasCreatedGroup
                 )
             }
             if (error != null) item { GroupErrorMessage(error, onClearError) }
@@ -294,47 +289,17 @@ internal fun PermissionsStage(
 
 @Composable
 private fun PermissionRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    val rowColor = MaterialTheme.colorScheme.surfaceContainer
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = rowColor)
-    ) {
-        ListItem(
-            headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall) },
-            supportingContent = {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            leadingContent = {
-                androidx.compose.material3.Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape = androidx.compose.foundation.shape.CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-                    }
-                }
-            },
-            trailingContent = {
-                Switch(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange,
-                    colors = androidx.compose.material3.SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primary
-                    )
-                )
-            },
-            modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) },
-            colors = androidx.compose.material3.ListItemDefaults.colors(containerColor = rowColor)
-        )
-    }
+    SettingsToggleItem(
+        title = title,
+        subtitle = subtitle,
+        imageVector = icon,
+        checked = checked,
+        onCheckedChange = onCheckedChange
+    )
 }
