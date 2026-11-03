@@ -51,7 +51,7 @@
     <string name="group_pending_requests">Pending Join Requests (%1$d)</string>
     <string name="group_pending_requests_support">Review and approve new member applications</string>
     <string name="group_participants_count">Participants (%1$d)</string>
-    <string name="group_participants_support">Long press to change role, promote, or remove</string>
+    <string name="group_participants_support">Tap the menu to change role, promote, or remove</string>
     <string name="group_members_unavailable">Participant information could not be loaded.</string>
     <string name="group_you">You</string>
     <string name="group_creator_admin">Group creator • Primary admin</string>
