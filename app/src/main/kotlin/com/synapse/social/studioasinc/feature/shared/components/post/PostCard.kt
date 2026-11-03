@@ -69,6 +69,7 @@ data class PostCardState(
     val formattedTimestamp: String = "",
     val isExpanded: Boolean = false,
     val repostedBy: String? = null,
+    val isRepostedBySelf: Boolean = false,
     // Comment-specific fields
     val isComment: Boolean = false,
     val parentCommentId: String? = null,
@@ -108,7 +109,7 @@ fun PostCard(
             .clickable(onClick = onPostClick)
             // No horizontal padding offset: avatars align fully to the left in X style
     ) {
-        if (state.repostedBy != null) {
+        if (state.repostedBy != null || state.isRepostedBySelf) {
             Row(
                 modifier = Modifier
                     .padding(start = Sizes.AvatarDefault, top = Spacing.space8, bottom = Spacing.space4),
@@ -122,7 +123,9 @@ fun PostCard(
                 )
                 Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
-                    text = "${state.repostedBy} reposted",
+                    text = state.repostedBy?.let { name ->
+                        stringResource(R.string.post_reposted_by, name)
+                    } ?: stringResource(R.string.post_reposted_you),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold

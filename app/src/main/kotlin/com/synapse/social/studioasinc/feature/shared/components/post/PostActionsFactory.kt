@@ -69,7 +69,7 @@ object PostActionsFactory {
             onLike = { _ -> viewModel.toggleReaction(ReactionType.LIKE) },
             onComment = onComment,
             onShare = onShare,
-            onRepost = { _ -> viewModel.createReshare(null) },
+            onRepost = { _ -> viewModel.toggleReshare() },
             onQuote = onQuote,
             onBookmark = { _ -> viewModel.toggleBookmark() },
             onOptionClick = onOptionClick,

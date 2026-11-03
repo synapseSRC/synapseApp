@@ -49,6 +49,8 @@ import com.synapse.social.studioasinc.styling.MarkdownRenderer
 import android.text.TextUtils
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.core.util.IntentUtils
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 import com.synapse.social.studioasinc.ui.settings.PostViewStyle
@@ -217,10 +219,14 @@ fun PostContent(
         }
  
         if (quotedPost != null) {
+            val context = LocalContext.current
             Spacer(modifier = Modifier.height(Spacing.space8))
             QuotedPostCard(
                 quotedPost = quotedPost,
-                onPostClick = { /* Handled by parent or specific click */ }
+                // Opening the quoted post uses the universal `synapse://post/{id}` deep link, so the
+                // embed is tappable from every screen that renders a PostCard (feed, profile, search,
+                // post detail) and matches the chat shared-post behaviour.
+                onPostClick = { IntentUtils.openUrl(context, DeepLink.post(quotedPost.id)) }
             )
         }
     }

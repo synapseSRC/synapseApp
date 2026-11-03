@@ -18,11 +18,12 @@ fun SharedPostItem(
     postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
     actions: PostActions,
     isExpanded: Boolean = false,
+    isReshareItem: Boolean = false,
     modifier: Modifier = Modifier
 ) {
 
-    val state = remember(post, currentProfile?.id, isExpanded) {
-        PostUiMapper.mapToState(post, currentProfile, isExpanded)
+    val state = remember(post, currentProfile?.id, isExpanded, isReshareItem) {
+        PostUiMapper.mapToState(post, currentProfile, isExpanded, isReshareItem)
     }
 
 

@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.utils
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Context
 import android.content.Intent
@@ -15,7 +16,7 @@ class ShortcutManager(private val context: Context) {
         return try {
             val intent = Intent(context, com.synapse.social.studioasinc.core.ui.base.BaseComposeActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
-                data = android.net.Uri.parse("synapse://chat/$chatId")
+                data = android.net.Uri.parse(DeepLink.chat(chatId))
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
 

@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.post.postdetail
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.app.Application
 import android.content.ClipData
@@ -29,6 +30,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizeThreadUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 
 @HiltViewModel
 class PostDetailViewModel @Inject constructor(
@@ -38,7 +41,8 @@ class PostDetailViewModel @Inject constructor(
     private val reactionRepository: ReactionRepositoryImpl,
     private val pollRepository: PollRepositoryImpl,
     private val bookmarkRepository: BookmarkRepositoryImpl,
-    private val reshareRepository: ReshareRepositoryImpl,
+    private val repostPostUseCase: RepostPostUseCase,
+    private val unrepostPostUseCase: UnrepostPostUseCase,
     private val reportRepository: ReportRepositoryImpl,
     private val userRepository: UserRepositoryImpl,
     private val authRepository: AuthRepository,
@@ -348,11 +352,11 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
-    fun createReshare(commentary: String?) {
+    fun toggleReshare() {
         val postId = currentPostId ?: return
         val currentPostDetail = _uiState.value.post ?: return
         val currentPost = currentPostDetail.post
-        val isCurrentlyReshared = currentPost.isReshared
+        val isCurrentlyReshared = currentPostDetail.hasReshared
 
         viewModelScope.launch {
             // Optimistic update
@@ -361,14 +365,17 @@ class PostDetailViewModel @Inject constructor(
                 isReshared = !isCurrentlyReshared,
                 resharesCount = newResharesCount
             )
-            val optimisticPostDetail = currentPostDetail.copy(post = optimisticPost)
+            val optimisticPostDetail = currentPostDetail.copy(
+                post = optimisticPost,
+                hasReshared = !isCurrentlyReshared
+            )
             _uiState.update { it.copy(post = optimisticPostDetail) }
             com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(optimisticPost))
 
             val result = if (isCurrentlyReshared) {
-                reshareRepository.removeReshare(postId)
+                unrepostPostUseCase(postId)
             } else {
-                reshareRepository.createReshare(postId, commentary)
+                repostPostUseCase(postId)
             }
 
             result.onSuccess {
@@ -448,7 +455,7 @@ class PostDetailViewModel @Inject constructor(
 
     fun copyLink(postId: String, context: Context) {
         val clipboard = context.getSystemService(ClipboardManager::class.java)
-        val clip = ClipData.newPlainText(application.getString(R.string.clip_label_post_link), "synapse://post/$postId")
+        val clip = ClipData.newPlainText(application.getString(R.string.clip_label_post_link), DeepLink.post(postId))
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
     }

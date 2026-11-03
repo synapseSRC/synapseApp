@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.feature.shared.components
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Intent
 import android.os.Bundle
@@ -43,7 +44,7 @@ class FollowListActivity : AppCompatActivity() {
                     initialTab = initialTab,
                     onNavigateBack = { finish() },
                     onUserClick = { targetUserId ->
-                        IntentUtils.openUrl(this@FollowListActivity, "synapse://profile/$targetUserId")
+                        IntentUtils.openUrl(this@FollowListActivity, DeepLink.profile(targetUserId))
                     },
                     onMessageClick = { targetUserId, _, _ ->
                         startDirectChat(targetUserId)
