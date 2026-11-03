@@ -80,6 +80,8 @@ import com.synapse.social.studioasinc.ui.settings.ScheduledPostsScreen
 import com.synapse.social.studioasinc.ui.settings.ScheduledPostsViewModel
 import kotlinx.serialization.Serializable
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatScreen
+import com.synapse.social.studioasinc.feature.echo.lobby.EchoLobbyScreen
+import com.synapse.social.studioasinc.feature.echo.room.EchoRoomScreen
 import androidx.compose.runtime.rememberCoroutineScope
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.core.auth.GoogleAuthHelper
@@ -330,9 +332,26 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
                     onStartCall = { request -> navController.navigate(request.toDestination()) },
+                    onOpenEchoRooms = { navController.navigate(AppDestination.EchoLobby) },
+                    onOpenEchoRoom = { roomId, speakOnEntry ->
+                        navController.navigate(AppDestination.EchoRoom(roomId, speakOnEntry))
+                    },
                     debugToolsEnabled = BuildConfig.DEBUG
                 )
             }
+    composable<AppDestination.EchoLobby> {
+        EchoLobbyScreen(
+            onBack = { navController.popBackStack() },
+            onOpenRoom = { roomId, speakOnEntry ->
+                navController.navigate(AppDestination.EchoRoom(roomId, speakOnEntry))
+            }
+        )
+    }
+    composable<AppDestination.EchoRoom>(
+        deepLinks = listOf(navDeepLink<AppDestination.EchoRoom>(basePath = "synapse://echo"))
+    ) {
+        EchoRoomScreen(onClose = { navController.popBackStack() })
+    }
     composable<AppDestination.Call>(
         enterTransition = { fadeIn(tween(CALL_TRANSITION_MILLIS)) },
         exitTransition = { fadeOut(tween(CALL_TRANSITION_MILLIS)) },

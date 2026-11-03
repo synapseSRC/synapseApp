@@ -345,6 +345,10 @@ dependencies {
     // the widely integrated release, which keeps native crashes attributable. Upgrade deliberately.
     implementation "io.github.webrtc-sdk:android:144.7559.15"
 
+    // Echo Rooms SFU client. It depends on the `android-prefixed` WebRTC artifact, whose relocated
+    // packages keep it from colliding with the call stack's org.webrtc classes above.
+    implementation "io.livekit:livekit-android:2.28.2"
+
     // Networking
     implementation 'com.squareup.okhttp3:okhttp:5.3.2'
     implementation 'com.google.code.gson:gson:2.13.1'

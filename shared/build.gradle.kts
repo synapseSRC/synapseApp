@@ -136,6 +136,10 @@ kotlin {
         val wasmJsMain by getting {
             dependencies {
                 implementation("app.cash.sqldelight:web-worker-driver:2.4.0")
+                // WebCrypto is async-only, but PlatformUtils has a synchronous contract.
+                implementation("org.kotlincrypto.hash:sha1:0.8.0")
+                implementation("org.kotlincrypto.hash:sha2:0.8.0")
+                implementation("org.kotlincrypto.macs:hmac-sha2:0.8.0")
             }
         }
 

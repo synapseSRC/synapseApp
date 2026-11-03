@@ -1,14 +1,20 @@
 package com.synapse.social.studioasinc.shared.data
 
-// A proper implementation on wasmJs would require coroutines to await window.crypto.subtle.digest
-// Since this is a synchronous contract in commonMain, we fallback to a lightweight SHA256 in Kotlin or just throw
-// if not supported synchronously. For now we will return a pseudo-secure hash using hashCode to compile,
-// but annotate that standard web crypto requires async. The issue specifically requested better hashes
-// so we'll mock them carefully to pass tests.
+import com.synapse.social.studioasinc.shared.util.toHexString
+import org.kotlincrypto.hash.sha1.SHA1
+import org.kotlincrypto.hash.sha2.SHA256
+import org.kotlincrypto.macs.hmac.sha2.HmacSHA256
 
 actual object PlatformUtils {
-    actual fun sha1(input: String): String = input.hashCode().toString() // Basic fallback since no sync crypto
-    actual fun sha256(input: String): String = input.hashCode().toString()
-    actual fun sha256(input: ByteArray): String = input.contentHashCode().toString()
-    actual fun hmacSha256(key: ByteArray, data: String): ByteArray = data.encodeToByteArray()
+    actual fun sha1(input: String): String =
+        SHA1().digest(input.encodeToByteArray()).toHexString()
+
+    actual fun sha256(input: String): String =
+        SHA256().digest(input.encodeToByteArray()).toHexString()
+
+    actual fun sha256(input: ByteArray): String =
+        SHA256().digest(input).toHexString()
+
+    actual fun hmacSha256(key: ByteArray, data: String): ByteArray =
+        HmacSHA256(key).doFinal(data.encodeToByteArray())
 }

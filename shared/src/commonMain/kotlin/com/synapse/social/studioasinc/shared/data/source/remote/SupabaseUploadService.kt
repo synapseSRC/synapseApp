@@ -9,9 +9,9 @@ import io.github.jan.supabase.storage.storage
 import io.github.jan.supabase.auth.auth
 import io.github.aakira.napier.Napier
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.core.readBytes
-import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.readBuffer
 import kotlinx.coroutines.coroutineScope
+import kotlinx.io.readByteArray
 import kotlin.time.Duration.Companion.minutes
 
 class SupabaseUploadService(private val supabase: SupabaseClient) : UploadService {
@@ -45,7 +45,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
 
             coroutineScope {
                 val channel = fileProvider(0L)
-                val bytes = channel.readRemaining().readBytes()
+                val bytes = channel.readBuffer().readByteArray()
                 bucket.upload(path, bytes) {
                     this.upsert = false
                 }
@@ -102,7 +102,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
 
                     coroutineScope {
                         val channel = fileProvider(0L)
-                        val bytes = channel.readRemaining().readBytes()
+                        val bytes = channel.readBuffer().readByteArray()
                         bucket.upload(path, bytes) {
                             this.upsert = false
                         }

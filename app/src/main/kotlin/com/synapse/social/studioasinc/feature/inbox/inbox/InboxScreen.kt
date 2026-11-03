@@ -31,9 +31,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -45,6 +47,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Unarchive
@@ -107,6 +110,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCate
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.CallsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ContactsTabScreen
+import com.synapse.social.studioasinc.feature.inbox.inbox.screens.EchoTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxArchivedScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxConversationRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSearchScreen
@@ -128,6 +132,14 @@ import kotlinx.datetime.toLocalDateTime
 
 private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION }
 
+/** Bottom bar positions. Echo took the slot Contacts used to hold; Contacts moved one place right. */
+private object InboxTab {
+    const val MESSAGES = 0
+    const val CALLS = 1
+    const val ECHO = 2
+    const val CONTACTS = 3
+}
+
 @Composable
 fun InboxScreen(
     onNavigateToProfile: (String) -> Unit,
@@ -135,6 +147,8 @@ fun InboxScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit = {},
     onStartCall: (CallLaunchRequest) -> Unit = {},
+    onOpenEchoRooms: () -> Unit = {},
+    onOpenEchoRoom: (String, Boolean) -> Unit = { _, _ -> },
     debugToolsEnabled: Boolean = false,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
@@ -144,6 +158,8 @@ fun InboxScreen(
         onNavigateToSearch = onNavigateToSearch,
         onNavigateToCreateGroup = onNavigateToCreateGroup,
         onStartCall = onStartCall,
+        onOpenEchoRooms = onOpenEchoRooms,
+        onOpenEchoRoom = onOpenEchoRoom,
         debugToolsEnabled = debugToolsEnabled,
         viewModel = viewModel
     )
@@ -157,6 +173,8 @@ private fun InboxScreenContent(
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit,
     onStartCall: (CallLaunchRequest) -> Unit,
+    onOpenEchoRooms: () -> Unit,
+    onOpenEchoRoom: (String, Boolean) -> Unit,
     debugToolsEnabled: Boolean,
     viewModel: InboxViewModel
 ) {
@@ -224,7 +242,7 @@ private fun InboxScreenContent(
         }
     }
     LaunchedEffect(destination, selectedTab) {
-        if (destination != InboxDestination.INBOX || selectedTab != 0) showCreateMenu = false
+        if (destination != InboxDestination.INBOX || selectedTab != InboxTab.MESSAGES) showCreateMenu = false
         when (destination) {
             InboxDestination.SEARCH -> viewModel.searchInbox("", InboxSearchCategory.UNREAD)
             InboxDestination.ARCHIVED -> viewModel.loadArchivedConversations()
@@ -377,7 +395,12 @@ private fun InboxScreenContent(
         bottomBar = {
             if (destination == InboxDestination.INBOX) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer, contentColor = MaterialTheme.colorScheme.onSurface) {
-                    val labels = listOf(R.string.inbox_messages_tab, R.string.inbox_calls_tab, R.string.inbox_contacts_tab)
+                    val labels = listOf(
+                        R.string.inbox_messages_tab,
+                        R.string.inbox_calls_tab,
+                        R.string.inbox_echo_tab,
+                        R.string.inbox_contacts_tab
+                    )
                     labels.forEachIndexed { index, labelRes ->
                         val selected = selectedTab == index
                         NavigationBarItem(
@@ -386,8 +409,9 @@ private fun InboxScreenContent(
                             label = { Text(stringResource(labelRes)) },
                             icon = {
                                 val icon = when (index) {
-                                    0 -> if (selected) Icons.Filled.Email else Icons.Outlined.Email
-                                    1 -> if (selected) Icons.Filled.Call else Icons.Outlined.Call
+                                    InboxTab.MESSAGES -> if (selected) Icons.Filled.Email else Icons.Outlined.Email
+                                    InboxTab.CALLS -> if (selected) Icons.Filled.Call else Icons.Outlined.Call
+                                    InboxTab.ECHO -> if (selected) Icons.Filled.Mic else Icons.Outlined.Mic
                                     else -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
                                 }
                                 Icon(icon, contentDescription = null)
@@ -405,7 +429,7 @@ private fun InboxScreenContent(
             }
         },
         floatingActionButton = {
-            if (destination == InboxDestination.INBOX && selectedTab == 0) {
+            if (destination == InboxDestination.INBOX && selectedTab == InboxTab.MESSAGES) {
                 FloatingActionButtonMenu(
                     expanded = showCreateMenu,
                     button = {
@@ -422,7 +446,7 @@ private fun InboxScreenContent(
                     }
                 ) {
                     FloatingActionButtonMenuItem(
-                        onClick = { showCreateMenu = false; selectedTab = 2 },
+                        onClick = { showCreateMenu = false; selectedTab = InboxTab.CONTACTS },
                         icon = { Icon(Icons.Rounded.Chat, contentDescription = null) },
                         text = { Text(stringResource(R.string.inbox_fab_create_chat)) }
                     )
@@ -438,6 +462,14 @@ private fun InboxScreenContent(
                         },
                         icon = { Icon(Icons.Rounded.Campaign, contentDescription = null) },
                         text = { Text(stringResource(R.string.inbox_fab_create_channel)) }
+                    )
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            showCreateMenu = false
+                            onOpenEchoRooms()
+                        },
+                        icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
+                        text = { Text(stringResource(R.string.inbox_fab_echo_room)) }
                     )
                 }
             }
@@ -466,7 +498,7 @@ private fun InboxScreenContent(
                     label = "inbox-bottom-destinations"
                 ) { tab ->
                     when (tab) {
-                        0 -> HomeMessages(
+                        InboxTab.MESSAGES -> HomeMessages(
                             conversations = filteredConversations,
                             isLoading = isLoading,
                             isRefreshing = isRefreshing,
@@ -483,12 +515,16 @@ private fun InboxScreenContent(
                             onOpenConversation = ::openConversation,
                             onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION }
                         )
-                        1 -> CallsTabScreen(
+                        InboxTab.CALLS -> CallsTabScreen(
                             contentPadding = PaddingValues(),
                             // The simulated-call launcher is only meaningful when the mock call repository
                             // is the one backing the screen; on a real backend it would place real calls.
                             debugToolsEnabled = debugToolsEnabled && BuildConfig.CALL_SIMULATION_ENABLED,
                             onStartCall = onStartCall
+                        )
+                        InboxTab.ECHO -> EchoTabScreen(
+                            onOpenRoom = onOpenEchoRoom,
+                            contentPadding = PaddingValues()
                         )
                         else -> ContactsTabScreen(
                             onNavigateToChat = onNavigateToChat,
