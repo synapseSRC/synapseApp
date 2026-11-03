@@ -56,6 +56,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
 import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
+import com.synapse.social.studioasinc.feature.shared.sharepost.SharePostSheetViewModel
+import com.synapse.social.studioasinc.feature.shared.sharepost.ShareToChatSheet
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.feature.stories.tray.StoryTray
 import com.synapse.social.studioasinc.feature.stories.tray.StoryTrayViewModel
@@ -65,6 +67,7 @@ import com.synapse.social.studioasinc.feature.stories.tray.StoryTrayViewModel
 fun FeedScreen(
     linkViewModel: com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
     viewModel: FeedViewModel = hiltViewModel(),
+    sharePostViewModel: SharePostSheetViewModel = hiltViewModel(),
     storyTrayViewModel: StoryTrayViewModel = hiltViewModel(),
     onPostClick: (String) -> Unit,
     onUserClick: (String) -> Unit,
@@ -80,6 +83,7 @@ fun FeedScreen(
     val atmosphereState = LocalUiAtmosphere.current
     val posts = viewModel.posts.collectAsLazyPagingItems()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
+    var postToShare by remember { mutableStateOf<Post?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -136,7 +140,10 @@ fun FeedScreen(
         PostActionsFactory.create(
             viewModel = viewModel,
             onComment = { post -> currentOnCommentClick(post) },
-            onShare = { post -> PostShareUtils.sharePost(context, post.id) },
+            onShare = { post ->
+                postToShare = post
+                sharePostViewModel.start(post)
+            },
             onQuote = { post -> onQuoteClick(post.id) },
             onUserClick = { userId -> currentOnUserClick(userId) },
             onOptionClick = { post -> selectedPost = post },
@@ -254,7 +261,8 @@ fun FeedScreen(
                                 SharedPostItem(
                                     post = feedItem.post,
                                     postViewStyle = uiState.postViewStyle,
-                                    actions = actions
+                                    actions = actions,
+                                    isReshareItem = feedItem.reshareId != null
                                 )
                             }
                             is FeedItem.CommentItem -> {
@@ -336,7 +344,11 @@ fun FeedScreen(
             onDismiss = { selectedPost = null },
             onEdit = { onEditPost(post.id) },
             onDelete = { viewModel.deletePost(post) },
-            onShare = { PostShareUtils.sharePost(context, post.id) },
+            onShare = {
+                postToShare = post
+                sharePostViewModel.start(post)
+                selectedPost = null
+            },
             onCopyLink = { viewModel.copyPostLink(post) },
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = { viewModel.toggleComments(post) },
@@ -359,6 +371,14 @@ fun FeedScreen(
                 showSummarySheet = false
                 viewModel.clearPostSummary()
             }
+        )
+    }
+
+    postToShare?.let { post ->
+        ShareToChatSheet(
+            viewModel = sharePostViewModel,
+            onDismiss = { postToShare = null },
+            onShareExternal = { PostShareUtils.sharePost(context, post.id) }
         )
     }
 }

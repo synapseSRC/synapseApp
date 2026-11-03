@@ -2533,5 +2533,14 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="shared_to_chat">Shared to %1$s</string>
     <string name="share_to_chat_failed">Failed to share post</string>
     <string name="failed_to_load_conversations">Failed to load conversations</string>
+    <string name="share_to_chat_title">Share to chat</string>
+    <string name="share_to_chat_search_hint">Search conversations</string>
+    <string name="share_to_chat_empty">No conversations yet. Start a chat to share this post.</string>
+    <string name="share_to_chat_no_results">No matching conversations</string>
+    <string name="cd_pinned_conversation">Pinned conversation</string>
+
+    <!-- Repost Strings -->
+    <string name="post_reposted_you">You reposted</string>
+    <string name="error_reshare_failed">Couldn\'t repost. Check your connection and try again.</string>
 
 </resources>
