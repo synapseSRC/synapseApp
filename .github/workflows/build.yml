@@ -2,6 +2,13 @@ name: 🔧 Build
 
 on:
   push:
+    # Only main builds from a push. PR-branch pushes are deliberately excluded - a branch
+    # with an open PR would otherwise fire two runs per commit (push + pull_request), and the
+    # concurrency cancellation below would leave a "cancelled" Build APKs / Send APKs to
+    # Telegram context that marks the PR mergeable_state as unstable even though the real run
+    # succeeded. Pushes to other branches can still be built on demand via workflow_dispatch.
+    branches:
+      - main
     paths:
       - 'app/**'
       - 'shared/**'
@@ -12,6 +19,7 @@ on:
       - 'gradlew.bat'
       - 'gradle.properties'
       - 'local.properties'
+      - '.github/workflows/build.yml'
   # Pull requests build the real release APK and send it to Telegram, exactly like a push.
   # That works only because the head branch lives in this repository: GitHub withholds the
   # org secrets below from a pull_request run whose head is a fork, and gives it no runners.
@@ -28,9 +36,8 @@ on:
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
-# A same-repo PR branch fires two runs per commit - the push to the branch and the
-# pull_request it belongs to - and both would build an APK and post it to Telegram. Keying
-# the group on the branch (head_ref for PRs, ref_name for pushes and dispatches) folds them
+# Concurrency still folds overlapping runs on the same branch - rapid pushes to main or
+# repeated commits on an open PR (head_ref for PRs, ref_name for pushes and dispatches) -
 # into one, so the newest commit wins and the test channel gets a single APK.
 concurrency:
   group: build-${{ github.head_ref || github.ref_name }}
