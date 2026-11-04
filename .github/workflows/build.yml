@@ -28,10 +28,12 @@ on:
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
-# A push to an open PR branch replaces the run already in flight, so cancel it rather than
-# pay for two builds of the same code - and two APKs posted to the same Telegram topic.
+# A same-repo PR branch fires two runs per commit - the push to the branch and the
+# pull_request it belongs to - and both would build an APK and post it to Telegram. Keying
+# the group on the branch (head_ref for PRs, ref_name for pushes and dispatches) folds them
+# into one, so the newest commit wins and the test channel gets a single APK.
 concurrency:
-  group: build-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  group: build-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
