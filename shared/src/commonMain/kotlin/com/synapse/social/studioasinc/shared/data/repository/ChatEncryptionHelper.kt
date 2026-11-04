@@ -137,13 +137,10 @@ internal class ChatEncryptionHelper(
                         val senderId = this.senderId
                         val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
                         try {
-                            if (!signalProtocolManager.hasSession(senderId)) {
-                                try {
-                                    ensureSession(senderId)
-                                } catch (sessionErr: Exception) {
-                                    Logger.w("E2EE_DECRYPT: Session not pre-established with $senderId, attempting direct decrypt", tag = "E2EE")
-                                }
-                            }
+                            // A PreKey envelope bootstraps the receiving session itself. Do NOT
+                            // establish an outgoing session toward the sender (would consume the
+                            // sender's pre-keys) and do NOT wipe an existing receiving session before
+                            // attempting decryption. Only clear stale state on failure.
                             val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
                             val decryptedContent = decryptedBytes.decodeToString()
                             Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
@@ -153,7 +150,13 @@ internal class ChatEncryptionHelper(
                             return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata, encryptionFailureReason = null)
                         } catch (decryptError: Throwable) {
                             if (decryptError is CancellationException) throw decryptError
-                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Session preserved — Double Ratchet may recover on next message.", tag = "E2EE", throwable = decryptError)
+                            // A PreKey envelope can only be consumed once, and re-establishing an
+                            // outgoing session toward the sender is exactly what corrupts bootstrap, so
+                            // we do NOT retry the same payload here. Clear any stale session bound to a
+                            // previous identity so the sender's *next* message opens a clean receiving
+                            // session; the Double Ratchet recovers from there.
+                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Clearing stale session so the next message can bootstrap cleanly.", tag = "E2EE", throwable = decryptError)
+                            try { signalProtocolManager.deleteSession(senderId) } catch (_: Exception) {}
                         }
                     }
                     return@withLock this.copy(encryptionFailureReason = "decryption_failed")
