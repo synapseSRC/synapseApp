@@ -1,6 +1,7 @@
 "use client";
 
 import { Icons } from "@/components/global/icons";
+import { ThemeToggle } from "@/components/global/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import {
     NavigationMenu,
@@ -67,13 +68,13 @@ const Navbar = () => {
                                                     )}>
                                                         {link.title === "Features" && (
                                                             <li className="row-span-4 pr-2 relative rounded-lg overflow-hidden">
-                                                                <div className="absolute inset-0 !z-10 h-full w-[calc(100%-10px)] bg-[linear-gradient(to_right,rgb(38,38,38,0.5)_1px,transparent_1px),linear-gradient(to_bottom,rgb(38,38,38,0.5)_1px,transparent_1px)] bg-[size:1rem_1rem]"></div>
+                                                                <div className="absolute inset-0 !z-10 h-full w-[calc(100%-10px)] bg-[linear-gradient(to_right,var(--grid-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-line)_1px,transparent_1px)] bg-[size:1rem_1rem]"></div>
                                                                 <NavigationMenuLink asChild className="z-20 relative">
                                                                     <Link
                                                                         href="/#features"
                                                                         className="flex h-full w-full select-none flex-col justify-end rounded-lg bg-gradient-to-b from-muted/50 to-muted p-4 no-underline outline-none focus:shadow-md"
                                                                     >
-                                                                        <Icons.mark className="h-5 w-5 text-cyan-300" />
+                                                                        <Icons.mark className="h-5 w-5 text-cyan-700 dark:text-cyan-300" />
                                                                         <h6 className="mb-2 mt-4 text-lg font-medium">
                                                                             One open codebase
                                                                         </h6>
@@ -112,6 +113,7 @@ const Navbar = () => {
                     </div>
 
                     <div className="hidden lg:flex items-center gap-3">
+                        <ThemeToggle />
                         <Link
                             href="/home"
                             className={buttonVariants({ size: "sm", variant: "outline", className: "gap-1.5" })}
@@ -152,7 +154,7 @@ const ListItem = React.forwardRef<
                     )}
                     {...props}
                 >
-                    <div className="flex items-center space-x-2 text-neutral-300">
+                    <div className="flex items-center space-x-2 text-foreground">
                         <Icon className="h-4 w-4" />
                         <h6 className="text-sm font-medium !leading-none">
                             {title}

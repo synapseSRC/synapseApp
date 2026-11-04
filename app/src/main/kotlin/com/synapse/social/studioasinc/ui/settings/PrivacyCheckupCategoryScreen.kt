@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -59,7 +61,7 @@ fun PrivacyCheckupCategoryScreen(
         "chats" -> CheckupCategoryConfig(
             title = "Add more privacy to your chats",
             heroSubtitle = "For even more privacy, limit access to your messages and media with these privacy features.",
-            heroIcon = Icons.Filled.Chat
+            heroIcon = Icons.AutoMirrored.Filled.Chat
         )
         "account" -> CheckupCategoryConfig(
             title = "Add more protection to your account",
@@ -174,7 +176,7 @@ fun PrivacyCheckupCategoryScreen(
                             SettingsToggleItem(
                                 title = "Silence unknown callers",
                                 subtitle = "Calls from unknown numbers will be silenced automatically",
-                                imageVector = Icons.Filled.VolumeOff,
+                                imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                                 checked = silenceUnknownCallers,
                                 onCheckedChange = { silenceUnknownCallers = it },
                                 position = SettingsItemPosition.Middle

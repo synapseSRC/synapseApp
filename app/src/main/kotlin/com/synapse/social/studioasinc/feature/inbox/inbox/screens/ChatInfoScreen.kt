@@ -22,9 +22,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Group
@@ -74,7 +74,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatInfoViewModel
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
@@ -571,7 +571,7 @@ private fun QuickActions(
     ) {
         QuickActionButton(
             label = stringResource(R.string.chat_info_action_message),
-            icon = Icons.Rounded.Chat,
+            icon = Icons.AutoMirrored.Rounded.Chat,
             position = ItemPosition.FIRST,
             onClick = onMessage,
             modifier = Modifier.weight(1f)
@@ -608,9 +608,7 @@ private fun QuickActionButton(
     val interaction = remember { MutableInteractionSource() }
     val buttonModifier = modifier.height(ChatInfoMetrics.actionHeight).pressScale(interaction)
     val content: @Composable RowScope.() -> Unit = {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(ChatInfoMetrics.actionIconSize))
-        Spacer(Modifier.size(Spacing.space8))
-        Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        Icon(icon, contentDescription = label, modifier = Modifier.size(ChatInfoMetrics.actionIconSize))
     }
     if (checked) {
         Button(
@@ -673,7 +671,7 @@ private fun SettingsItem(
 
     ListItem(
         modifier = rowModifier,
-        headlineContent = {
+        content = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -754,7 +752,7 @@ private fun CommonGroupList(groups: List<Conversation>) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
         groups.forEach { group ->
             ListItem(
-                headlineContent = { Text(group.participantName) },
+                content = { Text(group.participantName) },
                 leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
             )

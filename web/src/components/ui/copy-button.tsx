@@ -37,9 +37,9 @@ const CopyButton = ({ text, className, icon }: Props) => {
         >
             <span className="sr-only">Copy</span>
             {isCopied ? (
-                <Check className="text-neutral-700 group-hover:text-accent" />
+                <Check className="text-neutral-400 group-hover:text-accent" />
             ) : (
-                <Comp className="text-neutral-700 group-hover:text-foreground" />
+                <Comp className="text-neutral-400 group-hover:text-foreground" />
             )}
         </button>
     )

@@ -119,3 +119,14 @@
 "poll_option_placeholder" = "Option %d";
 "poll_add_option" = "Add Option";
 "poll_duration_label" = "Poll Duration";
+
+/* Passkeys */
+"auth_login_passkey" = "Sign in with Passkey";
+"settings_passkeys" = "Passkeys";
+"passkeys_loading" = "Loading Passkeys...";
+"passkeys_adding" = "Adding Passkey...";
+"passkeys_section_title" = "Your Passkeys";
+"passkeys_add_button" = "Add Passkey";
+"passkeys_empty_title" = "No Passkeys Yet";
+"passkeys_empty_message" = "Add a passkey to sign in faster and more securely.";
+"passkeys_date_added" = "Added %@";

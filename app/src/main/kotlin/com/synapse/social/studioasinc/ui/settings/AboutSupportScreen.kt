@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import android.content.ClipData
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -23,9 +24,9 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Launch
+import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.NewReleases
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Share
@@ -47,22 +48,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +77,9 @@ fun AboutSupportScreen(
     viewModel: AboutSupportViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipLabel = stringResource(R.string.clip_label_app_version)
+    val scope = rememberCoroutineScope()
     val appVersion by viewModel.appVersion.collectAsState()
     val buildNumber by viewModel.buildNumber.collectAsState()
     val commitHash by viewModel.commitHash.collectAsState()
@@ -173,7 +178,9 @@ fun AboutSupportScreen(
                         }
                         Button(
                             onClick = {
-                                clipboard.setText(AnnotatedString(versionLabel))
+                                scope.launch {
+                                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, versionLabel)))
+                                }
                                 Toast.makeText(context, R.string.about_version_copied, Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier.height(dimensionResource(R.dimen.about_connected_button_height)),
@@ -221,15 +228,15 @@ fun AboutSupportScreen(
                             AboutLinkItem(
                                 title = stringResource(R.string.about_privacy_title),
                                 supportingText = stringResource(R.string.about_privacy_supporting),
-                                leadingIcon = Icons.Filled.Policy,
-                                trailingIcon = Icons.Filled.OpenInNew,
-                                onClick = { IntentUtils.openUrl(context, viewModel.getPrivacyPolicyUrl()) }
-                            ),
-                            AboutLinkItem(
-                                title = stringResource(R.string.about_terms_title),
-                                supportingText = stringResource(R.string.about_terms_supporting),
-                                leadingIcon = Icons.Filled.Description,
-                                trailingIcon = Icons.Filled.OpenInNew,
+                                 leadingIcon = Icons.Filled.Policy,
+                                 trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
+                                 onClick = { IntentUtils.openUrl(context, viewModel.getPrivacyPolicyUrl()) }
+                             ),
+                             AboutLinkItem(
+                                 title = stringResource(R.string.about_terms_title),
+                                 supportingText = stringResource(R.string.about_terms_supporting),
+                                 leadingIcon = Icons.Filled.Description,
+                                 trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
                                 onClick = { IntentUtils.openUrl(context, viewModel.getTermsOfServiceUrl()) }
                             )
                         )
@@ -269,7 +276,7 @@ fun AboutSupportScreen(
                                 title = stringResource(R.string.about_rate_title),
                                 supportingText = stringResource(R.string.about_rate_supporting),
                                 leadingIcon = Icons.Filled.Star,
-                                trailingIcon = Icons.Filled.Launch,
+                                trailingIcon = Icons.AutoMirrored.Filled.Launch,
                                 onClick = {
                                     IntentUtils.openUrl(
                                         context,

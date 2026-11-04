@@ -78,7 +78,7 @@ const HelpPage = () => {
                                         className={buttonVariants({
                                             variant: "ghost",
                                             size: "sm",
-                                            className: "mt-4 px-0 text-cyan-300 hover:text-cyan-200",
+                                            className: "mt-4 px-0 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200",
                                         })}
                                     >
                                         {topic.label}
@@ -113,7 +113,7 @@ const HelpPage = () => {
                                     className={buttonVariants({
                                         variant: "ghost",
                                         size: "sm",
-                                        className: "mt-4 px-0 text-cyan-300 hover:text-cyan-200",
+                                        className: "mt-4 px-0 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200",
                                     })}
                                 >
                                     {SUPPORT_EMAIL}
@@ -136,7 +136,7 @@ const HelpPage = () => {
                                     className={buttonVariants({
                                         variant: "ghost",
                                         size: "sm",
-                                        className: "mt-4 px-0 text-cyan-300 hover:text-cyan-200",
+                                        className: "mt-4 px-0 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200",
                                     })}
                                 >
                                     <Icons.github className="mr-2 size-3.5" />

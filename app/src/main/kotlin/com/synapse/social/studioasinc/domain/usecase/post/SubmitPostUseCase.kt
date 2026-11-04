@@ -109,7 +109,7 @@ class SubmitPostUseCase @Inject constructor(
                     pollQuestion = request.pollQuestion,
                     pollOptions = request.pollOptions?.map { PollOption(text = it, votes = 0) },
                     pollEndTime = request.pollOptions?.let {
-                        kotlinx.datetime.Instant.fromEpochMilliseconds(timestamp + request.pollDurationHours * 3600 * 1000L).toString()
+                        kotlin.time.Instant.fromEpochMilliseconds(timestamp + request.pollDurationHours * 3600 * 1000L).toString()
                     },
                     pollAllowMultiple = false,
                     hasLocation = request.location != null,

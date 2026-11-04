@@ -16,7 +16,7 @@ object PostUiMapper {
      */
     private const val MAX_COMMENT_DEPTH = 10
 
-    fun toPostCardState(post: Post, currentProfile: UserProfile? = null, isExpanded: Boolean = false): PostCardState {
+    fun toPostCardState(post: Post, currentProfile: UserProfile? = null, isExpanded: Boolean = false, isReshareItem: Boolean = false): PostCardState {
         val resolvedUsername = when {
             !post.username.isNullOrBlank() -> post.username
             currentProfile?.id == post.authorUid -> currentProfile.username
@@ -79,13 +79,16 @@ object PostUiMapper {
             userPollVote = post.userPollVote,
             formattedTimestamp = com.synapse.social.studioasinc.core.util.TimeUtils.getTimeAgo(post.publishDate ?: post.createdAt ?: ""),
             isExpanded = isExpanded,
-            repostedBy = post.resharedByUsername ?: if (post.isReshared) "You" else null,
+            repostedBy = post.resharedByUsername,
+            // Only the dedicated reshare feed item carries a header; the original post must not
+            // duplicate it just because the current user reshared it.
+            isRepostedBySelf = isReshareItem && post.resharedByUsername == null,
             replyToUsernames = post.replyToUsernames.ifEmpty { listOfNotNull(post.inReplyToPost?.username?.takeIf { it.isNotBlank() }) }
         )
     }
 
-    fun mapToState(post: Post, currentProfile: UserProfile? = null, isExpanded: Boolean = false): PostCardState {
-        return toPostCardState(post, currentProfile, isExpanded)
+    fun mapToState(post: Post, currentProfile: UserProfile? = null, isExpanded: Boolean = false, isReshareItem: Boolean = false): PostCardState {
+        return toPostCardState(post, currentProfile, isExpanded, isReshareItem)
     }
 
     /**

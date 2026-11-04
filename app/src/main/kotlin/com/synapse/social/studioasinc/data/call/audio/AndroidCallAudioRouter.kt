@@ -69,7 +69,7 @@ class AndroidCallAudioRouter @Inject constructor(
         synchronized(this) {
             if (!inCall) {
                 previousMode = manager.mode
-                previousSpeaker = manager.isSpeakerphoneOn
+                previousSpeaker = legacySpeakerOn(manager)
                 inCall = true
                 requestFocus(manager)
                 // The interface stops talking the moment this device starts carrying a conversation: a
@@ -104,14 +104,14 @@ class AndroidCallAudioRouter @Inject constructor(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 runCatching { manager.clearCommunicationDevice() }
             } else {
-                runCatching { manager.isSpeakerphoneOn = false }
-                runCatching { manager.isBluetoothScoOn = false }
+                runCatching { setLegacySpeaker(manager, false) }
+                runCatching { setLegacySco(manager, false) }
             }
             runCatching { manager.mode = previousMode }
                 .onFailure { Napier.w("Audio mode restore failed: ${it.message}") }
             // Only the flag this call turned on gets put back; a speaker already up before the call
             // stays up.
-            runCatching { manager.isSpeakerphoneOn = previousSpeaker }
+            runCatching { setLegacySpeaker(manager, previousSpeaker) }
         }
         releaseDeviceWatcher(manager)
         _activeRoute.value = readRoute(manager)
@@ -189,31 +189,55 @@ class AndroidCallAudioRouter @Inject constructor(
         when (route) {
             CallAudioRoute.SPEAKER -> {
                 stopSco(manager)
-                manager.isSpeakerphoneOn = true
+                setLegacySpeaker(manager, true)
             }
 
             CallAudioRoute.EARPIECE -> {
                 stopSco(manager)
-                manager.isSpeakerphoneOn = false
+                setLegacySpeaker(manager, false)
             }
 
             CallAudioRoute.BLUETOOTH -> {
-                manager.isSpeakerphoneOn = false
+                setLegacySpeaker(manager, false)
                 manager.startBluetoothSco()
-                manager.isBluetoothScoOn = true
+                setLegacySco(manager, true)
             }
 
             CallAudioRoute.WIRED_HEADSET -> {
                 stopSco(manager)
-                manager.isSpeakerphoneOn = false
+                setLegacySpeaker(manager, false)
             }
         }
     }
 
     @Suppress("DEPRECATION")
     private fun stopSco(manager: AudioManager) {
-        runCatching { manager.isBluetoothScoOn = false }
+        runCatching { setLegacySco(manager, false) }
         runCatching { manager.stopBluetoothSco() }
+    }
+
+    // ---- The deprecated AudioManager flags -------------------------------------------
+    //
+    // setCommunicationDevice()/clearCommunicationDevice() are the modern way to steer a call's
+    // output, but they are API 31+ and minSdk is 26, so Android 8-11 still has to go through the
+    // speaker and Bluetooth-Sco flags Google deprecated. They are confined to these four helpers —
+    // one home for the deprecated surface, version-gated by the callers — which is why the legacy
+    // paths above read and write through them rather than touching the flags directly.
+
+    @Suppress("DEPRECATION")
+    private fun legacySpeakerOn(manager: AudioManager): Boolean = manager.isSpeakerphoneOn
+
+    @Suppress("DEPRECATION")
+    private fun setLegacySpeaker(manager: AudioManager, on: Boolean) {
+        manager.isSpeakerphoneOn = on
+    }
+
+    @Suppress("DEPRECATION")
+    private fun legacyScoOn(manager: AudioManager): Boolean = manager.isBluetoothScoOn
+
+    @Suppress("DEPRECATION")
+    private fun setLegacySco(manager: AudioManager, on: Boolean) {
+        manager.isBluetoothScoOn = on
     }
 
     /** The route the hardware reports — the only version of the truth worth showing. */
@@ -222,8 +246,8 @@ class AndroidCallAudioRouter @Inject constructor(
             manager.communicationDevice?.type?.let { return it.toRoute() }
         }
         val connected = connectedRoute()
-        val speaker = runCatching { manager.isSpeakerphoneOn }.getOrDefault(false)
-        val scoUp = runCatching { manager.isBluetoothScoOn }.getOrDefault(false)
+        val speaker = runCatching { legacySpeakerOn(manager) }.getOrDefault(false)
+        val scoUp = runCatching { legacyScoOn(manager) }.getOrDefault(false)
         return when {
             connected == CallAudioRoute.BLUETOOTH && scoUp -> CallAudioRoute.BLUETOOTH
             connected == CallAudioRoute.WIRED_HEADSET && !speaker -> CallAudioRoute.WIRED_HEADSET

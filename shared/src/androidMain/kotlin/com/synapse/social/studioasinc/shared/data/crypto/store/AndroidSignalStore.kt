@@ -24,6 +24,13 @@ import org.signal.libsignal.protocol.state.SignalProtocolStore
 import org.signal.libsignal.protocol.InvalidKeyIdException
 
 class AndroidSignalStore(context: Context, private val sharedPreferences: SharedPreferences? = null) : SignalProtocolStore {
+    // androidx.security:security-crypto is deprecated upstream and has no in-library successor, so
+    // every MasterKey/EncryptedSharedPreferences reference warns. Suppressing is deliberate, not a
+    // shortcut: this prefs file holds the Signal identity key, prekeys, sessions and sender keys,
+    // and they are written in security-crypto's on-disk format (AES-SIV names, AES-GCM values,
+    // keystore-backed master key). Changing how it is encrypted means re-keying every account's
+    // Signal identity — a migration project, not a warning fix.
+    @Suppress("DEPRECATION")
     private val prefs: SharedPreferences by lazy {
         sharedPreferences ?: try {
             val masterKey = MasterKey.Builder(context)

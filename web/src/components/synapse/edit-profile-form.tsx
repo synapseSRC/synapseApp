@@ -16,9 +16,9 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { normalizeWebsite, PROFILE_LIMITS, type ProfileFormValues } from "@/lib/synapse/profile-fields";
 import { uploadProfileImage, validateProfileImage } from "@/lib/synapse/profile-upload";
 
-const panel = "rounded-2xl border border-neutral-800 bg-neutral-950/60 p-5 backdrop-blur-xl";
-const field = "h-11 rounded-lg border-neutral-800 bg-neutral-900/60 focus-visible:ring-2 focus-visible:ring-violet-500/40";
-const textarea = "min-h-[110px] resize-y rounded-lg border-neutral-800 bg-neutral-900/60 focus-visible:ring-2 focus-visible:ring-violet-500/40";
+const panel = "rounded-2xl border border-border bg-card/60 p-5 backdrop-blur-xl";
+const field = "h-11 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/40";
+const textarea = "min-h-[110px] resize-y rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/40";
 
 type ImageKind = "avatar" | "cover";
 
@@ -192,7 +192,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
     return (
         <form onSubmit={submitForm} className="space-y-4">
             {error ? (
-                <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-200">
                     {error}
                 </p>
             ) : null}
@@ -200,14 +200,14 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
             <section className={panel}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 className="font-heading text-sm font-semibold">Profile photos</h2>
-                    <span className="text-xs text-neutral-500">JPEG, PNG, WebP or GIF · 5 MB max</span>
+                    <span className="text-xs text-muted-foreground">JPEG, PNG, WebP or GIF · 5 MB max</span>
                 </div>
 
-                <div className="relative mt-4 h-28 overflow-hidden rounded-xl border border-neutral-800">
+                <div className="relative mt-4 h-28 overflow-hidden rounded-xl border border-border">
                     {coverPreview ? (
                         <Image src={coverPreview} alt="" fill unoptimized className="object-cover" />
                     ) : (
-                        <div className="absolute inset-0 grid place-items-center bg-gradient-to-r from-violet-700/60 via-neutral-900 to-cyan-600/50 text-xs text-neutral-400">
+                        <div className="absolute inset-0 grid place-items-center bg-gradient-to-r from-violet-700/60 via-neutral-900 to-cyan-600/50 text-xs text-white/70">
                             No cover image
                         </div>
                     )}
@@ -222,7 +222,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
                                 width={64}
                                 height={64}
                                 unoptimized
-                                className="size-16 rounded-full border border-neutral-800 object-cover"
+                                className="size-16 rounded-full border border-border object-cover"
                             />
                         ) : (
                             <span className="grid size-16 place-items-center rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 text-lg font-semibold text-white">
@@ -231,7 +231,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
                         )}
                         <div>
                             <p className="text-sm font-medium">Avatar</p>
-                            <p className="text-xs text-neutral-500">Shown next to your posts.</p>
+                            <p className="text-xs text-muted-foreground">Shown next to your posts.</p>
                         </div>
                     </div>
 
@@ -254,7 +254,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
                         </button>
                     </div>
                 </div>
-                <p className="mt-3 text-xs text-neutral-500">Images upload when you save.</p>
+                <p className="mt-3 text-xs text-muted-foreground">Images upload when you save.</p>
 
                 <input
                     ref={avatarInput}
@@ -274,7 +274,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
 
             <section className={panel}>
                 <h2 className="font-heading text-sm font-semibold">About you</h2>
-                <p className="mt-1 text-xs text-neutral-500">Username @{initial.username} can&apos;t be changed.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Username @{initial.username} can&apos;t be changed.</p>
 
                 <div className="mt-4 space-y-4">
                     <div className="space-y-2">
@@ -292,7 +292,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="bio">Bio</Label>
-                            <span className="text-xs text-neutral-500">
+                            <span className="text-xs text-muted-foreground">
                                 {bio.length}/{PROFILE_LIMITS.bio}
                             </span>
                         </div>
@@ -384,7 +384,7 @@ export const EditProfileForm = ({ initial, coverUrl }: { initial: ProfileFormVal
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <h2 className="font-heading text-sm font-semibold">Private account</h2>
-                        <p className="mt-1 max-w-md text-xs leading-relaxed text-neutral-400">
+                        <p className="mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
                             Adds a private badge and hides your cover image from your public profile. Post visibility keeps
                             following your existing privacy rules.
                         </p>

@@ -27,6 +27,7 @@ fun UserAvatar(
     initialsTextStyle: TextStyle = MaterialTheme.typography.titleMedium
 ) {
     // The initials sit under the image so an unloaded or failed URL still identifies the user.
+    // Group avatars never pass a displayName: the first-letters API provides their image instead.
     Box(
         modifier = modifier
             .size(size)
@@ -39,11 +40,14 @@ fun UserAvatar(
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = displayName.let { name -> name?.firstOrNull { it.isLetterOrDigit() } ?: name?.firstOrNull() }?.uppercaseChar()?.toString() ?: "?",
-                style = initialsTextStyle,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            val initial = displayName?.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()
+            if (initial != null) {
+                Text(
+                    text = initial.toString(),
+                    style = initialsTextStyle,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
         }
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(

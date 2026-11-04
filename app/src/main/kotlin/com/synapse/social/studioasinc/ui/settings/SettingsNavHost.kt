@@ -29,7 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
@@ -105,6 +105,19 @@ fun SettingsNavHost(
                 },
                 onNavigateToChangeNumber = {
                     navController.navigate(SettingsDestination.ROUTE_CHANGE_NUMBER)
+                },
+                onNavigateToPasskeys = {
+                    navController.navigate(SettingsDestination.ROUTE_PASSKEYS)
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_PASSKEYS) {
+            val viewModel: PasskeysViewModel = hiltViewModel()
+            PasskeysScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }

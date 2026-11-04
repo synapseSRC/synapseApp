@@ -24,7 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -80,6 +80,8 @@ import com.synapse.social.studioasinc.ui.settings.ScheduledPostsScreen
 import com.synapse.social.studioasinc.ui.settings.ScheduledPostsViewModel
 import kotlinx.serialization.Serializable
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatScreen
+import com.synapse.social.studioasinc.feature.echo.lobby.EchoLobbyScreen
+import com.synapse.social.studioasinc.feature.echo.room.EchoRoomScreen
 import androidx.compose.runtime.rememberCoroutineScope
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.core.auth.GoogleAuthHelper
@@ -263,7 +265,9 @@ fun NavGraphBuilder.homeGraph(
     reelUploadManager: ReelUploadManager,
     sharedTransitionScope: SharedTransitionScope
 ) {
-    composable<AppDestination.Home> {
+    composable<AppDestination.Home>(
+        deepLinks = listOf(navDeepLink<AppDestination.Home>(basePath = "synapse://home"))
+    ) {
         HomeScreen(
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = this@composable,
@@ -328,9 +332,26 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
                     onStartCall = { request -> navController.navigate(request.toDestination()) },
+                    onOpenEchoRooms = { navController.navigate(AppDestination.EchoLobby) },
+                    onOpenEchoRoom = { roomId, speakOnEntry ->
+                        navController.navigate(AppDestination.EchoRoom(roomId, speakOnEntry))
+                    },
                     debugToolsEnabled = BuildConfig.DEBUG
                 )
             }
+    composable<AppDestination.EchoLobby> {
+        EchoLobbyScreen(
+            onBack = { navController.popBackStack() },
+            onOpenRoom = { roomId, speakOnEntry ->
+                navController.navigate(AppDestination.EchoRoom(roomId, speakOnEntry))
+            }
+        )
+    }
+    composable<AppDestination.EchoRoom>(
+        deepLinks = listOf(navDeepLink<AppDestination.EchoRoom>(basePath = "synapse://echo"))
+    ) {
+        EchoRoomScreen(onClose = { navController.popBackStack() })
+    }
     composable<AppDestination.Call>(
         enterTransition = { fadeIn(tween(CALL_TRANSITION_MILLIS)) },
         exitTransition = { fadeOut(tween(CALL_TRANSITION_MILLIS)) },
@@ -347,7 +368,9 @@ fun NavGraphBuilder.inboxGraph(
             }
         )
     }
-    composable<AppDestination.Chat> { backStackEntry ->
+    composable<AppDestination.Chat>(
+        deepLinks = listOf(navDeepLink<AppDestination.Chat>(basePath = "synapse://chat"))
+    ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.Chat>()
                 ChatScreen(
                     chatId = args.chatId,
@@ -365,17 +388,11 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
                     },
-                    onNavigateToNewGroup = {
-                        navController.navigate(AppDestination.CreateGroup)
-                    },
                     onNavigateToSharedContent = { chatId, tab ->
                         navController.navigate(AppDestination.SharedContent(chatId, tab))
                     },
                     onNavigateToChatSettings = { chatId ->
                         navController.navigate(AppDestination.ChatSettings(chatId))
-                    },
-                    onNavigateToChatSearch = { chatId ->
-                        navController.navigate(AppDestination.ChatSearch(chatId))
                     },
                     onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
@@ -394,7 +411,22 @@ fun NavGraphBuilder.inboxGraph(
                 com.synapse.social.studioasinc.feature.inbox.inbox.GroupInfoScreen(
                     chatId = args.chatId,
                     groupName = args.groupName,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) },
+                    onNavigateToSharedContent = { sharedChatId ->
+                        navController.navigate(AppDestination.SharedContent(sharedChatId, 0))
+                    },
+                    onNavigateToParticipants = {
+                        navController.navigate(AppDestination.GroupParticipants(args.chatId))
+                    }
+                )
+            }
+    composable<AppDestination.GroupParticipants> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.GroupParticipants>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.GroupParticipantsScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) }
                 )
             }
     composable<AppDestination.ChatInfo> { backStackEntry ->
@@ -442,16 +474,9 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-    composable<AppDestination.ChatSettings> { backStackEntry ->
-                val args = backStackEntry.toRoute<AppDestination.ChatSettings>()
-                navController.navigate(AppDestination.Settings) {
-                    popUpTo(AppDestination.Settings) { inclusive = true }
-                }
-    }
-    composable<AppDestination.ChatSearch> { backStackEntry ->
-                val args = backStackEntry.toRoute<AppDestination.ChatSearch>()
-                com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatSearchScreen(
-                    chatId = args.chatId,
+    composable<AppDestination.ChatSettings> {
+                com.synapse.social.studioasinc.ui.settings.ChatSettingsScreen(
+                    viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
     }
@@ -737,7 +762,9 @@ fun NavGraphBuilder.postGraph(
             onNavigateUp = { navController.popBackStack() }
         )
     }
-    composable<AppDestination.PostDetail> { backStackEntry ->
+    composable<AppDestination.PostDetail>(
+        deepLinks = listOf(navDeepLink<AppDestination.PostDetail>(basePath = "synapse://post"))
+    ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.PostDetail>()
                 PostDetailScreen(
                     postId = args.postId,

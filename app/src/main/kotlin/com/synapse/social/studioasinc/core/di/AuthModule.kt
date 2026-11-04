@@ -1,6 +1,8 @@
-﻿package com.synapse.social.studioasinc.core.di
+package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+import com.synapse.social.studioasinc.shared.domain.repository.PasskeyPlatformManager
+import com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
 import com.synapse.social.studioasinc.shared.domain.repository.UserRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.auth.*
 import dagger.Module
@@ -123,43 +125,44 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideGeneratePasskeyRequestJsonUseCase(): GeneratePasskeyRequestJsonUseCase {
-        return GeneratePasskeyRequestJsonUseCase()
-    }
-
-    @Provides
-    @Singleton
     fun provideLoadPasskeysUseCase(
-        authRepository: AuthRepository,
-        passkeyRepository: com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
-    ): com.synapse.social.studioasinc.domain.usecase.auth.LoadPasskeysUseCase {
-        return com.synapse.social.studioasinc.domain.usecase.auth.LoadPasskeysUseCase(authRepository, passkeyRepository)
+        passkeyRepository: PasskeyRepository
+    ): LoadPasskeysUseCase {
+        return LoadPasskeysUseCase(passkeyRepository)
     }
 
     @Provides
     @Singleton
     fun provideAddPasskeyUseCase(
-        authRepository: AuthRepository,
-        passkeyRepository: com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository,
-        generatePasskeyRequestJsonUseCase: GeneratePasskeyRequestJsonUseCase,
-        passkeyManager: com.synapse.social.studioasinc.domain.repository.PasskeyManager,
-        deviceInfoProvider: com.synapse.social.studioasinc.domain.repository.DeviceInfoProvider
-    ): com.synapse.social.studioasinc.domain.usecase.auth.AddPasskeyUseCase {
-        return com.synapse.social.studioasinc.domain.usecase.auth.AddPasskeyUseCase(
-            authRepository,
+        passkeyRepository: PasskeyRepository,
+        passkeyPlatformManager: PasskeyPlatformManager
+    ): AddPasskeyUseCase {
+        return AddPasskeyUseCase(
             passkeyRepository,
-            generatePasskeyRequestJsonUseCase,
-            passkeyManager,
-            deviceInfoProvider
+            passkeyPlatformManager
         )
     }
 
     @Provides
     @Singleton
     fun provideRemovePasskeyUseCase(
-        passkeyRepository: com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
-    ): com.synapse.social.studioasinc.domain.usecase.auth.RemovePasskeyUseCase {
-        return com.synapse.social.studioasinc.domain.usecase.auth.RemovePasskeyUseCase(passkeyRepository)
+        passkeyRepository: PasskeyRepository
+    ): RemovePasskeyUseCase {
+        return RemovePasskeyUseCase(passkeyRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSignInWithPasskeyUseCase(
+        authRepository: AuthRepository,
+        passkeyRepository: PasskeyRepository,
+        passkeyPlatformManager: PasskeyPlatformManager
+    ): SignInWithPasskeyUseCase {
+        return SignInWithPasskeyUseCase(
+            authRepository,
+            passkeyRepository,
+            passkeyPlatformManager
+        )
     }
 
     @Provides

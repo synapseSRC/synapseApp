@@ -209,7 +209,7 @@ const OpenSourcePage = () => {
                                         className={buttonVariants({
                                             variant: "ghost",
                                             size: "sm",
-                                            className: "mt-4 px-0 text-cyan-300 hover:text-cyan-200",
+                                            className: "mt-4 px-0 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200",
                                         })}
                                     >
                                         {entry.label}

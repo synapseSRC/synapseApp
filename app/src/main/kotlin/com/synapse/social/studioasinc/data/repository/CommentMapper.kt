@@ -4,6 +4,10 @@ import com.synapse.social.studioasinc.shared.data.local.entity.CommentEntity
 import com.synapse.social.studioasinc.domain.model.Comment
 import com.synapse.social.studioasinc.shared.data.database.Comment as DbComment
 
+// The legacy `Comment` domain model is still the currency of the SQLDelight comment cache and is
+// bridged to/from `CommentWithUser` here. Retiring it means reworking that cache path onto the Post
+// model — a data-layer migration, not a warning fix — hence the documented suppression.
+@Suppress("DEPRECATION")
 object CommentMapper {
 
     fun toSharedEntity(comment: Comment, username: String? = null, avatarUrl: String? = null): CommentEntity {

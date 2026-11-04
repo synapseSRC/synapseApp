@@ -7,6 +7,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/global/theme-toggle";
 import {
     Sheet,
     SheetClose,
@@ -36,12 +37,16 @@ const MobileNavbar = () => {
                 </SheetTrigger>
                 <SheetContent className="w-screen" aria-label="Navigation menu">
                     <SheetClose asChild className="absolute top-3 right-5 bg-background z-20 flex items-center justify-center">
-                        <Button size="icon" variant="ghost" className="text-neutral-600" aria-label="Close navigation menu">
+                        <Button size="icon" variant="ghost" className="text-muted-foreground" aria-label="Close navigation menu">
                             <X className="w-5 h-5" />
                         </Button>
                     </SheetClose>
                     <div className="flex flex-col items-start w-full py-2 mt-10">
-                        <div className="flex items-center justify-evenly w-full space-x-2">
+                        <div className="flex items-center justify-between w-full">
+                            <span className="text-sm font-medium text-muted-foreground">Appearance</span>
+                            <ThemeToggle />
+                        </div>
+                        <div className="flex items-center justify-evenly w-full space-x-2 mt-4">
                             <Link
                                 href="/download"
                                 onClick={handleClose}

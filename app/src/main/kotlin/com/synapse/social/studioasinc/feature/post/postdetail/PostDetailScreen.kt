@@ -20,7 +20,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.synapse.social.studioasinc.domain.model.CommentAction
@@ -261,7 +261,7 @@ fun PostDetailScreen(
                 }
             },
             onPostShare = { _ -> PostShareUtils.sharePost(context, postId) },
-            onPostRepost = { _ -> viewModel.createReshare(null) },
+            onPostRepost = { _ -> viewModel.toggleReshare() },
             onPostBookmark = { _ -> viewModel.toggleBookmark() },
             onPostOptionClick = { _ -> showPostOptions = true },
             onPostPollVote = { _, index -> viewModel.votePoll(index) },
@@ -393,6 +393,7 @@ private fun PostDetailContent(
                                     reactions = postDetail.reactionSummary,
                                     likesCount = postDetail.reactionSummary.values.sum(),
                                     replyCount = postDetail.post.replyCount,
+                                    isReshared = postDetail.hasReshared,
                                     username = postDetail.author.username,
                                     avatarUrl = postDetail.author.avatar,
                                     isVerified = postDetail.author.verify

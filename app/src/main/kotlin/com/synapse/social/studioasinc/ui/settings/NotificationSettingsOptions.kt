@@ -11,8 +11,8 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -233,7 +233,7 @@ internal fun SoundEffectsSection(
 ) {
     SettingsSection(title = stringResource(R.string.settings_sound_effects_section_title)) {
         SettingsToggleItem(
-            imageVector = Icons.Default.VolumeUp,
+            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
             title = stringResource(R.string.settings_sound_effects_title),
             subtitle = if (soundPreferences.masterEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
             checked = soundPreferences.masterEnabled,

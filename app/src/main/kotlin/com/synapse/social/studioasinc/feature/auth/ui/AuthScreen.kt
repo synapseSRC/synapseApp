@@ -17,7 +17,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.LoadingOverlay
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.EmailVerificationViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.ForgotPasswordViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.ResetPasswordViewModel
@@ -150,7 +150,8 @@ fun AuthScreen(
                     state = state as? AuthUiState.ForgotPassword ?: AuthUiState.ForgotPassword(),
                     onEmailChanged = viewModel::onEmailChanged,
                     onSendResetLinkClick = viewModel::onSubmitNewPassword,
-                    onBackClick = viewModel::onBackToSignInClick
+                    onBackClick = viewModel::onBackToSignInClick,
+                    onDismissError = viewModel::onDismissError
                 )
             }
 
@@ -166,7 +167,8 @@ fun AuthScreen(
                     state = state as? AuthUiState.ResetPassword ?: AuthUiState.ResetPassword(),
                     onPasswordChanged = viewModel::onPasswordChanged,
                     onConfirmPasswordChanged = viewModel::onConfirmPasswordChanged,
-                    onResetPasswordClick = viewModel::onSubmitNewPassword
+                    onResetPasswordClick = viewModel::onSubmitNewPassword,
+                    onDismissError = viewModel::onDismissError
                 )
             }
         }
@@ -197,6 +199,7 @@ private fun UnifiedAuthContent(
         onForgotPasswordClick = authViewModel::onForgotPasswordClick,
         onToggleModeClick = authViewModel::onToggleModeClick,
         onOAuthClick = authViewModel::onOAuthClick,
+        onSignInWithPasskeyClick = authViewModel::signInWithPasskey,
         onDismissError = authViewModel::onDismissGeneralError
     )
 }

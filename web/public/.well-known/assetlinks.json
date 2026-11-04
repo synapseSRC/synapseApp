@@ -1,0 +1,28 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.synapse.social.studioasinc",
+      "sha256_cert_fingerprints": [
+        "7F:47:FF:B3:04:C2:96:2E:12:6F:22:D5:6E:AF:85:9F:83:42:28:0E:E4:4C:9C:A6:4A:79:AC:36:28:5B:89:AF"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.synapse.social.studioasinc.debug",
+      "sha256_cert_fingerprints": [
+        "0B:AD:3E:81:06:C8:1F:25:58:83:BD:16:E0:55:66:29:B1:B1:34:75:79:05:53:67:A0:14:DE:69:7B:9B:A7:DF"
+      ]
+    }
+  }
+]

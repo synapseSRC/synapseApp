@@ -36,16 +36,16 @@ const GoogleGlyph = () => (
     </svg>
 );
 
-const shell = "w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-950/60 p-8 backdrop-blur-xl";
-const field = "h-11 rounded-lg border-neutral-800 bg-neutral-900/60 focus-visible:ring-2 focus-visible:ring-violet-500/40";
+const shell = "w-full max-w-md rounded-2xl border border-border bg-card/60 p-8 backdrop-blur-xl";
+const field = "h-11 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/40";
 const submit = buttonVariants({ variant: "accent", size: "lg", className: "w-full gap-2 rounded-lg" });
 
 const Notice = ({ children }: { children: ReactNode }) => (
-    <p className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-200">{children}</p>
+    <p className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-800 dark:text-violet-200">{children}</p>
 );
 
 export const Failure = ({ message }: { message: string }) => (
-    <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+    <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-200">
         {message}
     </p>
 );
@@ -61,7 +61,7 @@ export const AuthCard = ({
 }) => (
     <div className={shell}>
         <h1 className="font-heading text-3xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-2 text-sm text-neutral-400">{subtitle}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
         <div className="mt-8 space-y-4">{children}</div>
     </div>
 );
@@ -91,9 +91,9 @@ export const OAuthDivider = ({ next }: { next?: string }) => {
     return (
         <>
             <div className="flex items-center gap-3 py-1">
-                <span className="h-px flex-1 bg-neutral-800" />
-                <span className="text-xs uppercase tracking-widest text-neutral-500">or</span>
-                <span className="h-px flex-1 bg-neutral-800" />
+                <span className="h-px flex-1 bg-border" />
+                <span className="text-xs uppercase tracking-widest text-muted-foreground">or</span>
+                <span className="h-px flex-1 bg-border" />
             </div>
             <button
                 type="button"
@@ -148,7 +148,7 @@ export const LoginForm = ({ next = "/home" }: { next?: string }) => {
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Link href="/forgot-password" className="text-xs text-neutral-400 hover:text-white">
+                    <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">
                         Forgot password?
                     </Link>
                 </div>
@@ -159,9 +159,9 @@ export const LoginForm = ({ next = "/home" }: { next?: string }) => {
                 Sign in
             </button>
             <OAuthDivider next={next} />
-            <p className="pt-2 text-sm text-neutral-400">
+            <p className="pt-2 text-sm text-muted-foreground">
                 New to Synapse?{" "}
-                <Link href="/signup" className="text-white underline underline-offset-4">
+                <Link href="/signup" className="text-foreground underline underline-offset-4">
                     Create an account
                 </Link>
             </p>
@@ -233,7 +233,7 @@ export const SignUpForm = ({ next = "/home" }: { next?: string }) => {
                     placeholder="ashik"
                     className={field}
                 />
-                <p className="text-xs text-neutral-500">Lowercase letters, numbers, dots, dashes and underscores.</p>
+                <p className="text-xs text-muted-foreground">Lowercase letters, numbers, dots, dashes and underscores.</p>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -248,9 +248,9 @@ export const SignUpForm = ({ next = "/home" }: { next?: string }) => {
                 Create account
             </button>
             <OAuthDivider next={next} />
-            <p className="pt-2 text-sm text-neutral-400">
+            <p className="pt-2 text-sm text-muted-foreground">
                 Already have an account?{" "}
-                <Link href="/login" className="text-white underline underline-offset-4">
+                <Link href="/login" className="text-foreground underline underline-offset-4">
                     Sign in
                 </Link>
             </p>
@@ -306,9 +306,9 @@ export const ForgotPasswordForm = () => {
                 {pending ? <Loader2Icon className="size-4 animate-spin" /> : null}
                 Send reset link
             </button>
-            <p className="pt-2 text-sm text-neutral-400">
+            <p className="pt-2 text-sm text-muted-foreground">
                 Remembered it?{" "}
-                <Link href="/login" className="text-white underline underline-offset-4">
+                <Link href="/login" className="text-foreground underline underline-offset-4">
                     Sign in
                 </Link>
             </p>

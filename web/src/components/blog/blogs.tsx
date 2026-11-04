@@ -54,7 +54,7 @@ const Blogs = () => {
                                 <p className="mt-2 text-sm text-muted-foreground">
                                     {blog.description}
                                 </p>
-                                <p className="mt-auto flex items-center gap-1.5 pt-6 text-sm text-cyan-300 transition-transform duration-300 group-hover:translate-x-0.5">
+                                <p className="mt-auto flex items-center gap-1.5 pt-6 text-sm text-cyan-600 dark:text-cyan-300 transition-transform duration-300 group-hover:translate-x-0.5">
                                     Read the post
                                     <ArrowRightIcon className="size-4" />
                                 </p>

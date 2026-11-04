@@ -5,6 +5,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 interface ChatRepository {
     suspend fun getConversations(forceNetwork: Boolean = false, limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Conversation>>
@@ -45,12 +46,20 @@ interface ChatRepository {
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean): Result<Unit>
     fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit = {}): Flow<Message>
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message>
+
+    /**
+     * Emits the chat id whenever this user's own participation changes (added to a new chat —
+     * including an empty group — or removed from one), so the inbox can refresh without waiting
+     * for the first message. Default: no events.
+     */
+    fun subscribeToRosterChanges(): Flow<String> = emptyFlow()
     fun subscribeToTypingStatus(chatId: String): Flow<TypingStatus>
     fun subscribeToReadReceipts(chatId: String): Flow<Message>
     suspend fun initializeE2EE(): Result<Unit>
     suspend fun ensureSession(userId: String)
     fun getCurrentUserId(): String?
     suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): Result<String>
+    suspend fun reportChat(chatId: String, reason: String): Result<Unit>
     suspend fun getParticipantIds(chatId: String): Result<List<String>>
     suspend fun getGroupMembers(chatId: String): Result<List<Pair<com.synapse.social.studioasinc.shared.domain.model.User, Boolean>>>
     suspend fun addGroupMembers(chatId: String, userIds: List<String>): Result<Unit>
@@ -60,6 +69,11 @@ interface ChatRepository {
     suspend fun leaveGroup(chatId: String): Result<Unit>
     suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean): Result<Unit>
     suspend fun getChatInfo(chatId: String): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo?>
+    suspend fun updateGroupInfo(chatId: String, name: String? = null, description: String? = null, avatarUrl: String? = null): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo>
+    /** Re-fans-out encrypted group metadata to the full current roster (e.g. after members join). */
+    suspend fun resyncGroupMetadata(chatId: String): Result<Unit>
+    suspend fun updateGroupPrivacy(chatId: String, allowMemberInvites: Boolean? = null, requireJoinApproval: Boolean? = null, allowMemberSettingsEdits: Boolean? = null): Result<Unit>
+    suspend fun deleteGroup(chatId: String): Result<Unit>
     suspend fun toggleMessageReaction(messageId: String, emoji: String, chatId: String?): Result<Unit>
     suspend fun getReactionsForMessage(messageId: String): Result<List<MessageReaction>>
     suspend fun getReactionsForMessages(messages: List<Message>): List<Message>

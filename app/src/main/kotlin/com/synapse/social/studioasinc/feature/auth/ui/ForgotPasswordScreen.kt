@@ -24,8 +24,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
+import com.synapse.social.studioasinc.feature.auth.ui.components.AuthErrorDialog
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthTextField
-import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 
@@ -34,9 +34,14 @@ fun ForgotPasswordScreen(
     state: AuthUiState.ForgotPassword,
     onEmailChanged: (String) -> Unit,
     onSendResetLinkClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onDismissError: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+
+    state.generalError?.let {
+        AuthErrorDialog(error = it, onDismiss = onDismissError)
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -65,11 +70,6 @@ fun ForgotPasswordScreen(
             )
 
             Spacer(modifier = Modifier.height(Spacing.space32))
-
-            ErrorCard(
-                error = state.generalError,
-                onDismiss = {}
-            )
 
             if (state.isEmailSent) {
 

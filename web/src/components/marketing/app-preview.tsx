@@ -60,15 +60,15 @@ const AppPreview = ({ className }: { className?: string }) => {
             role="img"
             aria-label="Synapse client showing the design space: a channel list, a message thread with a CLI command and reactions, direct messages, and three synced devices."
             className={cn(
-                "relative overflow-hidden rounded-xl border border-border bg-neutral-950 text-left",
+                "dark relative overflow-hidden rounded-xl border border-border bg-neutral-950 text-left text-card-foreground",
                 className,
             )}
         >
             <div className="flex items-center gap-3 border-b border-border/70 bg-foreground/[0.02] px-4 py-2.5">
                 <div className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-neutral-700" />
-                    <span className="size-2.5 rounded-full bg-neutral-700" />
-                    <span className="size-2.5 rounded-full bg-neutral-700" />
+                    <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                    <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                    <span className="size-2.5 rounded-full bg-muted-foreground/40" />
                 </div>
                 <span className="truncate text-xs font-medium text-muted-foreground">
                     synapse.app

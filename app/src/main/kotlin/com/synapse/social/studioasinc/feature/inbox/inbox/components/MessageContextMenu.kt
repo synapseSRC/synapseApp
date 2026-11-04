@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
+import android.content.ClipData
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
@@ -31,15 +32,17 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +60,9 @@ fun MessageContextMenu(
 ) {
     if (selectedMessage == null) return
 
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipLabel = stringResource(R.string.clip_label_message)
+    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -104,7 +109,7 @@ fun MessageContextMenu(
                 onClick: () -> Unit
             ) {
                 ListItem(
-                    headlineContent = {
+                    content = {
                         Text(
                             text = text,
                             style = MaterialTheme.typography.bodyLarge,
@@ -170,7 +175,9 @@ fun MessageContextMenu(
                     icon = Icons.Default.ContentCopy,
                     text = stringResource(R.string.inbox_context_menu_copy),
                     onClick = {
-                        clipboard.setText(AnnotatedString(selectedMessage.content))
+                        scope.launch {
+                            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, selectedMessage.content)))
+                        }
                         onDismissRequest()
                     }
                 )

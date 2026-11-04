@@ -28,12 +28,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.CreatePostActivity
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
 import com.synapse.social.studioasinc.ui.createpost.ScheduleDateTimePickerDialog
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 

@@ -342,7 +342,7 @@ fun MessageBubble(
             Surface(
                 color = containerColor,
                 contentColor = contentColor,
-                shape = RoundedCornerShape(Sizes.CornerMedium),
+                shape = RoundedCornerShape(cornerRadius.dp),
                 tonalElevation = Sizes.BorderThin
             ) {
                 Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
@@ -450,7 +450,7 @@ fun MessageBubble(
             Column(horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start) {
                 message.mediaUrl?.let { url ->
                     Surface(
-                        shape = RoundedCornerShape(28.dp),
+                        shape = RoundedCornerShape(cornerRadius.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         color = Color.Transparent,
                         modifier = Modifier
@@ -463,7 +463,7 @@ fun MessageBubble(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(28.dp))
+                                .clip(RoundedCornerShape(cornerRadius.dp))
                                 .clickable { onClick() }
                         )
                     }
@@ -524,7 +524,8 @@ fun MessageBubble(
         }
     }
 
-    val shape = if (isMediaBubble) RoundedCornerShape(28.dp) else standardShape
+    // Media shares the user's bubble radius so the whole lane keeps one corner language.
+    val shape = if (isMediaBubble) RoundedCornerShape(radius) else standardShape
 
     Box(
         modifier = modifier

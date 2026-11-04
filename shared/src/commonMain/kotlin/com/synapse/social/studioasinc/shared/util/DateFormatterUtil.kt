@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.shared.util
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.Padding
@@ -12,7 +12,7 @@ internal object DateFormatterUtil {
     val amzDateFormatter = LocalDateTime.Format {
         year()
         monthNumber(Padding.ZERO)
-        dayOfMonth(Padding.ZERO)
+        day(Padding.ZERO)
         char('T')
         hour(Padding.ZERO)
         minute(Padding.ZERO)

@@ -49,6 +49,10 @@ data class AuthConfig(
             }
         }
 
+        // androidx.security:security-crypto is deprecated upstream with no in-library successor.
+        // These prefs hold auth config keyed by its on-disk format (AES-SIV names, AES-GCM values,
+        // keystore master key), so replacing it is a migration of stored values — not a warning fix.
+        @Suppress("DEPRECATION")
         private fun initializeEncryptedPrefs(context: Context): android.content.SharedPreferences {
             val masterKey = androidx.security.crypto.MasterKey.Builder(context)
                 .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)

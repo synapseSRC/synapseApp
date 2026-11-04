@@ -24,6 +24,7 @@ interface AuthRepository {
     suspend fun handleOAuthCallback(code: String?, accessToken: String?, refreshToken: String?): Result<Unit>
     suspend fun signInWithOAuth(provider: SocialProvider, redirectUrl: String): Result<Unit>
     suspend fun signInWithGoogleIdToken(idToken: String): Result<String>
+    suspend fun importSession(accessToken: String, refreshToken: String): Result<Unit>
     suspend fun linkIdentity(provider: SocialProvider): Result<Unit>
     suspend fun unlinkIdentity(identityId: String): Result<Unit>
     suspend fun getLinkedIdentities(): Result<List<String>>

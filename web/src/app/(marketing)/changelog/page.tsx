@@ -27,17 +27,17 @@ const KIND_STYLES: Record<ChangeKind, { label: string; heading: string; classNam
     added: {
         label: "Added",
         heading: "New features",
-        className: "border-cyan-400/40 bg-cyan-400/10 text-cyan-200",
+        className: "border-cyan-400/40 bg-cyan-400/10 text-cyan-700 dark:text-cyan-200",
     },
     improved: {
         label: "Improved",
         heading: "Improvements",
-        className: "border-violet-400/40 bg-violet-400/10 text-violet-200",
+        className: "border-violet-400/40 bg-violet-400/10 text-violet-800 dark:text-violet-200",
     },
     fixed: {
         label: "Fixed",
         heading: "Bug fixes",
-        className: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+        className: "border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-200",
     },
     changed: {
         label: "Changed",
@@ -87,7 +87,7 @@ function renderInline(text: string): ReactNode {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-foreground underline decoration-border underline-offset-2 transition-colors hover:text-cyan-200"
+                    className="text-foreground underline decoration-border underline-offset-2 transition-colors hover:text-cyan-700 dark:hover:text-cyan-200"
                 >
                     {label}
                 </a>,
@@ -151,7 +151,7 @@ function ReleaseEntry({ release, isLatest }: { release: ChangelogRelease; isLate
                 </h2>
                 {date && <span className="text-sm text-muted-foreground">{date}</span>}
                 {isLatest && (
-                    <span className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-cyan-200">
+                    <span className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-cyan-700 dark:text-cyan-200">
                         Latest
                     </span>
                 )}

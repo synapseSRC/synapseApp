@@ -83,6 +83,8 @@ sealed class SettingsDestination(val route: String) {
 
     object AppLock : SettingsDestination(ROUTE_APP_LOCK)
 
+    object Passkeys : SettingsDestination(ROUTE_PASSKEYS)
+
     companion object {
         const val ROUTE_HUB = "settings_hub"
         const val ROUTE_ACCOUNT = "settings_account"
@@ -127,6 +129,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_PRIVACY_CHECKUP_CATEGORY = "settings_privacy_checkup_category/{categoryId}"
         const val ROUTE_PRIVACY_EXCEPTION_SELECTOR = "settings_privacy_exception_selector/{settingKey}"
         const val ROUTE_APP_LOCK = "settings_app_lock"
+        const val ROUTE_PASSKEYS = "settings_passkeys"
 
         fun createPrivacyCheckupCategoryRoute(categoryId: String): String =
             "settings_privacy_checkup_category/$categoryId"
@@ -175,6 +178,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_PRIVACY_DISAPPEARING_MESSAGES -> PrivacyDisappearingMessages
             ROUTE_PRIVACY_CHECKUP -> PrivacyCheckup
             ROUTE_APP_LOCK -> AppLock
+            ROUTE_PASSKEYS -> Passkeys
             else -> null
         }
     }

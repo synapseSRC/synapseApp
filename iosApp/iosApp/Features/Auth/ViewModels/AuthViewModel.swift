@@ -21,6 +21,7 @@ class AuthViewModel: ObservableObject {
     private var signInUseCase: SignInUseCase?
     private var signUpUseCase: SignUpUseCase?
     private var sendPasswordResetUseCase: SendPasswordResetUseCase?
+    private var signInWithPasskeyUseCase: SignInWithPasskeyUseCase?
 
     // KMP Shared Secure Storage (Keychain)
     private let secureStorage = IosSecureStorage()
@@ -38,11 +39,13 @@ class AuthViewModel: ObservableObject {
     func setDependencies(
         signInUseCase: SignInUseCase,
         signUpUseCase: SignUpUseCase,
-        sendPasswordResetUseCase: SendPasswordResetUseCase
+        sendPasswordResetUseCase: SendPasswordResetUseCase,
+        signInWithPasskeyUseCase: SignInWithPasskeyUseCase
     ) {
         self.signInUseCase = signInUseCase
         self.signUpUseCase = signUpUseCase
         self.sendPasswordResetUseCase = sendPasswordResetUseCase
+        self.signInWithPasskeyUseCase = signInWithPasskeyUseCase
     }
 
     func checkSession() {
@@ -101,6 +104,56 @@ class AuthViewModel: ObservableObject {
 
                 navigator.isUserLoggedIn = true
                 navigator.reset()
+            }
+        }
+    }
+
+    func signInWithPasskey(navigator: AppNavigator) {
+        isLoading = true
+        errorMessage = nil
+
+        analyticsService.trackEvent("passkey_login_attempt", parameters: nil)
+
+        if let useCase = signInWithPasskeyUseCase {
+            Task {
+                do {
+                    // Call the KMP Shared SignInWithPasskeyUseCase. Note: Kotlin suspend functions
+                    // are exposed as Swift `async throws` functions returning the generic result.
+                    let result = try await useCase.invoke()
+
+                    // The use case returns a Kotlin Result<Unit>; a failed Result surfaces via
+                    // exceptionOrNull() rather than a thrown Swift error.
+                    if let error = result.exceptionOrNull() {
+                        DispatchQueue.main.async {
+                            self.isLoading = false
+                            self.errorMessage = error.message ?? "Unknown error"
+                        }
+                        return
+                    }
+
+                    // On success, store token in Keychain via shared KMP IosSecureStorage
+                    secureStorage.save(key: biometricTokenKey, value: "dummy_token_from_passkey_login")
+
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.isAuthenticated = true
+                        self.analyticsService.trackEvent("passkey_login_success", parameters: nil)
+
+                        navigator.isUserLoggedIn = true
+                        navigator.reset()
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
+        } else {
+            // Passkey sign-in requires the shared use case; never fake a session.
+            DispatchQueue.main.async {
+                self.isLoading = false
+                self.errorMessage = "Passkey sign-in is not available"
             }
         }
     }

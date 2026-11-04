@@ -8,7 +8,7 @@ kotlin {
     jvm()
 
     sourceSets {
-        val jvmMain by getting {
+        val jvmMain = getByName("jvmMain") {
             dependencies {
                 implementation(project(":shared"))
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
@@ -24,10 +24,15 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
                 implementation(compose.desktop.currentOs)
-                implementation(compose.material3)
-                implementation(compose.materialIconsExtended)
-                implementation(compose.ui)
-                implementation(compose.materialIconsExtended)
+                // Coordinates spelled out instead of the compose.material3 / compose.ui /
+                // compose.materialIconsExtended accessors, which the Compose plugin now deprecates.
+                // The versions are the ones those accessors resolved to here (material3 is held at
+                // 1.9.0 and the icons library was last released as 1.7.3, both below the 1.11.1
+                // plugin), so this changes no artifact - it only stops the build script from asking
+                // for one through a retired property.
+                implementation("org.jetbrains.compose.material3:material3:1.9.0")
+                implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+                implementation("org.jetbrains.compose.ui:ui:1.11.1")
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.shared.domain.model
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * Domain model representing a blocked user relationship.

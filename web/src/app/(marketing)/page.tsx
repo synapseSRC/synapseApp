@@ -25,14 +25,14 @@ const HomePage = () => {
                     <AnimationContainer className="flex w-full flex-col items-center justify-center text-center">
                         <Link
                             href="/changelog"
-                            className="group relative grid overflow-hidden rounded-full px-4 py-1 shadow-[0_1000px_0_0_hsl(0_0%_20%)_inset] transition-colors duration-200"
+                            className="group relative grid overflow-hidden rounded-full px-4 py-1 shadow-[0_1000px_0_0_hsl(var(--border))_inset] transition-colors duration-200"
                         >
                             <span>
                                 <span className="spark mask-gradient absolute inset-0 h-[100%] w-[100%] animate-flip overflow-hidden rounded-full [mask:linear-gradient(white,_transparent_50%)] before:absolute before:aspect-square before:w-[200%] before:rotate-[-90deg] before:animate-rotate before:bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] before:content-[''] before:[inset:0_auto_auto_50%] before:[translate:-50%_-15%]" />
                             </span>
-                            <span className="backdrop absolute inset-[1px] rounded-full bg-neutral-950 transition-colors duration-200 group-hover:bg-neutral-900" />
+                            <span className="backdrop absolute inset-[1px] rounded-full bg-background transition-colors duration-200 group-hover:bg-muted" />
                             <span className="h-full w-full blur-md absolute bottom-0 inset-x-0 bg-gradient-to-tr from-primary/20"></span>
-                            <span className="z-10 flex h-full w-full items-center justify-center gap-1 py-0.5 text-sm text-neutral-100">
+                            <span className="z-10 flex h-full w-full items-center justify-center gap-1 py-0.5 text-sm text-foreground">
                                 ✨ Synapse v1.0 is out
                                 <ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
                             </span>
@@ -90,7 +90,7 @@ const HomePage = () => {
                                 colorFrom="#7C3AED"
                                 colorTo="#22D3EE"
                             />
-                            <AppPreview className="ring-1 ring-border" />
+                            <AppPreview className="ring-1 ring-neutral-800" />
                             <div className="absolute -bottom-4 inset-x-0 z-40 h-1/2 w-full bg-gradient-to-t from-background"></div>
                             <div className="absolute bottom-0 inset-x-0 z-50 h-1/4 w-full bg-gradient-to-t from-background md:-bottom-8"></div>
                         </div>

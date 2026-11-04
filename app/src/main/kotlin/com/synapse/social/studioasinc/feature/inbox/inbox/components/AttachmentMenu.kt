@@ -83,6 +83,9 @@ fun MediaPreviewDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        // CropImageContract is deprecated upstream (com.canhub.cropper) with no drop-in replacement;
+        // rolling a custom ActivityResultContract is a separate project, not a warning fix.
+        @Suppress("DEPRECATION")
         val cropImageLauncher = rememberLauncherForActivityResult(contract = CropImageContract()) { result ->
             if (result.isSuccessful) {
                 result.uriContent?.let { croppedUri ->
@@ -144,6 +147,7 @@ fun MediaPreviewDialog(
 
                         if (activeMediaType == "image") {
                             IconButton(onClick = {
+                                @Suppress("DEPRECATION")
                                 cropImageLauncher.launch(
                                     CropImageContractOptions(
                                         uri = activeFile.uri,

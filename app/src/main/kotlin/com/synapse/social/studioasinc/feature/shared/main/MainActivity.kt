@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -87,6 +88,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         enableEdgeToEdge()
+
+        // Back with nothing left to pop closes the whole task, not just this activity. The
+        // dispatcher consults NavHost's own callbacks first, so this only runs once the graph is
+        // at its start destination - which is when the retired onBackPressed override used to run.
+        onBackPressedDispatcher.addCallback(this) {
+            finishAffinity()
+        }
 
         lifecycleScope.launch {
             val settingsRepository = com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl.getInstance(this@MainActivity)
@@ -235,12 +243,6 @@ class MainActivity : AppCompatActivity() {
             notificationManager.createNotificationChannel(messagesChannel)
             notificationManager.createNotificationChannel(generalChannel)
         }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        super.onBackPressed()
-        finishAffinity()
     }
 }
 

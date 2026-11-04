@@ -3,7 +3,6 @@ package com.synapse.social.studioasinc.core.util
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.model.chat.AttachmentType
 import com.synapse.social.studioasinc.ui.settings.AutoDownloadRules
@@ -19,40 +18,25 @@ object AutoDownloadManager {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             ?: return NetworkType.NONE
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = cm.activeNetwork ?: return NetworkType.NONE
-            val capabilities = cm.getNetworkCapabilities(network) ?: return NetworkType.NONE
+        // minSdk is 26, so activeNetwork/getNetworkCapabilities are always available and roaming is
+        // readable straight from the capabilities (NET_CAPABILITY_NOT_ROAMING is API 21+). The
+        // deprecated NetworkInfo fallbacks this function used to branch into — including the
+        // pre-API-23 path that could never run here — are gone.
+        val network = cm.activeNetwork ?: return NetworkType.NONE
+        val capabilities = cm.getNetworkCapabilities(network) ?: return NetworkType.NONE
 
-            if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
-                return NetworkType.NONE
-            }
+        if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+            return NetworkType.NONE
+        }
 
-            val isRoaming = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING)
-            } else {
-                @Suppress("DEPRECATED")
-                val activeNetworkInfo = cm.activeNetworkInfo
-                activeNetworkInfo?.isRoaming == true
-            }
+        if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING)) {
+            return NetworkType.ROAMING
+        }
 
-            if (isRoaming) return NetworkType.ROAMING
-
-            return when {
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> NetworkType.WIFI
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> NetworkType.MOBILE
-                else -> NetworkType.WIFI
-            }
-        } else {
-            @Suppress("DEPRECATED")
-            val activeNetworkInfo = cm.activeNetworkInfo ?: return NetworkType.NONE
-            if (!activeNetworkInfo.isConnected) return NetworkType.NONE
-            if (activeNetworkInfo.isRoaming) return NetworkType.ROAMING
-
-            return when (activeNetworkInfo.type) {
-                ConnectivityManager.TYPE_WIFI -> NetworkType.WIFI
-                ConnectivityManager.TYPE_MOBILE -> NetworkType.MOBILE
-                else -> NetworkType.WIFI
-            }
+        return when {
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> NetworkType.WIFI
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> NetworkType.MOBILE
+            else -> NetworkType.WIFI
         }
     }
 

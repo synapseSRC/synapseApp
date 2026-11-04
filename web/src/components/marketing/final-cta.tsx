@@ -23,7 +23,7 @@ const FinalCta = ({ title, description, className }: FinalCtaProps) => {
             <AnimationContainer delay={0.1}>
                 <LampContainer>
                     <div className="relative flex w-full flex-col items-center justify-center text-center">
-                        <h2 className="mt-8 bg-gradient-to-b from-neutral-200 to-neutral-400 py-4 text-4xl font-medium !leading-[1.15] tracking-tight text-transparent bg-clip-text font-heading md:text-7xl text-balance">
+                        <h2 className="mt-8 bg-gradient-to-b from-neutral-700 to-neutral-500 dark:from-neutral-200 dark:to-neutral-400 py-4 text-4xl font-medium !leading-[1.15] tracking-tight text-transparent bg-clip-text font-heading md:text-7xl text-balance">
                             {title}
                         </h2>
                         <p className="mx-auto mt-6 max-w-md text-muted-foreground">

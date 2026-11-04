@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.home.home
 
 import androidx.annotation.VisibleForTesting
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.viewmodel.BaseViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -57,6 +58,7 @@ data class FeedUiState(
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
+    private val application: android.app.Application,
     private val getFeedPagedUseCase: GetFeedPagedUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val isPostOwnerUseCase: IsPostOwnerUseCase,
@@ -233,10 +235,16 @@ class FeedViewModel @Inject constructor(
                 repostPostUseCase(post.id)
             }
 
-            result.onFailure {
-                // Revert on failure
+            result.onSuccess {
+                // The own-repost row is a new feed item; pull a fresh page to surface it.
+                refresh()
+            }.onFailure {
+                // Revert on failure and tell the user — a silent revert looks like a no-op.
                 cacheModifiedPost(post)
                 PostEventBus.emit(PostEvent.Updated(post))
+                updateState {
+                    it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+                }
             }
         }
     }
@@ -270,10 +278,6 @@ class FeedViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun sharePost(post: Post) {
-        // UI action
     }
 
     fun copyPostLink(post: Post) {

@@ -6,7 +6,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
@@ -137,7 +137,7 @@ fun PrivacyCheckupScreen(
                     SettingsNavigationItem(
                         title = "Add more privacy to your chats",
                         subtitle = "Protect your messages and media with lock and timer controls",
-                        imageVector = Icons.Filled.Chat,
+                        imageVector = Icons.AutoMirrored.Filled.Chat,
                         position = SettingsItemPosition.Middle,
                         onClick = { onNavigateToCategory("chats") }
                     )

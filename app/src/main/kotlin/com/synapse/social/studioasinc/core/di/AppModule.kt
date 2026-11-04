@@ -1,8 +1,7 @@
-﻿package com.synapse.social.studioasinc.core.di
+package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.synapse.social.studioasinc.data.local.AndroidPasskeyManager
 import com.synapse.social.studioasinc.data.local.AndroidPlatformInfoProvider
 import com.synapse.social.studioasinc.data.local.AppSettingsManager
 import com.synapse.social.studioasinc.data.repository.*
@@ -19,7 +18,6 @@ import com.synapse.social.studioasinc.shared.data.local.AndroidSecureStorage
 import com.synapse.social.studioasinc.shared.data.local.SecureStorage
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
@@ -94,14 +92,6 @@ import kotlinx.serialization.json.Json
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    @Provides
-    @Singleton
-    fun providePasskeyManager(
-        passkeyCredentialManager: com.synapse.social.studioasinc.ui.settings.PasskeyCredentialManager,
-        @ApplicationContext context: android.content.Context
-    ): com.synapse.social.studioasinc.domain.repository.PasskeyManager {
-        return AndroidPasskeyManager(passkeyCredentialManager, context)
-    }
     @Provides
     @Singleton
     fun provideMediaUploadHandler(

@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.shared.data.datasource
 import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.util.UUIDUtils
+import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageReactionDto
 import io.github.aakira.napier.Napier
@@ -32,6 +33,8 @@ import kotlinx.coroutines.yield
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Clock
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.booleanOrNull
@@ -248,7 +251,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             Napier.d("Closing realtime channel for messages: $channelId", tag = "Realtime")
             collector.cancel()
             statusMonitor.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -347,14 +350,118 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
                 } catch (e: Exception) {}
             }
         }
-    }
+    }.buffer(Channel.BUFFERED)
+
+    /**
+     * Emits the chat id whenever this user's own `chat_participants` row changes: being added to a
+     * group — even one without any messages yet — or being removed from one. The inbox listens to
+     * this so a freshly created empty group surfaces immediately instead of waiting for the first
+     * message to arrive through [subscribeToInboxUpdates]. Row visibility is enforced by RLS and
+     * narrowed further with a server-side filter on the user's own id.
+     */
+    fun subscribeToRosterChanges(): Flow<String> = callbackFlow {
+        val currentUserId = getCurrentUserId()
+        if (currentUserId.isNullOrBlank()) {
+            close(IllegalStateException("Not logged in"))
+            return@callbackFlow
+        }
+        val channelId = uniqueTopic("roster_flow")
+        Napier.d("Creating realtime channel for roster: $channelId", tag = "Realtime")
+
+        try {
+            client.realtime.connect()
+        } catch (e: Exception) {}
+
+        val channel = client.realtime.channel(channelId)
+        val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+            table = "chat_participants"
+            filter("user_id", FilterOperator.EQ, currentUserId)
+        }
+
+        val rosterJson = Json { ignoreUnknownKeys = true }
+        val subscriptionReady = CompletableDeferred<Unit>()
+        val collector = launch(AppDispatchers.IO) {
+            try {
+                flow
+                    .onStart { subscriptionReady.complete(Unit) }
+                    .collect { action ->
+                        try {
+                            val chatId = when (action) {
+                                is PostgresAction.Insert -> action.decodeRecord<ChatParticipantDto>().chatId
+                                is PostgresAction.Update -> action.decodeRecord<ChatParticipantDto>().chatId
+                                is PostgresAction.Delete -> runCatching {
+                                    rosterJson.decodeFromJsonElement(ChatParticipantDto.serializer(), action.oldRecord).chatId
+                                }.getOrNull()
+                                else -> null
+                            }
+                            if (chatId != null) {
+                                Napier.d("Realtime roster change received for chat: $chatId", tag = "Realtime")
+                                trySend(chatId)
+                            }
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            Napier.e("Error decoding real-time roster change", e, tag = "Realtime")
+                        }
+                    }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.e("Roster flow collector terminated unexpectedly", e, tag = "Realtime")
+                    close(e)
+                }
+            }
+        }
+
+        launch(AppDispatchers.IO) {
+            try {
+                subscriptionReady.await()
+                yield()
+                var subscribed = false
+                var attempts = 0
+                while (!subscribed && attempts < 3 && isActive) {
+                    try {
+                        channel.subscribe(blockUntilSubscribed = true)
+                        subscribed = true
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        attempts++
+                        if (attempts < 3) delay(1000L * attempts)
+                    }
+                }
+                if (!subscribed && isActive) {
+                    try {
+                        channel.subscribe(blockUntilSubscribed = false)
+                    } catch (e: Exception) {
+                        if (e !is CancellationException) {
+                            Napier.e("Failed to subscribe to roster channel after retries", e, tag = "Realtime")
+                            close(e)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    Napier.e("Failed to subscribe to roster channel", e, tag = "Realtime")
+                    close(e)
+                }
+            }
+        }
+
+        awaitClose {
+            collector.cancel()
+            CoroutineScope(AppDispatchers.IO).launch {
+                try {
+                    channel.unsubscribe()
+                    client.realtime.removeChannel(channel)
+                } catch (e: Exception) {}
+            }
+        }
+    }.buffer(Channel.BUFFERED)
 
     /**
      * Subscribes to typing indicators from all participants in a chat using Supabase Broadcast.
@@ -487,7 +594,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)
@@ -546,7 +653,7 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         awaitClose {
             collector.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
+            CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()
                     client.realtime.removeChannel(channel)

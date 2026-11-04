@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PermMedia
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ViewQuilt
+import androidx.compose.material.icons.automirrored.filled.ViewQuilt
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -159,7 +159,7 @@ fun CustomizationCategorySection(
             SettingsNavigationItem(
                 title = stringResource(R.string.nav_profile_layout),
                 subtitle = stringResource(R.string.nav_profile_layout_sub),
-                imageVector = Icons.Filled.ViewQuilt,
+                imageVector = Icons.AutoMirrored.Filled.ViewQuilt,
                 onClick = { onCategoryClick(ProfileCategoryType.PROFILE_LAYOUT) },
                 position = SettingsItemPosition.Middle
             )

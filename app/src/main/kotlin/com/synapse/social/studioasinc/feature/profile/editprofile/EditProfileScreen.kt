@@ -40,7 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -79,18 +79,23 @@ fun EditProfileScreen(
     val context = LocalContext.current
 
 
+    // CropImageContract is deprecated upstream (com.canhub.cropper) with no drop-in replacement;
+    // rolling a custom ActivityResultContract is a separate project, not a warning fix.
+    @Suppress("DEPRECATION")
     val avatarCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { viewModel.onEvent(EditProfileEvent.AvatarCropped(it)) }
         }
     }
 
+    @Suppress("DEPRECATION")
     val coverCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { viewModel.onEvent(EditProfileEvent.CoverCropped(it)) }
         }
     }
 
+    @Suppress("DEPRECATION")
     val avatarPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -109,6 +114,7 @@ fun EditProfileScreen(
         }
     }
 
+    @Suppress("DEPRECATION")
     val coverPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->

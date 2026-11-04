@@ -30,7 +30,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.NewReleases
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -67,7 +67,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.domain.model.release.AppRelease
@@ -296,11 +296,11 @@ private fun ReleaseHighlightCard(
                     modifier = Modifier.heightIn(min = dimensionResource(R.dimen.about_touch_target_min_height)),
                     contentPadding = PaddingValues(horizontal = Spacing.space4, vertical = Spacing.space4)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.size(dimensionResource(R.dimen.about_release_action_icon_size))
-                    )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = null,
+                    modifier = Modifier.size(dimensionResource(R.dimen.about_release_action_icon_size))
+                )
                     Spacer(modifier = Modifier.width(Spacing.space8))
                     Text(stringResource(R.string.whats_new_view_on_github))
                 }
@@ -366,7 +366,7 @@ private fun ReleaseHistoryRow(
                     // A release without notes has nothing to expand; the row opens it on GitHub.
                     Spacer(modifier = Modifier.width(Spacing.space8))
                     Icon(
-                        imageVector = Icons.Filled.OpenInNew,
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                         contentDescription = stringResource(R.string.whats_new_view_on_github),
                         modifier = Modifier.size(dimensionResource(R.dimen.about_release_action_icon_size)),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -389,7 +389,7 @@ private fun ReleaseHistoryRow(
                         contentPadding = PaddingValues(horizontal = Spacing.space4, vertical = Spacing.space4)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.OpenInNew,
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = null,
                             modifier = Modifier.size(dimensionResource(R.dimen.about_release_action_icon_size))
                         )

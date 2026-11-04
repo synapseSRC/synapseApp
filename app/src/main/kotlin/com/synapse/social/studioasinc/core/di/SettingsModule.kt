@@ -1,4 +1,4 @@
-﻿package com.synapse.social.studioasinc.core.di
+package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -15,9 +15,10 @@ import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.data.local.AndroidSecureStorage
 import com.synapse.social.studioasinc.shared.data.local.SecureStorage
+import com.synapse.social.studioasinc.shared.data.passkey.AndroidPasskeyPlatformManager
+import com.synapse.social.studioasinc.shared.data.passkey.PasskeyActivityProvider
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
@@ -48,6 +49,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.LinkPreviewReposi
 import com.synapse.social.studioasinc.shared.domain.repository.MediaUploadRepository
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.repository.OfflineActionRepository
+import com.synapse.social.studioasinc.shared.domain.repository.PasskeyPlatformManager
 import com.synapse.social.studioasinc.shared.domain.repository.PasskeyRepository
 import com.synapse.social.studioasinc.shared.domain.repository.PlatformInfoProvider
 import com.synapse.social.studioasinc.shared.domain.repository.PostActionsRepository
@@ -154,6 +156,20 @@ object SettingsModule {
         client: io.github.jan.supabase.SupabaseClient
     ): PasskeyRepository {
         return com.synapse.social.studioasinc.shared.data.repository.PasskeyRepositoryImpl(client)
+    }
+
+    @Provides
+    @Singleton
+    fun providePasskeyActivityProvider(): PasskeyActivityProvider {
+        return PasskeyActivityProvider()
+    }
+
+    @Provides
+    @Singleton
+    fun providePasskeyPlatformManager(
+        activityProvider: PasskeyActivityProvider
+    ): PasskeyPlatformManager {
+        return AndroidPasskeyPlatformManager(activityProvider)
     }
 
 }

@@ -13,10 +13,16 @@ import javax.inject.Singleton
 class SettingsPreferences @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext context: Context
 ) {
+    // androidx.security:security-crypto is deprecated upstream with no in-library successor. This
+    // file is encrypted with its on-disk format (AES-SIV names, AES-GCM values, keystore master
+    // key), so swapping the implementation is a data migration for privacy/security settings, not a
+    // warning fix — hence the documented suppression on the two construction sites below.
+    @Suppress("DEPRECATION")
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
+    @Suppress("DEPRECATION") // See the note on `masterKey`.
     private val prefs: SharedPreferences = EncryptedSharedPreferences.create(
         context,
         "synapse_settings",

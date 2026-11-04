@@ -397,6 +397,7 @@ fun SettingsSelectionItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsSliderItem(
     title: String,
@@ -460,11 +461,14 @@ fun SettingsSliderItem(
 
             Spacer(modifier = Modifier.height(Spacing.space8))
 
-            Slider(
+            val sliderState = rememberSliderState(
                 value = value,
-                onValueChange = onValueChange,
-                valueRange = valueRange,
                 steps = steps,
+                trackRange = valueRange
+            )
+            Slider(
+                state = sliderState,
+                onValueChange = onValueChange,
                 enabled = enabled,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,

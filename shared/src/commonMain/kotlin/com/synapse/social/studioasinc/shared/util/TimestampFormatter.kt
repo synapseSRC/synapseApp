@@ -1,8 +1,9 @@
 package com.synapse.social.studioasinc.shared.util
 
 import kotlin.time.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 
 object TimestampFormatter {
@@ -59,13 +60,13 @@ object TimestampFormatter {
             diff < 172800 -> "Yesterday"
             else -> {
                 val localTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-                val month = when (localTime.monthNumber) {
+                val month = when (localTime.month.number) {
                     1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
                     5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
                     9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
                     else -> ""
                 }
-                "$month ${localTime.dayOfMonth}"
+                "$month ${localTime.day}"
             }
         }
     }
@@ -105,7 +106,7 @@ object TimestampFormatter {
             }
             else -> {
                 val localTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-                val month = when (localTime.monthNumber) {
+                val month = when (localTime.month.number) {
                     1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
                     5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
                     9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
@@ -119,7 +120,7 @@ object TimestampFormatter {
                     hour > 12 -> hour - 12
                     else -> hour
                 }
-                "$month ${localTime.dayOfMonth} at $displayHour:$minute $amPm"
+                "$month ${localTime.day} at $displayHour:$minute $amPm"
             }
         }
     }

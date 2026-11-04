@@ -44,7 +44,10 @@ fun ViewerListSheet(
     onUserClick: (User) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -211,7 +214,7 @@ fun StoryOptionsSheet(
     onMute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -226,7 +229,7 @@ fun StoryOptionsSheet(
             if (isOwnStory) {
 
                 ListItem(
-                    headlineContent = {
+                    content = {
                         Text(
                             stringResource(R.string.story_delete),
                             color = MaterialTheme.colorScheme.error,
@@ -245,7 +248,7 @@ fun StoryOptionsSheet(
             } else {
 
                 ListItem(
-                    headlineContent = {
+                    content = {
                         Text(
                             stringResource(R.string.story_mute),
                             style = MaterialTheme.typography.bodyLarge
@@ -262,7 +265,7 @@ fun StoryOptionsSheet(
                 )
 
                 ListItem(
-                    headlineContent = {
+                    content = {
                         Text(
                             stringResource(R.string.story_report),
                             color = MaterialTheme.colorScheme.error,
@@ -290,7 +293,10 @@ fun StoryReactionsSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,

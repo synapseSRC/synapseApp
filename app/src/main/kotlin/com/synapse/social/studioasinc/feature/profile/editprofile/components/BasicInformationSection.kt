@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -79,7 +79,7 @@ fun BasicInformationSection(
                     label = { Text(stringResource(R.string.biography)) },
                     placeholder = { Text(stringResource(R.string.bio_hint)) },
                     leadingIcon = {
-                        Icon(imageVector = Icons.Filled.Notes, contentDescription = null)
+                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null)
                     },
                     supportingText = {
                         val currentLength = bio.length

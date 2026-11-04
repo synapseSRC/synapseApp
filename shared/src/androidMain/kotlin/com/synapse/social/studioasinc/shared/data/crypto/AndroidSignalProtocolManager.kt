@@ -165,20 +165,21 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
         val decodedBody = Base64.decode(message.body, Base64.DEFAULT)
 
         val decrypted = if (message.type == CiphertextMessage.PREKEY_TYPE) {
+            // A PreKey envelope bootstraps the receiving session itself. Its serialized bytes
+            // include the PreKey header, so they are NOT a valid plain SignalMessage — parsing
+            // them as one (the previous "fallback when a session exists") always threw and, worse,
+            // re-processed a single-use envelope while masking the true root cause. Hand the
+            // envelope to libsignal once and surface the real exception on failure.
             try {
                 sessionCipher.decrypt(PreKeySignalMessage(decodedBody))
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
-                if (store.containsSession(address)) {
-                    Logger.w(
-                        "E2EE_DECRYPT: PreKey decrypt failed, trying standard SignalMessage decrypt",
-                        tag = "E2EE",
-                        throwable = e
-                    )
-                    sessionCipher.decrypt(SignalMessage(decodedBody))
-                } else {
-                    throw e
-                }
+                Logger.e(
+                    "E2EE_DECRYPT: PreKey decrypt failed for sender $senderId (${e.javaClass.simpleName}: ${e.message})",
+                    tag = "E2EE",
+                    throwable = e
+                )
+                throw e
             }
         } else {
             sessionCipher.decrypt(SignalMessage(decodedBody))

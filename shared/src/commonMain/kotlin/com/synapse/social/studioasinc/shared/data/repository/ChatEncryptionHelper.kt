@@ -9,12 +9,12 @@ import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDa
 import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.shared.util.Logger
 import kotlinx.coroutines.CancellationException
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -39,15 +39,19 @@ internal class ChatEncryptionHelper(
      * where certain messages (like those consuming a one-time pre-key) can only
      * be decrypted once by the protocol's state machine.
      */
-    private val decryptedMessageCache = ConcurrentHashMap<String, String>()
-    private val decryptionMutexes = ConcurrentHashMap<String, Mutex>()
+    private val decryptedMessageCache = mutableMapOf<String, String>()
+    private val decryptionMutexes = mutableMapOf<String, Mutex>()
+    private val cacheLock = Mutex()
 
-    fun cacheDecrypted(messageId: String, content: String) {
-        if (messageId.isNotBlank()) decryptedMessageCache[messageId] = content
+    suspend fun cacheDecrypted(messageId: String, content: String) {
+        if (messageId.isBlank()) return
+        cacheLock.withLock { decryptedMessageCache[messageId] = content }
     }
-    private val mutexLock = Any()
 
-    private fun mutexFor(senderId: String): Mutex = synchronized(mutexLock) {
+    private suspend fun decryptedOrNull(messageId: String): String? =
+        cacheLock.withLock { decryptedMessageCache[messageId] }
+
+    private suspend fun mutexFor(senderId: String): Mutex = cacheLock.withLock {
         decryptionMutexes.getOrPut(senderId.ifBlank { "__global__" }) { Mutex() }
     }
 
@@ -59,9 +63,9 @@ internal class ChatEncryptionHelper(
     private fun extractContent(jsonString: String): Triple<String, String?, String?> {
         return try {
             val jsonPayload = Json.parseToJsonElement(jsonString).jsonObject
-            val content = jsonPayload["content"]?.jsonPrimitive?.content ?: jsonString
-            val mediaUrl = jsonPayload["mediaUrl"]?.jsonPrimitive?.content
-            val metadata = jsonPayload["metadata"]?.jsonPrimitive?.content
+            val content = jsonPayload["content"]?.jsonPrimitive?.contentOrNull ?: jsonString
+            val mediaUrl = jsonPayload["mediaUrl"]?.jsonPrimitive?.contentOrNull
+            val metadata = jsonPayload["metadata"]?.jsonPrimitive?.contentOrNull
             Triple(content, mediaUrl, metadata)
         } catch (_: Exception) {
             Triple(jsonString, null, null)
@@ -84,7 +88,7 @@ internal class ChatEncryptionHelper(
 
         return mutexFor(this.senderId).withLock {
             // 1) Check in-memory cache first (fastest)
-            decryptedMessageCache[messageId]?.let { cached ->
+            decryptedOrNull(messageId)?.let { cached ->
                 Logger.d("E2EE_DECRYPT: Found message $messageId in memory cache", tag = "E2EE")
                 val (content, mediaUrl, metadata) = extractContent(cached)
                 return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata)
@@ -100,7 +104,7 @@ internal class ChatEncryptionHelper(
                 !EncryptedPayloadDetector.isEncryptedPayload(dbCached.content)
             ) {
                 Logger.d("E2EE_DECRYPT: Found message $messageId in local DB cache", tag = "E2EE")
-                decryptedMessageCache[messageId] = dbCached.content
+                cacheDecrypted(messageId, dbCached.content)
                 return@withLock this.copy(content = dbCached.content, mediaUrl = dbCached.mediaUrl ?: this.mediaUrl, metadata = dbCached.metadataContainer?.let {
                     try { Json.encodeToString(com.synapse.social.studioasinc.shared.domain.model.chat.MessageMetadataContainer.serializer(), it) } catch (_: Exception) { null }
                 } ?: this.metadata)
@@ -119,7 +123,7 @@ internal class ChatEncryptionHelper(
                     if (myPayloadElement is JsonPrimitive && myPayloadElement.isString) {
                         val plaintextPayload = myPayloadElement.content
                         val (content, mediaUrl, metadata) = extractContent(plaintextPayload)
-                        decryptedMessageCache[messageId] = plaintextPayload
+                        cacheDecrypted(messageId, plaintextPayload)
                         try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
                         return@withLock this.copy(
                             content = content,
@@ -133,23 +137,26 @@ internal class ChatEncryptionHelper(
                         val senderId = this.senderId
                         val myPayload = Json.decodeFromJsonElement(EncryptedMessage.serializer(), myPayloadElement)
                         try {
-                            if (!signalProtocolManager.hasSession(senderId)) {
-                                try {
-                                    ensureSession(senderId)
-                                } catch (sessionErr: Exception) {
-                                    Logger.w("E2EE_DECRYPT: Session not pre-established with $senderId, attempting direct decrypt", tag = "E2EE")
-                                }
-                            }
+                            // A PreKey envelope bootstraps the receiving session itself. Do NOT
+                            // establish an outgoing session toward the sender (would consume the
+                            // sender's pre-keys) and do NOT wipe an existing receiving session before
+                            // attempting decryption. Only clear stale state on failure.
                             val decryptedBytes = signalProtocolManager.decryptMessage(senderId = senderId, message = myPayload)
                             val decryptedContent = decryptedBytes.decodeToString()
                             Logger.d("E2EE_DECRYPT: Successfully decrypted message $messageId", tag = "E2EE")
-                            decryptedMessageCache[messageId] = decryptedContent
+                            cacheDecrypted(messageId, decryptedContent)
                             val (content, mediaUrl, metadata) = extractContent(decryptedContent)
                             try { cachedMessageDao?.updateContent(messageId, content) } catch (_: Exception) {}
                             return@withLock this.copy(content = content, mediaUrl = mediaUrl ?: this.mediaUrl, metadata = metadata ?: this.metadata, encryptionFailureReason = null)
                         } catch (decryptError: Throwable) {
                             if (decryptError is CancellationException) throw decryptError
-                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Session preserved — Double Ratchet may recover on next message.", tag = "E2EE", throwable = decryptError)
+                            // A PreKey envelope can only be consumed once, and re-establishing an
+                            // outgoing session toward the sender is exactly what corrupts bootstrap, so
+                            // we do NOT retry the same payload here. Clear any stale session bound to a
+                            // previous identity so the sender's *next* message opens a clean receiving
+                            // session; the Double Ratchet recovers from there.
+                            Logger.e("E2EE_DECRYPT: Signal decryption failed for message $messageId from $senderId. Clearing stale session so the next message can bootstrap cleanly.", tag = "E2EE", throwable = decryptError)
+                            try { signalProtocolManager.deleteSession(senderId) } catch (_: Exception) {}
                         }
                     }
                     return@withLock this.copy(encryptionFailureReason = "decryption_failed")
@@ -272,7 +279,7 @@ internal class ChatEncryptionHelper(
                         Logger.d("E2EE_INIT: Fresh E2EE setup — no local or remote keys", tag = "E2EE")
                     }
 
-val identity = signalProtocolManager!!.generateIdentityAndKeys()
+                    val identity = signalProtocolManager.generateIdentityAndKeys()
                     Logger.d("E2EE_INIT: Generated identity with regId: ${identity.registrationId}", tag = "E2EE")
 
                     val preKeys = signalProtocolManager.generateOneTimePreKeys(startId = 1, count = 100)

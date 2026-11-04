@@ -12,7 +12,6 @@ import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.data.local.SecureStorage
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.StoryDao
@@ -51,7 +50,8 @@ object BackendModule {
         presenceRepository: PresenceRepository,
         offlineActionRepository: OfflineActionRepository,
         cachedMessageDao: CachedMessageDao,
-        cachedConversationDao: CachedConversationDao
+        cachedConversationDao: CachedConversationDao,
+        secureStorage: SecureStorage
     ): ChatRepository {
         return SupabaseChatRepository(
             SupabaseChatDataSource(client),
@@ -61,7 +61,8 @@ object BackendModule {
             presenceRepository,
             offlineActionRepository,
             cachedMessageDao,
-            cachedConversationDao
+            cachedConversationDao,
+            secureStorage = secureStorage
         )
     }
 
@@ -170,7 +171,7 @@ object BackendModule {
 
     @Provides
     @Singleton
-    fun provideCommentLocalDataSource(storageDatabase: StorageDatabase, commentDao: CommentDao): CommentLocalDataSource = CommentLocalDataSource(storageDatabase, commentDao)
+    fun provideCommentLocalDataSource(storageDatabase: StorageDatabase, postDao: PostDao): CommentLocalDataSource = CommentLocalDataSource(storageDatabase, postDao)
 
     @Provides
     @Singleton
@@ -195,10 +196,6 @@ object BackendModule {
     @Provides
     @Singleton
     fun provideBookmarkRepository(client: SupabaseClientType): BookmarkRepositoryImpl = BookmarkRepositoryImpl(client)
-
-    @Provides
-    @Singleton
-    fun provideReshareRepository(client: SupabaseClientType): ReshareRepositoryImpl = ReshareRepositoryImpl(client)
 
     @Provides
     @Singleton

@@ -45,6 +45,7 @@ import com.synapse.social.studioasinc.core.monitoring.SentryInitializer
 import com.synapse.social.studioasinc.core.crash.GlobalCrashHandler
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
+import com.synapse.social.studioasinc.shared.data.passkey.PasskeyActivityProvider
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.collect
@@ -99,6 +100,12 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
      * push. It is the same lifetime the presence tracker has, for the same reason.
      */
     @Inject lateinit var incomingCallWatcher: IncomingCallWatcher
+
+    /**
+     * Credential Manager only shows its passkey prompt when given an Activity, so the resumed one is
+     * tracked from process start — before any screen has had a chance to ask for it.
+     */
+    @Inject lateinit var passkeyActivityProvider: PasskeyActivityProvider
     private lateinit var mediaCacheCleanupManager: MediaCacheCleanupManager
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -116,6 +123,8 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
         super.onCreate()
         SentryInitializer.initialize(this)
         instance = this
+
+        registerActivityLifecycleCallbacks(passkeyActivityProvider)
 
         GlobalCrashHandler.install(this)
 

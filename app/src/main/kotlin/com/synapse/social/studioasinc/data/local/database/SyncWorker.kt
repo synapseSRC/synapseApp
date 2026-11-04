@@ -10,6 +10,7 @@ import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.domain.model.ReactionType
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import android.util.Log
@@ -39,8 +40,8 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters):
                 when (action.actionType) {
                     PendingAction.ActionType.LIKE -> {
                         val payload = Json.parseToJsonElement(action.payload ?: "{}").jsonObject
-                        val reactionType = ReactionType.valueOf(payload["reactionType"]?.jsonPrimitive?.content ?: "LIKE")
-                        val oldReaction = payload["oldReaction"]?.jsonPrimitive?.content?.let { ReactionType.valueOf(it) }
+                        val reactionType = ReactionType.valueOf(payload["reactionType"]?.jsonPrimitive?.contentOrNull ?: "LIKE")
+                        val oldReaction = payload["oldReaction"]?.jsonPrimitive?.contentOrNull?.let { ReactionType.valueOf(it) }
 
                         postRepository.toggleReaction(
                             postId = action.targetId,
@@ -68,11 +69,11 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters):
 
                         chatRepository.sendMessage(
                             chatId = action.targetId,
-                            content = payload["content"]?.jsonPrimitive?.content ?: "",
-                            mediaUrl = payload["mediaUrl"]?.jsonPrimitive?.content,
-                            messageType = payload["messageType"]?.jsonPrimitive?.content ?: "text",
-                            expiresAt = payload["expiresAt"]?.jsonPrimitive?.content,
-                            replyToId = payload["replyToId"]?.jsonPrimitive?.content,
+                            content = payload["content"]?.jsonPrimitive?.contentOrNull ?: "",
+                            mediaUrl = payload["mediaUrl"]?.jsonPrimitive?.contentOrNull,
+                            messageType = payload["messageType"]?.jsonPrimitive?.contentOrNull ?: "text",
+                            expiresAt = payload["expiresAt"]?.jsonPrimitive?.contentOrNull,
+                            replyToId = payload["replyToId"]?.jsonPrimitive?.contentOrNull,
                             attachments = parsedAttachments
                         ).isSuccess
                     }

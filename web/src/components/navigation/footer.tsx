@@ -36,7 +36,7 @@ const Column = ({
 }) => (
     <AnimationContainer delay={delay}>
         <div className="flex flex-col">
-            <h3 className="text-base font-medium text-white">{title}</h3>
+            <h3 className="text-base font-medium text-foreground">{title}</h3>
             <ul className="mt-4 text-sm text-muted-foreground space-y-2">
                 {links.map((link) => {
                     const external = /^https?:/.test(link.href);
@@ -60,7 +60,7 @@ const Column = ({
 
 const Footer = () => {
     return (
-        <footer className="flex flex-col relative items-center justify-center border-t border-border pt-16 pb-8 md:pb-0 px-6 lg:px-8 w-full max-w-6xl mx-auto lg:pt-32 bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)]">
+        <footer className="flex flex-col relative items-center justify-center border-t border-border pt-16 pb-8 md:pb-0 px-6 lg:px-8 w-full max-w-6xl mx-auto lg:pt-32 bg-[radial-gradient(35%_128px_at_50%_0%,hsl(var(--foreground)/0.06),transparent)]">
 
             <div className="absolute top-0 left-1/2 right-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1.5 bg-foreground rounded-full"></div>
 
@@ -105,7 +105,7 @@ const Footer = () => {
                 <AnimationContainer delay={0.7}>
                     <p className="mt-3 text-sm text-muted-foreground md:mt-0">
                         Made with an open roadmap —{" "}
-                        <Link href="/changelog" className="text-foreground hover:text-cyan-300 transition-colors duration-300">
+                        <Link href="/changelog" className="text-foreground hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors duration-300">
                             see what shipped
                         </Link>
                     </p>

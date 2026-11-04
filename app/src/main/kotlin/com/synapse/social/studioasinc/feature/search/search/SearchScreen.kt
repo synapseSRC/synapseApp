@@ -1,4 +1,5 @@
 package com.synapse.social.studioasinc.ui.search
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -43,7 +44,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.search.search.components.AccountCard
 import com.synapse.social.studioasinc.feature.search.search.components.HashtagCard
 import com.synapse.social.studioasinc.feature.search.search.components.NewsCard
@@ -134,6 +135,10 @@ fun SearchScreen(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
                 ) {
+                    // M3 SearchBar/InputField are deprecated in favour of the state-driven redesign
+                    // (SearchBarState + TextFieldState + Expanded*SearchBar). Adopting it is a UI rewrite
+                    // with regression risk, not a warning fix — hence the documented suppression.
+                    @Suppress("DEPRECATION")
                     SearchBar(
                         inputField = {
                             SearchBarDefaults.InputField(
@@ -512,7 +517,7 @@ onMediaClick = { post, index ->
             },
             onCopyLink = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText(postLinkLabel, "synapse://post/${post.id}")
+                val clip = ClipData.newPlainText(postLinkLabel, DeepLink.post(post.id))
                 clipboard.setPrimaryClip(clip)
                 Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
                 selectedPost = null

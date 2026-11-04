@@ -1716,21 +1716,22 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="chat_action_video_call">Video call</string>
     <string name="chat_action_more_options">More options</string>
     <string name="chat_menu_summary">Summary</string>
-    <string name="chat_menu_new_group">New group</string>
-    <string name="chat_menu_view_contact">View contact</string>
+    <string name="chat_menu_contact_info">Contact info</string>
+    <string name="chat_menu_group_info">Group info</string>
     <string name="chat_menu_search">Search</string>
     <string name="chat_menu_media_links_docs">Media, links, and docs</string>
     <string name="chat_menu_mute_notifications">Mute notifications</string>
     <string name="chat_menu_unmute_notifications">Unmute notifications</string>
     <string name="chat_menu_disappearing_messages">Disappearing messages</string>
-    <string name="chat_menu_chat_theme">Chat theme</string>
+    <string name="chat_menu_chat_settings">Chat settings</string>
     <string name="chat_menu_more">More</string>
     <string name="chat_menu_report">Report</string>
     <string name="chat_menu_block">Block</string>
     <string name="chat_menu_clear_chat">Clear chat</string>
     <string name="chat_menu_export_chat">Export chat</string>
-    <string name="chat_menu_add_shortcut">Add shortcut</string>
-    <string name="chat_menu_add_to_folder">Add to folder</string>
+    <string name="chat_report_group_confirm">Are you sure you want to report %1$s? Our moderation team will review this group.</string>
+    <string name="chat_report_error">Failed to submit report</string>
+    <string name="chat_info_error_export_chat">Failed to export chat</string>
     <string name="search_messages_hint">Search messages</string>
     <string name="search_messages_empty">Type to search messages</string>
     <string name="no_search_results">No results found</string>
@@ -1745,6 +1746,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="clip_label_profile_link">Profile Link</string>
     <string name="clip_label_post_link">Post Link</string>
     <string name="clip_label_comment">Comment</string>
+    <string name="clip_label_message">Message</string>
+    <string name="clip_label_group_invite">Group invite link</string>
+    <string name="clip_label_app_version">App version</string>
+    <string name="clip_label_error_details">Error details</string>
     <string name="chat_divider_unread_one">%1$d unread message</string>
     <string name="chat_divider_unread_other">%1$d unread messages</string>
 
@@ -2063,6 +2068,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_no_passkeys_title">No Passkeys</string>
     <string name="settings_passkeys_description">Passkeys allow you to sign in securely without a password using your device\'s biometrics.</string>
     <string name="settings_passkey_added_date">Added %1$s</string>
+    <string name="settings_passkey_delete_description">Delete passkey</string>
+    <string name="settings_passkey_delete_confirm_title">Delete Passkey</string>
+    <string name="settings_passkey_delete_confirm_body">This passkey will be removed from your account and you will no longer be able to use it to sign in.</string>
+    <string name="action_sign_in_with_passkey">Sign in with Passkey</string>
     <string name="settings_on">On</string>
     <string name="settings_off">Off</string>
     <string name="settings_enabled">Enabled</string>
@@ -2527,5 +2536,20 @@ Please explain the following message from %3$s in detail, considering the contex
 
     <string name="settings_permissions_title">Permissions</string>
     <string name="settings_permissions_subtitle">Camera, microphone and notifications</string>
+
+    <!-- Share Post to Chat Strings -->
+    <string name="share_post_chat_preview">%1$s shared a post</string>
+    <string name="shared_to_chat">Shared to %1$s</string>
+    <string name="share_to_chat_failed">Failed to share post</string>
+    <string name="failed_to_load_conversations">Failed to load conversations</string>
+    <string name="share_to_chat_title">Share to chat</string>
+    <string name="share_to_chat_search_hint">Search conversations</string>
+    <string name="share_to_chat_empty">No conversations yet. Start a chat to share this post.</string>
+    <string name="share_to_chat_no_results">No matching conversations</string>
+    <string name="cd_pinned_conversation">Pinned conversation</string>
+
+    <!-- Repost Strings -->
+    <string name="post_reposted_you">You reposted</string>
+    <string name="error_reshare_failed">Couldn\'t repost. Check your connection and try again.</string>
 
 </resources>

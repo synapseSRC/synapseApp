@@ -24,7 +24,7 @@ const ProfileScreenPage = async () => {
 
     if (!profile) {
         return (
-            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-200">
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
                 We couldn&apos;t load your profile.{" "}
                 <Link href="/profile" className="underline underline-offset-4">
                     Try again
@@ -66,13 +66,13 @@ const ProfileScreenPage = async () => {
             />
 
             {"error" in posts ? (
-                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-200">
+                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
                     Could not load your posts: {posts.error}
                 </div>
             ) : posts.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-neutral-800 bg-neutral-950/40 p-8 text-center">
+                <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
                     <p className="font-heading text-lg font-semibold">You haven&apos;t posted yet</p>
-                    <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-400">
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                         Posts from the native apps and CLI will show up here.
                     </p>
                 </div>

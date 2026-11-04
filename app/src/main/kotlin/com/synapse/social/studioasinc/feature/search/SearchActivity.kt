@@ -1,11 +1,12 @@
 package com.synapse.social.studioasinc
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.ui.search.SearchScreen
 import com.synapse.social.studioasinc.ui.search.SearchViewModel
 import com.synapse.social.studioasinc.core.ui.base.BaseComposeActivity
@@ -34,7 +35,7 @@ class SearchActivity : BaseComposeActivity() {
                         if (chatMode) {
                             Toast.makeText(this@SearchActivity, "Chat feature not implemented", Toast.LENGTH_SHORT).show()
                         } else {
-                            IntentUtils.openUrl(this@SearchActivity, "synapse://profile/$uid")
+                            IntentUtils.openUrl(this@SearchActivity, DeepLink.profile(uid))
                         }
                     },
                     onNavigateToPost = { postId ->

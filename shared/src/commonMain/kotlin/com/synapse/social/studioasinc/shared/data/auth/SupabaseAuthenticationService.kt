@@ -36,6 +36,7 @@ class SupabaseAuthenticationService(
 
     private val allowedRedirectUrls = setOf(
         "synapse://login",
+        "https://socialsynapse.vercel.app",
         "https://synapsesocial.vercel.app",
         "https://www.synapse.com/auth"
     )

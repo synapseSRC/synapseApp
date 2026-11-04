@@ -42,6 +42,11 @@ class ApiKeySettingsService @Inject constructor(
     private val supabaseClient: SupabaseClient
 ) {
     private val settingsDataStore by lazy { SettingsDataStore.getInstance(context) }
+    // androidx.security:security-crypto is deprecated upstream with no in-library successor. These
+    // prefs hold the user's BYOK API keys in its on-disk format (AES-SIV names, AES-GCM values,
+    // keystore master key), so replacing it is a data migration — the keys would have to be
+    // re-entered or re-encrypted in place — not a warning fix. Hence the documented suppression.
+    @Suppress("DEPRECATION")
     private val prefs: SharedPreferences by lazy {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

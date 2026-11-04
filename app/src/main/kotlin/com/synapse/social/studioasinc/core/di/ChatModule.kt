@@ -19,7 +19,6 @@ import com.synapse.social.studioasinc.shared.data.local.AndroidSecureStorage
 import com.synapse.social.studioasinc.shared.data.local.SecureStorage
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
@@ -71,6 +70,9 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.BroadcastTyping
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistoryUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.ReportChatUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.EditMessageUseCase
@@ -92,7 +94,9 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesU
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SharePostToChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToRosterChangesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToTypingStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase
@@ -180,6 +184,10 @@ object ChatModule {
 
     @Provides
     @Singleton
+    fun provideReportChatUseCase(chatRepository: ChatRepository): ReportChatUseCase = ReportChatUseCase(chatRepository)
+
+    @Provides
+    @Singleton
     fun provideGetSharedContentSummaryUseCase(chatRepository: ChatRepository): GetSharedContentSummaryUseCase = GetSharedContentSummaryUseCase(chatRepository)
 
     @Provides
@@ -213,6 +221,10 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideSendMessageUseCase(chatRepository: ChatRepository, signalProtocolManager: SignalProtocolManager): SendMessageUseCase = SendMessageUseCase(chatRepository, signalProtocolManager)
+
+    @Provides
+    @Singleton
+    fun provideSharePostToChatUseCase(sendMessageUseCase: SendMessageUseCase): SharePostToChatUseCase = SharePostToChatUseCase(sendMessageUseCase)
 
     @Provides
     @Singleton
@@ -304,6 +316,10 @@ object ChatModule {
 
     @Provides
     @Singleton
+    fun provideSubscribeToRosterChangesUseCase(chatRepository: ChatRepository): SubscribeToRosterChangesUseCase = SubscribeToRosterChangesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
     fun provideChatDependencies(
         messaging: ChatMessagingDependencies,
         subscription: ChatSubscriptionDependencies,
@@ -322,7 +338,11 @@ object ChatModule {
         voteInPollUseCase: VoteInPollUseCase,
         markViewOnceConsumedUseCase: MarkViewOnceConsumedUseCase,
         searchMessagesUseCase: SearchMessagesUseCase,
-        exportChatUseCase: ExportChatUseCase
+        exportChatUseCase: ExportChatUseCase,
+        reportChatUseCase: ReportChatUseCase,
+        clearChatHistoryUseCase: ClearChatHistoryUseCase,
+        blockUserUseCase: BlockUserUseCase,
+        reportUserUseCase: ReportUserUseCase
     ): ChatDependencies = ChatDependencies(
         messaging = messaging,
         subscription = subscription,
@@ -341,7 +361,11 @@ object ChatModule {
         voteInPollUseCase = voteInPollUseCase,
         markViewOnceConsumedUseCase = markViewOnceConsumedUseCase,
         searchMessagesUseCase = searchMessagesUseCase,
-        exportChatUseCase = exportChatUseCase
+        exportChatUseCase = exportChatUseCase,
+        reportChatUseCase = reportChatUseCase,
+        clearChatHistoryUseCase = clearChatHistoryUseCase,
+        blockUserUseCase = blockUserUseCase,
+        reportUserUseCase = reportUserUseCase
     )
 
     // Messaging dependencies group

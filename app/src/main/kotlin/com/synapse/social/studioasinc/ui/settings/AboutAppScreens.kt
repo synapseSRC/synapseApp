@@ -30,7 +30,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -79,7 +79,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -265,7 +265,7 @@ fun AboutOpenSourceScreen(
                                     ),
                                     description = license.licenseNote,
                                     leadingIcon = Icons.Filled.Code,
-                                    trailingIcon = Icons.Filled.OpenInNew,
+                                    trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
                                     onClick = { IntentUtils.openUrl(context, license.repositoryUrl) }
                                 )
                             }

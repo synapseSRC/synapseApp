@@ -273,15 +273,12 @@ class CallNotificationHelper @Inject constructor(
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val attributes = AudioAttributes.Builder()
             // A ring is not an alert to read later: this is the usage the system ducks other audio for
-            // and routes to the right output. API 28 introduced it; before that the notification usage
-            // with a speech content type is the closest the platform had.
-            .setUsage(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_REQUEST
-                } else {
-                    AudioAttributes.USAGE_NOTIFICATION
-                }
-            )
+            // and routes to the right output. USAGE_NOTIFICATION_COMMUNICATION_REQUEST was the
+            // usual way to say that, but Google deprecated it in API 33 and states that
+            // USAGE_NOTIFICATION is handled identically by the audio framework — so this is the same
+            // routing without the deprecated constant (and it needs no version branch: both are
+            // API 21+, unlike the pre-P special case the old code guarded for).
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
             .build()
 

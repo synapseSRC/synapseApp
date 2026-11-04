@@ -22,6 +22,8 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.sound.PlaySoundEffectUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
@@ -107,6 +109,10 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val setConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase = dependencies.settings.setConversationMuteStatusUseCase
     private val searchMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesUseCase = dependencies.searchMessagesUseCase
     private val exportChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.ExportChatUseCase = dependencies.exportChatUseCase
+    private val reportChatUseCase: ReportChatUseCase = dependencies.reportChatUseCase
+    private val clearChatHistoryUseCase: ClearChatHistoryUseCase = dependencies.clearChatHistoryUseCase
+    private val blockUserUseCase: BlockUserUseCase = dependencies.blockUserUseCase
+    private val reportUserUseCase: ReportUserUseCase = dependencies.reportUserUseCase
 
     // ===== ChatUiState: consolidated UI state =====
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -135,8 +141,17 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _isGroupChat = MutableStateFlow(false)
     val isGroupChat: StateFlow<Boolean> = _isGroupChat.asStateFlow()
 
+    private val _groupTitle = MutableStateFlow<String?>(null)
+    val groupTitle: StateFlow<String?> = _groupTitle.asStateFlow()
+
+    private val _groupAvatarUrl = MutableStateFlow<String?>(null)
+    val groupAvatarUrl: StateFlow<String?> = _groupAvatarUrl.asStateFlow()
+
     private val _groupMemberNames = MutableStateFlow<Map<String, String>>(emptyMap())
     val groupMemberNames: StateFlow<Map<String, String>> = _groupMemberNames.asStateFlow()
+
+    private val _groupMemberAvatars = MutableStateFlow<Map<String, String>>(emptyMap())
+    val groupMemberAvatars: StateFlow<Map<String, String>> = _groupMemberAvatars.asStateFlow()
 
     private val _isCurrentUserAdmin = MutableStateFlow(false)
     val isCurrentUserAdmin: StateFlow<Boolean> = _isCurrentUserAdmin.asStateFlow()
@@ -425,7 +440,10 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         _participantProfile = _participantProfile,
         _isE2EEReady = _isE2EEReady,
         _isGroupChat = _isGroupChat,
+        _groupTitle = _groupTitle,
+        _groupAvatarUrl = _groupAvatarUrl,
         _groupMemberNames = _groupMemberNames,
+        _groupMemberAvatars = _groupMemberAvatars,
         _onlyAdminsCanMessage = _onlyAdminsCanMessage,
         _isCurrentUserAdmin = _isCurrentUserAdmin,
         _isParticipantActive = _isParticipantActive,
@@ -559,6 +577,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                 }
             }
             refreshMessages()
+            // Re-sync the roster so a member added/removed (e.g. from Group info) updates the header
+            // member count and per-message sender attribution on return.
+            initializationDelegate.refreshGroupRoster()
             updateUiState()
             return
         }
@@ -1076,23 +1097,35 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         }
     }
 
+    private var activeSearchQuery: String? = null
+
     fun searchMessages(chatId: String, query: String) {
+        activeSearchQuery = query
         if (query.isBlank()) {
             _searchResults.value = emptyList()
+            _isSearching.value = false
             return
         }
         _isSearching.value = true
         viewModelScope.launch {
             searchMessagesUseCase(chatId, query)
                 .onSuccess { results ->
+                    if (activeSearchQuery != query) return@onSuccess
                     _searchResults.value = results
                     _isSearching.value = false
                 }
                 .onFailure {
+                    if (activeSearchQuery != query) return@onFailure
                     _error.value = "Failed to search messages"
                     _isSearching.value = false
                 }
         }
+    }
+
+    fun clearMessageSearch() {
+        activeSearchQuery = null
+        _searchResults.value = emptyList()
+        _isSearching.value = false
     }
 
     fun exportChat(onSuccess: (String) -> Unit, onError: (String) -> Unit) {
@@ -1108,15 +1141,48 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         }
     }
 
-    fun createChatShortcut(chatName: String, avatarUrl: String?, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        // This will be implemented with platform-specific code in the Activity
-        // For now, just call the callbacks
-        onSuccess()
+    fun reportCurrentChat(participantUserId: String?, reason: String, onResult: (Result<Unit>) -> Unit) {
+        val chatId = currentChatId
+            ?: return onResult(Result.failure(IllegalStateException("No active chat")))
+        if (reason.isBlank()) {
+            return onResult(Result.failure(IllegalArgumentException("A report reason is required")))
+        }
+        viewModelScope.launch {
+            val result = if (_isGroupChat.value || participantUserId.isNullOrBlank()) {
+                reportChatUseCase(chatId, reason)
+            } else {
+                val reporterId = _currentUserId.value.orEmpty()
+                if (reporterId.isBlank()) {
+                    Result.failure(IllegalStateException("User not authenticated"))
+                } else {
+                    reportUserUseCase(reporterId, participantUserId, reason).first()
+                }
+            }
+            onResult(result)
+        }
     }
 
-    fun addToFolder(chatId: String, folderId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        // TODO: Implement folder assignment logic with SettingsRepository
-        onSuccess()
+    fun blockCurrentChatParticipant(participantUserId: String, onResult: (Result<Unit>) -> Unit) {
+        if (_isGroupChat.value) {
+            return onResult(Result.failure(IllegalStateException("Group chats cannot be blocked")))
+        }
+        if (participantUserId.isBlank()) {
+            return onResult(Result.failure(IllegalStateException("Contact is unavailable")))
+        }
+        viewModelScope.launch { onResult(blockUserUseCase(participantUserId)) }
+    }
+
+    fun clearCurrentChat(onResult: (Result<Unit>) -> Unit) {
+        val chatId = currentChatId
+            ?: return onResult(Result.failure(IllegalStateException("No active chat")))
+        viewModelScope.launch {
+            val result = clearChatHistoryUseCase(chatId)
+            if (result.isSuccess) {
+                messagingDelegate.clearMessages()
+                _hasMoreMessages.value = false
+            }
+            onResult(result)
+        }
     }
 
     fun uploadVoiceMessage(

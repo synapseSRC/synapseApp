@@ -19,11 +19,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Chat
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AttachFile
-import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Share
@@ -40,7 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -73,7 +73,10 @@ fun ChatEncryptionSheet(
     val motion = MaterialTheme.motionScheme
     var page by remember { mutableStateOf(EncryptionSheetPage.OVERVIEW) }
     var showPrivacyExplanation by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+    )
     LaunchedEffect(chatId) { viewModel.load(chatId) }
     BackHandler(enabled = page == EncryptionSheetPage.VERIFY) { page = EncryptionSheetPage.OVERVIEW }
 
@@ -174,7 +177,7 @@ private fun EncryptionOverview(
         val active = state.info?.secureSessionActive == true
         Column(verticalArrangement = Arrangement.spacedBy(ChatEncryptionMetrics.listGap)) {
             EncryptionFeatureItem(Icons.Rounded.Lock, stringResource(R.string.chat_security_private_title), stringResource(if (active) R.string.chat_security_private_active else R.string.chat_security_private_pending, participantName), 0)
-            EncryptionFeatureItem(Icons.Rounded.Chat, stringResource(R.string.chat_security_messages_title), stringResource(if (active) R.string.chat_security_messages_active else R.string.chat_security_messages_pending), 1)
+            EncryptionFeatureItem(Icons.AutoMirrored.Rounded.Chat, stringResource(R.string.chat_security_messages_title), stringResource(if (active) R.string.chat_security_messages_active else R.string.chat_security_messages_pending), 1)
             EncryptionFeatureItem(Icons.Rounded.AttachFile, stringResource(R.string.chat_security_media_title), stringResource(if (active) R.string.chat_security_media_active else R.string.chat_security_media_pending), 2)
         }
         if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -196,7 +199,7 @@ private fun EncryptionOverview(
         TextButton(onClick = onLearnMore, modifier = Modifier.fillMaxWidth().heightIn(min = ChatEncryptionMetrics.buttonHeight).pressScale(learnSource), interactionSource = learnSource) {
             Text(stringResource(R.string.chat_security_learn_more))
             Spacer(Modifier.width(Spacing.space8))
-            Icon(Icons.Rounded.OpenInNew, contentDescription = null)
+            Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
         }
         Spacer(Modifier.height(Spacing.space8))
     }

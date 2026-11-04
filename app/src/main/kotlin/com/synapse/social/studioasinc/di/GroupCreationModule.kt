@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.di
 
 import com.synapse.social.studioasinc.shared.data.repository.SupabaseGroupCreationRepository
+import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.domain.repository.GroupCreationRepository
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import dagger.Module
@@ -18,6 +19,6 @@ object GroupCreationModule {
 
     @Provides
     @Singleton
-    fun provideGroupCreationRepository(dataSource: SupabaseChatDataSource): GroupCreationRepository =
-        SupabaseGroupCreationRepository(dataSource)
+    fun provideGroupCreationRepository(dataSource: SupabaseChatDataSource, signalProtocolManager: SignalProtocolManager): GroupCreationRepository =
+        SupabaseGroupCreationRepository(dataSource, signalProtocolManager)
 }

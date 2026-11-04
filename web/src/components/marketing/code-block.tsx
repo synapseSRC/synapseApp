@@ -25,15 +25,15 @@ const CodeBlock = ({ title = "terminal", lines, className }: CodeBlockProps) => 
     return (
         <div
             className={cn(
-                "relative overflow-hidden rounded-xl border border-border/70 bg-neutral-950/80",
+                "dark relative overflow-hidden rounded-xl border border-border/70 bg-card text-card-foreground",
                 className,
             )}
         >
             <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                    <span className="size-2.5 rounded-full bg-neutral-700" />
-                    <span className="size-2.5 rounded-full bg-neutral-700" />
-                    <span className="size-2.5 rounded-full bg-neutral-700" />
+                    <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                    <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                    <span className="size-2.5 rounded-full bg-muted-foreground/40" />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground">{title}</span>
                 <CopyButton
