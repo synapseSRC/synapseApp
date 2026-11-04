@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.auth.ui.components
 
+import android.content.ClipData
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
@@ -12,12 +13,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import com.synapse.social.studioasinc.R
+import kotlinx.coroutines.launch
 
 /**
  * Reports a failed authentication attempt with the raw provider message, so it can be
@@ -28,7 +31,9 @@ fun AuthErrorDialog(
     error: String,
     onDismiss: () -> Unit
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipLabel = stringResource(R.string.clip_label_error_details)
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val copiedLabel = stringResource(R.string.toast_copied_to_clipboard)
 
@@ -71,7 +76,9 @@ fun AuthErrorDialog(
         dismissButton = {
             TextButton(
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(error))
+                    scope.launch {
+                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, error)))
+                    }
                     Toast.makeText(context, copiedLabel, Toast.LENGTH_SHORT).show()
                     onDismiss()
                 }

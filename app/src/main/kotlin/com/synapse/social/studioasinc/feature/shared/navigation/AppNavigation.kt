@@ -476,7 +476,7 @@ fun NavGraphBuilder.inboxGraph(
             }
     composable<AppDestination.ChatSettings> {
                 com.synapse.social.studioasinc.ui.settings.ChatSettingsScreen(
-                    viewModel = androidx.hilt.navigation.compose.hiltViewModel(),
+                    viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
     }

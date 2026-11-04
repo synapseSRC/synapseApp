@@ -45,7 +45,10 @@ fun ChatAttachmentSheet(
     onCategorySelected: (ChatAttachmentCategory) -> Unit
 ) {
     // Keep all five choices visible in the requested compact-phone sheet.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+    )
     val scope = rememberCoroutineScope()
 
     fun dismissThen(action: () -> Unit) {
@@ -143,7 +146,7 @@ private fun AttachmentCategoryItem(
         interactionSource = interactionSource
     ) {
         ListItem(
-            headlineContent = {
+            content = {
                 Text(
                     text = stringResource(category.titleRes),
                     style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Default),

@@ -1746,6 +1746,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="clip_label_profile_link">Profile Link</string>
     <string name="clip_label_post_link">Post Link</string>
     <string name="clip_label_comment">Comment</string>
+    <string name="clip_label_message">Message</string>
+    <string name="clip_label_group_invite">Group invite link</string>
+    <string name="clip_label_app_version">App version</string>
+    <string name="clip_label_error_details">Error details</string>
     <string name="chat_divider_unread_one">%1$d unread message</string>
     <string name="chat_divider_unread_other">%1$d unread messages</string>
 

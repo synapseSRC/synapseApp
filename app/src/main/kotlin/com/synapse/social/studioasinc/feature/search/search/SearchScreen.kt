@@ -135,6 +135,10 @@ fun SearchScreen(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
                 ) {
+                    // M3 SearchBar/InputField are deprecated in favour of the state-driven redesign
+                    // (SearchBarState + TextFieldState + Expanded*SearchBar). Adopting it is a UI rewrite
+                    // with regression risk, not a warning fix — hence the documented suppression.
+                    @Suppress("DEPRECATION")
                     SearchBar(
                         inputField = {
                             SearchBarDefaults.InputField(

@@ -65,7 +65,7 @@ import com.synapse.social.studioasinc.feature.stories.tray.StoryTrayViewModel
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FeedScreen(
-    linkViewModel: com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
+    linkViewModel: com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel = hiltViewModel(),
     viewModel: FeedViewModel = hiltViewModel(),
     sharePostViewModel: SharePostSheetViewModel = hiltViewModel(),
     storyTrayViewModel: StoryTrayViewModel = hiltViewModel(),

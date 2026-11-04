@@ -32,6 +32,9 @@ class CommentRepositoryImpl constructor(
         private const val RETRY_DELAY_MS = 100L
     }
 
+    // Bridges the deprecated `Comment` model used by the SQLDelight comment cache; retiring it is
+    // a Post-model migration of the local cache path, not a warning fix.
+    @Suppress("DEPRECATION")
     fun getComments(postId: String): Flow<Result<List<Comment>>> {
         return flow {
             try {
@@ -471,6 +474,8 @@ class CommentRepositoryImpl constructor(
     }
 }
 
+// Bridges the deprecated `Comment` model to the SQLDelight cache; see the note on `getComments`.
+@Suppress("DEPRECATION")
 private fun CommentWithUser.toComment(): Comment {
     return Comment(
         key = this.id,

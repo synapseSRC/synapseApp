@@ -1148,6 +1148,10 @@
     <string name="clip_label_comment">মন্তব্য করুন</string>
     <string name="clip_label_post_link">পোস্ট লিঙ্ক</string>
     <string name="clip_label_profile_link">প্রোফাইল লিঙ্ক</string>
+    <string name="clip_label_message">বার্তা</string>
+    <string name="clip_label_group_invite">গ্রুপ আমন্ত্রণ লিঙ্ক</string>
+    <string name="clip_label_app_version">অ্যাপ সংস্করণ</string>
+    <string name="clip_label_error_details">ত্রুটির বিবরণ</string>
     <string name="collapse">সঙ্কুচিত</string>
     <string name="comment_write">একটি মন্তব্য লিখুন…</string>
     <string name="complete_profile_action">সম্পূর্ণ প্রোফাইল</string>

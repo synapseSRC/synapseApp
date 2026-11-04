@@ -22,9 +22,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Group
@@ -571,7 +571,7 @@ private fun QuickActions(
     ) {
         QuickActionButton(
             label = stringResource(R.string.chat_info_action_message),
-            icon = Icons.Rounded.Chat,
+            icon = Icons.AutoMirrored.Rounded.Chat,
             position = ItemPosition.FIRST,
             onClick = onMessage,
             modifier = Modifier.weight(1f)
@@ -671,7 +671,7 @@ private fun SettingsItem(
 
     ListItem(
         modifier = rowModifier,
-        headlineContent = {
+        content = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -752,7 +752,7 @@ private fun CommonGroupList(groups: List<Conversation>) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
         groups.forEach { group ->
             ListItem(
-                headlineContent = { Text(group.participantName) },
+                content = { Text(group.participantName) },
                 leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
             )

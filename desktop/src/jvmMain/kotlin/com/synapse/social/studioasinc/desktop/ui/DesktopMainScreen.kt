@@ -117,7 +117,7 @@ fun DesktopMainScreen(
                             modifier = Modifier.weight(1f)
                         )
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                             tooltip = { PlainTooltip { Text("New chat") } },
                             state = rememberTooltipState()
                         ) {
@@ -126,7 +126,7 @@ fun DesktopMainScreen(
                             }
                         }
                         TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                             tooltip = { PlainTooltip { Text("Menu") } },
                             state = rememberTooltipState()
                         ) {
@@ -463,7 +463,7 @@ fun ChatDetailView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Video call") } },
                         state = rememberTooltipState()
                     ) {
@@ -472,7 +472,7 @@ fun ChatDetailView(
                         }
                     }
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Voice call") } },
                         state = rememberTooltipState()
                     ) {
@@ -481,7 +481,7 @@ fun ChatDetailView(
                         }
                     }
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Search in chat") } },
                         state = rememberTooltipState()
                     ) {
@@ -490,7 +490,7 @@ fun ChatDetailView(
                         }
                     }
                     TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("More options") } },
                         state = rememberTooltipState()
                     ) {
@@ -566,7 +566,7 @@ fun ChatDetailView(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                     tooltip = { PlainTooltip { Text("Attach file") } },
                     state = rememberTooltipState()
                 ) {
@@ -575,7 +575,7 @@ fun ChatDetailView(
                     }
                 }
                 TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                     tooltip = { PlainTooltip { Text("Emoji") } },
                     state = rememberTooltipState()
                 ) {

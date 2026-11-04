@@ -30,7 +30,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -265,7 +265,7 @@ fun AboutOpenSourceScreen(
                                     ),
                                     description = license.licenseNote,
                                     leadingIcon = Icons.Filled.Code,
-                                    trailingIcon = Icons.Filled.OpenInNew,
+                                    trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
                                     onClick = { IntentUtils.openUrl(context, license.repositoryUrl) }
                                 )
                             }

@@ -609,6 +609,7 @@ internal fun PatternSelector(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BlurSlider(
     blurIntensity: Float,
@@ -643,11 +644,14 @@ internal fun BlurSlider(
 
         Spacer(modifier = Modifier.height(Spacing.space4))
 
-        Slider(
+        val blurSliderState = rememberSliderState(
             value = localBlur,
+            trackRange = 0f..1.0f
+        )
+        Slider(
+            state = blurSliderState,
             onValueChange = { localBlur = it },
-            onValueChangeFinished = { onBlurIntensityChanged(localBlur) },
-            valueRange = 0f..1.0f,
+            onValueChangeFinished = { onBlurIntensityChanged(blurSliderState.value) },
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary,

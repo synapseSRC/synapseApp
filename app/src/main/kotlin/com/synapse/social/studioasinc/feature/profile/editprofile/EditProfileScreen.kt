@@ -79,18 +79,23 @@ fun EditProfileScreen(
     val context = LocalContext.current
 
 
+    // CropImageContract is deprecated upstream (com.canhub.cropper) with no drop-in replacement;
+    // rolling a custom ActivityResultContract is a separate project, not a warning fix.
+    @Suppress("DEPRECATION")
     val avatarCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { viewModel.onEvent(EditProfileEvent.AvatarCropped(it)) }
         }
     }
 
+    @Suppress("DEPRECATION")
     val coverCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { viewModel.onEvent(EditProfileEvent.CoverCropped(it)) }
         }
     }
 
+    @Suppress("DEPRECATION")
     val avatarPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -109,6 +114,7 @@ fun EditProfileScreen(
         }
     }
 
+    @Suppress("DEPRECATION")
     val coverPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->

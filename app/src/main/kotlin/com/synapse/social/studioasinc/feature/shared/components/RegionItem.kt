@@ -76,7 +76,7 @@ fun RegionItem(
             .clickable { onRegionSelected(region) }
     ) {
         ListItem(
-            headlineContent = {
+            content = {
                 Text(
                     text = region,
                     style = MaterialTheme.typography.bodyLarge,

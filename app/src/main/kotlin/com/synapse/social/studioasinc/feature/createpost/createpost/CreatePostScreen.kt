@@ -48,6 +48,9 @@ fun CreatePostScreen(
 
     var editingMediaIndex by remember { mutableStateOf<Int?>(null) }
     var threadMediaPickerIndex by remember { mutableStateOf<Int?>(null) }
+    // CropImageContract is deprecated upstream (com.canhub.cropper) with no drop-in replacement;
+    // rolling a custom ActivityResultContract is a separate project, not a warning fix.
+    @Suppress("DEPRECATION")
     val cropImage = rememberLauncherForActivityResult(contract = CropImageContract()) { result ->
         if (result.isSuccessful) {
              editingMediaIndex?.let { index ->
@@ -216,6 +219,7 @@ fun CreatePostScreen(
                     } else {
                         Uri.fromFile(java.io.File(item.url))
                     }
+                    @Suppress("DEPRECATION")
                     cropImage.launch(
                         CropImageContractOptions(
                             uri = uri,

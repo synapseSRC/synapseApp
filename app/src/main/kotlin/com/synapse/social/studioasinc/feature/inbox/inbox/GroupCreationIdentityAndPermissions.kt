@@ -28,9 +28,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -84,11 +84,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.text.KeyboardOptions
@@ -188,7 +186,7 @@ internal fun IdentityStage(
             modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.space16, vertical = Spacing.space12).height(Sizes.ButtonHeightM3Medium)
         ) {
             if (isCreating) CircularProgressIndicator(modifier = Modifier.size(Sizes.IconDefault), strokeWidth = 2.dp)
-            else Icon(if (hasCreatedGroup) Icons.Filled.ArrowForward else Icons.Filled.Check, contentDescription = null)
+            else Icon(if (hasCreatedGroup) Icons.AutoMirrored.Filled.ArrowForward else Icons.Filled.Check, contentDescription = null)
             Spacer(Modifier.width(Spacing.space8))
             Text(if (hasCreatedGroup) stringResource(R.string.group_return_to_hub) else pluralStringResource(R.plurals.group_create_count, selectedCount, selectedCount))
         }
@@ -246,7 +244,7 @@ internal fun PermissionsStage(
             }
             item {
                 SettingsSection(title = stringResource(R.string.group_member_permissions_section)) {
-                    PermissionRow(Icons.Filled.Chat, stringResource(R.string.group_permission_send_messages), stringResource(R.string.group_permission_send_support), options.sendMessagesByMembers, onSendMessagesChange, SettingsItemPosition.Top)
+                    PermissionRow(Icons.AutoMirrored.Filled.Chat, stringResource(R.string.group_permission_send_messages), stringResource(R.string.group_permission_send_support), options.sendMessagesByMembers, onSendMessagesChange, SettingsItemPosition.Top)
                     PermissionRow(Icons.Filled.Edit, stringResource(R.string.group_permission_edit_settings), stringResource(R.string.group_permission_edit_support), options.allowMemberSettingsEdits, onMemberSettingsChange, SettingsItemPosition.Middle)
                     PermissionRow(Icons.Filled.HowToReg, stringResource(R.string.group_permission_approve), stringResource(R.string.group_permission_approve_support), options.requireJoinApproval, onApprovalChange, SettingsItemPosition.Middle)
                     PermissionRow(Icons.Filled.Share, stringResource(R.string.group_permission_invites), stringResource(R.string.group_permission_invites_support), options.allowMemberInvites, onInvitesChange, SettingsItemPosition.Middle)

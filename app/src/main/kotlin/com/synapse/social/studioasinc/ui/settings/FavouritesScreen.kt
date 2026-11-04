@@ -2,8 +2,9 @@ package com.synapse.social.studioasinc.ui.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
@@ -129,7 +130,7 @@ fun FavouritesScreen(
                     SettingsToggleItem(
                         title = stringResource(R.string.show_favourites_chat_list),
                         subtitle = stringResource(R.string.display_favourite_contacts_top),
-                        imageVector = Icons.Filled.Chat,
+                        imageVector = Icons.AutoMirrored.Filled.Chat,
                         checked = true,
                         onCheckedChange = { },
                         position = SettingsItemPosition.Top

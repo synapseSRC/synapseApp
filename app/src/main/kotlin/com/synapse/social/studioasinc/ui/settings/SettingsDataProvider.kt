@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import com.synapse.social.studioasinc.R
@@ -84,7 +85,7 @@ object SettingsDataProvider {
                     id = "chat_settings",
                     title = UiText.StringResource(R.string.settings_chat_settings_title),
                     subtitle = UiText.StringResource(R.string.settings_chat_settings_subtitle),
-                    icon = Icons.Filled.Message,
+                    icon = Icons.AutoMirrored.Filled.Message,
                     destination = SettingsDestination.ChatSettings,
                     keywords = listOf("chat", "message", "theme", "wallpaper", "bubble", "swipe", "layout")
                 ),

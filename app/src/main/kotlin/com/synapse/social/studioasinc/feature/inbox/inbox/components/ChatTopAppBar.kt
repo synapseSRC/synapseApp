@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
+import android.content.ClipData
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,11 +19,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import com.synapse.social.studioasinc.R
@@ -35,6 +36,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,8 +76,9 @@ fun ChatTopAppBar(
     onClearChat: () -> Unit = {},
     onExportChat: () -> Unit = {}
 ) {
-    @Suppress("DEPRECATION")
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipLabel = stringResource(R.string.clip_label_message)
+    val scope = rememberCoroutineScope()
 
     if (selectedMessageIds.isNotEmpty()) {
         TopAppBar(
@@ -95,7 +98,9 @@ fun ChatTopAppBar(
                         }
                         .joinToString("\n") { it.content }
                     if (selectedContent.isNotBlank()) {
-                        clipboard.setText(AnnotatedString(selectedContent))
+                        scope.launch {
+                            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, selectedContent)))
+                        }
                     }
                     onClearSelection()
                 }) {

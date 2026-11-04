@@ -35,6 +35,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -51,7 +52,6 @@ import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Unarchive
-import androidx.compose.material.icons.rounded.VolumeOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -183,7 +183,7 @@ fun InboxConversationRow(
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.space4)) {
                         if (conversation.isPinned) Icon(Icons.Rounded.PushPin, contentDescription = stringResource(R.string.inbox_action_unpin), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Spacing.space16))
-                        if (conversation.isMuted) Icon(Icons.Rounded.VolumeOff, contentDescription = stringResource(R.string.inbox_action_unmute), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(Spacing.space16))
+                        if (conversation.isMuted) Icon(Icons.AutoMirrored.Rounded.VolumeOff, contentDescription = stringResource(R.string.inbox_action_unmute), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(Spacing.space16))
                     }
                     if (conversation.unreadCount > 0) {
                         Spacer(Modifier.height(Spacing.space4))
@@ -456,7 +456,7 @@ fun InboxSelectionToolbar(
                 Icon(Icons.Rounded.PushPin, contentDescription = stringResource(if (allPinned) R.string.inbox_action_unpin else R.string.inbox_action_pin))
             }
             IconButton(onClick = onMute, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
-                Icon(Icons.Rounded.VolumeOff, contentDescription = stringResource(if (allMuted) R.string.inbox_action_unmute else R.string.inbox_action_mute))
+                Icon(Icons.AutoMirrored.Rounded.VolumeOff, contentDescription = stringResource(if (allMuted) R.string.inbox_action_unmute else R.string.inbox_action_mute))
             }
             IconButton(onClick = onArchive, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.Archive, contentDescription = stringResource(R.string.inbox_action_archive))

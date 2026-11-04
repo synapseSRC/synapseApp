@@ -5,6 +5,7 @@
 
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
+import android.content.ClipData
 import android.content.Intent
 import android.graphics.Bitmap
 import android.widget.Toast
@@ -70,6 +71,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -77,12 +79,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,10 +95,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -117,6 +120,7 @@ import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
+import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.ui.settings.SettingsClickableItem
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsListItem
@@ -147,15 +151,21 @@ fun GroupInfoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipLabel = stringResource(R.string.clip_label_group_invite)
+    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Group avatar picker: pick an image then crop to a 1:1 square before uploading.
+    // CropImageContract is deprecated upstream (com.canhub.cropper) with no drop-in replacement;
+    // rolling a custom ActivityResultContract is a separate project, not a warning fix.
+    @Suppress("DEPRECATION")
     val avatarCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { viewModel.onGroupAvatarPicked(it) }
         }
     }
+    @Suppress("DEPRECATION")
     val avatarPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
             avatarCropLauncher.launch(
@@ -328,7 +338,9 @@ fun GroupInfoScreen(
                                 inviteLink = inviteLink,
                                 isAdmin = isAdmin,
                                 onCopy = {
-                                    clipboard.setText(AnnotatedString(inviteLink))
+                                    scope.launch {
+                                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, inviteLink)))
+                                    }
                                     Toast.makeText(context, R.string.group_link_copied, Toast.LENGTH_SHORT).show()
                                 },
                                 onShare = {
@@ -651,7 +663,10 @@ fun GroupInfoScreen(
     }
 
     if (showAddMemberDialog) {
-        val addMemberSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val addMemberSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+        )
         ModalBottomSheet(
             onDismissRequest = { showAddMemberDialog = false },
             sheetState = addMemberSheetState,
@@ -1150,7 +1165,7 @@ private fun DangerActionItem(
             .clickable(interactionSource = interaction, onClick = onClick)
             .pressScale(interaction)
             .heightIn(min = ChatInfoMetrics.listItemMinHeight),
-        headlineContent = {
+        content = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,

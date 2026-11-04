@@ -196,7 +196,7 @@ class NotificationsViewModel @Inject constructor(
                 yesterday -> UiText.StringResource(R.string.notification_yesterday)
                 else -> {
                     val month = localDateTime.month.name.lowercase().replaceFirstChar { it.uppercase() }
-                    UiText.DynamicString("$month ${localDateTime.dayOfMonth}, ${localDateTime.year}")
+                    UiText.DynamicString("$month ${localDateTime.day}, ${localDateTime.year}")
                 }
             }
         } catch (e: Exception) {

@@ -37,12 +37,12 @@ import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Campaign
-import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
@@ -341,13 +341,13 @@ private fun InboxScreenContent(
                 )
                 InboxDestination.SEARCH -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_search_title)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
                     colors = barColors
                 )
                 InboxDestination.ARCHIVED -> if (selectedArchivedIds.isEmpty()) {
                     TopAppBar(
                         title = { Text(stringResource(R.string.inbox_archive_screen_title)) },
-                        navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                        navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
                         colors = barColors
                     )
                 } else {
@@ -448,7 +448,7 @@ private fun InboxScreenContent(
                 ) {
                     FloatingActionButtonMenuItem(
                         onClick = { showCreateMenu = false; selectedTab = InboxTab.CONTACTS },
-                        icon = { Icon(Icons.Rounded.Chat, contentDescription = null) },
+                        icon = { Icon(Icons.AutoMirrored.Rounded.Chat, contentDescription = null) },
                         text = { Text(stringResource(R.string.inbox_fab_create_chat)) }
                     )
                     FloatingActionButtonMenuItem(
@@ -583,7 +583,7 @@ private fun InboxScreenContent(
             }
             folders.forEach { folder ->
                 ListItem(
-                    headlineContent = { Text(folder.name) },
+                    content = { Text(folder.name) },
                     leadingContent = { Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.fillMaxWidth().clickable {
                         viewModel.assignConversationsToFolder(selectedChatIds, folder.id)
@@ -592,7 +592,7 @@ private fun InboxScreenContent(
                 )
             }
             ListItem(
-                headlineContent = { Text(stringResource(R.string.inbox_folder_create)) },
+                content = { Text(stringResource(R.string.inbox_folder_create)) },
                 leadingContent = { Icon(Icons.Rounded.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 modifier = Modifier.fillMaxWidth().clickable { showFolderSheet = false; showCreateFolderDialog = true }
             )

@@ -19,7 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -192,7 +192,7 @@ fun SocialLinksScreen(
                                     SettingsClickableItem(
                                         title = stringResource(R.string.discord_title),
                                         subtitle = uiState.discordTag.ifBlank { stringResource(R.string.not_set) },
-                                        imageVector = Icons.Filled.Message,
+                                        imageVector = Icons.AutoMirrored.Filled.Message,
                                         onClick = { activeDialogField = EditableSocialField.DISCORD },
                                         position = SettingsItemPosition.Middle
                                     )

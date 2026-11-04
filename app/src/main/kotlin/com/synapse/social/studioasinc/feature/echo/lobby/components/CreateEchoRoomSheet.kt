@@ -17,10 +17,12 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +55,10 @@ fun CreateEchoRoomSheet(
     onDismiss: () -> Unit,
     onCreate: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -162,11 +167,14 @@ fun CreateEchoRoomSheet(
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
-                Slider(
+                val speakersState = rememberSliderState(
                     value = state.maxSpeakers.toFloat(),
-                    onValueChange = { onMaxSpeakersChange(it.roundToInt()) },
-                    valueRange = EchoCreateUiState.MIN_SPEAKERS.toFloat()..EchoCreateUiState.MAX_SPEAKERS.toFloat(),
                     steps = EchoCreateUiState.MAX_SPEAKERS - EchoCreateUiState.MIN_SPEAKERS - 1,
+                    trackRange = EchoCreateUiState.MIN_SPEAKERS.toFloat()..EchoCreateUiState.MAX_SPEAKERS.toFloat()
+                )
+                Slider(
+                    state = speakersState,
+                    onValueChange = { onMaxSpeakersChange(it.roundToInt()) },
                     enabled = !state.isSubmitting
                 )
             }

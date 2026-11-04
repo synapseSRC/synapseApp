@@ -2,6 +2,7 @@
 
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
+import android.content.ClipData
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
@@ -90,10 +91,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.text.KeyboardOptions
@@ -138,7 +139,9 @@ internal fun GroupHubStage(
     onClearError: () -> Unit
 ) {
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipLabel = stringResource(R.string.clip_label_group_invite)
+    val scope = rememberCoroutineScope()
     var showRevokeDialog by remember { mutableStateOf(false) }
     var showRequestsDialog by remember { mutableStateOf(false) }
     var memberToRemove by remember { mutableStateOf<User?>(null) }
@@ -218,7 +221,12 @@ internal fun GroupHubStage(
                         Spacer(Modifier.height(Spacing.space12))
                         Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing), modifier = Modifier.fillMaxWidth()) {
                             FilledTonalButton(
-                                onClick = { clipboard.setText(AnnotatedString(inviteLink)); android.widget.Toast.makeText(context, R.string.group_link_copied, android.widget.Toast.LENGTH_SHORT).show() },
+                                onClick = {
+                                    scope.launch {
+                                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, inviteLink)))
+                                    }
+                                    android.widget.Toast.makeText(context, R.string.group_link_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                },
                                 modifier = Modifier.weight(1f).height(Sizes.ButtonHeightM3Medium)
                             ) {
                                 Icon(Icons.Filled.ContentCopy, contentDescription = null)
