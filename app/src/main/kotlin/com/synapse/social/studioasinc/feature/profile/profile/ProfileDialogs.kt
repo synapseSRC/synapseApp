@@ -42,7 +42,7 @@ internal fun ProfileMoreMenuSection(
     }
 }
 
-private const val PROFILE_LINK_FALLBACK_DOMAIN = "https://synapsesocial.vercel.app"
+private const val PROFILE_LINK_FALLBACK_DOMAIN = "https://socialsynapse.vercel.app"
 
 private fun shareProfile(context: Context, username: String?) {
     if (username.isNullOrBlank()) {

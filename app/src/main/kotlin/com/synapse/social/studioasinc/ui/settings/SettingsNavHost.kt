@@ -105,6 +105,19 @@ fun SettingsNavHost(
                 },
                 onNavigateToChangeNumber = {
                     navController.navigate(SettingsDestination.ROUTE_CHANGE_NUMBER)
+                },
+                onNavigateToPasskeys = {
+                    navController.navigate(SettingsDestination.ROUTE_PASSKEYS)
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_PASSKEYS) {
+            val viewModel: PasskeysViewModel = hiltViewModel()
+            PasskeysScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }

@@ -27,20 +27,20 @@ const EditProfilePage = async () => {
                 <Link
                     href="/profile"
                     aria-label="Back to profile"
-                    className="grid size-9 shrink-0 place-items-center rounded-full border border-neutral-800 text-neutral-400 transition-colors hover:text-white"
+                    className="grid size-9 shrink-0 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
                 >
                     <ArrowLeftIcon className="size-4" />
                 </Link>
                 <div>
                     <h1 className="font-heading text-2xl font-semibold tracking-tight">Edit profile</h1>
-                    <p className="text-sm text-neutral-400">Update how you appear across Synapse.</p>
+                    <p className="text-sm text-muted-foreground">Update how you appear across Synapse.</p>
                 </div>
             </div>
 
             {profile ? (
                 <EditProfileForm initial={toFormValues(profile)} coverUrl={coverUrl} />
             ) : (
-                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-200">
+                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
                     We couldn&apos;t load your profile.{" "}
                     <Link href="/profile" className="underline underline-offset-4">
                         Go back to your profile

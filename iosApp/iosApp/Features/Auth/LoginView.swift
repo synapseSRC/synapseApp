@@ -1,4 +1,5 @@
 import SwiftUI
+import shared
 
 struct LoginView: View {
     @EnvironmentObject var navigator: AppNavigator
@@ -47,6 +48,22 @@ struct LoginView: View {
                 }
                 .padding(.horizontal)
                 .disabled(viewModel.isLoading)
+
+                if DependencyContainer.shared.passkeyPlatformManager.isSupported {
+                    Button(action: {
+                        viewModel.signInWithPasskey(navigator: navigator)
+                    }) {
+                        Label(String(localized: "auth_login_passkey"), systemImage: "person.badge.key")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(AppTheme.primaryColor.opacity(0.1))
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .disabled(viewModel.isLoading)
+                }
 
                 Spacer()
             }

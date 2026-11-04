@@ -45,7 +45,7 @@ const LegalLayout = ({ title, updated, intro, sections, closing }: LegalLayoutPr
 export default LegalLayout;
 
 export const LegalList = ({ items }: { items: React.ReactNode[] }) => (
-    <ul className="my-4 list-disc space-y-2 pl-8 marker:text-neutral-700">
+    <ul className="my-4 list-disc space-y-2 pl-8 marker:text-muted-foreground">
         {items.map((item, id) => (
             <li key={id}>{item}</li>
         ))}

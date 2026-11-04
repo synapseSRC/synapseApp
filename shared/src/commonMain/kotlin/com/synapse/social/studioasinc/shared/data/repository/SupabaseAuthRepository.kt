@@ -457,6 +457,23 @@ class SupabaseAuthRepository(
     }
 
     /**
+     * Imports an externally obtained session (e.g. issued by the passkey
+     * sign-in Edge Function) into Supabase Auth.
+     */
+    override suspend fun importSession(accessToken: String, refreshToken: String): Result<Unit> {
+        return try {
+            withContext(AppDispatchers.IO) {
+                client.auth.importAuthToken(accessToken, refreshToken)
+                Napier.d("Session imported", tag = TAG)
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            logSafeError("Session import failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Initiates a native OAuth sign-in flow.
      */
     override suspend fun signInWithOAuth(provider: SocialProvider, redirectUrl: String): Result<Unit> {

@@ -57,7 +57,7 @@ class ResetPasswordViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true)
+            _uiState.value = state.copy(isLoading = true, generalError = null)
             resetPasswordUseCase(state.password).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
@@ -66,10 +66,15 @@ class ResetPasswordViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.value = state.copy(
                         isLoading = false,
-                        validationErrors = mapOf(AuthField.PASSWORD to error.message)
+                        generalError = error.message ?: "Failed to reset password. Please try again."
                     )
                 }
             )
         }
+    }
+
+    fun onDismissError() {
+        val state = _uiState.value as? AuthUiState.ResetPassword ?: return
+        _uiState.value = state.copy(generalError = null)
     }
 }

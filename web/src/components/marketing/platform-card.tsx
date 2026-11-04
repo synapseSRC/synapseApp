@@ -53,7 +53,7 @@ const PlatformCard = ({ platform, size = "full", command, className }: PlatformC
                                 </span>
                                 <Link
                                     href={channel.href}
-                                    className="flex items-center text-foreground/80 transition-colors hover:text-cyan-300"
+                                    className="flex items-center text-foreground/80 transition-colors hover:text-cyan-600 dark:hover:text-cyan-300"
                                 >
                                     <span className="sr-only">
                                         {channel.label} download for {platform.name}

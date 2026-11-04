@@ -60,6 +60,11 @@ class ForgotPasswordViewModel @Inject constructor(
          }
     }
 
+    fun onDismissError() {
+        val state = _uiState.value as? AuthUiState.ForgotPassword ?: return
+        _uiState.value = state.copy(generalError = null)
+    }
+
     fun onBackToSignInClick() {
         viewModelScope.launch { _navigationEvent.emit(AuthNavigationEvent.NavigateBack) }
     }

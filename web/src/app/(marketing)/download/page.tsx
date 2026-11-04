@@ -74,7 +74,7 @@ const DownloadPage = () => {
                         <div className="flex flex-col justify-between gap-4 rounded-xl border border-border/60 bg-foreground/[0.02] p-5">
                             <div>
                                 <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                    <ShieldCheckIcon className="size-4 text-cyan-300" />
+                                    <ShieldCheckIcon className="size-4 text-cyan-600 dark:text-cyan-300" />
                                     Reproducible builds
                                 </p>
                                 <p className="mt-2 text-sm text-muted-foreground">

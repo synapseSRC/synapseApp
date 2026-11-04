@@ -45,7 +45,7 @@ export const PostCard = ({ entry }: { entry: FeedEntry }) => {
     const primaryImage = mediaUrls[0];
 
     return (
-        <article className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-5 backdrop-blur-xl transition-colors hover:border-neutral-700">
+        <article className="rounded-2xl border border-border bg-card/60 p-5 backdrop-blur-xl transition-colors hover:border-muted-foreground/40">
             <div className="flex items-start gap-3">
                 <Link href={authorHref} className="shrink-0" aria-label={author?.username ?? "author"}>
                     {author?.avatar ? (
@@ -55,7 +55,7 @@ export const PostCard = ({ entry }: { entry: FeedEntry }) => {
                             width={44}
                             height={44}
                             unoptimized
-                            className="size-11 rounded-full border border-neutral-800 object-cover"
+                            className="size-11 rounded-full border border-border object-cover"
                         />
                     ) : (
                         <span className="grid size-11 place-items-center rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 text-sm font-semibold text-white">
@@ -66,16 +66,16 @@ export const PostCard = ({ entry }: { entry: FeedEntry }) => {
 
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <Link href={authorHref} className="truncate text-sm font-semibold text-white hover:underline">
+                        <Link href={authorHref} className="truncate text-sm font-semibold text-foreground hover:underline">
                             {author?.display_name ?? author?.username ?? "Synapse member"}
                         </Link>
-                        {author?.verify ? <BadgeCheckIcon className="size-4 text-cyan-400" aria-label="Verified" /> : null}
-                        {author?.username ? <span className="truncate text-sm text-neutral-500">@{author.username}</span> : null}
-                        <span className="text-xs text-neutral-500">{timeAgo(post)}</span>
+                        {author?.verify ? <BadgeCheckIcon className="size-4 text-cyan-600 dark:text-cyan-400" aria-label="Verified" /> : null}
+                        {author?.username ? <span className="truncate text-sm text-muted-foreground">@{author.username}</span> : null}
+                        <span className="text-xs text-muted-foreground">{timeAgo(post)}</span>
                     </div>
 
                     {post.post_text ? (
-                        <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-neutral-200">{post.post_text}</p>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground/90">{post.post_text}</p>
                     ) : null}
                 </div>
             </div>
@@ -87,18 +87,18 @@ export const PostCard = ({ entry }: { entry: FeedEntry }) => {
                     width={640}
                     height={360}
                     unoptimized
-                    className="mt-4 max-h-[26rem] w-full rounded-xl border border-neutral-800 object-cover"
+                    className="mt-4 max-h-[26rem] w-full rounded-xl border border-border object-cover"
                 />
             ) : null}
 
             {post.location_name ? (
-                <p className="mt-3 flex items-center gap-1.5 text-xs text-neutral-500">
+                <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <MapPinIcon className="size-3.5" />
                     {post.location_name}
                 </p>
             ) : null}
 
-            <div className="mt-4 flex items-center gap-6 text-xs text-neutral-500">
+            <div className="mt-4 flex items-center gap-6 text-xs text-muted-foreground">
                 {!hidden(post.post_hide_like_count) ? (
                     <span className="flex items-center gap-1.5">
                         <HeartIcon className="size-4" />

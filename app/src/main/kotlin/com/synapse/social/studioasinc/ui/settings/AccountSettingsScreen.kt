@@ -32,7 +32,8 @@ fun AccountSettingsScreen(
     onLogout: () -> Unit,
     onNavigateToRequestAccountInfo: () -> Unit = {},
     onNavigateToBusinessPlatform: () -> Unit = {},
-    onNavigateToChangeNumber: () -> Unit = {}
+    onNavigateToChangeNumber: () -> Unit = {},
+    onNavigateToPasskeys: () -> Unit = {}
 ) {
     val linkedAccounts by viewModel.linkedAccounts.collectAsState()
     val securityNotificationsEnabled by viewModel.securityNotificationsEnabled.collectAsState()
@@ -101,7 +102,7 @@ fun AccountSettingsScreen(
                         title = stringResource(R.string.settings_passkeys_title),
                         subtitle = stringResource(R.string.settings_passkeys_subtitle),
                         imageVector = Icons.Filled.Key,
-                        onClick = { },
+                        onClick = onNavigateToPasskeys,
                         position = SettingsItemPosition.Middle
                     )
                     SettingsNavigationItem(

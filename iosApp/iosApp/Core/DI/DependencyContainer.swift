@@ -14,6 +14,14 @@ class DependencyContainer: ObservableObject {
     let signUpUseCase: SignUpUseCase
     let sendPasswordResetUseCase: SendPasswordResetUseCase
 
+    // Passkey Repos & Use Cases
+    let passkeyRepository: PasskeyRepository
+    let passkeyPlatformManager: PasskeyPlatformManager
+    let addPasskeyUseCase: AddPasskeyUseCase
+    let loadPasskeysUseCase: LoadPasskeysUseCase
+    let removePasskeyUseCase: RemovePasskeyUseCase
+    let signInWithPasskeyUseCase: SignInWithPasskeyUseCase
+
     private init() {
         self.analyticsService = DefaultAnalyticsService()
         self.crashReportingService = DefaultCrashReportingService()
@@ -24,6 +32,25 @@ class DependencyContainer: ObservableObject {
         self.signInUseCase = SignInUseCase(repository: self.authRepository)
         self.signUpUseCase = SignUpUseCase(repository: self.authRepository)
         self.sendPasswordResetUseCase = SendPasswordResetUseCase(repository: self.authRepository)
+
+        // Initialize KMP Shared Passkey Dependencies
+        self.passkeyRepository = PasskeyRepositoryImpl(client: client)
+        self.passkeyPlatformManager = IosPasskeyPlatformManager()
+        self.addPasskeyUseCase = AddPasskeyUseCase(
+            passkeyRepository: self.passkeyRepository,
+            passkeyPlatformManager: self.passkeyPlatformManager
+        )
+        self.loadPasskeysUseCase = LoadPasskeysUseCase(
+            passkeyRepository: self.passkeyRepository
+        )
+        self.removePasskeyUseCase = RemovePasskeyUseCase(
+            passkeyRepository: self.passkeyRepository
+        )
+        self.signInWithPasskeyUseCase = SignInWithPasskeyUseCase(
+            authRepository: self.authRepository,
+            passkeyRepository: self.passkeyRepository,
+            passkeyPlatformManager: self.passkeyPlatformManager
+        )
     }
 
     // ViewModels
@@ -33,9 +60,19 @@ class DependencyContainer: ObservableObject {
         viewModel.setDependencies(
             signInUseCase: signInUseCase,
             signUpUseCase: signUpUseCase,
-            sendPasswordResetUseCase: sendPasswordResetUseCase
+            sendPasswordResetUseCase: sendPasswordResetUseCase,
+            signInWithPasskeyUseCase: signInWithPasskeyUseCase
         )
         return viewModel
+    }
+
+    @MainActor
+    func makePasskeysViewModel() -> PasskeysViewModel {
+        return PasskeysViewModel(
+            loadPasskeysUseCase: loadPasskeysUseCase,
+            addPasskeyUseCase: addPasskeyUseCase,
+            removePasskeyUseCase: removePasskeyUseCase
+        )
     }
 
     func makeHomeViewModel() -> HomeViewModel {

@@ -7,19 +7,28 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -29,13 +38,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
+import com.synapse.social.studioasinc.feature.auth.ui.components.AuthErrorDialog
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthScreenLayout
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthTextField
-import com.synapse.social.studioasinc.feature.auth.ui.components.ErrorCard
 import com.synapse.social.studioasinc.feature.auth.ui.components.OAuthSection
 import com.synapse.social.studioasinc.feature.auth.ui.components.PasswordStrengthIndicator
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
@@ -50,6 +60,7 @@ fun SignInSignUpScreenContent(
     onForgotPasswordClick: () -> Unit,
     onToggleModeClick: () -> Unit,
     onOAuthClick: (String) -> Unit,
+    onSignInWithPasskeyClick: () -> Unit,
     onDismissError: () -> Unit
 ) {
     AuthScreenLayout(
@@ -84,6 +95,7 @@ fun SignInSignUpScreenContent(
                 onForgotPasswordClick = onForgotPasswordClick,
                 onToggleModeClick = onToggleModeClick,
                 onOAuthClick = onOAuthClick,
+                onSignInWithPasskeyClick = onSignInWithPasskeyClick,
                 onDismissError = onDismissError
             )
         }
@@ -119,6 +131,7 @@ private fun UnifiedAuthForm(
     onForgotPasswordClick: () -> Unit,
     onToggleModeClick: () -> Unit,
     onOAuthClick: (String) -> Unit,
+    onSignInWithPasskeyClick: () -> Unit,
     onDismissError: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -162,10 +175,12 @@ private fun UnifiedAuthForm(
         else -> false
     }
 
-    ErrorCard(
-        error = generalError,
-        onDismiss = onDismissError
-    )
+    generalError?.let {
+        AuthErrorDialog(
+            error = it,
+            onDismiss = onDismissError
+        )
+    }
 
     AnimatedVisibility(visible = isSignUpMode) {
         Column {
@@ -248,6 +263,14 @@ private fun UnifiedAuthForm(
         onGitHubClick = { onOAuthClick("GitHub") }
     )
 
+    if (!isSignUpMode) {
+        Spacer(modifier = Modifier.height(Spacing.space12))
+        SignInWithPasskeyButton(
+            onClick = onSignInWithPasskeyClick,
+            enabled = !isLoading
+        )
+    }
+
     Spacer(modifier = Modifier.height(Spacing.space24))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,6 +283,38 @@ private fun UnifiedAuthForm(
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.clickable { onToggleModeClick() }
+        )
+    }
+}
+
+@Composable
+private fun SignInWithPasskeyButton(
+    onClick: () -> Unit,
+    enabled: Boolean
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(Sizes.ButtonHeightLarge),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        contentPadding = PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space8)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Key,
+            contentDescription = null,
+            modifier = Modifier
+                .size(Sizes.IconLarge)
+                .padding(end = Spacing.space8),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.action_sign_in_with_passkey),
+            style = MaterialTheme.typography.labelLarge
         )
     }
 }

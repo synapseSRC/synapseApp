@@ -200,6 +200,14 @@
 				<data android:scheme="synapse" android:host="login" />
 			</intent-filter>
 
+			<!-- Auth callback from the hosted site (OAuth and Magic Links) -->
+			<intent-filter android:autoVerify="true">
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="https" android:host="socialsynapse.vercel.app" android:pathPrefix="/home" />
+			</intent-filter>
+
 			<!-- Fallback for misconfigured Supabase redirect (www.synapse.com) -->
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />

@@ -43,18 +43,20 @@ const BentoCard = ({
     <div
         key={name}
         className={cn(
-            "group relative col-span-3 flex flex-col justify-between border border-border/60 overflow-hidden rounded-xl",
-            "bg-black [box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]",
+            "dark group relative col-span-3 flex flex-col justify-between border border-border/60 overflow-hidden rounded-xl",
+            // `.dark` swaps the tokens, but `color` only re-resolves where a text utility is set —
+            // without this the ghost CTA inherits the light page color and renders black-on-black.
+            "bg-card text-card-foreground [box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]",
             className,
         )}
     >
         <div>{background}</div>
         <div className="pointer-events-none z-10 flex flex-col gap-1 p-6 pb-24 transition-all duration-300 sm:pb-6 group-hover:-translate-y-10">
-            <Icon className="size-10 origin-left text-neutral-300 transition-all duration-300 ease-in-out sm:h-12 sm:w-12 group-hover:scale-75" strokeWidth={1.5} />
-            <h3 className="text-xl font-semibold text-neutral-300">
+            <Icon className="size-10 origin-left text-card-foreground transition-all duration-300 ease-in-out sm:h-12 sm:w-12 group-hover:scale-75" strokeWidth={1.5} />
+            <h3 className="text-xl font-semibold text-card-foreground">
                 {name}
             </h3>
-            <p className="max-w-lg text-sm text-neutral-400 sm:text-base">{description}</p>
+            <p className="max-w-lg text-sm text-muted-foreground sm:text-base">{description}</p>
         </div>
 
         <div

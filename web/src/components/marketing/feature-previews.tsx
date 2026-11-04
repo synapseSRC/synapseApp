@@ -15,7 +15,7 @@ import {
     WrenchIcon,
 } from "lucide-react";
 
-const panel = "rounded-xl border border-border/70 bg-neutral-950/70";
+const panel = "dark rounded-xl border border-border/70 bg-card text-card-foreground";
 
 const Row = ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm", className)}>

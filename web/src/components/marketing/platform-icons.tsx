@@ -15,11 +15,11 @@ type PlatformGlyphConfig = {
 };
 
 const GLYPHS: Record<PlatformId, PlatformGlyphConfig> = {
-    android: { icon: SmartphoneIcon, ring: "border-emerald-400/30", text: "text-emerald-300" },
-    ios: { icon: SmartphoneIcon, ring: "border-sky-400/30", text: "text-sky-300" },
-    windows: { icon: AppWindowIcon, ring: "border-cyan-400/30", text: "text-cyan-300" },
-    linux: { icon: LaptopIcon, ring: "border-amber-400/30", text: "text-amber-300" },
-    cli: { icon: TerminalIcon, ring: "border-violet-400/30", text: "text-violet-300" },
+    android: { icon: SmartphoneIcon, ring: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300" },
+    ios: { icon: SmartphoneIcon, ring: "border-sky-400/30", text: "text-sky-600 dark:text-sky-300" },
+    windows: { icon: AppWindowIcon, ring: "border-cyan-400/30", text: "text-cyan-600 dark:text-cyan-300" },
+    linux: { icon: LaptopIcon, ring: "border-amber-400/30", text: "text-amber-600 dark:text-amber-300" },
+    cli: { icon: TerminalIcon, ring: "border-violet-400/30", text: "text-violet-700 dark:text-violet-300" },
 };
 
 export const PlatformGlyph = ({

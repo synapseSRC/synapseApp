@@ -49,7 +49,7 @@ const ProfilePage = async ({ params }: Props) => {
                 coverUrl={coverUrl}
                 action={
                     !isOwner && user ? (
-                        <span className="rounded-full border border-neutral-700 px-4 py-2 text-xs text-neutral-300">
+                        <span className="rounded-full border border-border px-4 py-2 text-xs text-muted-foreground">
                             Follow is coming to web
                         </span>
                     ) : null
@@ -57,9 +57,9 @@ const ProfilePage = async ({ params }: Props) => {
             />
 
             {posts === null ? (
-                <div className="rounded-2xl border border-dashed border-neutral-800 bg-neutral-950/40 p-8 text-center">
+                <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
                     <p className="font-heading text-lg font-semibold">Posts need a Synapse account</p>
-                    <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-400">
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                         Profiles are public, but the post list is only readable by signed-in members.
                     </p>
                     <Link
@@ -70,11 +70,11 @@ const ProfilePage = async ({ params }: Props) => {
                     </Link>
                 </div>
             ) : "error" in posts ? (
-                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-200">
+                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
                     Could not load this profile&apos;s posts: {posts.error}
                 </div>
             ) : posts.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-neutral-800 bg-neutral-950/40 p-8 text-center text-sm text-neutral-400">
+                <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
                     {profile.display_name ?? profile.username} hasn&apos;t posted yet.
                 </div>
             ) : (

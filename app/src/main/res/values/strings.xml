@@ -2064,6 +2064,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_no_passkeys_title">No Passkeys</string>
     <string name="settings_passkeys_description">Passkeys allow you to sign in securely without a password using your device\'s biometrics.</string>
     <string name="settings_passkey_added_date">Added %1$s</string>
+    <string name="settings_passkey_delete_description">Delete passkey</string>
+    <string name="settings_passkey_delete_confirm_title">Delete Passkey</string>
+    <string name="settings_passkey_delete_confirm_body">This passkey will be removed from your account and you will no longer be able to use it to sign in.</string>
+    <string name="action_sign_in_with_passkey">Sign in with Passkey</string>
     <string name="settings_on">On</string>
     <string name="settings_off">Off</string>
     <string name="settings_enabled">Enabled</string>

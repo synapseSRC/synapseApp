@@ -139,7 +139,7 @@ const BlogDetailPage = ({ params }: Props) => {
                         </span>
                         <span className="flex items-center gap-2 text-lg font-medium text-foreground">
                             {next.title}
-                            <ArrowRightIcon className="size-4 shrink-0 text-cyan-300" />
+                            <ArrowRightIcon className="size-4 shrink-0 text-cyan-600 dark:text-cyan-300" />
                         </span>
                         <span className="text-sm text-muted-foreground">{next.description}</span>
                     </Link>

@@ -1,4 +1,5 @@
 import SwiftUI
+import shared
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
@@ -44,6 +45,11 @@ struct SettingsView: View {
                     }
                     NavigationLink(destination: PrivacySettingsView()) {
                         Label("Security & Privacy", systemImage: "lock.shield")
+                    }
+                    if DependencyContainer.shared.passkeyPlatformManager.isSupported {
+                        NavigationLink(destination: PasskeysView()) {
+                            Label(String(localized: "settings_passkeys"), systemImage: "person.badge.key")
+                        }
                     }
                 } label: {
                     Label("Account", systemImage: "person.crop.circle")

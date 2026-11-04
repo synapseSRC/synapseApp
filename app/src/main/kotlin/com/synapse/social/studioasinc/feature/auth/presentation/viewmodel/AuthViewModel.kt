@@ -49,6 +49,7 @@ class AuthViewModel @Inject constructor(
     private val getOAuthUrlUseCase: GetOAuthUrlUseCase,
     private val signInWithOAuthUseCase: SignInWithOAuthUseCase,
     private val signInWithGoogleIdTokenUseCase: SignInWithGoogleIdTokenUseCase,
+    private val signInWithPasskeyUseCase: SignInWithPasskeyUseCase,
     private val refreshSessionUseCase: RefreshSessionUseCase,
     private val isEmailVerifiedUseCase: IsEmailVerifiedUseCase
 ) : ViewModel() {
@@ -151,6 +152,27 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = state.copy(
                         isLoading = false,
                         generalError = error.message ?: "Login failed",
+                        isErrorDismissed = false
+                    )
+                }
+            )
+        }
+    }
+
+    fun signInWithPasskey() {
+        val state = _uiState.value as? AuthUiState.SignIn ?: return
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(isLoading = true, generalError = null, isErrorDismissed = false)
+            signInWithPasskeyUseCase().fold(
+                onSuccess = {
+                    _uiState.value = state.copy(isLoading = false)
+                    _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
+                },
+                onFailure = { error ->
+                    _uiState.value = state.copy(
+                        isLoading = false,
+                        generalError = error.message ?: "Passkey sign-in failed",
                         isErrorDismissed = false
                     )
                 }
