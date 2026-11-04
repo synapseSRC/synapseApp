@@ -42,13 +42,7 @@ import kotlin.time.ExperimentalTime
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
-
-private fun diceBearInitialsAvatarUrl(name: String): String {
-    val seed = name.trim().lowercase().ifBlank { "member" }
-    return URLBuilder("https://api.dicebear.com/9.x/initials/svg").apply {
-        parameters.append("seed", seed)
-    }.buildString()
-}
+import com.synapse.social.studioasinc.shared.data.util.initialsAvatarUrl
 
 /**
  * Implementation of [AuthRepository] that utilizes Supabase Auth for session management
@@ -102,7 +96,7 @@ class SupabaseAuthRepository(
                     this.password = password
                     data = buildJsonObject {
                         normalizedUsername?.let { put("username", it) }
-                        put("avatar_url", diceBearInitialsAvatarUrl(avatarSeed))
+                        put("avatar_url", initialsAvatarUrl(avatarSeed))
                     }
                 }
                 val userId = user?.id ?: client.auth.currentUserOrNull()?.id

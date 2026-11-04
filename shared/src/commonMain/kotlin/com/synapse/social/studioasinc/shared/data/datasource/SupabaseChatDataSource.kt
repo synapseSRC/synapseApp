@@ -70,8 +70,8 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     suspend fun getOrCreateChat(otherUserId: String): String =
         conversations.getOrCreateChat(otherUserId)
 
-    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions()): String? =
-        conversations.createGroupChat(name, participantIds, avatarUrl, options)
+    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions(), encName: String? = null, encDescription: String? = null, encAvatarUrl: String? = null): String? =
+        conversations.createGroupChat(name, participantIds, avatarUrl, options, encName, encDescription, encAvatarUrl)
 
     suspend fun getGroupInviteCode(chatId: String): String? = groups.getGroupInviteCode(chatId)
     suspend fun rotateGroupInviteCode(chatId: String): String = groups.rotateGroupInviteCode(chatId)
@@ -110,6 +110,15 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) =
         groups.toggleOnlyAdminsCanMessage(chatId, enabled)
+
+    suspend fun updateGroupInfo(chatId: String, name: String?, description: String?, avatarUrl: String?, encName: String? = null, encDescription: String? = null, encAvatarUrl: String? = null): ChatDto =
+        groups.updateGroupInfo(chatId, name, description, avatarUrl, encName, encDescription, encAvatarUrl)
+
+    suspend fun updateGroupPrivacy(chatId: String, allowMemberInvites: Boolean?, requireJoinApproval: Boolean?, allowMemberSettingsEdits: Boolean?) =
+        groups.updateGroupPrivacy(chatId, allowMemberInvites, requireJoinApproval, allowMemberSettingsEdits)
+
+    suspend fun deleteGroup(chatId: String) =
+        groups.deleteGroup(chatId)
 
     suspend fun updateConversationArchiveStatus(chatId: String, isArchived: Boolean) =
         conversations.updateConversationArchiveStatus(chatId, isArchived)

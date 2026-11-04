@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -142,10 +143,14 @@ fun SettingsHubScreen(
 @Composable
 fun SettingsSearchBar(
     query: String,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = stringResource(R.string.settings_search_settings_placeholder),
+    clearContentDescription: String = stringResource(R.string.settings_search_clear_content_description),
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = Spacing.space8),
         shape = CircleShape,
@@ -161,19 +166,20 @@ fun SettingsSearchBar(
             Spacer(modifier = Modifier.width(Spacing.space12))
             Box(modifier = Modifier.weight(1f)) {
                 if (query.isEmpty()) {
-                    Text(stringResource(R.string.settings_search_settings_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 androidx.compose.foundation.text.BasicTextField(
                     value = query,
                     onValueChange = onQueryChange,
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = keyboardOptions
                 )
             }
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(Sizes.IconLarge)) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.settings_search_clear_content_description))
+                    Icon(Icons.Default.Close, contentDescription = clearContentDescription)
                 }
             }
         }

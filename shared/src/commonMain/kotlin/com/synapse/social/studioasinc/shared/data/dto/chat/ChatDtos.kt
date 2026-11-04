@@ -12,6 +12,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
@@ -141,7 +142,10 @@ data class ChatDto(
     @SerialName("allow_member_settings_edits") val allowMemberSettingsEdits: Boolean = false,
     @SerialName("require_join_approval") val requireJoinApproval: Boolean = true,
     @SerialName("allow_member_invites") val allowMemberInvites: Boolean = false,
-    @SerialName("invite_code") val inviteCode: String? = null
+    @SerialName("invite_code") val inviteCode: String? = null,
+    @SerialName("enc_name") val encName: JsonObject? = null,
+    @SerialName("enc_description") val encDescription: JsonObject? = null,
+    @SerialName("enc_avatar_url") val encAvatarUrl: JsonObject? = null
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -157,7 +161,10 @@ data class NewChatDto(
     @EncodeDefault @SerialName("allow_member_settings_edits") val allowMemberSettingsEdits: Boolean = false,
     @EncodeDefault @SerialName("require_join_approval") val requireJoinApproval: Boolean = true,
     @EncodeDefault @SerialName("allow_member_invites") val allowMemberInvites: Boolean = false,
-    @EncodeDefault @SerialName("disappearing_mode") val disappearingMode: String = "OFF"
+    @EncodeDefault @SerialName("disappearing_mode") val disappearingMode: String = "OFF",
+    @SerialName("enc_name") val encName: JsonObject? = null,
+    @SerialName("enc_description") val encDescription: JsonObject? = null,
+    @SerialName("enc_avatar_url") val encAvatarUrl: JsonObject? = null
 )
 
 /**
@@ -217,5 +224,9 @@ data class ChatInboxSummaryDto(
     @SerialName("is_pinned") val isPinned: Boolean = false,
     @SerialName("is_muted") val isMuted: Boolean = false,
     @SerialName("last_message") val lastMessage: MessageDto? = null,
-    @SerialName("unread_count") val unreadCount: Long = 0
+    @SerialName("unread_count") val unreadCount: Long = 0,
+    @SerialName("enc_name") val encName: String? = null,
+    @SerialName("enc_avatar_url") val encAvatarUrl: String? = null,
+    /** Chat-level timestamp so message-less conversations (new groups) still date correctly. */
+    @SerialName("chat_created_at") val chatCreatedAt: String? = null
 )

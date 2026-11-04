@@ -233,7 +233,11 @@ class CreateGroupViewModel @Inject constructor(
                 else groupCreationRepository.declineGroupJoinRequest(requestId)
             result.onSuccess {
                 loadPendingRequests(chatId)
-                if (approve) loadGroupMembers(chatId)
+                if (approve) {
+                    loadGroupMembers(chatId)
+                    // Re-fan-out encrypted metadata so the newly approved member can decrypt it.
+                    chatRepository.resyncGroupMetadata(chatId)
+                }
             }.onFailure { _error.value = GroupCreationError.LOAD_REQUESTS_FAILED }
         }
     }

@@ -1,13 +1,47 @@
 package com.synapse.social.studioasinc.shared.data.repository
 
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
+import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
+import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
+import com.synapse.social.studioasinc.shared.data.util.initialsAvatarUrl
+import com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo
 
 internal class ChatGroupRepository(
-    private val dataSource: SupabaseChatDataSource
+    private val dataSource: SupabaseChatDataSource,
+    private val cipher: GroupMetadataCipher? = null
 ) {
 
+    /**
+     * Maps a [ChatDto] to the domain [ChatInfo], decrypting encrypted group metadata for the current
+     * user and falling back to the legacy plaintext columns when no envelope is addressed to them.
+     */
+    private suspend fun decryptToDomain(dto: ChatDto): ChatInfo {
+        val base = dto.toDomain()
+        val c = cipher
+        if (!dto.isGroup || c == null) return base
+        val uid = dataSource.getCurrentUserId() ?: return base
+        val chatId = dto.id
+        val name = c.decryptField(c.parse(dto.encName), uid, chatId, "name") ?: base.name
+        val description = c.decryptField(c.parse(dto.encDescription), uid, chatId, "description") ?: base.description
+        // Groups always resolve to an image URL: the first-letters API replaces client-side initials rendering.
+        val avatarUrl = c.decryptField(c.parse(dto.encAvatarUrl), uid, chatId, "avatar_url")
+            ?: base.avatarUrl
+            ?: name?.takeIf { it.isNotBlank() }?.let { initialsAvatarUrl(it, fallbackSeed = "group") }
+        return base.copy(name = name, description = description, avatarUrl = avatarUrl)
+    }
+
     suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String?): Result<String> = try {
-        val chatId = dataSource.createGroupChat(name, participantIds, avatarUrl) ?: throw Exception("Failed to create group chat")
+        val c = cipher
+        val uid = dataSource.getCurrentUserId()
+        var encName: String? = null
+        var encAvatar: String? = null
+        if (c != null && uid != null) {
+            val roster = participantIds + uid
+            c.encryptField(name, roster, uid)?.let { encName = c.serialize(it) }
+            val avatar = avatarUrl?.takeIf { it.isNotBlank() } ?: initialsAvatarUrl(name, fallbackSeed = "group")
+            c.encryptField(avatar, roster, uid)?.let { encAvatar = c.serialize(it) }
+        }
+        val chatId = dataSource.createGroupChat(name, participantIds, avatarUrl, encName = encName, encAvatarUrl = encAvatar) ?: throw Exception("Failed to create group chat")
         Result.success(chatId)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error creating group chat", e)
@@ -40,6 +74,8 @@ internal class ChatGroupRepository(
 
     suspend fun addGroupMembers(chatId: String, userIds: List<String>): Result<Unit> = try {
         dataSource.addGroupMembers(chatId, userIds)
+        // Best-effort: re-fan-out encrypted metadata so newly added members receive envelopes.
+        resyncMetadata(chatId)
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error adding group member", e)
@@ -88,11 +124,95 @@ internal class ChatGroupRepository(
 
     suspend fun getChatInfo(chatId: String): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo?> = try {
         val info = dataSource.getChatInfo(chatId)
-        with(com.synapse.social.studioasinc.shared.data.mapper.ChatMapper) {
-            Result.success(info?.toDomain())
-        }
+        Result.success(info?.let { decryptToDomain(it) })
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error getting chat info", e)
+        Result.failure(e)
+    }
+
+    suspend fun updateGroupInfo(chatId: String, name: String?, description: String?, avatarUrl: String?): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo> = try {
+        val uid = dataSource.getCurrentUserId()
+        var encNameStr: String? = null
+        var encDescStr: String? = null
+        var encAvatarStr: String? = null
+        val c = cipher
+        if (c != null && uid != null && (name != null || description != null || avatarUrl != null)) {
+            val participants = dataSource.getParticipantIds(chatId)
+            name?.let { v -> c.encryptField(v, participants, uid)?.let { f -> encNameStr = c.serialize(f) } }
+            description?.let { v -> c.encryptField(v, participants, uid)?.let { f -> encDescStr = c.serialize(f) } }
+            avatarUrl?.let { v -> c.encryptField(v, participants, uid)?.let { f -> encAvatarStr = c.serialize(f) } }
+        }
+        val dto = dataSource.updateGroupInfo(
+            chatId,
+            name = if (encNameStr != null) null else name,
+            description = if (encDescStr != null) null else description,
+            avatarUrl = if (encAvatarStr != null) null else avatarUrl,
+            encName = encNameStr,
+            encDescription = encDescStr,
+            encAvatarUrl = encAvatarStr
+        )
+        Result.success(decryptToDomain(dto))
+    } catch (e: Exception) {
+        io.github.aakira.napier.Napier.e("Error updating group info", e)
+        Result.failure(e)
+    }
+
+    /**
+     * Re-fans-out the group's encrypted metadata to the full current roster so that members who
+     * joined after the last edit (and therefore have no envelope) can decrypt name/description/avatar.
+     * Must be invoked by an existing member/admin who can already decrypt the current values.
+     * No-op when encryption is unavailable or the chat is not a group.
+     */
+    suspend fun resyncMetadata(chatId: String): Result<Unit> {
+        val c = cipher
+        val uid = dataSource.getCurrentUserId()
+        if (c == null || uid == null) return Result.success(Unit)
+        return try {
+            val dto = dataSource.getChatInfo(chatId) ?: return Result.success(Unit)
+            if (!dto.isGroup) return Result.success(Unit)
+
+            val currentName = c.decryptField(c.parse(dto.encName), uid, chatId, "name") ?: dto.name
+            val currentDescription = c.decryptField(c.parse(dto.encDescription), uid, chatId, "description") ?: dto.description
+            val currentAvatar = c.decryptField(c.parse(dto.encAvatarUrl), uid, chatId, "avatar_url")
+                ?: dto.avatarUrl
+                ?: currentName?.takeIf { it.isNotBlank() }?.let { initialsAvatarUrl(it, fallbackSeed = "group") }
+
+            val participants = dataSource.getParticipantIds(chatId)
+            val encName = currentName?.let { v -> c.encryptField(v, participants, uid)?.let { f -> c.serialize(f) } }
+            val encDescription = currentDescription?.let { v -> c.encryptField(v, participants, uid)?.let { f -> c.serialize(f) } }
+            val encAvatar = currentAvatar?.let { v -> c.encryptField(v, participants, uid)?.let { f -> c.serialize(f) } }
+
+            if (encName == null && encDescription == null && encAvatar == null) return Result.success(Unit)
+
+            dataSource.updateGroupInfo(
+                chatId,
+                name = null,
+                description = null,
+                avatarUrl = null,
+                encName = encName,
+                encDescription = encDescription,
+                encAvatarUrl = encAvatar
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            io.github.aakira.napier.Napier.e("Error resyncing group metadata", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateGroupPrivacy(chatId: String, allowMemberInvites: Boolean?, requireJoinApproval: Boolean?, allowMemberSettingsEdits: Boolean?): Result<Unit> = try {
+        dataSource.updateGroupPrivacy(chatId, allowMemberInvites, requireJoinApproval, allowMemberSettingsEdits)
+        Result.success(Unit)
+    } catch (e: Exception) {
+        io.github.aakira.napier.Napier.e("Error updating group privacy", e)
+        Result.failure(e)
+    }
+
+    suspend fun deleteGroup(chatId: String): Result<Unit> = try {
+        dataSource.deleteGroup(chatId)
+        Result.success(Unit)
+    } catch (e: Exception) {
+        io.github.aakira.napier.Napier.e("Error deleting group", e)
         Result.failure(e)
     }
 }

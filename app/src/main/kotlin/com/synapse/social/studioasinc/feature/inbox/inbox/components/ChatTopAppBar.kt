@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -110,9 +111,32 @@ fun ChatTopAppBar(
             )
         )
     } else {
+        // Single entry point for the header: the overflow menu item and the tappable title
+        // container (avatar, title and member/status line) both lead to the same info screen —
+        // group info for groups, contact info for DMs.
+        val isGroupLikeChat = isGroupChat || participantProfile?.accountType == "group"
+        val onViewContact: () -> Unit = {
+            if (isGroupLikeChat) {
+                onNavigateToGroupInfo(
+                    chatId,
+                    groupTitle ?: participantProfile?.displayName ?: initialParticipantName ?: "Group"
+                )
+            } else {
+                onNavigateToChatInfo(chatId, participantId ?: "")
+            }
+        }
+        val contactInfoLabel = stringResource(
+            if (isGroupLikeChat) R.string.chat_menu_group_info else R.string.chat_menu_contact_info
+        )
+
         TopAppBar(
             title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClickLabel = contactInfoLabel, onClick = onViewContact),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     // Participant avatar
                     UserAvatarWithStatus(
                         userId = if (isGroupChat) "" else participantId ?: "",
@@ -120,7 +144,7 @@ fun ChatTopAppBar(
                             else participantProfile?.avatar ?: initialParticipantAvatar,
                         size = Sizes.IconMassive,
                         showActiveStatus = !isGroupChat,
-                        displayName = if (isGroupChat) groupTitle ?: initialParticipantName
+                        displayName = if (isGroupChat) null // Group avatar comes from the first-letters API, not UI rendering.
                             else participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
                     Spacer(modifier = Modifier.width(Spacing.space12))
@@ -211,16 +235,7 @@ fun ChatTopAppBar(
                     isMuted = isMuted,
                     isMuteUpdating = isMuteUpdating,
                     onSummarizeChat = onSummarizeChat,
-                    onViewContact = {
-                        if (isGroupChat || participantProfile?.accountType == "group") {
-                            onNavigateToGroupInfo(
-                                chatId,
-                                groupTitle ?: participantProfile?.displayName ?: initialParticipantName ?: "Group"
-                            )
-                        } else {
-                            onNavigateToChatInfo(chatId, participantId ?: "")
-                        }
-                    },
+                    onViewContact = onViewContact,
                     onSearch = onSearchInChat,
                     onMediaLinksAndDocs = onOpenMediaLinksAndDocs,
                     onMuteNotifications = onToggleMuteNotifications,

@@ -404,7 +404,22 @@ fun NavGraphBuilder.inboxGraph(
                 com.synapse.social.studioasinc.feature.inbox.inbox.GroupInfoScreen(
                     chatId = args.chatId,
                     groupName = args.groupName,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) },
+                    onNavigateToSharedContent = { sharedChatId ->
+                        navController.navigate(AppDestination.SharedContent(sharedChatId, 0))
+                    },
+                    onNavigateToParticipants = {
+                        navController.navigate(AppDestination.GroupParticipants(args.chatId))
+                    }
+                )
+            }
+    composable<AppDestination.GroupParticipants> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.GroupParticipants>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.GroupParticipantsScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) }
                 )
             }
     composable<AppDestination.ChatInfo> { backStackEntry ->

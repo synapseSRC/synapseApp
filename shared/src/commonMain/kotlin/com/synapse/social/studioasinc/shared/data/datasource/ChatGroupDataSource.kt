@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.shared.data.datasource
 import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
+import com.synapse.social.studioasinc.shared.data.dto.chat.ChatDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.ChatParticipantDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.GroupInviteCodeDto
 import com.synapse.social.studioasinc.shared.data.dto.chat.GroupInvitePreviewDto
@@ -14,8 +15,10 @@ import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.result.PostgrestResult
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -187,6 +190,68 @@ internal class ChatGroupDataSource(private val client: SupabaseClientLib) {
             "already_member" -> GroupJoinOutcome.ALREADY_MEMBER
             else -> throw IllegalStateException("The invite response was not recognized.")
         }
+    }
+
+    suspend fun updateGroupInfo(
+        chatId: String,
+        name: String?,
+        description: String?,
+        avatarUrl: String?,
+        encName: String? = null,
+        encDescription: String? = null,
+        encAvatarUrl: String? = null
+    ): ChatDto = withContext(AppDispatchers.IO) {
+        try {
+            val json = Json { ignoreUnknownKeys = true }
+            client.postgrest.rpc("update_group_info", buildJsonObject {
+                put("p_chat_id", chatId)
+                name?.let { put("p_name", it) }
+                description?.let { put("p_description", it) }
+                avatarUrl?.let { put("p_avatar_url", it) }
+                encName?.let { put("p_enc_name", json.parseToJsonElement(it)) }
+                encDescription?.let { put("p_enc_description", json.parseToJsonElement(it)) }
+                encAvatarUrl?.let { put("p_enc_avatar_url", json.parseToJsonElement(it)) }
+            }).decodeRow<ChatDto>()
+        } catch (e: Exception) {
+            Napier.e("Error updating group info", e)
+            throw e
+        }
+    }
+
+    suspend fun updateGroupPrivacy(chatId: String, allowMemberInvites: Boolean?, requireJoinApproval: Boolean?, allowMemberSettingsEdits: Boolean?) = withContext(AppDispatchers.IO) {
+        try {
+            client.postgrest.rpc("update_group_privacy", buildJsonObject {
+                put("p_chat_id", chatId)
+                allowMemberInvites?.let { put("p_allow_member_invites", it) }
+                requireJoinApproval?.let { put("p_require_join_approval", it) }
+                allowMemberSettingsEdits?.let { put("p_allow_member_settings_edits", it) }
+            })
+        } catch (e: Exception) {
+            Napier.e("Error updating group privacy", e)
+            throw e
+        }
+    }
+
+    suspend fun deleteGroup(chatId: String) = withContext(AppDispatchers.IO) {
+        try {
+            client.postgrest.rpc("delete_group", buildJsonObject {
+                put("p_chat_id", chatId)
+            })
+        } catch (e: Exception) {
+            Napier.e("Error deleting group", e)
+            throw e
+        }
+    }
+
+    /**
+     * PostgREST renders a composite-returning RPC as a single JSON object (a set would be an
+     * array), while supabase-kt's `decodeSingle` only accepts an array — accept both. `update_group_info`
+     * returns `row_to_json(v_row)`, so a strict array decode would fail *after* the write had already
+     * landed, surfacing a spurious error and leaving the UI with stale group info.
+     */
+    private inline fun <reified T> PostgrestResult.decodeRow(): T {
+        val trimmed = data.trim()
+        return if (trimmed.startsWith("[")) decodeList<T>().first() else decodeAs<T>()
     }
 
 }

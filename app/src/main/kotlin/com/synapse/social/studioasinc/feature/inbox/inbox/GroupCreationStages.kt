@@ -35,11 +35,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.PersonSearch
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -71,6 +68,7 @@ import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.ui.components.ShimmerBox
 import com.synapse.social.studioasinc.ui.components.ShimmerCircle
+import com.synapse.social.studioasinc.ui.settings.SettingsSearchBar
 
 /**
  * The participant picker that opens the group-creation flow.
@@ -95,20 +93,11 @@ internal fun MembersStage(
     val query = searchQuery.trim()
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(horizontal = Spacing.space16)) {
-            Spacer(Modifier.height(Spacing.space8))
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = onSearch,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.group_search_placeholder)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) IconButton(onClick = { onSearch("") }) {
-                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.clear_search))
-                    }
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.extraLarge,
+            SettingsSearchBar(
+                query = searchQuery,
+                onQueryChange = onSearch,
+                placeholder = stringResource(R.string.group_search_placeholder),
+                clearContentDescription = stringResource(R.string.clear_search),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     imeAction = ImeAction.Search

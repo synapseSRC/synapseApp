@@ -13,7 +13,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,13 +99,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
+import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
+import com.synapse.social.studioasinc.ui.settings.SettingsSection
 import com.synapse.social.studioasinc.ui.settings.SettingsToggleItem
 import kotlinx.coroutines.launch
 
@@ -211,67 +213,67 @@ internal fun PermissionsStage(
     Column(Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = Spacing.space16, vertical = Spacing.space12),
-            verticalArrangement = Arrangement.spacedBy(Spacing.space12)
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AppSpacing.screenPadding, vertical = Spacing.space12),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionSpacing)
         ) {
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
-                ) {
-                    listOf(
-                        "collaborative" to stringResource(R.string.group_preset_collaborative),
-                        "announcement" to stringResource(R.string.group_preset_announcement),
-                        "private" to stringResource(R.string.group_preset_private)
-                    ).forEach { (id, label) ->
-                        FilterChip(
-                            selected = preset == id,
-                            onClick = { onSelectPreset(id) },
-                            modifier = Modifier.weight(1f).heightIn(min = 40.dp),
-                            label = {
-                                Text(
-                                    label,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
-                        )
+                SettingsSection(title = stringResource(R.string.group_preset_section)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+                    ) {
+                        listOf(
+                            "collaborative" to stringResource(R.string.group_preset_collaborative),
+                            "announcement" to stringResource(R.string.group_preset_announcement),
+                            "private" to stringResource(R.string.group_preset_private)
+                        ).forEach { (id, label) ->
+                            FilterChip(
+                                selected = preset == id,
+                                onClick = { onSelectPreset(id) },
+                                modifier = Modifier.weight(1f).heightIn(min = 40.dp),
+                                label = {
+                                    Text(
+                                        label,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
             item {
-                PermissionRow(Icons.Filled.Chat, stringResource(R.string.group_permission_send_messages), stringResource(R.string.group_permission_send_support), options.sendMessagesByMembers, onSendMessagesChange)
-            }
-            item {
-                PermissionRow(Icons.Filled.Edit, stringResource(R.string.group_permission_edit_settings), stringResource(R.string.group_permission_edit_support), options.allowMemberSettingsEdits, onMemberSettingsChange)
-            }
-            item {
-                PermissionRow(Icons.Filled.HowToReg, stringResource(R.string.group_permission_approve), stringResource(R.string.group_permission_approve_support), options.requireJoinApproval, onApprovalChange)
-            }
-            item {
-                PermissionRow(Icons.Filled.Share, stringResource(R.string.group_permission_invites), stringResource(R.string.group_permission_invites_support), options.allowMemberInvites, onInvitesChange)
-            }
-            item {
-                Box {
-                    OutlinedTextField(
-                        value = disappearingLabel(options.disappearingMode),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.group_disappearing_label)) },
-                        leadingIcon = { Icon(Icons.Filled.Timer, contentDescription = null) },
-                        trailingIcon = { Icon(Icons.Filled.ArrowForward, contentDescription = null) },
-                        supportingText = { Text(stringResource(R.string.group_disappearing_support)) },
-                        modifier = Modifier.fillMaxWidth().clickable { menuExpanded = true }
-                    )
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        listOf(
-                            DisappearingMode.OFF to stringResource(R.string.disappearing_mode_off),
-                            DisappearingMode.TWENTY_FOUR_HOURS to stringResource(R.string.disappearing_mode_24_hours),
-                            DisappearingMode.SEVEN_DAYS to stringResource(R.string.disappearing_mode_7_days),
-                            DisappearingMode.NINETY_DAYS to stringResource(R.string.disappearing_mode_90_days)
-                        ).forEach { (mode, label) ->
-                            DropdownMenuItem(text = { Text(label) }, onClick = { onDisappearingChange(mode); menuExpanded = false })
+                SettingsSection(title = stringResource(R.string.group_member_permissions_section)) {
+                    PermissionRow(Icons.Filled.Chat, stringResource(R.string.group_permission_send_messages), stringResource(R.string.group_permission_send_support), options.sendMessagesByMembers, onSendMessagesChange, SettingsItemPosition.Top)
+                    PermissionRow(Icons.Filled.Edit, stringResource(R.string.group_permission_edit_settings), stringResource(R.string.group_permission_edit_support), options.allowMemberSettingsEdits, onMemberSettingsChange, SettingsItemPosition.Middle)
+                    PermissionRow(Icons.Filled.HowToReg, stringResource(R.string.group_permission_approve), stringResource(R.string.group_permission_approve_support), options.requireJoinApproval, onApprovalChange, SettingsItemPosition.Middle)
+                    PermissionRow(Icons.Filled.Share, stringResource(R.string.group_permission_invites), stringResource(R.string.group_permission_invites_support), options.allowMemberInvites, onInvitesChange, SettingsItemPosition.Middle)
+                    Box {
+                        SettingsNavigationItem(
+                            title = stringResource(R.string.group_disappearing_label),
+                            subtitle = stringResource(R.string.group_disappearing_support),
+                            imageVector = Icons.Filled.Timer,
+                            position = SettingsItemPosition.Bottom,
+                            indicator = {
+                                Text(
+                                    text = disappearingLabel(options.disappearingMode),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            onClick = { menuExpanded = true }
+                        )
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            listOf(
+                                DisappearingMode.OFF to stringResource(R.string.disappearing_mode_off),
+                                DisappearingMode.TWENTY_FOUR_HOURS to stringResource(R.string.disappearing_mode_24_hours),
+                                DisappearingMode.SEVEN_DAYS to stringResource(R.string.disappearing_mode_7_days),
+                                DisappearingMode.NINETY_DAYS to stringResource(R.string.disappearing_mode_90_days)
+                            ).forEach { (mode, label) ->
+                                DropdownMenuItem(text = { Text(label) }, onClick = { onDisappearingChange(mode); menuExpanded = false })
+                            }
                         }
                     }
                 }
@@ -293,13 +295,15 @@ private fun PermissionRow(
     title: String,
     subtitle: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    position: SettingsItemPosition = SettingsItemPosition.Single
 ) {
     SettingsToggleItem(
         title = title,
         subtitle = subtitle,
         imageVector = icon,
         checked = checked,
-        onCheckedChange = onCheckedChange
+        onCheckedChange = onCheckedChange,
+        position = position
     )
 }
