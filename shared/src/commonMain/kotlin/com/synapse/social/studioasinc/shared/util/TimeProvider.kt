@@ -1,6 +1,6 @@
 package com.synapse.social.studioasinc.shared.util
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 expect object TimeProvider {

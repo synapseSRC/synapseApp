@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue

@@ -24,7 +24,7 @@ import com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadat
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
 import com.synapse.social.studioasinc.domain.model.LinkPreview
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 
 import androidx.compose.foundation.clickable

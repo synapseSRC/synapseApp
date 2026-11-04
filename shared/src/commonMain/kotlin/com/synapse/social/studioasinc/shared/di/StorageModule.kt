@@ -16,8 +16,6 @@ import com.synapse.social.studioasinc.shared.data.database.postMetadataAdapter
 import com.synapse.social.studioasinc.shared.data.database.intAdapter
 import com.synapse.social.studioasinc.shared.data.database.booleanAdapter
 import com.synapse.social.studioasinc.shared.data.repository.StorageRepositoryImpl
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
-import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
@@ -105,7 +103,6 @@ val storageModule = module {
     }
 
     single<StorageRepository> { StorageRepositoryImpl(get(), get()) }
-    single<CommentDao> { SqlDelightCommentDao(get()) }
     single<PendingActionDao> { SqlDelightPendingActionDao(get()) }
     single<CachedMessageDao> { SqlDelightCachedMessageDao(get()) }
     single<CachedConversationDao> { SqlDelightCachedConversationDao(get()) }

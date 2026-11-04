@@ -17,7 +17,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.LoadingOverlay
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.EmailVerificationViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.ForgotPasswordViewModel
 import com.synapse.social.studioasinc.feature.auth.presentation.viewmodel.ResetPasswordViewModel

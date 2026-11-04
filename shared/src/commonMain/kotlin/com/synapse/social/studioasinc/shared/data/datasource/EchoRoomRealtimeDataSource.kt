@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -116,12 +117,20 @@ class EchoRoomRealtimeDataSource(private val client: SupabaseClientLib) {
             collectors.forEach { it.cancel() }
             statusMonitor.cancel()
             subscription.cancel()
-            CoroutineScope(AppDispatchers.IO).launch(NonCancellable) {
-                try {
-                    channel.unsubscribe()
-                    client.realtime.removeChannel(channel)
-                } catch (e: Exception) {
-                    Napier.w("Echo realtime cleanup failed: ${e.message}", tag = TAG)
+            // awaitClose's handler is not a suspend block, so this cleanup stays detached; only the
+            // retired shape changes. launch(NonCancellable) is deprecated, so the context switch moves
+            // into the body, and the timeout keeps a dead socket from hanging the leftover coroutine —
+            // the same bounded-cleanup form the chat datasource uses.
+            CoroutineScope(AppDispatchers.IO).launch {
+                withContext(NonCancellable) {
+                    try {
+                        withTimeout(5_000) {
+                            channel.unsubscribe()
+                            client.realtime.removeChannel(channel)
+                        }
+                    } catch (e: Exception) {
+                        Napier.w("Echo realtime cleanup failed: ${e.message}", tag = TAG)
+                    }
                 }
             }
         }

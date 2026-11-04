@@ -19,6 +19,11 @@ class ActionQueue(context: Context) {
         private const val KEY_PENDING_ACTIONS = "pending_actions"
     }
 
+    // androidx.security:security-crypto is deprecated upstream with no in-library successor. The
+    // queued actions in here are written in its on-disk format (AES-SIV names, AES-GCM values,
+    // keystore master key), so replacing it is a data migration, not a warning fix — hence the
+    // documented suppression instead of a rewrite.
+    @Suppress("DEPRECATION")
     private val prefs: SharedPreferences by lazy {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

@@ -4,7 +4,7 @@ import com.synapse.social.studioasinc.shared.data.model.PasskeyDto
 import com.synapse.social.studioasinc.shared.data.model.PasskeySignInSessionDto
 import com.synapse.social.studioasinc.shared.domain.model.auth.Passkey
 import com.synapse.social.studioasinc.shared.domain.model.auth.PasskeySignInSession
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * Translates backend passkey DTOs into pure Domain models. DTOs never reach Domain or UI.

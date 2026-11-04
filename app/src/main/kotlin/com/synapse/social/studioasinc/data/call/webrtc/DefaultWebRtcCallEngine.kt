@@ -919,7 +919,10 @@ class DefaultWebRtcCallEngine(
             // A relay-only path is still a real call: do not wait for a direct candidate to declare it
             // writable, otherwise symmetric-NAT users sit in CONNECTING for no reason.
             presumeWritableWhenFullyRelayed = true
-            pruneTurnPorts = false
+            // No TURN port pruning: the boolean flag for that was deprecated in favour of this enum,
+            // and NO_PRUNE is what `pruneTurnPorts = false` meant (both are the library defaults, so
+            // stating it keeps the behaviour and drops the deprecated field).
+            turnPortPrunePolicy = PeerConnection.PortPrunePolicy.NO_PRUNE
             iceCandidatePoolSize = ICE_CANDIDATE_POOL_SIZE
         }
     }

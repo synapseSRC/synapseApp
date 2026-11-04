@@ -451,7 +451,7 @@ class SupabaseChatRepository(
     private fun parseInstantEpochOrNull(timestamp: String?): Long? {
         if (timestamp.isNullOrBlank()) return null
         return try {
-            kotlinx.datetime.Instant.parse(timestamp).toEpochMilliseconds()
+            kotlin.time.Instant.parse(timestamp).toEpochMilliseconds()
         } catch (_: Exception) {
             null
         }
@@ -562,7 +562,7 @@ class SupabaseChatRepository(
                         val modeEnum = try { DisappearingMode.valueOf(modeString) } catch (e: Exception) { DisappearingMode.OFF }
                         if (modeEnum != DisappearingMode.OFF && modeEnum.seconds != null) {
                             val now = com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant()
-                            val expiresAtInstant = kotlinx.datetime.Instant.fromEpochMilliseconds(now.toEpochMilliseconds() + (modeEnum.seconds * 1000))
+                            val expiresAtInstant = kotlin.time.Instant.fromEpochMilliseconds(now.toEpochMilliseconds() + (modeEnum.seconds * 1000))
                             expiresAtInstant.toString()
                         } else null
                     }

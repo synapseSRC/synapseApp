@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.shared.domain.usecase.chat
 
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 class MessageSyncUseCase(
     private val getMessagesUseCase: GetMessagesUseCase

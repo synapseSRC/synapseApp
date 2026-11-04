@@ -68,7 +68,7 @@ fun ScheduleDateTimePickerDialog(
                         if (chosenMillis <= System.currentTimeMillis()) {
                             Toast.makeText(context, context.getString(R.string.scheduled_time_past_error), Toast.LENGTH_SHORT).show()
                         } else {
-                            val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(chosenMillis)
+                            val instant = kotlin.time.Instant.fromEpochMilliseconds(chosenMillis)
                             onScheduleSet(instant.toString())
                             onDismiss()
                         }

@@ -25,12 +25,21 @@ class SynapseFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject lateinit var incomingCallWatcher: IncomingCallWatcher
 
-    override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        Log.d(TAG, "New FCM Token: $token")
+    /**
+     * Registration callbacks in place of the retired `onNewToken`. Firebase deprecated
+     * [FirebaseMessagingService.onNewToken] in firebase-messaging 26 and points here instead; the
+     * argument identifies this app instance's registration with FCM. OneSignal reads the device
+     * token itself, so both are debug-only — the unregister case is logged too, because a token
+     * that silently stops being valid is exactly the thing you want visible in logcat.
+     */
+    override fun onRegistered(installationId: String) {
+        super.onRegistered(installationId)
+        Log.d(TAG, "FCM registered: $installationId")
+    }
 
-        // OneSignal automatically picks up the FCM token,
-        // but we can manually pass it if needed or log it for debugging.
+    override fun onUnregistered(installationId: String) {
+        super.onUnregistered(installationId)
+        Log.d(TAG, "FCM unregistered: $installationId")
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

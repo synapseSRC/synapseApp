@@ -7,8 +7,10 @@ import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+import com.synapse.social.studioasinc.shared.data.local.entity.CommentEntity
 import com.synapse.social.studioasinc.shared.data.local.entity.PostEntity
 import com.synapse.social.studioasinc.shared.data.database.Post as DbPost
+import com.synapse.social.studioasinc.shared.data.database.Comment as DbComment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -70,6 +72,59 @@ class SqlDelightPostDao(
 
     override suspend fun deleteAll(): Unit = withContext(AppDispatchers.IO) {
         db.postQueries.deleteAll()
+    }
+
+    override fun getCommentsForPost(postId: String): Flow<List<CommentEntity>> {
+        return db.commentQueries.selectByPostId(postId)
+            .asFlow()
+            .mapToList(AppDispatchers.IO)
+            .map { comments -> comments.map { toCommentEntity(it) } }
+    }
+
+    override suspend fun insertComments(comments: List<CommentEntity>) = withContext(AppDispatchers.IO) {
+        db.transaction {
+            comments.forEach { comment ->
+                db.commentQueries.insertComment(toDbComment(comment))
+            }
+        }
+    }
+
+    private fun toCommentEntity(dbComment: DbComment): CommentEntity {
+        return CommentEntity(
+            id = dbComment.id,
+            postId = dbComment.postId,
+            authorUid = dbComment.authorId,
+            text = dbComment.text,
+            timestamp = dbComment.timestamp,
+            username = dbComment.username,
+            avatarUrl = dbComment.avatarUrl,
+            parentCommentId = dbComment.parentCommentId,
+            linkPreview = dbComment.linkPreview,
+            viewsCount = dbComment.viewsCount
+        )
+    }
+
+    private fun toDbComment(entity: CommentEntity): DbComment {
+        return DbComment(
+            id = entity.id,
+            postId = entity.postId,
+            authorId = entity.authorUid,
+            text = entity.text,
+            timestamp = entity.timestamp,
+            likesCount = 0,
+            repliesCount = 0,
+            isDeleted = false,
+            parentCommentId = entity.parentCommentId,
+            username = entity.username,
+            avatarUrl = entity.avatarUrl,
+            linkPreview = entity.linkPreview,
+            viewsCount = entity.viewsCount,
+            // Sync metadata
+            updatedAt = 0L,
+            isLocallyDeleted = false,
+            lastSyncedAt = null,
+            syncVersion = 1
+        )
     }
 
     private fun toEntity(dbPost: DbPost): PostEntity {

@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.shared.data.mapper
 
 import com.synapse.social.studioasinc.shared.data.dto.CommentDto
 import com.synapse.social.studioasinc.shared.domain.model.Comment
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 object CommentMapper {
     fun toDomain(dto: CommentDto): Comment {

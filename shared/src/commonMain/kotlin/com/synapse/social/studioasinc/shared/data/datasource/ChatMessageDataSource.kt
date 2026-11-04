@@ -392,7 +392,7 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
 
 private fun compareMessageCursor(leftCreatedAt: String, leftId: String, rightCreatedAt: String, rightId: String): Int {
     val timeComparison = try {
-        kotlinx.datetime.Instant.parse(leftCreatedAt).compareTo(kotlinx.datetime.Instant.parse(rightCreatedAt))
+        kotlin.time.Instant.parse(leftCreatedAt).compareTo(kotlin.time.Instant.parse(rightCreatedAt))
     } catch (_: Exception) {
         leftCreatedAt.compareTo(rightCreatedAt)
     }

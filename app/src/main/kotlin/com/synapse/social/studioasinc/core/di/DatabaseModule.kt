@@ -15,8 +15,6 @@ import com.synapse.social.studioasinc.shared.data.database.Post
 import com.synapse.social.studioasinc.shared.data.database.Comment
 import com.synapse.social.studioasinc.shared.data.database.User
 import com.synapse.social.studioasinc.shared.data.database.*
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
-import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightCommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.SqlDelightPostDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
@@ -42,11 +40,6 @@ object DatabaseModule {
         return SettingsDataStore.getInstance(context)
     }
 
-
-    @Provides
-    fun provideCommentDao(db: StorageDatabase): CommentDao {
-        return SqlDelightCommentDao(db)
-    }
 
     @Provides
     fun providePendingActionDao(db: StorageDatabase): PendingActionDao {

@@ -40,7 +40,7 @@ import com.synapse.social.studioasinc.shared.domain.model.call.CallMediaType
 import com.synapse.social.studioasinc.shared.domain.model.call.CallSession
 import com.synapse.social.studioasinc.shared.domain.model.call.isMissedCall
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * One ended call.

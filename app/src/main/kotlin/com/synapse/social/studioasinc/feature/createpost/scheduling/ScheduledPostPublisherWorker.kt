@@ -18,7 +18,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**

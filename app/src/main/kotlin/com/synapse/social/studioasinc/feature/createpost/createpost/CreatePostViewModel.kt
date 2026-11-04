@@ -28,7 +28,7 @@ import com.synapse.social.studioasinc.domain.repository.MediaUploadHandler
 import com.synapse.social.studioasinc.feature.createpost.scheduling.ScheduledPostPublisherWorker
 import com.synapse.social.studioasinc.domain.model.ScheduledPost
 import kotlin.time.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import com.synapse.social.studioasinc.shared.core.util.UiEvent
 import com.synapse.social.studioasinc.shared.core.util.UiEventManager
 import dagger.hilt.android.lifecycle.HiltViewModel

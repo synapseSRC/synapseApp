@@ -2,7 +2,7 @@ package com.synapse.social.studioasinc.shared.data.mapper
 
 import com.synapse.social.studioasinc.shared.data.dto.BlockWithUserDTO
 import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * Maps between DTOs and domain models for blocking feature.

@@ -19,7 +19,6 @@ import com.synapse.social.studioasinc.shared.data.passkey.AndroidPasskeyPlatform
 import com.synapse.social.studioasinc.shared.data.passkey.PasskeyActivityProvider
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
-import com.synapse.social.studioasinc.shared.data.local.database.CommentDao
 import com.synapse.social.studioasinc.shared.data.local.database.PendingActionDao
 import com.synapse.social.studioasinc.shared.data.local.database.PostDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao

@@ -5,7 +5,7 @@ import com.synapse.social.studioasinc.domain.model.release.AppRelease
 import com.synapse.social.studioasinc.domain.model.release.ReleaseNotesParser
 import com.synapse.social.studioasinc.domain.model.release.ReleaseVersion
 import java.net.URI
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 /**
  * Turns GitHub release entries into changelog data, dropping anything that cannot be presented

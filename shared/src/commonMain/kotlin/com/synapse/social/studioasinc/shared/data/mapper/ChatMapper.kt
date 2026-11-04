@@ -48,11 +48,11 @@ object ChatMapper {
         return withT
     }
 
-    fun parseInstant(raw: String?): kotlinx.datetime.Instant? {
+    fun parseInstant(raw: String?): kotlin.time.Instant? {
         if (raw.isNullOrBlank()) return null
         return try {
             val normalized = normalizeTimestamp(raw) ?: raw
-            kotlinx.datetime.Instant.parse(normalized)
+            kotlin.time.Instant.parse(normalized)
         } catch (_: Exception) {
             null
         }

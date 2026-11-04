@@ -34,10 +34,8 @@ kotlin {
             }
             commonWebpackConfig {
                 devServer = (devServer ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer()).apply {
-                    static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
-                        add(project.projectDir.path + "/src/wasmJsMain/resources")
-                    }
+                    // Serve sources to debug inside browser
+                    static(project.projectDir.path + "/src/wasmJsMain/resources")
                 }
             }
         }
@@ -64,7 +62,7 @@ kotlin {
                 isStatic = true
             }
             it.compilations.getByName("main").cinterops {
-                val corecrypto by creating {
+                val corecrypto = create("corecrypto") {
                     defFile(project.file("src/nativeInterop/cinterop/corecrypto.def"))
                 }
             }
@@ -83,7 +81,7 @@ kotlin {
             }
         }
 
-        val commonMain by getting {
+        val commonMain = getByName("commonMain") {
             dependencies {
                 // Supabase & Ktor
                 implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:3.8.0"))
@@ -123,7 +121,7 @@ kotlin {
         }
 
 
-        val jvmMain by getting {
+        val jvmMain = getByName("jvmMain") {
             dependencies {
                 // CIO engine is the recommended engine for Compose Desktop — pure Kotlin,
                 // no native libs, no jlink stripping issues unlike ktor-client-okhttp
@@ -133,7 +131,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1")
             }
         }
-        val wasmJsMain by getting {
+        val wasmJsMain = getByName("wasmJsMain") {
             dependencies {
                 implementation("app.cash.sqldelight:web-worker-driver:2.4.0")
                 // WebCrypto is async-only, but PlatformUtils has a synchronous contract.
@@ -143,7 +141,7 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
+        val commonTest = getByName("commonTest") {
             dependencies {
                 implementation(kotlin("test"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
@@ -151,7 +149,7 @@ kotlin {
             }
         }
 
-        val androidMain by getting {
+        val androidMain = getByName("androidMain") {
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:3.6.0")
                 // Official Signal Protocol client library (modern API under org.signal.libsignal.*)
@@ -166,7 +164,7 @@ kotlin {
             }
         }
 
-        val androidUnitTest by getting {
+        val androidUnitTest = getByName("androidUnitTest") {
             dependencies {
                 implementation("junit:junit:4.13.2")
                 implementation("org.mockito:mockito-core:5.24.0")
@@ -174,7 +172,7 @@ kotlin {
         }
 
         if (true) {
-            val iosMain by getting {
+            val iosMain = getByName("iosMain") {
                 dependencies {
                     implementation("io.ktor:ktor-client-darwin:3.6.0")
                     implementation("app.cash.sqldelight:native-driver:2.4.0")

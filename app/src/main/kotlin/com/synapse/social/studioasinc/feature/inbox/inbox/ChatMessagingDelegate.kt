@@ -172,9 +172,9 @@ class ChatMessagingDelegate(
             val now = TimeProvider.nowInstant()
             val nowInstant = if (latestTimestamp != null) {
                 try {
-                    val parsedLatest = kotlinx.datetime.Instant.parse(latestTimestamp)
+                    val parsedLatest = kotlin.time.Instant.parse(latestTimestamp)
                     if (now <= parsedLatest) {
-                        kotlinx.datetime.Instant.fromEpochMilliseconds(parsedLatest.toEpochMilliseconds() + 1)
+                        kotlin.time.Instant.fromEpochMilliseconds(parsedLatest.toEpochMilliseconds() + 1)
                     } else {
                         now
                     }
