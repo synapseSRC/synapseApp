@@ -13,7 +13,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +57,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -69,9 +69,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -106,12 +104,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
+import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
+import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
+import com.synapse.social.studioasinc.ui.settings.SettingsIconBadge
+import com.synapse.social.studioasinc.ui.settings.SettingsListItem
+import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
 import kotlinx.coroutines.launch
 
 @Composable
@@ -183,7 +187,11 @@ internal fun GroupHubStage(
     ) {
         if (error != null) item { GroupErrorMessage(error, onClearError) }
         item {
-            OutlinedCard(shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth()) {
+            Card(
+                shape = AppShapes.sectionShape,
+                colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Column(Modifier.fillMaxWidth().padding(Spacing.space16), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(stringResource(R.string.group_invite_title), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(Spacing.space4))
@@ -205,10 +213,10 @@ internal fun GroupHubStage(
                         if (qr != null) Image(
                             bitmap = qr.asImageBitmap(),
                             contentDescription = stringResource(R.string.group_invite_qr_description),
-                            modifier = Modifier.size(GroupCreationDimensions.qrCodeSize)
+                            modifier = Modifier.size(GroupQrCodeSize)
                         ) else Text(stringResource(R.string.group_qr_unavailable), color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(Spacing.space12))
-                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing), modifier = Modifier.fillMaxWidth()) {
                             FilledTonalButton(
                                 onClick = { clipboard.setText(AnnotatedString(inviteLink)); android.widget.Toast.makeText(context, R.string.group_link_copied, android.widget.Toast.LENGTH_SHORT).show() },
                                 modifier = Modifier.weight(1f).height(Sizes.ButtonHeightM3Medium)
@@ -243,12 +251,11 @@ internal fun GroupHubStage(
             }
         }
         item {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.group_pending_requests, requests.size)) },
-                supportingContent = { Text(stringResource(R.string.group_pending_requests_support), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                leadingContent = { Icon(Icons.Filled.GroupAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                trailingContent = { Icon(Icons.Filled.ArrowForward, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth().clickable { onOpenRequests(); showRequestsDialog = true }
+            SettingsNavigationItem(
+                title = stringResource(R.string.group_pending_requests, requests.size),
+                subtitle = stringResource(R.string.group_pending_requests_support),
+                imageVector = Icons.Filled.GroupAdd,
+                onClick = { onOpenRequests(); showRequestsDialog = true }
             )
         }
         item {
@@ -257,7 +264,11 @@ internal fun GroupHubStage(
         }
         if (members.isEmpty()) {
             item {
-                Card(shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    shape = AppShapes.sectionShape,
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBackground),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(stringResource(R.string.group_members_unavailable), modifier = Modifier.padding(Spacing.space20), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -265,16 +276,11 @@ internal fun GroupHubStage(
             items(members, key = { it.first.uid }) { (user, isAdmin) ->
                 val isMe = user.uid == currentUserId
                 var menuExpanded by remember(user.uid) { mutableStateOf(false) }
-                ListItem(
-                    headlineContent = { Text(if (isMe) stringResource(R.string.group_you) else userDisplayName(user)) },
-                    supportingContent = {
-                        Text(
-                            text = if (isMe) stringResource(R.string.group_creator_admin) else if (isAdmin) stringResource(R.string.group_admin_role) else stringResource(R.string.group_member_role),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
+                SettingsListItem(
+                    title = if (isMe) stringResource(R.string.group_you) else userDisplayName(user),
+                    subtitle = if (isMe) stringResource(R.string.group_creator_admin) else if (isAdmin) stringResource(R.string.group_admin_role) else stringResource(R.string.group_member_role),
                     leadingContent = {
-                        Icon(if (isMe) Icons.Filled.Star else Icons.Filled.AccountCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        SettingsIconBadge(imageVector = if (isMe) Icons.Filled.Star else Icons.Filled.AccountCircle)
                     },
                     trailingContent = {
                         if (!isMe && members.any { it.first.uid == currentUserId && it.second }) {
@@ -349,3 +355,6 @@ private fun createQrBitmap(value: String, foreground: Int, background: Int): Bit
 
 
 private const val INVITE_BASE_URL = "https://synapse.chat/g/"
+
+/** Invite QR rendered inside the hub card; the shared [Sizes.QRCodeSize] token is dialog-sized. */
+private val GroupQrCodeSize = 160.dp

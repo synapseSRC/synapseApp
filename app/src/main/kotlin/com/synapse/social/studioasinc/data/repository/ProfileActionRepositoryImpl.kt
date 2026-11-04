@@ -122,7 +122,7 @@ class ProfileActionRepositoryImpl @Inject constructor() : ProfilePrivacyReposito
             supabase.from("user_reports")
                 .insert(mapOf(
                     "reporter_id" to userId,
-                    "reported_user_id" to reportedUserId,
+                    "reported_id" to reportedUserId,
                     "reason" to reason
                 ))
             Result.success(Unit)

@@ -265,7 +265,7 @@
 			android:theme="@style/Base.Theme.AppCompat" />
 		<provider
 			android:name="androidx.startup.InitializationProvider"
-			android:authorities="com.synapse.social.studioasinc.androidx-startup"
+			android:authorities="${applicationId}.androidx-startup"
 			android:exported="false"
 			tools:replace="android:authorities">
 			<meta-data
@@ -333,7 +333,7 @@
 
 <provider
   android:name="androidx.core.content.FileProvider"
-  android:authorities="com.synapse.social.studioasinc.fileprovider"
+  android:authorities="${applicationId}.fileprovider"
   android:exported="false"
   android:grantUriPermissions="true">
   <meta-data

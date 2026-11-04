@@ -608,9 +608,7 @@ private fun QuickActionButton(
     val interaction = remember { MutableInteractionSource() }
     val buttonModifier = modifier.height(ChatInfoMetrics.actionHeight).pressScale(interaction)
     val content: @Composable RowScope.() -> Unit = {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(ChatInfoMetrics.actionIconSize))
-        Spacer(Modifier.size(Spacing.space8))
-        Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        Icon(icon, contentDescription = label, modifier = Modifier.size(ChatInfoMetrics.actionIconSize))
     }
     if (checked) {
         Button(

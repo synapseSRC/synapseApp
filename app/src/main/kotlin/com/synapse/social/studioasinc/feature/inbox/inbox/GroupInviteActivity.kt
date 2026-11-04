@@ -21,7 +21,7 @@ class GroupInviteActivity : ComponentActivity() {
             }
             ?.lastPathSegment
             ?.takeIf { code ->
-                code.length == 32 && code.all { character ->
+                code.length in 16..64 && code.all { character ->
                     character in '0'..'9' || character.lowercaseChar() in 'a'..'f'
                 }
             }

@@ -9,6 +9,7 @@ import com.synapse.social.studioasinc.shared.data.datasource.NotAuthenticatedExc
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseUserDataSource
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
+import com.synapse.social.studioasinc.shared.data.local.SecureStorage
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.data.local.database.MessageReactionDao
@@ -17,6 +18,7 @@ import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.MessageChron
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.mergeMonotonic
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDto
+import com.synapse.social.studioasinc.shared.data.util.initialsAvatarUrl
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
@@ -68,12 +70,14 @@ class SupabaseChatRepository(
     private val offlineActionRepository: OfflineActionRepository? = null,
     private val cachedMessageDao: CachedMessageDao? = null,
     private val cachedConversationDao: CachedConversationDao? = null,
+    private val secureStorage: SecureStorage? = null,
     private val reactionDao: MessageReactionDao? = null,
     private val externalScope: CoroutineScope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + AppDispatchers.IO)
 ) : ChatRepository {
 
     private val encryptionHelper = ChatEncryptionHelper(signalProtocolManager, dataSource, cachedMessageDao)
-    private val groupRepository = ChatGroupRepository(dataSource)
+    private val groupMetadataCipher = GroupMetadataCipher(signalProtocolManager, dataSource, secureStorage)
+    private val groupRepository = ChatGroupRepository(dataSource, groupMetadataCipher)
     private val reactionDataSource = ChatReactionDataSource(client)
     private val conversationMutex = Mutex()
 
@@ -222,17 +226,24 @@ class SupabaseChatRepository(
             } ?: "No messages yet"
             val isOnline = summary.participantStatus?.equals("ONLINE", ignoreCase = true) == true &&
                 TimestampFormatter.isWithinActiveWindow(summary.participantLastSeen, windowMinutes = 2)
+            val decryptedGroupName = if (summary.isGroup)
+                groupMetadataCipher.decryptField(groupMetadataCipher.parse(summary.encName), currentUserId, summary.chatId, "name") else null
+            val decryptedGroupAvatar = if (summary.isGroup)
+                groupMetadataCipher.decryptField(groupMetadataCipher.parse(summary.encAvatarUrl), currentUserId, summary.chatId, "avatar_url") else null
             Conversation(
                 chatId = summary.chatId,
                 participantId = summary.participantId,
-                participantName = summary.participantName?.takeIf { it.isNotBlank() }
+                participantName = decryptedGroupName?.takeIf { it.isNotBlank() }
+                    ?: summary.participantName?.takeIf { it.isNotBlank() }
                     ?: if (summary.isGroup) "Group Chat" else {
                         val userDataSource = SupabaseUserDataSource(client)
                         userDataSource.getUserProfile(summary.participantId).getOrNull()?.let { it.displayName ?: it.name ?: it.nickname ?: it.username }?.takeIf { it.isNotBlank() } ?: "Unknown User"
                     },
-                participantAvatar = summary.participantAvatar,
+                participantAvatar = decryptedGroupAvatar ?: summary.participantAvatar
+                    ?: if (summary.isGroup) (decryptedGroupName ?: summary.participantName)?.takeIf { it.isNotBlank() && it != "Group Chat" }
+                        ?.let { initialsAvatarUrl(it, fallbackSeed = "group") } else null,
                 lastMessage = lastMessageText,
-                lastMessageTime = summary.lastMessage?.createdAt,
+                lastMessageTime = summary.lastMessage?.createdAt ?: summary.chatCreatedAt,
                 unreadCount = summary.unreadCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                 isOnline = isOnline,
                 isGroup = summary.isGroup,
@@ -1028,6 +1039,7 @@ class SupabaseChatRepository(
     override fun getCurrentUserId(): String? = dataSource.getCurrentUserId()
 
     override suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String?) = withContext(AppDispatchers.IO) { groupRepository.createGroupChat(name, participantIds, avatarUrl) }
+    override suspend fun reportChat(chatId: String, reason: String): Result<Unit> = withContext(AppDispatchers.IO) { groupRepository.reportChat(chatId, reason) }
     override suspend fun getParticipantIds(chatId: String) = withContext(AppDispatchers.IO) { groupRepository.getParticipantIds(chatId) }
     override suspend fun getGroupMembers(chatId: String) = withContext(AppDispatchers.IO) { groupRepository.getGroupMembers(chatId) }
     override suspend fun addGroupMembers(chatId: String, userIds: List<String>) = withContext(AppDispatchers.IO) { groupRepository.addGroupMembers(chatId, userIds) }
@@ -1037,6 +1049,10 @@ class SupabaseChatRepository(
     override suspend fun leaveGroup(chatId: String) = withContext(AppDispatchers.IO) { groupRepository.leaveGroup(chatId) }
     override suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean) = withContext(AppDispatchers.IO) { groupRepository.toggleOnlyAdminsCanMessage(chatId, enabled) }
     override suspend fun getChatInfo(chatId: String) = withContext(AppDispatchers.IO) { groupRepository.getChatInfo(chatId) }
+    override suspend fun updateGroupInfo(chatId: String, name: String?, description: String?, avatarUrl: String?): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo> = withContext(AppDispatchers.IO) { groupRepository.updateGroupInfo(chatId, name, description, avatarUrl) }
+    override suspend fun resyncGroupMetadata(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) { groupRepository.resyncMetadata(chatId) }
+    override suspend fun updateGroupPrivacy(chatId: String, allowMemberInvites: Boolean?, requireJoinApproval: Boolean?, allowMemberSettingsEdits: Boolean?): Result<Unit> = withContext(AppDispatchers.IO) { groupRepository.updateGroupPrivacy(chatId, allowMemberInvites, requireJoinApproval, allowMemberSettingsEdits) }
+    override suspend fun deleteGroup(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) { groupRepository.deleteGroup(chatId) }
 
     override suspend fun toggleMessageReaction(messageId: String, emoji: String, chatId: String?): Result<Unit> = withContext(AppDispatchers.IO) {
         reactionDataSource.toggleReaction(messageId, emoji, chatId).onSuccess {

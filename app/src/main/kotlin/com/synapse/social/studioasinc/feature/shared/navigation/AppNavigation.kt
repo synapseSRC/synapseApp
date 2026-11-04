@@ -388,17 +388,11 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
                     },
-                    onNavigateToNewGroup = {
-                        navController.navigate(AppDestination.CreateGroup)
-                    },
                     onNavigateToSharedContent = { chatId, tab ->
                         navController.navigate(AppDestination.SharedContent(chatId, tab))
                     },
                     onNavigateToChatSettings = { chatId ->
                         navController.navigate(AppDestination.ChatSettings(chatId))
-                    },
-                    onNavigateToChatSearch = { chatId ->
-                        navController.navigate(AppDestination.ChatSearch(chatId))
                     },
                     onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
@@ -417,7 +411,22 @@ fun NavGraphBuilder.inboxGraph(
                 com.synapse.social.studioasinc.feature.inbox.inbox.GroupInfoScreen(
                     chatId = args.chatId,
                     groupName = args.groupName,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) },
+                    onNavigateToSharedContent = { sharedChatId ->
+                        navController.navigate(AppDestination.SharedContent(sharedChatId, 0))
+                    },
+                    onNavigateToParticipants = {
+                        navController.navigate(AppDestination.GroupParticipants(args.chatId))
+                    }
+                )
+            }
+    composable<AppDestination.GroupParticipants> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.GroupParticipants>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.GroupParticipantsScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) }
                 )
             }
     composable<AppDestination.ChatInfo> { backStackEntry ->
@@ -465,16 +474,9 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-    composable<AppDestination.ChatSettings> { backStackEntry ->
-                val args = backStackEntry.toRoute<AppDestination.ChatSettings>()
-                navController.navigate(AppDestination.Settings) {
-                    popUpTo(AppDestination.Settings) { inclusive = true }
-                }
-    }
-    composable<AppDestination.ChatSearch> { backStackEntry ->
-                val args = backStackEntry.toRoute<AppDestination.ChatSearch>()
-                com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatSearchScreen(
-                    chatId = args.chatId,
+    composable<AppDestination.ChatSettings> {
+                com.synapse.social.studioasinc.ui.settings.ChatSettingsScreen(
+                    viewModel = androidx.hilt.navigation.compose.hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
     }

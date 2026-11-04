@@ -51,6 +51,7 @@ interface ChatRepository {
     suspend fun ensureSession(userId: String)
     fun getCurrentUserId(): String?
     suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null): Result<String>
+    suspend fun reportChat(chatId: String, reason: String): Result<Unit>
     suspend fun getParticipantIds(chatId: String): Result<List<String>>
     suspend fun getGroupMembers(chatId: String): Result<List<Pair<com.synapse.social.studioasinc.shared.domain.model.User, Boolean>>>
     suspend fun addGroupMembers(chatId: String, userIds: List<String>): Result<Unit>
@@ -60,6 +61,11 @@ interface ChatRepository {
     suspend fun leaveGroup(chatId: String): Result<Unit>
     suspend fun toggleOnlyAdminsCanMessage(chatId: String, enabled: Boolean): Result<Unit>
     suspend fun getChatInfo(chatId: String): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo?>
+    suspend fun updateGroupInfo(chatId: String, name: String? = null, description: String? = null, avatarUrl: String? = null): Result<com.synapse.social.studioasinc.shared.domain.model.chat.ChatInfo>
+    /** Re-fans-out encrypted group metadata to the full current roster (e.g. after members join). */
+    suspend fun resyncGroupMetadata(chatId: String): Result<Unit>
+    suspend fun updateGroupPrivacy(chatId: String, allowMemberInvites: Boolean? = null, requireJoinApproval: Boolean? = null, allowMemberSettingsEdits: Boolean? = null): Result<Unit>
+    suspend fun deleteGroup(chatId: String): Result<Unit>
     suspend fun toggleMessageReaction(messageId: String, emoji: String, chatId: String?): Result<Unit>
     suspend fun getReactionsForMessage(messageId: String): Result<List<MessageReaction>>
     suspend fun getReactionsForMessages(messages: List<Message>): List<Message>

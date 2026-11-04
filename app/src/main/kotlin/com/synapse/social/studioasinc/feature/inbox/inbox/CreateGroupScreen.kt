@@ -52,12 +52,13 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -80,18 +81,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -108,13 +106,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.model.UserStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
-import kotlinx.coroutines.launch
 
 private const val FLOW_MEMBERS = 0
 private const val FLOW_IDENTITY = 1
@@ -133,18 +131,13 @@ fun CreateGroupScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val groupName by viewModel.groupName.collectAsStateWithLifecycle()
     val groupDescription by viewModel.groupDescription.collectAsStateWithLifecycle()
-    val iconConcept by viewModel.iconConcept.collectAsStateWithLifecycle()
-    val purpose by viewModel.purpose.collectAsStateWithLifecycle()
     val options by viewModel.options.collectAsStateWithLifecycle()
     val preset by viewModel.selectedPreset.collectAsStateWithLifecycle()
     val loadingUsers by viewModel.isLoadingUsers.collectAsStateWithLifecycle()
     val creating by viewModel.isCreating.collectAsStateWithLifecycle()
-    val generating by viewModel.isGeneratingIdentity.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val createdChatId by viewModel.createdChatId.collectAsStateWithLifecycle()
     var stage by rememberSaveable { mutableStateOf(FLOW_MEMBERS) }
-    val scope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
 
     fun goBack() {
         if (stage == FLOW_MEMBERS) onNavigateBack()
@@ -156,139 +149,151 @@ fun CreateGroupScreen(
         if (createdChatId != null) stage = FLOW_HUB
     }
 
-    GroupCreationTheme {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = when (stage) {
-                                FLOW_MEMBERS -> stringResource(R.string.group_select_members_title)
-                                FLOW_IDENTITY -> stringResource(R.string.group_identity_title)
-                                FLOW_PERMISSIONS -> stringResource(R.string.group_permissions_title)
-                                else -> groupName.ifBlank { stringResource(R.string.group_hub_title) }
-                            },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = ::goBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                        }
-                    },
-                    actions = {
-                        if (stage == FLOW_MEMBERS) {
-                            IconButton(onClick = { scope.launch { focusRequester.requestFocus() } }) {
-                                Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
-                            }
-                        }
-                    }
-                )
-            },
-            floatingActionButton = {
-                when (stage) {
-                    FLOW_MEMBERS -> FloatingActionButton(
-                        onClick = { if (selectedUsers.isNotEmpty()) stage = FLOW_IDENTITY },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Filled.ArrowForward, contentDescription = stringResource(R.string.group_continue_identity))
-                    }
-                    FLOW_HUB -> FloatingActionButton(
-                        onClick = { createdChatId?.let(onGroupCreated) },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Filled.Chat, contentDescription = stringResource(R.string.group_open_chat))
-                    }
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ) { scaffoldPadding ->
-            AnimatedContent(
-                targetState = stage,
-                modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
-                transitionSpec = {
-                    if (targetState == FLOW_HUB || initialState == FLOW_HUB) {
-                        fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) togetherWith
-                            fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
-                    } else {
-                        val movingForward = targetState > initialState
-                        (slideInHorizontally(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) { width -> if (movingForward) width else -width } +
-                            fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) { width -> if (movingForward) -width else width } +
-                                fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = when (stage) {
+                            FLOW_MEMBERS -> stringResource(R.string.group_select_members_title)
+                            FLOW_IDENTITY -> stringResource(R.string.group_identity_title)
+                            FLOW_PERMISSIONS -> stringResource(R.string.group_permissions_title)
+                            else -> groupName.ifBlank { stringResource(R.string.group_hub_title) }
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = ::goBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
-                label = "groupCreationStage"
-            ) { visibleStage ->
-                when (visibleStage) {
-                    FLOW_MEMBERS -> MembersStage(
-                        users = users,
-                        selectedUsers = selectedUsers,
-                        searchQuery = searchQuery,
-                        isLoading = loadingUsers,
-                        error = error,
-                        focusRequester = focusRequester,
-                        onSearch = viewModel::onSearchQueryChange,
-                        onToggleUser = viewModel::toggleUserSelection,
-                        onRemoveUser = viewModel::removeMember,
-                        onClearError = viewModel::clearError
-                    )
-                    FLOW_IDENTITY -> IdentityStage(
-                        selectedCount = selectedUsers.size,
-                        preset = preset,
-                        hasCreatedGroup = createdChatId != null,
-                        purpose = purpose,
-                        groupName = groupName,
-                        description = groupDescription,
-                        iconConcept = iconConcept,
-                        permissions = options,
-                        isGenerating = generating,
-                        isCreating = creating,
-                        error = error,
-                        onPurposeChange = viewModel::updatePurpose,
-                        onGroupNameChange = viewModel::updateGroupName,
-                        onDescriptionChange = viewModel::updateGroupDescription,
-                        onRegenerate = viewModel::generateIdentity,
-                        onOpenPermissions = { stage = FLOW_PERMISSIONS },
-                        onCreate = viewModel::createGroup,
-                        onReturnToHub = { stage = FLOW_HUB },
-                        onClearError = viewModel::clearError
-                    )
-                    FLOW_PERMISSIONS -> PermissionsStage(
-                        options = options,
-                        preset = preset,
-                        onSelectPreset = viewModel::selectPreset,
-                        onSendMessagesChange = viewModel::updateSendMessages,
-                        onMemberSettingsChange = viewModel::updateMemberSettingsEdits,
-                        onApprovalChange = viewModel::updateJoinApproval,
-                        onInvitesChange = viewModel::updateMemberInvites,
-                        onDisappearingChange = viewModel::updateDisappearingMode,
-                        error = error,
-                        onSave = { stage = FLOW_IDENTITY },
-                        onClearError = viewModel::clearError
-                    )
-                    else -> GroupHubStage(
-                        groupName = groupName,
-                        inviteCode = viewModel.inviteCode.collectAsStateWithLifecycle().value,
-                        requireJoinApproval = options.requireJoinApproval,
-                        members = viewModel.members.collectAsStateWithLifecycle().value,
-                        requests = viewModel.pendingRequests.collectAsStateWithLifecycle().value,
-                        requestsLoading = viewModel.isLoadingRequests.collectAsStateWithLifecycle().value,
-                        inviteUpdating = viewModel.isUpdatingInvite.collectAsStateWithLifecycle().value,
-                        currentUserId = viewModel.currentUserId,
-                        error = error,
-                        onRegenerateInvite = viewModel::regenerateInvite,
-                        onOpenRequests = viewModel::refreshPendingRequests,
-                        onApproveRequest = viewModel::approveRequest,
-                        onDeclineRequest = viewModel::declineRequest,
-                        onChangeRole = viewModel::changeMemberRole,
-                        onRemoveMember = viewModel::removeGroupMember,
-                        onClearError = viewModel::clearError
-                    )
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
+                )
+            )
+        },
+        floatingActionButton = {
+            when (stage) {
+                FLOW_MEMBERS -> {
+                    val hasSelection = selectedUsers.isNotEmpty()
+                    BadgedBox(
+                        badge = {
+                            if (hasSelection) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ) { Text(selectedUsers.size.toString()) }
+                            }
+                        }
+                    ) {
+                        FloatingActionButton(
+                            onClick = { if (hasSelection) stage = FLOW_IDENTITY },
+                            containerColor = if (hasSelection) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHighest
+                            },
+                            contentColor = if (hasSelection) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        ) {
+                            Icon(Icons.Filled.ArrowForward, contentDescription = stringResource(R.string.group_continue_identity))
+                        }
+                    }
                 }
+                FLOW_HUB -> FloatingActionButton(
+                    onClick = { createdChatId?.let(onGroupCreated) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Filled.Chat, contentDescription = stringResource(R.string.group_open_chat))
+                }
+            }
+        },
+        containerColor = AppColors.screenBackground
+    ) { scaffoldPadding ->
+        AnimatedContent(
+            targetState = stage,
+            modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
+            transitionSpec = {
+                if (targetState == FLOW_HUB || initialState == FLOW_HUB) {
+                    fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+                } else {
+                    val movingForward = targetState > initialState
+                    (slideInHorizontally(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) { width -> if (movingForward) width else -width } +
+                        fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))) togetherWith
+                        (slideOutHorizontally(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) { width -> if (movingForward) -width else width } +
+                            fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)))
+                }
+            },
+            label = "groupCreationStage"
+        ) { visibleStage ->
+            when (visibleStage) {
+                FLOW_MEMBERS -> MembersStage(
+                    users = users,
+                    selectedUsers = selectedUsers,
+                    searchQuery = searchQuery,
+                    isLoading = loadingUsers,
+                    error = error,
+                    onSearch = viewModel::onSearchQueryChange,
+                    onToggleUser = viewModel::toggleUserSelection,
+                    onRemoveUser = viewModel::removeMember,
+                    onClearSelection = viewModel::clearSelection,
+                    onClearError = viewModel::clearError
+                )
+                FLOW_IDENTITY -> IdentityStage(
+                    selectedCount = selectedUsers.size,
+                    preset = preset,
+                    hasCreatedGroup = createdChatId != null,
+                    groupName = groupName,
+                    description = groupDescription,
+                    permissions = options,
+                    isCreating = creating,
+                    error = error,
+                    onGroupNameChange = viewModel::updateGroupName,
+                    onDescriptionChange = viewModel::updateGroupDescription,
+                    onOpenPermissions = { stage = FLOW_PERMISSIONS },
+                    onCreate = viewModel::createGroup,
+                    onReturnToHub = { stage = FLOW_HUB },
+                    onClearError = viewModel::clearError
+                )
+                FLOW_PERMISSIONS -> PermissionsStage(
+                    options = options,
+                    preset = preset,
+                    onSelectPreset = viewModel::selectPreset,
+                    onSendMessagesChange = viewModel::updateSendMessages,
+                    onMemberSettingsChange = viewModel::updateMemberSettingsEdits,
+                    onApprovalChange = viewModel::updateJoinApproval,
+                    onInvitesChange = viewModel::updateMemberInvites,
+                    onDisappearingChange = viewModel::updateDisappearingMode,
+                    error = error,
+                    onSave = { stage = FLOW_IDENTITY },
+                    onClearError = viewModel::clearError
+                )
+                else -> GroupHubStage(
+                    groupName = groupName,
+                    inviteCode = viewModel.inviteCode.collectAsStateWithLifecycle().value,
+                    requireJoinApproval = options.requireJoinApproval,
+                    members = viewModel.members.collectAsStateWithLifecycle().value,
+                    requests = viewModel.pendingRequests.collectAsStateWithLifecycle().value,
+                    requestsLoading = viewModel.isLoadingRequests.collectAsStateWithLifecycle().value,
+                    inviteUpdating = viewModel.isUpdatingInvite.collectAsStateWithLifecycle().value,
+                    currentUserId = viewModel.currentUserId,
+                    error = error,
+                    onRegenerateInvite = viewModel::regenerateInvite,
+                    onOpenRequests = viewModel::refreshPendingRequests,
+                    onApproveRequest = viewModel::approveRequest,
+                    onDeclineRequest = viewModel::declineRequest,
+                    onChangeRole = viewModel::changeMemberRole,
+                    onRemoveMember = viewModel::removeGroupMember,
+                    onClearError = viewModel::clearError
+                )
             }
         }
     }

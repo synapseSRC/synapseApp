@@ -143,7 +143,7 @@ fun InboxConversationRow(
             } else {
                 UserAvatar(
                     avatarUrl = conversation.participantAvatar,
-                    displayName = conversation.participantName,
+                    displayName = if (conversation.isGroup) null else conversation.participantName,
                     size = InboxExpressiveDimens.ConversationAvatarSize
                 )
             }

@@ -19,6 +19,8 @@ import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 internal class ChatConversationDataSource(private val client: SupabaseClientLib) {
 
@@ -58,7 +60,7 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
 
             val chats = if (chatIds.isNotEmpty()) {
                 client.postgrest.from("chats")
-                    .select(columns = Columns.list("id", "name", "avatar_url", "is_group", "created_by")) {
+                    .select(columns = Columns.list("id", "name", "avatar_url", "is_group", "created_by", "enc_name", "enc_avatar_url")) {
                         filter { isIn("id", chatIds) }
                     }.decodeList<ChatDto>().associateBy { it.id }
             } else {
@@ -148,17 +150,25 @@ internal class ChatConversationDataSource(private val client: SupabaseClientLib)
         }
     }
 
-    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions()): String? = withContext(AppDispatchers.IO) {
+    suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String? = null, options: GroupCreationOptions = GroupCreationOptions(), encName: String? = null, encDescription: String? = null, encAvatarUrl: String? = null): String? = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: return@withContext null
 
             // Create chat entry
             val chatId = com.synapse.social.studioasinc.shared.util.UUIDUtils.randomUUID()
+            val json = Json { ignoreUnknownKeys = true }
+            val encNameJson: JsonObject? = encName?.let { json.parseToJsonElement(it) as? JsonObject }
+            val encDescriptionJson: JsonObject? = encDescription?.let { json.parseToJsonElement(it) as? JsonObject }
+            val encAvatarJson: JsonObject? = encAvatarUrl?.let { json.parseToJsonElement(it) as? JsonObject }
             val newChat = NewChatDto(
-                id = chatId, isGroup = true, name = name, description = options.description, avatarUrl = avatarUrl,
+                id = chatId, isGroup = true,
+                name = if (encNameJson != null) null else name,
+                description = if (encDescriptionJson != null) null else options.description,
+                avatarUrl = if (encAvatarJson != null) null else avatarUrl,
                 createdBy = currentUserId, onlyAdminsCanMessage = !options.sendMessagesByMembers,
                 allowMemberSettingsEdits = options.allowMemberSettingsEdits, requireJoinApproval = options.requireJoinApproval,
-                allowMemberInvites = options.allowMemberInvites, disappearingMode = options.disappearingMode.name
+                allowMemberInvites = options.allowMemberInvites, disappearingMode = options.disappearingMode.name,
+                encName = encNameJson, encDescription = encDescriptionJson, encAvatarUrl = encAvatarJson
             )
             try {
                 client.postgrest.from("chats").insert(newChat)

@@ -274,7 +274,8 @@ private fun InboxScreenContent(
     }
 
     fun openConversation(conversation: Conversation) {
-        val navigate = { onNavigateToChat(conversation.chatId, conversation.participantId, conversation.participantName, conversation.participantAvatar) }
+        val participantId = conversation.participantId.takeIf { !conversation.isGroup }
+        val navigate = { onNavigateToChat(conversation.chatId, participantId, conversation.participantName, conversation.participantAvatar) }
         if (viewModel.isChatLocked(conversation.chatId)) {
             val activity = context as? FragmentActivity
             if (activity != null) {

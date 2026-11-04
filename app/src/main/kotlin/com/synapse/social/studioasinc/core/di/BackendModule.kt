@@ -51,7 +51,8 @@ object BackendModule {
         presenceRepository: PresenceRepository,
         offlineActionRepository: OfflineActionRepository,
         cachedMessageDao: CachedMessageDao,
-        cachedConversationDao: CachedConversationDao
+        cachedConversationDao: CachedConversationDao,
+        secureStorage: SecureStorage
     ): ChatRepository {
         return SupabaseChatRepository(
             SupabaseChatDataSource(client),
@@ -61,7 +62,8 @@ object BackendModule {
             presenceRepository,
             offlineActionRepository,
             cachedMessageDao,
-            cachedConversationDao
+            cachedConversationDao,
+            secureStorage = secureStorage
         )
     }
 
