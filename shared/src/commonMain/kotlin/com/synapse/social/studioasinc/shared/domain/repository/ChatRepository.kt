@@ -5,6 +5,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 interface ChatRepository {
     suspend fun getConversations(forceNetwork: Boolean = false, limit: Int = 50, before: String? = null, beforeId: String? = null): Result<List<Conversation>>
@@ -45,6 +46,13 @@ interface ChatRepository {
     suspend fun broadcastTypingStatus(chatId: String, isTyping: Boolean): Result<Unit>
     fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit = {}): Flow<Message>
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message>
+
+    /**
+     * Emits the chat id whenever this user's own participation changes (added to a new chat —
+     * including an empty group — or removed from one), so the inbox can refresh without waiting
+     * for the first message. Default: no events.
+     */
+    fun subscribeToRosterChanges(): Flow<String> = emptyFlow()
     fun subscribeToTypingStatus(chatId: String): Flow<TypingStatus>
     fun subscribeToReadReceipts(chatId: String): Flow<Message>
     suspend fun initializeE2EE(): Result<Unit>

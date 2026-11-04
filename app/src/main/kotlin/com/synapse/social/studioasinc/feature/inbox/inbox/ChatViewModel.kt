@@ -150,6 +150,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _groupMemberNames = MutableStateFlow<Map<String, String>>(emptyMap())
     val groupMemberNames: StateFlow<Map<String, String>> = _groupMemberNames.asStateFlow()
 
+    private val _groupMemberAvatars = MutableStateFlow<Map<String, String>>(emptyMap())
+    val groupMemberAvatars: StateFlow<Map<String, String>> = _groupMemberAvatars.asStateFlow()
+
     private val _isCurrentUserAdmin = MutableStateFlow(false)
     val isCurrentUserAdmin: StateFlow<Boolean> = _isCurrentUserAdmin.asStateFlow()
 
@@ -440,6 +443,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         _groupTitle = _groupTitle,
         _groupAvatarUrl = _groupAvatarUrl,
         _groupMemberNames = _groupMemberNames,
+        _groupMemberAvatars = _groupMemberAvatars,
         _onlyAdminsCanMessage = _onlyAdminsCanMessage,
         _isCurrentUserAdmin = _isCurrentUserAdmin,
         _isParticipantActive = _isParticipantActive,
@@ -573,6 +577,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                 }
             }
             refreshMessages()
+            // Re-sync the roster so a member added/removed (e.g. from Group info) updates the header
+            // member count and per-message sender attribution on return.
+            initializationDelegate.refreshGroupRoster()
             updateUiState()
             return
         }

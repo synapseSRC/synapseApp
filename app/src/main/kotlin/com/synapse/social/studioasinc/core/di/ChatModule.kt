@@ -96,6 +96,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversation
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SharePostToChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToRosterChangesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToTypingStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.UploadMediaUseCase
@@ -312,6 +313,10 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideSubscribeToInboxUpdatesUseCase(chatRepository: ChatRepository): SubscribeToInboxUpdatesUseCase = SubscribeToInboxUpdatesUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideSubscribeToRosterChangesUseCase(chatRepository: ChatRepository): SubscribeToRosterChangesUseCase = SubscribeToRosterChangesUseCase(chatRepository)
 
     @Provides
     @Singleton

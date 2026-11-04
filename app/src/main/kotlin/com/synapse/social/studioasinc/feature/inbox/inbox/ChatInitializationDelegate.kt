@@ -48,11 +48,13 @@ class ChatInitializationDelegate(
     private val _isMuted: MutableStateFlow<Boolean>,
     private val getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
     private val onChatIdResolved: (String) -> Unit,
-    private val _groupMemberNames: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
+    private val _groupMemberNames: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap()),
+    private val _groupMemberAvatars: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
 ) {
 
     private var activeJob: Job? = null
     private var initializationToken = 0L
+    private var lastResolvedChatId: String? = null
 
     /** Cancels any in-flight initialization so stale results cannot land in the new chat. */
     fun cancelInitialization() {
@@ -65,6 +67,7 @@ class ChatInitializationDelegate(
     fun cleanup() {
         cancelInitialization()
         _groupMemberNames.value = emptyMap()
+        _groupMemberAvatars.value = emptyMap()
         _participantProfile.value = null
         _isParticipantActive.value = false
         _isGroupChat.value = false
@@ -89,6 +92,7 @@ class ChatInitializationDelegate(
         // Switching chats must not show the previous conversation's profile, group flags,
         // presence, or disappearing mode while the new metadata loads.
         _groupMemberNames.value = emptyMap()
+        _groupMemberAvatars.value = emptyMap()
         _participantProfile.value = null
         _isParticipantActive.value = false
         _isGroupChat.value = false
@@ -117,6 +121,7 @@ class ChatInitializationDelegate(
 
             if (token != initializationToken) return@launch
 
+            lastResolvedChatId = actualChatId
             onChatIdResolved(actualChatId)
 
             // Start subscription immediately — do NOT wait for E2EE init, messages fetch,
@@ -192,17 +197,7 @@ class ChatInitializationDelegate(
                         _groupTitle.value = chatDto.name
                         _groupAvatarUrl.value = chatDto.avatarUrl
                         _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
-                        getGroupMembersUseCase(actualChatId).onSuccess { members ->
-                            if (!isCurrent(token, actualChatId)) return@onSuccess
-                            _groupMemberNames.value = members.associate { (member, _) ->
-                                val displayName = member.displayName?.takeIf(String::isNotBlank)
-                                    ?: member.nickname?.takeIf(String::isNotBlank)
-                                    ?: member.name?.takeIf(String::isNotBlank)
-                                    ?: member.username?.takeIf(String::isNotBlank)
-                                member.uid to displayName
-                            }.filterValues { !it.isNullOrBlank() }.mapValues { it.value.orEmpty() }
-                            _isCurrentUserAdmin.value = members.find { it.first.uid == currentUserIdProvider() }?.second == true
-                        }
+                        loadGroupRoster(actualChatId, token)
                     }
                 }
             }
@@ -235,6 +230,39 @@ class ChatInitializationDelegate(
                 }
             }
         }
+    }
+
+    /**
+     * Fetches the group roster and publishes member display names, avatars (for per-message sender
+     * attribution in group chats), and the current user's admin flag. Shared by initialization and
+     * [refreshGroupRoster] so the header member count and sender identity stay current.
+     */
+    private suspend fun loadGroupRoster(chatId: String, token: Long = initializationToken) {
+        getGroupMembersUseCase(chatId).onSuccess { members ->
+            if (!isCurrent(token, chatId)) return@onSuccess
+            _groupMemberNames.value = members.associate { (member, _) ->
+                val displayName = member.displayName?.takeIf(String::isNotBlank)
+                    ?: member.nickname?.takeIf(String::isNotBlank)
+                    ?: member.name?.takeIf(String::isNotBlank)
+                    ?: member.username?.takeIf(String::isNotBlank)
+                member.uid to displayName
+            }.filterValues { !it.isNullOrBlank() }.mapValues { it.value.orEmpty() }
+            _groupMemberAvatars.value = members.associate { (member, _) ->
+                member.uid to member.avatar.orEmpty()
+            }
+            _isCurrentUserAdmin.value = members.find { it.first.uid == currentUserIdProvider() }?.second == true
+        }
+    }
+
+    /**
+     * Re-fetches the group roster for the currently open chat. Called when the chat screen resumes so a
+     * member added/removed from Group info (or another device) is reflected in the header count and in
+     * sender attribution without requiring a full re-initialization.
+     */
+    fun refreshGroupRoster() {
+        val chatId = lastResolvedChatId ?: return
+        if (!_isGroupChat.value) return
+        viewModelScope.launch { loadGroupRoster(chatId, initializationToken) }
     }
 
 }

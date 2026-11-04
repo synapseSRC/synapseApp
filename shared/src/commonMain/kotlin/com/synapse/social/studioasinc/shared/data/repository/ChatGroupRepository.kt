@@ -30,6 +30,37 @@ internal class ChatGroupRepository(
         return base.copy(name = name, description = description, avatarUrl = avatarUrl)
     }
 
+    /**
+     * Best-effort map of participant uid -> display name, used to render group system messages
+     * ("X joined the group", "Y is now an admin", ...). Returns an empty map when the roster can't
+     * be read so callers fall back to a generic "A member" label instead of failing the mutation.
+     */
+    private suspend fun memberNames(chatId: String): Map<String, String> = try {
+        dataSource.getGroupMembers(chatId).associate { (user, _) ->
+            val name = user.displayName?.takeIf { it.isNotBlank() }
+                ?: user.nickname?.takeIf { it.isNotBlank() }
+                ?: user.name?.takeIf { it.isNotBlank() }
+                ?: user.username?.takeIf { it.isNotBlank() }
+                ?: "A member"
+            user.uid to name
+        }
+    } catch (e: Exception) {
+        io.github.aakira.napier.Napier.e("Error resolving group member names", e)
+        emptyMap()
+    }
+
+    /**
+     * Writes a plaintext group system message. System messages are never encrypted (they render as
+     * centered pills) and are best-effort: a failure here must not roll back the completed mutation.
+     */
+    private suspend fun emitSystemMessage(chatId: String, content: String) {
+        try {
+            dataSource.insertSystemMessage(chatId, content)
+        } catch (e: Exception) {
+            io.github.aakira.napier.Napier.e("Error writing group system message", e)
+        }
+    }
+
     suspend fun createGroupChat(name: String, participantIds: List<String>, avatarUrl: String?): Result<String> = try {
         val c = cipher
         val uid = dataSource.getCurrentUserId()
@@ -76,6 +107,8 @@ internal class ChatGroupRepository(
         dataSource.addGroupMembers(chatId, userIds)
         // Best-effort: re-fan-out encrypted metadata so newly added members receive envelopes.
         resyncMetadata(chatId)
+        val names = memberNames(chatId)
+        userIds.forEach { uid -> emitSystemMessage(chatId, "${names[uid] ?: "A member"} was added to the group") }
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error adding group member", e)
@@ -83,7 +116,9 @@ internal class ChatGroupRepository(
     }
 
     suspend fun removeGroupMember(chatId: String, userId: String): Result<Unit> = try {
+        val name = memberNames(chatId)[userId] ?: "A member"
         dataSource.removeGroupMember(chatId, userId)
+        emitSystemMessage(chatId, "$name was removed from the group")
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error removing group member", e)
@@ -91,7 +126,9 @@ internal class ChatGroupRepository(
     }
 
     suspend fun promoteToAdmin(chatId: String, userId: String): Result<Unit> = try {
+        val name = memberNames(chatId)[userId] ?: "A member"
         dataSource.promoteToAdmin(chatId, userId)
+        emitSystemMessage(chatId, "$name is now an admin")
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error promoting admin", e)
@@ -99,7 +136,9 @@ internal class ChatGroupRepository(
     }
 
     suspend fun demoteAdmin(chatId: String, userId: String): Result<Unit> = try {
+        val name = memberNames(chatId)[userId] ?: "A member"
         dataSource.demoteAdmin(chatId, userId)
+        emitSystemMessage(chatId, "$name is no longer an admin")
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error demoting admin", e)
@@ -107,7 +146,10 @@ internal class ChatGroupRepository(
     }
 
     suspend fun leaveGroup(chatId: String): Result<Unit> = try {
+        val uid = dataSource.getCurrentUserId()
+        val name = uid?.let { memberNames(chatId)[it] } ?: "A member"
         dataSource.leaveGroup(chatId)
+        emitSystemMessage(chatId, "$name left the group")
         Result.success(Unit)
     } catch (e: Exception) {
         io.github.aakira.napier.Napier.e("Error leaving group", e)

@@ -127,6 +127,7 @@ import kotlinx.coroutines.withContext
     }
     val resolvedChatId by viewModel.resolvedChatId.collectAsState()
     val groupMemberNames by viewModel.groupMemberNames.collectAsState()
+    val groupMemberAvatars by viewModel.groupMemberAvatars.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMoreMessages by viewModel.hasMoreMessages.collectAsState()
 
@@ -577,6 +578,7 @@ val currentUserId = currentUserIdState ?: ""
                         participantId = participantId,
                         isGroupChat = isGroupChat,
                         groupMemberNames = groupMemberNames,
+                        groupMemberAvatars = groupMemberAvatars,
                         listState = listState,
                         initialMessageId = searchJumpMessageId ?: initialMessageId,
                         isListVisible = initialScrollCompleted || messages.isEmpty(),

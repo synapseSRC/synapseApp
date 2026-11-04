@@ -65,14 +65,18 @@ internal class GroupMetadataCipher(
         for (recipient in recipients) {
             try {
                 cryptoMutex.withLock {
-                    if (recipient == currentUserId) {
-                        // Force a fresh PreKey (type 3) envelope for the editor's own copy: an established
-                        // self session would produce a Whisper message whose sender/receiver chain split
-                        // cannot be decrypted back on the same device.
-                        manager.deleteSession(recipient)
-                    }
+                    // Force a fresh PreKey (type 3) envelope for EVERY recipient, then drop the session
+                    // again after encrypting. Two reasons:
+                    //  1. A member who joined at creation has not run X3DH yet, so every metadata field
+                    //     must be an independently-decryptable PreKey envelope (not an order-dependent
+                    //     Whisper built on a session only the editor has).
+                    //  2. Leaving a session behind here would make the creator's first chat message a
+                    //     Whisper that the member cannot bootstrap — the "Couldn't decrypt message #1" bug.
+                    //     Clearing it lets the message fan-out start a clean X3DH session instead.
+                    manager.deleteSession(recipient)
                     ensureSession(recipient)
                     envelopes[recipient] = manager.encryptMessage(recipient, bytes)
+                    manager.deleteSession(recipient)
                 }
             } catch (e: CancellationException) {
                 throw e

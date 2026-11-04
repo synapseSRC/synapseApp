@@ -25,6 +25,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUs
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkIncomingMessageAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToRosterChangesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.sound.PlaySoundEffectUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.SearchUsersUseCase
 import com.synapse.social.studioasinc.shared.util.TimestampFormatter
@@ -53,6 +54,7 @@ private val InboxUrlPattern = Regex("https?://\\S+", RegexOption.IGNORE_CASE)
 class InboxViewModel @Inject constructor(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val subscribeToInboxUpdatesUseCase: SubscribeToInboxUpdatesUseCase,
+    private val subscribeToRosterChangesUseCase: SubscribeToRosterChangesUseCase,
     private val markIncomingMessageAsDeliveredUseCase: MarkIncomingMessageAsDeliveredUseCase,
     private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
     private val initializeE2EUseCase: InitializeE2EUseCase,
@@ -134,6 +136,7 @@ class InboxViewModel @Inject constructor(
     val searchState: StateFlow<InboxSearchState> = _searchState.asStateFlow()
 
     private var inboxSubscriptionJob: Job? = null
+    private var rosterSubscriptionJob: Job? = null
     private var subscribedChatIds: List<String> = emptyList()
     private var searchJob: Job? = null
 
@@ -186,6 +189,7 @@ class InboxViewModel @Inject constructor(
                 _isLoading.value = false
                 _isRefreshing.value = false
                 subscribeToInboxUpdates()
+                subscribeToRosterChanges()
                 backfillDeliveryAcks(_conversations.value)
             }
             .onFailure { throwable ->
@@ -200,6 +204,7 @@ class InboxViewModel @Inject constructor(
             authRepository.sessionStatus.collect { status ->
                 if (status == AuthSessionStatus.NOT_AUTHENTICATED) {
                     inboxSubscriptionJob?.cancel()
+                    rosterSubscriptionJob?.cancel()
                     subscribedChatIds = emptyList()
                     _conversations.value = emptyList()
                     _archivedConversations.value = emptyList()
@@ -232,6 +237,29 @@ class InboxViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     io.github.aakira.napier.Napier.w("Inbox realtime subscription failed, reconnecting in 2s: ${e.message}", tag = "InboxRealtime")
+                    delay(2000)
+                }
+            }
+        }
+    }
+
+    // A group created without any messages produces no realtime message event, so the inbox relies
+    // on participation changes to learn about it. Each arrival (added to / removed from a chat)
+    // re-pulls the conversation list, which includes zero-message chats.
+    private fun subscribeToRosterChanges() {
+        if (rosterSubscriptionJob?.isActive == true) return
+        rosterSubscriptionJob = viewModelScope.launch {
+            while (isActive) {
+                try {
+                    subscribeToRosterChangesUseCase()
+                        .debounce(300L)
+                        .collect {
+                            refreshConversations()
+                        }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    io.github.aakira.napier.Napier.w("Inbox roster subscription failed, reconnecting in 2s: ${e.message}", tag = "InboxRealtime")
                     delay(2000)
                 }
             }
@@ -278,6 +306,7 @@ class InboxViewModel @Inject constructor(
     // live job, and the refresh that follows re-acks arrivals the screen missed while away.
     fun onAppResumed() {
         inboxSubscriptionJob?.cancel()
+        rosterSubscriptionJob?.cancel()
         subscribedChatIds = emptyList()
         backfilledDeliveryChats.clear()
         viewModelScope.launch { refreshConversations() }

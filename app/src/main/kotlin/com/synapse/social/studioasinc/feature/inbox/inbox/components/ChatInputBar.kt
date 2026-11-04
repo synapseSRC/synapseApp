@@ -96,8 +96,8 @@ fun ChatInputBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.space4)
-            .padding(top = Spacing.space4, bottom = Spacing.space16)
+            .padding(horizontal = Spacing.space8)
+            .padding(top = Spacing.space4, bottom = Spacing.space8)
     ) {
         // Shared quote preview keeps the composer context consistent with sent reply bubbles.
         AnimatedVisibility(

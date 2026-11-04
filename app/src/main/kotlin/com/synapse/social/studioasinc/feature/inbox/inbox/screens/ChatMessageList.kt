@@ -94,6 +94,7 @@ internal fun ChatMessageList(
     modifier: Modifier = Modifier,
     onLocateMessage: (String) -> Unit = {},
     groupMemberNames: Map<String, String> = emptyMap(),
+    groupMemberAvatars: Map<String, String> = emptyMap(),
     initialMessageId: String? = null,
     isListVisible: Boolean = true,
     isScreenVisible: Boolean
@@ -342,8 +343,19 @@ internal fun ChatMessageList(
                         cornerRadius = chatMessageCornerRadius,
                         themePreset = chatThemePreset,
                         showAvatar = !chatAvatarDisabled,
-                        senderName = participantProfile?.displayName ?: participantProfile?.name ?: initialParticipantName,
-                        senderAvatarUrl = participantAvatarUrl,
+                        senderName = if (isGroupChat) {
+                            groupMemberNames[message.senderId]?.takeIf { it.isNotBlank() }
+                                ?: participantProfile?.displayName
+                                ?: initialParticipantName
+                        } else {
+                            participantProfile?.displayName ?: participantProfile?.name ?: initialParticipantName
+                        },
+                        senderAvatarUrl = if (isGroupChat) {
+                            groupMemberAvatars[message.senderId]?.takeIf { it.isNotBlank() }
+                                ?: participantAvatarUrl
+                        } else {
+                            participantAvatarUrl
+                        },
                         onVoteOption = { messageId, optionId -> onVoteOption(messageId, optionId) },
                         onOpenPost = onOpenPost,
                         onOpenStory = onOpenStory,

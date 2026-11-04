@@ -215,6 +215,9 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
     fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> =
         realtime.subscribeToInboxUpdates(chatIds)
 
+    fun subscribeToRosterChanges(): Flow<String> =
+        realtime.subscribeToRosterChanges()
+
     fun subscribeToTypingStatus(chatId: String): Flow<Map<String, Any?>> =
         realtime.subscribeToTypingStatus(chatId)
 
