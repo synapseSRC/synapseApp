@@ -187,6 +187,7 @@ val currentUserId = currentUserIdState ?: ""
     val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
         LazyListState(0, 0)
     }
+    val topAppBarScrollBehavior = remember { TopAppBarDefaults.pinnedTopAppBarScrollBehavior() }
     var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -511,7 +512,8 @@ val currentUserId = currentUserIdState ?: ""
                                 ).show()
                             }
                         )
-                    }
+                    },
+                    scrollBehavior = topAppBarScrollBehavior
                 )
             }
         }
@@ -562,7 +564,9 @@ val currentUserId = currentUserIdState ?: ""
                 else -> {
                     ChatMessageList(
                         chatId = chatId,
-                        modifier = Modifier.graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f }
+                            .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
                         chatItems = chatItems,
                         messages = messages,
                         bottomContentPadding = messageListBottomPadding,

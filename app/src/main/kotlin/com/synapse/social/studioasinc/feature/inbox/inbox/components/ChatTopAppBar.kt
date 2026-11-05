@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import com.synapse.social.studioasinc.R
@@ -74,7 +75,8 @@ fun ChatTopAppBar(
     onReportChat: () -> Unit = {},
     onBlockChat: () -> Unit = {},
     onClearChat: () -> Unit = {},
-    onExportChat: () -> Unit = {}
+    onExportChat: () -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     val clipboard = LocalClipboard.current
     val clipLabel = stringResource(R.string.clip_label_message)
@@ -83,6 +85,7 @@ fun ChatTopAppBar(
     if (selectedMessageIds.isNotEmpty()) {
         TopAppBar(
             title = { Text(stringResource(R.string.selected_count_title, selectedMessageIds.size)) },
+            scrollBehavior = scrollBehavior,
             navigationIcon = {
                 IconButton(onClick = onClearSelection) {
                     Icon(Icons.Default.Close, contentDescription = "Clear Selection")
@@ -135,6 +138,7 @@ fun ChatTopAppBar(
         )
 
         TopAppBar(
+            scrollBehavior = scrollBehavior,
             title = {
                 Row(
                     modifier = Modifier
@@ -153,21 +157,28 @@ fun ChatTopAppBar(
                             else participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
                     Spacer(modifier = Modifier.width(Spacing.space12))
-                    Column {
-                        Text(
-                            text = if (isGroupChat) {
-                                groupTitle ?: initialParticipantName
-                                    ?: stringResource(R.string.group_chat_fallback_title)
-                            } else {
-                                participantProfile?.displayName
-                                    ?: participantProfile?.username
-                                    ?: initialParticipantName
-                                    ?: participantId ?: "Chat"
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isGroupChat) {
+                                    groupTitle ?: initialParticipantName
+                                        ?: stringResource(R.string.group_chat_fallback_title)
+                                } else {
+                                    participantProfile?.displayName
+                                        ?: participantProfile?.username
+                                        ?: initialParticipantName
+                                        ?: participantId ?: "Chat"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .maxLines(1)
+                                    .overflow(TextOverflow.Ellipsis)
+                            )
                             if (isGroupChat) {
                                 Text(
                                     text = if (groupMemberCount > 0) {

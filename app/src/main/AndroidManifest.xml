@@ -299,18 +299,6 @@
 			</intent-filter>
 		</service>
 
-		<!-- Background Deletion Service -->
-		<service
-			android:name=".data.repository.deletion.BackgroundDeletionService"
-			android:enabled="true"
-			android:exported="false"
-			android:foregroundServiceType="dataSync" />
-
-		<!--
-			Holds the microphone (and the camera, once a call turns to video) while the call's screen is
-			not on top. The types are declared as both because a voice call can become a video call
-			without the manifest changing; the service only ever asks for the type its media justifies.
-		-->
 		<service
 			android:name=".service.call.CallForegroundService"
 			android:enabled="true"

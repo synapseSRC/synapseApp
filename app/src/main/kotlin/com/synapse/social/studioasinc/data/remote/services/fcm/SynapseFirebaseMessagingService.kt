@@ -48,11 +48,11 @@ class SynapseFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "From: ${message.from}")
 
         if (message.data.isNotEmpty()) {
-            Log.d(TAG, "Message data payload: ${message.data}")
+            Log.d(TAG, "Message data payload received")
         }
 
         message.notification?.let {
-            Log.d(TAG, "Message Notification Body: ${it.body}")
+            Log.d(TAG, "Message Notification received")
         }
 
         if (message.data[KEY_TYPE] == TYPE_INCOMING_CALL) {

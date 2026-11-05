@@ -253,7 +253,17 @@ fun provideMediaUploadRepository(
 
     @Provides
     @Singleton
-    fun provideChatRepositoryApp(signalRepository: com.synapse.social.studioasinc.shared.data.repository.SignalRepository, signalProtocolManager: SignalProtocolManager, client: SupabaseClientType): ChatRepositoryImpl = ChatRepositoryImpl(client, signalRepository, signalProtocolManager)
+    fun provideChatRepositoryApp(
+        @ApplicationContext context: android.content.Context,
+        signalRepository: com.synapse.social.studioasinc.shared.data.repository.SignalRepository,
+        signalProtocolManager: SignalProtocolManager,
+        client: SupabaseClientType
+    ): ChatRepositoryImpl = ChatRepositoryImpl(client, signalRepository, signalProtocolManager, computeDeviceId(context))
+
+    private fun computeDeviceId(context: android.content.Context): Int {
+        val androidId = android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ANDROID_ID)
+        return (androidId ?: context.packageName).hashCode()
+    }
 
 @Provides
     @Singleton

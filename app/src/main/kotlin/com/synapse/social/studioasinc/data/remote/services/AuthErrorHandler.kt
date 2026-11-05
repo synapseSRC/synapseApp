@@ -121,17 +121,17 @@ class AuthErrorHandler {
 
         fun logVerificationAttempt(email: String, success: Boolean, errorMessage: String? = null) {
             if (success) {
-                Log.i(TAG, "Email verification successful for: $email")
+                Log.i(TAG, "Email verification successful")
             } else {
-                Log.w(TAG, "Email verification failed for: $email, error: $errorMessage")
+                Log.w(TAG, "Email verification failed, error: $errorMessage")
             }
         }
 
         fun logResendVerificationAttempt(email: String, success: Boolean, errorMessage: String? = null) {
             if (success) {
-                Log.i(TAG, "Resend verification email successful for: $email")
+                Log.i(TAG, "Resend verification email successful")
             } else {
-                Log.w(TAG, "Resend verification email failed for: $email, error: $errorMessage")
+                Log.w(TAG, "Resend verification email failed, error: $errorMessage")
             }
         }
     }

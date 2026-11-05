@@ -72,16 +72,13 @@ class ProfileRepositoryImpl(
         internal const val KEY_PUBLIC_EMAIL = "public_email"
     }
 
-    internal fun resolveUserId(userId: String): String? {
+    internal suspend fun resolveUserId(userId: String): String? {
         return if (userId == "me") {
             val authId = client.auth.currentUserOrNull()?.id ?: return null
-            // Resolve auth id to the public users.uid used by posts.author_uid
-            runBlocking {
-                client.from("users").select(columns = Columns.list("uid")) {
-                    filter { eq("id", authId) }
-                }.decodeSingleOrNull<JsonObject>()
-                    ?.get("uid")?.let { if (it is JsonPrimitive) it.contentOrNull else null }
-            } ?: authId
+            client.from("users").select(columns = Columns.list("uid")) {
+                filter { eq("id", authId) }
+            }.decodeSingleOrNull<JsonObject>()
+                ?.get("uid")?.let { if (it is JsonPrimitive) it.contentOrNull else null }
         } else {
             userId
         }

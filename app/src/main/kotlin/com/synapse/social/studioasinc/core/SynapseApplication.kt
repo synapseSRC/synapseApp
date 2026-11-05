@@ -282,7 +282,6 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                 if (userId != null) {
                     OneSignal.login(userId)
                     OneSignal.User.pushSubscription.optIn()
-                    android.util.Log.d("OneSignal", "✅ App startup registration for user: $userId")
                     
                     val subId = OneSignal.User.pushSubscription.id
                     if (subId != null) {
@@ -319,11 +318,10 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                             val userId = status.session.user?.id
                             if (userId != null) {
                                 isAuthenticated = true
-                                Napier.d(
-                                    "Auth state: Authenticated (user=$userId, " +
-                                        "isAppInForeground=$isAppInForeground, isTracking=$isTracking)",
-                                    tag = "PresenceTracker"
-                                )
+                            Napier.d(
+                                "Auth state: Authenticated (isAppInForeground=$isAppInForeground, isTracking=$isTracking)",
+                                tag = "PresenceTracker"
+                            )
                                 managePresenceTracking()
                                 // Watches for a ring, and re-reads whatever is already open server-side —
                                 // which is the cold-start path for a call placed while this process was
@@ -333,17 +331,16 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                                 try {
                                     val rt = io.github.jan.supabase.realtime.Realtime
                                     SupabaseClient.client.pluginManager.getPlugin(rt).connect()
-                                    Napier.d("✅ Supabase Realtime connected globally for user: $userId")
+                                    Napier.d("✅ Supabase Realtime connected globally")
                                 } catch (e: Exception) {
                                     Napier.e("❌ Failed to connect to Supabase Realtime", e)
                                 }
 
                                 if (isOneSignalConfigured()) {
                                     withContext(Dispatchers.Main) {
-                                        try {
-                                            android.util.Log.d("OneSignal", "Syncing identity for authenticated user: $userId")
-                                            OneSignal.login(userId)
-                                            OneSignal.User.pushSubscription.optIn()
+                                    try {
+                                        OneSignal.login(userId)
+                                        OneSignal.User.pushSubscription.optIn()
                                             
                                             val subId = OneSignal.User.pushSubscription.id
                                             if (subId != null) {
