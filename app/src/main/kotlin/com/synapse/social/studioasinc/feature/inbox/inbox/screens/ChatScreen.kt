@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -187,7 +188,7 @@ val currentUserId = currentUserIdState ?: ""
     val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
         LazyListState(0, 0)
     }
-    val topAppBarScrollBehavior = remember { TopAppBarDefaults.pinnedTopAppBarScrollBehavior() }
+    val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
