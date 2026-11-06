@@ -193,24 +193,6 @@ fun ChatTopAppBar(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            } else {
-                                val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
-                                val statusText = when {
-                                    typingStatus?.isTyping == true -> "Typing..."
-                                    isParticipantActive -> "Online"
-                                    formattedLastSeen != null -> "Last seen $formattedLastSeen"
-                                    else -> "Offline"
-                                }
-                                val statusColor = when {
-                                    typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
-                                    isParticipantActive -> StatusOnline
-                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                                Text(
-                                    text = statusText,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = statusColor
-                                )
                             }
                             if (disappearingMode != DisappearingMode.OFF) {
                                 Spacer(modifier = Modifier.width(Spacing.space8))
@@ -221,6 +203,26 @@ fun ChatTopAppBar(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+
+                        if (!isGroupChat) {
+                            val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
+                            val statusText = when {
+                                typingStatus?.isTyping == true -> "Typing..."
+                                isParticipantActive -> "Online"
+                                formattedLastSeen != null -> "Last seen $formattedLastSeen"
+                                else -> "Offline"
+                            }
+                            val statusColor = when {
+                                typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
+                                isParticipantActive -> StatusOnline
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                            Text(
+                                text = statusText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = statusColor
+                            )
                         }
                     }
                 }
