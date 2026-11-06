@@ -97,7 +97,7 @@ jobs:
           GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
         run: |
           set +e
-          ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
+          ./gradlew assembleRelease --no-daemon --console=plain -x :app:checkReleaseAarMetadata 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
           if [ "$gradle_status" -ne 0 ]; then

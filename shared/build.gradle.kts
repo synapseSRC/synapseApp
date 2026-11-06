@@ -197,6 +197,7 @@ dependencies {
 android {
     namespace = "com.synapse.social.studioasinc.shared"
     compileSdk = 37
+    compileSdkExtension = 1
     buildToolsVersion = "36.0.0"
     defaultConfig {
         minSdk = 26

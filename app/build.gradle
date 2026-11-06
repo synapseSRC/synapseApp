@@ -34,6 +34,7 @@ if (parsedSentryAgentTraceSampleRate < 0.0 || parsedSentryAgentTraceSampleRate >
 android {
     namespace = "com.synapse.social.studioasinc"
     compileSdk 37
+    compileSdkExtension 1
     buildToolsVersion = "36.0.0"
 
     signingConfigs {
