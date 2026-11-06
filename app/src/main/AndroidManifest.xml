@@ -76,6 +76,12 @@
 		<meta-data
 			android:name="com.onesignal.NotificationOpened.DEFAULT"
 			android:value="DISABLE" />
+
+		<!-- OneSignal v5 extension: renders circular sender avatars into push notification large icons. -->
+		<meta-data
+			android:name="com.onesignal.NotificationServiceExtension"
+			android:value="com.synapse.social.studioasinc.core.NotificationExtensionService" />
+
 		<activity
 			android:name=".feature.shared.main.MainActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"

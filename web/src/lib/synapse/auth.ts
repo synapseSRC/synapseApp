@@ -42,9 +42,11 @@ export const resolveUsername = (user: User): string => {
     return metadata.username || user.email?.split("@")[0] || FALLBACK_USERNAME;
 };
 
+// PNG, not SVG: Android decodes notification large icons through BitmapFactory, which cannot
+// rasterize SVG, so an SVG avatar URL silently drops the picture from push notifications.
 export const initialsAvatarUrl = (name: string): string => {
     const seed = name.trim().toLowerCase() || FALLBACK_USERNAME;
-    return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}`;
+    return `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(seed)}`;
 };
 
 export const normalizeUsername = (value: string): string => value.trim().toLowerCase();

@@ -53,3 +53,7 @@
 
 # The Gemini SDK maps JSON onto AutoValue models through Gson reflection.
 -keep class com.google.genai.** { *; }
+
+# OneSignal discovers the notification service extension by fully-qualified class name from manifest
+# meta-data, so R8 must not rename or remove it.
+-keep class com.synapse.social.studioasinc.core.NotificationExtensionService { *; }
