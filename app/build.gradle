@@ -34,7 +34,11 @@ if (parsedSentryAgentTraceSampleRate < 0.0 || parsedSentryAgentTraceSampleRate >
 android {
     namespace = "com.synapse.social.studioasinc"
     compileSdk 37
-    compileSdkExtension 1
+    // androidx.compose 1.13.0-beta02 AARs declare minCompileSdk=37 with minCompileMinorSdk=1 and
+    // minCompileSdkExtension=0, so the compile platform must be the base 37.1. compileSdkExtension
+    // has to stay unset: the SDK repo publishes no -ext packages for API 37, so any value here makes
+    // AGP resolve the non-downloadable "platforms;android-37.1-ext1" instead of "platforms;android-37.1".
+    compileSdkMinor 1
     buildToolsVersion = "36.0.0"
 
     signingConfigs {

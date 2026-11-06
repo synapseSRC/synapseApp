@@ -18,6 +18,7 @@ import com.synapse.social.studioasinc.shared.data.local.database.StoryDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.repository.*
 import com.synapse.social.studioasinc.shared.data.sync.SyncManager
+import com.synapse.social.studioasinc.shared.data.sync.SupabaseMessageDeliveryCoordinator
 import com.synapse.social.studioasinc.shared.domain.repository.*
 import com.synapse.social.studioasinc.shared.domain.usecase.UploadMediaUseCase
 import dagger.Module
@@ -87,6 +88,13 @@ object BackendModule {
             syncManager = syncManager
         )
     }
+
+    @Provides
+    @Singleton
+    fun provideMessageDeliveryCoordinator(
+        client: SupabaseClientType,
+        authRepository: AuthRepository
+    ): MessageDeliveryCoordinator = SupabaseMessageDeliveryCoordinator(client, authRepository)
 
     @Provides
     @Singleton

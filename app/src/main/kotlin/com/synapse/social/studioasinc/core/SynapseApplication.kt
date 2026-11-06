@@ -28,6 +28,7 @@ import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import com.synapse.social.studioasinc.feature.shared.theme.ThemeManager
 import com.synapse.social.studioasinc.feature.settings.backup.SettingsCloudSyncScheduler
 import com.synapse.social.studioasinc.shared.domain.repository.IncomingCallWatcher
+import com.synapse.social.studioasinc.shared.domain.repository.MessageDeliveryCoordinator
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StartPresenceTrackingUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.StopPresenceTrackingUseCase
@@ -100,6 +101,7 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
      * push. It is the same lifetime the presence tracker has, for the same reason.
      */
     @Inject lateinit var incomingCallWatcher: IncomingCallWatcher
+    @Inject lateinit var messageDeliveryCoordinator: MessageDeliveryCoordinator
 
     /**
      * Credential Manager only shows its passkey prompt when given an Activity, so the resumed one is
@@ -145,6 +147,7 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
         SupabaseAuthenticationService.initialize(this)
 
         setupAuthSessionObserver()
+        messageDeliveryCoordinator.start()
 
         settingsCloudSyncScheduler.start()
 
@@ -165,6 +168,7 @@ class SynapseApplication : Application(), SingletonImageLoader.Factory {
                 isAppInForeground = true
                 managePresenceTracking()
                 settingsCloudSyncScheduler.requestSyncIfEligible()
+                messageDeliveryCoordinator.requestSync()
                 // Reconnect Realtime on foreground resume (e.g. after screen-off/Doze)
                 if (isAuthenticated) {
                     applicationScope.launch(Dispatchers.IO) {

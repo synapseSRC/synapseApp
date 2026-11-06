@@ -36,7 +36,8 @@ enum class ChatAttachmentCategory(
     DOCUMENTS(R.string.chat_attachment_documents, R.string.chat_attachment_documents_supporting, Icons.Rounded.Description),
     AUDIO(R.string.chat_attachment_audio, R.string.chat_attachment_audio_supporting, Icons.Rounded.Headphones),
     FILES(R.string.chat_attachment_files, R.string.chat_attachment_files_supporting, Icons.Rounded.FolderOpen),
-    CONTACTS(R.string.chat_attachment_contacts, R.string.chat_attachment_contacts_supporting, Icons.Rounded.ContactPage)
+    CONTACTS(R.string.chat_attachment_contacts, R.string.chat_attachment_contacts_supporting, Icons.Rounded.ContactPage),
+    POLL(R.string.chat_attachment_poll, R.string.chat_attachment_poll_supporting, Icons.Rounded.BarChart)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)

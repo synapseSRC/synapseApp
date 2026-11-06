@@ -967,7 +967,7 @@ if (message.content.isNotBlank()) {
 
                                             MessageType.POLL -> {
                                                 Column {
-                                                    PollCardBubble(metadata = message.metadataContainer?.poll, messageId = message.id, contentColor = contentColor, onVoteOption = onVoteOption)
+                                                    PollCardBubble(metadata = message.metadataContainer?.poll, messageId = message.id, contentColor = contentColor, currentUserId = currentUserId, onVoteOption = onVoteOption)
                                                     MessageMetadataRow(message = message, isFromMe = isFromMe, contentColor = contentColor, onRetryClick = onRetryClick)
                                                 }
                                             }

@@ -19,6 +19,7 @@ import coil3.toBitmap
 import com.onesignal.notifications.IDisplayableMutableNotification
 import com.onesignal.notifications.INotificationReceivedEvent
 import com.onesignal.notifications.INotificationServiceExtension
+import com.synapse.social.studioasinc.data.local.database.MessageDeliveryWorker
 import kotlinx.coroutines.runBlocking
 import kotlin.math.min
 
@@ -38,6 +39,7 @@ class NotificationExtensionService : INotificationServiceExtension {
     override fun onNotificationReceived(event: INotificationReceivedEvent) {
         val notification: IDisplayableMutableNotification = event.notification
         val context: Context = event.context
+        MessageDeliveryWorker.enqueueIfMessage(context, notification.additionalData)
 
         val avatarUrl = notification.additionalData?.optString("avatarUrl", null)
 

@@ -3,6 +3,8 @@ package com.synapse.social.studioasinc.data.remote.services.fcm
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.synapse.social.studioasinc.data.local.database.MessageDeliveryWorker
+import org.json.JSONObject
 import com.synapse.social.studioasinc.shared.domain.repository.IncomingCallWatcher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -55,12 +57,19 @@ class SynapseFirebaseMessagingService : FirebaseMessagingService() {
             Log.d(TAG, "Message Notification received")
         }
 
+        MessageDeliveryWorker.enqueueIfMessage(this, JSONObject(message.data))
+
         if (message.data[KEY_TYPE] == TYPE_INCOMING_CALL) {
             // Idempotent when already watching, and re-reads the open rows either way — which is the whole
             // point of a wake-up. Errors are not reported to the user from here: a hint that led nowhere is
             // not a call, and saying so would be a false alarm.
             incomingCallWatcher.start()
         }
+    }
+
+    override fun onDeletedMessages() {
+        super.onDeletedMessages()
+        MessageDeliveryWorker.enqueue(this)
     }
 
     companion object {

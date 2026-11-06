@@ -84,6 +84,7 @@ import kotlinx.coroutines.withContext
         onNavigateToProduct: (String) -> Unit = {},
         onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
         onNavigateToChatSettings: (String) -> Unit = {},
+        onNavigateToCreatePoll: (String) -> Unit = {},
         onStartCall: (CallLaunchRequest) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
@@ -741,6 +742,7 @@ typingStatus = typingStatus,
                                 ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
                                 ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
                                 ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                                ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
                             }
                         }
                     )
