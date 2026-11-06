@@ -282,7 +282,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("request_follow", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<String>()
+        }).decodeAs<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -293,7 +293,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("unfollow_user", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<String>()
+        }).decodeAs<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -353,7 +353,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         val status = client.postgrest.rpc("get_follow_status", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<String>()
+        }).decodeAs<String>()
         Result.success(status == "following")
     } catch (e: Exception) {
         Result.failure(e)

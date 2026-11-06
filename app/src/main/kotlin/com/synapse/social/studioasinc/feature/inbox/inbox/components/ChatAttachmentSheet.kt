@@ -136,7 +136,7 @@ private fun AttachmentCategoryItem(
                 }
             }
         },
-        headlineContent = {
+        content = {
             Text(
                 text = stringResource(category.titleRes),
                 style = AppTypography.itemTitle,
