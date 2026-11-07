@@ -24,7 +24,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.text.style.TextOverflow
+import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarqueeText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import com.synapse.social.studioasinc.R
@@ -162,7 +162,7 @@ fun ChatTopAppBar(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
+                            SingleLineMarqueeText(
                                 text = if (isGroupChat) {
                                     groupTitle ?: initialParticipantName
                                         ?: stringResource(R.string.group_chat_fallback_title)
@@ -174,10 +174,7 @@ fun ChatTopAppBar(
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .weight(1f)
+                                modifier = Modifier.weight(1f)
                             )
                             if (isGroupChat) {
                                 Text(
@@ -218,8 +215,9 @@ fun ChatTopAppBar(
                                 isParticipantActive -> StatusOnline
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
-                            Text(
+                            SingleLineMarqueeText(
                                 text = statusText,
+                                modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = statusColor
                             )
