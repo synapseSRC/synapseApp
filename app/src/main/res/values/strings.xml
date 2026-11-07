@@ -2552,4 +2552,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="post_reposted_you">You reposted</string>
     <string name="error_reshare_failed">Couldn\'t repost. Check your connection and try again.</string>
 
+    <!-- Welcome links -->
+
 </resources>

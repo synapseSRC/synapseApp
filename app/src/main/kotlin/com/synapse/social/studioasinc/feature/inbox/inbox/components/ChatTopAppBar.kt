@@ -24,10 +24,10 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
+import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarqueeText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarqueeText
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -75,7 +75,8 @@ fun ChatTopAppBar(
     onReportChat: () -> Unit = {},
     onBlockChat: () -> Unit = {},
     onClearChat: () -> Unit = {},
-    onExportChat: () -> Unit = {}
+    onExportChat: () -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     val clipboard = LocalClipboard.current
     val clipLabel = stringResource(R.string.clip_label_message)
@@ -84,6 +85,7 @@ fun ChatTopAppBar(
     if (selectedMessageIds.isNotEmpty()) {
         TopAppBar(
             title = { Text(stringResource(R.string.selected_count_title, selectedMessageIds.size)) },
+            scrollBehavior = scrollBehavior,
             navigationIcon = {
                 IconButton(onClick = onClearSelection) {
                     Icon(Icons.Default.Close, contentDescription = "Clear Selection")
@@ -136,6 +138,7 @@ fun ChatTopAppBar(
         )
 
         TopAppBar(
+            scrollBehavior = scrollBehavior,
             title = {
                 Row(
                     modifier = Modifier
@@ -154,25 +157,27 @@ fun ChatTopAppBar(
                             else participantProfile?.displayName ?: participantProfile?.username ?: initialParticipantName
                     )
                     Spacer(modifier = Modifier.width(Spacing.space12))
-                    Column {
-                        // Name line: one line only, scrolls when the name is too long.
-                        SingleLineMarqueeText(
-                            text = if (isGroupChat) {
-                                groupTitle ?: initialParticipantName
-                                    ?: stringResource(R.string.group_chat_fallback_title)
-                            } else {
-                                participantProfile?.displayName
-                                    ?: participantProfile?.username
-                                    ?: initialParticipantName
-                                    ?: participantId ?: "Chat"
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            SingleLineMarqueeText(
+                                text = if (isGroupChat) {
+                                    groupTitle ?: initialParticipantName
+                                        ?: stringResource(R.string.group_chat_fallback_title)
+                                } else {
+                                    participantProfile?.displayName
+                                        ?: participantProfile?.username
+                                        ?: initialParticipantName
+                                        ?: participantId ?: "Chat"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
                             if (isGroupChat) {
-                                // Status line: its own line under the name; weight reserves room for the timer icon.
-                                SingleLineMarqueeText(
+                                Text(
                                     text = if (groupMemberCount > 0) {
                                         pluralStringResource(
                                             R.plurals.group_chat_member_count,
@@ -180,31 +185,10 @@ fun ChatTopAppBar(
                                             groupMemberCount
                                         )
                                     } else {
-                                        stringResource(R.string.group_chat_member_count_unknown)
+                                        stringResource(R.string.group_chat_fallback_title)
                                     },
-                                    modifier = Modifier.weight(1f, fill = false),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            } else {
-                                val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
-                                val statusText = when {
-                                    typingStatus?.isTyping == true -> "Typing..."
-                                    isParticipantActive -> "Online"
-                                    formattedLastSeen != null -> "Last seen $formattedLastSeen"
-                                    else -> "Offline"
-                                }
-                                val statusColor = when {
-                                    typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
-                                    isParticipantActive -> StatusOnline
-                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                                // Status line: its own line under the name; weight reserves room for the timer icon.
-                                SingleLineMarqueeText(
-                                    text = statusText,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = statusColor
                                 )
                             }
                             if (disappearingMode != DisappearingMode.OFF) {
@@ -216,6 +200,27 @@ fun ChatTopAppBar(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+
+                        if (!isGroupChat) {
+                            val formattedLastSeen = participantProfile?.lastSeen?.let { formatChatTimestamp(it) }?.takeIf { it.isNotBlank() }
+                            val statusText = when {
+                                typingStatus?.isTyping == true -> "Typing..."
+                                isParticipantActive -> "Online"
+                                formattedLastSeen != null -> "Last seen $formattedLastSeen"
+                                else -> "Offline"
+                            }
+                            val statusColor = when {
+                                typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
+                                isParticipantActive -> StatusOnline
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                            SingleLineMarqueeText(
+                                text = statusText,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = statusColor
+                            )
                         }
                     }
                 }

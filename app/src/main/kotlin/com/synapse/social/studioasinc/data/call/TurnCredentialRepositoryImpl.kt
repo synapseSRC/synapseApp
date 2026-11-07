@@ -18,6 +18,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 /**
@@ -101,11 +102,20 @@ class TurnCredentialRepositoryImpl(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Napier.w("turn-credentials request failed: ${e.message}", tag = TAG)
+                    // A kotlinx.serialization decode failure quotes the offending slice of the
+                    // response body, and for this payload that slice is the TURN username and
+                    // password. Keep only the cause type for decode failures; transport errors
+                    // carry no credentials. This message reaches logcat, CrashActivity and Sentry.
+                    val safeCause = if (e is SerializationException) {
+                        e.javaClass.simpleName
+                    } else {
+                        e.message ?: e.javaClass.simpleName
+                    }
+                    Napier.w("turn-credentials request failed: $safeCause", tag = TAG)
                     Result.failure(
                         if (e is CallBackendException) e else CallBackendException(
                             if (e is IOException) CallErrorKind.BACKEND_UNREACHABLE else CallErrorKind.UNKNOWN,
-                            "Could not obtain traversal credentials: ${e.message ?: e.javaClass.simpleName}"
+                            "Could not obtain traversal credentials: $safeCause"
                         )
                     )
                 }

@@ -283,8 +283,13 @@ class AuthViewModel @Inject constructor(
                      onSuccess = { url ->
                          _navigationEvent.emit(AuthNavigationEvent.OpenUrl(url))
                      },
-                     onFailure = { e ->
-                     }
+                      onFailure = { e ->
+                          _uiState.value = when (val state = _uiState.value) {
+                              is AuthUiState.SignIn -> state.copy(isLoading = false, generalError = "OAuth sign-in failed: ${e.message ?: "Unknown error"}")
+                              is AuthUiState.SignUp -> state.copy(isLoading = false, generalError = "OAuth sign-up failed: ${e.message ?: "Unknown error"}")
+                              else -> state
+                          }
+                      }
                  )
              }
         }

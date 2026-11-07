@@ -38,8 +38,11 @@ class SettingsViewModel @Inject constructor(
     fun resetE2EE() {
         viewModelScope.launch {
             _isResettingE2EE.value = true
-            resetE2EUseCase()
-            _isResettingE2EE.value = false
+            try {
+                resetE2EUseCase()
+            } finally {
+                _isResettingE2EE.value = false
+            }
         }
     }
 

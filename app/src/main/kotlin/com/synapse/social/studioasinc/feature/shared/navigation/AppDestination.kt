@@ -90,6 +90,8 @@ sealed interface AppDestination {
     @Serializable
     data object CreateGroup : AppDestination
     @Serializable
+    data class CreatePoll(val chatId: String) : AppDestination
+    @Serializable
     data class GroupInfo(val chatId: String, val groupName: String) : AppDestination
     @Serializable
     data class GroupParticipants(val chatId: String) : AppDestination

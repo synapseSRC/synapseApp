@@ -36,7 +36,7 @@ const ProfileScreenPage = async () => {
     const posts: FeedEntry[] | { error: string } = await getPostsByAuthor(user.id).catch((error: Error) => ({
         error: error.message,
     }));
-    const coverUrl = await resolveCoverUrl(profile.profile_cover_image);
+    const coverUrl = await resolveCoverUrl(profile.profile_cover_image, user.id);
 
     return (
         <div className="space-y-4">

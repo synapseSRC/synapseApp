@@ -394,6 +394,9 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToChatSettings = { chatId ->
                         navController.navigate(AppDestination.ChatSettings(chatId))
                     },
+                    onNavigateToCreatePoll = { chatId ->
+                        navController.navigate(AppDestination.CreatePoll(chatId))
+                    },
                     onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
             }
@@ -404,6 +407,14 @@ fun NavGraphBuilder.inboxGraph(
                         navController.popBackStack()
                         navController.navigate(AppDestination.Chat(chatId = chatId))
                     }
+                )
+            }
+    composable<AppDestination.CreatePoll> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.CreatePoll>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.CreatePollScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onPollSent = { navController.popBackStack() }
                 )
             }
     composable<AppDestination.GroupInfo> { backStackEntry ->

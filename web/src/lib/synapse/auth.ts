@@ -31,6 +31,24 @@ export const describeAuthError = (error: unknown): string => {
     return message;
 };
 
+// `?error=` / `error_description` reach the sign-in page straight from the query string, so any
+// text a visitor puts in a link would be rendered inside our own alert. Map the known
+// Supabase/GoTrue wording onto fixed copy and fall back to a generic line instead of echoing it.
+const AUTH_NOTICES: ReadonlyArray<readonly [RegExp, string]> = [
+    [/expired|invalid.*(link|token|grant)|otp_expired/i, "That sign-in link has expired. Request a new one and try again."],
+    [/access_denied|cancel(l)?ed/i, "Sign-in was cancelled before it completed."],
+    [/email.*not.*confirmed|email_not_confirmed/i, "Confirm your email address, then try signing in again."],
+    [/too many|rate.?limit/i, "Too many attempts. Please wait a moment and try again."],
+    [/server error|unexpected_failure/i, "The sign-in service is unavailable right now. Please try again shortly."],
+];
+
+export const safeAuthNotice = (value: string | string[] | undefined): string | null => {
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (!raw) return null;
+
+    return AUTH_NOTICES.find(([pattern]) => pattern.test(raw))?.[1] ?? "We could not complete that sign-in. Please try again.";
+};
+
 export const safeNextPath = (value: string | string[] | undefined): string => {
     const path = Array.isArray(value) ? value[0] : value;
     if (!path || !path.startsWith("/") || path.startsWith("//")) return "/home";
@@ -42,9 +60,11 @@ export const resolveUsername = (user: User): string => {
     return metadata.username || user.email?.split("@")[0] || FALLBACK_USERNAME;
 };
 
+// PNG, not SVG: Android decodes notification large icons through BitmapFactory, which cannot
+// rasterize SVG, so an SVG avatar URL silently drops the picture from push notifications.
 export const initialsAvatarUrl = (name: string): string => {
     const seed = name.trim().toLowerCase() || FALLBACK_USERNAME;
-    return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}`;
+    return `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(seed)}`;
 };
 
 export const normalizeUsername = (value: string): string => value.trim().toLowerCase();

@@ -106,11 +106,14 @@ internal class PostFeedHelper(
                 postDto.toDomain(PostRepositoryUtils.Companion::constructMediaUrl, PostRepositoryUtils.Companion::constructAvatarUrl).withSignedStorageMediaUrls().also { post ->
                     postDto.user?.let { user ->
                         if (user.uid.isNotEmpty()) {
-                            utils.profileCache[user.uid] = CacheEntry(
-                                ProfileData(
-                                    username = if (!user.displayName.isNullOrBlank()) user.displayName else user.username,
-                                    avatarUrl = user.avatarUrl?.let { PostRepositoryUtils.constructAvatarUrl(it) },
-                                    isVerified = user.isVerified ?: false
+                            utils.putProfile(
+                                user.uid,
+                                CacheEntry(
+                                    ProfileData(
+                                        username = if (!user.displayName.isNullOrBlank()) user.displayName else user.username,
+                                        avatarUrl = user.avatarUrl?.let { PostRepositoryUtils.constructAvatarUrl(it) },
+                                        isVerified = user.isVerified ?: false
+                                    )
                                 )
                             )
                         }
@@ -155,11 +158,14 @@ internal class PostFeedHelper(
                     // Cache user profile
                      postDto.user?.let { user ->
                         if (user.uid.isNotEmpty()) {
-                            utils.profileCache[user.uid] = CacheEntry(
-                                ProfileData(
-                                    username = if (!user.displayName.isNullOrBlank()) user.displayName else user.username,
-                                    avatarUrl = user.avatarUrl?.let { PostRepositoryUtils.constructAvatarUrl(it) },
-                                    isVerified = user.isVerified ?: false
+                            utils.putProfile(
+                                user.uid,
+                                CacheEntry(
+                                    ProfileData(
+                                        username = if (!user.displayName.isNullOrBlank()) user.displayName else user.username,
+                                        avatarUrl = user.avatarUrl?.let { PostRepositoryUtils.constructAvatarUrl(it) },
+                                        isVerified = user.isVerified ?: false
+                                    )
                                 )
                             )
                         }

@@ -1,0 +1,5 @@
+# Preserve the deployed webhook contract: the function checks the Vault-backed
+# x-notification-webhook-secret itself; this is not an unauthenticated endpoint.
+# https://supabase.com/docs/guides/functions/function-configuration
+[functions.send-push-notification]
+verify_jwt = false
