@@ -27,6 +27,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarqueeText
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -154,7 +155,8 @@ fun ChatTopAppBar(
                     )
                     Spacer(modifier = Modifier.width(Spacing.space12))
                     Column {
-                        Text(
+                        // Name line: one line only, scrolls when the name is too long.
+                        SingleLineMarqueeText(
                             text = if (isGroupChat) {
                                 groupTitle ?: initialParticipantName
                                     ?: stringResource(R.string.group_chat_fallback_title)
@@ -169,7 +171,8 @@ fun ChatTopAppBar(
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (isGroupChat) {
-                                Text(
+                                // Status line: its own line under the name; weight reserves room for the timer icon.
+                                SingleLineMarqueeText(
                                     text = if (groupMemberCount > 0) {
                                         pluralStringResource(
                                             R.plurals.group_chat_member_count,
@@ -177,8 +180,9 @@ fun ChatTopAppBar(
                                             groupMemberCount
                                         )
                                     } else {
-                                        stringResource(R.string.group_chat_fallback_title)
+                                        stringResource(R.string.group_chat_member_count_unknown)
                                     },
+                                    modifier = Modifier.weight(1f, fill = false),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -195,8 +199,10 @@ fun ChatTopAppBar(
                                     isParticipantActive -> StatusOnline
                                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                                 }
-                                Text(
+                                // Status line: its own line under the name; weight reserves room for the timer icon.
+                                SingleLineMarqueeText(
                                     text = statusText,
+                                    modifier = Modifier.weight(1f, fill = false),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = statusColor
                                 )
