@@ -19,7 +19,10 @@ object UserProfileManager {
 
         return try {
             val result = dbService.getSingle("users", "uid", uid).getOrNull()
-            android.util.Log.d("UserProfileManager", "Database result for uid $uid: $result")
+            // The row carries email, bio and linked-account fields; android.util.Log is not gated by
+            // BuildConfig.DEBUG here and Sentry's logcat breadcrumb module ships it with the next
+            // crash, so the whole record must stay out of logs. Presence is all this line can say.
+            android.util.Log.d("UserProfileManager", "Profile lookup ${if (result == null) "missed" else "hit"}")
             if (result != null) {
                 val avatarPath = result["avatar"] as? String
                 val avatarUrl = avatarPath?.let { 

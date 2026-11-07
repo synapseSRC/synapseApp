@@ -214,8 +214,12 @@
 				<data android:scheme="https" android:host="socialsynapse.vercel.app" android:pathPrefix="/home" />
 			</intent-filter>
 
-			<!-- Fallback for misconfigured Supabase redirect (www.synapse.com) -->
-			<intent-filter>
+			<!-- Fallback for misconfigured Supabase redirect (www.synapse.com).
+			     autoVerify is required here: without it Android lets ANY app claim this
+			     host/path pair, so a malicious install can register the same filter and receive
+			     OAuth and magic-link auth callbacks. Requires assetlinks.json on this host, or
+			     delete this filter if the domain is not ours. -->
+			<intent-filter android:autoVerify="true">
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />
@@ -355,7 +359,9 @@
 			android:screenOrientation="portrait"
 			android:windowSoftInputMode="adjustResize"
 			android:exported="true">
-			<intent-filter>
+			<!-- Group invite links carry a bearer-equivalent code, so the filter must be
+			     domain-verified for the same reason as the auth callbacks above. -->
+			<intent-filter android:autoVerify="true">
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />

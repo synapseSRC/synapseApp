@@ -118,7 +118,11 @@ class SupabaseMessageDeliveryCoordinator(
                         val pending = messages.getPendingDeliveries(userId)
                         checkAccount(userId)
                         if (pending.isEmpty()) break
-                        val ids = pending.map { checkNotNull(it.id) { "Received message has no ID" } }
+                        // A row without an ID cannot be acknowledged. Drop only that row rather than
+                        // aborting the whole batch, which would leave every other pending delivery
+                        // unacknowledged and retry forever against the same malformed page.
+                        val ids = pending.mapNotNull { it.id }
+                        if (ids.isEmpty()) break
                         messages.acknowledgeReceivedMessages(userId, ids)
                     }
                 }

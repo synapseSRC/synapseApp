@@ -24,6 +24,9 @@ class CreatePollUseCase(private val sendMessageUseCase: SendMessageUseCase) {
         options: List<String>,
         allowMultipleAnswers: Boolean
     ): Result<Message> {
+        if (chatId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Poll requires a target chat."))
+        }
         val trimmedQuestion = question.trim()
         if (trimmedQuestion.isBlank()) {
             return Result.failure(IllegalArgumentException("Poll question cannot be empty."))

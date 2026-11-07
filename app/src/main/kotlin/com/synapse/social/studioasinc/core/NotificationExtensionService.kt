@@ -106,7 +106,10 @@ class NotificationExtensionService : INotificationServiceExtension {
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
         canvas.drawBitmap(squared, srcRect, dstRect, paint)
 
-        squared.recycle()
+        // Bitmap.createBitmap returns the *source object* unchanged when the requested rect covers
+        // it entirely, which is every square avatar. Recycling that alias would free a bitmap Coil
+        // still holds in its memory cache, blanking the avatar everywhere else in the app.
+        if (squared !== source) squared.recycle()
         return output
     }
 

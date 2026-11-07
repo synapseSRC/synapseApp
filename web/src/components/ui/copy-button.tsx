@@ -19,13 +19,18 @@ const CopyButton = ({ text, className, icon }: Props) => {
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
-        setIsCopied(true);
+        // Resolve the visual state from the promise: writeText rejects when the page is not in a
+        // secure context or the user denies clipboard permission, and claiming success there both
+        // leaves an unhandled rejection and shows a checkmark for a copy that never happened.
         navigator.clipboard.writeText(text).then(() => {
+            setIsCopied(true);
             toast.success("Copied to clipboard!");
+            setTimeout(() => {
+                setIsCopied(false);
+            }, 2000);
+        }).catch(() => {
+            toast.error("Copy failed — clipboard access was denied.");
         });
-        setTimeout(() => {
-            setIsCopied(false);
-        }, 2000);
     };
 
     return (

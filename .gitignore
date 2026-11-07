@@ -63,9 +63,9 @@ jacoco*.exec
 # Project-Specific (Sensitive/Generated) Exclusions
 # ---------------------------------------------------
 # Keystore and Signing Information (CRITICAL for security)
-# I see 'app/release_key.jks' in your file listing, this MUST be excluded.
 *.jks
 *.keystore
+keystore.properties
 # Firebase Configuration (CRITICAL for security)
 /app/google-services.json
 /app/google-services.json.example
