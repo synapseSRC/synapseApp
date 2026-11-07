@@ -259,10 +259,9 @@ private fun LegalNotice(
                 detectTapGestures { position ->
                     val layout = textLayout ?: return@detectTapGestures
                     val offset = layout.getOffsetForPosition(position)
-                    when {
-                        termsStart >= 0 && offset in termsStart until termsEnd -> onTermsClick()
-                        privacyStart >= 0 && offset in privacyStart until privacyEnd -> onPrivacyClick()
-                    }
+                    val onTerms = termsStart >= 0 && offset in termsStart until termsEnd
+                    val onPrivacy = privacyStart >= 0 && offset in privacyStart until privacyEnd
+                    if (onTerms) onTermsClick() else if (onPrivacy) onPrivacyClick()
                 }
             }
             .semantics {
