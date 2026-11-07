@@ -39,6 +39,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.AuroraWaveformView
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveWaveformView
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -56,6 +57,8 @@ private const val LOCK_PILL_CHEVRON_END_OFFSET_DP = -2f
 private const val LOCK_PILL_CHEVRON_BOUNCE_DURATION_MILLIS = 1_400
 private val MIC_TOUCH_TARGET_SIZE = 48.dp
 private val MIC_VISUAL_SIZE = 44.dp
+// Component-specific visual height for the live envelope waveform (not a foundation spacing step).
+private val RECORDING_WAVEFORM_HEIGHT = 18.dp
 private val VOICE_BAR_MIN_HEIGHT = 52.dp + Spacing.space4 + Spacing.space8
 // 6.dp follows the Material 3 level-3 elevation step; the halo color remains a theme surface color.
 private val ACTIVE_MIC_GLOW_ELEVATION = 6.dp
@@ -188,7 +191,8 @@ fun VoiceInputHost(
                                 VoiceInputBarContent(
                                     voiceState = animatedState,
                                     onVoiceAction = onVoiceAction,
-                                    onSendBoundsChanged = { micBoundsInRoot = it }
+                                    onSendBoundsChanged = { micBoundsInRoot = it },
+                                    reducedMotion = reducedMotion
                                 )
                             }
                         }
@@ -253,7 +257,8 @@ fun VoiceInputHost(
 private fun VoiceInputBarContent(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit,
-    onSendBoundsChanged: (Rect) -> Unit = {}
+    onSendBoundsChanged: (Rect) -> Unit = {},
+    reducedMotion: Boolean = false
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         when (voiceState) {
@@ -345,8 +350,16 @@ private fun VoiceInputBarContent(
                         )
                     }
                     val progress = if (voiceState.durationMs > 0) voiceState.playbackPositionMs.toFloat() / voiceState.durationMs else 0f
-                    LiveWaveformView(amplitudeHistory = voiceState.amplitudeHistory, progressFraction = progress, isDraftPlayback = true,
-                        onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) }, modifier = Modifier.weight(1f).height(32.dp), activeColor = MaterialTheme.colorScheme.primary)
+                    LiveWaveformView(
+                        amplitudeHistory = voiceState.amplitudeHistory,
+                        progressFraction = progress,
+                        isDraftPlayback = true,
+                        isPlaying = voiceState.isPlaying,
+                        reducedMotion = reducedMotion,
+                        onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) },
+                        modifier = Modifier.weight(1f).height(32.dp),
+                        activeColor = MaterialTheme.colorScheme.primary
+                    )
                     OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
                     Surface(
                         modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE),
@@ -509,11 +522,35 @@ private fun RecordingStatusOverlay(voiceState: VoiceState.Recording, reducedMoti
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.space4)
     ) {
-        OdometerTimerText(
-            durationMs = voiceState.durationMs,
-            modifier = Modifier.testTag("voice-recording-timer"),
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+        ) {
+            // Live envelope waveform. It reads the same amplitude history that drives the liquid
+            // surface and shifts toward the error colour as the cancel drag progresses, so the
+            // waveform and the background stay one synchronised visual system.
+            AuroraWaveformView(
+                amplitudeHistory = voiceState.amplitudeHistory,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(RECORDING_WAVEFORM_HEIGHT)
+                    .testTag("voice-recording-waveform"),
+                isLive = true,
+                reducedMotion = reducedMotion,
+                activeColor = voiceCancelTint(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.error,
+                    voiceState.cancelProgress
+                ),
+                peakColor = MaterialTheme.colorScheme.tertiary
+            )
+            OdometerTimerText(
+                durationMs = voiceState.durationMs,
+                modifier = Modifier.testTag("voice-recording-timer"),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
         ShimmerCancelHint(reducedMotion)
     }
 }
