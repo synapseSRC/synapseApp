@@ -99,10 +99,10 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         val existing = prefs.getString(key, null)
         val presented = Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)
         return when (IdentityTrustPolicy.decide(existing, presented)) {
-            IdentityTrustOutcome.FIRST_USE -> {
-                prefs.edit().putString(key, presented).commitOrThrow("Failed to save identity key")
-                true
-            }
+            // isTrustedIdentity() is called by libsignal on every encrypt/decrypt, so it must not
+            // write: persisting a first-seen key is saveIdentity()'s job, and libsignal calls that
+            // for the same address before the identity is used.
+            IdentityTrustOutcome.FIRST_USE -> true
             IdentityTrustOutcome.UNCHANGED -> true
             IdentityTrustOutcome.CHANGED -> {
                 // Record the change and refuse the key: libsignal will not build a session or decrypt

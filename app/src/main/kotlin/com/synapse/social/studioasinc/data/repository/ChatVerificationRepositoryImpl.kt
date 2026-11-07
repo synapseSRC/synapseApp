@@ -53,7 +53,12 @@ class ChatVerificationRepositoryImpl @Inject constructor(
 
     override suspend fun verifyScannedCode(info: ChatVerificationInfo, scannedCode: String): Result<Boolean> = execute {
         val current = loadFresh(info.chatId)
-        if (current.participantId != info.participantId || current.safetyNumber != info.safetyNumber) return@execute false
+        // The snapshot the user is looking at no longer describes this conversation: the peer, or
+        // the peer's key, moved between opening the sheet and scanning. Say so instead of returning
+        // a plain "code does not match", which would hide a real identity change from the caller.
+        if (current.participantId != info.participantId || current.safetyNumber != info.safetyNumber) {
+            throw ChatVerificationException(ChatVerificationFailureReason.IDENTITY_CHANGED)
+        }
         val parts = scannedCode.split('|', limit = 3)
         if (parts.size != 3 || parts[0] != QR_PREFIX || parts[1] != current.participantId) return@execute false
         val scannedKey = try { java.util.Base64.getDecoder().decode(parts[2]) }
@@ -120,9 +125,16 @@ class ChatVerificationRepositoryImpl @Inject constructor(
     private fun migrateLegacyVerification(chatId: String, participantId: String, safetyNumber: String): String? {
         val legacyKey = "verified:$chatId:$participantId"
         val legacyValue = legacyPreferences.getString(legacyKey, null) ?: return null
-        legacyPreferences.edit().remove(legacyKey).apply()
-        if (legacyValue != safetyNumber) return null
+        if (legacyValue != safetyNumber) {
+            // Stale: it describes keys that are no longer in use, so it is dropped rather than migrated.
+            legacyPreferences.edit().remove(legacyKey).commit()
+            return null
+        }
+        // Store the encrypted entry first and commit it; only then drop the legacy entry. If the
+        // encrypted write fails, the legacy entry is still on disk and the next load retries, so the
+        // user cannot lose their verification.
         signalProtocolManager.setVerifiedSafetyNumber(participantId, safetyNumber)
+        legacyPreferences.edit().remove(legacyKey).commit()
         return safetyNumber
     }
 
