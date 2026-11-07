@@ -180,7 +180,7 @@ fun ChatTopAppBar(
                                             groupMemberCount
                                         )
                                     } else {
-                                        stringResource(R.string.group_chat_fallback_title)
+                                        stringResource(R.string.group_chat_member_count_unknown)
                                     },
                                     modifier = Modifier.weight(1f, fill = false),
                                     style = MaterialTheme.typography.bodySmall,

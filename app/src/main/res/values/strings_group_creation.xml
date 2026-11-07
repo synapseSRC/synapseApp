@@ -82,6 +82,9 @@
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
+    <!-- Status slot of the chat header when the group size is not known yet. It must not reuse
+         group_chat_fallback_title, or the name line and the status line would show the same text. -->
+    <string name="group_chat_member_count_unknown">Members unavailable</string>
     <string name="group_chat_fallback_title">Group</string>
     <string name="group_join_request_sent">Your request was sent to the group admins.</string>
     <string name="group_request_to_join">Request to join</string>
