@@ -28,6 +28,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -260,17 +261,19 @@ float surfaceProfile(float x, float t, float amp) {
 // and the warm roles only enter as the normalised amplitude (warmth) rises.
 float3 energyColor(float x, float warmth, float travel) {
     const float TAU = 6.2831853;
-    float coolMix = 0.5 + 0.5 * sin(TAU * x * 0.85 - travel * 0.90);
+    // Roughly 1.5 hue cycles travel across the surface instead of a single slow sweep, so several
+    // related hues are on screen at once and hand over to each other through the Gaussian pools.
+    float coolMix = 0.5 + 0.5 * sin(TAU * x * 1.45 - travel * 0.95);
     float3 cool = mix(cBlue.rgb, cViolet.rgb, coolMix);
-    float coolCyan = pool(x, 0.30 + 0.14 * sin(travel * 0.70), 0.30);
-    cool = mix(cool, cCyan.rgb, clamp(coolCyan * 0.55, 0.0, 0.70));
+    float coolCyan = pool(x, 0.30 + 0.16 * sin(travel * 0.70), 0.26);
+    cool = mix(cool, cCyan.rgb, clamp(coolCyan * 0.62, 0.0, 0.80));
 
-    float warmMix = 0.5 + 0.5 * sin(TAU * x * 0.70 + travel * 1.10);
+    float warmMix = 0.5 + 0.5 * sin(TAU * x * 1.70 + travel * 1.15);
     float3 warm = mix(cCoral.rgb, cAmber.rgb, warmMix);
-    float warmGreen = pool(x, 0.76 - 0.12 * cos(travel * 0.80), 0.26);
-    warm = mix(warm, cGreen.rgb, clamp(warmGreen * 0.60, 0.0, 0.80));
-    float warmPink = pool(x, 0.08 + 0.10 * cos(travel * 0.55), 0.20);
-    warm = mix(warm, cPink.rgb, clamp(warmPink * 0.45, 0.0, 0.60));
+    float warmGreen = pool(x, 0.74 - 0.14 * cos(travel * 0.80), 0.22);
+    warm = mix(warm, cGreen.rgb, clamp(warmGreen * 0.70, 0.0, 0.86));
+    float warmPink = pool(x, 0.10 + 0.12 * cos(travel * 0.55), 0.18);
+    warm = mix(warm, cPink.rgb, clamp(warmPink * 0.55, 0.0, 0.68));
 
     return mix(cool, warm, warmth);
 }
@@ -280,7 +283,10 @@ half4 main(in float2 fragCoord) {
     float x = clamp(uv.x, 0.0, 1.0);
     float y = uv.y;
     float amp = clamp(iAmplitude, 0.0, 1.0);
-    float warmth = smoothstep(0.18, 0.92, amp);
+    // The warm roles used to sit behind a very high energy gate, so a conversational voice rendered
+    // as one flat blue/violet mass. The gate now opens at speaking level and saturates below peak, so
+    // the whole spectrum stays on screen and keeps re-mixing while someone talks.
+    float warmth = smoothstep(0.12, 0.60, amp);
     float travel = iTime * 0.055 + iDrift * 0.02;
 
     // ---- Layer 1: primary energy surface ------------------------------------------------
@@ -309,7 +315,7 @@ half4 main(in float2 fragCoord) {
     float3 col = energyColor(x, warmth, travel);
     float3 ribbonTint = energyColor(fract(x + 0.22), warmth, travel + 1.35);
     col += ribbonTint * ribbon * 0.60;
-    col *= 0.45 + 0.55 * amp;
+    col *= 0.52 + 0.48 * amp;
 
     float alpha = clamp(volume * (0.55 + 0.40 * amp), 0.0, 0.94) + ribbon * 0.16;
     alpha = clamp(alpha, 0.0, 0.96);
@@ -475,7 +481,7 @@ private fun DrawScope.drawVoiceEnergyFallback(
     if (width <= 0f || height <= 0f) return
 
     val energy = field.energy
-    val warmth = ((energy - 0.18f) / 0.74f).coerceIn(0f, 1f)
+    val warmth = ((energy - 0.12f) / 0.48f).coerceIn(0f, 1f)
     val rippleBoost = 0.75f + 0.35f * field.ripple
     val baseLine = height * (0.90f - 0.05f * energy)
     val scale = height * (0.10f + 0.13f * energy + 0.05f * field.ripple)
@@ -542,7 +548,7 @@ private fun DrawScope.drawVoiceAmbientHalos(field: VoiceEnergyField, art: VoiceA
     if (width <= 0f || height <= 0f) return
 
     val energy = field.energy
-    val warmth = ((energy - 0.18f) / 0.74f).coerceIn(0f, 1f)
+    val warmth = ((energy - 0.12f) / 0.48f).coerceIn(0f, 1f)
     val drift = field.drift
     val radius = maxOf(width * 0.62f, height * 0.95f) * (0.92f + 0.16f * energy)
     val coreAlpha = 0.10f + 0.22f * energy
@@ -569,7 +575,22 @@ internal fun VoiceState.glowAmplitude(): Float = when (this) {
     is VoiceState.Locked -> if (isPaused) VoiceEnergyDesign.MIN_AMPLITUDE else
         (amplitudeHistory.lastOrNull() ?: VoiceEnergyDesign.MIN_AMPLITUDE)
             .coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+    is VoiceState.VoiceDraft -> draftGlowAmplitude()
     else -> 0f
+}
+
+/**
+ * Amplitude source for a recorded draft: the envelope is sampled at the current playback
+ * position, so replaying or scrubbing the draft lifts the surface exactly where the original
+ * audio did. An idle draft reports the silence floor and settles through the paused path.
+ */
+private fun VoiceState.VoiceDraft.draftGlowAmplitude(): Float {
+    if (!isPlaying || durationMs <= 0L || amplitudeHistory.isEmpty()) return VoiceEnergyDesign.MIN_AMPLITUDE
+    val fraction = (playbackPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+    val index = (fraction * (amplitudeHistory.size - 1).toFloat()).roundToInt()
+        .coerceIn(0, amplitudeHistory.size - 1)
+    return amplitudeHistory[index]
+        .coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
 }
 
 @Composable
@@ -634,16 +655,29 @@ fun VoiceRecordingGlowSurface(
     modifier: Modifier = Modifier
 ) {
     val active = voiceState.isGlowActive()
+    // A recorded draft keeps the energy surface - the same spectrum, held at a calmer intensity -
+    // so the voice bar stays part of one visual language after the finger lifts instead of
+    // collapsing into a flat card. The large ambient halos stay recording-only.
+    val isDraft = voiceState is VoiceState.VoiceDraft
+    val showField = active || isDraft
     val reducedMotion = reducedMotionOverride
     val surfaceColor = cardSurfaceColor()
     val shape = RoundedCornerShape(Sizes.CornerMassive)
-    val isPaused = (voiceState as? VoiceState.Locked)?.isPaused == true
-    val amplitude = if (active) voiceState.glowAmplitude() else VoiceEnergyDesign.MIN_AMPLITUDE
-    val field = rememberVoiceEnergyField(active, isPaused, amplitude, reducedMotion)
+    val isPaused = when (voiceState) {
+        is VoiceState.Locked -> voiceState.isPaused
+        is VoiceState.VoiceDraft -> !voiceState.isPlaying
+        else -> false
+    }
+    val amplitude = if (showField) voiceState.glowAmplitude() else VoiceEnergyDesign.MIN_AMPLITUDE
+    val field = rememberVoiceEnergyField(showField, isPaused, amplitude, reducedMotion)
 
     // Read inside the draw phase so the settle fade never recomposes the composer.
     val presenceState = animateFloatAsState(
-        targetValue = if (active) 1f else 0f,
+        targetValue = when {
+            active -> 1f
+            isDraft -> VoiceEnergyDesign.DRAFT_PRESENCE
+            else -> 0f
+        },
         animationSpec = if (reducedMotion) snap() else
             spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "voiceLiquidSettle"

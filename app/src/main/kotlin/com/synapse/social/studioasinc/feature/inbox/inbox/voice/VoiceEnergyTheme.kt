@@ -63,4 +63,31 @@ internal object VoiceEnergyDesign {
     /** Drift of the secondary energy ribbons, expressed as a time shift in seconds. */
     const val RIBBON_TIME_SHIFT_1 = 1.7f
     const val RIBBON_TIME_SHIFT_2 = 4.3f
+
+    /**
+     * Draft playback is a review state, so the field stays clearly calmer than a live take while
+     * keeping the same colour language as recording.
+     */
+    const val DRAFT_PRESENCE = 0.72f
+
+    /** Alpha of the not-yet-played part of the draft waveform, drawn with the spectrum brush. */
+    const val WAVEFORM_IDLE_ALPHA = 0.30f
+
+    /** Alpha of the played part of the draft waveform. */
+    const val WAVEFORM_PLAYED_ALPHA = 0.95f
 }
+
+/**
+ * Ordered colour sweep for the draft waveform player. It is the same Google-spectrum the energy
+ * field blends through, so the preview reads as part of one surface instead of a single flat
+ * accent colour; the gradient itself does the blending (every bar samples the next hue).
+ */
+internal fun voiceEnergySpectrum(): List<Color> = listOf(
+    VoiceEnergyColors.Blue,
+    VoiceEnergyColors.Cyan,
+    VoiceEnergyColors.Violet,
+    VoiceEnergyColors.Pink,
+    VoiceEnergyColors.Coral,
+    VoiceEnergyColors.Amber,
+    VoiceEnergyColors.Green
+)
