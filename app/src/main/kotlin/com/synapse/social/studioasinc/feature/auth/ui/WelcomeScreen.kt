@@ -41,7 +41,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.onTextLayout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -252,9 +251,9 @@ private fun LegalNotice(
         style = bodyStyle.copy(lineHeight = bodyStyle.fontSize * 1.5f),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
+        onTextLayout = { textLayout = it },
         modifier = modifier
             .fillMaxWidth()
-            .onTextLayout { textLayout = it }
             .pointerInput(termsStart, termsEnd, privacyStart, privacyEnd) {
                 detectTapGestures { position ->
                     val layout = textLayout ?: return@detectTapGestures
