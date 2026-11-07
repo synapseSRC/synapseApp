@@ -198,7 +198,8 @@ object PostUiMapper {
             repliesCount = comment.repliesCount,
             depth = clampedDepth,
             showThreadLine = showThreadLine,
-            isLastReply = isLastReply
+            isLastReply = isLastReply,
+            isPinnedComment = comment.isPinned
         )
     }
 }

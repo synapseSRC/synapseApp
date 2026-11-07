@@ -359,6 +359,7 @@
     <string name="hide_comment">মন্তব্য লুকান</string>
     <string name="pin_comment">মন্তব্য পিন করুন</string>
     <string name="unpin_comment">মন্তব্য আনপিন করুন</string>
+    <string name="pinned_comment">পিন করা মন্তব্য</string>
     <string name="report_comment">মন্তব্য রিপোর্ট করুন</string>
     <string name="comment_hidden">মন্তব্য লুকানো হয়েছে</string>
     <string name="comment_pinned">মন্তব্য পিন করা হয়েছে</string>

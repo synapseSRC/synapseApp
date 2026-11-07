@@ -52,6 +52,7 @@ class CommentRepositoryImpl constructor(
 
             val comments = remoteDataSource.fetchComments(postId, limit, offset)
             val populatedComments = reactionRepository.populateCommentReactions(comments)
+                .sortedWith(compareByDescending<CommentWithUser> { it.isPinned }.thenByDescending { it.createdAt })
 
             // Cache in DB
             val commentsToCache = populatedComments.map {
