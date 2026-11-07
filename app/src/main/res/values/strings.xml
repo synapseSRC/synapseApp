@@ -2553,9 +2553,5 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="error_reshare_failed">Couldn\'t repost. Check your connection and try again.</string>
 
     <!-- Welcome links -->
-    <string name="welcome_link_terms">Terms of Service</string>
-    <string name="welcome_link_privacy">Privacy Policy</string>
-    <string name="welcome_terms_url" translatable="false">https://synapsesocial.vercel.app/terms</string>
-    <string name="welcome_privacy_url" translatable="false">https://synapsesocial.vercel.app/privacy</string>
 
 </resources>
