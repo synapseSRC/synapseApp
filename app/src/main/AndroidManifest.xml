@@ -197,41 +197,18 @@
 			android:supportsPictureInPicture="true"
 			android:windowSoftInputMode="adjustResize"
 			android:exported="true">
-			<!-- Deep link for Auth (OAuth and Magic Links) -->
+			<!-- The single app-link for the whole product. OAuth, magic links and email confirmation
+			     all return to https://synapsesocial.vercel.app/home; every other host that used to be
+			     registered here (synapse://login, socialsynapse.vercel.app, www.synapse.com/auth,
+			     synapseofficial.vercel.app) has been retired. Android only routes a link to this app when
+			     the host serves an assetlinks.json containing this package and its signing certificate
+			     SHA-256, so autoVerify is load-bearing rather than decorative. -->
 			<intent-filter android:autoVerify="true">
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />
-				<data android:scheme="synapse" android:host="login" />
+				<data android:scheme="https" android:host="synapsesocial.vercel.app" android:pathPrefix="/home" />
 			</intent-filter>
-
-			<!-- Auth callback from the hosted site (OAuth and Magic Links) -->
-			<intent-filter android:autoVerify="true">
-				<action android:name="android.intent.action.VIEW" />
-				<category android:name="android.intent.category.DEFAULT" />
-				<category android:name="android.intent.category.BROWSABLE" />
-				<data android:scheme="https" android:host="socialsynapse.vercel.app" android:pathPrefix="/home" />
-			</intent-filter>
-
-			<!-- Fallback for misconfigured Supabase redirect (www.synapse.com).
-			     autoVerify is required here: without it Android lets ANY app claim this
-			     host/path pair, so a malicious install can register the same filter and receive
-			     OAuth and magic-link auth callbacks. Requires assetlinks.json on this host, or
-			     delete this filter if the domain is not ours. -->
-			<intent-filter android:autoVerify="true">
-				<action android:name="android.intent.action.VIEW" />
-				<category android:name="android.intent.category.DEFAULT" />
-				<category android:name="android.intent.category.BROWSABLE" />
-				<data android:scheme="https" android:host="www.synapse.com" android:pathPrefix="/auth" />
-			</intent-filter>
-
-			<!-- Support for synapseofficial.vercel.app -->
-			<intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="synapseofficial.vercel.app" />
-            </intent-filter>
 		</activity>
 		<activity
 			android:name=".feature.settings.SettingsActivity"
