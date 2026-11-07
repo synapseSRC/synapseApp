@@ -4,6 +4,167 @@
 
 | Field | Value |
 | --- | --- |
+| Date | 2026-11-07 (second pass) |
+| Branch | `code-review` |
+| HEAD reviewed | `b0d89576` — *fix(review): scope cover-URL signing, stop reflecting auth errors, add web error boundaries* |
+| Review started at | `2a577731` — *fix(review): close auth deep-link, credential-leak and delivery-retry defects* |
+| Scope | Full tracked-file inventory of the branch (1,809 files, 535 directories; 1,311 Kotlin, 112 TSX, 29 TS, 88 Swift, 10 SQLDelight, 55 XML) derived from the Git Trees API, then focused review of the release-critical surface: the four `SecurityCipher` actuals, Android signing/lint/manifest configuration, auth-posture configuration, the `web/` Next.js app (routing, middleware, session, cover media, auth error paths) and the 2026-11-06 delivery/poll/upload changes |
+| Status | **CHANGES REQUESTED** — 10 files fixed in this pass; 4 blocking items from the first pass remain untouched by design (they need a maintainer decision, not a code edit) |
+| Overall grade | Architecture **B-**, Security **C**, Correctness **B**, Performance **B**, Build hygiene **D** (unchanged — the release-key item dominates this grade) |
+
+**How this pass was run.** The complete file inventory was enumerated through the GitHub Trees API so the coverage claim below is exhaustive rather than sampled. Review then concentrated on files a static pass can actually adjudicate. Where a first-pass finding was re-checked, the result is stated as *verified fixed* or *verified still open* with the exact evidence (line, function, or commit). No Kotlin compilation, Node type-check or Android lint run was performed: this review environment has no network access from the build sandbox and no Android SDK, so nothing in this document should be read as a build result.
+
+---
+
+## Scanned & Fixed Files
+
+### Files fixed in this pass (10) — commit `b0d89576`
+
+| # | File path | Change |
+| --- | --- | --- |
+| 1 | `web/src/lib/synapse/profile-media.ts` | **Modified** — signed cover URLs are now bound to the owner's uid; path traversal rejected |
+| 2 | `web/src/app/(app)/u/[username]/page.tsx` | **Modified** — passes the profile's uid to the signer; raw PostgREST text no longer rendered |
+| 3 | `web/src/app/(app)/profile/page.tsx` | **Modified** — passes the session user's uid to the signer |
+| 4 | `web/src/app/(app)/profile/edit/page.tsx` | **Modified** — passes the session user's uid to the signer |
+| 5 | `web/src/lib/synapse/auth.ts` | **Modified** — added `safeAuthNotice()`, an allow-list mapper for query-string auth text |
+| 6 | `web/src/app/auth/callback/route.ts` | **Modified** — no longer forwards `error`/`error_description` verbatim |
+| 7 | `web/src/app/(auth)/login/page.tsx` | **Modified** — renders only the mapped notice |
+| 8 | `web/src/app/error.tsx` | **Added** — route-level error boundary for the whole `app/` tree |
+| 9 | `web/src/app/global-error.tsx` | **Added** — last-resort boundary that replaces the root layout |
+| 10 | `app/src/main/AndroidManifest.xml` | **Modified** — removed `WRITE_MEDIA_STORAGE`, a `signature\|privileged` permission that can never be granted |
+
+### Files scanned in this pass
+
+Read in full or line-scanned with targeted queries, at `code-review`:
+
+```
+AGENTS.md
+REVIEW.md
+.agents/.memory/CODE_REVIEW.md            (prior-pass state on this branch)
+app/build.gradle
+app/src/main/AndroidManifest.xml
+app/src/main/kotlin/com/synapse/social/studioasinc/data/remote/services/AuthConfig.kt
+app/src/main/kotlin/com/synapse/social/studioasinc/data/call/TurnCredentialRepositoryImpl.kt
+shared/src/commonMain/.../shared/security/SecurityCipher.kt
+shared/src/androidMain/.../shared/security/AndroidSecurityCipher.kt
+shared/src/iosMain/.../shared/security/IosSecurityCipher.kt
+shared/src/jvmMain/.../shared/security/SecurityCipher.jvm.kt
+shared/src/commonMain/.../shared/domain/usecase/chat/CreatePollUseCase.kt
+shared/src/commonMain/.../shared/data/source/remote/SupabaseUploadService.kt
+web/next.config.mjs
+web/package.json
+web/src/middleware.ts
+web/src/lib/supabase/config.ts
+web/src/lib/supabase/server.ts
+web/src/lib/supabase/middleware.ts
+web/src/lib/synapse/auth.ts
+web/src/lib/synapse/profile-media.ts
+web/src/lib/synapse/profile-upload.ts
+web/src/lib/synapse/profiles.ts
+web/src/components/synapse/app-nav.tsx
+web/src/components/synapse/profile-header.tsx
+web/src/components/ui/copy-button.tsx
+web/src/app/layout.tsx
+web/src/app/(app)/layout.tsx
+web/src/app/(app)/profile/page.tsx
+web/src/app/(app)/profile/edit/page.tsx
+web/src/app/(app)/u/[username]/page.tsx
+web/src/app/(auth)/login/page.tsx
+web/src/app/auth/callback/route.ts
+```
+
+Directory inventory was also taken for every path in the repository (535 directories), so the file list above is a deliberate cut of a known-complete set rather than the limit of what was reachable.
+
+---
+
+## Findings & Fixes Applied
+
+### 🔴 Security
+
+**`web/src/lib/synapse/profile-media.ts`**
+*Issue identified.* `resolveCoverUrl()` minted a one-hour Supabase **signed URL for any storage path it was handed**, with no ownership check and no traversal guard. The path comes from `users.profile_cover_image`, a column the user writes, and the result is rendered on the public, indexable `/u/[username]` page. Any member could point their own column at `private-media://covers/<other-member-uid>/<file>` and have the server sign someone else's private object into a page they control the URL of — a signing oracle, not just a display bug. `decodeURIComponent` on the URL form additionally let percent-encoded `..` segments through.
+*Resolution.* `resolveCoverUrl(reference, ownerUid?)` now normalises the extracted path (strips leading separators, rejects any `.` or `..` segment) and, when the caller supplies an owner, refuses to sign unless the path starts with `${ownerUid}/` — which is the prefix every upload writes. Unmatched references return `null` instead of a signed URL. All three call sites were updated: `(app)/profile/page.tsx` and `(app)/profile/edit/page.tsx` pass `user.id` (session-derived, never client input), `(app)/u/[username]/page.tsx` passes `profile.uid`.
+
+**`web/src/app/auth/callback/route.ts`, `web/src/app/(auth)/login/page.tsx`, `web/src/lib/synapse/auth.ts`**
+*Issue identified.* The callback read `error_description` (or `error`) straight off the query string and redirected it into `/login?error=…`, and the login page rendered that string verbatim inside the app's own `Failure` alert. React escapes it, so this is not XSS, but it is text spoofing: a crafted link renders attacker-authored copy inside a component that users read as the application speaking. The same route also echoed the raw `exchangeCodeForSession` message, which can carry backend wording.
+*Resolution.* Added `safeAuthNotice()` — an ordered allow-list mapping the known Supabase/GoTrue phrases (expired/invalid link, `access_denied`, unconfirmed email, rate limit, server error) onto fixed copy, with a generic fallback for anything else. The callback now prefers the machine-readable `error` code, passes both parameters through the mapper, and uses fixed text for the exchange failure; the login page renders only the mapped notice.
+
+### 🟠 Correctness
+
+**`web/src/app/error.tsx`, `web/src/app/global-error.tsx` (added)**
+*Issue identified.* `web/` had no `error.tsx` and no `global-error.tsx` — only `not-found.tsx`. `(app)/layout.tsx` awaits `getProfileByUid()`, and `profiles.ts` converts any PostgREST error into a thrown `Error`. A single transient database failure therefore escaped the render tree and took down every signed-in page with the framework's default overlay instead of a recoverable boundary.
+*Resolution.* Added a route-level boundary for the `app/` subtree (generic copy, `reset()` retry, error logged via `console.error` so the connected monitor still sees it) and a `global-error.tsx` for failures in the root layout, written without Tailwind because it replaces `app/layout.tsx` and so does not inherit `globals.css`.
+
+**`web/src/app/(app)/u/[username]/page.tsx`**
+*Issue identified.* The public profile page interpolated `posts.error` — the raw PostgREST message — into visible copy on an indexable page (`robots: "index, follow"`), leaking backend table and constraint wording.
+*Resolution.* Replaced with fixed copy; the branch still renders a distinct error state, but the message is no longer surfaced to the visitor.
+
+### 🟡 Build hygiene
+
+**`app/src/main/AndroidManifest.xml`**
+*Issue identified.* The manifest declared `android.permission.WRITE_MEDIA_STORAGE`, which is `signature|privileged`: the platform can never grant it to a normal app, so the declaration is inert while implying a capability the app does not have.
+*Resolution.* Removed the declaration (one line, no other manifest change).
+
+---
+
+## Verification Performed (and not performed)
+
+* **Applied.** Commit `b0d89576` was pushed to `refs/heads/code-review` on top of `2a577731`, and the GitHub commit API reports exactly the ten paths above with the expected deltas (`+36`/−0 and `+43`/−0 for the two new boundary files, `+29`/−6 for the signer, `+0`/−1 for the manifest). `web/src/app/error.tsx` was also re-fetched from the branch to confirm it is served.
+* **Re-checked from the first pass.** `TurnCredentialRepositoryImpl.kt` now logs a cause *type* only (`e.message ?: e.javaClass.simpleName`, with the comment "This message reaches logcat, CrashActivity and Sentry") — credential redaction holds. `SupabaseUploadService.kt` sanitises the object key and refuses the public-bucket fallback for user-scoped buckets — holds. `CreatePollUseCase.kt` rejects a blank `chatId` — holds. `auth/callback/route.ts` now **awaits** `ensureProfileRow`, so a callback can no longer silently leave an account with no `users` row. `copy-button.tsx` resolves its visual state from the clipboard promise. `app-nav.tsx` resets its pending state in a `finally`.
+* **Not performed.** No `tsc`, `npm ci`, `./gradlew` or Android lint run — this environment has no package-manager or Android SDK access, and `AGENTS.md` forbids agents from running the repository's test tasks. Every change here is deliberately local and non-signature-affecting, but a maintainer-side `npm ci && tsc --noEmit` and `./gradlew compileDebugKotlin` remain the gate before merge.
+
+---
+
+## Findings Still Open
+
+These were verified **still present at `2a577731`** during this pass and are restated with the evidence that was re-read. They are unchanged by choice, not by oversight.
+
+| # | Severity | Finding | Evidence re-read this pass |
+| --- | --- | --- | --- |
+| 1 | 🔴 BLOCK | **Release signing key is published in the repository**, with its credentials hardcoded next to it. Anyone who can read the repo can build a same-signature APK. `keystore.properties` is loaded and then never used. | `app/build.gradle:49-52` — `storeFile file("release_key.jks")`, `storePassword "1111"`, `keyAlias "ashik"`, `keyPassword "1111"`; `app/release_key.jks` is tracked |
+| 2 | 🔴 BLOCK | **Four divergent `SecurityCipher` implementations, three of them fail-open.** | `SecurityCipher.jvm.kt` still does `Cipher.getInstance("AES")` (defaults to ECB, no IV/MAC) with a `KeyGenerator` key created in `init`, so previously written ciphertext is undecryptable after a restart; `AndroidSecurityCipher.kt` still `return plainText` on encrypt failure and `return cipherText` on decrypt failure; `IosSecurityCipher.kt` still returns the input on failure at lines 105, 138, 147 and 178 with `kCCOptionPKCS7Padding` and no MAC |
+| 3 | 🔴 BLOCK | **Fail-open auth posture driven by device-writable storage.** `AuthConfig` reads `development_mode`/`require_email_verification` from prefs at runtime and every catch falls back to a permissive value; `isDebugLoggingEnabled()` can be switched on in a release build by a persisted flag. | `AuthConfig.kt` — `prefs.getBoolean(KEY_DEVELOPMENT_MODE, BuildConfig.DEBUG)` (:101), `prefs.getBoolean(KEY_REQUIRE_EMAIL_VERIFICATION, false)` (:118), `shouldBypassEmailVerification() = developmentMode && !requireEmailVerification` (:231) |
+| 4 | 🔴 BLOCK | **No migrations, RLS policies or storage policies are committed**, so the application's access control cannot be reviewed from the client side at all. | `supabase/` contains `config.toml` and one Edge Function; no `supabase/migrations` path exists in the tree inventory |
+| 5 | 🟠 High | **`web/` still ships no security headers.** `next.config.mjs` defines `redirects()` only — no CSP, `frame-ancestors`, `Referrer-Policy` or `X-Content-Type-Options` on a site that renders user-authored text and avatar URLs. | `web/next.config.mjs` read in full |
+| 6 | 🟠 High | **Four of five primary navigation targets do not exist.** `NAV_LINKS` points at `/search`, `/notifications`, `/inbox` and `/settings`; the only routes under `web/src/app/(app)/` are `home`, `profile`, `profile/edit` and `u/[username]`. `PROTECTED_ROUTES` in the Supabase middleware guards the same four dead paths. | `app-nav.tsx` and the full `web/src/app/**` inventory compared; `updateSession()` `PROTECTED_ROUTES` |
+| 7 | 🟡 Medium | **`web/` route protection trusts `getSession()`.** `updateSession()` decodes the session cookie locally rather than verifying it with `getUser()`; data reads stay RLS-protected, so the impact is limited to rendering authenticated shells, but the guard is weaker than it reads. | `web/src/lib/supabase/middleware.ts` — `await supabase.auth.getSession()` |
+| 8 | 🟡 Medium | **Uploads still trust the browser-supplied MIME type.** `validateProfileImage` accepts only `file.type`, and the stored extension *and* the served `contentType` are derived from it. | `web/src/lib/synapse/profile-upload.ts` — `if (!EXTENSIONS[file.type])`, `contentType: file.type` |
+| 9 | 🟡 Medium | **Every release lint check is disabled.** `abortOnError = false` *and* `checkReleaseBuilds = false`; several findings in this report are exactly what those detectors exist to catch. | `app/build.gradle:181-183` |
+| 10 | 🟡 Medium | **`versionCode` is derived from `git rev-list --count HEAD`**, which regresses on any rebase or shallow checkout and makes a newer APK fail to install over an older one. | `app/build.gradle:22` `getGitCommitCount`, :66 `versionCode = getGitCommitCount()` |
+
+Everything else from the first pass — the ~27 empty catch blocks, the unbounded caches, the N+1 read paths, the 60 files whose `package` no longer matches their directory, the dead `SyncWorker`/`ActionQueue`/`app/.../S3Signer.kt`, the `FLAG_SECURE` gap, the Edge Function's authenticate-last ordering and unbounded fan-out loop — was **not** re-verified in this pass and should be treated as still open, with the first pass as the reference.
+
+---
+
+## Recommendations
+
+1. **Rotate the signing key and untrack `app/release_key.jks`.** This is the only item on the list that no code change can compensate for, and it is the reason the build-hygiene grade is a D.
+2. **Commit `supabase/migrations/`** before any further client review. Until the policies are in the repository, every "the server enforces it" comment in the Kotlin data layer stays unverifiable, including the cover-scoping change made here.
+3. **Make the two cheap gates mandatory:** `npm ci && tsc --noEmit` for `web/` and `./gradlew compileDebugKotlin` for the Kotlin modules. The edits in this pass are small and local, but they still deserve a compiler before a merge.
+4. **Fix the web shell before the next feature:** add the security headers from finding 5, then either implement the four missing routes or remove them from `NAV_LINKS` and `PROTECTED_ROUTES` — shipping navigation that 404s is worse than shipping fewer links.
+5. **Finish the auth-posture item (finding 3).** `AuthConfig` already loads `keystore.properties`-style build values; making `BuildConfig` the only source in release variants, and every catch fall back to *closed*, removes a class of defects in one change.
+6. **Treat `SecurityCipher` as one contract with a migration.** One AES-GCM implementation, a per-record IV prefixed to the ciphertext, a persisted non-exportable key per platform, and no plaintext fallback — with a documented migration path for values already written under ECB/CBC/XTEA.
+7. **Adopt `getUser()` in the `web/` middleware** (finding 7) once the routes it guards actually exist, so the guard and the data layer agree on what "signed in" means.
+
+### Positive observations worth preserving (this pass)
+
+* The **release-critical fixes from the first pass are genuinely landed**, not just described: credential redaction in the TURN path, object-key sanitisation, the `chatId` guard in the new poll flow, and the awaited `ensureProfileRow` in the OAuth callback. The repository is not accumulating review debt on paper.
+* **`supabase/server.ts` and `supabase/middleware.ts` are carefully written** — the cookie adapter documents exactly why it swallows writes from a Server Component, and the middleware explains why `.well-known/` is excluded from the matcher (passkey Digital Asset Links). That is the level of comment quality the rest of the web layer should match.
+* **`safeNextPath()` already rejects protocol-relative redirects**, so the open-redirect class is closed on the web side.
+* **The new `profile-upload.ts` writes uid-scoped cover paths** (`${uid}/cover-<ts>.ext`), which is precisely the invariant the signer fix now enforces — the data model and the check agree, so no legacy rows were invalidated by the change beyond the intended owner check.
+
+---
+
+## Appendix — First-Pass Review (2026-11-07, HEAD `cc97e14`; its 18 fixes landed in `2a577731`)
+
+Retained verbatim: it is the deep reference for every area this second pass only re-checked. Line numbers in it refer to `cc97e14`.
+
+# Code Review — synapseSRC/synapseApp
+
+## Metadata
+
+| Field | Value |
+| --- | --- |
 | Date | 2026-11-07 |
 | Branch | `code-review` |
 | HEAD reviewed | `cc97e14` — *feat(chat): add poll creation and improve message delivery reliability* |
@@ -252,3 +413,4 @@ Worth stating explicitly, because the codebase is not uniformly weak and some fi
 4. Make `./gradlew compileDebugKotlin` and `npm ci && tsc --noEmit` required checks, and re-enable `lint.checkReleaseBuilds` — three of the findings in this report are lint-detectable.
 5. Add `error.tsx` + CSP headers to `web/`, implement or remove the 4 dead nav routes, then fix `profile-media.ts` scoping.
 6. Package/path drift (60 files) and `ChatMessagingDelegate._messages` encapsulation — both safe once a compile gate exists.
+
