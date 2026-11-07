@@ -39,23 +39,9 @@ fun AuthButton(
 
     val scale = AnimationUtil.animatedScale(pressed = isPressed)
 
-
-    if (isPressed) {
-
-
-
-
-
-
-
-
-
-
-    }
-
     Button(
         onClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             onClick()
         },
         enabled = enabled && !loading,
