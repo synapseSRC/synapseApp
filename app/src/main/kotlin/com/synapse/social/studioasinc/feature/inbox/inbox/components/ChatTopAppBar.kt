@@ -215,9 +215,12 @@ fun ChatTopAppBar(
                                 isParticipantActive -> StatusOnline
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
+                            // One line, full width, wrap content height. A ColumnScope weight
+                            // here means a *vertical* fill, which let the "Last seen ..." label grow the
+                            // title box (and with it the whole app bar) instead of just scrolling.
                             SingleLineMarqueeText(
                                 text = statusText,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth(),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = statusColor
                             )
