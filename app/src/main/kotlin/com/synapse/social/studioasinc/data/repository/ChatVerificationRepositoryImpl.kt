@@ -13,6 +13,7 @@ import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSou
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient as SupabaseClientType
+import java.security.MessageDigest
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +26,15 @@ class ChatVerificationRepositoryImpl @Inject constructor(
     private val signalProtocolManager: SignalProtocolManager,
     private val chatRepository: ChatRepository
 ) : ChatVerificationRepository {
-    private val preferences: SharedPreferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+
+    /**
+     * Legacy plaintext verification store. It is read once so a verification made before the state
+     * moved into the encrypted Signal store is not lost, and every entry is removed as it is read;
+     * nothing is ever written here again.
+     */
+    private val legacyPreferences: SharedPreferences =
+        context.getSharedPreferences(LEGACY_PREFERENCES_NAME, Context.MODE_PRIVATE)
+
     private val dataSource = SupabaseChatDataSource(client)
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -34,9 +43,12 @@ class ChatVerificationRepositoryImpl @Inject constructor(
     override suspend fun setVerified(info: ChatVerificationInfo, verified: Boolean): Result<Unit> = execute {
         val current = loadFresh(info.chatId)
         ensureSameIdentity(info, current)
-        val editor = preferences.edit()
-        if (verified) editor.putString(preferenceKey(current), current.safetyNumber) else editor.remove(preferenceKey(current))
-        if (!editor.commit()) throw ChatVerificationException(ChatVerificationFailureReason.STORAGE_FAILURE)
+        if (!verified) {
+            signalProtocolManager.clearVerifiedSafetyNumber(current.participantId)
+            return@execute
+        }
+        adoptPendingIdentityChangeOrThrow(current)
+        signalProtocolManager.setVerifiedSafetyNumber(current.participantId, current.safetyNumber)
     }
 
     override suspend fun verifyScannedCode(info: ChatVerificationInfo, scannedCode: String): Result<Boolean> = execute {
@@ -48,11 +60,22 @@ class ChatVerificationRepositoryImpl @Inject constructor(
         catch (_: IllegalArgumentException) { return@execute false }
         val expectedKey = try { java.util.Base64.getDecoder().decode(current.participantIdentityKey) }
         catch (_: IllegalArgumentException) { throw ChatVerificationException(ChatVerificationFailureReason.INVALID_IDENTITY_KEY) }
-        if (!java.security.MessageDigest.isEqual(scannedKey, expectedKey)) return@execute false
-        if (!preferences.edit().putString(preferenceKey(current), current.safetyNumber).commit()) {
-            throw ChatVerificationException(ChatVerificationFailureReason.STORAGE_FAILURE)
-        }
+        if (!MessageDigest.isEqual(scannedKey, expectedKey)) return@execute false
+        adoptPendingIdentityChangeOrThrow(current)
+        signalProtocolManager.setVerifiedSafetyNumber(current.participantId, current.safetyNumber)
         true
+    }
+
+    /**
+     * The comparison the user just completed is against the peer's current key, so a key that
+     * changed since the last verification is adopted now: stored key advanced, previous
+     * verification dropped and stale session deleted. Nothing happens when no change is pending.
+     */
+    private fun adoptPendingIdentityChangeOrThrow(info: ChatVerificationInfo) {
+        if (signalProtocolManager.pendingIdentityChange(info.participantId) == null) return
+        if (!signalProtocolManager.acceptIdentityChange(info.participantId)) {
+            throw ChatVerificationException(ChatVerificationFailureReason.INVALID_IDENTITY_KEY)
+        }
     }
 
     private suspend fun loadFresh(chatId: String): ChatVerificationInfo {
@@ -72,6 +95,9 @@ class ChatVerificationRepositoryImpl @Inject constructor(
         val safetyNumber = try {
             SignalSafetyNumberGenerator.generate(localUserId, localIdentityKey, remoteId, remoteIdentityKey)
         } catch (_: Exception) { throw ChatVerificationException(ChatVerificationFailureReason.INVALID_IDENTITY_KEY) }
+        val pendingChange = signalProtocolManager.pendingIdentityChange(remoteId)
+        val verifiedSafetyNumber = signalProtocolManager.verifiedSafetyNumber(remoteId)
+            ?: migrateLegacyVerification(chatId, remoteId, safetyNumber)
         return ChatVerificationInfo(
             chatId = chatId,
             participantId = remoteId,
@@ -79,8 +105,25 @@ class ChatVerificationRepositoryImpl @Inject constructor(
             safetyNumber = safetyNumber,
             localQrPayload = "$QR_PREFIX|$localUserId|$localIdentityKey",
             secureSessionActive = signalProtocolManager.hasSession(remoteId),
-            isVerified = preferences.getString("verified:$chatId:$remoteId", null) == safetyNumber
+            // A pending change invalidates the verification even when the numbers happen to match,
+            // because the user has not accepted the new key yet.
+            isVerified = pendingChange == null && verifiedSafetyNumber == safetyNumber,
+            identityChanged = pendingChange != null
         )
+    }
+
+    /**
+     * Moves a verification that is still sitting in the plaintext store into the encrypted Signal
+     * store, but only when it describes the keys in use right now. The legacy entry is removed
+     * either way: it is no longer authoritative once the keys moved.
+     */
+    private fun migrateLegacyVerification(chatId: String, participantId: String, safetyNumber: String): String? {
+        val legacyKey = "verified:$chatId:$participantId"
+        val legacyValue = legacyPreferences.getString(legacyKey, null) ?: return null
+        legacyPreferences.edit().remove(legacyKey).apply()
+        if (legacyValue != safetyNumber) return null
+        signalProtocolManager.setVerifiedSafetyNumber(participantId, safetyNumber)
+        return safetyNumber
     }
 
     private fun ensureSameIdentity(original: ChatVerificationInfo, current: ChatVerificationInfo) {
@@ -88,8 +131,6 @@ class ChatVerificationRepositoryImpl @Inject constructor(
             throw ChatVerificationException(ChatVerificationFailureReason.IDENTITY_CHANGED)
         }
     }
-
-    private fun preferenceKey(info: ChatVerificationInfo): String = "verified:" + info.chatId + ":" + info.participantId
 
     private suspend fun <T> execute(block: suspend () -> T): Result<T> = try {
         Result.success(withContext(Dispatchers.IO) { block() })
@@ -100,7 +141,7 @@ class ChatVerificationRepositoryImpl @Inject constructor(
     }
 
     private companion object {
-        const val PREFERENCES_NAME = "chat_security_verification"
+        const val LEGACY_PREFERENCES_NAME = "chat_security_verification"
         const val QR_PREFIX = "synapse-safety-v1"
     }
 }

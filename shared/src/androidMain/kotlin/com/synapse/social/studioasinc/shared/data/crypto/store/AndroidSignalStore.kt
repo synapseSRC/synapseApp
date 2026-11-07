@@ -5,6 +5,9 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.synapse.social.studioasinc.shared.data.crypto.IdentityTrustOutcome
+import com.synapse.social.studioasinc.shared.data.crypto.IdentityTrustPolicy
+import com.synapse.social.studioasinc.shared.data.crypto.PendingIdentityChange
 
 // ── libsignal-android (org.signal:libsignal-android) ─────────────────────────
 // Replaces archived org.whispersystems:signal-protocol-android:2.8.x.
@@ -67,23 +70,24 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
     }
 
     override fun saveIdentity(address: SignalProtocolAddress, identityKey: IdentityKey): Boolean {
-        val key = "identity_${address.name}_${address.deviceId}"
+        val key = identityKeyPreferenceKey(address)
         val existing = prefs.getString(key, null)
-        if (existing != null) {
-            // new IdentityKey(bytes) — no offset parameter in libsignal-android
-            val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP))
-            if (existingKey != identityKey) {
-                prefs.edit()
-                    .putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
-                    .commitOrThrow("Failed to save identity key")
-                return true
+        val presented = Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)
+        return when (IdentityTrustPolicy.decide(existing, presented)) {
+            // First key for this peer: store it and report that nothing was replaced.
+            IdentityTrustOutcome.FIRST_USE -> {
+                prefs.edit().putString(key, presented).commitOrThrow("Failed to save identity key")
+                false
             }
-            return false
+            IdentityTrustOutcome.UNCHANGED -> false
+            IdentityTrustOutcome.CHANGED -> {
+                // Keep the stored key. Overwriting it here would erase both the evidence of the change
+                // and any verification the user performed, and the next isTrustedIdentity() call would
+                // look like trust-on-first-use again. acceptIdentityChange() is the only way to advance.
+                recordIdentityChange(address.name, existing, presented)
+                true
+            }
         }
-        prefs.edit()
-            .putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
-            .commitOrThrow("Failed to save identity key")
-        return true
     }
 
     override fun isTrustedIdentity(
@@ -91,16 +95,22 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         identityKey: IdentityKey,
         direction: IdentityKeyStore.Direction?
     ): Boolean {
-        val key = "identity_${address.name}_${address.deviceId}"
+        val key = identityKeyPreferenceKey(address)
         val existing = prefs.getString(key, null)
-        if (existing == null) return true
-        val existingKey = IdentityKey(Base64.decode(existing, Base64.NO_WRAP))
-        if (existingKey != identityKey) {
-            prefs.edit()
-                .putString(key, Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
-                .commitOrThrow("Failed to save identity key")
+        val presented = Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP)
+        return when (IdentityTrustPolicy.decide(existing, presented)) {
+            IdentityTrustOutcome.FIRST_USE -> {
+                prefs.edit().putString(key, presented).commitOrThrow("Failed to save identity key")
+                true
+            }
+            IdentityTrustOutcome.UNCHANGED -> true
+            IdentityTrustOutcome.CHANGED -> {
+                // Record the change and refuse the key: libsignal will not build a session or decrypt
+                // with it until the user compares the new safety number and accepts the identity.
+                recordIdentityChange(address.name, existing, presented)
+                false
+            }
         }
-        return true
     }
 
     override fun getIdentity(address: SignalProtocolAddress): IdentityKey? {
@@ -365,4 +375,74 @@ class AndroidSignalStore(context: Context, private val sharedPreferences: Shared
         val daysSinceRotation = (System.currentTimeMillis() - lastRotation) / (1000L * 60 * 60 * 24)
         return daysSinceRotation >= thresholdDays
     }
+    // ─── Verification & trust state ──────────────────────────────────────────
+    //
+    // Verified safety numbers and pending identity changes live in this same encrypted file
+    // (AES-SIV names, AES-GCM values, Keystore-backed master key) instead of the plaintext
+    // SharedPreferences file used by the first version of chat verification.
+
+    private fun identityKeyPreferenceKey(address: SignalProtocolAddress): String =
+        "identity_${address.name}_${address.deviceId}"
+
+    private fun verifiedPreferenceKey(peerId: String): String = "verified_identity_$peerId"
+
+    private fun pendingChangePreferenceKey(peerId: String, field: String): String =
+        "identity_change_${peerId}_$field"
+
+    /** Safety number the user verified for [peerId], or null when the peer is not verified. */
+    fun verifiedSafetyNumber(peerId: String): String? = prefs.getString(verifiedPreferenceKey(peerId), null)
+
+    fun setVerifiedSafetyNumber(peerId: String, safetyNumber: String) {
+        prefs.edit()
+            .putString(verifiedPreferenceKey(peerId), safetyNumber)
+            .commitOrThrow("Failed to save identity verification")
+    }
+
+    fun clearVerifiedSafetyNumber(peerId: String) {
+        prefs.edit()
+            .remove(verifiedPreferenceKey(peerId))
+            .commitOrThrow("Failed to clear identity verification")
+    }
+
+    fun recordIdentityChange(peerId: String, previousIdentityKey: String?, currentIdentityKey: String) {
+        prefs.edit()
+            .putString(pendingChangePreferenceKey(peerId, "previous"), previousIdentityKey.orEmpty())
+            .putString(pendingChangePreferenceKey(peerId, "current"), currentIdentityKey)
+            .putLong(pendingChangePreferenceKey(peerId, "detected_at"), System.currentTimeMillis())
+            .commitOrThrow("Failed to record identity change")
+    }
+
+    fun pendingIdentityChange(peerId: String): PendingIdentityChange? {
+        val current = prefs.getString(pendingChangePreferenceKey(peerId, "current"), null) ?: return null
+        val previous = prefs.getString(pendingChangePreferenceKey(peerId, "previous"), null)?.takeIf { it.isNotEmpty() }
+        return PendingIdentityChange(
+            peerId = peerId,
+            previousIdentityKey = previous,
+            currentIdentityKey = current,
+            detectedAtMs = prefs.getLong(pendingChangePreferenceKey(peerId, "detected_at"), 0L)
+        )
+    }
+
+    private fun clearPendingIdentityChange(peerId: String) {
+        prefs.edit()
+            .remove(pendingChangePreferenceKey(peerId, "previous"))
+            .remove(pendingChangePreferenceKey(peerId, "current"))
+            .remove(pendingChangePreferenceKey(peerId, "detected_at"))
+            .commitOrThrow("Failed to clear identity change")
+    }
+
+    /**
+     * Accepts the key [peerId] presented last as its identity: the stored key is advanced, the
+     * previous verification is dropped (its safety number no longer describes this pair of keys)
+     * and the pending change marker is cleared. Only a user-driven re-verification calls this.
+     */
+    fun acceptIdentityChange(peerId: String, deviceId: Int, identityKey: IdentityKey) {
+        val hadPendingChange = pendingIdentityChange(peerId) != null
+        prefs.edit()
+            .putString("identity_${peerId}_$deviceId", Base64.encodeToString(identityKey.serialize(), Base64.NO_WRAP))
+            .remove(verifiedPreferenceKey(peerId))
+            .commitOrThrow("Failed to accept identity change")
+        if (hadPendingChange) clearPendingIdentityChange(peerId)
+    }
+
 }

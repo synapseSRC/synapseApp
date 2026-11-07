@@ -21,8 +21,11 @@ Security properties of the Signal Protocol implementation in Synapse Social, cle
 
 ### Implemented
 
-- `AndroidSignalStore.isTrustedIdentity()` **always returns `true`**. On first sight of a recipient identity it is stored; on a changed identity it silently overwrites the stored value and returns `true`. There is **no user-facing safety-number comparison**, no trust-on-first-use prompt, and no identity-change notification.
-- Local/remote identity comparison in `initializeE2EE` detects mismatch and triggers `deleteAllSessions()` + re-upload, but this is a **sync-repair action**, not an authentication ceremony. The user is not alerted.
+- A 60-digit safety number is derived from both parties' identity keys (`SignalSafetyNumberGenerator`, Signal's numeric fingerprint: SHA-512, 5200 iterations, version 0) and shown in the chat's security sheet with a scannable QR code.
+- `AndroidSignalStore.isTrustedIdentity()` compares the presented key with the stored one through `IdentityTrustPolicy`: a first key is accepted (trust-on-first-use), an identical key is trusted, and a **changed key returns `false`**, so libsignal refuses to build a session or decrypt with it. The stored key is never overwritten by the change.
+- A detected change is recorded as a pending identity change in the encrypted store and surfaces as `ChatVerificationInfo.identityChanged`. Accepting it (after comparing the new code) advances the stored key, drops the previous verification and deletes the stale session.
+- `AndroidSignalStore.saveIdentity()` no longer clobbers a changed identity either, so the change cannot disappear between calls.
+- Local/remote identity comparison in `initializeE2EE` detects mismatch and triggers `deleteAllSessions()` + re-upload, but this is a **sync-repair action** for the local account, not an authentication ceremony; peers must re-verify that account afterwards.
 
 ### Trust-on-first-use behavior
 
@@ -48,8 +51,8 @@ Security properties of the Signal Protocol implementation in Synapse Social, cle
 
 ## Potential security weaknesses
 
-1. **No identity authentication.** TOFU with no safety-number verification allows undetected MITM if the public-key server is compromised.
-2. **Silent identity overwrite.** `isTrustedIdentity` always returns `true`; a rotated identity on the server is accepted without alerting either party.
+1. **Verification is opt-in.** TOFU is still the default on first contact, and nothing forces two people to compare safety numbers; a compromised public-key server can therefore still MITM a conversation whose codes were never compared.
+2. **A change is refused, but quietly on the peer's side.** A changed key blocks session work on this device and is visible in the chat's security sheet; there is no notification, no chat-list badge and no message telling the other party. Until the UI surfaces it more widely, a user only notices when they open the security sheet or a message fails to send.
 3. **Centralized key directory.** Supabase `user_public_keys` is a single point of trust for binding user IDs to keys. No key transparency, no pinned keys, no out-of-band fingerprint.
 4. **One-time pre-key exhaustion.** Pre-keys are generated once in a batch of 100 at initialization with no background replenishment. If the pool is depleted, new sessions cannot be established via X3DH until keys are re-uploaded (which only happens on mismatch or remote-missing paths).
 5. **Hardcoded `deviceId = 1`.** No cryptographic separation between multiple devices of the same account at the Signal address level.
@@ -67,8 +70,9 @@ Security properties of the Signal Protocol implementation in Synapse Social, cle
 
 ## Recommendations (not implemented)
 
-- Add a safety-number / fingerprint verification UI with user-visible identity-change notifications.
-- Replace `isTrustedIdentity` always-true with a trust store that prompts on change.
+- ~~Add a safety-number / fingerprint verification UI.~~ Shipped (see [Identity verification](./verification.md)); still missing wider surfacing of a changed identity (notification, chat-list badge, in-thread warning).
+- ~~Replace `isTrustedIdentity` always-true with a trust store that prompts on change.~~ Shipped: a changed key is refused and recorded; the prompt is the security sheet's re-verification path, which is not yet reachable from the conversation list.
+- Extend verification to group chats (fan-out recipients), where each member needs an individual comparison.
 - Add key transparency or certificate pinning for the public-key directory.
 - Replenish one-time pre-keys in the background when the pool falls below a threshold.
 - Add automatic or user-triggered key rotation with contact notification.

@@ -12,6 +12,7 @@ Synapse Social implements **Signal Protocol** end-to-end encryption for one-to-o
 | Key management | `./key-management.md` | Identity keys, signed pre-keys, one-time pre-keys, bundle sync, rotation, identity mismatch. |
 | Message encryption | `./message-encryption.md` | Outgoing encryption, incoming decryption, multi-recipient, caching, retry. |
 | Security considerations | `./security-considerations.md` | Private-key storage, identity verification, trust-on-first-use, weaknesses, limitations. |
+| Identity verification | `./verification.md` | Safety numbers, QR comparison, identity-change handling, verified-state storage. |
 
 ## Technology overview
 

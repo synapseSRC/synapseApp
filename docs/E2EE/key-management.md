@@ -142,3 +142,11 @@ If **any** recipient encryption fails, the entire message is aborted (`Result.fa
 - One-time pre-keys are generated in a fixed batch of 100 at initialization. There is no background replenishment when the pool runs low; `claim_one_time_pre_key` server-side removes claimed keys, but the client does not refill.
 - Signed pre-key is regenerated on every `generateIdentityAndKeys()` call (even when reusing identity), which may create orphan signed pre-key records locally.
 - `deviceId = 1` hardcoded means no cryptographic separation between multiple devices of the same account at the Signal protocol layer.
+
+## Peer identity changes (verification)
+
+- A peer's identity key is trusted on first use and stored in `AndroidSignalStore` (`identity_<userId>_<deviceId>`).
+- If the peer later presents a different key, `IdentityTrustPolicy` returns `CHANGED`: `isTrustedIdentity()` returns `false`, the stored key is kept, and the new key is recorded as a pending change in the encrypted store.
+- `ChatVerificationRepositoryImpl.load()` reports the pending change (`ChatVerificationInfo.identityChanged`) and shows the new safety number so the user can compare it (60-digit number or QR scan).
+- On a successful comparison the app calls `SignalProtocolManager.acceptIdentityChange(peerId)`: the stored key advances, the previous verification is dropped, the stale session is deleted so the next message re-runs X3DH, and the verified safety number is stored in the encrypted store.
+- Verified safety numbers live in `signal_secure_store` (EncryptedSharedPreferences); a verification written by an older build in the plaintext `chat_security_verification` file is migrated on first read when it still matches the current keys, and the plaintext entry is removed.
