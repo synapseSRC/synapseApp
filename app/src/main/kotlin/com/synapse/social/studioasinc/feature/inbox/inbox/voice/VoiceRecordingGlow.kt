@@ -290,13 +290,17 @@ private fun createLiquidLayers(edgeWidthPx: Float, light: VoiceEnvironmentLight)
         staticScale = 0.42f,
         amplitudeGain = 0.75f,
         fillBrush = Brush.verticalGradient(
-            lerp(GlowColors.DeepIndigo, light.roomColor, 0.30f).copy(alpha = 0.80f),
-            lerp(GlowColors.Violet, light.fillColor, 0.24f).copy(alpha = 0.58f),
-            lerp(GlowColors.ElectricBlue, light.keyColor, 0.20f).copy(alpha = 0.26f)
+            colors = listOf(
+                lerp(GlowColors.DeepIndigo, light.roomColor, 0.30f).copy(alpha = 0.80f),
+                lerp(GlowColors.Violet, light.fillColor, 0.24f).copy(alpha = 0.58f),
+                lerp(GlowColors.ElectricBlue, light.keyColor, 0.20f).copy(alpha = 0.26f)
+            )
         ),
         edgeBrush = Brush.horizontalGradient(
-            lerp(GlowColors.ElectricBlue, light.keyColor, 0.30f),
-            lerp(GlowColors.Violet, light.rimColor, 0.20f)
+            colors = listOf(
+                lerp(GlowColors.ElectricBlue, light.keyColor, 0.30f),
+                lerp(GlowColors.Violet, light.rimColor, 0.20f)
+            )
         )
     ),
     LiquidLayer(
@@ -312,14 +316,18 @@ private fun createLiquidLayers(edgeWidthPx: Float, light: VoiceEnvironmentLight)
         staticScale = 0.52f,
         amplitudeGain = 0.90f,
         fillBrush = Brush.verticalGradient(
-            lerp(GlowColors.Cyan, light.keyColor, 0.26f).copy(alpha = 0.62f),
-            lerp(GlowColors.ElectricBlue, light.fillColor, 0.20f).copy(alpha = 0.46f),
-            lerp(GlowColors.Magenta, light.fillColor, 0.18f).copy(alpha = 0.28f)
+            colors = listOf(
+                lerp(GlowColors.Cyan, light.keyColor, 0.26f).copy(alpha = 0.62f),
+                lerp(GlowColors.ElectricBlue, light.fillColor, 0.20f).copy(alpha = 0.46f),
+                lerp(GlowColors.Magenta, light.fillColor, 0.18f).copy(alpha = 0.28f)
+            )
         ),
         edgeBrush = Brush.horizontalGradient(
-            lerp(GlowColors.Cyan, light.keyColor, 0.35f),
-            lerp(GlowColors.Magenta, light.rimColor, 0.20f),
-            lerp(GlowColors.ElectricBlue, light.fillColor, 0.20f)
+            colors = listOf(
+                lerp(GlowColors.Cyan, light.keyColor, 0.35f),
+                lerp(GlowColors.Magenta, light.rimColor, 0.20f),
+                lerp(GlowColors.ElectricBlue, light.fillColor, 0.20f)
+            )
         )
     ),
     LiquidLayer(
@@ -335,14 +343,18 @@ private fun createLiquidLayers(edgeWidthPx: Float, light: VoiceEnvironmentLight)
         staticScale = 0.64f,
         amplitudeGain = 1.10f,
         fillBrush = Brush.verticalGradient(
-            lerp(GlowColors.Magenta, light.rimColor, 0.24f).copy(alpha = 0.48f),
-            lerp(GlowColors.SunsetGold, light.keyColor, 0.22f).copy(alpha = 0.34f),
-            lerp(GlowColors.Violet, light.fillColor, 0.22f).copy(alpha = 0.24f)
+            colors = listOf(
+                lerp(GlowColors.Magenta, light.rimColor, 0.24f).copy(alpha = 0.48f),
+                lerp(GlowColors.SunsetGold, light.keyColor, 0.22f).copy(alpha = 0.34f),
+                lerp(GlowColors.Violet, light.fillColor, 0.22f).copy(alpha = 0.24f)
+            )
         ),
         edgeBrush = Brush.horizontalGradient(
-            lerp(GlowColors.SunsetGold, light.keyColor, 0.30f),
-            lerp(GlowColors.Magenta, light.rimColor, 0.30f),
-            lerp(GlowColors.Violet, light.fillColor, 0.20f)
+            colors = listOf(
+                lerp(GlowColors.SunsetGold, light.keyColor, 0.30f),
+                lerp(GlowColors.Magenta, light.rimColor, 0.30f),
+                lerp(GlowColors.Violet, light.fillColor, 0.20f)
+            )
         )
     ),
     LiquidLayer(
@@ -358,14 +370,18 @@ private fun createLiquidLayers(edgeWidthPx: Float, light: VoiceEnvironmentLight)
         staticScale = 0.78f,
         amplitudeGain = 1.30f,
         fillBrush = Brush.verticalGradient(
-            lerp(GlowColors.Cyan, light.rimColor, 0.30f).copy(alpha = 0.40f),
-            lerp(GlowColors.SunsetGold, light.keyColor, 0.28f).copy(alpha = 0.28f),
-            lerp(GlowColors.Cyan, light.fillColor, 0.20f).copy(alpha = 0.18f)
+            colors = listOf(
+                lerp(GlowColors.Cyan, light.rimColor, 0.30f).copy(alpha = 0.40f),
+                lerp(GlowColors.SunsetGold, light.keyColor, 0.28f).copy(alpha = 0.28f),
+                lerp(GlowColors.Cyan, light.fillColor, 0.20f).copy(alpha = 0.18f)
+            )
         ),
         edgeBrush = Brush.horizontalGradient(
-            lerp(GlowColors.SunsetGold, light.keyColor, 0.40f),
-            lerp(GlowColors.Magenta, light.rimColor, 0.35f),
-            lerp(GlowColors.Violet, light.fillColor, 0.20f)
+            colors = listOf(
+                lerp(GlowColors.SunsetGold, light.keyColor, 0.40f),
+                lerp(GlowColors.Magenta, light.rimColor, 0.35f),
+                lerp(GlowColors.Violet, light.fillColor, 0.20f)
+            )
         )
     )
 )
@@ -827,7 +843,7 @@ fun VoiceRecordingGlowSurface(
         )
     }
     val errorBrush = remember(errorColor) {
-        Brush.horizontalGradient(errorColor, errorColor.copy(alpha = 0.55f))
+        Brush.horizontalGradient(listOf(errorColor, errorColor.copy(alpha = 0.55f)))
     }
 
     val surfaceAlpha = animateFloatAsState(
