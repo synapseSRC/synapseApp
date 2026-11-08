@@ -28,6 +28,9 @@ import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.tanh
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -56,8 +59,32 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
     private val cosineBasis = Array(VoiceEnergyDesign.HARMONICS) { FloatArray(nodeCount) }
     private val sineBasis = Array(VoiceEnergyDesign.HARMONICS) { FloatArray(nodeCount) }
 
-    /** Smoothed, normalised audio energy (attack is fast, release is calm). */
+    /** Smoothed, normalised audio energy. Drives illumination and colour, not the geometry. */
     var energy by mutableFloatStateOf(VoiceEnergyDesign.MIN_AMPLITUDE)
+        private set
+
+    /** Newest sample of amplitudeHistory: the level the surface follows this frame. */
+    var level by mutableFloatStateOf(VoiceEnergyDesign.MIN_AMPLITUDE)
+        private set
+
+    /** Loudest sample of the recent window, i.e. how loud the last half second has been. */
+    var peak by mutableFloatStateOf(VoiceEnergyDesign.MIN_AMPLITUDE)
+        private set
+
+    /** Mean sample-to-sample change across the window, normalised: how lively the speech is. */
+    var activity by mutableFloatStateOf(0f)
+        private set
+
+    /** Decaying envelope of the most recent rise in microphone energy. */
+    var onset by mutableFloatStateOf(0f)
+        private set
+
+    /** Microphone-driven deformation gain that scales the whole silhouette. */
+    var deformation by mutableFloatStateOf(0f)
+        private set
+
+    /** Horizontal position of the region the voice most recently excited, 0..1. */
+    var hotSpot by mutableFloatStateOf(0.5f)
         private set
 
     /** Decaying kinetic impulse of the most recent loudness rise. */
@@ -68,18 +95,26 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
     var elapsed by mutableFloatStateOf(0f)
         private set
 
-    /** Slow travel phase used for colour movement and ribbon drift. */
+    /** Slow travel phase used for colour movement. */
     var drift by mutableFloatStateOf(0f)
         private set
 
-    /** Harmonic displacement amplitudes of the simulated surface. */
-    val harmonicAmplitude = mutableStateListOf(0f, 0f, 0f)
-
-    /** Harmonic phases of the simulated surface. */
-    val harmonicPhase = mutableStateListOf(0f, 0f, 0f)
+    /**
+     * Per-mode amplitudes, already divided by the level each mode reaches in ordinary speech and
+     * damped by its energy gate, plus the mode phases. Five scalars are the whole contract between the
+     * simulation and either renderer.
+     */
+    val harmonicAmplitude = mutableStateListOf(0f, 0f, 0f, 0f, 0f)
+    val harmonicPhase = mutableStateListOf(0f, 0f, 0f, 0f, 0f)
 
     private var envelope = 0.1f
     private var oscillator = 0f
+
+    /** Sample-to-sample rise of the newest history entry, kept for the onset path. */
+    private var sampleRise = 0f
+
+    /** Where the next onset will be delivered, and the smoothed position the renderer sees. */
+    private var hotTarget = 0.5f
 
     /** Monotonic seconds of this instance's first animated frame, used as the phase origin. */
     private var firstFrameSeconds = -1f
@@ -103,8 +138,8 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
     }
 
     /**
-     * Static but attractive composition for reduced motion. No animation loop is started, so the
-     * energy surface stays a fixed, legible gradient composition instead of a moving field.
+     * Static composition for reduced motion. No animation loop runs, so the frame keeps a legible
+     * fixed silhouette instead of a moving field.
      */
     fun snapshot(amplitude: Float) {
         clearNodes()
@@ -114,19 +149,43 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
         elapsed = 0f
         drift = 0f
         ripple = 0f
+        onset = 0f
         oscillator = 0f
         val target = amplitude.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
         energy = target
+        level = target
+        peak = target
+        activity = 0f
         envelope = target
-        harmonicAmplitude[0] = target * 0.42f
-        harmonicAmplitude[1] = target * 0.24f
-        harmonicAmplitude[2] = target * 0.14f
+        deformation = deformationFor(target, target, 0f)
+        hotSpot = 0.5f
+        hotTarget = 0.5f
         harmonicPhase[0] = 0.6f
         harmonicPhase[1] = 2.4f
         harmonicPhase[2] = 4.1f
+        harmonicPhase[3] = 1.3f
+        harmonicPhase[4] = 3.2f
+        for (mode in 0 until VoiceEnergyDesign.HARMONICS) {
+            harmonicAmplitude[mode] = VoiceEnergyDesign.SNAPSHOT_MODES[mode] +
+                VoiceEnergyDesign.SNAPSHOT_MODE_ENERGY[mode] * target
+        }
     }
 
-    fun update(dtSeconds: Float, amplitude: Float, paused: Boolean, absoluteSeconds: Float) {
+    /**
+     * Advances one frame from the microphone's recent history.
+     *
+     * [history] is the recorder's amplitudeHistory: one smoothed sample every 60ms. Reading the window
+     * rather than only its last value is what lets the geometry respond to successive peaks and to how
+     * lively the speech is, instead of tracking one number. [fallbackAmplitude] covers states that have
+     * no live audio (draft playback, reduced motion), and [paused] freezes the surface.
+     */
+    fun update(
+        dtSeconds: Float,
+        history: List<Float>,
+        fallbackAmplitude: Float,
+        paused: Boolean,
+        absoluteSeconds: Float
+    ) {
         val dt = dtSeconds.coerceIn(0f, VoiceEnergyDesign.MAX_FRAME_DELTA_SECONDS)
 
         if (firstFrameSeconds < 0f) firstFrameSeconds = absoluteSeconds
@@ -135,37 +194,99 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
         if (paused) {
             pausedSeconds += dt
         } else {
-            // Phase from the shared frame clock: both field instances (composer surface and ambient
-            // band) therefore share one timeline instead of accumulating their own frame deltas.
+            // Phase from the shared frame clock, so both field instances (composer surface and ambient
+            // band) share one timeline instead of accumulating their own frame deltas.
             elapsed = (absoluteSeconds - firstFrameSeconds - pausedSeconds).coerceAtLeast(0f)
             drift = wrap(drift + dt * (0.12f + 0.55f * energy))
         }
 
-        val target = if (paused) {
-            VoiceEnergyDesign.PAUSED_ENERGY
-        } else {
-            amplitude.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
-        }
+        readSignals(history, fallbackAmplitude, paused)
 
-        // Fast attack so speech reads immediately, slow release so the surface decays gracefully.
+        val target = if (paused) VoiceEnergyDesign.PAUSED_ENERGY else level
+        // Illumination keeps a calm release, because light that snaps looks like a flash.
         energy = if (target > energy) energy * 0.30f + target * 0.70f
         else energy * 0.90f + target * 0.10f
 
+        // Geometry does not: it follows the level much more directly, which is what makes ordinary
+        // conversation visibly move the surface.
+        deformation = deformationFor(level, peak, activity)
+
+        oscillator = wrap(oscillator + dt * (0.30f + 1.05f * energy))
+        if (!paused) {
+            drivePhase = if (drivePhase >= VoiceEnergyDesign.TAU) drivePhase - VoiceEnergyDesign.TAU
+            else drivePhase + dt * VoiceEnergyDesign.DRIVE_RATE
+        }
+
         val rise = target - envelope
         envelope = envelope * 0.86f + target * 0.14f
-        if (!paused && rise > 0.02f) {
-            val impulse = (rise * VoiceEnergyDesign.IMPULSE_GAIN).coerceAtMost(1f)
-            ripple = (ripple + impulse).coerceAtMost(1f)
-            injectImpulse(impulse)
+        if (!paused) {
+            val onsetRise = (rise * VoiceEnergyDesign.IMPULSE_GAIN).coerceAtLeast(0f)
+            val sampleOnset = (sampleRise * VoiceEnergyDesign.IMPULSE_GAIN).coerceAtLeast(0f)
+            onset = maxOf(onset * VoiceEnergyDesign.ONSET_DECAY, onsetRise, sampleOnset)
+                .coerceIn(0f, 1f)
+            val strength = maxOf(onsetRise, sampleOnset).coerceIn(0f, 1f)
+            if (strength > ONSET_MINIMUM) {
+                advanceHotSpot()
+                injectImpulse(strength)
+                ripple = (ripple + strength).coerceAtMost(1f)
+            }
         }
         // While paused the impulse field decays faster so no high-energy deformation lingers.
         ripple *= if (paused) 0.80f else 0.93f
 
-        oscillator = wrap(oscillator + dt * (0.30f + 1.05f * energy))
-
         stepFluid(dt, paused)
         extractHarmonics()
     }
+
+    /**
+     * Reduces the recent microphone history to the four numbers the simulation needs: the current
+     * level, the loudest sample in the window, how much the signal is changing, and the newest rise.
+     * Reading the window is deliberately allocation-free: it walks the list by index and writes into
+     * preallocated state.
+     */
+    private fun readSignals(history: List<Float>, fallbackAmplitude: Float, paused: Boolean) {
+        sampleRise = 0f
+        if (paused) {
+            level = VoiceEnergyDesign.MIN_AMPLITUDE
+            peak = VoiceEnergyDesign.MIN_AMPLITUDE
+            activity = 0f
+            return
+        }
+        if (history.isEmpty()) {
+            val value = fallbackAmplitude.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+            level = value
+            peak = value
+            activity = 0f
+            return
+        }
+
+        val count = minOf(history.size, VoiceEnergyDesign.SIGNAL_WINDOW)
+        val from = history.size - count
+        var loudest = 0f
+        var change = 0f
+        var previous = 0f
+        for (index in from until history.size) {
+            val sample = history[index].coerceIn(0f, 1f)
+            if (sample > loudest) loudest = sample
+            if (index > from) change += abs(sample - previous)
+            previous = sample
+        }
+        level = previous.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+        peak = loudest.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+        val mean = if (count > 1) change / (count - 1).toFloat() else 0f
+        activity = (mean / VoiceEnergyDesign.ACTIVITY_REFERENCE).coerceIn(0f, 1f)
+        if (count > 1) {
+            sampleRise = (history[history.size - 1] - history[history.size - 2]).coerceAtLeast(0f)
+        }
+    }
+
+    private fun deformationFor(level: Float, peak: Float, activity: Float): Float =
+        (VoiceEnergyDesign.MAG_FLOOR +
+            VoiceEnergyDesign.MAG_SLOPE * sqrt(level) -
+            VoiceEnergyDesign.MAG_SQRT_OFFSET +
+            VoiceEnergyDesign.MAG_PEAK * peak +
+            VoiceEnergyDesign.MAG_ACTIVITY * activity)
+            .coerceIn(0f, VoiceEnergyDesign.MAG_MAX)
 
     private fun clearNodes() {
         for (i in 0 until nodeCount) {
@@ -176,50 +297,72 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
 
     private fun wrap(value: Float): Float = if (value >= 1000f) value - 1000f else value
 
+    /** Moves the excited region along the surface so successive onsets deform different places. */
+    private fun advanceHotSpot() {
+        val wander = abs(sin(oscillator * 0.9f))
+        val step = (VoiceEnergyDesign.HOT_STEP + VoiceEnergyDesign.HOT_WANDER * wander) /
+            (nodeCount - 1).toFloat()
+        hotTarget += step
+        if (hotTarget >= 1f) hotTarget -= 1f
+        hotSpot += shortestStep(hotTarget - hotSpot) * VoiceEnergyDesign.HOT_EMA
+        if (hotSpot < 0f) hotSpot += 1f
+        if (hotSpot > 1f) hotSpot -= 1f
+    }
+
+    /** Signed distance along the ring, in 0..1 units, taking the short way round. */
+    private fun shortestStep(delta: Float): Float = when {
+        delta > 0.5f -> delta - 1f
+        delta < -0.5f -> delta + 1f
+        else -> delta
+    }
+
     /**
      * Impulse launched when the voice suddenly gets louder.
      *
-     * The kick is modal: it is spread across the first two modes instead of a single node, so an
-     * onset always excites the low orders the renderer uses. The previous single-node kick landed
-     * wherever the oscillator happened to point, which could sit on a node of the mode and project
-     * almost nothing - measured over a simulated take, a shout then deformed the surface LESS than
-     * normal speech. With the modal kick the first harmonic travels roughly 0.07 at silence, 0.31
-     * for normal speech and 0.53 for a shout, so loudness reads as deformation.
+     * Two things happen at once. A Gaussian kernel lifts the nodes around [hotTarget], which is what
+     * produces a localised bulge instead of an evenly pushed surface. On top of that a smaller modal
+     * push excites the low orders coherently, so the deformation that follows is an organic shape
+     * rather than a spike: the previous single-node kick projected almost nothing when the oscillator
+     * happened to point at a node of the mode, which is why a shout used to deform the surface less
+     * than normal speech.
      */
     private fun injectImpulse(strength: Float) {
         val kick = strength * VoiceEnergyDesign.IMPULSE_KICK
         val primaryPhase = oscillator * 4.2f
         val secondaryPhase = oscillator * 2.6f
+        val kernelWidth = 2f * (VoiceEnergyDesign.KERNEL_NODES / (nodeCount - 1).toFloat()) *
+            (VoiceEnergyDesign.KERNEL_NODES / (nodeCount - 1).toFloat())
         for (i in 0 until nodeCount) {
             val x = i.toFloat() / (nodeCount - 1).toFloat()
-            nodeVelocities[i] += kick * (
-                sin(VoiceEnergyDesign.TAU * x + primaryPhase) * 0.70f +
-                    sin(VoiceEnergyDesign.TAU * 2f * x + secondaryPhase) * 0.40f
-                )
+            val delta = shortestStep(x - hotTarget)
+            val kernel = exp(-(delta * delta) / kernelWidth)
+            val modal = VoiceEnergyDesign.IMPULSE_MODAL_WEIGHTS
+            nodeVelocities[i] += kick * (kernel +
+                VoiceEnergyDesign.IMPULSE_MODAL * (
+                    sin(VoiceEnergyDesign.TAU * x + primaryPhase) * modal[0] +
+                        sin(VoiceEnergyDesign.TAU * 2f * x + secondaryPhase) * modal[1]
+                    ))
         }
     }
 
     private fun stepFluid(dt: Float, paused: Boolean) {
-        val springK = 9f
-        val coupling = 15f
-        val damping = 0.96f
 
-        // A gentle seam of motion keeps the surface breathing while the voice is calm, and the whole
-        // drive grows linearly with the microphone amplitude, so the silhouette travels further the
-        // louder someone speaks. The drive phase advances at a constant rate on purpose: tying it to
-        // the energy (as the oscillator is) swept the resonance faster at high energy and made loud
+        // The continuous drive now follows the microphone level itself rather than the doubly smoothed
+        // energy, so a syllable pushes the fluid while it is being spoken. The phase still advances at
+        // a constant rate: tying it to the energy swept the resonance faster when loud and made loud
         // speech deform the surface less than normal speech.
         if (!paused) {
-            drivePhase = if (drivePhase >= VoiceEnergyDesign.TAU) drivePhase - VoiceEnergyDesign.TAU
-            else drivePhase + dt * VoiceEnergyDesign.DRIVE_RATE
-            val drive = (VoiceEnergyDesign.DRIVE_FLOOR + VoiceEnergyDesign.DRIVE_ENERGY * energy) *
-                dt * VoiceEnergyDesign.DRIVE_GAIN
+            val drive = (VoiceEnergyDesign.DRIVE_FLOOR +
+                VoiceEnergyDesign.DRIVE_LEVEL * level +
+                VoiceEnergyDesign.DRIVE_PEAK * peak * 0.4f) * dt * VoiceEnergyDesign.DRIVE_GAIN
             for (i in 0 until nodeCount) {
                 val x = i.toFloat() / (nodeCount - 1).toFloat()
+                val weights = VoiceEnergyDesign.DRIVE_MODE_WEIGHTS
                 nodeVelocities[i] += drive * (
-                    sin(VoiceEnergyDesign.TAU * x + drivePhase) * 0.60f +
-                        sin(VoiceEnergyDesign.TAU * 2f * x + drivePhase * 0.55f) * 0.30f +
-                        sin(VoiceEnergyDesign.TAU * 3f * x - drivePhase * 0.40f) * 0.15f
+                    sin(VoiceEnergyDesign.TAU * x + drivePhase) * weights[0] +
+                        sin(VoiceEnergyDesign.TAU * 2f * x + drivePhase * 0.55f) * weights[1] +
+                        sin(VoiceEnergyDesign.TAU * 3f * x - drivePhase * 0.40f) * weights[2] +
+                        sin(VoiceEnergyDesign.TAU * 5f * x + drivePhase * 0.27f) * weights[3]
                     )
             }
         }
@@ -227,22 +370,28 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
         for (i in 0 until nodeCount) {
             val left = if (i > 0) nodeHeights[i - 1] else nodeHeights[i]
             val right = if (i < nodeCount - 1) nodeHeights[i + 1] else nodeHeights[i]
-            val springForce = -springK * nodeHeights[i]
-            val couplingForce = coupling * (left + right - 2f * nodeHeights[i])
-            nodeVelocities[i] = (nodeVelocities[i] + (springForce + couplingForce) * dt) * damping
+            val springForce = -VoiceEnergyDesign.FLUID_SPRING * nodeHeights[i]
+            val couplingForce = VoiceEnergyDesign.FLUID_COUPLING * (left + right - 2f * nodeHeights[i])
+            nodeVelocities[i] = (nodeVelocities[i] + (springForce + couplingForce) * dt) *
+                VoiceEnergyDesign.FLUID_DAMPING
             nodeHeights[i] = (nodeHeights[i] + nodeVelocities[i] * dt).coerceIn(-0.9f, 0.9f)
         }
     }
 
     /**
-     * Projects the simulated node heights onto the three lowest harmonics so the shader and the
-     * Canvas fallback can rebuild the same silhouette from a handful of scalars.
+     * Projects the simulated node heights onto the five modes the renderers rebuild the silhouette
+     * from.
+     *
+     * Each mode is divided by the amplitude it reaches in ordinary speech, so the silhouette keeps a
+     * usable size at conversation level instead of collapsing into a flat line, and each mode is then
+     * gated by how loud the voice is: a quiet surface shows one broad swell, a loud one shows several
+     * pronounced peaks and valleys.
      */
     private fun extractHarmonics() {
         val normalisation = 2f / nodeCount
-        for (harmonic in 0 until VoiceEnergyDesign.HARMONICS) {
-            val cosines = cosineBasis[harmonic]
-            val sines = sineBasis[harmonic]
+        for (mode in 0 until VoiceEnergyDesign.HARMONICS) {
+            val cosines = cosineBasis[mode]
+            val sines = sineBasis[mode]
             var a = 0f
             var b = 0f
             for (i in 0 until nodeCount) {
@@ -252,19 +401,34 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
             }
             a *= normalisation
             b *= normalisation
-            harmonicAmplitude[harmonic] = sqrt(a * a + b * b).coerceAtMost(VoiceEnergyDesign.MAX_HARMONIC)
-            harmonicPhase[harmonic] = atan2(a, b)
+            val raw = sqrt(a * a + b * b)
+            var normalised = (raw / VoiceEnergyDesign.HARMONIC_REFERENCE[mode])
+                .coerceAtMost(VoiceEnergyDesign.HARMONIC_MAX)
+            if (mode > 0) {
+                normalised *= smoothstep(
+                    VoiceEnergyDesign.MODE_GATE_LEVEL[mode],
+                    VoiceEnergyDesign.MODE_GATE_LEVEL[mode] + VoiceEnergyDesign.MODE_GATE_WIDTH[mode],
+                    level
+                )
+            }
+            harmonicAmplitude[mode] = normalised
+            harmonicPhase[mode] = atan2(a, b)
         }
     }
 }
 
 /**
- * The voice energy composition, rendered by the Android runtime shader on API 33+.
+ * AGSL renderer for the composer's energy surface (API 33+).
  *
- * Geometry is amplitude-driven and comes in as uniforms (iBodyTop, iCrestScale, iBand*), the shape
- * comes from the fluid simulation's harmonics, and colour walks a Gaussian-blended hue field. Three
- * contours are layered: the body crest, and two translucent ribbon bands floating above it, each
- * with its own spatial frequency, time scale and hue offset.
+ * The surface is a lit volume, not a coloured graphic drawn over a button. One organic boundary is
+ * built from the five live modes of the fluid simulation plus the bulges the voice just pushed into
+ * it; light is diffused away from that boundary through several overlapping falloffs of different
+ * widths, and the fluid's own glow meets the light it spills into the air across a wide band. There
+ * is therefore no line to anti-alias anywhere in the frame: the illumination dissolves into the black
+ * over roughly 20dp instead of ending at an edge.
+ *
+ * Colour is one broad, low-frequency sweep through a single cyclic spectrum, so adjacent samples are
+ * always neighbours on the wheel and regions blend instead of averaging into grey.
  *
  * Uniforms are set on a single cached shader instance - no shader object is created per frame.
  */
@@ -274,23 +438,49 @@ uniform float iTime;
 uniform float iAmplitude;
 uniform float iRipple;
 uniform float iDrift;
+// Modal amplitudes and phases. The amplitudes arrive already divided by the level each mode reaches in
+// ordinary speech and already damped by its energy gate, so the shader and the Canvas fallback render
+// the same silhouette from the same five numbers.
 uniform float iHarmonic1;
 uniform float iHarmonic2;
 uniform float iHarmonic3;
+uniform float iHarmonic4;
+uniform float iHarmonic5;
 uniform float iPhase1;
 uniform float iPhase2;
 uniform float iPhase3;
+uniform float iPhase4;
+uniform float iPhase5;
+// Shape weights of the modal mix, so a change is made once in VoiceEnergyDesign for both renderers.
+uniform float iModeWeight2;
+uniform float iModeWeight3;
+uniform float iModeWeight4;
+uniform float iModeWeight5;
 // Composition, computed on the Kotlin side (VoiceEnergyComposition) and shared with the Canvas
 // fallback, so the amplitude -> geometry mapping exists exactly once.
 uniform float iBodyTop;
 uniform float iCrestScale;
 uniform float iWarmth;
-// Volumetric light: how far the light diffuses upward from the crest, the narrow halo just above
-// it, the soft pool along the bottom edge and the emissive crest bloom.
+// Localised deformation: how strong the bulge is, where the voice put it, and the ripple that follows.
+uniform float iOnset;
+uniform float iHotSpot;
+uniform float iBulgeWidth;
+uniform float iBulgePrimary;
+uniform float iBulgeSecondary;
+uniform float iBulgeSecondaryOffset;
+uniform float iBulgeSecondaryWidth;
+uniform float iTransientRipple;
+uniform float iProfileLimit;
+// Volumetric light. Several overlapping falloffs of different widths are what make the illumination
+// read as light inside a fluid instead of a shape with an edge: a broad diffusion, a wider halo, an
+// even wider veil, the inner glow of the fluid, the pool at its base and a soft (not specular) bloom.
 uniform float iDiffusionCalm;
 uniform float iDiffusionExpressive;
+uniform float iEdgeSoftness;
 uniform float iHaloWidth;
 uniform float iHaloStrength;
+uniform float iVeilWidth;
+uniform float iVeilStrength;
 uniform float iFloorDiffusion;
 uniform float iFloorGlow;
 uniform float iBloomWidth;
@@ -302,8 +492,8 @@ uniform float iHueBase;
 uniform float iHueSpanCalm;
 uniform float iHueSpanExpressive;
 uniform float iVolumeCalm;
-// Light inside the fluid, as a fraction of the light it emits upward. Keeps the boundary from
-// reading as a step between lit and unlit.
+// Light inside the fluid, as a fraction of the light it emits upward. It decays away from the surface,
+// and the band over which it meets the outside light is wide, so the luminance never steps there.
 uniform float iVolumeInside;
 uniform float iVolumeAlpha;
 uniform float iLightGain;
@@ -318,23 +508,33 @@ uniform float4 cAmber;
 uniform float4 cGreen;
 uniform float4 cPink;
 
-// Organic silhouette. The harmonics are the live output of the fluid simulation. The profile is
-// evaluated on a slowly bending axis, which is what makes the contours lean, pinch and stay
-// asymmetric instead of reading as a ruler-straight line, and a slow idle term keeps the surface
-// undulating when the microphone is quiet without ever inventing an amplitude value.
+// Organic silhouette. The five modes are the live output of the fluid simulation, the bulges are the
+// places the voice most recently pushed, and the idle term keeps the surface undulating when the
+// microphone is quiet without ever inventing an amplitude value.
+//
+// The profile is evaluated on a slowly bending axis, so the contours lean, pinch and stay asymmetric,
+// and the sum is soft-saturated: when the voice is loud the crest flattens smoothly at its extremes
+// instead of clipping into a flat-topped wave.
 float surfaceProfile(float x, float t, float amp) {
     const float TAU = 6.2831853;
     float warped = x
         + 0.075 * sin(TAU * (x * 0.62 - t * 0.13))
         + 0.035 * sin(TAU * (x * 1.90 + t * 0.21));
     float d = iHarmonic1 * sin(TAU * warped + iPhase1);
-    d += iHarmonic2 * 0.55 * sin(TAU * 2.0 * warped + iPhase2);
-    d += iHarmonic3 * 0.32 * sin(TAU * 3.0 * warped + iPhase3);
+    d += iHarmonic2 * iModeWeight2 * sin(TAU * 2.0 * warped + iPhase2);
+    d += iHarmonic3 * iModeWeight3 * sin(TAU * 3.0 * warped + iPhase3);
+    d += iHarmonic4 * iModeWeight4 * sin(TAU * 4.0 * warped + iPhase4);
+    d += iHarmonic5 * iModeWeight5 * sin(TAU * 5.0 * warped + iPhase5);
+    // Rounded bulges centred on the excited region, plus a smaller echo of it elsewhere on the surface.
+    d += iBulgePrimary * iOnset * exp(-pow((x - iHotSpot) / iBulgeWidth, 2.0));
+    float echo = fract(iHotSpot + iBulgeSecondaryOffset);
+    d += iBulgeSecondary * iOnset * exp(-pow((x - echo) / (iBulgeWidth * iBulgeSecondaryWidth), 2.0));
+    // Travelling ripple that follows an onset, and the decaying impulse of the loudness rise itself.
+    d += iOnset * iTransientRipple * sin(TAU * (warped * 1.6 - t * 0.33));
+    d += iRipple * 0.10 * sin(TAU * (warped * 1.15 + t * 0.40));
     d += (iIdleCalm + iIdleEnergy * amp)
         * sin(TAU * (warped * 0.9 + 0.22 * sin(TAU * warped)) - t * 0.19);
-    d += 0.10 * amp * sin(TAU * 1.7 * warped - t * 0.55);
-    d += 0.055 * amp * sin(TAU * 2.9 * warped + t * 0.83);
-    return d;
+    return iProfileLimit * tanh(d / iProfileLimit);
 }
 
 // Cyclic spectrum, ordered around the colour wheel: blue, cyan, green, amber, coral, pink, violet and
@@ -373,25 +573,25 @@ half4 main(in float2 fragCoord) {
     // still when the recording is calm and unmistakably freeform when it is expressive.
     float crest = iBodyTop - surfaceProfile(x, iTime, amp) * iCrestScale;
 
-    // ---- Volumetric light -----------------------------------------------------------------
-    // Light is emitted upward from the crest and diffuses into black; the bottom edge carries a soft
-    // pool. Nothing here is drawn as a line: this is the reference treatment, where the volume is lit
-    // from its boundary and the colour lives inside the glow.
-    float above = max(crest - y, 0.0);
-    float below = max(y - crest, 0.0);
+    // ---- Volumetric light, with no boundary to speak of -----------------------------------
+    // Signed distance to the surface; positive inside the fluid. Everything below is a function of
+    // that distance alone, and the fluid's own glow meets the light it spills into the air across a
+    // wide band. That is what removes the defined edge: there is no line to anti-alias, only a
+    // luminance transition about 20dp wide.
+    float d = y - crest;
+    float above = max(-d, 0.0);
+    float below = max(d, 0.0);
     float diffusion = iDiffusionCalm + (iDiffusionExpressive - iDiffusionCalm) * expression;
-    float emitted = exp(-above / diffusion);
-    float halo = exp(-above / iHaloWidth);
-    // Light inside the fluid decays away from its surface, so it only exists below the crest - and the
-    // gate is smooth, because a step here would put a visible seam back on the boundary.
-    float inside = exp(-below / diffusion) * smoothstep(0.0, 0.012, below);
-    // Pool of light along the bottom edge of the pill, which is where the volume is deepest.
-    float floorGlow = exp(-(1.0 - y) / iFloorDiffusion);
-    float bloom = exp(-abs(y - crest) / (iBloomWidth + 0.015 * expression));
+    float inside = exp(-below / diffusion) * iVolumeInside;
+    float outside = exp(-above / diffusion) * iVolumeCalm
+        + exp(-above / iHaloWidth) * iHaloStrength
+        + exp(-above / iVeilWidth) * iVeilStrength;
+    float blend = smoothstep(-iEdgeSoftness, iEdgeSoftness, -d);
+    float floorGlow = exp(-(1.0 - y) / iFloorDiffusion) * iFloorGlow;
+    float bloom = exp(-abs(d) / (iBloomWidth + 0.015 * expression))
+        * (iBloomCalm + iBloomExpressive * expression);
 
-    float volume = emitted * iVolumeCalm + inside * iVolumeInside + halo * iHaloStrength
-        + floorGlow * iFloorGlow
-        + bloom * (iBloomCalm + iBloomExpressive * expression);
+    float volume = mix(inside, outside, blend) + floorGlow + bloom;
     volume = clamp(volume, 0.0, 1.0);
 
     // ---- Colour ---------------------------------------------------------------------------
@@ -451,16 +651,36 @@ private class VoiceEnergyShader {
         runtimeShader.setFloatUniform("iHarmonic1", field.harmonicAmplitude[0])
         runtimeShader.setFloatUniform("iHarmonic2", field.harmonicAmplitude[1])
         runtimeShader.setFloatUniform("iHarmonic3", field.harmonicAmplitude[2])
+        runtimeShader.setFloatUniform("iHarmonic4", field.harmonicAmplitude[3])
+        runtimeShader.setFloatUniform("iHarmonic5", field.harmonicAmplitude[4])
         runtimeShader.setFloatUniform("iPhase1", field.harmonicPhase[0])
         runtimeShader.setFloatUniform("iPhase2", field.harmonicPhase[1])
         runtimeShader.setFloatUniform("iPhase3", field.harmonicPhase[2])
+        runtimeShader.setFloatUniform("iPhase4", field.harmonicPhase[3])
+        runtimeShader.setFloatUniform("iPhase5", field.harmonicPhase[4])
+        runtimeShader.setFloatUniform("iModeWeight2", VoiceEnergyDesign.HARMONIC_WEIGHT[1])
+        runtimeShader.setFloatUniform("iModeWeight3", VoiceEnergyDesign.HARMONIC_WEIGHT[2])
+        runtimeShader.setFloatUniform("iModeWeight4", VoiceEnergyDesign.HARMONIC_WEIGHT[3])
+        runtimeShader.setFloatUniform("iModeWeight5", VoiceEnergyDesign.HARMONIC_WEIGHT[4])
         runtimeShader.setFloatUniform("iBodyTop", composition.bodyTop)
         runtimeShader.setFloatUniform("iCrestScale", composition.crestScale)
         runtimeShader.setFloatUniform("iWarmth", composition.warmth)
+        runtimeShader.setFloatUniform("iOnset", composition.onset)
+        runtimeShader.setFloatUniform("iHotSpot", composition.hotSpot)
+        runtimeShader.setFloatUniform("iBulgeWidth", VoiceEnergyDesign.BULGE_WIDTH)
+        runtimeShader.setFloatUniform("iBulgePrimary", VoiceEnergyDesign.BULGE_PRIMARY)
+        runtimeShader.setFloatUniform("iBulgeSecondary", VoiceEnergyDesign.BULGE_SECONDARY)
+        runtimeShader.setFloatUniform("iBulgeSecondaryOffset", VoiceEnergyDesign.BULGE_SECONDARY_OFFSET)
+        runtimeShader.setFloatUniform("iBulgeSecondaryWidth", VoiceEnergyDesign.BULGE_SECONDARY_WIDTH)
+        runtimeShader.setFloatUniform("iTransientRipple", VoiceEnergyDesign.TRANSIENT_RIPPLE)
+        runtimeShader.setFloatUniform("iProfileLimit", VoiceEnergyDesign.PROFILE_LIMIT)
         runtimeShader.setFloatUniform("iDiffusionCalm", VoiceEnergyDesign.DIFFUSION_CALM)
         runtimeShader.setFloatUniform("iDiffusionExpressive", VoiceEnergyDesign.DIFFUSION_EXPRESSIVE)
+        runtimeShader.setFloatUniform("iEdgeSoftness", VoiceEnergyDesign.EDGE_SOFTNESS)
         runtimeShader.setFloatUniform("iHaloWidth", VoiceEnergyDesign.HALO_WIDTH)
         runtimeShader.setFloatUniform("iHaloStrength", VoiceEnergyDesign.HALO_STRENGTH)
+        runtimeShader.setFloatUniform("iVeilWidth", VoiceEnergyDesign.VEIL_WIDTH)
+        runtimeShader.setFloatUniform("iVeilStrength", VoiceEnergyDesign.VEIL_STRENGTH)
         runtimeShader.setFloatUniform("iFloorDiffusion", VoiceEnergyDesign.FLOOR_DIFFUSION)
         runtimeShader.setFloatUniform("iFloorGlow", VoiceEnergyDesign.FLOOR_GLOW)
         runtimeShader.setFloatUniform("iBloomWidth", VoiceEnergyDesign.BLOOM_WIDTH)
@@ -488,16 +708,29 @@ private class VoiceEnergyComposition {
     /** Amplitude actually rendered, i.e. field energy scaled by the surface presence. */
     var amplitude = VoiceEnergyDesign.MIN_AMPLITUDE
         private set
+
+    /** Height of the fluid surface as a fraction of the composer height. */
     var bodyTop = VoiceEnergyDesign.BODY_TOP_CALM
         private set
-    var crestScale = VoiceEnergyDesign.CREST_CALM
+
+    /** Fraction of the composer height the silhouette may travel, from the microphone signal. */
+    var crestScale = VoiceEnergyDesign.CREST_SPAN * VoiceEnergyDesign.CREST_BASE
         private set
 
     /**
-     * 0 = calm personality, 1 = expressive. This is the only knob the two personalities need: the
-     * renderer derives its diffusion, its colour sweep and its deformation from it.
+     * 0 = calm personality (blue and violet, wide and soft diffusion), 1 = expressive (full spectrum,
+     * pronounced freeform boundary). Driven by the live microphone level, so it changes as someone
+     * starts speaking instead of following the slower illumination.
      */
     var warmth = 0f
+        private set
+
+    /** Strength of the localised bulge and travelling ripple, from the onset envelope. */
+    var onset = 0f
+        private set
+
+    /** Horizontal centre of the excited region, 0..1. */
+    var hotSpot = 0.5f
         private set
 
     fun update(field: VoiceEnergyField, presence: Float) {
@@ -505,10 +738,11 @@ private class VoiceEnergyComposition {
         amplitude = amp
         bodyTop = VoiceEnergyDesign.BODY_TOP_CALM +
             (VoiceEnergyDesign.BODY_TOP_FULL - VoiceEnergyDesign.BODY_TOP_CALM) * amp
-        crestScale = VoiceEnergyDesign.CREST_CALM +
-            VoiceEnergyDesign.CREST_PER_ENERGY * amp +
-            VoiceEnergyDesign.CREST_PER_RIPPLE * field.ripple
-        warmth = smoothstep(VoiceEnergyDesign.WARMTH_GATE_LOW, VoiceEnergyDesign.WARMTH_GATE_HIGH, amp)
+        crestScale = VoiceEnergyDesign.CREST_SPAN * (VoiceEnergyDesign.CREST_BASE +
+            VoiceEnergyDesign.CREST_DEFORM * field.deformation)
+        warmth = smoothstep(VoiceEnergyDesign.WARMTH_GATE_LOW, VoiceEnergyDesign.WARMTH_GATE_HIGH, field.level)
+        onset = (field.onset * presence).coerceIn(0f, 1f)
+        hotSpot = field.hotSpot
     }
 }
 
@@ -530,20 +764,96 @@ private class VoiceLayerShape {
     var timeScale = 1f
     var timeShift = 0f
 
+    /** How much of the live modal shape this layer shows, and how much of the localised bulges. */
+    var modeGain = 1f
+    var bulgeGain = 1f
+
     /** Repositions this component for the current frame, without allocating. */
-    fun set(baseLine: Float, scale: Float, xScale: Float, timeScale: Float, timeShift: Float) {
+    fun set(
+        baseLine: Float,
+        scale: Float,
+        xScale: Float,
+        timeScale: Float,
+        timeShift: Float,
+        modeGain: Float = 1f,
+        bulgeGain: Float = 1f
+    ) {
         this.baseLine = baseLine
         this.scale = scale
         this.xScale = xScale
         this.timeScale = timeScale
         this.timeShift = timeShift
+        this.modeGain = modeGain
+        this.bulgeGain = bulgeGain
     }
 }
 
-/** Evaluates the composite silhouette of [layers] at horizontal fraction [x]. */
-private fun contourY(x: Float, field: VoiceEnergyField, layers: List<VoiceLayerShape>): Float {
+/**
+ * Shared silhouette maths, mirroring the AGSL surfaceProfile term for term so the two renderers draw
+ * the same shape: five live modes weighted into one organic curve, the rounded bulges the voice just
+ * pushed into the surface, a travelling onset ripple, a decaying impulse ripple and the slow idle
+ * undulation, all soft-saturated so a loud crest flattens instead of clipping.
+ */
+private fun layerProfile(
+    field: VoiceEnergyField,
+    composition: VoiceEnergyComposition,
+    x: Float,
+    time: Float,
+    layer: VoiceLayerShape
+): Float {
+    val warped = x +
+        0.075f * sin(VoiceEnergyDesign.TAU * (x * 0.62f - time * 0.13f)) +
+        0.035f * sin(VoiceEnergyDesign.TAU * (x * 1.90f + time * 0.21f))
     val amplitudes = field.harmonicAmplitude
     val phases = field.harmonicPhase
+    var profile = amplitudes[0] * sin(VoiceEnergyDesign.TAU * warped + phases[0])
+    for (mode in 1 until VoiceEnergyDesign.HARMONICS) {
+        profile += amplitudes[mode] * VoiceEnergyDesign.HARMONIC_WEIGHT[mode] *
+            sin(VoiceEnergyDesign.TAU * (mode + 1).toFloat() * warped + phases[mode])
+    }
+    profile *= layer.modeGain
+
+    if (layer.bulgeGain > 0f && composition.onset > 0.001f) {
+        val bulge = composition.onset * layer.bulgeGain
+        profile += VoiceEnergyDesign.BULGE_PRIMARY * bulge *
+            gaussian(x - composition.hotSpot, VoiceEnergyDesign.BULGE_WIDTH)
+        val echo = wrapFraction(composition.hotSpot + VoiceEnergyDesign.BULGE_SECONDARY_OFFSET)
+        profile += VoiceEnergyDesign.BULGE_SECONDARY * bulge *
+            gaussian(x - echo, VoiceEnergyDesign.BULGE_WIDTH * VoiceEnergyDesign.BULGE_SECONDARY_WIDTH)
+        profile += VoiceEnergyDesign.TRANSIENT_RIPPLE * bulge *
+            sin(VoiceEnergyDesign.TAU * (warped * 1.6f - time * 0.33f))
+    }
+
+    profile += field.ripple * 0.10f *
+        sin(VoiceEnergyDesign.TAU * (warped * 1.15f + time * 0.40f))
+    profile += (VoiceEnergyDesign.IDLE_WAVE_CALM +
+        VoiceEnergyDesign.IDLE_WAVE_PER_ENERGY * composition.amplitude) *
+        sin(VoiceEnergyDesign.TAU * (warped * 0.9f + 0.22f * sin(VoiceEnergyDesign.TAU * warped)) -
+            time * 0.19f)
+
+    return VoiceEnergyDesign.PROFILE_LIMIT *
+        tanh(profile / VoiceEnergyDesign.PROFILE_LIMIT)
+}
+
+private fun gaussian(delta: Float, width: Float): Float {
+    val scaled = delta / width
+    return exp(-scaled * scaled)
+}
+
+private fun wrapFraction(value: Float): Float {
+    var result = value
+    while (result >= 1f) result -= 1f
+    while (result < 0f) result += 1f
+    return result
+}
+
+/** Evaluates the composite silhouette of [layers] at horizontal fraction [x]. */
+private fun contourY(
+    x: Float,
+    field: VoiceEnergyField,
+    layers: List<VoiceLayerShape>,
+    composition: VoiceEnergyComposition
+): Float {
     var base = 0f
     var wobble = 0f
     for (index in layers.indices) {
@@ -552,21 +862,10 @@ private fun contourY(x: Float, field: VoiceEnergyField, layers: List<VoiceLayerS
         if (layer.scale == 0f) continue
         val scaledX = x * layer.xScale
         val time = field.elapsed * layer.timeScale + layer.timeShift
-        // Mirrors the shader's surfaceProfile term by term: the same bending axis, the same idle
-        // undulation and the same two energy-locked drift terms, so the two renderers agree.
-        val warped = scaledX +
-            0.075f * sin(VoiceEnergyDesign.TAU * (scaledX * 0.62f - time * 0.13f)) +
-            0.035f * sin(VoiceEnergyDesign.TAU * (scaledX * 1.90f + time * 0.21f))
-        var profile = amplitudes[0] * sin(VoiceEnergyDesign.TAU * warped + phases[0])
-        profile += amplitudes[1] * 0.55f * sin(VoiceEnergyDesign.TAU * 2f * warped + phases[1])
-        profile += amplitudes[2] * 0.32f * sin(VoiceEnergyDesign.TAU * 3f * warped + phases[2])
-        profile += (VoiceEnergyDesign.IDLE_WAVE_CALM + VoiceEnergyDesign.IDLE_WAVE_PER_ENERGY * field.energy) *
-            sin(VoiceEnergyDesign.TAU * (warped * 0.9f + 0.22f * sin(VoiceEnergyDesign.TAU * warped)) -
-                time * 0.19f)
-        profile += 0.10f * field.energy * sin(VoiceEnergyDesign.TAU * 1.7f * warped - time * 0.55f)
-        profile += 0.055f * field.energy * sin(VoiceEnergyDesign.TAU * 2.9f * warped + time * 0.83f)
-        wobble += profile * layer.scale
+        wobble += layer.scale * layerProfile(field, composition, scaledX, time, layer)
     }
+    // The profile is positive upward, exactly as in the shader, while the crest is a pixel offset from
+    // the top of the canvas - so moving the surface up means subtracting it.
     return base - wobble
 }
 
@@ -576,6 +875,7 @@ private fun buildContourPath(
     width: Float,
     height: Float,
     layers: List<VoiceLayerShape>,
+    composition: VoiceEnergyComposition,
     startFraction: Float = 0f,
     endFraction: Float = 1f,
     closeToBottom: Boolean = false
@@ -583,10 +883,10 @@ private fun buildContourPath(
     val samples = VoiceEnergyDesign.FALLBACK_SAMPLES
     path.reset()
     val startX = width * startFraction
-    path.moveTo(startX, contourY(startFraction, field, layers))
+    path.moveTo(startX, contourY(startFraction, field, layers, composition))
     for (i in 1..samples) {
         val step = startFraction + (endFraction - startFraction) * (i.toFloat() / samples.toFloat())
-        path.lineTo(width * step, contourY(step, field, layers))
+        path.lineTo(width * step, contourY(step, field, layers, composition))
     }
     if (closeToBottom) {
         path.lineTo(width * endFraction, height)
@@ -598,39 +898,43 @@ private fun buildContourPath(
 /**
  * Preallocated drawing resources for the Canvas fallback (API 26..32).
  *
- * The fallback reproduces the shader's volumetric model with gradients instead of per-fragment maths:
- * the region below the crest is a dark fluid volume, and the light above it is a stack of nested
- * strokes on the crest contour - widest and faintest first - which yields the same smooth upward
- * diffusion without ever drawing a line.
+ * The fallback reproduces the shader's volumetric model with gradients instead of per-fragment maths.
+ * The fluid body is painted as several nested, low-opacity layers rather than one solid fill, so its
+ * own edge fades in rather than appearing as a step, and the light above it is a stack of wide, faint
+ * strokes - many spatial widths, always low opacity - which is what makes the transition to black
+ * gradual instead of a drawn line.
  */
 private class VoiceEnergyFallbackArt(density: Density) {
     val crestPath = Path()
+    val bodyPath = Path()
     private val crestShape = VoiceLayerShape()
+    private val bodyShapes = List(VoiceEnergyDesign.BODY_LAYERS) { VoiceLayerShape() }
+
+    /** One shared layer list, so drawing the nested body never allocates. */
     val crestLayers: List<VoiceLayerShape> = listOf(crestShape)
+    val bodyLayers: List<List<VoiceLayerShape>> = bodyShapes.map { listOf(it) }
 
     /** The fluid volume under the boundary: near-black, with a soft pool of light at its base. */
     val bodyVolume: Brush = Brush.verticalGradient(
-        colorStops = arrayOf(
-            0.00f to VoiceEnergyColors.VolumeBlack,
-            0.52f to VoiceEnergyColors.VolumeBlack,
-            0.86f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.50f),
-            1.00f to VoiceEnergyColors.Blue.copy(alpha = 0.28f)
-        )
+        0.00f to VoiceEnergyColors.VolumeBlack,
+        0.52f to VoiceEnergyColors.VolumeBlack,
+        0.86f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.50f),
+        1.00f to VoiceEnergyColors.Blue.copy(alpha = 0.26f)
     )
 
-    /** Upward diffusion from the boundary: five nested widths, faintest and widest first. */
-    val lightStrokes: List<Stroke> = listOf(52.dp, 34.dp, 20.dp, 11.dp, 5.dp).map { widthDp ->
-        Stroke(width = with(density) { widthDp.toPx() }, cap = StrokeCap.Round)
+    /** Diffusion strokes: many widths, low opacity, widest and faintest first. */
+    val lightStrokes: List<Stroke> = VoiceEnergyDesign.FALLBACK_STROKE_WIDTHS_DP.map { widthDp ->
+        Stroke(width = with(density) { widthDp.dp.toPx() }, cap = StrokeCap.Round)
     }
-    val lightAlphas: List<Float> = listOf(0.16f, 0.24f, 0.34f, 0.48f, 0.62f)
+    val lightAlphas: List<Float> = VoiceEnergyDesign.FALLBACK_STROKE_ALPHAS.toList()
 
-    /** Emissive edge: tight, slightly whiter, and far from a neon outline. */
-    val bloomStroke: Stroke = Stroke(width = with(density) { 3.dp.toPx() }, cap = StrokeCap.Round)
+    /** Wide, faint boundary bloom. Never a specular line. */
+    val bloomStroke: Stroke = Stroke(
+        width = with(density) { VoiceEnergyDesign.FALLBACK_BLOOM_WIDTH_DP.dp.toPx() },
+        cap = StrokeCap.Round
+    )
 
-    /**
-     * One colour sweep per expression bucket. Picking a prebuilt sweep rather than cross-fading two
-     * of them is deliberate: blending a blue sweep with an amber one is what turns a light field grey.
-     */
+    /** One colour sweep per expression bucket, so the fallback never cross-fades two sweeps into grey. */
     val lightFills: List<Brush> = lightSweepBrushes(fadedEnds = false, whiten = 0f)
     val bloomFills: List<Brush> = lightSweepBrushes(fadedEnds = false, whiten = VoiceEnergyDesign.BLOOM_WHITE)
 
@@ -638,6 +942,22 @@ private class VoiceEnergyFallbackArt(density: Density) {
     fun updateShapes(height: Float, composition: VoiceEnergyComposition) {
         crestShape.set(height * composition.bodyTop, height * composition.crestScale, 1f, 1f, 0f)
     }
+
+    /** Positions the nested fluid layers, each 5% of the height below the one above it. */
+    fun updateBody(height: Float, composition: VoiceEnergyComposition) {
+        val offset = height * VoiceEnergyDesign.BODY_LAYER_OFFSET
+        for (index in bodyShapes.indices) {
+            bodyShapes[index].set(
+                baseLine = height * composition.bodyTop + offset * index,
+                scale = height * composition.crestScale,
+                xScale = 1f,
+                timeScale = 1f,
+                timeShift = 0f
+            )
+        }
+    }
+
+    fun bodyLayer(index: Int): List<VoiceLayerShape> = bodyLayers[index]
 
     /** Which prebuilt sweep matches the current expression value. */
     fun sweepIndex(expression: Float): Int =
@@ -663,8 +983,8 @@ private fun energySpectrumColor(u: Float): Color {
 
 /**
  * Prebuilds the sweep brushes, one per expression bucket: at calm personality the sweep covers only
- * violet..blue, at full expression it walks the whole wheel from violet round to cyan. The warm
- * colours therefore *emerge* from the volume as the voice rises, which is the reference behaviour.
+ * violet..blue, at full expression it walks the whole wheel. The warm colours therefore emerge from
+ * the volume as the voice rises.
  *
  * [fadedEnds] fades a brush to transparent at both ends, which is what lets the ambient strokes
  * dissolve into the chat background instead of stopping on a hard vertical edge.
@@ -688,7 +1008,6 @@ private fun lightSweepBrushes(fadedEnds: Boolean, whiten: Float): List<Brush> {
     }
 }
 
-/** Gradients and contour shapes for the ambient band above the composer, built once. */
 /** Drawing resources for the light above the composer, built once per density. */
 private class VoiceAmbientArt(density: Density) {
     val crestPath = Path()
@@ -696,17 +1015,15 @@ private class VoiceAmbientArt(density: Density) {
     val crestLayers: List<VoiceLayerShape> = listOf(crestShape)
 
     /**
-     * The same nested-stroke diffusion the composer uses, wider and fainter, with ends that fade to
-     * transparent: the ambient is the pill's light spilling upward into the black, not a set of
-     * ribbons, and a stroke can never terminate on a visible edge.
+     * The composer's own diffusion, widened and faded at the ends, and showing less of the live modal
+     * shape than the surface inside the pill so it reads as the pill glowing into the dark.
      */
-    val lightStrokes: List<Stroke> = listOf(58.dp, 38.dp, 22.dp, 12.dp).map { widthDp ->
-        Stroke(width = with(density) { widthDp.toPx() }, cap = StrokeCap.Round)
+    val lightStrokes: List<Stroke> = VoiceEnergyDesign.AMBIENT_STROKE_WIDTHS_DP.map { widthDp ->
+        Stroke(width = with(density) { widthDp.dp.toPx() }, cap = StrokeCap.Round)
     }
-    val lightAlphas: List<Float> = listOf(0.10f, 0.16f, 0.24f, 0.34f)
+    val lightAlphas: List<Float> = VoiceEnergyDesign.AMBIENT_STROKE_ALPHAS.toList()
     val lightFills: List<Brush> = lightSweepBrushes(fadedEnds = true, whiten = 0f)
 
-    /** Rides on the composer's own boundary shape, lifted by voice energy. */
     fun updateShapes(height: Float, composition: VoiceEnergyComposition) {
         crestShape.set(
             baseLine = height * (VoiceEnergyDesign.AMBIENT_BASE -
@@ -715,7 +1032,9 @@ private class VoiceAmbientArt(density: Density) {
                 VoiceEnergyDesign.AMBIENT_SCALE_ENERGY * composition.amplitude),
             xScale = VoiceEnergyDesign.AMBIENT_X_SCALE,
             timeScale = VoiceEnergyDesign.AMBIENT_TIME_SCALE,
-            timeShift = VoiceEnergyDesign.AMBIENT_TIME_SHIFT
+            timeShift = VoiceEnergyDesign.AMBIENT_TIME_SHIFT,
+            modeGain = VoiceEnergyDesign.AMBIENT_MODE_GAIN,
+            bulgeGain = VoiceEnergyDesign.AMBIENT_BULGE_GAIN
         )
     }
 
@@ -724,8 +1043,9 @@ private class VoiceAmbientArt(density: Density) {
 }
 
 /**
- * The composer surface, Canvas path. The pill itself is a near-black volume; the colour is light
- * emitted from the fluid boundary and diffused upward, so nothing reads as a line drawn over a button.
+ * The composer surface, Canvas path. The pill is a near-black volume and the colour is light emitted
+ * from the fluid boundary and diffused upward through many wide, faint passes, so nothing reads as a
+ * line drawn over a button.
  */
 private fun DrawScope.drawVoiceEnergyFallback(
     field: VoiceEnergyField,
@@ -738,13 +1058,13 @@ private fun DrawScope.drawVoiceEnergyFallback(
     if (width <= 0f || height <= 0f) return
 
     art.updateShapes(height, composition)
+    buildContourPath(art.crestPath, field, width, height, art.crestLayers, composition)
 
     val expression = composition.warmth
     val bucket = art.sweepIndex(expression)
     val rippleBoost = 0.85f + 0.25f * field.ripple
 
-    // Light first: nested strokes on the boundary contour, widest and faintest first. It hugs the
-    // crest and fades into the black above it; there is no second contour and no ribbon.
+    // Diffusion first: many widths, each pass faint, so the light spreads gradually into the black.
     val volume = VoiceEnergyDesign.VOLUME_CALM + VoiceEnergyDesign.VOLUME_EXPRESSIVE * expression
     art.lightStrokes.forEachIndexed { index, stroke ->
         val alpha = art.lightAlphas[index] * volume * rippleBoost * presence
@@ -752,8 +1072,7 @@ private fun DrawScope.drawVoiceEnergyFallback(
         drawPath(art.crestPath, brush = art.lightFills[bucket], alpha = alpha, style = stroke)
     }
 
-    // Emissive boundary: the same light, tighter and slightly whiter. Straddles the contour, so it
-    // softens the boundary instead of drawing a line on it.
+    // Wide, faint bloom straddling the boundary. It softens the transition rather than drawing a line.
     drawPath(
         path = art.crestPath,
         brush = art.bloomFills[bucket],
@@ -762,27 +1081,30 @@ private fun DrawScope.drawVoiceEnergyFallback(
         style = art.bloomStroke
     )
 
-    // The fluid body is then veiled over the light: brighter above the boundary than inside it, which
-    // is what makes the boundary read as a surface. A pool of light stays visible at its base.
-    buildContourPath(
-        path = art.crestPath,
-        field = field,
-        width = width,
-        height = height,
-        layers = art.crestLayers,
-        closeToBottom = true
-    )
-    drawPath(
-        path = art.crestPath,
-        brush = art.bodyVolume,
-        alpha = presence * VoiceEnergyDesign.BODY_VEIL_ALPHA
-    )
+    // Then the fluid body, as nested low-opacity layers: the light that crossed the boundary is dimmed
+    // a little more with each layer, so the surface fades in instead of starting at an edge.
+    art.updateBody(height, composition)
+    for (index in 0 until VoiceEnergyDesign.BODY_LAYERS) {
+        buildContourPath(
+            path = art.bodyPath,
+            field = field,
+            width = width,
+            height = height,
+            layers = art.bodyLayer(index),
+            composition = composition,
+            closeToBottom = true
+        )
+        drawPath(
+            path = art.bodyPath,
+            brush = art.bodyVolume,
+            alpha = presence * VoiceEnergyDesign.BODY_LAYER_ALPHA
+        )
+    }
 }
 
 /**
  * Ambient light above the composer, Canvas path: the composer's own diffusion, widened, faded and
- * clipped to the lower part of the band, so it reads as the pill glowing into the dark instead of a
- * colored streak crossing the chat.
+ * clipped to the lower part of the band, so it reads as the pill glowing into the dark.
  */
 private fun DrawScope.drawVoiceAmbientWaves(
     field: VoiceEnergyField,
@@ -799,7 +1121,7 @@ private fun DrawScope.drawVoiceAmbientWaves(
 
     clipRect(top = height * VoiceEnergyDesign.AMBIENT_CLIP_TOP) {
         art.updateShapes(height, composition)
-        buildContourPath(art.crestPath, field, width, height, art.crestLayers)
+        buildContourPath(art.crestPath, field, width, height, art.crestLayers, composition)
         val volume = VoiceEnergyDesign.AMBIENT_ALPHA_FLOOR +
             VoiceEnergyDesign.AMBIENT_ALPHA_ENERGY * energy +
             VoiceEnergyDesign.AMBIENT_ALPHA_EXPRESSION * expression
@@ -812,6 +1134,18 @@ private fun DrawScope.drawVoiceAmbientWaves(
 }
 
 private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
+
+/**
+ * The recent microphone history the geometry deforms from: one smoothed sample every 60ms, so the
+ * window carries the successive peaks of speech, how quickly it is changing and where it is loudest,
+ * rather than a single number. States without live audio return an empty list, and the field then
+ * falls back to [glowAmplitude], which is how a draft replays its recorded envelope.
+ */
+internal fun VoiceState.glowAmplitudeHistory(): List<Float> = when (this) {
+    is VoiceState.Recording -> amplitudeHistory
+    is VoiceState.Locked -> if (isPaused) emptyList() else amplitudeHistory
+    else -> emptyList()
+}
 
 internal fun VoiceState.glowAmplitude(): Float = when (this) {
     is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: VoiceEnergyDesign.MIN_AMPLITUDE)
@@ -863,15 +1197,17 @@ internal fun rememberVoiceShimmerPhase(reducedMotion: Boolean, label: String): F
 private fun rememberVoiceEnergyField(
     active: Boolean,
     paused: Boolean,
-    amplitude: Float,
+    history: List<Float>,
+    fallbackAmplitude: Float,
     reducedMotion: Boolean
 ): VoiceEnergyField {
     val field = remember { VoiceEnergyField() }
-    val latestAmplitude by rememberUpdatedState(amplitude)
+    val latestHistory by rememberUpdatedState(history)
+    val latestFallback by rememberUpdatedState(fallbackAmplitude)
     val latestPaused by rememberUpdatedState(paused)
 
     if (reducedMotion) {
-        SideEffect { field.snapshot(latestAmplitude) }
+        SideEffect { field.snapshot(latestFallback) }
         return field
     }
 
@@ -883,7 +1219,8 @@ private fun rememberVoiceEnergyField(
             if (previousFrameNanos != 0L) {
                 field.update(
                     dtSeconds = (frameNanos - previousFrameNanos) / 1_000_000_000f,
-                    amplitude = latestAmplitude,
+                    history = latestHistory,
+                    fallbackAmplitude = latestFallback,
                     paused = latestPaused,
                     absoluteSeconds = frameNanos / 1_000_000_000f
                 )
@@ -919,8 +1256,9 @@ fun VoiceRecordingGlowSurface(
         is VoiceState.VoiceDraft -> !voiceState.isPlaying
         else -> false
     }
+    val history = if (showField) voiceState.glowAmplitudeHistory() else emptyList()
     val amplitude = if (showField) voiceState.glowAmplitude() else VoiceEnergyDesign.MIN_AMPLITUDE
-    val field = rememberVoiceEnergyField(showField, isPaused, amplitude, reducedMotion)
+    val field = rememberVoiceEnergyField(showField, isPaused, history, amplitude, reducedMotion)
     val composition = remember { VoiceEnergyComposition() }
 
     // Read inside the draw phase so the settle fade never recomposes the composer.
@@ -991,7 +1329,8 @@ fun VoiceRecordingAmbientGlow(
     val field = rememberVoiceEnergyField(
         active = true,
         paused = isPaused,
-        amplitude = voiceState.glowAmplitude(),
+        history = voiceState.glowAmplitudeHistory(),
+        fallbackAmplitude = voiceState.glowAmplitude(),
         reducedMotion = reducedMotion
     )
     val density = LocalDensity.current
