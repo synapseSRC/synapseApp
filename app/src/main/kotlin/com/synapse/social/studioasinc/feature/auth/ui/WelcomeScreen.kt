@@ -251,4 +251,3 @@ private fun linkSpan(notice: String, label: String): IntRange? {
 
 private const val TermsLinkTag = "welcome-terms-of-service"
 private const val PrivacyLinkTag = "welcome-privacy-policy"
-

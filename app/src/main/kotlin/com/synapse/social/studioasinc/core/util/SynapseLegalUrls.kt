@@ -13,4 +13,3 @@ object SynapseLegalUrls {
     val termsOfService: String = "$website/reference/terms/"
     val privacyPolicy: String = "$website/reference/privacy/"
 }
-

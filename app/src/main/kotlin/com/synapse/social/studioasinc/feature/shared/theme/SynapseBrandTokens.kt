@@ -144,4 +144,3 @@ object SignInHeroMetrics {
     val PlateElevation = 12.dp
     val MarkSize = 134.dp
 }
-

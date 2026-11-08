@@ -197,4 +197,3 @@ private fun UnifiedAuthContent(
         onDismissError = authViewModel::onDismissGeneralError
     )
 }
-

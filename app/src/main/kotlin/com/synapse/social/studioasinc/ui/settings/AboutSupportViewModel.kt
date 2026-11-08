@@ -110,4 +110,3 @@ class AboutSupportViewModel @Inject constructor(
     fun getTermsOfServiceUrl(): String = SynapseLegalUrls.termsOfService
     fun getPrivacyPolicyUrl(): String = SynapseLegalUrls.privacyPolicy
 
-}

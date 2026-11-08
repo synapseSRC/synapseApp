@@ -59,4 +59,3 @@ fun SignInHeroHeader(modifier: Modifier = Modifier) {
         )
     }
 }
-

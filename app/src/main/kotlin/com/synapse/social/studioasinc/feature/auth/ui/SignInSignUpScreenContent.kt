@@ -386,4 +386,3 @@ private fun UnifiedAuthForm(
         )
     }
 }
-

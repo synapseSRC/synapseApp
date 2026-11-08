@@ -173,4 +173,3 @@ private fun rememberSystemHighContrastTextEnabled(): Boolean {
 
     return enabled.value
 }
-
