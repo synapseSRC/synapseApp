@@ -20,11 +20,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.core.util.SynapseLegalUrls
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
 import com.synapse.social.studioasinc.feature.auth.ui.components.WelcomeHero
@@ -58,18 +57,14 @@ import com.synapse.social.studioasinc.feature.shared.theme.WelcomeHeroMetrics
 @Composable
 fun WelcomeScreen(
     onGetStartedClick: () -> Unit,
+    onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val palette = SynapseBrand.palette
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
-
-    val openUrl: (String) -> Unit = remember(context) {
-        { url -> IntentUtils.openUrl(context, url) }
-    }
     val legalNotice = rememberLegalNotice(
         linkColor = palette.accent,
-        onOpenUrl = openUrl
+        onOpenUrl = onOpenUrl
     )
 
     Box(
@@ -202,8 +197,11 @@ private fun rememberLegalNotice(
     val notice = stringResource(id = R.string.welcome_terms_notice)
     val termsLabel = stringResource(id = R.string.about_terms)
     val privacyLabel = stringResource(id = R.string.about_privacy_policy)
+    // Read through a state holder so the annotated string is not rebuilt when the caller passes a
+    // new lambda instance on recomposition.
+    val currentOnOpenUrl = rememberUpdatedState(onOpenUrl)
 
-    return remember(notice, termsLabel, privacyLabel, linkColor, onOpenUrl) {
+    return remember(notice, termsLabel, privacyLabel, linkColor) {
         val linkStyles = TextLinkStyles(
             style = SpanStyle(
                 color = linkColor,
@@ -231,7 +229,7 @@ private fun rememberLegalNotice(
                     LinkAnnotation.Clickable(
                         tag = span.tag,
                         styles = linkStyles,
-                        linkInteractionListener = { onOpenUrl(span.url) }
+                        linkInteractionListener = { currentOnOpenUrl.value(span.url) }
                     )
                 )
                 append(notice.substring(span.range.first, span.range.last + 1))
