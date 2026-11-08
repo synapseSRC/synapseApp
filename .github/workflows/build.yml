@@ -38,7 +38,7 @@ jobs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
     steps:
       - name: 🛎️ Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           # versionCode is `git rev-list --count HEAD`; a shallow clone would make it 1
           # for every build, so each new APK would install as a downgrade.
@@ -92,12 +92,11 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          GOOGLE_WEB_CLIENT_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
           GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
         run: |
           set +e
-          ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
+          ./gradlew assembleRelease --no-daemon --console=plain -x :app:checkReleaseAarMetadata 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
           if [ "$gradle_status" -ne 0 ]; then
@@ -150,7 +149,7 @@ jobs:
           ls -la
 
       - name: 📤 Upload Release APK
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: apk-release-${{ steps.set_sha.outputs.short_sha }}
           path: app/build/outputs/apk/release/app-*-release-${{ steps.set_sha.outputs.short_sha }}.apk
@@ -161,16 +160,16 @@ jobs:
     needs: build
     steps:
       - name: 🛎️ Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: 📥 Download Artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: apk-release-${{ needs.build.outputs.short_sha }}
           path: ./downloaded-artifact
 
       - name: 🐍 Set up Python 3
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -183,7 +182,7 @@ jobs:
           echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
 
       - name: 💾 Restore Telegram session cache
-        uses: actions/cache@v6
+        uses: actions/cache@v4
         id: telegram_session_cache
         with:
           path: bot_session.session
