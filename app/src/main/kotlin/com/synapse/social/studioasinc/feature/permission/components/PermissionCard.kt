@@ -171,7 +171,7 @@ internal fun PermissionCard(
                 permissionTitle = permissionTitle,
                 enabled = !isRequestPending,
                 onClick = { onAction(permission) },
-                modifier = Modifier.fillMaxWidth()
+            onClick = onAction,
             )
         }
     }
