@@ -25,8 +25,11 @@ internal object VoiceEnergyColors {
     val Green = Color(0xFF34D399)
     val Pink = Color(0xFFFF7EB6)
 
-    // Lighting.
+    // Lighting and volume.
     val Specular = Color(0xFFFFFFFF)
+
+    /** Deep black the light lives inside - the reference images are lit volumes on black, not cards. */
+    val VolumeBlack = Color(0xFF04050A)
 }
 
 /**
@@ -34,112 +37,39 @@ internal object VoiceEnergyColors {
  * inspectable in one place instead of being spread across the renderer.
  */
 internal object VoiceEnergyDesign {
-    // ── Composition: how much of the composer the energy body occupies ───────────────────────
-    // These numbers are the amplitude -> geometry contract. The AGSL shader receives the values
-    // derived from them as uniforms (iBodyTop, iCrestScale, iBand*), and the Canvas fallback reads
-    // the same composition object, so both renderers stay in step.
+    // ── Composition: where the fluid boundary sits ──────────────────────────────────────────
+    // These numbers are the amplitude -> geometry contract. The AGSL shader receives the derived
+    // values (iBodyTop, iCrestScale, iWarmth) as uniforms and the Canvas fallback reads the same
+    // composition object, so the two renderers cannot drift apart.
     //
-    // Coverage of the composer's interior, measured against the simulated field:
-    //   silence      -> body crest at 0.62, i.e. ~38% covered, ~2dp of idle undulation
-    //   normal voice -> ~43% covered, roughly 5dp of crest travel with peaks around ~9dp
-    //   loud voice   -> ~47% covered, roughly 9dp of travel with peaks around ~14dp
-    // The mean stays inside the 35-55% band; only crest peaks reach past it.
-    const val BODY_TOP_CALM = 0.62f
-    const val BODY_TOP_FULL = 0.52f
+    // Two personalities, driven by the real microphone envelope:
+    //   calm       -> boundary near 0.76 of the height, only a couple of dp of movement, and a
+    //                 blue/violet volume with a wide, soft diffusion
+    //   expressive -> boundary around 0.60 with pronounced freeform deformation and the whole
+    //                 Google spectrum present in the volume
+    const val BODY_TOP_CALM = 0.76f
+    const val BODY_TOP_FULL = 0.60f
 
-    /**
-     * Organic travel of the crest around its mean height, in composer-relative units. The calm value
-     * matters more than it looks: at 0.08 the contour was visually a straight rule when the
-     * microphone was quiet, which is why the surface read as a bar rather than a surface.
-     */
-    const val CREST_CALM = 0.16f
-    const val CREST_PER_ENERGY = 0.20f
-
-    /** Extra crest travel contributed by a fresh amplitude impulse. */
-    const val CREST_PER_RIPPLE = 0.045f
+    /** Freeform deformation of the boundary: at rest, per unit of energy, and per amplitude impulse. */
+    const val CREST_CALM = 0.07f
+    const val CREST_PER_ENERGY = 0.09f
+    const val CREST_PER_RIPPLE = 0.02f
 
     /**
      * Slow idle undulation, applied whether or not the microphone reports anything. This is decorative
-     * motion at the same phase as the fluid - never a substitute amplitude value. The shader receives
-     * both numbers as uniforms so its silhouette matches the Canvas fallback's term for term.
+     * motion at the fluid's own phase - never a substitute amplitude value. The shader reads both
+     * numbers as uniforms, so its silhouette matches the Canvas fallback's term for term.
      */
-    const val IDLE_WAVE_CALM = 0.22f
-    const val IDLE_WAVE_PER_ENERGY = 0.14f
-
-    /** The two ribbon bands floating above the crest: vertical offset and band half-width. */
-    const val BAND_1_OFFSET_CALM = 0.10f
-    const val BAND_1_OFFSET_PER_ENERGY = 0.06f
-    const val BAND_1_WIDTH = 0.070f
-    const val BAND_1_WIDTH_PER_ENERGY = 0.040f
-    const val BAND_2_OFFSET_CALM = 0.21f
-    const val BAND_2_OFFSET_PER_ENERGY = 0.10f
-    const val BAND_2_WIDTH = 0.100f
-    const val BAND_2_WIDTH_PER_ENERGY = 0.050f
+    const val IDLE_WAVE_CALM = 0.30f
+    const val IDLE_WAVE_PER_ENERGY = 0.18f
 
     /**
-     * Per-layer silhouette shaping. The shader mirrors these as its band1/band2 terms, so changing a
-     * value here means changing the matching literal in the AGSL profile as well.
-     */
-    const val LAYER_1_X_SCALE = 0.68f
-    const val LAYER_1_TIME_SCALE = 0.71f
-    const val LAYER_1_SHAPE = 0.62f
-    const val LAYER_2_X_SCALE = 1.42f
-    const val LAYER_2_TIME_SCALE = 0.53f
-    const val LAYER_2_SHAPE = 0.48f
-
-    /** Opacity of each ribbon band at its centre. The shader reads these as uniforms. */
-    const val BAND_1_WEIGHT = 0.26f
-    const val BAND_2_WEIGHT = 0.18f
-
-    /**
-     * How much warm colour the spectrum picks up with voice energy. Warmth no longer swaps a cool
-     * gradient for a warm one - the spectrum is a single wheel - it stretches and shifts the hue
-     * index, so louder speech walks further around the wheel instead of desaturating toward grey.
+     * Where the recording sits between the two personalities, per unit of amplitude. This single
+     * value moves the diffusion, the deformation and the colour sweep together, which is what makes
+     * the transition feel like one fluid changing rather than several effects fading.
      */
     const val WARMTH_GATE_LOW = 0.15f
     const val WARMTH_GATE_HIGH = 0.72f
-
-    // ── Renderer composition ────────────────────────────────────────────────────────────────
-    // Alpha and brightness of the layers. The aim is a dark translucent foundation that the spectrum
-    // illuminates from within; the previous values laid a bright, desaturated slab over the capsule.
-    const val BODY_ALPHA_CALM = 0.38f
-    const val BODY_ALPHA_PER_ENERGY = 0.28f
-
-    /** Illuminated leading edge at the crest: a coloured glow, and no white specular line at all. */
-    const val CREST_ALPHA_CALM = 0.20f
-    const val CREST_ALPHA_PER_ENERGY = 0.26f
-
-    /** Vertical brightness falloff: dimmer toward the top, so the timer and controls keep contrast. */
-    const val CEILING_FLOOR = 0.36f
-    const val CEILING_RANGE = 0.64f
-
-    const val LUMA_CALM = 0.64f
-    const val LUMA_PER_ENERGY = 0.22f
-
-    /**
-     * Concentrated luminous regions. Each formation drifts with an amplitude-locked speed and hangs
-     * below the local crest, so it always sits inside the body and never behind the controls.
-     */
-    const val CORE_TRAVEL_TIME = 0.055f
-    const val CORE_TRAVEL_DRIFT = 0.02f
-    const val CORE_ALPHA_CALM = 0.10f
-    const val CORE_ALPHA_PER_ENERGY = 0.10f
-    const val CORE_A_DRIFT_X = 0.14f
-    const val CORE_A_DROP = 0.075f
-    const val CORE_A_DROP_ENERGY = 0.055f
-    const val CORE_A_WOBBLE = 0.020f
-    const val CORE_A_RADIUS_X = 0.21f
-    const val CORE_A_RADIUS_X_ENERGY = 0.05f
-    const val CORE_A_RADIUS_Y = 0.080f
-    const val CORE_A_RADIUS_Y_ENERGY = 0.035f
-    const val CORE_B_DRIFT_X = 0.13f
-    const val CORE_B_DROP = 0.145f
-    const val CORE_B_DROP_ENERGY = 0.075f
-    const val CORE_B_WOBBLE = 0.018f
-    const val CORE_B_RADIUS_X = 0.17f
-    const val CORE_B_RADIUS_X_ENERGY = 0.04f
-    const val CORE_B_RADIUS_Y = 0.065f
-    const val CORE_B_RADIUS_Y_ENERGY = 0.030f
 
     // ── Microphone drive ────────────────────────────────────────────────────────────────────
     /** Continuous modal force on the fluid surface: floor, per unit of energy, and gain. */
@@ -147,56 +77,91 @@ internal object VoiceEnergyDesign {
     const val DRIVE_ENERGY = 0.55f
     const val DRIVE_GAIN = 10f
 
-    /** Constant phase rate of the drive. Decoupled from the energy on purpose (see VoiceEnergyField). */
+    /** Constant phase rate of the drive, deliberately decoupled from the energy. */
     const val DRIVE_RATE = 0.55f
 
     /** Scale of the modal impulse fired when the microphone envelope rises. */
     const val IMPULSE_KICK = 0.15f
 
-    // ── Ambient band above the composer ─────────────────────────────────────────────────────
-    /**
-     * Base height of the lowest ambient wave (band-relative) and how far voice energy lifts it.
-     * Calibrated so the waves clear the composer itself: at normal voice they sit 60-120dp above the
-     * bottom edge of the 184dp ambient band, i.e. above the input bar rather than behind it.
-     */
-    const val AMBIENT_BASE = 0.72f
-    const val AMBIENT_LIFT = 0.16f
-    const val AMBIENT_LAYER_STEP = 0.13f
+    // ── Volumetric light ───────────────────────────────────────────────────────────────────
+    /** How far light diffuses above the boundary: wide and soft when calm, tighter when expressive. */
+    const val DIFFUSION_CALM = 0.60f
+    const val DIFFUSION_EXPRESSIVE = 0.42f
+
+    /** Narrow halo hugging the boundary. This is what makes the light look emitted, not flat. */
+    const val HALO_WIDTH = 0.10f
+    const val HALO_STRENGTH = 0.14f
+
+    /** Soft pool of light along the bottom edge of the volume. */
+    const val FLOOR_DIFFUSION = 0.22f
+    const val FLOOR_GLOW = 0.20f
+
+    /** Emissive boundary bloom: tight, only slightly whiter than the volume, never a neon outline. */
+    const val BLOOM_WIDTH = 0.035f
+    const val BLOOM_CALM = 0.10f
+    const val BLOOM_EXPRESSIVE = 0.16f
+    const val BLOOM_WHITE = 0.22f
+
+    /** Overall light level of the volume, and how opaque it is over the card behind it. */
+    const val VOLUME_CALM = 0.34f
 
     /**
-     * Wave amplitude: at rest and per unit of energy, plus the damping of higher layers. Bounded on
-     * purpose - with these values the highest wave crest stays around 0.25 of the band, comfortably
-     * inside [AMBIENT_CLIP_TOP], so the safety clip is never actually reached and cannot draw an edge.
+     * Light inside the fluid itself, as a fraction of the light it emits upward. Without it the
+     * boundary was a step from lit to unlit, which reads as a drawn line; with it the fluid glows
+     * below its own surface and the boundary becomes a soft ridge instead of an edge.
      */
-    const val AMBIENT_SCALE_CALM = 0.06f
-    const val AMBIENT_SCALE_ENERGY = 0.06f
-    const val AMBIENT_LAYER_SCALE_STEP = 0.30f
+    const val VOLUME_INSIDE = 0.34f
+    const val VOLUME_EXPRESSIVE = 0.13f
+    const val VOLUME_ALPHA = 0.80f
+    const val VOLUME_BLACK_ALPHA = 0.94f
 
     /**
-     * Ambient waves run across more than one cycle and move more slowly than the surface: at 0.55 of a
-     * cycle across the full width the contours were so shallow that they read as straight rules.
+     * Canvas fallback only: how hard the fluid body is painted over the light that crosses it. It is
+     * the fallback's way of reproducing the difference between light inside the fluid and light
+     * emitted above its surface.
      */
+    const val BODY_VEIL_ALPHA = 0.62f
+    const val LIGHT_GAIN = 0.95f
+
+    // ── Colour sweep ───────────────────────────────────────────────────────────────────────
+    /**
+     * The volume samples ONE cyclic spectrum along a single broad, low-frequency sweep. At calm the
+     * sweep covers violet..blue only; at full expression it walks the wheel from violet round through
+     * coral and yellow to cyan. Every sample is a neighbour of the next, so regions blend into each
+     * other instead of averaging into grey, and the warm colours live inside the volume rather than
+     * along its edge.
+     */
+    const val HUE_BASE = 0.98f
+    const val HUE_SPAN_CALM = 0.14f
+    const val HUE_SPAN_EXPRESSIVE = 0.90f
+
+    /** The Canvas fallback prebuilds one sweep per bucket, so it never cross-fades two sweeps. */
+    const val SWEEP_BUCKETS = 21
+    const val SWEEP_STOPS = 9
+
+    // ── Ambient light above the composer ───────────────────────────────────────────────────
+    /** Height of the ambient boundary inside the band, and how far voice energy lifts it. */
+    const val AMBIENT_BASE = 0.62f
+    const val AMBIENT_LIFT = 0.10f
+
+    /** Ambient deformation, stretched horizontally and moving more slowly than the composer surface. */
+    const val AMBIENT_SCALE_CALM = 0.035f
+    const val AMBIENT_SCALE_ENERGY = 0.045f
     const val AMBIENT_X_SCALE = 1.05f
     const val AMBIENT_TIME_SCALE = 0.62f
     const val AMBIENT_TIME_SHIFT = 1.1f
-    const val AMBIENT_TIME_SHIFT_STEP = 1.9f
 
-    /** Ambient wave and pool opacity, and the damping of higher layers. Kept deliberately subtle. */
-    const val AMBIENT_ALPHA_FLOOR = 0.26f
-    const val AMBIENT_ALPHA_ENERGY = 0.34f
-    const val AMBIENT_ALPHA_LAYER_STEP = 0.30f
-    const val AMBIENT_POOL_ALPHA = 0.05f
-    const val AMBIENT_POOL_ALPHA_ENERGY = 0.12f
-    const val AMBIENT_POOL_RADIUS_WIDTH = 0.26f
-    const val AMBIENT_POOL_RADIUS_HEIGHT = 0.30f
-    const val AMBIENT_POOL_RADIUS_CALM = 0.60f
-    const val AMBIENT_POOL_RADIUS_ENERGY = 0.20f
+    /** Ambient opacity: deliberately a whisper of light rather than a wash over the chat. */
+    const val AMBIENT_ALPHA_FLOOR = 0.10f
+    const val AMBIENT_ALPHA_ENERGY = 0.22f
+    const val AMBIENT_ALPHA_EXPRESSION = 0.10f
 
     /**
      * Top of the ambient drawing area, band-relative (0 = top of the band). Everything the ambient
-     * draws is clipped below this line so chat content above it can never be touched.
+     * draws is clipped below this line, and the widest stroke stays well under it - the guard is
+     * invisible rather than an edge.
      */
-    const val AMBIENT_CLIP_TOP = 0.20f
+    const val AMBIENT_CLIP_TOP = 0.16f
 
     /** Silence floor: the surface never collapses completely while the microphone is live. */
     const val MIN_AMPLITUDE = 0.08f
@@ -223,10 +188,6 @@ internal object VoiceEnergyDesign {
     const val FALLBACK_SAMPLES = 28
 
     const val MAX_FRAME_DELTA_SECONDS = 0.05f
-
-    /** Drift of the secondary energy ribbons, expressed as a time shift in seconds. */
-    const val RIBBON_TIME_SHIFT_1 = 1.7f
-    const val RIBBON_TIME_SHIFT_2 = 4.3f
 
     /**
      * Draft playback is a review state, so the field stays clearly calmer than a live take while

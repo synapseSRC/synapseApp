@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -29,6 +30,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.PI
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -285,25 +287,32 @@ uniform float iPhase3;
 // fallback, so the amplitude -> geometry mapping exists exactly once.
 uniform float iBodyTop;
 uniform float iCrestScale;
-uniform float iBand1Offset;
-uniform float iBand1Width;
-uniform float iBand2Offset;
-uniform float iBand2Width;
 uniform float iWarmth;
-// Layer weights, brightness and the idle undulation amount, all owned by VoiceEnergyDesign so the
-// two renderers can be tuned together instead of drifting apart.
+// Volumetric light: how far the light diffuses upward from the crest, the narrow halo just above
+// it, the soft pool along the bottom edge and the emissive crest bloom.
+uniform float iDiffusionCalm;
+uniform float iDiffusionExpressive;
+uniform float iHaloWidth;
+uniform float iHaloStrength;
+uniform float iFloorDiffusion;
+uniform float iFloorGlow;
+uniform float iBloomWidth;
+uniform float iBloomCalm;
+uniform float iBloomExpressive;
+uniform float iBloomWhite;
+// Colour sweep along the crest: one broad, low-frequency migration that widens with the voice.
+uniform float iHueBase;
+uniform float iHueSpanCalm;
+uniform float iHueSpanExpressive;
+uniform float iVolumeCalm;
+// Light inside the fluid, as a fraction of the light it emits upward. Keeps the boundary from
+// reading as a step between lit and unlit.
+uniform float iVolumeInside;
+uniform float iVolumeAlpha;
+uniform float iLightGain;
+// The idle undulation amount, owned by VoiceEnergyDesign so both renderers use the same value.
 uniform float iIdleCalm;
 uniform float iIdleEnergy;
-uniform float iBodyAlphaCalm;
-uniform float iBodyAlphaEnergy;
-uniform float iBand1Weight;
-uniform float iBand2Weight;
-uniform float iCrestAlphaCalm;
-uniform float iCrestAlphaEnergy;
-uniform float iCeilingFloor;
-uniform float iCeilingRange;
-uniform float iLumaCalm;
-uniform float iLumaEnergy;
 uniform float4 cBlue;
 uniform float4 cViolet;
 uniform float4 cCyan;
@@ -311,13 +320,6 @@ uniform float4 cCoral;
 uniform float4 cAmber;
 uniform float4 cGreen;
 uniform float4 cPink;
-
-// Soft Gaussian weight. Every layer and every colour pool uses it, so hues and bands travel through
-// one another instead of forming rigid stripes.
-float pool(float value, float centre, float width) {
-    float d = (value - centre) / width;
-    return exp(-d * d);
-}
 
 // Organic silhouette. The harmonics are the live output of the fluid simulation. The profile is
 // evaluated on a slowly bending axis, which is what makes the contours lean, pinch and stay
@@ -356,104 +358,66 @@ float3 energySpectrum(float u) {
     return c;
 }
 
-// Hue index. It depends on x AND y, so the spectrum travels diagonally across the surface instead of
-// being pinned to the floor: warm colours appear in the middle of the field and cool ones near its
-// base, and the whole assignment migrates slowly with time.
-float hueIndex(float2 p, float travel, float warmth) {
-    const float TAU = 6.2831853;
-    float bend = 0.10 * sin(TAU * (p.y * 0.8 + p.x * 0.3) + travel * 0.24);
-    return p.x * (1.05 + 0.15 * warmth)
-        + p.y * 0.58 * (1.0 - 0.25 * warmth)
-        + bend
-        + travel * 0.14;
-}
-
-// Soft elliptical energy formation: a concentrated luminous region surrounded by diffused colour.
-float ellipse(float2 p, float2 centre, float2 radii) {
-    float2 d = (p - centre) / radii;
-    return exp(-dot(d, d) * 1.7);
-}
-
 half4 main(in float2 fragCoord) {
     float2 uv = fragCoord / iResolution;
     float x = clamp(uv.x, 0.0, 1.0);
     float y = clamp(uv.y, 0.0, 1.0);
     float amp = clamp(iAmplitude, 0.0, 1.0);
+    // 0 = calm personality (blue and violet, minimal deformation), 1 = expressive (full Google
+    // spectrum, pronounced freeform boundary). Driven by the real microphone envelope.
+    float expression = clamp(iWarmth, 0.0, 1.0);
     float travel = iTime * 0.055 + iDrift * 0.02;
 
-    // Slow migration of the whole hue assignment, so the field keeps re-mixing even on a held note.
+    // Slow migration of the whole hue assignment, so the volume keeps re-mixing on a held note.
     float migrate = 0.06 * sin(travel * 0.37);
 
-    // ---- Silhouette ----------------------------------------------------------------------
-    // iBodyTop is the mean crest height (0 = top of the composer): about 38% visible coverage at
-    // silence, about 48% at full voice. The harmonics carry the organic shape on top of that, and a
-    // fresh amplitude impulse lifts the crest further.
+    // ---- Fluid boundary -------------------------------------------------------------------
+    // ONE organic, asymmetric crest. The deformation grows with the voice, so the boundary is nearly
+    // still when the recording is calm and unmistakably freeform when it is expressive.
     float crest = iBodyTop - surfaceProfile(x, iTime, amp) * iCrestScale;
 
-    // Two ribbon bands floating above the crest. Each one uses its own spatial frequency and time
-    // scale, so all three contours move independently while sharing the same fluid simulation.
-    float band1 = crest - iBand1Offset - surfaceProfile(x * 0.68, iTime * 0.71 + 1.7, amp) * iCrestScale * 0.62;
-    float band2 = crest - iBand2Offset - surfaceProfile(x * 1.42, iTime * 0.53 + 4.3, amp) * iCrestScale * 0.48;
+    // ---- Volumetric light -----------------------------------------------------------------
+    // Light is emitted upward from the crest and diffuses into black; the bottom edge carries a soft
+    // pool. Nothing here is drawn as a line: this is the reference treatment, where the volume is lit
+    // from its boundary and the colour lives inside the glow.
+    float above = max(crest - y, 0.0);
+    float below = max(y - crest, 0.0);
+    float diffusion = iDiffusionCalm + (iDiffusionExpressive - iDiffusionCalm) * expression;
+    float emitted = exp(-above / diffusion);
+    float halo = exp(-above / iHaloWidth);
+    // Light inside the fluid decays away from its surface, so it only exists below the crest - and the
+    // gate is smooth, because a step here would put a visible seam back on the boundary.
+    float inside = exp(-below / diffusion) * smoothstep(0.0, 0.012, below);
+    // Pool of light along the bottom edge of the pill, which is where the volume is deepest.
+    float floorGlow = exp(-(1.0 - y) / iFloorDiffusion);
+    float bloom = exp(-abs(y - crest) / (iBloomWidth + 0.015 * expression));
 
-    // ---- Layer weights -------------------------------------------------------------------
-    float2 xy = float2(x, y);
-    float body = smoothstep(crest - 0.012, crest + 0.035, y);
-    float depth = exp(-max(y - crest, 0.0) / 0.46);
-    float crestBand = pool(y, crest, 0.040 + 0.020 * amp);
-    float w1 = pool(y, band1, iBand1Width) * (0.60 + 0.40 * amp);
-    float w2 = pool(y, band2, iBand2Width) * (0.45 + 0.35 * amp);
+    float volume = emitted * iVolumeCalm + inside * iVolumeInside + halo * iHaloStrength
+        + floorGlow * iFloorGlow
+        + bloom * (iBloomCalm + iBloomExpressive * expression);
+    volume = clamp(volume, 0.0, 1.0);
 
-    // Two soft elliptical formations drifting through the body, one lower than the other. They give
-    // the composition concentrated luminous regions inside otherwise diffused colour, and they sit
-    // below the crest so they never crowd the timer or the controls.
-    float2 coreA = float2(0.32 + 0.14 * sin(travel * 0.61),
-        crest + 0.075 + 0.055 * amp + 0.020 * sin(travel * 0.43));
-    float2 coreB = float2(0.68 - 0.13 * sin(travel * 0.47 + 1.9),
-        crest + 0.145 + 0.075 * amp + 0.018 * cos(travel * 0.39));
-    float coreGlow = clamp(
-        ellipse(xy, coreA, float2(0.21 + 0.05 * amp, 0.080 + 0.035 * amp))
-        + 0.85 * ellipse(xy, coreB, float2(0.17 + 0.04 * amp, 0.065 + 0.030 * amp)),
-        0.0, 1.0);
+    // ---- Colour ---------------------------------------------------------------------------
+    // A single broad migration along the crest at low spatial frequency: violet and blue when calm,
+    // and the whole Google spectrum when expressive. Each sample is a neighbour of the next on the
+    // wheel, so the regions blend into one another instead of averaging out to grey - and the warm
+    // colours are part of the volume, not a stripe along its edge.
+    float span = iHueSpanCalm + (iHueSpanExpressive - iHueSpanCalm) * expression;
+    float u = iHueBase - x * span
+        + migrate
+        + 0.035 * sin(travel * 0.27)
+        + 0.06 * (y - 0.5) * expression;
+    float3 light = energySpectrum(u);
+    // The crest blooms slightly whiter, like an emissive edge. Restrained, never a neon outline.
+    light = mix(light, float3(1.0), bloom * iBloomWhite);
 
-    // The upper part of the field stays dimmer so the timer and the controls keep their contrast.
-    float ceiling = iCeilingFloor + iCeilingRange * smoothstep(0.10, 0.88, y);
-
-    // ---- Colour --------------------------------------------------------------------------
-    // One cyclic spectrum, sampled at three related indices: overlapping layers therefore reinforce
-    // each other instead of averaging out to grey.
-    float hueBody = hueIndex(xy, travel, iWarmth) + migrate;
-    float3 cBody = energySpectrum(hueBody);
-    float3 cBand1 = energySpectrum(hueBody + 0.31 + 0.04 * sin(travel * 0.5));
-    float3 cBand2 = energySpectrum(hueBody + 0.63);
-    float3 cCore = energySpectrum(hueBody + 0.17);
-
-    // Hue of the composite is the weighted average of the layers that overlap here, so an
-    // overlapping ribbon genuinely mixes its colour into the body instead of painting over it.
-    float3 col = cBody * body + cBand1 * w1 * 0.85 + cBand2 * w2 * 0.65 + cCore * coreGlow * 0.55;
-    float weight = body + w1 * 0.85 + w2 * 0.65 + coreGlow * 0.55;
-    col /= max(weight, 0.0001);
-
-    // ---- Composite -----------------------------------------------------------------------
-    float alpha = body * (iBodyAlphaCalm + iBodyAlphaEnergy * amp) * (0.58 + 0.42 * depth)
-        + w1 * iBand1Weight
-        + w2 * iBand2Weight
-        + crestBand * (iCrestAlphaCalm + iCrestAlphaEnergy * amp);
-    alpha += coreGlow * (0.10 + 0.10 * amp);
-    alpha *= 0.74 + 0.26 * smoothstep(0.10, 0.85, y);
-    alpha = clamp(alpha, 0.0, 0.78);
+    // ---- Composite ------------------------------------------------------------------------
+    float alpha = volume * iVolumeAlpha;
     if (alpha <= 0.002) {
         return half4(0.0, 0.0, 0.0, 0.0);
     }
-
-    // A dark translucent foundation: the field colours illuminate the interior from within instead of
-    // laying a bright slab over it, and the white specular line is gone entirely.
-    col *= iLumaCalm + iLumaEnergy * amp;
-    col *= ceiling;
-    col *= 1.0 + 0.30 * coreGlow;                          // concentrated luminous regions
-    col += col * crestBand * (0.18 + 0.30 * amp);           // illuminated leading edge
-    col = clamp(col, 0.0, 1.0);
-
-    return half4(col, alpha);
+    float3 col = light * volume * iLightGain;
+    return half4(clamp(col, 0.0, 1.0), alpha);
 }
 """
 
@@ -495,23 +459,26 @@ private class VoiceEnergyShader {
         runtimeShader.setFloatUniform("iPhase3", field.harmonicPhase[2])
         runtimeShader.setFloatUniform("iBodyTop", composition.bodyTop)
         runtimeShader.setFloatUniform("iCrestScale", composition.crestScale)
-        runtimeShader.setFloatUniform("iBand1Offset", composition.band1Offset)
-        runtimeShader.setFloatUniform("iBand1Width", composition.band1Width)
-        runtimeShader.setFloatUniform("iBand2Offset", composition.band2Offset)
-        runtimeShader.setFloatUniform("iBand2Width", composition.band2Width)
         runtimeShader.setFloatUniform("iWarmth", composition.warmth)
+        runtimeShader.setFloatUniform("iDiffusionCalm", VoiceEnergyDesign.DIFFUSION_CALM)
+        runtimeShader.setFloatUniform("iDiffusionExpressive", VoiceEnergyDesign.DIFFUSION_EXPRESSIVE)
+        runtimeShader.setFloatUniform("iHaloWidth", VoiceEnergyDesign.HALO_WIDTH)
+        runtimeShader.setFloatUniform("iHaloStrength", VoiceEnergyDesign.HALO_STRENGTH)
+        runtimeShader.setFloatUniform("iFloorDiffusion", VoiceEnergyDesign.FLOOR_DIFFUSION)
+        runtimeShader.setFloatUniform("iFloorGlow", VoiceEnergyDesign.FLOOR_GLOW)
+        runtimeShader.setFloatUniform("iBloomWidth", VoiceEnergyDesign.BLOOM_WIDTH)
+        runtimeShader.setFloatUniform("iBloomCalm", VoiceEnergyDesign.BLOOM_CALM)
+        runtimeShader.setFloatUniform("iBloomExpressive", VoiceEnergyDesign.BLOOM_EXPRESSIVE)
+        runtimeShader.setFloatUniform("iBloomWhite", VoiceEnergyDesign.BLOOM_WHITE)
+        runtimeShader.setFloatUniform("iHueBase", VoiceEnergyDesign.HUE_BASE)
+        runtimeShader.setFloatUniform("iHueSpanCalm", VoiceEnergyDesign.HUE_SPAN_CALM)
+        runtimeShader.setFloatUniform("iHueSpanExpressive", VoiceEnergyDesign.HUE_SPAN_EXPRESSIVE)
+        runtimeShader.setFloatUniform("iVolumeCalm", VoiceEnergyDesign.VOLUME_CALM)
+        runtimeShader.setFloatUniform("iVolumeInside", VoiceEnergyDesign.VOLUME_INSIDE)
+        runtimeShader.setFloatUniform("iVolumeAlpha", VoiceEnergyDesign.VOLUME_ALPHA)
+        runtimeShader.setFloatUniform("iLightGain", VoiceEnergyDesign.LIGHT_GAIN)
         runtimeShader.setFloatUniform("iIdleCalm", VoiceEnergyDesign.IDLE_WAVE_CALM)
         runtimeShader.setFloatUniform("iIdleEnergy", VoiceEnergyDesign.IDLE_WAVE_PER_ENERGY)
-        runtimeShader.setFloatUniform("iBodyAlphaCalm", VoiceEnergyDesign.BODY_ALPHA_CALM)
-        runtimeShader.setFloatUniform("iBodyAlphaEnergy", VoiceEnergyDesign.BODY_ALPHA_PER_ENERGY)
-        runtimeShader.setFloatUniform("iBand1Weight", VoiceEnergyDesign.BAND_1_WEIGHT)
-        runtimeShader.setFloatUniform("iBand2Weight", VoiceEnergyDesign.BAND_2_WEIGHT)
-        runtimeShader.setFloatUniform("iCrestAlphaCalm", VoiceEnergyDesign.CREST_ALPHA_CALM)
-        runtimeShader.setFloatUniform("iCrestAlphaEnergy", VoiceEnergyDesign.CREST_ALPHA_PER_ENERGY)
-        runtimeShader.setFloatUniform("iCeilingFloor", VoiceEnergyDesign.CEILING_FLOOR)
-        runtimeShader.setFloatUniform("iCeilingRange", VoiceEnergyDesign.CEILING_RANGE)
-        runtimeShader.setFloatUniform("iLumaCalm", VoiceEnergyDesign.LUMA_CALM)
-        runtimeShader.setFloatUniform("iLumaEnergy", VoiceEnergyDesign.LUMA_PER_ENERGY)
     }
 }
 
@@ -528,14 +495,11 @@ private class VoiceEnergyComposition {
         private set
     var crestScale = VoiceEnergyDesign.CREST_CALM
         private set
-    var band1Offset = VoiceEnergyDesign.BAND_1_OFFSET_CALM
-        private set
-    var band1Width = VoiceEnergyDesign.BAND_1_WIDTH
-        private set
-    var band2Offset = VoiceEnergyDesign.BAND_2_OFFSET_CALM
-        private set
-    var band2Width = VoiceEnergyDesign.BAND_2_WIDTH
-        private set
+
+    /**
+     * 0 = calm personality, 1 = expressive. This is the only knob the two personalities need: the
+     * renderer derives its diffusion, its colour sweep and its deformation from it.
+     */
     var warmth = 0f
         private set
 
@@ -547,10 +511,6 @@ private class VoiceEnergyComposition {
         crestScale = VoiceEnergyDesign.CREST_CALM +
             VoiceEnergyDesign.CREST_PER_ENERGY * amp +
             VoiceEnergyDesign.CREST_PER_RIPPLE * field.ripple
-        band1Offset = VoiceEnergyDesign.BAND_1_OFFSET_CALM + VoiceEnergyDesign.BAND_1_OFFSET_PER_ENERGY * amp
-        band1Width = VoiceEnergyDesign.BAND_1_WIDTH + VoiceEnergyDesign.BAND_1_WIDTH_PER_ENERGY * amp
-        band2Offset = VoiceEnergyDesign.BAND_2_OFFSET_CALM + VoiceEnergyDesign.BAND_2_OFFSET_PER_ENERGY * amp
-        band2Width = VoiceEnergyDesign.BAND_2_WIDTH + VoiceEnergyDesign.BAND_2_WIDTH_PER_ENERGY * amp
         warmth = smoothstep(VoiceEnergyDesign.WARMTH_GATE_LOW, VoiceEnergyDesign.WARMTH_GATE_HIGH, amp)
     }
 }
@@ -639,191 +599,142 @@ private fun buildContourPath(
 }
 
 /**
- * Preallocated drawing resources for the Canvas fallback (API 26..32). Everything that would be
- * recreated every frame (paths, strokes, gradients, contour shapes) is built once per density.
+ * Preallocated drawing resources for the Canvas fallback (API 26..32).
  *
- * The fallback reproduces the shader composition with gradient brushes instead of per-fragment
- * maths: the body is filled with a horizontal hue sweep plus a coloured depth glaze, and the two
- * ribbon bands are wide translucent strokes that fade softly at their edges.
+ * The fallback reproduces the shader's volumetric model with gradients instead of per-fragment maths:
+ * the region below the crest is a dark fluid volume, and the light above it is a stack of nested
+ * strokes on the crest contour - widest and faintest first - which yields the same smooth upward
+ * diffusion without ever drawing a line.
  */
 private class VoiceEnergyFallbackArt(density: Density) {
-    val primaryPath = Path()
-    val bandPaths: List<Path> = List(2) { Path() }
+    val crestPath = Path()
+    private val crestShape = VoiceLayerShape()
+    val crestLayers: List<VoiceLayerShape> = listOf(crestShape)
 
-    private val bodyShape = VoiceLayerShape()
-    private val band1Shape = VoiceLayerShape()
-    private val band2Shape = VoiceLayerShape()
-    val bodyLayers: List<VoiceLayerShape> = listOf(bodyShape)
-    val band1Layers: List<VoiceLayerShape> = listOf(bodyShape, band1Shape)
-    val band2Layers: List<VoiceLayerShape> = listOf(bodyShape, band2Shape)
-
-    /**
-     * The whole composition is painted with ONE cyclic spectrum brush, sampled along the bounds
-     * diagonal. Adjacent hues on that wheel reinforce each other, so nothing averages out to grey;
-     * the previous version laid a warm gradient over a cool one, and blue over amber is exactly the
-     * desaturated metal look this replaces.
-     */
-    val spectrumFill: Brush = Brush.linearGradient(colorStops = energySpectrumStops())
-
-    /** Coloured depth glaze: the interior gets deeper toward the floor instead of grey. */
-    val depthGlaze: Brush = Brush.verticalGradient(
+    /** The fluid volume under the boundary: near-black, with a soft pool of light at its base. */
+    val bodyVolume: Brush = Brush.verticalGradient(
         colorStops = arrayOf(
-            0.35f to Color.Transparent,
-            0.78f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.34f),
-            1.00f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.58f)
+            0.00f to VoiceEnergyColors.VolumeBlack,
+            0.52f to VoiceEnergyColors.VolumeBlack,
+            0.86f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.50f),
+            1.00f to VoiceEnergyColors.Blue.copy(alpha = 0.28f)
         )
     )
 
-    /** Concentrated luminous regions: a cool ellipse and a warm one, drifting through the body. */
-    val coolCore: Brush = Brush.radialGradient(
-        colorStops = arrayOf(
-            0.00f to VoiceEnergyColors.Cyan.copy(alpha = 0.55f),
-            0.45f to VoiceEnergyColors.Blue.copy(alpha = 0.30f),
-            1.00f to Color.Transparent
-        )
-    )
-    val warmCore: Brush = Brush.radialGradient(
-        colorStops = arrayOf(
-            0.00f to VoiceEnergyColors.Amber.copy(alpha = 0.55f),
-            0.45f to VoiceEnergyColors.Coral.copy(alpha = 0.30f),
-            1.00f to Color.Transparent
-        )
-    )
-
-    /** Crest illumination: a luminous core inside two wider, dimmer haloes. No white line. */
-    val crestStrokes: List<Stroke> = listOf(15.dp, 7.5.dp, 3.dp).map { widthDp ->
+    /** Upward diffusion from the boundary: five nested widths, faintest and widest first. */
+    val lightStrokes: List<Stroke> = listOf(52.dp, 34.dp, 20.dp, 11.dp, 5.dp).map { widthDp ->
         Stroke(width = with(density) { widthDp.toPx() }, cap = StrokeCap.Round)
     }
-    val crestAlphas: List<Float> = listOf(0.34f, 0.62f, 1.00f)
+    val lightAlphas: List<Float> = listOf(0.16f, 0.24f, 0.34f, 0.48f, 0.62f)
 
-    /** Ribbon bands: a wide translucent halo plus a brighter core, one set per band. */
-    val bandStrokes: List<List<Stroke>> = listOf(
-        listOf(15.dp, 7.dp).map { widthDp ->
-            Stroke(width = with(density) { widthDp.toPx() }, cap = StrokeCap.Round)
-        },
-        listOf(24.dp, 12.dp).map { widthDp ->
-            Stroke(width = with(density) { widthDp.toPx() }, cap = StrokeCap.Round)
-        }
-    )
-    val bandAlphas: List<Float> = listOf(0.38f, 0.72f)
+    /** Emissive edge: tight, slightly whiter, and far from a neon outline. */
+    val bloomStroke: Stroke = Stroke(width = with(density) { 3.dp.toPx() }, cap = StrokeCap.Round)
 
-    /** Maps the shared composition onto this frame's contour shapes. */
+    /**
+     * One colour sweep per expression bucket. Picking a prebuilt sweep rather than cross-fading two
+     * of them is deliberate: blending a blue sweep with an amber one is what turns a light field grey.
+     */
+    val lightFills: List<Brush> = lightSweepBrushes(fadedEnds = false, whiten = 0f)
+    val bloomFills: List<Brush> = lightSweepBrushes(fadedEnds = false, whiten = VoiceEnergyDesign.BLOOM_WHITE)
+
+    /** Maps the shared composition onto this frame's boundary shape. */
     fun updateShapes(height: Float, composition: VoiceEnergyComposition) {
-        bodyShape.set(height * composition.bodyTop, height * composition.crestScale, 1f, 1f, 0f)
-        band1Shape.set(
-            -height * composition.band1Offset,
-            height * composition.crestScale * VoiceEnergyDesign.LAYER_1_SHAPE,
-            VoiceEnergyDesign.LAYER_1_X_SCALE,
-            VoiceEnergyDesign.LAYER_1_TIME_SCALE,
-            VoiceEnergyDesign.RIBBON_TIME_SHIFT_1
-        )
-        band2Shape.set(
-            -height * composition.band2Offset,
-            height * composition.crestScale * VoiceEnergyDesign.LAYER_2_SHAPE,
-            VoiceEnergyDesign.LAYER_2_X_SCALE,
-            VoiceEnergyDesign.LAYER_2_TIME_SCALE,
-            VoiceEnergyDesign.RIBBON_TIME_SHIFT_2
+        crestShape.set(height * composition.bodyTop, height * composition.crestScale, 1f, 1f, 0f)
+    }
+
+    /** Which prebuilt sweep matches the current expression value. */
+    fun sweepIndex(expression: Float): Int =
+        (expression.coerceIn(0f, 1f) * (VoiceEnergyDesign.SWEEP_BUCKETS - 1).toFloat()).roundToInt()
+}
+
+/**
+ * Samples the same colour wheel the shader walks, stop for stop. Keeping this identical is what makes
+ * the fallback's hues match the AGSL path instead of being a separate approximation.
+ */
+private fun energySpectrumColor(u: Float): Color {
+    val x = u.mod(1f)
+    var color = VoiceEnergyColors.Blue
+    color = lerp(color, VoiceEnergyColors.Cyan, smoothstep(0.00f, 0.15f, x))
+    color = lerp(color, VoiceEnergyColors.Green, smoothstep(0.10f, 0.31f, x))
+    color = lerp(color, VoiceEnergyColors.Amber, smoothstep(0.26f, 0.50f, x))
+    color = lerp(color, VoiceEnergyColors.Coral, smoothstep(0.45f, 0.66f, x))
+    color = lerp(color, VoiceEnergyColors.Pink, smoothstep(0.62f, 0.80f, x))
+    color = lerp(color, VoiceEnergyColors.Violet, smoothstep(0.76f, 0.90f, x))
+    color = lerp(color, VoiceEnergyColors.Blue, smoothstep(0.88f, 1.00f, x))
+    return color
+}
+
+/**
+ * Prebuilds the sweep brushes, one per expression bucket: at calm personality the sweep covers only
+ * violet..blue, at full expression it walks the whole wheel from violet round to cyan. The warm
+ * colours therefore *emerge* from the volume as the voice rises, which is the reference behaviour.
+ *
+ * [fadedEnds] fades a brush to transparent at both ends, which is what lets the ambient strokes
+ * dissolve into the chat background instead of stopping on a hard vertical edge.
+ */
+private fun lightSweepBrushes(fadedEnds: Boolean, whiten: Float): List<Brush> {
+    val buckets = VoiceEnergyDesign.SWEEP_BUCKETS
+    val stops = VoiceEnergyDesign.SWEEP_STOPS
+    return List(buckets) { bucket ->
+        val expression = if (buckets <= 1) 0f else bucket.toFloat() / (buckets - 1).toFloat()
+        val span = VoiceEnergyDesign.HUE_SPAN_CALM +
+            (VoiceEnergyDesign.HUE_SPAN_EXPRESSIVE - VoiceEnergyDesign.HUE_SPAN_CALM) * expression
+        Brush.horizontalGradient(
+            colorStops = Array(stops) { index ->
+                val t = if (stops <= 1) 0f else index.toFloat() / (stops - 1).toFloat()
+                var color = energySpectrumColor(VoiceEnergyDesign.HUE_BASE - t * span)
+                if (whiten > 0f) color = lerp(color, Color.White, whiten)
+                if (fadedEnds) color = color.copy(alpha = color.alpha * sin(PI * t).toFloat())
+                t to color
+            }
         )
     }
 }
 
 /** Gradients and contour shapes for the ambient band above the composer, built once. */
+/** Drawing resources for the light above the composer, built once per density. */
 private class VoiceAmbientArt(density: Density) {
-    val wavePaths: List<Path> = List(3) { Path() }
-
-    private val waveShapes: List<VoiceLayerShape> = List(3) { VoiceLayerShape() }
-    val waveLayers: List<List<VoiceLayerShape>> = waveShapes.map { listOf(it) }
-
-    /** Each wave spans a different slice of the width, so the light stays local to the composer. */
-    val waveStart = floatArrayOf(0.02f, 0.10f, 0.18f)
-    val waveEnd = floatArrayOf(0.98f, 0.90f, 0.82f)
+    val crestPath = Path()
+    private val crestShape = VoiceLayerShape()
+    val crestLayers: List<VoiceLayerShape> = listOf(crestShape)
 
     /**
-     * Two soft widths per wave - a wide halo and a mid glow. Deliberately no thin bright core line:
-     * that reads as a stray rainbow streak across the chat, which is what it looked like before.
-     * Round caps matter as much as the widths: a butt-capped stroke along a shallow contour stamps a
-     * hard-edged rectangle into the message area.
+     * The same nested-stroke diffusion the composer uses, wider and fainter, with ends that fade to
+     * transparent: the ambient is the pill's light spilling upward into the black, not a set of
+     * ribbons, and a stroke can never terminate on a visible edge.
      */
-    val waveStrokes: List<Stroke> = listOf(26.dp, 13.dp).map { widthDp ->
+    val lightStrokes: List<Stroke> = listOf(58.dp, 38.dp, 22.dp, 12.dp).map { widthDp ->
         Stroke(width = with(density) { widthDp.toPx() }, cap = StrokeCap.Round)
     }
-    val waveAlphas: List<Float> = listOf(0.40f, 0.75f)
+    val lightAlphas: List<Float> = listOf(0.10f, 0.16f, 0.24f, 0.34f)
+    val lightFills: List<Brush> = lightSweepBrushes(fadedEnds = true, whiten = 0f)
 
-    /** The spectrum with transparent ends, so a wave dissolves instead of terminating on an edge. */
-    val waveFill: Brush = Brush.horizontalGradient(colorStops = ambientWaveStops())
-
-    /** Soft pools of light just above the composer, so the wash has a visible source. */
-    val calmPool: Brush = Brush.radialGradient(
-        colorStops = arrayOf(
-            0.00f to VoiceEnergyColors.Blue.copy(alpha = 0.60f),
-            0.38f to VoiceEnergyColors.Violet.copy(alpha = 0.28f),
-            0.72f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.10f),
-            1.00f to Color.Transparent
+    /** Rides on the composer's own boundary shape, lifted by voice energy. */
+    fun updateShapes(height: Float, composition: VoiceEnergyComposition) {
+        crestShape.set(
+            baseLine = height * (VoiceEnergyDesign.AMBIENT_BASE -
+                VoiceEnergyDesign.AMBIENT_LIFT * composition.amplitude),
+            scale = height * (VoiceEnergyDesign.AMBIENT_SCALE_CALM +
+                VoiceEnergyDesign.AMBIENT_SCALE_ENERGY * composition.amplitude),
+            xScale = VoiceEnergyDesign.AMBIENT_X_SCALE,
+            timeScale = VoiceEnergyDesign.AMBIENT_TIME_SCALE,
+            timeShift = VoiceEnergyDesign.AMBIENT_TIME_SHIFT
         )
-    )
-    val warmPool: Brush = Brush.radialGradient(
-        colorStops = arrayOf(
-            0.00f to VoiceEnergyColors.Coral.copy(alpha = 0.55f),
-            0.36f to VoiceEnergyColors.Amber.copy(alpha = 0.28f),
-            0.74f to VoiceEnergyColors.Green.copy(alpha = 0.10f),
-            1.00f to Color.Transparent
-        )
-    )
-
-    /** Lifts each wave as the voice gets louder: the crests rise toward the message area. */
-    fun updateShapes(height: Float, energy: Float) {
-        for (index in waveShapes.indices) {
-            waveShapes[index].set(
-                baseLine = height * (VoiceEnergyDesign.AMBIENT_BASE -
-                    VoiceEnergyDesign.AMBIENT_LIFT * energy -
-                    VoiceEnergyDesign.AMBIENT_LAYER_STEP * index),
-                scale = height * (VoiceEnergyDesign.AMBIENT_SCALE_CALM +
-                    VoiceEnergyDesign.AMBIENT_SCALE_ENERGY * energy) *
-                    (1f - VoiceEnergyDesign.AMBIENT_LAYER_SCALE_STEP * index),
-                xScale = VoiceEnergyDesign.AMBIENT_X_SCALE,
-                timeScale = VoiceEnergyDesign.AMBIENT_TIME_SCALE,
-                timeShift = VoiceEnergyDesign.AMBIENT_TIME_SHIFT +
-                    VoiceEnergyDesign.AMBIENT_TIME_SHIFT_STEP * index
-            )
-        }
     }
+
+    fun sweepIndex(expression: Float): Int =
+        (expression.coerceIn(0f, 1f) * (VoiceEnergyDesign.SWEEP_BUCKETS - 1).toFloat()).roundToInt()
 }
 
 /**
- * The same cyclic spectrum the shader walks, expressed as gradient stops: blue, cyan, green, amber,
- * coral, pink, violet and back to blue. Because it is a wheel, the ends agree and nothing desaturates
- * in the middle. This ordering is the single place the fallback's hues are defined.
+ * The composer surface, Canvas path. The pill itself is a near-black volume; the colour is light
+ * emitted from the fluid boundary and diffused upward, so nothing reads as a line drawn over a button.
  */
-private fun energySpectrumStops(): Array<Pair<Float, Color>> = arrayOf(
-    0.00f to VoiceEnergyColors.Blue,
-    0.15f to VoiceEnergyColors.Cyan,
-    0.31f to VoiceEnergyColors.Green,
-    0.50f to VoiceEnergyColors.Amber,
-    0.66f to VoiceEnergyColors.Coral,
-    0.80f to VoiceEnergyColors.Pink,
-    0.90f to VoiceEnergyColors.Violet,
-    1.00f to VoiceEnergyColors.Blue
-)
-
-/**
- * Ambient wave brush: the same spectrum with transparent ends, so a wave dissolves into the chat
- * background instead of terminating on a hard vertical edge.
- */
-private fun ambientWaveStops(): Array<Pair<Float, Color>> = arrayOf(
-    0.00f to Color.Transparent,
-    0.14f to VoiceEnergyColors.Blue.copy(alpha = 0.55f),
-    0.32f to VoiceEnergyColors.Violet.copy(alpha = 0.60f),
-    0.48f to VoiceEnergyColors.Cyan.copy(alpha = 0.55f),
-    0.62f to VoiceEnergyColors.Green.copy(alpha = 0.50f),
-    0.74f to VoiceEnergyColors.Coral.copy(alpha = 0.55f),
-    0.86f to VoiceEnergyColors.Amber.copy(alpha = 0.50f),
-    1.00f to Color.Transparent
-)
-
 private fun DrawScope.drawVoiceEnergyFallback(
     field: VoiceEnergyField,
     art: VoiceEnergyFallbackArt,
-    composition: VoiceEnergyComposition
+    composition: VoiceEnergyComposition,
+    presence: Float
 ) {
     val width = size.width
     val height = size.height
@@ -831,112 +742,51 @@ private fun DrawScope.drawVoiceEnergyFallback(
 
     art.updateShapes(height, composition)
 
-    val energy = composition.amplitude
-    val rippleBoost = 0.75f + 0.35f * field.ripple
-    // Same travel clock the shader uses for its cores, so both renderers drift together.
-    val travel = field.elapsed * VoiceEnergyDesign.CORE_TRAVEL_TIME +
-        field.drift * VoiceEnergyDesign.CORE_TRAVEL_DRIFT
+    val expression = composition.warmth
+    val bucket = art.sweepIndex(expression)
+    val rippleBoost = 0.85f + 0.25f * field.ripple
 
-    // The two ribbon bands floating above the body crest. Each one rides on the body silhouette but
-    // wobbles at its own frequency and speed, so the three contours never move as one block. Round
-    // caps and a spectrum brush keep their ends soft.
-    for (index in art.bandPaths.indices) {
-        val path = art.bandPaths[index]
-        val layers = if (index == 0) art.band1Layers else art.band2Layers
-        buildContourPath(path, field, width, height, layers)
-        val bandWeight = if (index == 0) VoiceEnergyDesign.BAND_1_WEIGHT else VoiceEnergyDesign.BAND_2_WEIGHT
-        art.bandStrokes[index].forEachIndexed { strokeIndex, stroke ->
-            val alpha = art.bandAlphas[strokeIndex] * bandWeight * (0.85f + 0.30f * energy)
-            if (alpha <= 0.002f) return@forEachIndexed
-            drawPath(path, brush = art.spectrumFill, alpha = alpha, style = stroke)
-        }
+    // Light first: nested strokes on the boundary contour, widest and faintest first. It hugs the
+    // crest and fades into the black above it; there is no second contour and no ribbon.
+    val volume = VoiceEnergyDesign.VOLUME_CALM + VoiceEnergyDesign.VOLUME_EXPRESSIVE * expression
+    art.lightStrokes.forEachIndexed { index, stroke ->
+        val alpha = art.lightAlphas[index] * volume * rippleBoost * presence
+        if (alpha <= 0.002f) return@forEachIndexed
+        drawPath(art.crestPath, brush = art.lightFills[bucket], alpha = alpha, style = stroke)
     }
 
-    // The primary energy body, filled from its own crest down to the floor.
+    // Emissive boundary: the same light, tighter and slightly whiter. Straddles the contour, so it
+    // softens the boundary instead of drawing a line on it.
+    drawPath(
+        path = art.crestPath,
+        brush = art.bloomFills[bucket],
+        alpha = (VoiceEnergyDesign.BLOOM_CALM + VoiceEnergyDesign.BLOOM_EXPRESSIVE * expression) *
+            rippleBoost * presence,
+        style = art.bloomStroke
+    )
+
+    // The fluid body is then veiled over the light: brighter above the boundary than inside it, which
+    // is what makes the boundary read as a surface. A pool of light stays visible at its base.
     buildContourPath(
-        path = art.primaryPath,
+        path = art.crestPath,
         field = field,
         width = width,
         height = height,
-        layers = art.bodyLayers,
+        layers = art.crestLayers,
         closeToBottom = true
     )
-
-    val bodyAlpha = VoiceEnergyDesign.BODY_ALPHA_CALM + VoiceEnergyDesign.BODY_ALPHA_PER_ENERGY * energy
-    val coreAlpha = VoiceEnergyDesign.CORE_ALPHA_CALM + VoiceEnergyDesign.CORE_ALPHA_PER_ENERGY * energy
-    val coreAx = coreCentreX(
-        0.32f + VoiceEnergyDesign.CORE_A_DRIFT_X * sin(travel * 0.61f)
-    )
-    val coreBx = coreCentreX(
-        0.68f - VoiceEnergyDesign.CORE_B_DRIFT_X * sin(travel * 0.47f + 1.9f)
-    )
-
-    clipPath(art.primaryPath) {
-        // A translucent foundation: the spectrum illuminates the interior from within, so the capsule
-        // reads as dark glass rather than a bright slab.
-        drawRect(brush = art.spectrumFill, alpha = bodyAlpha)
-        drawRect(brush = art.depthGlaze, alpha = 0.80f)
-
-        // Two concentrated luminous regions, each surrounded by diffused colour. They hang below the
-        // local crest - measured at their own horizontal position, exactly like the shader - so they
-        // stay clear of the timer and the controls.
-        drawEnergyCore(
-            brush = art.coolCore,
-            centreX = width * coreAx,
-            centreY = contourY(coreAx, field, art.bodyLayers) +
-                height * (VoiceEnergyDesign.CORE_A_DROP + VoiceEnergyDesign.CORE_A_DROP_ENERGY * energy +
-                    VoiceEnergyDesign.CORE_A_WOBBLE * sin(travel * 0.43f)),
-            radiusX = width * (VoiceEnergyDesign.CORE_A_RADIUS_X +
-                VoiceEnergyDesign.CORE_A_RADIUS_X_ENERGY * energy),
-            radiusY = height * (VoiceEnergyDesign.CORE_A_RADIUS_Y +
-                VoiceEnergyDesign.CORE_A_RADIUS_Y_ENERGY * energy),
-            alpha = coreAlpha
-        )
-        drawEnergyCore(
-            brush = art.warmCore,
-            centreX = width * coreBx,
-            centreY = contourY(coreBx, field, art.bodyLayers) +
-                height * (VoiceEnergyDesign.CORE_B_DROP + VoiceEnergyDesign.CORE_B_DROP_ENERGY * energy +
-                    VoiceEnergyDesign.CORE_B_WOBBLE * cos(travel * 0.39f)),
-            radiusX = width * (VoiceEnergyDesign.CORE_B_RADIUS_X +
-                VoiceEnergyDesign.CORE_B_RADIUS_X_ENERGY * energy),
-            radiusY = height * (VoiceEnergyDesign.CORE_B_RADIUS_Y +
-                VoiceEnergyDesign.CORE_B_RADIUS_Y_ENERGY * energy),
-            alpha = coreAlpha * 0.85f
-        )
-    }
-
-    // Illuminated crest: a luminous core inside wider haloes. The white specular line is gone.
-    val crestAlpha = VoiceEnergyDesign.CREST_ALPHA_CALM +
-        VoiceEnergyDesign.CREST_ALPHA_PER_ENERGY * energy
-    art.crestStrokes.forEachIndexed { index, stroke ->
-        val alpha = art.crestAlphas[index] * crestAlpha * rippleBoost
-        if (alpha <= 0.002f) return@forEachIndexed
-        drawPath(art.primaryPath, brush = art.spectrumFill, alpha = alpha, style = stroke)
-    }
-}
-
-/** Keeps a drifting core centre inside the visible field instead of off the edge of the pill. */
-private fun coreCentreX(value: Float): Float = value.coerceIn(0.10f, 0.90f)
-
-/** One soft elliptical energy formation: a concentrated luminous region inside diffused colour. */
-private fun DrawScope.drawEnergyCore(
-    brush: Brush,
-    centreX: Float,
-    centreY: Float,
-    radiusX: Float,
-    radiusY: Float,
-    alpha: Float
-) {
-    if (alpha <= 0.002f || radiusX <= 0f || radiusY <= 0f) return
-    drawOval(
-        brush = brush,
-        topLeft = Offset(centreX - radiusX, centreY - radiusY),
-        size = Size(radiusX * 2f, radiusY * 2f),
-        alpha = alpha
+    drawPath(
+        path = art.crestPath,
+        brush = art.bodyVolume,
+        alpha = presence * VoiceEnergyDesign.BODY_VEIL_ALPHA
     )
 }
 
+/**
+ * Ambient light above the composer, Canvas path: the composer's own diffusion, widened, faded and
+ * clipped to the lower part of the band, so it reads as the pill glowing into the dark instead of a
+ * colored streak crossing the chat.
+ */
 private fun DrawScope.drawVoiceAmbientWaves(
     field: VoiceEnergyField,
     art: VoiceAmbientArt,
@@ -947,63 +797,19 @@ private fun DrawScope.drawVoiceAmbientWaves(
     if (width <= 0f || height <= 0f) return
 
     val energy = composition.amplitude
-    val warmth = composition.warmth
-    val drift = field.drift
+    val expression = composition.warmth
+    val bucket = art.sweepIndex(expression)
 
-    // Everything below is confined to the lower part of the ambient band, and the band itself is
-    // clipped above the reachable zone: however loud the recording gets, the wash can never climb
-    // into the message list. The waves are bounded so they never actually reach the clip line, which
-    // keeps the guard invisible rather than turning it into a straight edge.
     clipRect(top = height * VoiceEnergyDesign.AMBIENT_CLIP_TOP) {
-        // A localized source of light just above the composer keeps the wash anchored to the pill.
-        val poolRadius = minOf(
-            width * VoiceEnergyDesign.AMBIENT_POOL_RADIUS_WIDTH,
-            height * VoiceEnergyDesign.AMBIENT_POOL_RADIUS_HEIGHT
-        ) * (VoiceEnergyDesign.AMBIENT_POOL_RADIUS_CALM +
-            VoiceEnergyDesign.AMBIENT_POOL_RADIUS_ENERGY * energy)
-        val poolAlpha = VoiceEnergyDesign.AMBIENT_POOL_ALPHA +
-            VoiceEnergyDesign.AMBIENT_POOL_ALPHA_ENERGY * energy
-        val poolLeft = Offset(width * (0.34f + 0.05f * sin(drift * 0.90f)), height * 0.88f)
-        val poolRight = Offset(width * (0.66f - 0.05f * sin(drift * 1.05f)), height * 0.88f)
-        drawCircle(brush = art.calmPool, center = poolLeft, radius = poolRadius, alpha = poolAlpha)
-        drawCircle(brush = art.calmPool, center = poolRight, radius = poolRadius, alpha = poolAlpha * 0.85f)
-        if (warmth > 0.01f) {
-            drawCircle(
-                brush = art.warmPool,
-                center = poolLeft,
-                radius = poolRadius,
-                alpha = poolAlpha * warmth * 0.85f
-            )
-            drawCircle(
-                brush = art.warmPool,
-                center = poolRight,
-                radius = poolRadius,
-                alpha = poolAlpha * warmth * 0.65f
-            )
-        }
-
-        art.updateShapes(height, energy)
-        for (index in art.wavePaths.indices) {
-            val path = art.wavePaths[index]
-            // Wave 0 hugs the composer and is the brightest; the higher waves are dimmer and shorter,
-            // so the illumination lifts away from the pill and fades out well below the messages.
-            buildContourPath(
-                path = path,
-                field = field,
-                width = width,
-                height = height,
-                layers = art.waveLayers[index],
-                startFraction = art.waveStart[index],
-                endFraction = art.waveEnd[index]
-            )
-            val waveAlpha = (VoiceEnergyDesign.AMBIENT_ALPHA_FLOOR +
-                VoiceEnergyDesign.AMBIENT_ALPHA_ENERGY * energy) *
-                (1f - VoiceEnergyDesign.AMBIENT_ALPHA_LAYER_STEP * index)
-            art.waveStrokes.forEachIndexed { strokeIndex, stroke ->
-                val alpha = art.waveAlphas[strokeIndex] * waveAlpha
-                if (alpha <= 0.002f) return@forEachIndexed
-                drawPath(path, brush = art.waveFill, alpha = alpha, style = stroke)
-            }
+        art.updateShapes(height, composition)
+        buildContourPath(art.crestPath, field, width, height, art.crestLayers)
+        val volume = VoiceEnergyDesign.AMBIENT_ALPHA_FLOOR +
+            VoiceEnergyDesign.AMBIENT_ALPHA_ENERGY * energy +
+            VoiceEnergyDesign.AMBIENT_ALPHA_EXPRESSION * expression
+        art.lightStrokes.forEachIndexed { index, stroke ->
+            val alpha = art.lightAlphas[index] * volume
+            if (alpha <= 0.002f) return@forEachIndexed
+            drawPath(art.crestPath, brush = art.lightFills[bucket], alpha = alpha, style = stroke)
         }
     }
 }
@@ -1092,10 +898,10 @@ private fun rememberVoiceEnergyField(
 }
 
 /**
- * The composer's energy surface. It fills the interior of the pill: the body crest sits around 38%
- * of the height at silence and 47% at full voice, with two translucent ribbon bands floating above
- * it and two soft elliptical formations drifting inside it. The white specular line is gone and the
- * rim is only a soft coloured edge, so the energy - not the border - is the centrepiece.
+ * The composer's energy surface: a lit volume inside the pill rather than a coloured graphic on top
+ * of it. The pill itself goes almost black and the light is emitted from one organic fluid boundary
+ * and diffuses upward. Calm keeps a small, high boundary with a blue/violet volume; as the voice
+ * rises the boundary drops, deforms further and the whole spectrum appears in the light.
  */
 @Composable
 fun VoiceRecordingGlowSurface(
@@ -1139,16 +945,6 @@ fun VoiceRecordingGlowSurface(
     val fallbackArt = remember(density) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) VoiceEnergyFallbackArt(density) else null
     }
-    val rimBrush = remember {
-        Brush.verticalGradient(
-            colors = listOf(
-                VoiceEnergyColors.Cyan.copy(alpha = 0.55f),
-                VoiceEnergyColors.Violet.copy(alpha = 0.42f)
-            )
-        )
-    }
-    val rimStroke = remember(density) { Stroke(width = with(density) { 1.2.dp.toPx() }) }
-
     Box(modifier = modifier.clip(shape)) {
         Canvas(Modifier.matchParentSize()) {
             val width = size.width
@@ -1164,34 +960,27 @@ fun VoiceRecordingGlowSurface(
             if (presence <= 0.001f) return@Canvas
 
             composition.update(field, presence)
+            // A deep black volume: the colour is light inside it, not paint on a card surface.
+            drawRoundRect(
+                color = VoiceEnergyColors.VolumeBlack,
+                cornerRadius = corner,
+                alpha = presence * VoiceEnergyDesign.VOLUME_BLACK_ALPHA
+            )
             if (shader != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 shader.updateUniforms(width, height, field, composition)
                 drawRoundRect(brush = shader.shaderBrush, cornerRadius = corner, alpha = presence)
             } else if (fallbackArt != null) {
-                drawVoiceEnergyFallback(field, fallbackArt, composition)
+                drawVoiceEnergyFallback(field, fallbackArt, composition, presence)
             }
 
-            // A soft coloured edge only: the metallic rim used to compete with the energy field.
-            val borderAlpha = presence * (0.12f + 0.16f * composition.amplitude)
-            val strokePx = with(density) { 1.2.dp.toPx() }
-            val strokeCornerRadiusPx = with(density) { (Sizes.CornerMassive - (strokePx / 2f).toDp()).toPx() }
-            val strokeCorner = CornerRadius(minOf(strokeCornerRadiusPx, (height - strokePx) / 2f).coerceAtLeast(0f))
-            drawRoundRect(
-                brush = rimBrush,
-                topLeft = Offset(strokePx / 2f, strokePx / 2f),
-                size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
-                cornerRadius = strokeCorner,
-                alpha = borderAlpha,
-                style = rimStroke
-            )
         }
     }
 }
 
 /**
- * Ambient energy above the composer. Rendered behind the chat content and localized to the bottom
- * of the message area: three organic waves rise from the pill, each one lower and dimmer than the
- * next, carrying the same spectrum as the surface inside it.
+ * Ambient light above the composer. Rendered behind the chat content and localized to the bottom of
+ * the message area: it is the composer's own diffusion, widened, faded and clipped below the chat
+ * content, so the pill appears to be glowing into the dark rather than underlining it with stripes.
  */
 @Composable
 fun VoiceRecordingAmbientGlow(
