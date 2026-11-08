@@ -225,7 +225,7 @@ internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.F
             onset = maxOf(onset * VoiceEnergyDesign.ONSET_DECAY, onsetRise, sampleOnset)
                 .coerceIn(0f, 1f)
             val strength = maxOf(onsetRise, sampleOnset).coerceIn(0f, 1f)
-            if (strength > ONSET_MINIMUM) {
+            if (strength > VoiceEnergyDesign.ONSET_MINIMUM) {
                 advanceHotSpot()
                 injectImpulse(strength)
                 ripple = (ripple + strength).coerceAtMost(1f)
@@ -1000,7 +1000,7 @@ private fun lightSweepBrushes(fadedEnds: Boolean, whiten: Float): List<Brush> {
             colorStops = Array(stops) { index ->
                 val t = if (stops <= 1) 0f else index.toFloat() / (stops - 1).toFloat()
                 var color = energySpectrumColor(VoiceEnergyDesign.HUE_BASE - t * span)
-                if (whiten > 0f) color = lerp(color, Color.White, whiten)
+                if (whiten > 0f) color = lerp(color, VoiceEnergyColors.Specular, whiten)
                 if (fadedEnds) color = color.copy(alpha = color.alpha * sin(PI * t).toFloat())
                 t to color
             }
