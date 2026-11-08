@@ -515,6 +515,16 @@ uniform float4 cPink;
 // The profile is evaluated on a slowly bending axis, so the contours lean, pinch and stay asymmetric,
 // and the sum is soft-saturated: when the voice is loud the crest flattens smoothly at its extremes
 // instead of clipping into a flat-topped wave.
+// AGSL has no tanh (the driver rejected it with "no match for tanh(float)" and the shader failed to
+// compile at runtime), so the soft saturation is written out from exp. This is limit*tanh(v/limit)
+// evaluated safely: exp only ever sees a non-positive argument, so a loud crest cannot overflow it.
+// It is declared before use because functions must be declared before they are called.
+float softSaturate(float value, float limit) {
+    float decay = exp(-2.0 * abs(value) / limit);
+    float magnitude = limit * (1.0 - decay) / (1.0 + decay);
+    return value < 0.0 ? -magnitude : magnitude;
+}
+
 float surfaceProfile(float x, float t, float amp) {
     const float TAU = 6.2831853;
     float warped = x
@@ -526,16 +536,19 @@ float surfaceProfile(float x, float t, float amp) {
     d += iHarmonic4 * iModeWeight4 * sin(TAU * 4.0 * warped + iPhase4);
     d += iHarmonic5 * iModeWeight5 * sin(TAU * 5.0 * warped + iPhase5);
     // Rounded bulges centred on the excited region, plus a smaller echo of it elsewhere on the surface.
-    d += iBulgePrimary * iOnset * exp(-pow((x - iHotSpot) / iBulgeWidth, 2.0));
+    float primary = (x - iHotSpot) / iBulgeWidth;
+    d += iBulgePrimary * iOnset * exp(-primary * primary);
     float echo = fract(iHotSpot + iBulgeSecondaryOffset);
-    d += iBulgeSecondary * iOnset * exp(-pow((x - echo) / (iBulgeWidth * iBulgeSecondaryWidth), 2.0));
+    float secondary = (x - echo) / (iBulgeWidth * iBulgeSecondaryWidth);
+    d += iBulgeSecondary * iOnset * exp(-secondary * secondary);
     // Travelling ripple that follows an onset, and the decaying impulse of the loudness rise itself.
     d += iOnset * iTransientRipple * sin(TAU * (warped * 1.6 - t * 0.33));
     d += iRipple * 0.10 * sin(TAU * (warped * 1.15 + t * 0.40));
     d += (iIdleCalm + iIdleEnergy * amp)
         * sin(TAU * (warped * 0.9 + 0.22 * sin(TAU * warped)) - t * 0.19);
-    return iProfileLimit * tanh(d / iProfileLimit);
+    return softSaturate(d, iProfileLimit);
 }
+
 
 // Cyclic spectrum, ordered around the colour wheel: blue, cyan, green, amber, coral, pink, violet and
 // back to blue. Every stop is a neighbour of the next, so adjacent samples always blend into a
@@ -1274,11 +1287,17 @@ fun VoiceRecordingGlowSurface(
     )
 
     val density = LocalDensity.current
+    // A driver that rejects the shader program must not take the composer down with it: the AGSL path
+    // is attempted once, and any failure leaves the Canvas renderer to draw the same composition.
     val shader = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) VoiceEnergyShader() else null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            runCatching { VoiceEnergyShader() }.getOrNull()
+        } else {
+            null
+        }
     }
-    val fallbackArt = remember(density) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) VoiceEnergyFallbackArt(density) else null
+    val fallbackArt = remember(density, shader) {
+        if (shader == null) VoiceEnergyFallbackArt(density) else null
     }
     Box(modifier = modifier.clip(shape)) {
         Canvas(Modifier.matchParentSize()) {
