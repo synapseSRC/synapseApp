@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -52,9 +51,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.WelcomeHeroMetrics
  * Welcome screen shown as the entry point of the authentication flow.
  *
  * Three regions, one above the other: the hero artwork with the Synapse mark, the introduction
- * copy, and the single bottom action with the legal notice. The action column is pushed to the
- * bottom by a weighted gap and the whole column falls back to scrolling when the copy no longer
- * fits (compact displays, larger font scales), so nothing is positioned in screen coordinates.
+ * copy, and the single bottom action with the legal notice. The hero and the copy share the
+ * flexible space above the action, which is anchored to the bottom insets and never squeezed; that
+ * flexible region scrolls as a fallback when the copy no longer fits (compact displays, larger font
+ * scales). Nothing is positioned in screen coordinates.
  */
 @Composable
 fun WelcomeScreen(
@@ -89,7 +89,7 @@ fun WelcomeScreen(
         ) {
             val availableWidth = maxWidth
             val contentWidth = min(availableWidth, WelcomeHeroMetrics.ContentMaxWidth)
-            val heroHeight = (maxHeight * WelcomeHeroMetrics.HeroHeightFraction)
+            val heroHeight = min(maxHeight * WelcomeHeroMetrics.HeroHeightFraction, availableWidth)
                 .coerceIn(WelcomeHeroMetrics.HeroMinHeight, WelcomeHeroMetrics.HeroMaxHeight)
             val headingStyle = if (availableWidth < WelcomeHeroMetrics.CompactWidth) {
                 MaterialTheme.typography.headlineMedium
@@ -98,41 +98,47 @@ fun WelcomeScreen(
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(scrollState)
-                    .heightIn(min = maxHeight),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Region 1 - brand artwork and mark.
-                WelcomeHero(heroHeight = heroHeight)
-
-                // Region 2 - introduction copy.
+                // Regions 1 and 2 share the flexible space above the action area. They scroll as a
+                // fallback when the copy needs more room than the display has (compact screens,
+                // large font scales) while the action stays anchored to the bottom.
                 Column(
                     modifier = Modifier
-                        .width(contentWidth)
-                        .padding(horizontal = Spacing.space24),
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(scrollState),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.welcome_title),
-                        style = headingStyle.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Center
-                    )
+                    // Region 1 - brand artwork and mark.
+                    WelcomeHero(heroHeight = heroHeight)
 
-                    Spacer(modifier = Modifier.height(Spacing.space12))
+                    // Region 2 - introduction copy.
+                    Column(
+                        modifier = Modifier
+                            .width(contentWidth)
+                            .padding(horizontal = Spacing.space24),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.welcome_title),
+                            style = headingStyle.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center
+                        )
 
-                    Text(
-                        text = stringResource(id = R.string.welcome_subtitle),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = Spacing.space8)
-                    )
+                        Spacer(modifier = Modifier.height(Spacing.space12))
+
+                        Text(
+                            text = stringResource(id = R.string.welcome_subtitle),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = Spacing.space8)
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.weight(1f))
 
                 // Region 3 - single primary action plus the legal notice.
                 Column(
