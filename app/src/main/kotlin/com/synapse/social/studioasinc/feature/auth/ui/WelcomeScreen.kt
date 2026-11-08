@@ -212,37 +212,40 @@ private fun rememberLegalNotice(
             )
         )
 
+        // Located in the notice so the sentence keeps its exact wording and translation; a locale
+        // without a matching label simply renders the plain sentence.
+        val links = listOfNotNull(
+            linkSpan(notice, termsLabel)?.let {
+                LinkSpan(it, TermsLinkTag, SynapseLegalUrls.termsOfService)
+            },
+            linkSpan(notice, privacyLabel)?.let {
+                LinkSpan(it, PrivacyLinkTag, SynapseLegalUrls.privacyPolicy)
+            }
+        ).sortedBy { it.range.first }
+
         buildAnnotatedString {
-            append(notice)
-
-            linkRange(notice, termsLabel)?.let { range ->
-                addLink(
-                    link = LinkAnnotation.Clickable(
-                        tag = TermsLinkTag,
+            var cursor = 0
+            links.forEach { span ->
+                append(notice.substring(cursor, span.range.first))
+                pushLink(
+                    LinkAnnotation.Clickable(
+                        tag = span.tag,
                         styles = linkStyles,
-                        linkInteractionListener = { onOpenUrl(SynapseLegalUrls.termsOfService) }
-                    ),
-                    start = range.first,
-                    end = range.last + 1
+                        linkInteractionListener = { onOpenUrl(span.url) }
+                    )
                 )
+                append(notice.substring(span.range.first, span.range.last + 1))
+                pop()
+                cursor = span.range.last + 1
             }
-
-            linkRange(notice, privacyLabel)?.let { range ->
-                addLink(
-                    link = LinkAnnotation.Clickable(
-                        tag = PrivacyLinkTag,
-                        styles = linkStyles,
-                        linkInteractionListener = { onOpenUrl(SynapseLegalUrls.privacyPolicy) }
-                    ),
-                    start = range.first,
-                    end = range.last + 1
-                )
-            }
+            append(notice.substring(cursor))
         }
     }
 }
 
-private fun linkRange(notice: String, label: String): IntRange? {
+private data class LinkSpan(val range: IntRange, val tag: String, val url: String)
+
+private fun linkSpan(notice: String, label: String): IntRange? {
     if (label.isBlank()) return null
     val start = notice.indexOf(label)
     return if (start < 0) null else start..(start + label.length - 1)
