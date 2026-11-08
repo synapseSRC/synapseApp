@@ -9,7 +9,6 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.SynapseLegalUrls
 import com.synapse.social.studioasinc.domain.model.AppUpdateCheckResult
 import com.synapse.social.studioasinc.domain.usecase.about.CheckForUpdatesUseCase
-import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -110,8 +109,4 @@ class AboutSupportViewModel @Inject constructor(
 
     fun getTermsOfServiceUrl(): String = SynapseLegalUrls.termsOfService
     fun getPrivacyPolicyUrl(): String = SynapseLegalUrls.privacyPolicy
-
-    companion object {
-        val APP_WEBSITE_URL: String = SynapseConfig.APP_WEBSITE_URL
-    }
 }
