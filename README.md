@@ -74,6 +74,16 @@ Contributions are welcome!
 
 ---
 
+## 🙌 Contributors
+
+<p align="center">
+  <a href="https://github.com/synapseSRC/synapseApp/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=synapseSRC/synapseApp" style="border-radius:50%" alt="Contributors"/>
+  </a>
+</p>
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
