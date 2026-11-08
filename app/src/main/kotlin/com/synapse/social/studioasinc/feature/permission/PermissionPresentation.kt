@@ -56,6 +56,52 @@ internal fun AppPermission.icon(): ImageVector = when (this) {
     AppPermission.CAMERA -> Icons.Rounded.CameraAlt
 }
 
+private val NotificationsAccentLight = PermissionAccent(
+    badge = PermissionPalette.NotificationsBadgeLight,
+    onBadge = PermissionPalette.NotificationsOnBadgeLight,
+    glow = PermissionPalette.NotificationsGlowLight
+)
+private val NotificationsAccentDark = PermissionAccent(
+    badge = PermissionPalette.NotificationsBadgeDark,
+    onBadge = PermissionPalette.NotificationsOnBadgeDark,
+    glow = PermissionPalette.NotificationsGlowDark
+)
+private val MicrophoneAccentLight = PermissionAccent(
+    badge = PermissionPalette.MicrophoneBadgeLight,
+    onBadge = PermissionPalette.MicrophoneOnBadgeLight,
+    glow = PermissionPalette.MicrophoneGlowLight
+)
+private val MicrophoneAccentDark = PermissionAccent(
+    badge = PermissionPalette.MicrophoneBadgeDark,
+    onBadge = PermissionPalette.MicrophoneOnBadgeDark,
+    glow = PermissionPalette.MicrophoneGlowDark
+)
+private val CameraAccentLight = PermissionAccent(
+    badge = PermissionPalette.CameraBadgeLight,
+    onBadge = PermissionPalette.CameraOnBadgeLight,
+    glow = PermissionPalette.CameraGlowLight
+)
+private val CameraAccentDark = PermissionAccent(
+    badge = PermissionPalette.CameraBadgeDark,
+    onBadge = PermissionPalette.CameraOnBadgeDark,
+    glow = PermissionPalette.CameraGlowDark
+)
+
+/**
+ * The accent family a permission owns: cyan for notifications, lavender for the microphone, champagne
+ * for the camera. It is what makes a card recognisable before its title is read, and it is a pure
+ * function of the permission and the theme so it can be reasoned about without a composition.
+ */
+internal fun permissionAccent(permission: AppPermission, dark: Boolean): PermissionAccent =
+    when (permission) {
+        AppPermission.NOTIFICATIONS ->
+            if (dark) NotificationsAccentDark else NotificationsAccentLight
+        AppPermission.MICROPHONE ->
+            if (dark) MicrophoneAccentDark else MicrophoneAccentLight
+        AppPermission.CAMERA ->
+            if (dark) CameraAccentDark else CameraAccentLight
+    }
+
 @StringRes
 internal fun PermissionStatus.labelRes(): Int = when (this) {
     PermissionStatus.GRANTED -> R.string.permission_status_granted
