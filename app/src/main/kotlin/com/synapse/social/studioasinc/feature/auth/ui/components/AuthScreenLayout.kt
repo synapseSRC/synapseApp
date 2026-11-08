@@ -47,6 +47,9 @@ fun AuthScreenLayout(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (isTwoColumn) {
+            // paddingValues is applied here, on the Row that hosts both columns, so the status and
+            // navigation bar insets protect the header and the form alike. The columns must not
+            // apply it again or the bottom inset would be counted twice.
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -80,6 +83,10 @@ fun AuthScreenLayout(
                 }
             }
         } else {
+            // Same order as the two-column path: the page canvas fills the whole window (edge to
+            // edge, behind the bars) and the insets are consumed inside the scroll container, with
+            // the keyboard height added by imePadding so the focused field can always scroll clear
+            // of it.
             Column(
                 modifier = Modifier
                     .fillMaxSize()

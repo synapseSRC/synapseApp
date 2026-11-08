@@ -64,12 +64,13 @@ fun WelcomeHero(
         // The artwork is pure geometry: build the paths, brushes and scalar values once per size
         // instead of allocating them on every draw pass, so the Canvas lambda only issues draw
         // calls and never triggers GC work on the render thread.
-        val artwork = remember(maxWidth, maxHeight, palette, density) {
+        val artwork = remember(maxWidth, maxHeight, palette, density, logoCentreFraction) {
             with(density) {
                 buildHeroArtwork(
                     width = maxWidth.toPx(),
                     height = maxHeight.toPx(),
                     hairlineWidth = RibbonHairlineWidth.toPx(),
+                    logoCentreFraction = logoCentreFraction,
                     palette = palette
                 )
             }
@@ -177,6 +178,7 @@ private fun buildHeroArtwork(
     width: Float,
     height: Float,
     hairlineWidth: Float,
+    logoCentreFraction: Float,
     palette: SynapseBrandPalette
 ): HeroArtwork {
     val w = width
@@ -266,7 +268,9 @@ private fun buildHeroArtwork(
     )
 
     // Cool violet halo behind the plate; keeps the mark crisply separated from the ribbon band.
-    val haloCenter = Offset(0.5f * w, WelcomeHeroMetrics.LogoCentreFraction * h)
+    // Follows the plate exactly: the sign-in hero centres the plate at 0.5, the welcome hero at
+    // 0.56, and the halo must never drift away from the mark it is lighting.
+    val haloCenter = Offset(0.5f * w, logoCentreFraction * h)
     val haloRadius = 0.34f * w
     val haloBrush = Brush.radialGradient(
         colors = listOf(

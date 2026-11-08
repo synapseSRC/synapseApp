@@ -37,6 +37,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -285,13 +286,17 @@ private fun UnifiedAuthForm(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
+            val forgotPasswordLabel = stringResource(R.string.forgot_password_link)
             Text(
-                text = stringResource(R.string.forgot_password_link),
+                text = forgotPasswordLabel,
                 style = MaterialTheme.typography.labelLarge,
                 color = palette.accent,
                 textAlign = TextAlign.End,
                 modifier = Modifier
-                    .clickable { onForgotPasswordClick() }
+                    .clickable(
+                        onClickLabel = forgotPasswordLabel,
+                        role = Role.Button
+                    ) { onForgotPasswordClick() }
                     .padding(vertical = Spacing.space12)
             )
         }
@@ -346,11 +351,19 @@ private fun UnifiedAuthForm(
 
     Spacer(modifier = Modifier.height(Spacing.space24))
 
+    val toggleActionLabel = if (isSignUpMode) {
+        stringResource(R.string.action_sign_in)
+    } else {
+        stringResource(R.string.action_sign_up)
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = Spacing.space48)
-            .clickable { onToggleModeClick() },
+            .clickable(
+                onClickLabel = toggleActionLabel,
+                role = Role.Button
+            ) { onToggleModeClick() },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -367,11 +380,7 @@ private fun UnifiedAuthForm(
         // locales, so the visual separation must not depend on them.
         Spacer(modifier = Modifier.width(Spacing.space4))
         Text(
-            text = if (isSignUpMode) {
-                stringResource(R.string.action_sign_in)
-            } else {
-                stringResource(R.string.action_sign_up)
-            },
+            text = toggleActionLabel,
             style = MaterialTheme.typography.labelLarge,
             color = palette.accent
         )

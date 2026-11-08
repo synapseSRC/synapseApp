@@ -2,6 +2,9 @@ package com.synapse.social.studioasinc.feature.auth.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -16,6 +19,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
  * from [AuthOutlinedButton], so Google, Apple, GitHub and the passkey entry point share one height,
  * corner radius, border, icon lane and press animation. The labels are resolved from resources
  * instead of being hardcoded here.
+ *
+ * A provider without a brand asset falls back to a neutral account icon, never to another
+ * provider's logo: showing Google's mark for an unknown provider would misrepresent which service
+ * is about to be used.
  */
 @Composable
 fun OAuthButton(
@@ -23,12 +30,12 @@ fun OAuthButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val iconRes = when (provider.lowercase()) {
+    val brandIconRes = when (provider.lowercase()) {
         "google" -> R.drawable.ic_google_logo
         "apple" -> R.drawable.ic_apple_logo
         "facebook" -> R.drawable.ic_facebook_logo
         "github" -> R.drawable.ic_github_logo
-        else -> R.drawable.ic_google_logo
+        else -> null
     }
 
     val label = when (provider.lowercase()) {
@@ -44,11 +51,19 @@ fun OAuthButton(
         onClick = onClick,
         modifier = modifier,
         leadingIcon = {
-            Image(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(Sizes.IconLarge)
-            )
+            if (brandIconRes != null) {
+                Image(
+                    painter = painterResource(id = brandIconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(Sizes.IconLarge)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(Sizes.IconLarge)
+                )
+            }
         }
     )
 }
