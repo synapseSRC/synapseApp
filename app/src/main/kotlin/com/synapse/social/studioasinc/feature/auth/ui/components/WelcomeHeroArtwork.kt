@@ -47,7 +47,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.WelcomeHeroMetrics
 @Composable
 fun WelcomeHero(
     heroHeight: Dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    plateSize: Dp = WelcomeHeroMetrics.PlateSize,
+    markSize: Dp = WelcomeHeroMetrics.MarkSize,
+    logoCentreFraction: Float = WelcomeHeroMetrics.LogoCentreFraction
 ) {
     val palette = SynapseBrand.palette
     val density = LocalDensity.current
@@ -78,8 +81,10 @@ fun WelcomeHero(
 
         WelcomeLogoPlate(
             palette = palette,
+            plateSize = plateSize,
+            markSize = markSize,
             modifier = Modifier.align(Alignment.Center).offset(
-                y = heroHeight * (WelcomeHeroMetrics.LogoCentreFraction - 0.5f)
+                y = heroHeight * (logoCentreFraction - 0.5f)
             )
         )
     }
@@ -94,15 +99,19 @@ fun WelcomeHero(
 @Composable
 fun WelcomeLogoPlate(
     modifier: Modifier = Modifier,
-    palette: SynapseBrandPalette = SynapseBrand.palette
+    palette: SynapseBrandPalette = SynapseBrand.palette,
+    plateSize: Dp = WelcomeHeroMetrics.PlateSize,
+    markSize: Dp = WelcomeHeroMetrics.MarkSize,
+    plateCorner: Dp = WelcomeHeroMetrics.PlateCorner,
+    plateElevation: Dp = WelcomeHeroMetrics.PlateElevation
 ) {
-    val shape = RoundedCornerShape(WelcomeHeroMetrics.PlateCorner)
+    val shape = RoundedCornerShape(plateCorner)
 
     Box(
         modifier = modifier
-            .size(WelcomeHeroMetrics.PlateSize)
+            .size(plateSize)
             .shadow(
-                elevation = WelcomeHeroMetrics.PlateElevation,
+                elevation = plateElevation,
                 shape = shape,
                 clip = false,
                 ambientColor = palette.plateShadow,
@@ -120,7 +129,7 @@ fun WelcomeLogoPlate(
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground),
             contentDescription = stringResource(id = R.string.app_name),
-            modifier = Modifier.requiredSize(WelcomeHeroMetrics.MarkSize)
+            modifier = Modifier.requiredSize(markSize)
         )
     }
 }

@@ -124,3 +124,23 @@ object WelcomeHeroMetrics {
      */
     val MarkSize = 236.dp
 }
+
+/**
+ * Geometry for the compact sign-in hero.
+ *
+ * Deliberately much shorter than the welcome hero: the form is the primary focus of this screen, so
+ * the artwork is a branded band that keeps the heading and the first field above the fold on a
+ * typical phone, while still reading as the same illustration as the welcome screen.
+ */
+object SignInHeroMetrics {
+    /** Height of the artwork band above the heading. */
+    val Height = 176.dp
+
+    /** Vertical centre of the logo plate inside the band, as a share of the band height. */
+    const val LogoCentreFraction = 0.5f
+
+    val PlateSize = 96.dp
+    val PlateCorner = 30.dp
+    val PlateElevation = 12.dp
+    val MarkSize = 134.dp
+}
