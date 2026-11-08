@@ -188,7 +188,7 @@ private fun permissionSupportingRes(permission: AppPermission, status: Permissio
         PermissionStatus.NOT_REQUESTED -> permission.benefitRes()
         PermissionStatus.DENIED,
         PermissionStatus.PERMANENTLY_DENIED,
-        PermissionStatus.RESTRICTED -> permission.hintRes()
+        PermissionStatus.RESTRICTED -> status.hintRes()
     }
 
 @Composable
