@@ -98,10 +98,6 @@ fun AuthScreen(
                     onGetStartedClick = {
                         authViewModel.showSignUpScreen()
                         navController.navigate("authMain")
-                    },
-                    onSignInClick = {
-                        authViewModel.showSignInScreen()
-                        navController.navigate("authMain")
                     }
                 )
             }

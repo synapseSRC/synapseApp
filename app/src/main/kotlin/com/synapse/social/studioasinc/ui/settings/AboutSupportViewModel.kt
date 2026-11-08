@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.core.util.SynapseLegalUrls
 import com.synapse.social.studioasinc.domain.model.AppUpdateCheckResult
 import com.synapse.social.studioasinc.domain.usecase.about.CheckForUpdatesUseCase
 import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
@@ -107,8 +108,8 @@ class AboutSupportViewModel @Inject constructor(
         }
     }
 
-    fun getTermsOfServiceUrl(): String = "$APP_WEBSITE_URL/reference/terms/"
-    fun getPrivacyPolicyUrl(): String = "$APP_WEBSITE_URL/reference/privacy/"
+    fun getTermsOfServiceUrl(): String = SynapseLegalUrls.termsOfService
+    fun getPrivacyPolicyUrl(): String = SynapseLegalUrls.privacyPolicy
 
     companion object {
         val APP_WEBSITE_URL: String = SynapseConfig.APP_WEBSITE_URL
