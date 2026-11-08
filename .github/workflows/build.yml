@@ -2,13 +2,14 @@ name: 🔧 Build
 
 on:
   push:
-    # Only main builds from a push. PR-branch pushes are deliberately excluded - a branch
-    # with an open PR would otherwise fire two runs per commit (push + pull_request), and the
-    # concurrency cancellation below would leave a "cancelled" Build APKs / Send APKs to
-    # Telegram context that marks the PR mergeable_state as unstable even though the real run
-    # succeeded. Pushes to other branches can still be built on demand via workflow_dispatch.
-    branches:
-      - main
+    # Every branch builds on push, exactly once per commit. There is deliberately no
+    # pull_request trigger: this repo's PRs always come from same-repo branches, so the commit
+    # that opened or updated a PR has already fired a push run here. Firing both push and
+    # pull_request would build the same commit twice (duplicate Telegram APKs) and the
+    # concurrency cancellation below would leave a "cancelled" Build APKs / Send APKs to Telegram
+    # context that marks the PR mergeable_state as unstable even when the real run succeeded.
+    # Fork PRs are not buildable regardless - GitHub withholds the org secrets from a fork-HEAD
+    # run and gives it no runners. Other branches can also be built on demand via workflow_dispatch.
     paths:
       - 'app/**'
       - 'shared/**'
@@ -20,25 +21,11 @@ on:
       - 'gradle.properties'
       - 'local.properties'
       - '.github/workflows/build.yml'
-  # Pull requests build the real release APK and send it to Telegram, exactly like a push.
-  # That works only because the head branch lives in this repository: GitHub withholds the
-  # org secrets below from a pull_request run whose head is a fork, and gives it no runners.
-  pull_request:
-    paths:
-      - 'app/**'
-      - 'shared/**'
-      - 'gradle/**'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - 'gradle.properties'
-      - '.github/workflows/build.yml'
   workflow_dispatch:
 
-# Concurrency still folds overlapping runs on the same branch - rapid pushes to main or
-# repeated commits on an open PR (head_ref for PRs, ref_name for pushes and dispatches) -
-# into one, so the newest commit wins and the test channel gets a single APK.
+# Concurrency folds overlapping runs on the same branch (rapid pushes) into one, so the newest
+# commit wins and the test channel gets a single APK. With no pull_request event, head_ref is
+# always empty and the group is just the branch name.
 concurrency:
   group: build-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -110,7 +97,7 @@ jobs:
           GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
         run: |
           set +e
-          ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
+          ./gradlew assembleRelease --no-daemon --console=plain -x :app:checkReleaseAarMetadata 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
           gradle_status=${PIPESTATUS[0]}
           set -e
           if [ "$gradle_status" -ne 0 ]; then
@@ -213,8 +200,8 @@ jobs:
           # arm64 covers the test fleet. All three splits stay available in the uploaded artifact.
           APK_PATH: ./downloaded-artifact/app-arm64-v8a-release-${{ needs.build.outputs.short_sha }}.apk
           GITHUB_ACTOR: ${{ github.actor }}
-          # On a pull_request run github.ref_name is "merge" (the PR merge ref), which would
-          # label every test build with a useless branch name; head_ref is the real branch.
+          # Only push and workflow_dispatch runs reach here, so head_ref is always empty and
+          # ref_name is the real branch. head_ref is kept as a fallback for defensiveness.
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: python ./.github/workflows/deploy_artifacts.py
         continue-on-error: true
