@@ -1,10 +1,5 @@
-<p align="center"><img src="assets/synapse_transparent_black_bg.png" alt="Synapse Logo" width="200"/></p>
-<h1 align="center">⚡ Synapse Social</h1>
-<p align="center"><i>Native UI. Shared Logic. Real-time everything.</i></p>
-
----
-
-Synapse Social is a cross-platform social media application built on the **"Native UI, Shared Logic"** philosophy. Powered by Kotlin Multiplatform, it shares business logic, networking, and data layers across Android and iOS — while each platform delivers a fully native experience via **Jetpack Compose** (Android) and **SwiftUI** (iOS).
+<p align="center"><img src="assets/synapse_social_2d_m3_1280x640.png" alt="Repo banner" width="1280"/></p>
+Synapse Social is a cross-platform social media application built on the **Native UI, Shared Logic** philosophy. Powered by Kotlin Multiplatform, it shares business logic, networking, and data layers across Android and iOS — while each platform delivers a fully native experience via **Jetpack Compose** (Android) and **SwiftUI** (iOS).
 
 The backend runs on **Supabase** — handling real-time messaging, authentication, and file storage at scale.
 
