@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Strings introduced by the sign-in redesign.
+
+  They live in their own feature-scoped file, like inbox_strings.xml / chat_attachments.xml /
+  about_app.xml, so the shared strings.xml is not rewritten for a handful of additions.
+-->
+<resources>
+    <!-- Social sign-in providers (labels moved out of OAuthButton.kt) -->
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="continue_with_apple">Continue with Apple</string>
+    <string name="continue_with_github">Continue with GitHub</string>
+    <string name="continue_with_facebook">Continue with Facebook</string>
+    <string name="continue_with_provider">Continue with %1$s</string>
+
+    <!-- Auth input field accessibility (moved out of AuthTextField.kt) -->
+    <string name="auth_field_content_description">%1$s input field</string>
+    <string name="auth_field_show_password">Show password</string>
+    <string name="auth_field_hide_password">Hide password</string>
+    <string name="auth_field_valid_input">Valid input</string>
+    <string name="auth_field_error">Error</string>
+</resources>

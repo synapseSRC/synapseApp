@@ -47,7 +47,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.WelcomeHeroMetrics
 @Composable
 fun WelcomeHero(
     heroHeight: Dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    plateSize: Dp = WelcomeHeroMetrics.PlateSize,
+    markSize: Dp = WelcomeHeroMetrics.MarkSize,
+    logoCentreFraction: Float = WelcomeHeroMetrics.LogoCentreFraction
 ) {
     val palette = SynapseBrand.palette
     val density = LocalDensity.current
@@ -61,12 +64,13 @@ fun WelcomeHero(
         // The artwork is pure geometry: build the paths, brushes and scalar values once per size
         // instead of allocating them on every draw pass, so the Canvas lambda only issues draw
         // calls and never triggers GC work on the render thread.
-        val artwork = remember(maxWidth, maxHeight, palette, density) {
+        val artwork = remember(maxWidth, maxHeight, palette, density, logoCentreFraction) {
             with(density) {
                 buildHeroArtwork(
                     width = maxWidth.toPx(),
                     height = maxHeight.toPx(),
                     hairlineWidth = RibbonHairlineWidth.toPx(),
+                    logoCentreFraction = logoCentreFraction,
                     palette = palette
                 )
             }
@@ -78,8 +82,10 @@ fun WelcomeHero(
 
         WelcomeLogoPlate(
             palette = palette,
+            plateSize = plateSize,
+            markSize = markSize,
             modifier = Modifier.align(Alignment.Center).offset(
-                y = heroHeight * (WelcomeHeroMetrics.LogoCentreFraction - 0.5f)
+                y = heroHeight * (logoCentreFraction - 0.5f)
             )
         )
     }
@@ -94,15 +100,19 @@ fun WelcomeHero(
 @Composable
 fun WelcomeLogoPlate(
     modifier: Modifier = Modifier,
-    palette: SynapseBrandPalette = SynapseBrand.palette
+    palette: SynapseBrandPalette = SynapseBrand.palette,
+    plateSize: Dp = WelcomeHeroMetrics.PlateSize,
+    markSize: Dp = WelcomeHeroMetrics.MarkSize,
+    plateCorner: Dp = WelcomeHeroMetrics.PlateCorner,
+    plateElevation: Dp = WelcomeHeroMetrics.PlateElevation
 ) {
-    val shape = RoundedCornerShape(WelcomeHeroMetrics.PlateCorner)
+    val shape = RoundedCornerShape(plateCorner)
 
     Box(
         modifier = modifier
-            .size(WelcomeHeroMetrics.PlateSize)
+            .size(plateSize)
             .shadow(
-                elevation = WelcomeHeroMetrics.PlateElevation,
+                elevation = plateElevation,
                 shape = shape,
                 clip = false,
                 ambientColor = palette.plateShadow,
@@ -120,7 +130,7 @@ fun WelcomeLogoPlate(
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground),
             contentDescription = stringResource(id = R.string.app_name),
-            modifier = Modifier.requiredSize(WelcomeHeroMetrics.MarkSize)
+            modifier = Modifier.requiredSize(markSize)
         )
     }
 }
@@ -168,6 +178,7 @@ private fun buildHeroArtwork(
     width: Float,
     height: Float,
     hairlineWidth: Float,
+    logoCentreFraction: Float,
     palette: SynapseBrandPalette
 ): HeroArtwork {
     val w = width
@@ -257,7 +268,9 @@ private fun buildHeroArtwork(
     )
 
     // Cool violet halo behind the plate; keeps the mark crisply separated from the ribbon band.
-    val haloCenter = Offset(0.5f * w, WelcomeHeroMetrics.LogoCentreFraction * h)
+    // Follows the plate exactly: the sign-in hero centres the plate at 0.5, the welcome hero at
+    // 0.56, and the halo must never drift away from the mark it is lighting.
+    val haloCenter = Offset(0.5f * w, logoCentreFraction * h)
     val haloRadius = 0.34f * w
     val haloBrush = Brush.radialGradient(
         colors = listOf(
