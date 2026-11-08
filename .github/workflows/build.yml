@@ -205,3 +205,4 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: python ./.github/workflows/deploy_artifacts.py
         continue-on-error: true
+

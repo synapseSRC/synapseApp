@@ -390,3 +390,4 @@ private fun cubicPointAt(p0: Offset, p1: Offset, p2: Offset, p3: Offset, t: Floa
         y = w0 * p0.y + w1 * p1.y + w2 * p2.y + w3 * p3.y
     )
 }
+

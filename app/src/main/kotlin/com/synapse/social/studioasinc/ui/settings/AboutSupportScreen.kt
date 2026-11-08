@@ -425,3 +425,4 @@ internal fun aboutListShape(index: Int, count: Int): androidx.compose.ui.graphic
         else -> RoundedCornerShape(inner)
     }
 }
+
