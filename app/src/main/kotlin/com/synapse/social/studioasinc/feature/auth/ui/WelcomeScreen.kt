@@ -36,7 +36,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.min
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.core.util.SynapseLegalUrls
@@ -88,8 +87,9 @@ fun WelcomeScreen(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
             val availableWidth = maxWidth
-            val contentWidth = min(availableWidth, WelcomeHeroMetrics.ContentMaxWidth)
-            val heroHeight = min(maxHeight * WelcomeHeroMetrics.HeroHeightFraction, availableWidth)
+            val contentWidth = availableWidth.coerceAtMost(WelcomeHeroMetrics.ContentMaxWidth)
+            val heroHeight = (maxHeight * WelcomeHeroMetrics.HeroHeightFraction)
+                .coerceAtMost(availableWidth)
                 .coerceIn(WelcomeHeroMetrics.HeroMinHeight, WelcomeHeroMetrics.HeroMaxHeight)
             val headingStyle = if (availableWidth < WelcomeHeroMetrics.CompactWidth) {
                 MaterialTheme.typography.headlineMedium
