@@ -393,23 +393,22 @@ fun NavGraphBuilder.inboxGraph(
                         navController.navigate(AppDestination.GroupInfo(chatId, groupName))
                     },
                     onNavigateToChatInfo = { chatId, userId ->
-                        // Contact Info is already on the stack, or is still opening: a second tap on
-                        // the pill while the transition runs must not push another copy.
-                        val contactInfoIsOpen = navController.currentBackStack.value.any { entry ->
-                            entry.destination.hasRoute<AppDestination.ChatInfo>()
-                        }
-                        if (!contactInfoIsOpen) {
-                            navController.navigate(
-                                AppDestination.ChatInfo(
-                                    chatId = chatId,
-                                    userId = userId,
-                                    participantName = args.participantName,
-                                    participantAvatar = args.participantAvatar
-                                )
-                            ) {
-                                // Never two Contact Info destinations for one conversation.
-                                launchSingleTop = true
-                            }
+                        // The whole pill is clickable and the transition takes a moment, so a second
+                        // tap can land before Contact Info has finished opening. launchSingleTop is
+                        // the guard for exactly that case: once Contact Info is the current
+                        // destination the tap does nothing, no second destination and no second
+                        // animation. It deliberately is *not* a scan of the whole back stack - a
+                        // Contact Info deeper in the stack (a chat opened again on top of it) must
+                        // never stop the pill from opening it for this conversation.
+                        navController.navigate(
+                            AppDestination.ChatInfo(
+                                chatId = chatId,
+                                userId = userId,
+                                participantName = args.participantName,
+                                participantAvatar = args.participantAvatar
+                            )
+                        ) {
+                            launchSingleTop = true
                         }
                     },
                     onNavigateToProfile = { userId ->
