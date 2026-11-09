@@ -221,12 +221,19 @@ fun ChatTopAppBar(
 
 /**
  * Height shared by the three floating surfaces, so the circular back button and both pills line up
- * on one baseline. M3 Expressive's medium container height.
+ * on one baseline. 48dp is the slimmest height that still leaves each pill's icon buttons their
+ * full touch target, and it keeps the header from reading as a bar.
  */
-private val FloatingHeaderHeight = Sizes.ButtonHeightM3Medium
+private val FloatingHeaderHeight = Sizes.ButtonHeightLarge
 
-/** Avatar diameter leaving the same inset the reference geometry shows inside the title pill. */
-private val FloatingHeaderAvatarSize = Sizes.ButtonHeightM3Medium - Spacing.space12
+/** Avatar diameter: a 2dp inset top and bottom, so the avatar nearly fills the pill it sits in. */
+private val FloatingHeaderAvatarSize = FloatingHeaderHeight - Spacing.space4
+
+/**
+ * What the floating header occupies below the status bar - the tallest surface plus the row's own
+ * vertical padding - so the timeline knows how far its oldest item has to scroll clear of it.
+ */
+val ChatFloatingHeaderHeight = FloatingHeaderHeight + Spacing.space4 * 2
 
 /**
  * Restrained translucency for the floating surfaces: the active theme's surface-container role at a
@@ -279,11 +286,11 @@ private fun ChatFloatingTopBar(
             // Clear of the status icons only; the wallpaper still paints behind the transparent
             // status bar because nothing here reserves layout space.
             .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = Spacing.space8, vertical = Spacing.space8),
+            .padding(horizontal = Spacing.space4, vertical = Spacing.space4),
         verticalAlignment = Alignment.CenterVertically
     ) {
         FloatingBackButton(onNavigateBack = onNavigateBack)
-        Spacer(modifier = Modifier.width(Spacing.space8))
+        Spacer(modifier = Modifier.width(Spacing.space4))
         FloatingTitlePill(
             modifier = Modifier.weight(1f),
             title = title,
@@ -297,7 +304,7 @@ private fun ChatFloatingTopBar(
             onClickLabel = contactInfoLabel,
             onViewContact = onViewContact
         )
-        Spacer(modifier = Modifier.width(Spacing.space8))
+        Spacer(modifier = Modifier.width(Spacing.space4))
         FloatingActionsPill(
             isGroupChat = isGroupChat,
             onViewContact = onViewContact,
@@ -388,7 +395,9 @@ private fun FloatingTitlePill(
             modifier = Modifier
                 .fillMaxSize()
                 .clickable(onClickLabel = onClickLabel, onClick = onViewContact)
-                .padding(horizontal = Spacing.space4, vertical = Spacing.space4),
+                // Horizontal only: the avatar already carries its own inset inside the pill, so
+                // a vertical padding here would only shrink it.
+                .padding(horizontal = Spacing.space4),
             verticalAlignment = Alignment.CenterVertically
         ) {
             UserAvatarWithStatus(
@@ -398,7 +407,7 @@ private fun FloatingTitlePill(
                 showActiveStatus = showAvatarActiveStatus,
                 displayName = avatarDisplayName
             )
-            Spacer(modifier = Modifier.width(Spacing.space12))
+            Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
                 SingleLineMarqueeText(
                     text = title,

@@ -283,8 +283,7 @@ val currentUserId = currentUserIdState ?: ""
 
     // Scroll padding, not reserved layout: the floating header paints over the timeline, so the
     // oldest content has to be able to scroll clear of it.
-    val floatingHeaderHeight = Sizes.ButtonHeightM3Medium + Spacing.space16
-    val messageListTopPadding = floatingHeaderHeight +
+    val messageListTopPadding = ChatFloatingHeaderHeight +
         with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
     // "View earliest message" lands on the earliest message that is loaded. The older page has to
