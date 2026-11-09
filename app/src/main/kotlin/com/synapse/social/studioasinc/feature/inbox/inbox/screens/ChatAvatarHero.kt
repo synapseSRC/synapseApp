@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -11,38 +12,44 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 
 /**
- * Shared-element key for a chat's profile picture. The pill in the conversation and the header of
- * Contact Info both claim the key returned here, so the picture travels between the two screens as
- * one element instead of two elements swapping places.
+ * Shared-element key for a person's picture.
+ *
+ * The conversation's floating pill and the Contact Info header derive it from the same user id, so
+ * the element keeps one identity wherever that person appears: tap, tap again, go back, come back,
+ * and it is still the same picture travelling. A conversation whose participant id is not known
+ * falls back to the chat id, which both screens also receive, so the two sides still agree.
  */
-private fun chatAvatarHeroKey(chatId: String): String = "chat-avatar-" + chatId
+internal fun chatAvatarHeroKey(userId: String?, chatId: String): String =
+    if (!userId.isNullOrBlank()) "chat-avatar-user-" + userId else "chat-avatar-chat-" + chatId
 
 /**
- * The bounds spring the create-post button already uses, so a shared element moves with one feel
- * across the app instead of a new curve per screen.
+ * One smooth spring with no overshoot, of the same family as the create-post button's movement:
+ * the picture arrives where it is going rather than bouncing there, and settles in roughly the time
+ * the screen around it takes to fade.
  */
 private val ChatAvatarHeroBounds: BoundsTransform = BoundsTransform { _, _ ->
-    spring(dampingRatio = 0.8f, stiffness = 380f)
+    spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)
 }
 
 /**
- * The shared-element modifier for a chat's profile picture, or [Modifier] when the surrounding
- * navigation did not supply the transition scopes (previews, tests) - which keeps both the floating
- * header and Contact Info usable on their own.
+ * The shared-element modifier for a person's picture, or [Modifier] when the surrounding navigation
+ * did not supply the transition scopes (previews, tests) - which keeps both the floating header and
+ * Contact Info usable on their own.
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun rememberChatAvatarHero(
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
-    chatId: String
+    chatId: String,
+    userId: String? = null
 ): Modifier {
     if (sharedTransitionScope == null || animatedVisibilityScope == null) return Modifier
     return with(sharedTransitionScope) {
         // The picture is round in both screens, and stays round while the overlay carries it.
         val circleClip = remember { OverlayClip(CircleShape) }
         Modifier.sharedElement(
-            sharedContentState = rememberSharedContentState(key = chatAvatarHeroKey(chatId)),
+            sharedContentState = rememberSharedContentState(key = chatAvatarHeroKey(userId, chatId)),
             animatedVisibilityScope = animatedVisibilityScope,
             boundsTransform = ChatAvatarHeroBounds,
             clipInOverlayDuringTransition = circleClip

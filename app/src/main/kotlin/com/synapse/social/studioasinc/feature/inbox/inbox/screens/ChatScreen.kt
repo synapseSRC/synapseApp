@@ -93,14 +93,6 @@ import kotlinx.coroutines.withContext
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
-
-    // The picture is the element that carries this conversation's identity into Contact Info, so
-    // both screens declare the same shared element by the same key.
-    val avatarHeroModifier = rememberChatAvatarHero(
-        sharedTransitionScope = sharedTransitionScope,
-        animatedVisibilityScope = animatedVisibilityScope,
-        chatId = chatId
-    )
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
@@ -611,6 +603,15 @@ typingStatus = typingStatus,
                 val disappearingMode by viewModel.disappearingMode.collectAsState()
                 val isMuted by viewModel.isMuted.collectAsState()
                 val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
+                // The picture is the element that carries this person into Contact Info, so both
+                // screens declare the same shared element under the same user-based key. A group
+                // avatar is not that element, so a group hands over no user id.
+                val avatarHeroModifier = rememberChatAvatarHero(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    userId = if (isGroupChat) null else participantId,
+                    chatId = chatId
+                )
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
