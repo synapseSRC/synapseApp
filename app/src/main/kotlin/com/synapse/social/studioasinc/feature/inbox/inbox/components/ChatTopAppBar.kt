@@ -462,7 +462,10 @@ private fun FloatingActionsPill(
         shape = RoundedCornerShape(percent = 50)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            // Wrap content: a fillMaxSize row inside a surface that only fixes its height claims
+            // the whole remaining width of the header, and Row measures non-weighted children
+            // first, so the weighted title pill next to it would be left with zero width.
+            modifier = Modifier.fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Video calling lives in the overflow menu so the pill keeps the reference's two-icon
