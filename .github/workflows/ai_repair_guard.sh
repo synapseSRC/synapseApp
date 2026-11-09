@@ -71,6 +71,13 @@ changed_paths() {
     case "$path" in
       *' -> '*) path="${path##* -> }" ;;
     esac
+    # Generated build output, caches and IDE state are not repairs: a Gradle run
+    # creates them, path_is_allowed() refuses them anyway, and treating them as
+    # out-of-scope edits would block the commit of a genuinely green repair on a
+    # repository whose .gitignore does not (or no longer) cover them.
+    case "$path" in
+      build/*|*/build/*|.gradle/*|*/.gradle/*|.kotlin/*|*/.kotlin/*|.idea/*|*/.idea/*) continue ;;
+    esac
     printf '%s\n' "$path"
   done
 }

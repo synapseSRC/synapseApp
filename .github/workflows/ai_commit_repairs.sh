@@ -85,7 +85,13 @@ printf '  %s\n' "${CHANGED[@]}"
 git config user.name "$BOT_NAME"
 git config user.email "$BOT_EMAIL"
 
-git add -A -- app shared
+# Stage exactly the paths that were validated above. A bare `git add -A -- app shared`
+# pathspec aborts the whole add when one of the directories is absent, which would
+# leave the repair unstaged and silently drop it.
+for path in "${CHANGED[@]}"; do
+  [ -n "$path" ] || continue
+  git add -A -- "$path" || warn "could not stage $path"
+done
 if git diff --cached --quiet; then
   log "nothing staged under app/ or shared/; nothing to commit"
   exit 0

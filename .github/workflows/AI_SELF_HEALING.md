@@ -96,3 +96,23 @@ the model catalog) are uploaded as the `ai-repair-diagnostics-*` artifact.
   re-triggering the job that produced it.
 * A repair is only ever committed when the build and the release verification both
   pass; a failed cycle leaves the branch untouched and the job red.
+
+## Annotation budget
+
+GitHub Actions surfaces at most **10 error annotations per step**. The pipeline therefore
+streams the diagnosis of every attempt as plain log text and stores it per attempt
+(`attempt-<n>-gradle-diagnostics.txt`, inside the uploaded artifact), and spends the step's
+annotation budget on the loop's own verdict plus at most `AI_REPAIR_MAX_DIAGNOSTIC_ANNOTATIONS`
+(default 6) lines from the **last still-failing** attempt. Annotating every attempt would push
+the verdict — "KILO_API_KEY is not configured", "CLI unavailable", "attempts exhausted" — out
+of the budget exactly when an operator needs it.
+
+## Tests
+
+`outputs/ai-repair-tests/harness.py` drives the real scripts, guard rails, classifiers and
+workflow wiring against stub `gradlew`/`kilo` executables in throw-away git workspaces. It
+covers 82 assertions across: green first attempt (agent not invoked, no commit), repair-then-green,
+attempt exhaustion, infrastructure classification, out-of-scope reverts, undo of an agent-created
+commit, redaction, rate-limit model fallback, auth abort, missing secret, the consolidated
+commit + push, refusal in PR-head/tag contexts, the APK guard, test-source protection and the
+annotation budget. It found and fixed four real defects before the first live run.

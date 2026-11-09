@@ -62,6 +62,10 @@ GRADLE_TASK="${AI_REPAIR_GRADLE_TASK:-assembleRelease}"
 GRADLE_FLAGS="${AI_REPAIR_GRADLE_FLAGS:---no-daemon --console=plain -x :app:checkReleaseAarMetadata}"
 GRADLE_LOG_TAIL_LINES="${AI_REPAIR_GRADLE_LOG_TAIL_LINES:-200}"
 KILO_CONFIG_NAME="${AI_REPAIR_KILO_CONFIG:-kilo_repair_config.jsonc}"
+# GitHub Actions surfaces at most 10 error annotations per step, so the diagnostics of
+# every attempt are streamed as plain log text and stored per attempt, while the step's
+# annotation budget is reserved for the loop's own verdict plus the last attempt.
+MAX_DIAGNOSTIC_ANNOTATIONS="${AI_REPAIR_MAX_DIAGNOSTIC_ANNOTATIONS:-6}"
 
 KILO_BIN=""
 MODELS=()
@@ -190,8 +194,9 @@ resolve_models() {
 }
 
 # --- Gradle ------------------------------------------------------------------
-annotate_gradle() {
-  local logfile="$1" diagnostics="" line
+extract_gradle_diagnostics() {
+  local logfile="$1" outfile="$2" diagnostics="" line
+  : >"$outfile"
   [ -s "$logfile" ] || return 0
   diagnostics="$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|^> Task .* FAILED|^.* FAILED$|^.*AssertionError:|^.*error:|^.*AAPT2|^.*failed linking references)' -- "$logfile" | tail -n 25 || true)"
   if [ -z "$diagnostics" ]; then
@@ -201,8 +206,29 @@ annotate_gradle() {
     diagnostics="$(tail -n 12 -- "$logfile")"
   fi
   while IFS= read -r line; do
-    [ -n "$line" ] && printf '::error title=Android release-build diagnostics::%s\n' "$(redact_line "$line")"
-  done <<<"$diagnostics"
+    [ -n "$line" ] && printf '%s\n' "$line"
+  done <<<"$diagnostics" | redact_stream >"$outfile"
+}
+
+print_gradle_diagnostics() {
+  local outfile="$1"
+  [ -s "$outfile" ] || return 0
+  printf '[ai-repair] extracted diagnostics:\n'
+  sed -e 's/^/    /' -- "$outfile"
+}
+
+# Annotations are a budget, not a stream: GitHub shows at most 10 error annotations per
+# step, so annotating every attempt would hide the loop's verdict - the one thing an
+# operator has to read - behind the first attempt's compiler output.
+emit_diagnostic_annotations() {
+  local outfile="$1" n=0 line
+  [ -s "$outfile" ] || return 0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    printf '::error title=Android release-build diagnostics::%s\n' "$line"
+    n=$((n + 1))
+    [ "$n" -ge "$MAX_DIAGNOSTIC_ANNOTATIONS" ] && break
+  done <"$outfile"
 }
 
 run_gradle() {
@@ -218,7 +244,9 @@ run_gradle() {
     tail -n "$GRADLE_LOG_TAIL_LINES" -- "$logfile" | redact_stream
   fi
   if [ "$status" -ne 0 ]; then
-    annotate_gradle "$logfile"
+    local diagfile="${logfile%.log}-diagnostics.txt"
+    extract_gradle_diagnostics "$logfile" "$diagfile"
+    print_gradle_diagnostics "$diagfile"
   fi
   return "$status"
 }
@@ -408,6 +436,7 @@ main() {
   local ai_repairs=0 infra_retries=0 repairs_applied=false baseline_sha=""
   local last_failure_kind="" repaired=0
   APK_COUNT=0
+  FAILURE_REASON=""
 
   mkdir -p -- "$DIAG_DIR"
   cd -- "$WORKSPACE" || { printf '::error title=AI repair::workspace %s not found\n' "$WORKSPACE"; exit 1; }
@@ -454,6 +483,7 @@ main() {
       summary "| ${attempt} | failed | infrastructure | not invoked |"
       if [ "$infra_retries" -ge "$MAX_INFRA_RETRIES" ]; then
         warn "infrastructure retry budget ($MAX_INFRA_RETRIES) exhausted"
+        FAILURE_REASON="the build kept failing on infrastructure problems (dependency repositories, network or runner resources) and the retry budget (${MAX_INFRA_RETRIES}) is exhausted"
         break
       fi
       infra_retries=$((infra_retries + 1))
@@ -468,15 +498,18 @@ main() {
     summary "| ${attempt} | failed | source code | pending |"
 
     if [ -z "${KILO_API_KEY:-}" ]; then
-      printf '::error title=AI repair::the build failed and KILO_API_KEY is not configured, so no repair could be attempted; add the secret to enable the self-healing loop\n'
+      warn "KILO_API_KEY is not configured; no repair can be attempted"
+      FAILURE_REASON="the build failed and KILO_API_KEY is not configured, so no repair could be attempted; add the repository secret to enable the self-healing loop"
       break
     fi
     if [ -z "$KILO_BIN" ] && ! install_kilo_cli; then
-      printf '::error title=AI repair::the build failed and the Kilo Code CLI is unavailable on this runner, so no repair could be attempted\n'
+      warn "the Kilo Code CLI is unavailable on this runner"
+      FAILURE_REASON="the build failed and the Kilo Code CLI is unavailable on this runner, so no repair could be attempted"
       break
     fi
     if [ "$ai_repairs" -ge "$((MAX_BUILD_ATTEMPTS - 1))" ]; then
       warn "AI repair budget exhausted"
+      FAILURE_REASON="the AI repair budget is exhausted (build attempts - 1 repair runs)"
       break
     fi
 
@@ -502,6 +535,7 @@ main() {
 
     if [ "$status" -eq 2 ] || [ "$ABORTED_FOR_AUTH" -eq 1 ]; then
       warn "aborting the repair loop: the model gateway rejected our credentials"
+      FAILURE_REASON="the model gateway rejected the request (HTTP 401/403 or a missing/invalid API key); the repair loop was aborted"
       break
     fi
   done
@@ -516,7 +550,9 @@ main() {
     emit_output "apk_count" "$APK_COUNT"
     summary ""
     summary "the release build did **not** pass after ${attempt} attempt(s) (classification of the last failure: ${last_failure_kind}); no commit was created."
+    printf '::error title=AI repair::%s\n' "${FAILURE_REASON:-the release build did not pass within the attempt budget}"
     printf '::error title=AI repair::release build still failing after %s attempt(s); no repair commit was created\n' "$attempt"
+    emit_diagnostic_annotations "$DIAG_DIR/attempt-${attempt}-gradle-diagnostics.txt"
     exit 1
   fi
 
