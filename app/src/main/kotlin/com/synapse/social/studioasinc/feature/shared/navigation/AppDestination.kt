@@ -99,11 +99,14 @@ sealed interface AppDestination {
     data class ChatInfo(
         val chatId: String,
         val userId: String,
-        // Carried over from the conversation so Contact Info paints the same picture and name on
-        // its first frame, which is what lets the picture travel between the two screens instead of
-        // being swapped or reloaded.
+        // Carried over from the conversation so Contact Info paints the same picture, name and
+        // status on its first frame, which is what lets all three travel between the two screens
+        // instead of being swapped or reloaded.
         val participantName: String? = null,
-        val participantAvatar: String? = null
+        val participantAvatar: String? = null,
+        // The line the pill was showing for this person, and whether it was an active one.
+        val participantStatus: String? = null,
+        val participantStatusActive: Boolean = false
     ) : AppDestination
     @Serializable
     data class ChatSettings(val chatId: String) : AppDestination
