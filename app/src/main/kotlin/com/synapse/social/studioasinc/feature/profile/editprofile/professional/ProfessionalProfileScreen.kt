@@ -51,7 +51,9 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.business.AccountType
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
 import com.synapse.social.studioasinc.ui.settings.SettingsSection
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,28 +73,30 @@ fun ProfessionalProfileScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MediumTopAppBar(
-                title = { Text(text = stringResource(R.string.professional_profile_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.settings_back_description)
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+    SynapseTheme {
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = AppColors.screenBackground,
+            topBar = {
+                MediumTopAppBar(
+                    title = { Text(text = stringResource(R.string.professional_profile_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.settings_back_description)
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
+                    )
                 )
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier

@@ -54,6 +54,7 @@ import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsClickableItem
 import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
@@ -91,6 +92,7 @@ fun SocialLinksScreen(
 
     SynapseTheme {
         Scaffold(
+            containerColor = AppColors.screenBackground,
             topBar = {
                 TopAppBar(
                     title = { Text(text = stringResource(R.string.social_links_title)) },
@@ -120,7 +122,8 @@ fun SocialLinksScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
                     )
                 )
             },
