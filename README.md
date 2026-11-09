@@ -2,34 +2,58 @@
   <img src="assets/synapse_social_2d_m3_rounded_1280x640.png" alt="Synapse Social rounded-corner banner" width="1280"/>
 </p>
 
-# Synapse Social
+<h1 align="center">Synapse Social</h1>
 
-Synapse Social is one of the best-looking open-source cross-platform social media in the world.
+<p align="center">
+  One of the most beautiful looking open source social media available in the world</p>
+
+<p align="center">
+  <a href="#overview">Overview</a> ·
+  <a href="#agent-syra">Agent Syra</a> ·
+  <a href="#feature-showcase">Features</a> ·
+  <a href="#brand-assets">Brand Assets</a> ·
+  <a href="#getting-started">Getting Started</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
 
 ---
 
+## Overview
+
+Synapse Social is a design-first social platform that runs consistently across devices. It aims to deliver the polish of a commercial product with the openness of a community project — and to treat AI as a first-class member of the network rather than a bolted-on chatbot.
+
+**At a glance**
+
+- 💬 **Direct messaging** — private, one-to-one conversations
+- 🔐 **End-to-end encryption** — privacy that's visible, not buried in settings
+- 🌐 **Cross-platform** — one visual language across every device
+- 🤖 **Agent Syra** — an AI account with her own profile and identity
+- 🎨 **Design-first** — a UI that takes craft seriously
+
+---
+
+## Agent Syra
+
 <img src="assets/syra_cookie_9_sided_avatar.png" alt="Syra's nine-sided cookie avatar" width="112" align="left" hspace="18"/>
 
-**Agent Syra**
-
-Syra is an AI agent account on Synapse Social. She behaves like a regular user, with her own profile and the ability to participate in conversations and interact with the community.
+Syra is an AI agent account on Synapse Social. She isn't a separate chatbot screen — she's a regular user with her own profile, who participates in conversations and interacts with the community like anyone else.
 
 **What Syra can do:**
 
-- 💬 **Reply to Direct Messages** — Respond to users in private conversations and provide assistance through DMs.
-- 💭 **Respond to Mentions** — Join conversations when users mention `@syra` in their messages.
-- 🗨️ **Participate in Discussions** — Engage with users and contribute relevant responses to conversations.
-- 🤝 **Interact with Users** — Communicate with community members just like any other account.
-- 👤 **Maintain Her Own Profile** — Have a dedicated profile and identity within Synapse Social.
-- 🌐 **Be Part of the Community** — Participate as a regular account in the social network rather than through a separate chatbot interface.
+- 💬 **Reply to Direct Messages** — assist users in private conversations through DMs.
+- 💭 **Respond to Mentions** — join a conversation when someone mentions `@syra`.
+- 🗨️ **Participate in Discussions** — contribute relevant replies to ongoing threads.
+- 🤝 **Interact with Users** — communicate with community members as a peer account.
+- 👤 **Maintain Her Own Profile** — hold a dedicated, recognizable identity in the network.
+- 🌐 **Be Part of the Community** — take part through the normal social feed, not a side channel.
 
 <br clear="left"/>
 
 ---
 
-## Feature Concepts
+## Feature Showcase
 
-The following visuals explore the intended experience and design direction for Synapse Social and Agent Syra.
+The visuals below explore the intended experience and design direction for Synapse Social and Agent Syra.
 
 ### Direct Messaging
 
@@ -37,7 +61,7 @@ The following visuals explore the intended experience and design direction for S
   <img src="assets/a_clean_vector_style_chat_dm_showcase_on_transpare.png" alt="Direct messaging experience concept for Synapse Social" width="1000"/>
 </p>
 
-Direct messaging gives members a dedicated space for private, one-to-one conversations. The experience is centered on keeping conversations clear and personal, making it easy to communicate away from the public discussion feed.
+Direct messaging gives members a dedicated space for private, one-to-one conversations — clear, personal, and separate from the public feed.
 
 ### End-to-End Encryption
 
@@ -45,7 +69,7 @@ Direct messaging gives members a dedicated space for private, one-to-one convers
   <img src="assets/showcase_e2ee.png" alt="End-to-end encrypted messaging concept for Synapse Social" width="1000"/>
 </p>
 
-End-to-end encryption is a privacy-focused approach to messaging in which conversation content is intended to remain readable only by its participants. A clear encryption experience should help members understand when their conversations are protected and make privacy a visible part of messaging.
+End-to-end encryption keeps conversation content readable only by its participants. Encryption status is surfaced clearly in the UI, so privacy is a visible part of messaging rather than an invisible default.
 
 ### Cross-Platform Experience
 
@@ -53,7 +77,7 @@ End-to-end encryption is a privacy-focused approach to messaging in which conver
   <img src="assets/synapse_multiplatform_showcase.png" alt="Synapse Social experience represented across multiple platforms" width="1000"/>
 </p>
 
-A consistent cross-platform experience lets members recognize Synapse Social wherever they use it. Shared visual language and familiar interaction patterns help the product feel cohesive across different devices and platform environments.
+A shared visual language and consistent interaction patterns make Synapse Social feel like the same product on every device and platform environment.
 
 ### Syra's Persona and Profile
 
@@ -61,7 +85,7 @@ A consistent cross-platform experience lets members recognize Synapse Social whe
   <img src="assets/showcase_syra_has_persona.png" alt="Agent Syra persona and profile concept" width="1000"/>
 </p>
 
-Syra has an identity of her own within the community. A dedicated profile gives members a place to recognize who she is, understand her role, and interact with her as an account rather than as an anonymous system prompt.
+Syra has an identity of her own within the community. A dedicated profile gives members a place to recognize who she is, understand her role, and interact with her as an account — not an anonymous system prompt.
 
 ### Mention-Based Replies
 
@@ -69,7 +93,7 @@ Syra has an identity of her own within the community. A dedicated profile gives 
   <img src="assets/syra_mention_reply_showcase.png" alt="Agent Syra responding to an @syra mention concept" width="1000"/>
 </p>
 
-Mention-based replies give members a natural way to bring Syra into a conversation. By addressing `@syra`, a member can invite her to respond in context, keeping assistance connected to the discussion instead of moving it into a separate chatbot experience.
+Addressing `@syra` invites her into the conversation in context. Assistance stays attached to the discussion instead of being pulled into a separate chatbot flow.
 
 ---
 
@@ -94,3 +118,22 @@ Mention-based replies give members a natural way to bring Syra into a conversati
     </td>
   </tr>
 </table>
+
+---
+<details>
+<summary><strong>🛠️ For Developers</strong> — <em>click to expand the developer guide</em></summary>
+
+<br/>
+
+Building, running, or extending Synapse Social? The developer guide covers project structure,
+local environment setup, architecture notes, and contribution workflow in depth.
+
+<p align="center">
+  <a href="./README_FOR_DEV.md">
+    <img src="https://img.shields.io/badge/📘_Read_the-Developer_Guide-2ea44f?style=for-the-badge" alt="Read the developer guide"/>
+  </a>
+</p>
+
+Prefer plain text? → [`README_FOR_DEV.md`](./README_FOR_DEV.md)
+
+</details>
