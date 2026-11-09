@@ -1,102 +1,24 @@
-<p align="center"><img src="assets/synapse_social_2d_m3_rounded_1280x640.png" alt="Repo banner" width="1280"/></p>
-Synapse Social is a cross-platform social media application built on the Native UI, Shared Logic philosophy. Powered by Kotlin Multiplatform, it shares business logic, networking, and data layers across Android and iOS — while each platform delivers a fully native experience via Jetpack Compose (Android) and SwiftUI (iOS).
-
-The backend runs on Supabase — handling real-time messaging, authentication, and file storage at scale.
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|--------|-------------|
-| 🧩 **Kotlin Multiplatform** | Shared engine for networking, database caching, and business logic |
-| 🎨 **Native UI** | 100% Jetpack Compose on Android, SwiftUI on iOS — no compromises |
-| 💬 **Real-time Chat** | Live messaging with Supabase Realtime subscriptions |
-| 🗂️ **X-style Threads** | Nested comment threading with inline reply support |
-| 👥 **Group Chat** | AI-powered smart replies via Gemini SDK |
-| 🎥 **Rich Media** | Posts with images, video (ExoPlayer), and markdown rendering |
-| 🔒 **Privacy-First** | Encrypted local storage, secure auth flows |
-| 🏗️ **Extensible** | Modular Clean Architecture for long-term maintainability |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- **JDK 17 or higher**: Ensure your `JAVA_HOME` is set correctly.
-- **Android SDK**: Latest stable version (API 35+).
-- **Xcode (macOS only)**: For iOS development.
-- **Node.js**: For the Web target.
-
-### Configuration
-1. Clone the repository.
-2. Copy `gradle.properties` (if not pre-configured) and ensure the following keys are set:
-   ```properties
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your-anon-key-here
-   GEMINI_API_KEY=your-gemini-api-key-here
-   ```
-3. For Android, ensure `google-services.json` is present in the `app/` directory if required for specific Firebase features.
-4. **Calling (optional, real 1:1 voice/video):** calling needs the calling schema in Supabase (already applied to this project), a coturn TURN server, and the `turn-credentials` Edge Function configured with `TURN_SHARED_SECRET` and `TURN_URLS`. Set `TURN_FUNCTION_NAME` in `gradle.properties` and deploy the functions in `supabase/functions/` with their secrets before calls will connect. No TURN, service-role, or push secrets belong in the app or this repository.
-
-### Running the App
-- **Android**: Run `./gradlew :app:installDebug` or use Android Studio.
-- **iOS**: Open `iosApp/iosApp.xcodeproj` in Xcode and run.
-- **Desktop**: Run `./gradlew :desktop:run`.
-- **Web**: Run `./gradlew :web:wasmJsBrowserDevelopmentRun`.
-
----
-
-## 🏗️ Project Structure
-
-The project follows a modular KMP architecture:
-
-- **`:shared`**: Core business logic, networking (Ktor), database (SQLDelight), and domain models.
-  - `commonMain`: Shared logic for all platforms.
-  - `androidMain`: Android-specific implementations.
-  - `iosMain`: iOS-specific implementations.
-- **`:app`**: Android-specific UI and features using Jetpack Compose.
-- **`:iosApp`**: iOS-specific UI using SwiftUI.
-- **`:desktop`**: Desktop-specific target using Compose for Desktop.
-- **`:web`**: Web-specific target using Kotlin/Wasm.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Read **[CONTRIBUTING.md](./CONTRIBUTING.md)** for our workflow and commit standards.
-2. Read **[AGENTS.md](./AGENTS.md)** for engineering standards and AI agent roles.
-3. Fork and create your branch: `git checkout -b feature/YourFeature`.
-4. Commit with a clear message: `git commit -m '✨ feat: Add YourFeature'`.
-5. Push and open a Pull Request.
-
----
-
-## 🙌 Contributors
-
 <p align="center">
-  <a href="https://github.com/synapseSRC/synapseApp/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=synapseSRC/synapseApp" style="border-radius:50%" alt="Contributors"/>
-  </a>
+  <img src="assets/synapse_social_2d_m3_rounded_1280x640.png" alt="Synapse Social Banner" width="1280"/>
 </p>
 
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
+**Synapse Social** is one of the best-looking open-source cross-platform social media in the world.
 
 ---
 
-## 👥 Contact
+<img src="assets/syra_cookie_9_sided_avatar.png" alt="Syra" width="112" align="left" hspace="16"/>
 
-| Role | Name | Contact |
-|------|------|---------|
-| Lead Developer | Ashik Ahmed | [iamashik.ms@hotmail.com](mailto:iamashik.ms@hotmail.com) |
-| Organization | StudioAs Inc. | @StudioAsInc |
+### Agent Syra
 
----
+Syra is an AI agent account on Synapse Social. She behaves like a regular user, with her own profile and the ability to participate in conversations and interact with the community.
 
-<p align="center"><i>Built with ❤️ by the StudioAs Inc. team.</i></p>
+**What Syra can do:**
+
+- 💬 **Reply to Direct Messages** — Respond to users in private conversations and provide assistance through DMs.
+- 💭 **Respond to Mentions** — Join conversations when users mention `@syra` in their messages.
+- 🗨️ **Participate in Discussions** — Engage with users and contribute relevant responses to conversations.
+- 🤝 **Interact with Users** — Communicate with community members just like any other account.
+- 👤 **Maintain Her Own Profile** — Have a dedicated profile and identity within Synapse Social.
+- 🌐 **Be Part of the Community** — Participate as a regular account in the social network rather than through a separate chatbot interface.
+
+<br clear="left"/>
