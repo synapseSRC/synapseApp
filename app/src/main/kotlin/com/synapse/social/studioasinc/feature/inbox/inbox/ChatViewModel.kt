@@ -1225,7 +1225,21 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                 name = cleanName,
                 includedChatIds = listOf(chatId)
             )
-            persistChatFolders(chatFolders.value + newFolder)
+            // Putting the chat in the new folder means taking it out of the others, exactly as
+            // assignCurrentChatToFolder does, so the two paths cannot disagree about where a chat
+            // lives.
+            val leaving = chatFolders.value.map { folder ->
+                val wasIncluded = chatId in folder.includedChatIds
+                folder.copy(
+                    includedChatIds = folder.includedChatIds - chatId,
+                    excludedChatIds = if (wasIncluded) {
+                        (folder.excludedChatIds + chatId).distinct()
+                    } else {
+                        folder.excludedChatIds
+                    }
+                )
+            }
+            persistChatFolders(leaving + newFolder)
         }
     }
 
