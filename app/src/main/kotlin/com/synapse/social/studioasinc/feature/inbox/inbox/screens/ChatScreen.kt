@@ -27,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -75,6 +76,10 @@ import kotlinx.coroutines.withContext
         initialParticipantName: String? = null,
         initialParticipantAvatar: String? = null,
         initialMessageId: String? = null,
+        // Supplied by the navigation graph so the pill's picture and the Contact Info header can be
+        // one shared element. Null keeps the screen usable without a shared-transition host.
+        sharedTransitionScope: SharedTransitionScope? = null,
+        animatedVisibilityScope: AnimatedVisibilityScope? = null,
         onNavigateBack: () -> Unit,
         onNavigateToGroupInfo: (String, String) -> Unit = { _, _ -> },
         onNavigateToChatInfo: (String, String) -> Unit = { _, _ -> },
@@ -88,6 +93,14 @@ import kotlinx.coroutines.withContext
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
+
+    // The picture is the element that carries this conversation's identity into Contact Info, so
+    // both screens declare the same shared element by the same key.
+    val avatarHeroModifier = rememberChatAvatarHero(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        chatId = chatId
+    )
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
@@ -603,6 +616,24 @@ typingStatus = typingStatus,
                         .align(Alignment.TopCenter)
                         .fillMaxWidth()
                 ) {
+                    // Graduated scrim behind the header: the active theme's surface fading to
+                    // nothing, so the pills and the status icons stay readable over any wallpaper
+                    // without a hard edge, a blur or a shadow.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(messageListTopPadding + Spacing.space24)
+                            .background(
+                                Brush.verticalGradient(
+                                    colorStops = arrayOf(
+                                        0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                                        0.55f to MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
+                                        1f to Color.Transparent
+                                    )
+                                )
+                            )
+                    )
                     ChatTopAppBar(
                         selectedMessageIds = selectedMessageIds,
                         messages = messages,
@@ -613,6 +644,7 @@ typingStatus = typingStatus,
                         typingStatus = typingStatus,
                         isParticipantActive = isParticipantActive,
                         chatId = chatId,
+                        avatarModifier = avatarHeroModifier,
                         disappearingMode = disappearingMode,
                         isGroupChat = isGroupChat,
                         groupTitle = groupTitle,

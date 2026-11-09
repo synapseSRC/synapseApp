@@ -63,6 +63,9 @@ fun ChatTopAppBar(
     groupMemberCount: Int = 0,
     isMuted: Boolean = false,
     isMuteUpdating: Boolean = false,
+    // Shared-element modifier for the pill's picture, applied by the screen so the avatar can
+    // travel into Contact Info instead of being re-created there.
+    avatarModifier: Modifier = Modifier,
     onClearSelection: () -> Unit,
     onDeleteSelectedMessages: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -185,6 +188,7 @@ fun ChatTopAppBar(
                 participantProfile?.avatar ?: initialParticipantAvatar
             },
             avatarUserId = if (isGroupChat) "" else participantId ?: "",
+            avatarModifier = avatarModifier,
             avatarDisplayName = if (isGroupChat) {
                 null // Group avatar comes from the first-letters API, not UI rendering.
             } else {
@@ -254,6 +258,7 @@ private fun ChatFloatingTopBar(
     avatarUrl: String?,
     avatarUserId: String,
     avatarDisplayName: String?,
+    avatarModifier: Modifier,
     showAvatarActiveStatus: Boolean,
     isGroupChat: Boolean,
     disappearingEnabled: Boolean,
@@ -299,6 +304,7 @@ private fun ChatFloatingTopBar(
             avatarUrl = avatarUrl,
             avatarUserId = avatarUserId,
             avatarDisplayName = avatarDisplayName,
+            avatarModifier = avatarModifier,
             showAvatarActiveStatus = showAvatarActiveStatus,
             disappearingEnabled = disappearingEnabled,
             onClickLabel = contactInfoLabel,
@@ -382,6 +388,7 @@ private fun FloatingTitlePill(
     avatarUrl: String?,
     avatarUserId: String,
     avatarDisplayName: String?,
+    avatarModifier: Modifier,
     showAvatarActiveStatus: Boolean,
     disappearingEnabled: Boolean,
     onClickLabel: String,
@@ -404,6 +411,7 @@ private fun FloatingTitlePill(
                 userId = avatarUserId,
                 avatarUrl = avatarUrl,
                 size = FloatingHeaderAvatarSize,
+                modifier = avatarModifier,
                 showActiveStatus = showAvatarActiveStatus,
                 displayName = avatarDisplayName
             )
