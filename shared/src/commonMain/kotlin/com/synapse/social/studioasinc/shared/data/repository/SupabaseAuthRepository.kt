@@ -31,6 +31,7 @@ import io.github.jan.supabase.postgrest.query.Count
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.withContext
@@ -42,7 +43,11 @@ import kotlin.time.ExperimentalTime
 import io.github.jan.supabase.SupabaseClient as SupabaseClientLib
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
+import com.synapse.social.studioasinc.shared.data.util.googleAccountAvatarUrl
 import com.synapse.social.studioasinc.shared.data.util.initialsAvatarUrl
+import com.synapse.social.studioasinc.shared.data.util.isRemoteImageUrl
+import com.synapse.social.studioasinc.shared.data.util.providerAvatarUrl
+import com.synapse.social.studioasinc.shared.data.util.resolveStoredAvatar
 
 /**
  * Implementation of [AuthRepository] that utilizes Supabase Auth for session management
@@ -447,6 +452,13 @@ class SupabaseAuthRepository(
                         throw Exception("No valid OAuth parameters")
                     }
                 }
+                // A provider photo (Google above all) seeds the default Synapse profile picture.
+                // Only Google-hosted images are accepted here because the callback does not say
+                // which provider just completed the flow.
+                client.auth.currentUserOrNull()?.let { user ->
+                    storeProviderAvatar(user.id, googleAccountAvatarUrl(user.userMetadata))
+                }
+
                 Napier.d("OAuth callback handled", tag = TAG)
                 Result.success(Unit)
             }
@@ -514,7 +526,11 @@ class SupabaseAuthRepository(
                     ?: throw Exception("Email not found after Google sign-in")
                 
                 ensureProfileExists(userId, email, null)
-                
+
+                // The provider is known here, so any picture Google forwarded is eligible. A
+                // custom upload always wins: see resolveStoredAvatar.
+                storeProviderAvatar(userId, providerAvatarUrl(user.userMetadata))
+
                 Napier.d("Google ID token sign-in successful: $userId", tag = TAG)
                 Result.success(userId)
             }
@@ -613,6 +629,38 @@ class SupabaseAuthRepository(
         } catch (e: Exception) {
             logSafeError("Delete account failed", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Stores the picture an identity provider shared as the user's default profile picture.
+     *
+     * The stored picture is replaced only while it is still a placeholder (nothing yet, a previous
+     * provider picture, or a generated initials avatar) so a picture the user uploaded themselves is
+     * never overwritten by a later social sign-in. Any failure is logged and swallowed: a missing
+     * avatar must never fail an otherwise successful sign-in.
+     */
+    private suspend fun storeProviderAvatar(userId: String, providerAvatar: String?) {
+        if (!isRemoteImageUrl(providerAvatar)) return
+        try {
+            val storedAvatar = client.from("users").select(columns = Columns.list("avatar")) {
+                filter {
+                    eq("uid", userId)
+                }
+            }.decodeSingleOrNull<JsonObject>()
+                ?.get("avatar")
+                ?.let { if (it is JsonPrimitive) it else null }
+                ?.contentOrNull
+
+            val avatarToStore = resolveStoredAvatar(storedAvatar, providerAvatar) ?: return
+            client.from("users").update(mapOf("avatar" to avatarToStore)) {
+                filter {
+                    eq("uid", userId)
+                }
+            }
+            Napier.d("Stored provider profile picture for $userId", tag = TAG)
+        } catch (e: Exception) {
+            Napier.w("Failed to store provider profile picture for $userId", e, tag = TAG)
         }
     }
 

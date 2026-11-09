@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -26,28 +27,41 @@ fun CircularAvatar(
     displayName: String? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val imageModifier = modifier
-        .size(size)
-        .clip(CircleShape)
-        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+    // The initials sit under the picture so a profile image that is missing, expired or otherwise
+    // unloadable still identifies the user instead of leaving an empty circle — Google account
+    // photos are remote URLs that can stop resolving.
+    val initial = displayName
+        ?.let { name -> name.firstOrNull { it.isLetterOrDigit() } ?: name.firstOrNull() }
+        ?.uppercaseChar()
+        ?.toString()
+        ?: "?"
 
-    if (!imageUrl.isNullOrBlank()) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = contentDescription,
-            modifier = imageModifier,
-            contentScale = ContentScale.Crop
-        )
-    } else {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        contentAlignment = Alignment.Center
+    ) {
         Box(
-            modifier = imageModifier
+            modifier = Modifier
+                .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = displayName.let { name -> name?.firstOrNull { it.isLetterOrDigit() } ?: name?.firstOrNull() }?.uppercaseChar()?.toString() ?: "?",
+                text = initial,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = contentDescription,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
         }
     }

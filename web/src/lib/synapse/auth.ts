@@ -69,25 +69,109 @@ export const initialsAvatarUrl = (name: string): string => {
 
 export const normalizeUsername = (value: string): string => value.trim().toLowerCase();
 
+const GOOGLE_AVATAR_HOST_SUFFIX = "googleusercontent.com";
+const GENERATED_AVATAR_HOST = "api.dicebear.com";
+
+const hostOf = (url: string): string => {
+    const authority = url.substring(url.indexOf("://") + 3).split(/[/?#]/)[0] ?? "";
+    const hostAndPort = authority.split("@").slice(-1)[0] ?? "";
+
+    return hostAndPort.split(":")[0] ?? "";
+};
+
+/** Absolute http(s) URL with a host — anything else (blank, relative path, other scheme) is no picture. */
+export const isRemoteImageUrl = (value: string | null | undefined): boolean => {
+    const url = value?.trim() ?? "";
+    if (!url.startsWith("http://") && !url.startsWith("https://")) return false;
+
+    const host = hostOf(url);
+    return host.includes(".");
+};
+
+/** Google serves account photos from `googleusercontent.com`. */
+export const isGoogleAvatarUrl = (value: string | null | undefined): boolean => {
+    const host = hostOf(value?.trim() ?? "");
+    return host === GOOGLE_AVATAR_HOST_SUFFIX || host.endsWith(`.${GOOGLE_AVATAR_HOST_SUFFIX}`);
+};
+
+/** DiceBear initials avatars are Synapse-generated placeholders, not a picture the user picked. */
+export const isGeneratedAvatarUrl = (value: string | null | undefined): boolean =>
+    hostOf(value?.trim() ?? "") === GENERATED_AVATAR_HOST;
+
+/**
+ * Picture a Google account shares with Supabase. GoTrue copies the provider profile into the user
+ * metadata as `picture`, and mirrors it to `avatar_url` — the key an email sign-up also writes —
+ * so both are read, in that order, and only Google-hosted images are accepted.
+ */
+export const googleAvatarUrl = (user: User): string | null => {
+    const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
+
+    for (const key of ["picture", "avatar_url"]) {
+        const value = metadata[key];
+        if (typeof value !== "string") continue;
+
+        const url = value.trim();
+        if (isRemoteImageUrl(url) && isGoogleAvatarUrl(url)) return url;
+    }
+
+    return null;
+};
+
+/**
+ * Picture the profile should hold once [provided] is known, or null when nothing must change:
+ * the profile may already hold it, or it may hold the user's own upload, which always wins — a
+ * later Google sign-in must never overwrite a custom picture. Placeholders (a stale provider photo
+ * or a generated initials avatar) are replaced instead.
+ */
+export const resolveStoredAvatar = (current: string | null, provided: string | null): string | null => {
+    const incoming = provided?.trim() ?? "";
+    if (!isRemoteImageUrl(incoming)) return null;
+
+    const stored = current?.trim() ?? "";
+    if (!stored) return incoming;
+    if (stored === incoming) return null;
+
+    return isGoogleAvatarUrl(stored) || isGeneratedAvatarUrl(stored) ? incoming : null;
+};
+
 // Mirrors ensureProfileExists in the Android client (SupabaseAuthRepository.kt:121), so web
-// accounts appear in the same directory as native ones. A pre-existing row is left untouched.
+// accounts appear in the same directory as native ones. A pre-existing row keeps its own data —
+// only the Google account picture is refreshed, and only while the stored one is still a
+// placeholder, so a picture the user uploaded is never replaced by a later sign-in.
 export const ensureProfileRow = async (
     client: SupabaseClient,
     user: User,
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
     try {
+        const providerAvatar = googleAvatarUrl(user);
+
         const { data, error: selectError } = await client
             .from("users")
-            .select("uid")
+            .select("uid,avatar")
             .eq("uid", user.id)
             .maybeSingle();
 
         if (selectError) return { ok: false, message: selectError.message };
-        if (data) return { ok: true };
+
+        if (data) {
+            const currentAvatar = (data as { avatar: string | null }).avatar;
+            const avatar = resolveStoredAvatar(currentAvatar, providerAvatar);
+
+            if (avatar) {
+                const { error: updateError } = await client
+                    .from("users")
+                    .update({ avatar })
+                    .eq("uid", user.id);
+
+                if (updateError) return { ok: false, message: updateError.message };
+            }
+
+            return { ok: true };
+        }
 
         const { error: insertError } = await client
             .from("users")
-            .insert({ uid: user.id, username: resolveUsername(user) });
+            .insert({ uid: user.id, username: resolveUsername(user), ...(providerAvatar ? { avatar: providerAvatar } : {}) });
 
         if (insertError) return { ok: false, message: insertError.message };
 
