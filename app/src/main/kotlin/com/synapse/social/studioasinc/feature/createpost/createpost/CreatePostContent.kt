@@ -92,52 +92,54 @@ fun CreatePostContent(
                 modifier = Modifier.fillMaxWidth(),
                 color = Color.Transparent
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .defaultMinSize(minHeight = Sizes.Height120),
-                    contentAlignment = Alignment.TopStart
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (uiState.postText.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.hint_whats_on_your_mind),
-                            style = if (uiState.mediaItems.isEmpty()) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-
-
                     var dismissedPreviewUrl by remember { mutableStateOf<String?>(null) }
-    val textSize = if (uiState.postText.length < 80 && uiState.mediaItems.isEmpty() && uiState.pollData == null) {
+                    val textSize = if (uiState.postText.length < 80 && uiState.mediaItems.isEmpty() && uiState.pollData == null) {
                         MaterialTheme.typography.headlineSmall
                     } else {
                         MaterialTheme.typography.bodyLarge
                     }
 
-                    BasicTextField(
-                        value = uiState.postText,
-                        onValueChange = onUpdateText,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        textStyle = textSize.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = textSize.lineHeight * 1.2,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Start
-                        ),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
-                    )
+                            .defaultMinSize(minHeight = Sizes.Height120),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        if (uiState.postText.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.hint_whats_on_your_mind),
+                                style = if (uiState.mediaItems.isEmpty()) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
+
+                        BasicTextField(
+                            value = uiState.postText,
+                            onValueChange = onUpdateText,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                            textStyle = textSize.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                lineHeight = textSize.lineHeight * 1.2,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Start
+                            ),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                        )
+                    }
 
                     val firstUrl = UrlUtils.extractFirstUrl(uiState.postText)
                     if (firstUrl != null && firstUrl != dismissedPreviewUrl && uiState.mediaItems.isEmpty()) {
-                        Spacer(modifier = Modifier.height(Spacing.space8))
                         LinkPreviewCard(
                             url = firstUrl,
                             useCase = linkPreviewViewModel.getLinkMetadataUseCase,
                             onRemove = { dismissedPreviewUrl = firstUrl },
-                            modifier = Modifier.padding(top = Spacing.space8)
+                            modifier = Modifier.padding(top = Spacing.space12)
                         )
                     }
                 }

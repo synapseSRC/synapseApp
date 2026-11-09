@@ -19,12 +19,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.domain.model.Post
-import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
-import com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadataUseCase
-import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
-import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
+import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewsSection
 import com.synapse.social.studioasinc.domain.model.LinkPreview
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 
 import androidx.compose.foundation.clickable
@@ -177,37 +173,14 @@ fun PostContent(
             )
         }
 
-        // Show link previews
-        val previewsToShow = remember(linkPreviews, text) {
-            if (!linkPreviews.isNullOrEmpty()) {
-                linkPreviews.take(3)
-            } else {
-                UrlUtils.extractUrls(text).take(3).map { url ->
-                    LinkPreview(url = url)
-                }
-            }
-        }
-
-        if (previewsToShow.isNotEmpty()) {
-            val resolvedUseCase = getLinkMetadataUseCase ?: LocalLinkMetadataUseCase.current
-            if (resolvedUseCase != null) {
-                previewsToShow.forEach { preview ->
-                    Spacer(modifier = Modifier.height(Spacing.space8))
-                    LinkPreviewCard(
-                        url = preview.url,
-                        useCase = resolvedUseCase,
-                        initialPreview = com.synapse.social.studioasinc.shared.domain.model.LinkPreview(
-                            url = preview.url,
-                            title = preview.title,
-                            description = preview.description,
-                            imageUrl = preview.imageUrl,
-                            domain = preview.domain
-                        ),
-                        modifier = Modifier.padding(top = Spacing.space4)
-                    )
-                }
-            }
-        }
+        // Link previews are rendered through the single shared pipeline, so every screen that
+        // renders a post (feed, post detail, profile, shared posts, chat) shows exactly the same
+        // preview with the same metadata, styling and interaction behaviour.
+        LinkPreviewsSection(
+            text = text,
+            serverPreviews = linkPreviews,
+            useCase = getLinkMetadataUseCase
+        )
 
         if (pollQuestion != null && pollOptions != null) {
             PollContent(
