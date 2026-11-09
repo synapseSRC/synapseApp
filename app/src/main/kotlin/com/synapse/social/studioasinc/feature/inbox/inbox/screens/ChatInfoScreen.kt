@@ -104,11 +104,15 @@ import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 fun ChatInfoScreen(
     chatId: String,
     userId: String,
-    // Seeded by the conversation so Contact Info paints the same picture and name on its first
-    // frame; the shared element then moves the picture between the two screens instead of swapping
-    // or reloading it.
+    // Seeded by the conversation so Contact Info paints the same picture, name and status on its
+    // first frame; the shared elements then move all three between the two screens instead of
+    // swapping or reloading them.
     initialDisplayName: String? = null,
     initialAvatarUrl: String? = null,
+    // The line the pill was showing about this person, and whether it was an active one, so the
+    // status keeps its words and its colour while it travels into place.
+    initialStatusText: String? = null,
+    initialStatusActive: Boolean = false,
     // The navigation graph hands both screens the same transition scopes. Null keeps the screen
     // usable without a shared-transition host, for example in a preview.
     sharedTransitionScope: SharedTransitionScope? = null,
@@ -138,6 +142,23 @@ fun ChatInfoScreen(
         sharedTransitionScope = sharedTransitionScope,
         animatedVisibilityScope = animatedVisibilityScope,
         // The same person, therefore the same element as the picture in the floating pill.
+        userId = userId,
+        chatId = chatId
+    )
+
+    // The name and the status line are the other two values the pill shows, declared here under the
+    // same keys, so they travel with the picture instead of appearing underneath it.
+    val nameHeroModifier = rememberChatHeaderTextHero(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        hero = ChatHeaderTextHero.Name,
+        userId = userId,
+        chatId = chatId
+    )
+    val statusHeroModifier = rememberChatHeaderTextHero(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        hero = ChatHeaderTextHero.Status,
         userId = userId,
         chatId = chatId
     )
@@ -245,13 +266,17 @@ fun ChatInfoScreen(
                     // The seed keeps the picture identical to the one the pill was showing.
                     avatarUrl = profile?.avatar?.takeIf { it.isNotBlank() } ?: initialAvatarUrl,
                     avatarModifier = avatarHeroModifier,
+                    nameModifier = nameHeroModifier,
+                    statusModifier = statusHeroModifier,
                     displayName = displayName,
                     username = username,
                     isOnline = uiState.isOnline,
                     lastSeen = profile?.lastSeen,
-                    // Nothing about this person is known yet: the status line says so quietly
-                    // rather than claiming Offline.
-                    isStatusPending = uiState.isLoading && profile == null
+                    // Nothing about this person is known yet and the pill handed nothing over: a
+                    // quiet placeholder rather than a claim of Offline.
+                    isStatusPending = uiState.isLoading && profile == null,
+                    initialStatusText = initialStatusText,
+                    initialStatusActive = initialStatusActive
                 )
             }
             item(key = "actions") {
@@ -583,11 +608,15 @@ private fun ContactHeader(
     userId: String,
     avatarUrl: String?,
     avatarModifier: Modifier,
+    nameModifier: Modifier,
+    statusModifier: Modifier,
     displayName: String,
     username: String?,
     isOnline: Boolean,
     lastSeen: String?,
-    isStatusPending: Boolean
+    isStatusPending: Boolean,
+    initialStatusText: String?,
+    initialStatusActive: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.space8),
@@ -604,6 +633,9 @@ private fun ContactHeader(
         Spacer(Modifier.height(Spacing.space8))
         Text(
             text = displayName,
+            // The same element the pill's title declared: the name lands here instead of being
+            // written again, and the two screens fade one into the other while the bounds move.
+            modifier = nameModifier,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -621,25 +653,33 @@ private fun ContactHeader(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        if (isStatusPending) {
+        // While nothing about this person has arrived yet, the line the pill was showing is still
+        // the truth - it came from the conversation itself - so the status element keeps its words
+        // and travels into place instead of dissolving into a placeholder.
+        val seededStatus = initialStatusText?.takeIf { it.isNotBlank() }
+        val status = when {
+            isStatusPending -> seededStatus
+            isOnline -> stringResource(R.string.chat_info_user_online)
+            lastSeen != null -> stringResource(
+                R.string.chat_info_user_last_seen,
+                TimestampFormatter.formatRelative(lastSeen)
+            )
+            else -> stringResource(R.string.chat_info_user_offline)
+        }
+        if (status == null) {
             SkeletonLine(
                 width = 104.dp,
                 label = stringResource(R.string.loading_profile),
                 height = 12.dp
             )
         } else {
-            val status = when {
-                isOnline -> stringResource(R.string.chat_info_user_online)
-                lastSeen != null -> stringResource(
-                    R.string.chat_info_user_last_seen,
-                    TimestampFormatter.formatRelative(lastSeen)
-                )
-                else -> stringResource(R.string.chat_info_user_offline)
-            }
+            val isActive = if (isStatusPending) initialStatusActive else isOnline
             Text(
                 text = status,
+                // The same element the pill's status line declared.
+                modifier = statusModifier,
                 style = MaterialTheme.typography.labelLarge,
-                color = if (isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
