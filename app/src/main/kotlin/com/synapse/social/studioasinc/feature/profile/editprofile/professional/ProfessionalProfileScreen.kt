@@ -147,6 +147,7 @@ fun ProfessionalProfileScreen(
             }
         }
     }
+}
 
 @Composable
 private fun AccountTypeSection(
