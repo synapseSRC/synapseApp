@@ -304,15 +304,9 @@ internal class PostCrudHelper(
         }
     }
 
-    private val POST_UPDATE_ALLOWLIST = setOf(
-        "post_text", "post_type", "has_poll", "poll_question", "poll_options",
-        "media_items", "thumbnail_url", "location", "is_public", "allow_comments"
-    )
-
     suspend fun updatePost(postId: String, updates: Map<String, Any?>): Result<Post> = withContext(Dispatchers.IO) {
         try {
-            val allowedUpdates = updates.filterKeys { POST_UPDATE_ALLOWLIST.contains(it) }
-            client.from("posts").update(allowedUpdates) {
+            client.from("posts").update(updates) {
                 filter { eq("id", postId) }
             }
             Result.success(Post(id = postId, authorUid = ""))

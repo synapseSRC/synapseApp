@@ -58,7 +58,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.crossfade
 import com.synapse.social.studioasinc.R
@@ -218,7 +217,7 @@ private fun ColumnScope.MessageMetadataRow(
     Row(
         modifier = modifier
             .align(Alignment.End)
-            .padding(top = 2.dp),
+            .padding(top = Spacing.space4),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -340,55 +339,20 @@ fun MessageBubble(
             modifier = modifier.fillMaxWidth(),
             contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
         ) {
-            if (!isFromMe && showAvatar) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
-                        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
-                            avatarUrl = senderAvatarUrl,
-                            displayName = senderName,
-                            size = Sizes.AvatarSmall
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
-                    }
-                    Spacer(modifier = Modifier.width(Spacing.space8))
-                    Surface(
-                        color = containerColor,
+            Surface(
+                color = containerColor,
+                contentColor = contentColor,
+                shape = RoundedCornerShape(cornerRadius.dp),
+                tonalElevation = Sizes.BorderThin
+            ) {
+                Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
+                    UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
+                    MessageMetadataRow(
+                        message = message,
+                        isFromMe = isFromMe,
                         contentColor = contentColor,
-                        shape = RoundedCornerShape(cornerRadius.dp),
-                        tonalElevation = Sizes.BorderThin
-                    ) {
-                        Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
-                            UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
-                            MessageMetadataRow(
-                                message = message,
-                                isFromMe = isFromMe,
-                                contentColor = contentColor,
-                                onRetryClick = onRetryClick
-                            )
-                        }
-                    }
-                }
-            } else {
-                Surface(
-                    color = containerColor,
-                    contentColor = contentColor,
-                    shape = RoundedCornerShape(cornerRadius.dp),
-                    tonalElevation = Sizes.BorderThin
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)) {
-                        UndecryptableMessageNotice(fontScale = fontScale, contentColor = contentColor)
-                        MessageMetadataRow(
-                            message = message,
-                            isFromMe = isFromMe,
-                            contentColor = contentColor,
-                            onRetryClick = onRetryClick
-                        )
-                    }
+                        onRetryClick = onRetryClick
+                    )
                 }
             }
         }
@@ -427,53 +391,20 @@ fun MessageBubble(
                 .padding(vertical = Spacing.space4),
             contentAlignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
         ) {
-            if (!isFromMe && showAvatar) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    if (position == GroupPosition.LAST || position == GroupPosition.SINGLE) {
-                        com.synapse.social.studioasinc.feature.shared.components.UserAvatar(
-                            avatarUrl = senderAvatarUrl,
-                            displayName = senderName,
-                            size = Sizes.AvatarSmall
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.size(Sizes.AvatarSmall))
-                    }
-                    Spacer(modifier = Modifier.width(Spacing.space8))
-                    CallLogCardBubble(
-                        metadata = message.metadataContainer?.call,
+            CallLogCardBubble(
+                metadata = message.metadataContainer?.call,
+                isFromMe = isFromMe,
+                cornerRadius = cornerRadius,
+                modifier = Modifier.widthIn(max = bubbleMaxWidth),
+                footer = { footerColor ->
+                    MessageMetadataRow(
+                        message = message,
                         isFromMe = isFromMe,
-                        cornerRadius = cornerRadius,
-                        modifier = Modifier.widthIn(max = bubbleMaxWidth),
-                        footer = { footerColor ->
-                            MessageMetadataRow(
-                                message = message,
-                                isFromMe = isFromMe,
-                                contentColor = footerColor,
-                                onRetryClick = onRetryClick
-                            )
-                        }
+                        contentColor = footerColor,
+                        onRetryClick = onRetryClick
                     )
                 }
-            } else {
-                CallLogCardBubble(
-                    metadata = message.metadataContainer?.call,
-                    isFromMe = isFromMe,
-                    cornerRadius = cornerRadius,
-                    modifier = Modifier.widthIn(max = bubbleMaxWidth),
-                    footer = { footerColor ->
-                        MessageMetadataRow(
-                            message = message,
-                            isFromMe = isFromMe,
-                            contentColor = footerColor,
-                            onRetryClick = onRetryClick
-                        )
-                    }
-                )
-            }
+            )
         }
         return
     }
@@ -849,7 +780,7 @@ if (message.content.isNotBlank()) {
                                                 text = message.content,
                                                 style = MaterialTheme.typography.bodyMedium.copy(
                                                     color = contentColor,
-                                                    fontSize = 18.sp * fontScale
+                                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale
                                                 ),
                                                 modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                                             )
@@ -967,7 +898,7 @@ if (message.content.isNotBlank()) {
 
                                             MessageType.POLL -> {
                                                 Column {
-                                                    PollCardBubble(metadata = message.metadataContainer?.poll, messageId = message.id, contentColor = contentColor, currentUserId = currentUserId, onVoteOption = onVoteOption)
+                                                    PollCardBubble(metadata = message.metadataContainer?.poll, messageId = message.id, contentColor = contentColor, onVoteOption = onVoteOption)
                                                     MessageMetadataRow(message = message, isFromMe = isFromMe, contentColor = contentColor, onRetryClick = onRetryClick)
                                                 }
                                             }

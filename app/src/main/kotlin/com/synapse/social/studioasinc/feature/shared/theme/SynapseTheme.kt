@@ -125,10 +125,7 @@ fun SynapseTheme(
         baseScheme
     }
 
-    CompositionLocalProvider(
-        LocalUiAtmosphere provides atmosphereState,
-        LocalSynapseBrandPalette provides if (darkTheme) SynapseDarkBrandPalette else SynapseLightBrandPalette
-    ) {
+    CompositionLocalProvider(LocalUiAtmosphere provides atmosphereState) {
         MaterialExpressiveTheme(
             colorScheme = finalColorScheme,
             motionScheme = MotionScheme.expressive(),

@@ -27,7 +27,7 @@ internal class ProfilePostsRepositoryImpl(
     private val commentRepository: CommentRepositoryImpl,
     private val constructMediaUrl: (String) -> String,
     private val constructAvatarUrl: (String) -> String,
-    private val resolveUserId: suspend (String) -> String?
+    private val resolveUserId: (String) -> String?
 ) {
 
     private val reactionRepository = ReactionRepositoryImpl(client)

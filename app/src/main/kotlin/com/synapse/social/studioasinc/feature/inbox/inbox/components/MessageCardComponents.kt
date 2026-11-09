@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -25,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -342,26 +340,15 @@ fun LiveLocationCardBubble(
 
 /**
  * M3 Expressive Poll card bubble.
- *
- * Results use a determinate [LinearProgressIndicator] (active indicator = primary, track =
- * secondaryContainer, default M3 gap/stop-indicator). Selection is derived from [currentUserId] so
- * a voter only sees their own choice highlighted. Closed polls are read-only.
+ * Uses surfaceContainerHigh for unselected rows, secondaryContainer for selected rows.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PollCardBubble(
     metadata: PollMetadata?,
     messageId: String,
     contentColor: Color,
-    currentUserId: String,
     onVoteOption: (messageId: String, optionId: String) -> Unit = { _, _ -> }
 ) {
-    val motion = MaterialTheme.motionScheme
-    val isClosed = metadata?.isClosed ?: false
-    val allowMultiple = metadata?.allowMultipleAnswers ?: false
-    // Unique voters across every option; correct for both single- and multi-choice polls.
-    val totalVoters = metadata?.options?.flatMap { it.voterUserIds }?.distinct()?.size ?: 0
-
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
         shape = RoundedCornerShape(12.dp),
@@ -379,56 +366,20 @@ fun PollCardBubble(
                 )
                 Spacer(modifier = Modifier.width(Spacing.space8))
                 Text(
-                    text = metadata?.question ?: stringResource(R.string.poll_fallback_title),
+                    text = metadata?.question ?: "Poll",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = contentColor,
-                    modifier = Modifier.weight(1f)
+                    color = contentColor
                 )
-                if (isClosed) {
-                    Spacer(modifier = Modifier.width(Spacing.space8))
-                    Text(
-                        text = stringResource(R.string.poll_closed),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
-
-            Spacer(modifier = Modifier.height(Spacing.space4))
-            Text(
-                text = stringResource(
-                    if (allowMultiple) R.string.poll_multi_choice_hint else R.string.poll_single_choice_hint
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.7f)
-            )
-
             Spacer(modifier = Modifier.height(Spacing.space8))
             metadata?.options?.forEach { option ->
-                val isSelected = currentUserId.isNotBlank() && currentUserId in option.voterUserIds
-                val fraction = if (totalVoters > 0) {
-                    (option.voteCount.toFloat() / totalVoters).coerceIn(0f, 1f)
-                } else {
-                    0f
-                }
-                val animatedFraction by animateFloatAsState(
-                    targetValue = fraction,
-                    animationSpec = motion.defaultEffectsSpec(),
-                    label = "pollOptionProgress"
-                )
+                val totalVotes = metadata.options.sumOf { it.voteCount }.coerceAtLeast(1)
+                val percentage = (option.voteCount.toFloat() / totalVotes)
+                val isSelected = option.voterUserIds.isNotEmpty()
 
-                val rowBg = if (isSelected) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHigh
-                }
-                val rowText = if (isSelected) {
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                val rowBg = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+                val rowText = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -436,63 +387,36 @@ fun PollCardBubble(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = Spacing.space4)
-                        .clickable(enabled = !isClosed) { onVoteOption(messageId, option.id) }
+                        .clickable { onVoteOption(messageId, option.id) }
                 ) {
-                    Column(modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space8)) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(percentage)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                        )
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space8),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = stringResource(R.string.poll_option_selected),
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(Spacing.space4))
-                                }
-                                Text(
-                                    text = option.text,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = rowText
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(Spacing.space8))
                             Text(
-                                text = pluralStringResource(R.plurals.poll_vote_count, option.voteCount, option.voteCount),
+                                text = option.text,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = rowText,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${option.voteCount}",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = rowText
                             )
                         }
-                        Spacer(modifier = Modifier.height(Spacing.space8))
-                        LinearProgressIndicator(
-                            progress = { animatedFraction },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.secondaryContainer
-                        )
                     }
                 }
-            }
-
-            if (totalVoters > 0) {
-                Spacer(modifier = Modifier.height(Spacing.space8))
-                Text(
-                    text = pluralStringResource(R.plurals.poll_total_voters, totalVoters, totalVoters),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor.copy(alpha = 0.7f)
-                )
             }
         }
     }

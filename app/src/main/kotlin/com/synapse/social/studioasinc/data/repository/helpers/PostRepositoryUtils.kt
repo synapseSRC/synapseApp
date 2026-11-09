@@ -18,24 +18,7 @@ internal data class CacheEntry<T>(val data: T, val timestamp: Long = System.curr
 }
 
 internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
-    private val MAX_CACHE_SIZE = 500
-    private val profileCacheMap = ConcurrentHashMap<String, CacheEntry<ProfileData>>()
-    val profileCache: Map<String, CacheEntry<ProfileData>>
-        get() = profileCacheMap
-
-    fun putProfile(key: String, value: CacheEntry<ProfileData>) {
-        putBounded(key, value)
-    }
-
-    private fun putBounded(key: String, value: CacheEntry<ProfileData>) {
-        if (profileCacheMap.size >= MAX_CACHE_SIZE) {
-            val oldestKey = profileCacheMap.keys.firstOrNull()
-            if (oldestKey != null) {
-                profileCacheMap.remove(oldestKey)
-            }
-        }
-        profileCacheMap[key] = value
-    }
+    val profileCache = ConcurrentHashMap<String, CacheEntry<ProfileData>>()
 
     companion object {
         const val CACHE_EXPIRATION_MS = 5 * 60 * 1000L
@@ -84,7 +67,7 @@ internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
     }
 
     suspend fun fetchUserProfile(userId: String): ProfileData? {
-        profileCacheMap[userId]?.let { entry ->
+        profileCache[userId]?.let { entry ->
             if (!entry.isExpired()) return entry.data
         }
 
@@ -100,7 +83,7 @@ internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
                     avatarUrl = user["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { constructAvatarUrl(it) },
                     isVerified = user["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
-                putBounded(userId, CacheEntry(profile))
+                profileCache[userId] = CacheEntry(profile)
                 profile
             } else {
                 null
@@ -128,7 +111,7 @@ internal class PostRepositoryUtils(private val client: JanSupabaseClient) {
                     avatarUrl = user["avatar"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull?.let { constructAvatarUrl(it) },
                     isVerified = user["verify"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: false
                 )
-                putBounded(uid, CacheEntry(profile))
+                profileCache[uid] = CacheEntry(profile)
                 result[uid] = profile
             }
         } catch (e: CancellationException) {

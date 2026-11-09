@@ -6,12 +6,9 @@ import com.synapse.social.studioasinc.data.source.CommentRemoteDataSource
 import com.synapse.social.studioasinc.domain.model.*
 import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -55,7 +52,6 @@ class CommentRepositoryImpl constructor(
 
             val comments = remoteDataSource.fetchComments(postId, limit, offset)
             val populatedComments = reactionRepository.populateCommentReactions(comments)
-                .sortedWith(compareByDescending<CommentWithUser> { it.isPinned }.thenByDescending { it.createdAt })
 
             // Cache in DB
             val commentsToCache = populatedComments.map {
@@ -172,59 +168,51 @@ class CommentRepositoryImpl constructor(
     }
 
     fun getCommentsForPost(postId: String): Flow<List<CommentWithUser>> {
-        return localDataSource.getCommentsForPostFlow(postId).flatMapConcat { entities ->
-            flow {
-                val uniqueAuthorUids = entities.mapNotNull { it.authorUid }.distinct()
-                val userMap = mutableMapOf<String, com.synapse.social.studioasinc.domain.model.User>()
+        return localDataSource.getCommentsForPostFlow(postId).map { entities ->
+            entities.map { entity ->
 
-                coroutineScope {
-                    uniqueAuthorUids.forEach { uid ->
-                        async(Dispatchers.IO) {
-                            userRepository.getUserById(uid).getOrNull()?.let { userMap[uid] = it }
-                        }
-                    }
-                }
+                val comment = CommentMapper.toModel(entity)
 
-                emit(entities.map { entity ->
-                    val comment = CommentMapper.toModel(entity)
-                    val domainUser = userMap[entity.authorUid]
-                    val user = domainUser?.let {
+                val user = try {
+                    userRepository.getUserById(entity.authorUid).getOrNull()?.let { domainUser ->
                         UserProfile(
-                            uid = it.uid,
-                            username = it.username ?: "",
-                            displayName = it.displayName ?: "",
-                            email = it.email ?: "",
-                            bio = it.bio,
-                            avatar = it.avatar,
-                            followersCount = it.followersCount,
-                            followingCount = it.followingCount,
-                            postsCount = it.postsCount,
-                            status = it.status,
-                            account_type = it.accountType,
-                            verify = it.verify,
-                            banned = it.banned
+                            uid = domainUser.uid,
+                            username = domainUser.username ?: "",
+                            displayName = domainUser.displayName ?: "",
+                            email = domainUser.email ?: "",
+                            bio = domainUser.bio,
+                            avatar = domainUser.avatar,
+                            followersCount = domainUser.followersCount,
+                            followingCount = domainUser.followingCount,
+                            postsCount = domainUser.postsCount,
+                            status = domainUser.status,
+                            account_type = domainUser.accountType,
+                            verify = domainUser.verify,
+                            banned = domainUser.banned
                         )
                     }
+                } catch (e: Exception) {
+                    null
+                }
 
-                    CommentWithUser(
-                        id = comment.key,
-                        postId = comment.postKey,
-                        userId = comment.uid,
-                        parentCommentId = comment.replyCommentKey,
-                        content = comment.comment,
-                        mediaUrl = null,
-                        createdAt = comment.pushTime,
-                        updatedAt = null,
-                        likesCount = 0,
-                        repliesCount = 0,
-                        isDeleted = false,
-                        isEdited = false,
-                        isPinned = false,
-                        user = user,
-                        reactionSummary = emptyMap(),
-                        userReaction = null
-                    )
-                })
+                CommentWithUser(
+                    id = comment.key,
+                    postId = comment.postKey,
+                    userId = comment.uid,
+                    parentCommentId = comment.replyCommentKey,
+                    content = comment.comment,
+                    mediaUrl = null,
+                    createdAt = comment.pushTime,
+                    updatedAt = null,
+                    likesCount = 0,
+                    repliesCount = 0,
+                    isDeleted = false,
+                    isEdited = false,
+                    isPinned = false,
+                    user = user,
+                    reactionSummary = emptyMap(),
+                    userReaction = null
+                )
             }
         }
     }

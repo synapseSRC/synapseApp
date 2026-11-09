@@ -14,8 +14,7 @@ import kotlinx.coroutines.withContext
 class ChatRepositoryImpl(
     private val client: SupabaseClient,
     private val signalRepository: SignalRepository,
-    private val signalProtocolManager: SignalProtocolManager,
-    private val deviceId: Int
+    private val signalProtocolManager: SignalProtocolManager
 ) {
 
     suspend fun sendMessage(recipientId: String, content: String): Result<Unit> = withContext(Dispatchers.IO) {
@@ -45,7 +44,7 @@ class ChatRepositoryImpl(
                 content = encryptedMessage.body,
                 type = encryptedMessage.type,
                 registrationId = encryptedMessage.registrationId,
-                deviceId = deviceId,
+                deviceId = 1, // Assuming default device ID 1
                 createdAt = java.time.Instant.now().toString()
             )
 

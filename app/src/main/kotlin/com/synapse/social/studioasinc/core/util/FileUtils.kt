@@ -196,10 +196,7 @@ object FileUtils {
                 Log.e(TAG, "Invalid file source (private data dir): $canonicalPath")
                 return null
             }
-            // Return the value that was actually checked. Handing back cleanPath lets a caller
-            // re-resolve a string that still contains symlinks or ".." segments, so a link swapped
-            // in after this check silently bypasses the policy above.
-            return canonicalPath
+            return cleanPath
         } catch (e: Exception) {
             Log.e(TAG, "Path validation failed", e)
             return null

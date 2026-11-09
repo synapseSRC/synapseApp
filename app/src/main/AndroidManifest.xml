@@ -13,6 +13,7 @@
 	<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 	<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 	<uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+	<uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
@@ -75,12 +76,6 @@
 		<meta-data
 			android:name="com.onesignal.NotificationOpened.DEFAULT"
 			android:value="DISABLE" />
-
-		<!-- OneSignal v5 extension: renders circular sender avatars into push notification large icons. -->
-		<meta-data
-			android:name="com.onesignal.NotificationServiceExtension"
-			android:value="com.synapse.social.studioasinc.core.NotificationExtensionService" />
-
 		<activity
 			android:name=".feature.shared.main.MainActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|locale"
@@ -197,18 +192,37 @@
 			android:supportsPictureInPicture="true"
 			android:windowSoftInputMode="adjustResize"
 			android:exported="true">
-			<!-- The single app-link for the whole product. OAuth, magic links and email confirmation
-			     all return to https://synapsesocial.vercel.app/home; every other host that used to be
-			     registered here (synapse://login, socialsynapse.vercel.app, www.synapse.com/auth,
-			     synapseofficial.vercel.app) has been retired. Android only routes a link to this app when
-			     the host serves an assetlinks.json containing this package and its signing certificate
-			     SHA-256, so autoVerify is load-bearing rather than decorative. -->
+			<!-- Deep link for Auth (OAuth and Magic Links) -->
 			<intent-filter android:autoVerify="true">
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />
-				<data android:scheme="https" android:host="synapsesocial.vercel.app" android:pathPrefix="/home" />
+				<data android:scheme="synapse" android:host="login" />
 			</intent-filter>
+
+			<!-- Auth callback from the hosted site (OAuth and Magic Links) -->
+			<intent-filter android:autoVerify="true">
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="https" android:host="socialsynapse.vercel.app" android:pathPrefix="/home" />
+			</intent-filter>
+
+			<!-- Fallback for misconfigured Supabase redirect (www.synapse.com) -->
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="https" android:host="www.synapse.com" android:pathPrefix="/auth" />
+			</intent-filter>
+
+			<!-- Support for synapseofficial.vercel.app -->
+			<intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="synapseofficial.vercel.app" />
+            </intent-filter>
 		</activity>
 		<activity
 			android:name=".feature.settings.SettingsActivity"
@@ -285,6 +299,18 @@
 			</intent-filter>
 		</service>
 
+		<!-- Background Deletion Service -->
+		<service
+			android:name=".data.repository.deletion.BackgroundDeletionService"
+			android:enabled="true"
+			android:exported="false"
+			android:foregroundServiceType="dataSync" />
+
+		<!--
+			Holds the microphone (and the camera, once a call turns to video) while the call's screen is
+			not on top. The types are declared as both because a voice call can become a video call
+			without the manifest changing; the service only ever asks for the type its media justifies.
+		-->
 		<service
 			android:name=".service.call.CallForegroundService"
 			android:enabled="true"
@@ -335,9 +361,7 @@
 			android:screenOrientation="portrait"
 			android:windowSoftInputMode="adjustResize"
 			android:exported="true">
-			<!-- Group invite links carry a bearer-equivalent code, so the filter must be
-			     domain-verified for the same reason as the auth callbacks above. -->
-			<intent-filter android:autoVerify="true">
+			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />

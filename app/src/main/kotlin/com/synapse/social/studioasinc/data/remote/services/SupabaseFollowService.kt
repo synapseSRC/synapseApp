@@ -29,7 +29,7 @@ class SupabaseFollowService @Inject constructor() {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
             android.util.Log.d("SupabaseFollowService", "Attempting to follow: followerId=$followerId, followingId=$followingId")
-            val response = client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeAs<JsonElement>()
+            val response = client.postgrest.rpc("request_follow", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
             android.util.Log.d("SupabaseFollowService", "Follow request successful: $response")
             return@withContext Result.success(Unit)
         } catch (e: Exception) {
@@ -44,7 +44,7 @@ class SupabaseFollowService @Inject constructor() {
         try {
             if (!SupabaseClient.isConfigured()) return@withContext Result.failure(Exception("Supabase not configured"))
             if (client.auth.currentUserOrNull() == null) return@withContext Result.failure(Exception("User not authenticated"))
-            client.postgrest.rpc("unfollow_user", buildJsonObject { put("p_target_uid", followingId) }).decodeAs<JsonElement>()
+            client.postgrest.rpc("unfollow_user", buildJsonObject { put("p_target_uid", followingId) }).decodeSingle<JsonElement>()
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("SupabaseFollowService", "Failed to unfollow user", e)
@@ -55,7 +55,7 @@ class SupabaseFollowService @Inject constructor() {
     suspend fun getFollowStatus(targetUid: String): Result<ProfileFollowStatus> = withContext(Dispatchers.IO) {
         try {
             if (client.auth.currentUserOrNull() == null) return@withContext Result.success(ProfileFollowStatus.NONE)
-            val status = client.postgrest.rpc("get_follow_status", buildJsonObject { put("p_target_uid", targetUid) }).decodeAs<String>()
+            val status = client.postgrest.rpc("get_follow_status", buildJsonObject { put("p_target_uid", targetUid) }).decodeSingle<String>()
             Result.success(when (status) {
                 "following" -> ProfileFollowStatus.FOLLOWING
                 "requested" -> ProfileFollowStatus.REQUESTED

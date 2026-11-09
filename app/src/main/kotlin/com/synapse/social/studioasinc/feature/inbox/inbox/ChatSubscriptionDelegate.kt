@@ -54,7 +54,7 @@ class ChatSubscriptionDelegate(
     private data class ActiveTyping(val status: TypingStatus, val expiresAt: Long)
     private val activeTypingUsers = linkedMapOf<String, ActiveTyping>()
 
-    private val _typingStatus = MutableStateFlow<TypingStatus?>(null)
+    val _typingStatus = MutableStateFlow<TypingStatus?>(null)
     val typingStatus: StateFlow<TypingStatus?> = _typingStatus.asStateFlow()
 
     private enum class ReceiptLevel { DELIVERED, READ }

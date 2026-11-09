@@ -38,7 +38,7 @@ class AboutSupportViewModel @Inject constructor(
     private val _buildNumber = MutableStateFlow("")
     val buildNumber: StateFlow<String> = _buildNumber.asStateFlow()
 
-    /** Short commit hash stamped into [BuildConfig] at build time; blank when git was unavailable. */
+    // Short commit hash stamped into BuildConfig at build time; blank when git was unavailable.
     private val _commitHash = MutableStateFlow(BuildConfig.GIT_COMMIT_HASH.trim())
     val commitHash: StateFlow<String> = _commitHash.asStateFlow()
 

@@ -269,15 +269,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Opens an external URL through [AuthNavigationEvent.OpenUrl], so screens in the auth flow do
-     * not build their own intents and every URL is opened the same way.
-     */
-    fun openUrl(url: String) {
-        if (url.isBlank()) return
-        viewModelScope.launch { _navigationEvent.emit(AuthNavigationEvent.OpenUrl(url)) }
-    }
-
     fun onOAuthClick(provider: String) {
         viewModelScope.launch {
              if (provider.equals("Google", ignoreCase = true)) {

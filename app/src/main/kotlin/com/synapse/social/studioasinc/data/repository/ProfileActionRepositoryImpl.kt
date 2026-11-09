@@ -39,7 +39,7 @@ class ProfileActionRepositoryImpl @Inject constructor() : ProfilePrivacyReposito
             if (supabase.auth.currentUserOrNull() == null) return@withContext Result.success(ProfileFollowStatus.NONE)
             val status = supabase.postgrest.rpc("get_follow_status", buildJsonObject {
                 put("p_target_uid", targetUid)
-            }).decodeAs<String>()
+            }).decodeSingle<String>()
             Result.success(when (status) {
                 "following" -> ProfileFollowStatus.FOLLOWING
                 "requested" -> ProfileFollowStatus.REQUESTED

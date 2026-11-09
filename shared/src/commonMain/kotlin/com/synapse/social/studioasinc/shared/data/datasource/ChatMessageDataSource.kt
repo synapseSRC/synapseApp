@@ -15,48 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
-import kotlinx.serialization.json.add
 
 internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
 
     private fun getCurrentUserId(): String? = runCatching {
         client.pluginManager.getPluginOrNull(io.github.jan.supabase.auth.Auth)?.currentUserOrNull()?.id
     }.getOrNull()
-
-    /** RLS scopes this queue to the authenticated participant, including archived conversations. */
-    suspend fun getPendingDeliveries(userId: String): List<MessageDto> = withContext(AppDispatchers.IO) {
-        check(getCurrentUserId() == userId) { "Delivery account changed" }
-        client.postgrest.from("messages").select {
-            filter {
-                neq("sender_id", userId)
-                filter("delivered_at", FilterOperator.IS, "null")
-                eq("is_deleted", false)
-                or {
-                    filter("expires_at", FilterOperator.IS, "null")
-                    gt("expires_at", com.synapse.social.studioasinc.shared.util.TimeProvider.nowInstant().toString())
-                }
-            }
-            order("created_at", Order.ASCENDING)
-            order("id", Order.ASCENDING)
-            limit(100)
-        }.decodeList<MessageDto>()
-    }
-
-    /** Only acknowledge rows actually fetched by this account, never future arrivals in the chat. */
-    suspend fun acknowledgeReceivedMessages(userId: String, messageIds: List<String>) = withContext(AppDispatchers.IO) {
-        check(getCurrentUserId() == userId) { "Delivery account changed" }
-        val ids = messageIds.distinct()
-        require(ids.isNotEmpty() && ids.size <= 100) { "Invalid delivery batch" }
-        client.postgrest.rpc(
-            function = "acknowledge_received_messages",
-            parameters = buildJsonObject {
-                put("p_user_id", userId)
-                putJsonArray("p_message_ids") { ids.forEach { add(it) } }
-            }
-        )
-        Unit
-    }
 
     suspend fun getMessages(chatId: String, limit: Int = 50, before: String? = null, beforeId: String? = null): List<MessageDto> =
         getMessagesPage(chatId, limit, before, beforeId, null, null)
@@ -255,29 +219,6 @@ internal class ChatMessageDataSource(private val client: SupabaseClientLib) {
             }
         } catch (e: Exception) {
             Napier.e("Error editing message", e)
-            throw e
-        }
-    }
-
-    /**
-     * Atomically toggles the caller's vote for a poll option via the `vote_in_chat_poll` RPC.
-     *
-     * This is a void RPC: the server performs the read-modify-write inside a single atomic
-     * statement, so no decode call is made here (per project RPC conventions).
-     */
-    suspend fun voteInChatPoll(messageId: String, optionId: String, userId: String) = withContext(AppDispatchers.IO) {
-        try {
-            client.postgrest.rpc(
-                function = "vote_in_chat_poll",
-                parameters = mapOf(
-                    "p_message_id" to messageId,
-                    "p_option_id" to optionId,
-                    "p_user_id" to userId
-                )
-            )
-            Unit
-        } catch (e: Exception) {
-            Napier.e("Error voting in poll $messageId", e)
             throw e
         }
     }

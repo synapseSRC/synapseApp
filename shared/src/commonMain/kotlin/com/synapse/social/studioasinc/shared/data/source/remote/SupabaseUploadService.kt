@@ -30,22 +30,11 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
             .ifBlank { config.primaryBucket }
             .ifBlank { com.synapse.social.studioasinc.shared.core.network.SupabaseClient.BUCKET_POST_MEDIA }
 
-        // fileName reaches the object key verbatim, and for user-scoped buckets the key is
-        // "$userId/<timestamp>_$fileName". A name carrying a separator or ".." would move the write
-        // outside the caller's own prefix, so the storage policy that scopes a user to their own
-        // folder no longer holds. Strip anything path-like rather than trusting the caller.
-        val safeFileName = fileName
-            .replace('\\', '/')
-            .substringAfterLast('/')
-            .replace("..", "_")
-            .filterNot { it.code < 0x20 || it.code == 0x7f }
-            .ifBlank { "upload" }
-
-        Napier.d("Uploading to Supabase bucket: $targetBucket, file: $safeFileName", tag = "SupabaseUpload")
+        Napier.d("Uploading to Supabase bucket: $targetBucket, file: $fileName", tag = "SupabaseUpload")
 
         try {
             val bucket = supabase.storage.from(targetBucket)
-            val objectName = "${TimeProvider.nowMillis()}_$safeFileName"
+            val objectName = "${TimeProvider.nowMillis()}_$fileName"
             val path = if (targetBucket in userScopedBuckets) {
                 val userId = supabase.auth.currentUserOrNull()?.id
                     ?: throw UploadError.BackendError("An authenticated user is required to upload profile media")
@@ -102,7 +91,7 @@ class SupabaseUploadService(private val supabase: SupabaseClient) : UploadServic
                 try {
                     Napier.d("Retrying Supabase upload to fallback bucket: $fallbackBucket", tag = "SupabaseUpload")
                     val bucket = supabase.storage.from(fallbackBucket)
-                    val fallbackObjectName = "${TimeProvider.nowMillis()}_$safeFileName"
+                    val fallbackObjectName = "${TimeProvider.nowMillis()}_$fileName"
                     val path = if (fallbackBucket in protectedMediaBuckets) {
                         val userId = supabase.auth.currentUserOrNull()?.id
                             ?: throw UploadError.BackendError("An authenticated user is required to upload protected media")

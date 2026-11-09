@@ -797,17 +797,42 @@ class SupabaseChatRepository(
     override suspend fun voteInPoll(messageId: String, optionId: String, pollId: String): Result<Unit> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+            val dto = dataSource.getMessageById(messageId) ?: throw Exception("Poll message not found")
+            val domainMessage = dto.toDomain()
+            val poll = domainMessage.metadataContainer?.poll ?: throw Exception("Poll metadata not found")
 
-            // Atomic server-side toggle: the RPC verifies participation, loads the poll from
-            // metadata, toggles the vote and recomputes counts in a single statement, so the
-            // client never performs a racy read-modify-write of the whole metadata column.
-            dataSource.voteInChatPoll(messageId, optionId, currentUserId)
-
-            // Re-fetch the authoritative message and refresh the local cache.
-            val freshDto = dataSource.getMessageById(messageId)
-            if (freshDto != null) {
-                cachedMessageDao?.upsert(freshDto.toDomain())
+            if (poll.isClosed) {
+                throw Exception("Poll is closed")
             }
+
+            val updatedOptions = poll.options.map { option ->
+                if (option.id == optionId) {
+                    val currentVoters = option.voterUserIds.toSet()
+                    val newVoters = if (currentUserId in currentVoters) currentVoters - currentUserId else currentVoters + currentUserId
+                    option.copy(
+                        voteCount = newVoters.size,
+                        voterUserIds = newVoters.toList()
+                    )
+                } else if (!poll.allowMultipleAnswers) {
+                    val currentVoters = option.voterUserIds.toSet() - currentUserId
+                    option.copy(
+                        voteCount = currentVoters.size,
+                        voterUserIds = currentVoters.toList()
+                    )
+                } else option
+            }
+
+            val updatedContainer = domainMessage.metadataContainer?.copy(poll = poll.copy(options = updatedOptions))
+            val serializedMetadata = updatedContainer?.let {
+                try {
+                    Json.encodeToString(MessageMetadataContainer.serializer(), it)
+                } catch (e: Exception) { null }
+            }
+
+            dataSource.editMessageMetadata(messageId, serializedMetadata)
+
+            val cachedMsg = domainMessage.copy(metadataContainer = updatedContainer)
+            cachedMessageDao?.upsert(cachedMsg)
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -954,12 +979,10 @@ class SupabaseChatRepository(
             val userId = getCurrentUserId() ?: ""
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
-            withContext(AppDispatchers.IO) {
-                check(getCurrentUserId() == userId && userId.isNotBlank()) { "Inbox account changed" }
+            externalScope.launch {
                 if (domainMessage.encryptionFailureReason == null && !EncryptedPayloadDetector.isEncryptedPayload(domainMessage.content) && !encryptionHelper.isPlaceholder(domainMessage.content)) {
                     getCacheMutexForChat(domainMessage.chatId).withLock {
-                        val cached = cachedMessageDao?.getMessageById(domainMessage.id)
-                        cachedMessageDao?.upsert(cached?.mergeMonotonic(domainMessage) ?: domainMessage)
+                        cachedMessageDao?.upsert(domainMessage)
                         recordCacheSyncTime(domainMessage.chatId)
                     }
                 }
@@ -967,7 +990,6 @@ class SupabaseChatRepository(
                 val chatInfo = if (existing == null) dataSource.getChatInfo(domainMessage.chatId) else null
 
                 conversationMutex.withLock {
-                    check(getCurrentUserId() == userId) { "Inbox account changed" }
                     val currentExisting = cachedConversationDao?.getAll()?.find { it.chatId == domainMessage.chatId }
                     val updated = if (currentExisting != null) {
                         val isNewest = isMoreRecent(domainMessage.createdAt, currentExisting.lastMessageTime)

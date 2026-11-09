@@ -163,9 +163,6 @@ class SupabaseChatDataSource(private val client: SupabaseClientLib = SupabaseCli
 
     suspend fun editMessageMetadata(messageId: String, metadata: String?) = messages.editMessageMetadata(messageId, metadata)
 
-    suspend fun voteInChatPoll(messageId: String, optionId: String, userId: String) =
-        messages.voteInChatPoll(messageId, optionId, userId)
-
     suspend fun markViewOnceConsumed(messageId: String) = messages.markViewOnceConsumed(messageId)
 
     // Device registration methods

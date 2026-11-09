@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -84,7 +83,6 @@ import kotlinx.coroutines.withContext
         onNavigateToProduct: (String) -> Unit = {},
         onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
         onNavigateToChatSettings: (String) -> Unit = {},
-        onNavigateToCreatePoll: (String) -> Unit = {},
         onStartCall: (CallLaunchRequest) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
@@ -189,7 +187,6 @@ val currentUserId = currentUserIdState ?: ""
     val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
         LazyListState(0, 0)
     }
-    val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -514,8 +511,7 @@ val currentUserId = currentUserIdState ?: ""
                                 ).show()
                             }
                         )
-                    },
-                    scrollBehavior = topAppBarScrollBehavior
+                    }
                 )
             }
         }
@@ -566,9 +562,7 @@ val currentUserId = currentUserIdState ?: ""
                 else -> {
                     ChatMessageList(
                         chatId = chatId,
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f }
-                            .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+                        modifier = Modifier.graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
                         bottomContentPadding = messageListBottomPadding,
@@ -742,7 +736,6 @@ typingStatus = typingStatus,
                                 ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
                                 ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
                                 ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
-                                ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
                             }
                         }
                     )

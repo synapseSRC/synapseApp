@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -16,15 +17,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.feature.shared.theme.AppColors
-import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
-import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
-import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
-import com.synapse.social.studioasinc.feature.shared.theme.GroupedListSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.settings.SettingsAnimations
 import kotlinx.coroutines.launch
 
 enum class ChatAttachmentCategory(
@@ -36,8 +35,7 @@ enum class ChatAttachmentCategory(
     DOCUMENTS(R.string.chat_attachment_documents, R.string.chat_attachment_documents_supporting, Icons.Rounded.Description),
     AUDIO(R.string.chat_attachment_audio, R.string.chat_attachment_audio_supporting, Icons.Rounded.Headphones),
     FILES(R.string.chat_attachment_files, R.string.chat_attachment_files_supporting, Icons.Rounded.FolderOpen),
-    CONTACTS(R.string.chat_attachment_contacts, R.string.chat_attachment_contacts_supporting, Icons.Rounded.ContactPage),
-    POLL(R.string.chat_attachment_poll, R.string.chat_attachment_poll_supporting, Icons.Rounded.BarChart)
+    CONTACTS(R.string.chat_attachment_contacts, R.string.chat_attachment_contacts_supporting, Icons.Rounded.ContactPage)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -63,31 +61,38 @@ fun ChatAttachmentSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        containerColor = AppColors.screenBackground,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AppSpacing.screenPadding, vertical = Spacing.space16)
+                .padding(horizontal = Spacing.space16, vertical = Spacing.space16)
         ) {
-            Text(
-                text = stringResource(R.string.chat_attachment_share_content),
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().height(Sizes.HeightDefault),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.chat_attachment_share_content),
+                    modifier = Modifier.weight(1f),
+                    // Product-specific bold emphasis; size stays on the M3 titleLarge scale.
+                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
             Spacer(modifier = Modifier.height(Spacing.space12))
-
-            val categories = ChatAttachmentCategory.values()
-            Column(verticalArrangement = Arrangement.spacedBy(GroupedListSpacing)) {
-                categories.forEachIndexed { index, category ->
+            // My design decision (not in M3): use the requested 3dp gaps for this contained list.
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                ChatAttachmentCategory.values().forEachIndexed { index, category ->
                     AttachmentCategoryItem(
                         category = category,
-                        position = GroupedItemPosition.at(index, categories.size),
+                        index = index,
+                        itemCount = ChatAttachmentCategory.values().size,
                         onClick = { dismissThen { onCategorySelected(category) } }
                     )
                 }
@@ -100,77 +105,83 @@ fun ChatAttachmentSheet(
 @Composable
 private fun AttachmentCategoryItem(
     category: ChatAttachmentCategory,
-    position: GroupedItemPosition,
+    index: Int,
+    itemCount: Int,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
+    // My design decision (not in M3): a subtle press scale is requested for tappable rows.
     val scale by animateFloatAsState(
-        targetValue = if (pressed) SettingsAnimations.pressScale else 1f,
+        targetValue = if (pressed) 0.98f else 1f,
         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "attachmentCategoryPress"
     )
-    val shape = position.shape
+    val shape = when {
+        itemCount == 1 -> RoundedCornerShape(Sizes.CornerMassive)
+        index == 0 -> RoundedCornerShape(
+            topStart = Sizes.CornerMassive,
+            topEnd = Sizes.CornerMassive,
+            bottomStart = Sizes.CornerMedium,
+            bottomEnd = Sizes.CornerMedium
+        )
+        index == itemCount - 1 -> RoundedCornerShape(
+            topStart = Sizes.CornerMedium,
+            topEnd = Sizes.CornerMedium,
+            bottomStart = Sizes.CornerMassive,
+            bottomEnd = Sizes.CornerMassive
+        )
+        else -> RoundedCornerShape(Sizes.CornerMedium)
+    }
 
-    ListItem(
+    Surface(
         onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AppSpacing.rowMinHeight)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-        leadingContent = {
-            Surface(
-                modifier = Modifier.size(AppSpacing.iconBadgeSize),
-                shape = CircleShape,
-                color = AppColors.iconContainerBackground,
-                contentColor = AppColors.itemIcon
-            ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = category.icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(AppSpacing.rowIconSize)
-                    )
-                }
-            }
+        modifier = Modifier.fillMaxWidth().height(Sizes.HeightAvatarLarge).graphicsLayer {
+            scaleX = scale
+            scaleY = scale
         },
-        content = {
-            Text(
-                text = stringResource(category.titleRes),
-                style = AppTypography.itemTitle,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        supportingContent = {
-            Text(
-                text = stringResource(category.supportingTextRes),
-                style = AppTypography.itemSubtitle,
-                color = AppColors.supportingText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        verticalAlignment = Alignment.CenterVertically,
-        shapes = ListItemDefaults.shapes(
-            shape = shape,
-            pressedShape = shape,
-            focusedShape = shape,
-            hoveredShape = shape
-        ),
-        colors = ListItemDefaults.colors(
-            containerColor = AppColors.cardBackground,
-            headlineColor = AppColors.itemContent,
-            leadingIconColor = AppColors.itemIcon,
-            supportingColor = AppColors.supportingText
-        ),
-        contentPadding = PaddingValues(
-            horizontal = AppSpacing.rowHorizontalPadding,
-            vertical = AppSpacing.rowVerticalPadding
-        ),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         interactionSource = interactionSource
-    )
+    ) {
+        ListItem(
+            content = {
+                Text(
+                    text = stringResource(category.titleRes),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Default),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = stringResource(category.supportingTextRes),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Default),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            leadingContent = {
+                Surface(
+                    modifier = Modifier.size(Sizes.IconMassive),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = category.icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(Sizes.IconLarge)
+                        )
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+        )
+    }
 }

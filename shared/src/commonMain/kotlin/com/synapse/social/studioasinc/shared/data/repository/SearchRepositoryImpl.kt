@@ -70,11 +70,9 @@ class SearchRepositoryImpl(
 
         val columns = Columns.raw("id, post_text, author_uid, likes_count, comments_count, reshares_count, created_at, media_items, author:users!posts_author_uid_fkey(display_name, username, avatar)")
 
-        // The sibling lookups below (searchNews:147, searchHashtags:113) all run sanitizeSearchQuery
-        // over the same ilike operator. This branch is ilike too - not a full-text search - so `%`
-        // and `_` typed by the user are wildcards: an unescaped "%" matches every post and a long
-        // leading wildcard forces an unindexed scan.
-        val sanitizedQuery = sanitizeSearchQuery(query)
+        // For Full Text Search, we do not escape % and _ as they are not wildcards in FTS.
+        // We trim and limit to prevent excessively long query strings that might strain the backend.
+        val sanitizedQuery = query.trim().take(100)
 
         val result = client.postgrest["posts"].select(columns = columns) {
             if (sanitizedQuery.isNotBlank()) {

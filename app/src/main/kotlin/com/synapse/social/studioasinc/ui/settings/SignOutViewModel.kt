@@ -18,12 +18,8 @@ class SignOutViewModel @Inject constructor(
         if (isSigningOut) return
         isSigningOut = true
         viewModelScope.launch {
-            try {
-                authRepository.signOut()
-                onSignedOut()
-            } finally {
-                isSigningOut = false
-            }
+            authRepository.signOut()
+            onSignedOut()
         }
     }
 }

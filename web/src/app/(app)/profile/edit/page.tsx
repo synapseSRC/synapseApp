@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 const EditProfilePage = async () => {
     const user = await requireCurrentUser("/profile/edit");
     const profile = await getOrCreateOwnProfile(user);
-    const coverUrl = profile ? await resolveCoverUrl(profile.profile_cover_image, user.id) : null;
+    const coverUrl = profile ? await resolveCoverUrl(profile.profile_cover_image) : null;
 
     return (
         <div className="space-y-4">

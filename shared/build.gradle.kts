@@ -84,25 +84,25 @@ kotlin {
         val commonMain = getByName("commonMain") {
             dependencies {
                 // Supabase & Ktor
-                implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:3.9.0"))
+                implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:3.8.0"))
                 implementation("io.github.jan-tennert.supabase:postgrest-kt")
                 implementation("io.github.jan-tennert.supabase:auth-kt")
                 implementation("io.github.jan-tennert.supabase:realtime-kt")
                 implementation("io.github.jan-tennert.supabase:storage-kt")
                 implementation("io.github.jan-tennert.supabase:functions-kt")
-                implementation("io.ktor:ktor-client-core:3.6.1")
+                implementation("io.ktor:ktor-client-core:3.6.0")
                 implementation("com.fleeksoft.ksoup:ksoup:0.2.0")
-                implementation("io.ktor:ktor-client-content-negotiation:3.6.1")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.1")
+                implementation("io.ktor:ktor-client-content-negotiation:3.6.0")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.0")
 
                 // Serialization
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
                 // Coroutines
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
                 // DateTime
-                api("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
 
                 // Logging
                 implementation("io.github.aakira:napier:2.7.1")
@@ -115,8 +115,8 @@ kotlin {
                 implementation("com.russhwolf:multiplatform-settings-no-arg:1.3.0")
 
                 // SQLDelight
-                implementation("app.cash.sqldelight:runtime:2.4.1")
-                implementation("app.cash.sqldelight:coroutines-extensions:2.4.1")
+                implementation("app.cash.sqldelight:runtime:2.4.0")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.4.0")
             }
         }
 
@@ -125,15 +125,15 @@ kotlin {
             dependencies {
                 // CIO engine is the recommended engine for Compose Desktop — pure Kotlin,
                 // no native libs, no jlink stripping issues unlike ktor-client-okhttp
-                implementation("io.ktor:ktor-client-cio:3.6.1")
-                implementation("app.cash.sqldelight:sqlite-driver:2.4.1")
+                implementation("io.ktor:ktor-client-cio:3.6.0")
+                implementation("app.cash.sqldelight:sqlite-driver:2.4.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.8.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1")
             }
         }
         val wasmJsMain = getByName("wasmJsMain") {
             dependencies {
-                implementation("app.cash.sqldelight:web-worker-driver:2.4.1")
+                implementation("app.cash.sqldelight:web-worker-driver:2.4.0")
                 // WebCrypto is async-only, but PlatformUtils has a synchronous contract.
                 implementation("org.kotlincrypto.hash:sha1:0.8.0")
                 implementation("org.kotlincrypto.hash:sha2:0.8.0")
@@ -151,13 +151,13 @@ kotlin {
 
         val androidMain = getByName("androidMain") {
             dependencies {
-                implementation("io.ktor:ktor-client-okhttp:3.6.1")
+                implementation("io.ktor:ktor-client-okhttp:3.6.0")
                 // Official Signal Protocol client library (modern API under org.signal.libsignal.*)
                 implementation("org.signal:libsignal-client:0.66.2")
                 implementation("org.signal:libsignal-android:0.66.2")
                 implementation("androidx.security:security-crypto:1.1.0-beta01")
                 implementation("androidx.exifinterface:exifinterface:1.4.2")
-                implementation("app.cash.sqldelight:android-driver:2.4.1")
+                implementation("app.cash.sqldelight:android-driver:2.4.0")
                 implementation("androidx.credentials:credentials:1.6.0")
                 implementation("io.insert-koin:koin-android:4.2.2")
                 implementation("io.sentry:sentry-android:8.60.0")
@@ -174,8 +174,8 @@ kotlin {
         if (true) {
             val iosMain = getByName("iosMain") {
                 dependencies {
-                    implementation("io.ktor:ktor-client-darwin:3.6.1")
-                    implementation("app.cash.sqldelight:native-driver:2.4.1")
+                    implementation("io.ktor:ktor-client-darwin:3.6.0")
+                    implementation("app.cash.sqldelight:native-driver:2.4.0")
                 }
             }
         }
@@ -197,7 +197,6 @@ dependencies {
 android {
     namespace = "com.synapse.social.studioasinc.shared"
     compileSdk = 37
-    compileSdkExtension = 1
     buildToolsVersion = "36.0.0"
     defaultConfig {
         minSdk = 26
@@ -213,11 +212,11 @@ android {
         buildConfigField("String", "GEMINI_API_ENDPOINT", "\"${System.getenv("GEMINI_API_ENDPOINT") ?: project.findProperty("GEMINI_API_ENDPOINT") ?: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"}\"")
         buildConfigField("String", "IMGBB_API_ENDPOINT", "\"${System.getenv("IMGBB_API_ENDPOINT") ?: project.findProperty("IMGBB_API_ENDPOINT") ?: "https://api.imgbb.com/1/upload"}\"")
         buildConfigField("String", "CLOUDINARY_API_BASE_URL", "\"${System.getenv("CLOUDINARY_API_BASE_URL") ?: project.findProperty("CLOUDINARY_API_BASE_URL") ?: "https://api.cloudinary.com/v1_1/"}\"")
-        buildConfigField("String", "APP_WEBSITE_URL", "\"${System.getenv("APP_WEBSITE_URL") ?: project.findProperty("APP_WEBSITE_URL") ?: "https://synapsesocial.vercel.app"}\"")
+        buildConfigField("String", "APP_WEBSITE_URL", "\"${System.getenv("APP_WEBSITE_URL") ?: project.findProperty("APP_WEBSITE_URL") ?: "https://socialsynapse.vercel.app"}\"")
         buildConfigField("String", "GITHUB_BUG_REPORT_URL", "\"${System.getenv("GITHUB_BUG_REPORT_URL") ?: project.findProperty("GITHUB_BUG_REPORT_URL") ?: "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md"}\"")
         buildConfigField("String", "DEFAULT_QUIET_HOURS_START", "\"${System.getenv("DEFAULT_QUIET_HOURS_START") ?: project.findProperty("DEFAULT_QUIET_HOURS_START") ?: "22:00"}\"")
         buildConfigField("String", "DEFAULT_QUIET_HOURS_END", "\"${System.getenv("DEFAULT_QUIET_HOURS_END") ?: project.findProperty("DEFAULT_QUIET_HOURS_END") ?: "08:00"}\"")
-        buildConfigField("String", "SUPABASE_REDIRECT_URL", "\"${System.getenv("SUPABASE_REDIRECT_URL") ?: project.findProperty("SUPABASE_REDIRECT_URL") ?: "https://synapsesocial.vercel.app/home"}\"")
+        buildConfigField("String", "SUPABASE_REDIRECT_URL", "\"${System.getenv("SUPABASE_REDIRECT_URL") ?: project.findProperty("SUPABASE_REDIRECT_URL") ?: "https://socialsynapse.vercel.app/home"}\"")
         buildConfigField("String", "X_BASE_URL", "\"${System.getenv("X_BASE_URL") ?: project.findProperty("X_BASE_URL") ?: "https://x.com/"}\"")
         buildConfigField("String", "INSTAGRAM_BASE_URL", "\"${System.getenv("INSTAGRAM_BASE_URL") ?: project.findProperty("INSTAGRAM_BASE_URL") ?: "https://instagram.com/"}\"")
         buildConfigField("String", "FACEBOOK_BASE_URL", "\"${System.getenv("FACEBOOK_BASE_URL") ?: project.findProperty("FACEBOOK_BASE_URL") ?: "https://facebook.com/"}\"")

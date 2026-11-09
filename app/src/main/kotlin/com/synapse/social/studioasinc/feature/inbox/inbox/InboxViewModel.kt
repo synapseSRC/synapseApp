@@ -22,6 +22,8 @@ import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkIncomingMessageAsDeliveredUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsDeliveredUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToInboxUpdatesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SubscribeToRosterChangesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.sound.PlaySoundEffectUseCase
@@ -53,6 +55,8 @@ class InboxViewModel @Inject constructor(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val subscribeToInboxUpdatesUseCase: SubscribeToInboxUpdatesUseCase,
     private val subscribeToRosterChangesUseCase: SubscribeToRosterChangesUseCase,
+    private val markIncomingMessageAsDeliveredUseCase: MarkIncomingMessageAsDeliveredUseCase,
+    private val markMessagesAsDeliveredUseCase: MarkMessagesAsDeliveredUseCase,
     private val initializeE2EUseCase: InitializeE2EUseCase,
     private val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     private val settingsRepository: SettingsRepository,
@@ -186,6 +190,7 @@ class InboxViewModel @Inject constructor(
                 _isRefreshing.value = false
                 subscribeToInboxUpdates()
                 subscribeToRosterChanges()
+                backfillDeliveryAcks(_conversations.value)
             }
             .onFailure { throwable ->
                 _error.value = "Failed to load conversations: ${throwable.message.orEmpty()}"
@@ -211,15 +216,18 @@ class InboxViewModel @Inject constructor(
 
     private fun subscribeToInboxUpdates() {
         val chatIds = _conversations.value.map { it.chatId }.distinct()
-        if (chatIds == subscribedChatIds && inboxSubscriptionJob?.isActive == true) return
+        if (chatIds == subscribedChatIds) return
         inboxSubscriptionJob?.cancel()
         subscribedChatIds = chatIds
+        if (chatIds.isEmpty()) return
         inboxSubscriptionJob = viewModelScope.launch {
             while (isActive) {
                 try {
                     subscribeToInboxUpdatesUseCase(chatIds)
                         .onEach { message ->
                             playArrivalCue(message)
+                            // Acknowledge every arrival; the refresh debounce only coalesces the list reload.
+                            acknowledgeDelivery(message)
                         }
                         .debounce(300L)
                         .collect {
@@ -258,11 +266,49 @@ class InboxViewModel @Inject constructor(
         }
     }
 
-    // The application owns delivery acknowledgments. This subscription only refreshes inbox UI.
+    // Delivery marks every undelivered message of a chat, so one in-flight acknowledgement per chat is enough.
+    private val pendingDeliveryAcks = mutableSetOf<String>()
+
+    private fun acknowledgeDelivery(message: Message) {
+        if (!pendingDeliveryAcks.add(message.chatId)) return
+        viewModelScope.launch {
+            try {
+                markIncomingMessageAsDeliveredUseCase(message)
+                    .onFailure {
+                        io.github.aakira.napier.Napier.w("Inbox delivery acknowledgement failed: ${it.message}", tag = "InboxRealtime")
+                    }
+            } finally {
+                pendingDeliveryAcks.remove(message.chatId)
+            }
+        }
+    }
+
+    // Listing a chat with unread incoming messages proves this device has them, even when the
+    // realtime arrival event was missed because the app was closed. One ack per chat per session.
+    private val backfilledDeliveryChats = mutableSetOf<String>()
+
+    private fun backfillDeliveryAcks(conversations: List<Conversation>) {
+        conversations.filter { it.unreadCount > 0 && it.chatId !in backfilledDeliveryChats }
+            .forEach { conversation ->
+                backfilledDeliveryChats.add(conversation.chatId)
+                viewModelScope.launch {
+                    markMessagesAsDeliveredUseCase(conversation.chatId)
+                        .onFailure {
+                            backfilledDeliveryChats.remove(conversation.chatId)
+                            io.github.aakira.napier.Napier.w("Inbox delivery backfill failed: ${it.message}", tag = "InboxRealtime")
+                        }
+                }
+            }
+    }
+
+    // A backgrounded process can lose the realtime socket without the collector ever seeing an
+    // error, so returning to the foreground re-subscribes from scratch instead of trusting the
+    // live job, and the refresh that follows re-acks arrivals the screen missed while away.
     fun onAppResumed() {
         inboxSubscriptionJob?.cancel()
         rosterSubscriptionJob?.cancel()
         subscribedChatIds = emptyList()
+        backfilledDeliveryChats.clear()
         viewModelScope.launch { refreshConversations() }
     }
 

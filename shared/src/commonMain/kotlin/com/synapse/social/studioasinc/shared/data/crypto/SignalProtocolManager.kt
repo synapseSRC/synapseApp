@@ -22,15 +22,4 @@ interface SignalProtocolManager {
     suspend fun getLocalIdentityKey(): String
     suspend fun checkKeyRotationNeeded(thresholdDays: Int = 30): Boolean
     suspend fun hasIdentity(): Boolean
-
-    // ─── Identity verification (safety numbers) ──────────────────────────────
-    // Local, synchronous trust state: the safety number the user verified for a peer, and a
-    // detected identity-key change that has not been accepted yet.
-    fun verifiedSafetyNumber(peerId: String): String?
-    fun setVerifiedSafetyNumber(peerId: String, safetyNumber: String)
-    fun clearVerifiedSafetyNumber(peerId: String)
-    fun pendingIdentityChange(peerId: String): PendingIdentityChange?
-
-    /** Advances the stored key to the pending one, drops the verification and the stale session. */
-    fun acceptIdentityChange(peerId: String): Boolean
 }

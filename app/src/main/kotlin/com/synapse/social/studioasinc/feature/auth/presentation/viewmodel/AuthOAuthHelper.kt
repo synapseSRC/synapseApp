@@ -8,7 +8,7 @@ object AuthOAuthHelper {
     fun parseDeepLink(uri: Uri?): OAuthDeepLink? {
         if (uri == null) return null
 
-        Napier.d("Handling deep link", tag = "AuthViewModel")
+        Napier.d("Handling deep link: $uri", tag = "AuthViewModel")
 
         val code = uri.getQueryParameter("code")
         val fragment = uri.fragment
@@ -20,7 +20,7 @@ object AuthOAuthHelper {
         var type: String? = if (code != null) "pkce" else "implicit"
 
         if (fragment != null) {
-            Napier.d("Deep link has fragment", tag = "AuthViewModel")
+            Napier.d("Deep link has fragment: $fragment", tag = "AuthViewModel")
             val params = fragment.split("&").associate {
                 val parts = it.split("=")
                 if (parts.size == 2) parts[0] to parts[1] else "" to ""

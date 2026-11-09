@@ -14,17 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 
-/**
- * "Or continue with" divider plus the provider buttons.
- *
- * The provider list is unchanged (Google, Apple, GitHub, in that order, with the same callbacks).
- * The divider is now a hairline pair with a tighter label style and the block sits closer to the
- * primary action, so the alternative methods read as one secondary group.
- */
 @Composable
 fun OAuthSection(
     onGoogleClick: () -> Unit,
@@ -37,17 +31,27 @@ fun OAuthSection(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DividerLine(modifier = Modifier.weight(1f))
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(Sizes.BorderThin)
+                .background(MaterialTheme.colorScheme.outlineVariant)
+        )
         Text(
             text = stringResource(id = R.string.or_continue_with),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = Spacing.space12)
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = Spacing.space16),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        DividerLine(modifier = Modifier.weight(1f))
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(Sizes.BorderThin)
+                .background(MaterialTheme.colorScheme.outlineVariant)
+        )
     }
 
-    Spacer(modifier = Modifier.height(Spacing.space16))
+    Spacer(modifier = Modifier.height(Spacing.space24))
 
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.space12)) {
         OAuthButton(
@@ -63,13 +67,4 @@ fun OAuthSection(
             onClick = onGitHubClick
         )
     }
-}
-
-@Composable
-private fun DividerLine(modifier: Modifier = Modifier) {
-    Spacer(
-        modifier = modifier
-            .height(Sizes.BorderThin)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-    )
 }

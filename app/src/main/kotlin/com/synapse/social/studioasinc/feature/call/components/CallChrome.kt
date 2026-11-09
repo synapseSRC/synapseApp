@@ -70,7 +70,6 @@ import com.synapse.social.studioasinc.shared.domain.model.call.CallMediaType
 import com.synapse.social.studioasinc.shared.domain.model.call.CallPhase
 import com.synapse.social.studioasinc.shared.domain.model.call.CallSession
 import androidx.core.view.WindowCompat
-import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 
 /** Text/icon role used for every piece of chrome drawn on top of call media. */
 @Composable
@@ -159,28 +158,19 @@ fun CallStatusText(
     val description = if (showDuration) spokenDuration(elapsedMs) else text
     val debugLabel = stringResource(R.string.call_debug_open)
 
-    if (showDuration) {
-        OdometerTimerText(
-            elapsedMs,
-            modifier = modifier.callDebugGesture(debugToolsEnabled, debugLabel, onOpenDebug),
-            style = style,
-            color = color
-        )
-    } else {
-        Text(
-            text = text,
-            style = style.copy(fontFeatureSettings = TABULAR_FEATURE),
-            color = color,
-            textAlign = textAlign,
-            maxLines = 1,
-            modifier = modifier
-                .callDebugGesture(debugToolsEnabled, debugLabel, onOpenDebug)
-                .semantics {
-                    contentDescription = description
-                    if (!showDuration) liveRegion = LiveRegionMode.Polite
-                }
-        )
-    }
+    Text(
+        text = text,
+        style = style.copy(fontFeatureSettings = TABULAR_FEATURE),
+        color = color,
+        textAlign = textAlign,
+        maxLines = 1,
+        modifier = modifier
+            .callDebugGesture(debugToolsEnabled, debugLabel, onOpenDebug)
+            .semantics {
+                contentDescription = description
+                if (!showDuration) liveRegion = LiveRegionMode.Polite
+            }
+    )
 }
 
 @Composable

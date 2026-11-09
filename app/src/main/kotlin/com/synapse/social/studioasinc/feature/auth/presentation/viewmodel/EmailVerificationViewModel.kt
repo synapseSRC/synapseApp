@@ -35,7 +35,6 @@ class EmailVerificationViewModel @Inject constructor(
     val navigationEvent: SharedFlow<AuthNavigationEvent> = _navigationEvent.asSharedFlow()
 
     private var cooldownJob: Job? = null
-    private var verificationPollJob: Job? = null
     private val RESEND_COOLDOWN_SECONDS = 60
 
     fun initEmail(email: String) {
@@ -90,9 +89,8 @@ class EmailVerificationViewModel @Inject constructor(
     }
 
     private fun checkEmailVerification(email: String) {
-        verificationPollJob?.cancel()
         val pollInterval = 3000L
-        verificationPollJob = viewModelScope.launch {
+        viewModelScope.launch {
             while (_uiState.value is AuthUiState.EmailVerification) {
                 delay(pollInterval)
                 if (_uiState.value !is AuthUiState.EmailVerification) break
@@ -111,6 +109,5 @@ class EmailVerificationViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         cooldownJob?.cancel()
-        verificationPollJob?.cancel()
     }
 }

@@ -27,16 +27,16 @@ class ChatAiDelegate(
     private val onLoading: (Boolean) -> Unit
 ) {
 
-    private val _smartReplies = MutableStateFlow<List<String>>(emptyList())
+    val _smartReplies = MutableStateFlow<List<String>>(emptyList())
     val smartReplies: StateFlow<List<String>> = _smartReplies.asStateFlow()
 
-    private val _chatSummary = MutableStateFlow<String?>(null)
+    val _chatSummary = MutableStateFlow<String?>(null)
     val chatSummary: StateFlow<String?> = _chatSummary.asStateFlow()
 
-    private val _messageSummary = MutableStateFlow<String?>(null)
+    val _messageSummary = MutableStateFlow<String?>(null)
     val messageSummary: StateFlow<String?> = _messageSummary.asStateFlow()
 
-    private val _isSummarizingMessage = MutableStateFlow(false)
+    val _isSummarizingMessage = MutableStateFlow(false)
     val isSummarizingMessage: StateFlow<Boolean> = _isSummarizingMessage.asStateFlow()
 
     private var smartRepliesJob: Job? = null
@@ -66,7 +66,7 @@ class ChatAiDelegate(
             "$senderName: ${msg.content}"
         }
 
-        val job = viewModelScope.launch {
+        smartRepliesJob = viewModelScope.launch {
             delay(SMART_REPLY_DEBOUNCE_MS)
             val result = generateSmartRepliesUseCase(recentMessages, chatId)
             if (generation != smartRepliesGeneration || chatId != chatIdProvider()) return@launch
@@ -76,12 +76,8 @@ class ChatAiDelegate(
                 _smartReplies.value = emptyList()
             }
         }
-        // Bind to a local: cancelPendingSmartReplies() nulls the field, and a later generation
-        // replaces it, so re-reading smartRepliesJob at completion time would NPE or remove the
-        // wrong entry and leak the finished job out of activeJobs forever.
-        smartRepliesJob = job
-        activeJobs[job] = Unit
-        job.invokeOnCompletion { activeJobs.remove(job) }
+        activeJobs[smartRepliesJob!!] = Unit
+        smartRepliesJob!!.invokeOnCompletion { activeJobs.remove(smartRepliesJob!!) }
     }
 
     private companion object {

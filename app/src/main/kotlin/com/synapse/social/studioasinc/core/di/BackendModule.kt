@@ -18,7 +18,6 @@ import com.synapse.social.studioasinc.shared.data.local.database.StoryDao
 import com.synapse.social.studioasinc.shared.data.local.database.UserDao
 import com.synapse.social.studioasinc.shared.data.repository.*
 import com.synapse.social.studioasinc.shared.data.sync.SyncManager
-import com.synapse.social.studioasinc.shared.data.sync.SupabaseMessageDeliveryCoordinator
 import com.synapse.social.studioasinc.shared.domain.repository.*
 import com.synapse.social.studioasinc.shared.domain.usecase.UploadMediaUseCase
 import dagger.Module
@@ -88,13 +87,6 @@ object BackendModule {
             syncManager = syncManager
         )
     }
-
-    @Provides
-    @Singleton
-    fun provideMessageDeliveryCoordinator(
-        client: SupabaseClientType,
-        authRepository: AuthRepository
-    ): MessageDeliveryCoordinator = SupabaseMessageDeliveryCoordinator(client, authRepository)
 
     @Provides
     @Singleton
@@ -261,17 +253,7 @@ fun provideMediaUploadRepository(
 
     @Provides
     @Singleton
-    fun provideChatRepositoryApp(
-        @ApplicationContext context: android.content.Context,
-        signalRepository: com.synapse.social.studioasinc.shared.data.repository.SignalRepository,
-        signalProtocolManager: SignalProtocolManager,
-        client: SupabaseClientType
-    ): ChatRepositoryImpl = ChatRepositoryImpl(client, signalRepository, signalProtocolManager, computeDeviceId(context))
-
-    private fun computeDeviceId(context: android.content.Context): Int {
-        val androidId = android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ANDROID_ID)
-        return (androidId ?: context.packageName).hashCode()
-    }
+    fun provideChatRepositoryApp(signalRepository: com.synapse.social.studioasinc.shared.data.repository.SignalRepository, signalProtocolManager: SignalProtocolManager, client: SupabaseClientType): ChatRepositoryImpl = ChatRepositoryImpl(client, signalRepository, signalProtocolManager)
 
 @Provides
     @Singleton

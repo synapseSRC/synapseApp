@@ -37,7 +37,7 @@ const ProfilePage = async ({ params }: Props) => {
 
     const user = await getCurrentUser();
     const isOwner = Boolean(user && user.id === profile.uid);
-    const coverUrl = await resolveCoverUrl(profile.profile_cover_image, profile.uid);
+    const coverUrl = await resolveCoverUrl(profile.profile_cover_image);
     const posts: FeedEntry[] | { error: string } | null = user
         ? await getPostsByAuthor(profile.uid).catch((error: Error) => ({ error: error.message }))
         : null;
@@ -71,7 +71,7 @@ const ProfilePage = async ({ params }: Props) => {
                 </div>
             ) : "error" in posts ? (
                 <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700 dark:text-red-200">
-                    We could not load this profile&apos;s posts. Please try again in a moment.
+                    Could not load this profile&apos;s posts: {posts.error}
                 </div>
             ) : posts.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">

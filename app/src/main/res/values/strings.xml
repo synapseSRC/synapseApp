@@ -393,7 +393,6 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="hide_comment">Hide Comment</string>
     <string name="pin_comment">Pin Comment</string>
     <string name="unpin_comment">Unpin Comment</string>
-    <string name="pinned_comment">Pinned comment</string>
     <string name="report_comment">Report Comment</string>
     <string name="comment_hidden">Comment hidden</string>
     <string name="comment_pinned">Comment pinned</string>
@@ -2552,7 +2551,5 @@ Please explain the following message from %3$s in detail, considering the contex
     <!-- Repost Strings -->
     <string name="post_reposted_you">You reposted</string>
     <string name="error_reshare_failed">Couldn\'t repost. Check your connection and try again.</string>
-
-    <!-- Welcome links -->
 
 </resources>

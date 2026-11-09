@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
@@ -78,8 +77,7 @@ data class PostCardState(
     val repliesCount: Int = 0,
     val depth: Int = 0,
     val showThreadLine: Boolean = false,
-    val isLastReply: Boolean = false,
-    val isPinnedComment: Boolean = false
+    val isLastReply: Boolean = false
 )
 
 @Composable
@@ -130,26 +128,6 @@ fun PostCard(
                     } ?: stringResource(R.string.post_reposted_you),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        } else if (state.isPinnedComment) {
-            Row(
-                modifier = Modifier
-                    .padding(start = Sizes.AvatarDefault, top = Spacing.space8, bottom = Spacing.space4),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PushPin,
-                    contentDescription = null,
-                    modifier = Modifier.size(Sizes.IconSemiMedium),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(Spacing.space8))
-                Text(
-                    text = stringResource(R.string.pinned_comment),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
             }

@@ -71,8 +71,8 @@ fun CommentOptionsBottomSheet(
                 )
                 if (isPostAuthor && !comment.isDeleted) {
                     QuickAction(
-                        icon = Icons.Filled.PushPin,
-                        label = stringResource(if (comment.isPinned) R.string.unpin_comment else R.string.pin_comment),
+                        icon = Icons.Filled.Bookmark,
+                        label = if (comment.isPinned) "Unpin" else "Pin",
                         onClick = {
                             onAction(CommentAction.Pin(comment.id, comment.postId))
                             onDismiss()

@@ -255,8 +255,6 @@ private fun VoiceInputBarContent(
     onVoiceAction: (VoiceAction) -> Unit,
     onSendBoundsChanged: (Rect) -> Unit = {}
 ) {
-    // One shared spectrum sweep for the draft player, built once for the whole bar.
-    val waveformSpectrum = remember { voiceEnergySpectrum() }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         when (voiceState) {
             is VoiceState.VoiceReady, is VoiceState.Pressing -> {
@@ -319,14 +317,10 @@ private fun VoiceInputBarContent(
                 }
             }
             is VoiceState.VoiceDraft -> {
-                // Trailing inset only. The leading 48dp action button must sit on the same grid line
-                // as the locked row's cancel button, otherwise the same Delete glyph jumps 8dp when a
-                // locked recording becomes a draft; the trailing inset then matches the locked row's
-                // send slot so the send circle keeps the same gap to the edge in both states.
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(end = Spacing.space8),
+                        .padding(horizontal = Spacing.space8),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
@@ -352,13 +346,10 @@ private fun VoiceInputBarContent(
                     }
                     val progress = if (voiceState.durationMs > 0) voiceState.playbackPositionMs.toFloat() / voiceState.durationMs else 0f
                     LiveWaveformView(amplitudeHistory = voiceState.amplitudeHistory, progressFraction = progress, isDraftPlayback = true,
-                        onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) }, modifier = Modifier.weight(1f).height(32.dp),
-                        activeColor = MaterialTheme.colorScheme.primary, activeSpectrum = waveformSpectrum)
+                        onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) }, modifier = Modifier.weight(1f).height(32.dp), activeColor = MaterialTheme.colorScheme.primary)
                     OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
                     Surface(
-                        // Same circle size as the locked row's send so the gap to the trailing edge is
-                        // identical in both voice states.
-                        modifier = Modifier.size(Sizes.SendButton),
+                        modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE),
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary

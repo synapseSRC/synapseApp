@@ -3,8 +3,6 @@ package com.synapse.social.studioasinc.data.remote.services.fcm
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.synapse.social.studioasinc.data.local.database.MessageDeliveryWorker
-import org.json.JSONObject
 import com.synapse.social.studioasinc.shared.domain.repository.IncomingCallWatcher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -50,14 +48,12 @@ class SynapseFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "From: ${message.from}")
 
         if (message.data.isNotEmpty()) {
-            Log.d(TAG, "Message data payload received")
+            Log.d(TAG, "Message data payload: ${message.data}")
         }
 
         message.notification?.let {
-            Log.d(TAG, "Message Notification received")
+            Log.d(TAG, "Message Notification Body: ${it.body}")
         }
-
-        MessageDeliveryWorker.enqueueIfMessage(this, JSONObject(message.data))
 
         if (message.data[KEY_TYPE] == TYPE_INCOMING_CALL) {
             // Idempotent when already watching, and re-reads the open rows either way — which is the whole
@@ -65,11 +61,6 @@ class SynapseFirebaseMessagingService : FirebaseMessagingService() {
             // not a call, and saying so would be a false alarm.
             incomingCallWatcher.start()
         }
-    }
-
-    override fun onDeletedMessages() {
-        super.onDeletedMessages()
-        MessageDeliveryWorker.enqueue(this)
     }
 
     companion object {

@@ -170,8 +170,7 @@ internal fun PermissionCard(
                 status = status,
                 permissionTitle = permissionTitle,
                 enabled = !isRequestPending,
-                onClick = { onAction(permission) },
-            onClick = onAction,
+                onClick = { onAction(permission) }
             )
         }
     }
