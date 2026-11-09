@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.auth.ui.components.LoadingOverlay
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
@@ -53,11 +54,7 @@ fun AuthScreen(
             is AuthNavigationEvent.NavigateToForgotPassword -> navController.navigate("forgotPassword")
             is AuthNavigationEvent.NavigateToResetPassword -> navController.navigate("resetPassword")
             is AuthNavigationEvent.NavigateBack -> navController.popBackStack()
-            is AuthNavigationEvent.OpenUrl -> {
-                val uri = android.net.Uri.parse(event.url)
-                val intent = androidx.browser.customtabs.CustomTabsIntent.Builder().build()
-                intent.launchUrl(context, uri)
-            }
+            is AuthNavigationEvent.OpenUrl -> IntentUtils.openUrl(context, event.url)
             is AuthNavigationEvent.InitiateGoogleSignIn -> {
                 onInitiateGoogleSignIn()
             }
@@ -99,10 +96,7 @@ fun AuthScreen(
                         authViewModel.showSignUpScreen()
                         navController.navigate("authMain")
                     },
-                    onSignInClick = {
-                        authViewModel.showSignInScreen()
-                        navController.navigate("authMain")
-                    }
+                    onOpenUrl = authViewModel::openUrl
                 )
             }
 

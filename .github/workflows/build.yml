@@ -37,7 +37,7 @@ jobs:
     outputs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
     steps:
-        uses: actions/checkout@v4
+      - name: 🛎️ Checkout
         uses: actions/checkout@v6
         with:
           # versionCode is `git rev-list --count HEAD`; a shallow clone would make it 1
@@ -148,7 +148,7 @@ jobs:
           done
           ls -la
 
-        uses: actions/upload-artifact@v4
+      - name: 📤 Upload Release APK
         uses: actions/upload-artifact@v7
         with:
           name: apk-release-${{ steps.set_sha.outputs.short_sha }}
@@ -159,16 +159,16 @@ jobs:
     runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
     needs: build
     steps:
-        uses: actions/checkout@v4
+      - name: 🛎️ Checkout
         uses: actions/checkout@v6
 
-        uses: actions/download-artifact@v4
+      - name: 📥 Download Artifacts
         uses: actions/download-artifact@v8
         with:
           name: apk-release-${{ needs.build.outputs.short_sha }}
           path: ./downloaded-artifact
 
-        uses: actions/setup-python@v5
+      - name: 🐍 Set up Python 3
         uses: actions/setup-python@v6
         with:
           python-version: '3.x'
@@ -181,7 +181,7 @@ jobs:
           echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
           echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
 
-        uses: actions/cache@v4
+      - name: 💾 Restore Telegram session cache
         uses: actions/cache@v6
         id: telegram_session_cache
         with:
