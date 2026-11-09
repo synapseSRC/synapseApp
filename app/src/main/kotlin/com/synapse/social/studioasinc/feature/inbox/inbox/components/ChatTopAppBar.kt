@@ -29,6 +29,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -37,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarqueeText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.DpOffset
 import com.kyant.backdrop.Backdrop
@@ -474,6 +477,10 @@ private fun FloatingHeaderSurface(
                     )
                 }
             )
+            // Parity with the M3 Surface this Box replaces: the surface stays one traversal group
+            // for accessibility, and the minimum constraints still reach its content.
+            .semantics { isTraversalGroup = true },
+            propagateMinConstraints = true
         ) {
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                 content()
