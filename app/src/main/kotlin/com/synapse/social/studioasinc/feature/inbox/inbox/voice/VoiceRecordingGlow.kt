@@ -684,11 +684,18 @@ fun VoiceRecordingGlowSurface(
     )
 
     val density = LocalDensity.current
+    // RuntimeShader compiles AGSL on the device. A driver that rejects the program throws
+    // IllegalArgumentException out of the shader compiler at launch (SYNAPSE-9); that must not take
+    // the composer down with it. Fall back to the Canvas renderer, which draws the same silhouette.
     val shader = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) VoiceEnergyShader() else null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            runCatching { VoiceEnergyShader() }.getOrNull()
+        } else {
+            null
+        }
     }
-    val fallbackArt = remember(density) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) VoiceEnergyFallbackArt(density) else null
+    val fallbackArt = remember(density, shader) {
+        if (shader == null) VoiceEnergyFallbackArt(density) else null
     }
     val rimBrush = remember {
         Brush.verticalGradient(

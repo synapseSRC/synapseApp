@@ -304,7 +304,13 @@ internal class ChatEncryptionHelper(
             }
 
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            // libsignal is a native library: a device that cannot load libsignal_jni.so raises
+            // UnsatisfiedLinkError, and a broken interop/keystore path raises AssertionError. Both are
+            // Errors, so the previous "catch (Exception)" let them escape E2EE initialization and crash
+            // the app. E2EE is optional for chatting, so initialization must fail its Result instead.
             Logger.e("E2EE_INIT: Initialization failed: ${e.message}", tag = "E2EE", throwable = e)
             Result.failure(e)
         }

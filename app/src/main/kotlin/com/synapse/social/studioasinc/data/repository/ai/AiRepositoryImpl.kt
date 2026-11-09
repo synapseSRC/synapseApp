@@ -55,12 +55,20 @@ class AiRepositoryImpl(
         return withContext(Dispatchers.IO) {
             SentryAgentTracing.traceChat(provider = "google", model = model, conversationId = conversationId) {
                 if (!customKey.isNullOrBlank()) {
-                    // User provided custom Gemini API key (BYOK)
-                    val client = Client.builder().apiKey(customKey).build()
-                    val response = client.models.generateContent(model, prompt, null)
-                    val text = response.text()
-                    if (text.isNullOrBlank()) Result.failure(Exception("Empty response from Gemini"))
-                    else Result.success(text.trim())
+                    // User provided custom Gemini API key (BYOK). Provider and network failures must
+                    // surface as a failed Result exactly like the platform path below: generateContent
+                    // promises a Result, and an escaping ClientException (SYNAPSE-4) took the caller down
+                    // instead of showing the AI error the UI already knows how to render.
+                    try {
+                        val client = Client.builder().apiKey(customKey).build()
+                        val response = client.models.generateContent(model, prompt, null)
+                        val text = response.text()
+                        if (text.isNullOrBlank()) Result.failure(Exception("Empty response from Gemini"))
+                        else Result.success(text.trim())
+                    } catch (e: Exception) {
+                        Napier.e("Error generating content with the custom Gemini key", e)
+                        Result.failure(e)
+                    }
                 } else {
                     // Platform managed: route through secure Supabase Edge Function without exposing key in APK
                     try {
