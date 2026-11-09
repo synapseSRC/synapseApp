@@ -1,12 +1,8 @@
 package com.synapse.social.studioasinc.feature.auth.ui
 
-import android.content.Intent
-import android.net.Uri
-import androidx.browser.customtabs.CustomTabsIntent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,265 +11,243 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.core.util.SynapseLegalUrls
 import com.synapse.social.studioasinc.feature.auth.ui.components.AuthButton
-import com.synapse.social.studioasinc.feature.auth.ui.components.AuthSecondaryButton
-import com.synapse.social.studioasinc.feature.auth.ui.util.WindowWidthSizeClass
-import com.synapse.social.studioasinc.feature.auth.ui.util.calculateWindowSizeClass
+import com.synapse.social.studioasinc.feature.auth.ui.components.WelcomeHero
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-
-private val ContentMaxWidth = 420.dp
-private val LogoSizeCompact = 96.dp
-private val LogoSizeRegular = 112.dp
+import com.synapse.social.studioasinc.feature.shared.theme.SynapseBrand
+import com.synapse.social.studioasinc.feature.shared.theme.WelcomeHeroMetrics
 
 /**
- * First screen of the authentication flow.
+ * Welcome screen shown as the entry point of the authentication flow.
  *
- * Layout contract:
- *  - The brand block lives in a scrollable region that takes every pixel left over by the
- *    actions, so it is optically centred on tall screens and scrolls instead of clipping on
- *    short ones (small phones, landscape, large font scales).
- *  - The actions block is pinned above the bottom inset and is never scrolled away.
+ * Three regions, one above the other: the hero artwork with the Synapse mark, the introduction
+ * copy, and the single bottom action with the legal notice. The hero and the copy share the
+ * flexible space above the action, which is anchored to the bottom insets and never squeezed; that
+ * flexible region scrolls as a fallback when the copy no longer fits (compact displays, larger font
+ * scales). Nothing is positioned in screen coordinates.
  */
 @Composable
 fun WelcomeScreen(
     onGetStartedClick: () -> Unit,
-    onSignInClick: () -> Unit,
+    onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val isCompactWidth = calculateWindowSizeClass() == WindowWidthSizeClass.Compact
-
-    val openUrl: (String) -> Unit = remember(context) {
-        { url ->
-            val uri = Uri.parse(url)
-            // Custom Tabs keeps the in-app feel; fall back to any browser when none is installed.
-            runCatching { CustomTabsIntent.Builder().build().launchUrl(context, uri) }
-                .onFailure {
-                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
-                }
-        }
-    }
+    val palette = SynapseBrand.palette
+    val scrollState = rememberScrollState()
+    val legalNotice = rememberLegalNotice(
+        linkColor = palette.accent,
+        onOpenUrl = onOpenUrl
+    )
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(palette.pageTop, palette.pageMid, palette.pageBottom)
+                )
+            )
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = Spacing.space24, vertical = Spacing.space32),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                WelcomeHeader(isCompactWidth = isCompactWidth)
+            val availableWidth = maxWidth
+            val contentWidth = availableWidth.coerceAtMost(WelcomeHeroMetrics.ContentMaxWidth)
+            val heroHeight = (maxHeight * WelcomeHeroMetrics.HeroHeightFraction)
+                .coerceAtMost(availableWidth)
+                .coerceIn(WelcomeHeroMetrics.HeroMinHeight, WelcomeHeroMetrics.HeroMaxHeight)
+            val headingStyle = if (availableWidth < WelcomeHeroMetrics.CompactWidth) {
+                MaterialTheme.typography.headlineMedium
+            } else {
+                MaterialTheme.typography.headlineLarge
             }
 
-            WelcomeActions(
-                onGetStartedClick = onGetStartedClick,
-                onSignInClick = onSignInClick,
-                onOpenUrl = openUrl
-            )
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Regions 1 and 2 share the flexible space above the action area. They scroll as a
+                // fallback when the copy needs more room than the display has (compact screens,
+                // large font scales) while the action stays anchored to the bottom.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(scrollState),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Region 1 - brand artwork and mark.
+                    WelcomeHero(heroHeight = heroHeight)
+
+                    // Region 2 - introduction copy.
+                    Column(
+                        modifier = Modifier
+                            .width(contentWidth)
+                            .padding(horizontal = Spacing.space24),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.welcome_title),
+                            style = headingStyle.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(Spacing.space12))
+
+                        Text(
+                            text = stringResource(id = R.string.welcome_subtitle),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = Spacing.space8)
+                        )
+                    }
+                }
+
+                // Region 3 - single primary action plus the legal notice.
+                Column(
+                    modifier = Modifier
+                        .width(contentWidth)
+                        .padding(
+                            start = Spacing.space24,
+                            end = Spacing.space24,
+                            top = Spacing.space32,
+                            bottom = Spacing.space32
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val getStartedText = stringResource(id = R.string.welcome_get_started)
+                    AuthButton(
+                        text = getStartedText,
+                        onClick = onGetStartedClick,
+                        modifier = Modifier.semantics {
+                            contentDescription = getStartedText
+                        },
+                        containerColor = palette.accent,
+                        contentColor = palette.onAccent,
+                        shape = MaterialTheme.shapes.medium,
+                        height = Sizes.ButtonHeightM3Medium,
+                        textStyle = MaterialTheme.typography.titleMedium,
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = Sizes.ElevationLow,
+                            pressedElevation = Sizes.ElevationNone,
+                            hoveredElevation = Sizes.ElevationMedium,
+                            disabledElevation = Sizes.ElevationNone
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(Spacing.space20))
+
+                    Text(
+                        text = legalNotice,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun WelcomeHeader(isCompactWidth: Boolean) {
-    val bodyStyle = MaterialTheme.typography.bodyLarge
-
-    Column(
-        modifier = Modifier.widthIn(max = ContentMaxWidth),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-            // Decorative: the heading right below already announces the brand to screen readers.
-            contentDescription = null,
-            modifier = Modifier.size(if (isCompactWidth) LogoSizeCompact else LogoSizeRegular)
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.space20))
-
-        Text(
-            text = stringResource(id = R.string.welcome_title),
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { heading() }
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.space12))
-
-        Text(
-            text = stringResource(id = R.string.welcome_subtitle),
-            style = bodyStyle.copy(lineHeight = bodyStyle.fontSize * 1.5f),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun WelcomeActions(
-    onGetStartedClick: () -> Unit,
-    onSignInClick: () -> Unit,
-    onOpenUrl: (String) -> Unit
-) {
-    // Guards against a double tap pushing the next destination twice while it animates in.
-    var navigationStarted by remember { mutableStateOf(false) }
-    val termsUrl = stringResource(id = R.string.welcome_terms_url)
-    val privacyUrl = stringResource(id = R.string.welcome_privacy_url)
-
-    Column(
-        modifier = Modifier
-            .widthIn(max = ContentMaxWidth)
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.space24, vertical = Spacing.space24),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AuthButton(
-            text = stringResource(id = R.string.welcome_get_started),
-            onClick = {
-                if (!navigationStarted) {
-                    navigationStarted = true
-                    onGetStartedClick()
-                }
-            },
-            enabled = !navigationStarted,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.space16))
-
-        AuthSecondaryButton(
-            text = stringResource(id = R.string.welcome_already_have_account),
-            onClick = {
-                if (!navigationStarted) {
-                    navigationStarted = true
-                    onSignInClick()
-                }
-            },
-            enabled = !navigationStarted,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.space24))
-
-        LegalNotice(
-            onTermsClick = { onOpenUrl(termsUrl) },
-            onPrivacyClick = { onOpenUrl(privacyUrl) }
-        )
     }
 }
 
 /**
- * The legal sentence with "Terms of Service" and "Privacy Policy" tappable individually.
+ * Builds the legal notice from the existing localized sentence and turns the two policy labels
+ * inside it into individual links.
  *
- *  - [R.string.welcome_link_terms] / [R.string.welcome_link_privacy] are the labels, so the
- *    highlighted range is always found again after a translation.
- *  - The whole sentence is a single semantics node that exposes one custom accessibility action
- *    per document, which is how a screen reader reaches them.
+ * The notice keeps its exact wording and translation: the link ranges are located by matching the
+ * already-localized "Terms of Service" / "Privacy Policy" labels inside it, so a locale that has no
+ * matching label simply renders plain text instead of breaking the sentence apart.
  */
 @Composable
-private fun LegalNotice(
-    onTermsClick: () -> Unit,
-    onPrivacyClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val noticeText = stringResource(id = R.string.welcome_terms_notice)
-    val termsLabel = stringResource(id = R.string.welcome_link_terms)
-    val privacyLabel = stringResource(id = R.string.welcome_link_privacy)
-    val bodyStyle = MaterialTheme.typography.bodySmall
-    val linkColor = MaterialTheme.colorScheme.primary
+private fun rememberLegalNotice(
+    linkColor: Color,
+    onOpenUrl: (String) -> Unit
+): AnnotatedString {
+    val notice = stringResource(id = R.string.welcome_terms_notice)
+    val termsLabel = stringResource(id = R.string.about_terms)
+    val privacyLabel = stringResource(id = R.string.about_privacy_policy)
+    // Read through a state holder so the annotated string is not rebuilt when the caller passes a
+    // new lambda instance on recomposition.
+    val currentOnOpenUrl = rememberUpdatedState(onOpenUrl)
 
-    val termsStart = remember(noticeText, termsLabel) { noticeText.indexOf(termsLabel) }
-    val privacyStart = remember(noticeText, privacyLabel) { noticeText.indexOf(privacyLabel) }
-    val termsEnd = if (termsStart >= 0) termsStart + termsLabel.length else -1
-    val privacyEnd = if (privacyStart >= 0) privacyStart + privacyLabel.length else -1
-
-    val annotatedNotice = remember(noticeText, termsStart, termsEnd, privacyStart, privacyEnd, linkColor) {
-        buildAnnotatedString {
-            append(noticeText)
-            val linkStyle = SpanStyle(
+    return remember(notice, termsLabel, privacyLabel, linkColor) {
+        val linkStyles = TextLinkStyles(
+            style = SpanStyle(
                 color = linkColor,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 textDecoration = TextDecoration.Underline
             )
-            if (termsStart >= 0) addStyle(linkStyle, termsStart, termsEnd)
-            if (privacyStart >= 0) addStyle(linkStyle, privacyStart, privacyEnd)
+        )
+
+        // Located in the notice so the sentence keeps its exact wording and translation; a locale
+        // without a matching label simply renders the plain sentence.
+        val links = listOfNotNull(
+            linkSpan(notice, termsLabel)?.let {
+                LinkSpan(it, TermsLinkTag, SynapseLegalUrls.termsOfService)
+            },
+            linkSpan(notice, privacyLabel)?.let {
+                LinkSpan(it, PrivacyLinkTag, SynapseLegalUrls.privacyPolicy)
+            }
+        ).sortedBy { it.range.first }
+
+        buildAnnotatedString {
+            var cursor = 0
+            links.forEach { span ->
+                append(notice.substring(cursor, span.range.first))
+                pushLink(
+                    LinkAnnotation.Clickable(
+                        tag = span.tag,
+                        styles = linkStyles,
+                        linkInteractionListener = { currentOnOpenUrl.value(span.url) }
+                    )
+                )
+                append(notice.substring(span.range.first, span.range.last + 1))
+                pop()
+                cursor = span.range.last + 1
+            }
+            append(notice.substring(cursor))
         }
     }
-
-    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
-
-    Text(
-        text = annotatedNotice,
-        style = bodyStyle.copy(lineHeight = bodyStyle.fontSize * 1.5f),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        onTextLayout = { textLayout = it },
-        modifier = modifier
-            .fillMaxWidth()
-            .pointerInput(termsStart, termsEnd, privacyStart, privacyEnd) {
-                detectTapGestures { position ->
-                    val layout = textLayout ?: return@detectTapGestures
-                    val offset = layout.getOffsetForPosition(position)
-                    val onTerms = termsStart >= 0 && offset in termsStart until termsEnd
-                    val onPrivacy = privacyStart >= 0 && offset in privacyStart until privacyEnd
-                    if (onTerms) onTermsClick() else if (onPrivacy) onPrivacyClick()
-                }
-            }
-            .semantics {
-                customActions = listOf(
-                    CustomAccessibilityAction(label = termsLabel) {
-                        onTermsClick()
-                        true
-                    },
-                    CustomAccessibilityAction(label = privacyLabel) {
-                        onPrivacyClick()
-                        true
-                    }
-                )
-            }
-    )
 }
+
+private data class LinkSpan(val range: IntRange, val tag: String, val url: String)
+
+private fun linkSpan(notice: String, label: String): IntRange? {
+    if (label.isBlank()) return null
+    val start = notice.indexOf(label)
+    return if (start < 0) null else start..(start + label.length - 1)
+}
+
+private const val TermsLinkTag = "welcome-terms-of-service"
+private const val PrivacyLinkTag = "welcome-privacy-policy"
