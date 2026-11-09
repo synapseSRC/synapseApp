@@ -1,0 +1,90 @@
+// Kilo Code CLI configuration used ONLY by the AI build-repair loop.
+//
+// ai_build_repair.sh copies this file to ~/.config/kilo/kilo.jsonc on the runner
+// before invoking the CLI. That path is "trusted config", which is why the
+// {env:KILO_API_KEY} reference below is allowed to resolve (project-level config
+// in a repository deliberately cannot read the environment).
+//
+// Docs: https://kilo.ai/docs/code-with-ai/platforms/cli  (config + permissions)
+//       https://kilo.ai/docs/getting-started/cost-controls-and-usage-safeguards
+//       (free-model limits: kilo-auto/free is rate limited upstream)
+{
+  "$schema": "https://app.kilo.ai/config.json",
+
+  // Kilo Gateway "Auto Free" (kilo-auto/free). The CLI's own provider entry for
+  // the gateway already reads KILO_API_KEY from the environment; the explicit
+  // provider block below makes that dependency obvious and survives a provider
+  // id rename. ai_build_repair.sh overrides the model with `kilo run --model`
+  // when AI_REPAIR_MODEL / the fallback chain says so.
+  "model": "kilo/kilo-auto/free",
+  "provider": {
+    "kilo": {
+      "options": {
+        "apiKey": "{env:KILO_API_KEY}"
+      }
+    }
+  },
+
+  // The repair agent may only touch production Kotlin/Java/resource source under
+  // app/ and shared/. Everything else - workflows, Gradle build scripts, the
+  // wrapper, signing material, generated google-services.json, test source sets
+  // and build output - is refused here as defense in depth.
+  //
+  // Rule order matters: the last matching pattern wins, so the specific denies
+  // come after the broad allows.
+  //
+  // These rules are advisory controls: ai_build_repair.sh re-derives the same
+  // policy with path_is_allowed() after every agent run and reverts anything that
+  // slipped through, so no out-of-scope edit can reach the build, the artifact
+  // or the consolidated commit.
+  "permission": {
+    "*": "allow",
+
+    // Nothing the agent can execute can commit, push, rewrite history, install a
+    // package or reach the network. Only read-only inspection helpers and the
+    // two Gradle compile tasks needed for self-checking are allowed.
+    "bash": {
+      "*": "deny",
+      "git status": "allow",
+      "git status --short": "allow",
+      "git diff": "allow",
+      "git diff --stat": "allow",
+      "./gradlew :app:compileReleaseKotlin": "allow",
+      "./gradlew :shared:compileReleaseKotlin": "allow",
+      "./gradlew :app:compileDebugKotlin": "allow",
+      "./gradlew :shared:compileDebugKotlin": "allow"
+    },
+
+    "edit": {
+      "*": "deny",
+      "app/**": "allow",
+      "shared/**": "allow",
+
+      "app/build.gradle": "deny",
+      "app/proguard-rules.pro": "deny",
+      "app/release_key.jks": "deny",
+      "app/google-services.json": "deny",
+      "shared/build.gradle.kts": "deny",
+      "shared/proguard-rules.pro": "deny",
+
+      "shared/src/commonTest/**": "deny",
+      "**/src/*Test*/**": "deny",
+      "**/src/test/**": "deny",
+      "**/src/androidTest/**": "deny",
+
+      "gradle/**": "deny",
+      "gradlew": "deny",
+      "gradlew.bat": "deny",
+      "gradle.properties": "deny",
+      "keystore.properties": "deny",
+      "local.properties": "deny",
+      "*.gradle": "deny",
+      "*.gradle.kts": "deny",
+      "*.jks": "deny",
+      "*.keystore": "deny",
+      ".github/**": "deny",
+      "kilo.json": "deny",
+      "kilo.jsonc": "deny"
+    }
+  }
+}
