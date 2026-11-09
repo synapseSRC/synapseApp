@@ -12,7 +12,7 @@ import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.AsyncImage
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.di.LinkPreviewEntryPoint
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -198,23 +200,25 @@ fun LinkPreviewCard(
             }
 
             if (onRemove != null) {
-                IconButton(
+                Surface(
                     onClick = onRemove,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(Spacing.space4)
-                        .size(Sizes.IconLarge)
-                        .background(
-                            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(Sizes.CornerDefault)
-                        )
+                        .padding(Spacing.space8)
+                        .size(Sizes.IconHuge),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = Sizes.ElevationMedium,
+                    shadowElevation = Sizes.BorderDefault
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Remove Link Preview",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(Sizes.IconSemiMedium)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.cd_remove),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(Sizes.IconDefault)
+                        )
+                    }
                 }
             }
         }
