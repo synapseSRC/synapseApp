@@ -96,7 +96,15 @@ sealed interface AppDestination {
     @Serializable
     data class GroupParticipants(val chatId: String) : AppDestination
     @Serializable
-    data class ChatInfo(val chatId: String, val userId: String) : AppDestination
+    data class ChatInfo(
+        val chatId: String,
+        val userId: String,
+        // Carried over from the conversation so Contact Info paints the same picture and name on
+        // its first frame, which is what lets the picture travel between the two screens instead of
+        // being swapped or reloaded.
+        val participantName: String? = null,
+        val participantAvatar: String? = null
+    ) : AppDestination
     @Serializable
     data class ChatSettings(val chatId: String) : AppDestination
     @Serializable

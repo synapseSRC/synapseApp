@@ -2,6 +2,8 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -90,6 +92,15 @@ import com.synapse.social.studioasinc.shared.util.TimestampFormatter
 fun ChatInfoScreen(
     chatId: String,
     userId: String,
+    // Seeded by the conversation so Contact Info paints the same picture and name on its first
+    // frame; the shared element then moves the picture between the two screens instead of swapping
+    // or reloading it.
+    initialDisplayName: String? = null,
+    initialAvatarUrl: String? = null,
+    // The navigation graph hands both screens the same transition scopes. Null keeps the screen
+    // usable without a shared-transition host, for example in a preview.
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onNavigateBack: () -> Unit,
     onNavigateToProfile: (String) -> Unit = {},
     onNavigateToCreateGroup: () -> Unit = {},
@@ -109,8 +120,17 @@ fun ChatInfoScreen(
     var showEncryptionSheet by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
 
+    // The header picture is the shared element the conversation's pill hands over, so both screens
+    // declare the same element under the same key.
+    val avatarHeroModifier = rememberChatAvatarHero(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        chatId = chatId
+    )
+
     val profile = uiState.userProfile
     val displayName = profile?.displayName?.takeIf { it.isNotBlank() && it != "null" }
+        ?: initialDisplayName?.takeIf { it.isNotBlank() && it != "null" }
         ?: profile?.username?.takeIf { it.isNotBlank() && it != "null" }
         ?: stringResource(R.string.user)
     val username = profile?.username?.takeIf { it.isNotBlank() && it != "null" }
@@ -214,7 +234,9 @@ fun ChatInfoScreen(
                 item(key = "contact-header") {
                     ContactHeader(
                         userId = userId,
-                        avatarUrl = profile?.avatar,
+                        // The seed keeps the picture identical to the one the pill was showing.
+                        avatarUrl = profile?.avatar?.takeIf { it.isNotBlank() } ?: initialAvatarUrl,
+                        avatarModifier = avatarHeroModifier,
                         displayName = displayName,
                         username = username,
                         isOnline = uiState.isOnline,
@@ -510,6 +532,7 @@ fun ChatInfoScreen(
 private fun ContactHeader(
     userId: String,
     avatarUrl: String?,
+    avatarModifier: Modifier,
     displayName: String,
     username: String?,
     isOnline: Boolean,
@@ -523,6 +546,7 @@ private fun ContactHeader(
             userId = userId,
             avatarUrl = avatarUrl,
             size = ChatInfoMetrics.contactAvatarSize,
+            modifier = avatarModifier,
             showActiveStatus = true,
             displayName = displayName
         )
