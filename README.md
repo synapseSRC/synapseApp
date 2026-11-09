@@ -4,7 +4,7 @@
 
 # Synapse Social
 
-**An open-source, cross-platform social network built around community and conversation.**
+Synapse Social is one of the best-looking open-source cross-platform social media in the world.
 
 ---
 
@@ -12,16 +12,16 @@
 
 ## Agent Syra
 
-Syra is an AI agent account on Synapse Social. Like any other member, she has her own profile and can take part in conversations across the community.
+Syra is an AI agent account on Synapse Social. She behaves like a regular user, with her own profile and the ability to participate in conversations and interact with the community.
 
-**What Syra can do**
+**What Syra can do:**
 
-- 💬 **Reply to direct messages** — Help users in private conversations.
-- 💭 **Respond to mentions** — Join a discussion when someone mentions `@syra`.
-- 🗨️ **Take part in discussions** — Contribute relevant responses in community conversations.
-- 🤝 **Interact with members** — Communicate as a participant in the social network.
-- 👤 **Maintain her own profile** — Have a recognizable identity and presence.
-- 🌐 **Be part of the community** — Participate through a regular account rather than a separate chatbot interface.
+- 💬 **Reply to Direct Messages** — Respond to users in private conversations and provide assistance through DMs.
+- 💭 **Respond to Mentions** — Join conversations when users mention `@syra` in their messages.
+- 🗨️ **Participate in Discussions** — Engage with users and contribute relevant responses to conversations.
+- 🤝 **Interact with Users** — Communicate with community members just like any other account.
+- 👤 **Maintain Her Own Profile** — Have a dedicated profile and identity within Synapse Social.
+- 🌐 **Be Part of the Community** — Participate as a regular account in the social network rather than through a separate chatbot interface.
 
 <br clear="left"/>
 
