@@ -18,6 +18,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
 import com.synapse.social.studioasinc.shared.domain.model.sound.SoundEffect
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
+import com.synapse.social.studioasinc.shared.domain.model.settings.ChatFolder
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
@@ -35,9 +36,12 @@ import com.synapse.social.studioasinc.shared.util.TimeProvider
 import com.synapse.social.studioasinc.shared.domain.util.EncryptedPayloadDetector
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import java.io.File
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aakira.napier.Napier
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -113,6 +117,17 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val clearChatHistoryUseCase: ClearChatHistoryUseCase = dependencies.clearChatHistoryUseCase
     private val blockUserUseCase: BlockUserUseCase = dependencies.blockUserUseCase
     private val reportUserUseCase: ReportUserUseCase = dependencies.reportUserUseCase
+
+    // Chat folders are a user setting rather than chat state, so they are read from the settings
+    // repository exactly the way the inbox does it.
+    private val settingsRepository = dependencies.settings.settingsRepository
+
+    val chatFolders: StateFlow<List<ChatFolder>> = settingsRepository.chatFoldersJson
+        .map { json ->
+            if (json.isNullOrBlank()) emptyList()
+            else try { Json.decodeFromString<List<ChatFolder>>(json) } catch (_: Exception) { emptyList() }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // ===== ChatUiState: consolidated UI state =====
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -1170,6 +1185,63 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             return onResult(Result.failure(IllegalStateException("Contact is unavailable")))
         }
         viewModelScope.launch { onResult(blockUserUseCase(participantUserId)) }
+    }
+
+    /** Assigns the open chat to a chat folder, mirroring the inbox's folder assignment. */
+    fun assignCurrentChatToFolder(folderId: String) {
+        val chatId = currentChatId ?: return
+        viewModelScope.launch {
+            val updated = chatFolders.value.map { folder ->
+                if (folder.id == folderId) {
+                    folder.copy(
+                        includedChatIds = (folder.includedChatIds + chatId).distinct(),
+                        excludedChatIds = folder.excludedChatIds - chatId
+                    )
+                } else {
+                    folder.copy(
+                        includedChatIds = folder.includedChatIds - chatId,
+                        excludedChatIds = (folder.excludedChatIds + chatId).distinct()
+                    )
+                }
+            }
+            persistChatFolders(updated)
+        }
+    }
+
+    fun createFolderAndAssignCurrentChat(name: String) {
+        val cleanName = name.trim()
+        val chatId = currentChatId ?: return
+        if (cleanName.isBlank()) return
+        viewModelScope.launch {
+            val newFolder = ChatFolder(
+                id = UUID.randomUUID().toString(),
+                name = cleanName,
+                includedChatIds = listOf(chatId)
+            )
+            persistChatFolders(chatFolders.value + newFolder)
+        }
+    }
+
+    private suspend fun persistChatFolders(folders: List<ChatFolder>) {
+        try {
+            settingsRepository.setChatFoldersJson(Json.encodeToString(folders))
+        } catch (throwable: Exception) {
+            Napier.w("Failed to save chat folder: " + throwable.message, tag = "ChatViewModel")
+        }
+    }
+
+    /** Removes the conversation from this account's inbox. */
+    fun deleteCurrentChat(onResult: (Result<Unit>) -> Unit) {
+        val chatId = currentChatId
+            ?: return onResult(Result.failure(IllegalStateException("No active chat")))
+        viewModelScope.launch {
+            val result = chatRepository.deleteConversation(chatId)
+            if (result.isSuccess) {
+                messagingDelegate.clearMessages()
+                _hasMoreMessages.value = false
+            }
+            onResult(result)
+        }
     }
 
     fun clearCurrentChat(onResult: (Result<Unit>) -> Unit) {
