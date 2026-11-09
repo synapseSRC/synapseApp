@@ -138,8 +138,10 @@ internal object VoiceEnergyDesign {
     const val FLUID_DAMPING = 0.96f
 
     /** Spatial weights of the continuous drive, and of the modal half of an onset impulse. */
-    val DRIVE_MODE_WEIGHTS = floatArrayOf(0.60f, 0.30f, 0.15f, 0.08f)
-    val IMPULSE_MODAL_WEIGHTS = floatArrayOf(0.70f, 0.40f)
+    private val _DRIVE_MODE_WEIGHTS = floatArrayOf(0.60f, 0.30f, 0.15f, 0.08f)
+    val DRIVE_MODE_WEIGHTS: List<Float> get() = _DRIVE_MODE_WEIGHTS.asList()
+    private val _IMPULSE_MODAL_WEIGHTS = floatArrayOf(0.70f, 0.40f)
+    val IMPULSE_MODAL_WEIGHTS: List<Float> get() = _IMPULSE_MODAL_WEIGHTS.asList()
 
     /** Spring-coupled fluid nodes that carry the live audio energy. */
     const val FLUID_NODES = 24
@@ -152,8 +154,10 @@ internal object VoiceEnergyDesign {
      * speech, so the silhouette keeps a usable size at conversation level instead of collapsing into a
      * flat line, and the weights mix the modes into one organic curve.
      */
-    val HARMONIC_REFERENCE = floatArrayOf(0.30f, 0.22f, 0.07f, 0.045f, 0.045f)
-    val HARMONIC_WEIGHT = floatArrayOf(1f, 0.62f, 0.40f, 0.26f, 0.17f)
+    private val _HARMONIC_REFERENCE = floatArrayOf(0.30f, 0.22f, 0.07f, 0.045f, 0.045f)
+    val HARMONIC_REFERENCE: List<Float> get() = _HARMONIC_REFERENCE.asList()
+    private val _HARMONIC_WEIGHT = floatArrayOf(1f, 0.62f, 0.40f, 0.26f, 0.17f)
+    val HARMONIC_WEIGHT: List<Float> get() = _HARMONIC_WEIGHT.asList()
 
     /** Ceiling on a normalised mode, so a shout cannot push the silhouette into chaos. */
     const val HARMONIC_MAX = 2f
@@ -163,15 +167,19 @@ internal object VoiceEnergyDesign {
      * broad swell and a loud one shows several pronounced peaks and valleys. This is the "number of
      * visible peaks" response, and the widths keep the appearance smooth rather than popping.
      */
-    val MODE_GATE_LEVEL = floatArrayOf(0f, 0.10f, 0.16f, 0.24f, 0.32f)
-    val MODE_GATE_WIDTH = floatArrayOf(0f, 0.06f, 0.08f, 0.10f, 0.12f)
+    private val _MODE_GATE_LEVEL = floatArrayOf(0f, 0.10f, 0.16f, 0.24f, 0.32f)
+    val MODE_GATE_LEVEL: List<Float> get() = _MODE_GATE_LEVEL.asList()
+    private val _MODE_GATE_WIDTH = floatArrayOf(0f, 0.06f, 0.08f, 0.10f, 0.12f)
+    val MODE_GATE_WIDTH: List<Float> get() = _MODE_GATE_WIDTH.asList()
 
     /**
      * Fixed mode mix used by the reduced-motion snapshot, so a still frame is a legible composition
      * rather than whatever the simulation happened to be holding.
      */
-    val SNAPSHOT_MODES = floatArrayOf(0.35f, 0.20f, 0.10f, 0.05f, 0.04f)
-    val SNAPSHOT_MODE_ENERGY = floatArrayOf(0.45f, 0.25f, 0.15f, 0.10f, 0.08f)
+    private val _SNAPSHOT_MODES = floatArrayOf(0.35f, 0.20f, 0.10f, 0.05f, 0.04f)
+    val SNAPSHOT_MODES: List<Float> get() = _SNAPSHOT_MODES.asList()
+    private val _SNAPSHOT_MODE_ENERGY = floatArrayOf(0.45f, 0.25f, 0.15f, 0.10f, 0.08f)
+    val SNAPSHOT_MODE_ENERGY: List<Float> get() = _SNAPSHOT_MODE_ENERGY.asList()
 
     /** Soft limit on the assembled profile. tanh saturation keeps the crest smooth when it is loud. */
     const val PROFILE_LIMIT = 1.6f
@@ -244,8 +252,10 @@ internal object VoiceEnergyDesign {
     const val AMBIENT_BULGE_GAIN = 0.30f
 
     /** Diffusion strokes for the fallback: many widths, low opacity, faintest and widest first. */
-    val FALLBACK_STROKE_WIDTHS_DP = floatArrayOf(64f, 46f, 32f, 22f, 14f, 8f, 4f)
-    val FALLBACK_STROKE_ALPHAS = floatArrayOf(0.05f, 0.07f, 0.10f, 0.14f, 0.19f, 0.25f, 0.30f)
+    private val _FALLBACK_STROKE_WIDTHS_DP = floatArrayOf(64f, 46f, 32f, 22f, 14f, 8f, 4f)
+    val FALLBACK_STROKE_WIDTHS_DP: List<Float> get() = _FALLBACK_STROKE_WIDTHS_DP.asList()
+    private val _FALLBACK_STROKE_ALPHAS = floatArrayOf(0.05f, 0.07f, 0.10f, 0.14f, 0.19f, 0.25f, 0.30f)
+    val FALLBACK_STROKE_ALPHAS: List<Float> get() = _FALLBACK_STROKE_ALPHAS.asList()
 
     // ── Colour sweep ───────────────────────────────────────────────────────────────────────
     /**
@@ -279,8 +289,10 @@ internal object VoiceEnergyDesign {
     const val AMBIENT_ALPHA_FLOOR = 0.10f
     const val AMBIENT_ALPHA_ENERGY = 0.22f
     const val AMBIENT_ALPHA_EXPRESSION = 0.10f
-    val AMBIENT_STROKE_WIDTHS_DP = floatArrayOf(76f, 54f, 38f, 26f, 16f, 9f)
-    val AMBIENT_STROKE_ALPHAS = floatArrayOf(0.045f, 0.06f, 0.08f, 0.11f, 0.15f, 0.19f)
+    private val _AMBIENT_STROKE_WIDTHS_DP = floatArrayOf(76f, 54f, 38f, 26f, 16f, 9f)
+    val AMBIENT_STROKE_WIDTHS_DP: List<Float> get() = _AMBIENT_STROKE_WIDTHS_DP.asList()
+    private val _AMBIENT_STROKE_ALPHAS = floatArrayOf(0.045f, 0.06f, 0.08f, 0.11f, 0.15f, 0.19f)
+    val AMBIENT_STROKE_ALPHAS: List<Float> get() = _AMBIENT_STROKE_ALPHAS.asList()
 
     /**
      * Top of the ambient drawing area, band-relative (0 = top of the band). Everything the ambient

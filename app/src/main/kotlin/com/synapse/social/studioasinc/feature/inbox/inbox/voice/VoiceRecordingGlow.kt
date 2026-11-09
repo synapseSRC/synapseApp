@@ -939,7 +939,7 @@ private class VoiceEnergyFallbackArt(density: Density) {
     val lightStrokes: List<Stroke> = VoiceEnergyDesign.FALLBACK_STROKE_WIDTHS_DP.map { widthDp ->
         Stroke(width = with(density) { widthDp.dp.toPx() }, cap = StrokeCap.Round)
     }
-    val lightAlphas: List<Float> = VoiceEnergyDesign.FALLBACK_STROKE_ALPHAS.toList()
+    val lightAlphas: List<Float> = VoiceEnergyDesign.FALLBACK_STROKE_ALPHAS
 
     /** Wide, faint boundary bloom. Never a specular line. */
     val bloomStroke: Stroke = Stroke(
@@ -1034,7 +1034,7 @@ private class VoiceAmbientArt(density: Density) {
     val lightStrokes: List<Stroke> = VoiceEnergyDesign.AMBIENT_STROKE_WIDTHS_DP.map { widthDp ->
         Stroke(width = with(density) { widthDp.dp.toPx() }, cap = StrokeCap.Round)
     }
-    val lightAlphas: List<Float> = VoiceEnergyDesign.AMBIENT_STROKE_ALPHAS.toList()
+    val lightAlphas: List<Float> = VoiceEnergyDesign.AMBIENT_STROKE_ALPHAS
     val lightFills: List<Brush> = lightSweepBrushes(fadedEnds = true, whiten = 0f)
 
     fun updateShapes(height: Float, composition: VoiceEnergyComposition) {
