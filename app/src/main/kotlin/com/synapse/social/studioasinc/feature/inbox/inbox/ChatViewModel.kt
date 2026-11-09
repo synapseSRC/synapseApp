@@ -1198,9 +1198,16 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                         excludedChatIds = folder.excludedChatIds - chatId
                     )
                 } else {
+                    // Only a folder the chat actually belonged to records the exclusion: writing
+                    // it into folders the chat was never in leaves noise in every other folder.
+                    val wasIncluded = chatId in folder.includedChatIds
                     folder.copy(
                         includedChatIds = folder.includedChatIds - chatId,
-                        excludedChatIds = (folder.excludedChatIds + chatId).distinct()
+                        excludedChatIds = if (wasIncluded) {
+                            (folder.excludedChatIds + chatId).distinct()
+                        } else {
+                            folder.excludedChatIds
+                        }
                     )
                 }
             }
