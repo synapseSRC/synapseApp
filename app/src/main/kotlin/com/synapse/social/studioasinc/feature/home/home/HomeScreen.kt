@@ -61,6 +61,11 @@ import com.synapse.social.studioasinc.ui.navigation.HomeNavGraph
 import com.synapse.social.studioasinc.ui.settings.NavigationPlacement
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.shared.reels.components.UploadProgressOverlay
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** How long a buffered notification tap waits for this screen's navigation graph before falling back. */
+private const val NAV_GRAPH_READY_TIMEOUT_MS = 3_000L
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -86,6 +91,14 @@ fun HomeScreen(
             navController.navigate(HomeDestinations.Notifications) { launchSingleTop = true }
         }
 
+        // A notification tap can arrive before this screen's NavHost has attached its graph - the app
+        // may be cold-started by the tap while the home content is still settling. Navigating then makes
+        // NavController throw IllegalStateException, so wait for the first back-stack entry, which only
+        // exists once setGraph() has run.
+        withTimeoutOrNull(NAV_GRAPH_READY_TIMEOUT_MS) {
+            navController.currentBackStackEntryFlow.firstOrNull()
+        }
+
         try {
             when (request.target) {
                 "POST" -> {
@@ -108,8 +121,12 @@ fun HomeScreen(
                 }
                 else -> navigateToNotifications()
             }
+        } catch (_: IllegalStateException) {
+            // The graph is still not ready (or navigation was refused): fall back to the tab, and let
+            // runCatching absorb a second refusal instead of crashing the app.
+            runCatching { navigateToNotifications() }
         } catch (_: IllegalArgumentException) {
-            navigateToNotifications()
+            runCatching { navigateToNotifications() }
         } finally {
             NotificationNavigationCoordinator.consumeHomeNavigation(request)
         }
