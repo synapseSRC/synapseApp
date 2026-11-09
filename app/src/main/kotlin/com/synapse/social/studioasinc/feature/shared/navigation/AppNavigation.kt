@@ -402,7 +402,7 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToGroupInfo = { chatId, groupName ->
                         navController.navigate(AppDestination.GroupInfo(chatId, groupName))
                     },
-                    onNavigateToChatInfo = { chatId, userId ->
+                    onNavigateToChatInfo = { chatId, userId, status, statusIsActive ->
                         // The whole pill is clickable and the transition takes a moment, so a second
                         // tap can land before Contact Info has finished opening. launchSingleTop is
                         // the guard for exactly that case: once Contact Info is the current
@@ -415,7 +415,11 @@ fun NavGraphBuilder.inboxGraph(
                                 chatId = chatId,
                                 userId = userId,
                                 participantName = args.participantName,
-                                participantAvatar = args.participantAvatar
+                                participantAvatar = args.participantAvatar,
+                                // Contact Info opens on the same words and colour the pill was
+                                // showing, so the status travels with the name and the picture.
+                                participantStatus = status,
+                                participantStatusActive = statusIsActive
                             )
                         ) {
                             launchSingleTop = true
@@ -511,6 +515,8 @@ fun NavGraphBuilder.inboxGraph(
                     userId = args.userId,
                     initialDisplayName = args.participantName,
                     initialAvatarUrl = args.participantAvatar,
+                    initialStatusText = args.participantStatus,
+                    initialStatusActive = args.participantStatusActive,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = this@composable,
                     onNavigateBack = { navController.popBackStack() },

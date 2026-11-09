@@ -85,7 +85,14 @@ import kotlinx.coroutines.withContext
         animatedVisibilityScope: AnimatedVisibilityScope? = null,
         onNavigateBack: () -> Unit,
         onNavigateToGroupInfo: (String, String) -> Unit = { _, _ -> },
-        onNavigateToChatInfo: (String, String) -> Unit = { _, _ -> },
+        // The conversation adds what its header is saying about this person, so Contact Info opens
+        // on the same words and the same colour instead of composing them again.
+        onNavigateToChatInfo: (
+            chatId: String,
+            userId: String,
+            status: String?,
+            statusIsActive: Boolean
+        ) -> Unit = { _, _, _, _ -> },
         onNavigateToProfile: (String) -> Unit = {},
         onNavigateToEvent: (String) -> Unit = {},
         onNavigateToProduct: (String) -> Unit = {},
@@ -665,6 +672,34 @@ val currentUserId = currentUserIdState ?: ""
                     userId = if (isGroupChat) null else participantId,
                     chatId = chatId
                 )
+                // The name and the status line are the other two values both screens show, so they
+                // travel on the same terms as the picture: same ids, same spring, one movement.
+                val titleHeroModifier = rememberChatHeaderTextHero(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    hero = ChatHeaderTextHero.Name,
+                    userId = if (isGroupChat) null else participantId,
+                    chatId = chatId
+                )
+                val statusHeroModifier = rememberChatHeaderTextHero(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    hero = ChatHeaderTextHero.Status,
+                    userId = if (isGroupChat) null else participantId,
+                    chatId = chatId
+                )
+                // Derived here as well as in the header itself, because the tap that opens Contact
+                // Info hands the line over: the other screen opens on exactly what the pill was
+                // showing, so the status can travel with the name and the picture.
+                val headerStatusText = chatHeaderStatusText(
+                    isGroupChat = isGroupChat,
+                    groupMemberCount = groupMemberNames.size,
+                    isTyping = typingStatus?.isTyping == true,
+                    isParticipantActive = isParticipantActive,
+                    lastSeen = participantProfile?.lastSeen
+                )
+                val headerStatusActive =
+                    !isGroupChat && (typingStatus?.isTyping == true || isParticipantActive)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -681,6 +716,8 @@ val currentUserId = currentUserIdState ?: ""
                         isParticipantActive = isParticipantActive,
                         chatId = chatId,
                         avatarModifier = avatarHeroModifier,
+                        titleModifier = titleHeroModifier,
+                        statusModifier = statusHeroModifier,
                         backdrop = headerGlassBackdrop,
                         disappearingMode = disappearingMode,
                         isGroupChat = isGroupChat,
@@ -694,7 +731,14 @@ val currentUserId = currentUserIdState ?: ""
                         onNavigateBack = onNavigateBack,
                         onSummarizeChat = viewModel::summarizeChat,
                         onNavigateToGroupInfo = onNavigateToGroupInfo,
-                        onNavigateToChatInfo = onNavigateToChatInfo,
+                        onNavigateToChatInfo = { targetChatId, targetUserId ->
+                            onNavigateToChatInfo(
+                                targetChatId,
+                                targetUserId,
+                                headerStatusText,
+                                headerStatusActive
+                            )
+                        },
                         onOpenDisappearingMessages = { showDisappearingModeDialog = true },
                         onStartVoiceCall = { launchCall(false) },
                         onStartVideoCall = { launchCall(true) },
