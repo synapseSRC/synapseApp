@@ -61,11 +61,27 @@ Files:
   anything out of scope is still present.
 * **Tests cannot be weakened to get green.** Test source sets are outside the
   allow-list, test tasks are denied to the agent, and the pipeline adds no tests.
+* **The agent CLI comes from a package registry, not a pipe to a shell.** It is installed
+  from npm (`@kilocode/cli`, pin with `AI_REPAIR_KILO_VERSION`) and only lazily, after a
+  code failure. The vendor's remote shell installer is never used unless the repository
+  sets `AI_REPAIR_ALLOW_CURL_INSTALL=true`, because it executes downloaded code on a runner
+  that holds this step's build secrets.
 * **Secrets never reach a log.** Every line printed, teed or archived passes through
   a redaction filter that removes the API key exactly, plus JWTs, GitHub tokens and
   bearer headers. The key is also removed from the Gradle environment.
 * **Least privilege.** The workflow gets `contents: read` (+`actions: read`); only the
-  build job widens to `contents: write`, which is exactly what the one push needs.
+  build job widens to `contents: write`, which is exactly what the one push needs. The
+  checkout runs with `persist-credentials: false`, so no credential is written into
+  `.git/config` and the build step - the one that runs AI-generated code on a failure -
+  holds no usable credential at all. The job's token is materialised only in the
+  `Commit AI repairs` step's environment and passed to git as a one-shot
+  `http.extraheader` for the push and the push-retry rebase.
+* **Failures are checked by hand.** The scripts deliberately do not use `set -e`: the loop
+  inspects the status of commands that are allowed to fail (`grep`, `git diff --cached
+  --quiet`, the push retry path) and an unexpected abort mid-sequence would be worse than
+  the explicit checks. Every command whose failure would corrupt state or silently drop a
+  repair - resolving `HEAD`, staging, committing, pushing - is checked and reported as an
+  `::error`.
 
 ## Configuration
 
@@ -76,6 +92,9 @@ Files:
 | `KILO_REPAIR_FALLBACK_MODELS` | variable (optional) | space-separated extra models tried when the primary is rate limited |
 | `AI_REPAIR_MAX_BUILD_ATTEMPTS` | step env | total build attempts, default `5` |
 | `AI_REPAIR_MAX_INFRA_RETRIES` | step env | infrastructure-only retries inside that cap, default `2` |
+| `AI_REPAIR_KILO_VERSION` | step env | pins the npm package version of the CLI |
+| `AI_REPAIR_ALLOW_CURL_INSTALL` | variable (optional) | set to `true` to allow the vendor's remote shell installer as a fallback; off by default |
+| `AI_REPAIR_MAX_DIAGNOSTIC_ANNOTATIONS` | step env | annotation lines taken from the last failing attempt, default `6` |
 
 Free tiers are rate limited upstream (Kilo documents ~200 requests/hour for
 `kilo-auto/free`), so the model chain is not a formality: a rate-limited or
@@ -115,4 +134,6 @@ covers 82 assertions across: green first attempt (agent not invoked, no commit),
 attempt exhaustion, infrastructure classification, out-of-scope reverts, undo of an agent-created
 commit, redaction, rate-limit model fallback, auth abort, missing secret, the consolidated
 commit + push, refusal in PR-head/tag contexts, the APK guard, test-source protection and the
-annotation budget. It found and fixed four real defects before the first live run.
+annotation budget. It found and fixed four real defects before the first live run, and covers the five
+security/robustness findings raised by the PR review bots (installer policy, redaction
+delimiter with hostile keys, missing `-e`, credential scoping, explicit status checks).

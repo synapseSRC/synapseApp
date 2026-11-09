@@ -91,9 +91,13 @@ redact_stream() {
   local key="${KILO_API_KEY:-}"
   local -a sed_args=()
   if [ -n "$key" ]; then
-    local escaped
-    escaped="$(printf '%s' "$key" | sed -e 's/[\\&|]/\\&/g')"
-    sed_args+=(-e "s|${escaped}|***REDACTED***|g")
+    local escaped delim=$'\001'
+    # The delimiter is a control character, so it cannot occur in a key, and the key only
+    # has to be escaped for the two characters sed treats specially in a replacement
+    # (backslash and &). A key containing '|' - the delimiter this used to use - can no
+    # longer break the expression or silently stop the key from being redacted.
+    escaped="$(printf '%s' "$key" | sed -e 's/[\\&]/\\&/g')"
+    sed_args+=(-e "s${delim}${escaped}${delim}***REDACTED***${delim}g")
   fi
   sed "${sed_args[@]}" \
     -e 's#eyJ[A-Za-z0-9_-]\{8,\}\.[A-Za-z0-9_-]\{8,\}\.[A-Za-z0-9_-]\{4,\}#***REDACTED-JWT***#g' \

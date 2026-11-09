@@ -100,19 +100,36 @@ install_kilo_cli() {
   local version="${AI_REPAIR_KILO_VERSION:-}"
   local linklog="$DIAG_DIR/kilo-install.log"
 
-  log "installing the Kilo Code CLI (official installer)"
-  if ! timeout 600 bash -c 'curl -fsSL https://kilo.ai/cli/install | bash' >>"$linklog" 2>&1; then
-    warn "official installer failed; see $linklog"
-  fi
-  export PATH="$HOME/.kilo/bin:$PATH"
-  KILO_BIN="$(resolve_kilo_bin || true)"
-
-  if [ -z "$KILO_BIN" ] && command -v npm >/dev/null 2>&1; then
-    log "installing the Kilo Code CLI with npm (@kilocode/cli${version:+@$version})"
+  # Preferred path: the npm registry. It fetches a versioned package with integrity
+  # verification instead of executing a remote script, and it is the documented install
+  # path. Pin it with AI_REPAIR_KILO_VERSION to make the installed version deterministic.
+  if command -v npm >/dev/null 2>&1; then
+    log "installing the Kilo Code CLI from npm (@kilocode/cli${version:+@$version})"
     if ! timeout 600 npm install -g --no-audit --no-fund "@kilocode/cli${version:+@$version}" >>"$linklog" 2>&1; then
       warn "npm install failed; see $linklog"
     fi
     KILO_BIN="$(resolve_kilo_bin || true)"
+  else
+    warn "npm is not available on this runner"
+  fi
+
+  # Fallback: the vendor's shell installer runs a downloaded script. That is code executed
+  # on a runner that holds this step's build secrets, so it happens only when the repository
+  # explicitly opts in (repository variable / env AI_REPAIR_ALLOW_CURL_INSTALL=true), never
+  # by default, and the script is downloaded to a file first rather than piped into bash.
+  if [ -z "$KILO_BIN" ] && [ "${AI_REPAIR_ALLOW_CURL_INSTALL:-false}" = "true" ]; then
+    log "installing the Kilo Code CLI with the vendor installer (remote script; explicitly opted in)"
+    if ! timeout 600 curl -fsSL https://kilo.ai/cli/install -o "$DIAG_DIR/kilo-install.sh" >>"$linklog" 2>&1; then
+      warn "could not download the vendor installer; see $linklog"
+    elif ! timeout 600 bash "$DIAG_DIR/kilo-install.sh" >>"$linklog" 2>&1; then
+      warn "vendor installer failed; see $linklog"
+    fi
+    export PATH="$HOME/.kilo/bin:$PATH"
+    KILO_BIN="$(resolve_kilo_bin || true)"
+  fi
+
+  if [ -z "$KILO_BIN" ]; then
+    warn "AI_REPAIR_ALLOW_CURL_INSTALL is not enabled, so the vendor installer was not run"
   fi
 
   if [ -n "$KILO_BIN" ]; then
@@ -354,8 +371,12 @@ build_prompt() {
 # --- Guards ------------------------------------------------------------------
 guard_workspace() {
   local baseline="$1" path head_now
-  head_now="$(git -C "$WORKSPACE" rev-parse HEAD)"
-  if [ "$head_now" != "$baseline" ]; then
+  if [ -z "$baseline" ]; then
+    warn "no baseline commit recorded; refusing to inspect or revert the working tree"
+    return 1
+  fi
+  head_now="$(git -C "$WORKSPACE" rev-parse HEAD 2>/dev/null || true)"
+  if [ -n "$head_now" ] && [ "$head_now" != "$baseline" ]; then
     warn "the agent created a commit ($head_now); undoing it and keeping its working-tree changes"
     printf '::warning title=AI repair::the repair agent committed during the loop; the commit was undone so the pipeline can create the single consolidated commit\n'
     git -C "$WORKSPACE" reset --mixed --quiet "$baseline" || warn "could not undo the agent commit"
@@ -440,7 +461,16 @@ main() {
 
   mkdir -p -- "$DIAG_DIR"
   cd -- "$WORKSPACE" || { printf '::error title=AI repair::workspace %s not found\n' "$WORKSPACE"; exit 1; }
-  baseline_sha="$(git -C "$WORKSPACE" rev-parse HEAD)"
+  # Every guard below (undoing a stray agent commit, attributing the change set) depends on a
+  # known baseline. `set -e` is deliberately not used here because the loop checks statuses
+  # explicitly, so this one is checked by hand: continuing with an empty SHA would silently
+  # degrade the guards.
+  if ! baseline_sha="$(git -C "$WORKSPACE" rev-parse HEAD 2>/dev/null)" || [ -z "$baseline_sha" ]; then
+    printf '::error title=AI repair::could not resolve HEAD in %s; the workspace is not a usable git checkout\n' "$WORKSPACE"
+    summary ""
+    summary "aborting: the workspace is not a git checkout, so a repair could not be attributed, guarded or committed safely."
+    exit 1
+  fi
   log "workspace: $WORKSPACE (HEAD ${baseline_sha:0:12})"
 
   KILO_BIN="$(resolve_kilo_bin || true)"

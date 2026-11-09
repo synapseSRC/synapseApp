@@ -36,8 +36,12 @@ concurrency:
   cancel-in-progress: true
 
 # Least privilege. The workflow itself only needs to read the repository and its own run's
-# artifacts; the build job widens this to contents:write because the self-healing loop may
-# have to publish exactly one consolidated repair commit.
+# artifacts. The build job widens this to contents:write because an in-job repair must be
+# published from the same runner and workspace (the design deliberately has no second job),
+# but the token is never handed to the build/repair step: the checkout runs with
+# persist-credentials: false, so no credential is written into .git/config or the workspace,
+# and the job's token is materialised only in the "Commit AI repairs" step's own environment
+# and passed to git as a one-shot header for the push.
 permissions:
   contents: read
   actions: read
@@ -47,7 +51,8 @@ jobs:
     name: 🔨 Build APKs
     runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'blacksmith-4vcpu-ubuntu-2404' }}
     # contents:write is used at most once per run, by "Commit AI repairs", and only after the
-    # release build and the release verification both passed. Nothing else needs write access.
+    # release build and the release verification both passed. Nothing else needs write access,
+    # and no other step receives a token that could use it.
     permissions:
       contents: write
     outputs:
@@ -60,6 +65,10 @@ jobs:
           # versionCode is `git rev-list --count HEAD`; a shallow clone would make it 1
           # for every build, so each new APK would install as a downgrade.
           fetch-depth: 0
+          # No credential is persisted into .git/config, so the build step - the one that runs
+          # AI-generated code on a build failure - has no usable write credential at all. The
+          # commit step gets its own token below.
+          persist-credentials: false
 
       - name: ☕ Set up JDK 17
         uses: actions/setup-java@v5
@@ -127,6 +136,10 @@ jobs:
           AI_REPAIR_FALLBACK_MODELS: ${{ vars.KILO_REPAIR_FALLBACK_MODELS }}
           AI_REPAIR_MAX_BUILD_ATTEMPTS: '5'
           AI_REPAIR_MAX_INFRA_RETRIES: '2'
+          # The agent CLI is installed from the npm registry (integrity-verified package).
+          # The vendor's remote shell installer is only used when this is explicitly set to
+          # 'true'; it downloads a script and runs it on a runner that holds build secrets.
+          AI_REPAIR_ALLOW_CURL_INSTALL: ${{ vars.KILO_REPAIR_ALLOW_CURL_INSTALL }}
         run: bash ./.github/workflows/ai_build_repair.sh
 
       - name: 🔎 Verify shipped auth and push config
@@ -158,6 +171,8 @@ jobs:
         if: steps.build_loop.outputs.repairs_applied == 'true'
         shell: bash
         env:
+          # The only step that receives the job's write token, and only for its push.
+          GITHUB_TOKEN: ${{ github.token }}
           AI_REPAIR_APPLIED: ${{ steps.build_loop.outputs.repairs_applied }}
           AI_REPAIR_ATTEMPTS: ${{ steps.build_loop.outputs.build_attempts }}
           AI_REPAIR_MODEL: ${{ steps.build_loop.outputs.kilo_model }}

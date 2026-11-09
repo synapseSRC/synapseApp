@@ -17,7 +17,16 @@
 #
 # The push uses the workflow's GITHUB_TOKEN. GitHub does not start new workflow
 # runs for events caused by that token, so this commit cannot re-trigger the
-# build job and cannot create an endless repair/push cycle.
+# build job and cannot create an endless repair/push cycle. The checkout runs with
+# persist-credentials: false, so this step receives the token through its own env and
+# passes it to git as a one-shot `http.extraheader` instead of writing it into
+# .git/config or leaving a usable credential behind in the workspace.
+#
+# `set -e` is deliberately not enabled: this script inspects the status of several
+# commands that are allowed to fail (git diff --cached --quiet, git status, the push
+# retry path) and an unexpected abort mid-sequence would be worse than the explicit
+# checks below. Every command whose failure would corrupt or silently drop the commit
+# is therefore checked by hand and reported as an ::error.
 # =============================================================================
 set -uo pipefail
 
@@ -35,6 +44,17 @@ ATTEMPTS="${AI_REPAIR_ATTEMPTS:-0}"
 MODEL="${AI_REPAIR_MODEL:-unknown}"
 BOT_NAME="github-actions[bot]"
 BOT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+
+# The token is materialised here, for this step only. Without it git falls back to
+# whatever credential helper the checkout configured (kept for compatibility with a
+# repository that re-enables persisted credentials).
+GIT_AUTH_ARGS=()
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  GIT_AUTH_ARGS=(-c "http.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')")
+fi
+git_auth() {
+  if [ "${#GIT_AUTH_ARGS[@]}" -gt 0 ]; then git "${GIT_AUTH_ARGS[@]}" "$@"; else git "$@"; fi
+}
 
 log()  { printf '[ai-commit] %s\n' "$*"; }
 warn() { printf '[ai-commit] warning: %s\n' "$*" >&2; }
@@ -90,14 +110,17 @@ git config user.email "$BOT_EMAIL"
 # leave the repair unstaged and silently drop it.
 for path in "${CHANGED[@]}"; do
   [ -n "$path" ] || continue
-  git add -A -- "$path" || warn "could not stage $path"
+  if ! git add -A -- "$path"; then
+    printf '::error title=AI commit::could not stage %s; refusing to commit an incomplete repair\n' "$path"
+    exit 1
+  fi
 done
 if git diff --cached --quiet; then
   log "nothing staged under app/ or shared/; nothing to commit"
   exit 0
 fi
 
-git commit --quiet -m "fix(ci): apply AI-assisted Android build repairs" -m \
+if ! git commit --quiet -m "fix(ci): apply AI-assisted Android build repairs" -m \
 "The release build failed in the Build APKs workflow and was repaired in-run by the
 Kilo Code CLI in autonomous mode, then rebuilt and verified in the same job.
 
@@ -107,19 +130,22 @@ Kilo Code CLI in autonomous mode, then rebuilt and verified in the same job.
 
 Only source files under app/ and shared/ are included: the repair pipeline reverts
 workflow, Gradle, signing, generated-config and test changes, and no attempt inside
-the loop commits anything. This is the single consolidated repair commit."
+the loop commits anything. This is the single consolidated repair commit."; then
+  printf '::error title=AI commit::the consolidated repair commit could not be created\n'
+  exit 1
+fi
 
 COMMIT_SHA="$(git rev-parse HEAD)"
 log "created commit ${COMMIT_SHA:0:12}"
 
 # --- Push --------------------------------------------------------------------
 push_once() {
-  git push --quiet origin "HEAD:refs/heads/${BRANCH}"
+  git_auth push --quiet origin "HEAD:refs/heads/${BRANCH}"
 }
 
 if ! push_once; then
   warn "push rejected; rebasing onto origin/${BRANCH} and retrying once"
-  if raw="$(git pull --rebase --autostash origin "$BRANCH" 2>&1)"; then
+  if raw="$(git_auth pull --rebase --autostash origin "$BRANCH" 2>&1)"; then
     if ! push_once; then
       printf '::error title=AI commit::could not push the repair commit to %s after a rebase; the build succeeded but the fix was not published\n' "$BRANCH"
       exit 1
