@@ -1,7 +1,7 @@
 package com.synapse.social.studioasinc.shared.data.repository
 
-import com.fleeksoft.ksoup.Ksoup
 import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
+import com.synapse.social.studioasinc.shared.core.util.LinkMetadataParser
 import com.synapse.social.studioasinc.shared.data.database.StorageDatabase
 import com.synapse.social.studioasinc.shared.domain.model.LinkPreview
 import com.synapse.social.studioasinc.shared.domain.repository.LinkPreviewRepository
@@ -9,76 +9,132 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.Url
+import io.ktor.http.HttpHeaders
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+/**
+ * Fetches and caches link metadata.
+ *
+ * Caching happens in two layers: an in-memory session cache that also remembers failures so the
+ * same URL is never fetched twice while the app is running, and the persistent LinkMetadataEntity
+ * table that survives restarts. Only previews that actually carry metadata are written to the
+ * database, so a page without Open Graph data can no longer poison the cache for a later visit.
+ */
 class LinkPreviewRepositoryImpl(
     private val database: StorageDatabase,
     private val httpClient: HttpClient
 ) : LinkPreviewRepository {
 
+    private val sessionCache = mutableMapOf<String, LinkPreview?>()
+    private val sessionCacheMutex = Mutex()
+
     override suspend fun getLinkPreview(url: String): LinkPreview? = withContext(AppDispatchers.IO) {
-        try {
-            // Check cache
-            val cached = database.linkMetadataQueries.getLinkMetadata(url).executeAsOneOrNull()
-            if (cached != null) {
-                return@withContext LinkPreview(
-                    url = cached.url,
-                    title = cached.title,
-                    description = cached.description,
-                    imageUrl = cached.imageUrl,
-                    domain = cached.domain
+        val normalized = LinkMetadataParser.normalizeUrl(url) ?: return@withContext null
+
+        val (alreadyResolved, remembered) = sessionCacheMutex.withLock {
+            if (sessionCache.containsKey(normalized)) {
+                true to sessionCache[normalized]
+            } else {
+                false to null
+            }
+        }
+        if (alreadyResolved) return@withContext remembered
+
+        val stored = readFromDatabase(normalized)
+        if (stored != null) {
+            cacheInSession(normalized, stored)
+            return@withContext stored
+        }
+
+        val fetched = fetchMetadata(normalized)
+        cacheInSession(normalized, fetched)
+        if (fetched != null && LinkMetadataParser.hasRenderableMetadata(fetched)) {
+            writeToDatabase(fetched)
+        }
+        fetched
+    }
+
+    private suspend fun cacheInSession(url: String, preview: LinkPreview?) {
+        sessionCacheMutex.withLock { sessionCache[url] = preview }
+    }
+
+    private fun readFromDatabase(url: String): LinkPreview? = try {
+        database.linkMetadataQueries.getLinkMetadata(url).executeAsOneOrNull()
+            ?.let { row ->
+                LinkPreview(
+                    url = row.url,
+                    title = row.title,
+                    description = row.description,
+                    imageUrl = row.imageUrl,
+                    domain = row.domain
                 )
             }
+            ?.takeIf { LinkMetadataParser.hasRenderableMetadata(it) }
+    } catch (t: Throwable) {
+        Napier.e("Failed to read cached link metadata for " + url, t)
+        null
+    }
 
-            // Fetch from network with a reasonable timeout and mobile user agent
-            val response = httpClient.get(url) {
-                header("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36")
-            }
-
-            // Limit the amount of text we read to avoid OOM for massive pages
-            // If the response doesn't have a content length, we might want to read in chunks,
-            // but for simplicity we'll assume bodyAsText() is okay if we use a background thread.
-            // Ideally we'd limit this to first 512KB.
-            val html = response.bodyAsText()
-
-            // Parse metadata using Ksoup
-            val document = Ksoup.parse(html)
-
-            val title = document.select("meta[property=og:title]").attr("content").takeIf { it.isNotBlank() }
-                ?: document.title().takeIf { it.isNotBlank() }
-
-            val description = document.select("meta[property=og:description]").attr("content").takeIf { it.isNotBlank() }
-                ?: document.select("meta[name=description]").attr("content").takeIf { it.isNotBlank() }
-
-            val imageUrl = document.select("meta[property=og:image]").attr("content").takeIf { it.isNotBlank() }
-
-            val domain = try {
-                Url(url).host.removePrefix("www.")
-            } catch (e: Exception) {
-                null
-            }
-
-            // Cache it
+    private fun writeToDatabase(preview: LinkPreview) {
+        try {
             database.linkMetadataQueries.insertLinkMetadata(
-                url = url,
-                title = title,
-                description = description,
-                imageUrl = imageUrl,
-                domain = domain
+                url = preview.url,
+                title = preview.title,
+                description = preview.description,
+                imageUrl = preview.imageUrl,
+                domain = preview.domain
             )
-
-            LinkPreview(
-                url = url,
-                title = title,
-                description = description,
-                imageUrl = imageUrl,
-                domain = domain
-            )
-        } catch (e: Exception) {
-            Napier.e("Error fetching link preview for $url", e)
-            null
+        } catch (t: Throwable) {
+            Napier.e("Failed to cache link metadata for " + preview.url, t)
         }
+    }
+
+    private suspend fun fetchMetadata(url: String): LinkPreview? = try {
+        val response = httpClient.get(url) {
+            header(HttpHeaders.UserAgent, MOBILE_USER_AGENT)
+            header(HttpHeaders.Accept, ACCEPTED_CONTENT)
+        }
+
+        when {
+            !response.status.isSuccess() -> null
+            isBinary(response) -> null
+            declaresOversizedBody(response) -> null
+            else -> LinkMetadataParser.parse(url, response.bodyAsText())
+        }
+    } catch (t: Throwable) {
+        Napier.e("Error fetching link preview for " + url, t)
+        null
+    }
+
+    private fun declaresOversizedBody(response: HttpResponse): Boolean {
+        val declaredLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: return false
+        return declaredLength > LinkMetadataParser.MAX_RESPONSE_BYTES
+    }
+
+    /** Pages that can never contain HTML metadata are skipped before the body is read. */
+    private fun isBinary(response: HttpResponse): Boolean {
+        val contentType = response.headers[HttpHeaders.ContentType]
+            ?.substringBefore(';')
+            ?.trim()
+            ?.lowercase()
+            ?: return false
+
+        return contentType.startsWith("image/") ||
+            contentType.startsWith("video/") ||
+            contentType.startsWith("audio/") ||
+            contentType.startsWith("font/") ||
+            contentType == "application/pdf" ||
+            contentType == "application/zip" ||
+            contentType == "application/octet-stream"
+    }
+
+    private companion object {
+        const val MOBILE_USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+        const val ACCEPTED_CONTENT = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
 }

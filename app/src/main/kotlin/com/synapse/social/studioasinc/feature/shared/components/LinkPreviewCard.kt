@@ -1,166 +1,286 @@
 package com.synapse.social.studioasinc.feature.shared.components
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.synapse.social.studioasinc.core.di.LinkPreviewEntryPoint
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.core.util.LinkMetadataParser
 import com.synapse.social.studioasinc.shared.domain.model.LinkPreview
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
+import com.synapse.social.studioasinc.ui.components.ShimmerBox
+import dagger.hilt.android.EntryPointAccessors
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-import androidx.compose.runtime.compositionLocalOf
-
+/**
+ * Lets a screen provide the shared link metadata use case. Providing it is optional: when no
+ * provider is installed the card resolves the same singleton through [LinkPreviewEntryPoint], so
+ * every screen renders identical previews without any per screen wiring.
+ */
 val LocalLinkMetadataUseCase = compositionLocalOf<GetLinkMetadataUseCase?> { null }
 
+/** Standard Open Graph image ratio (1200x630). */
+private const val PREVIEW_IMAGE_ASPECT_RATIO = 1.91f
+
+@Composable
+fun rememberLinkMetadataUseCase(explicit: GetLinkMetadataUseCase? = null): GetLinkMetadataUseCase? {
+    val provided = LocalLinkMetadataUseCase.current
+    val context = LocalContext.current
+    return explicit ?: provided ?: remember(context) { resolveLinkMetadataUseCase(context) }
+}
+
+private fun resolveLinkMetadataUseCase(context: Context): GetLinkMetadataUseCase? = try {
+    EntryPointAccessors
+        .fromApplication(context.applicationContext, LinkPreviewEntryPoint::class.java)
+        .linkMetadataUseCase()
+} catch (t: Throwable) {
+    Napier.e("Link preview use case is unavailable", t)
+    null
+}
+
+/**
+ * The single link preview card used by every surface that renders post content.
+ *
+ * The card is self sufficient: it resolves its own metadata use case, shows a loading skeleton
+ * while metadata is on the way and, when a page has no usable metadata (or cannot be reached),
+ * falls back to the site identity derived from the URL. It therefore never renders an empty
+ * rounded container.
+ */
 @Composable
 fun LinkPreviewCard(
     url: String,
-    useCase: GetLinkMetadataUseCase,
+    useCase: GetLinkMetadataUseCase?,
     onRemove: (() -> Unit)? = null,
     initialPreview: LinkPreview? = null,
     modifier: Modifier = Modifier
 ) {
-    var linkPreview by remember(url) { mutableStateOf<LinkPreview?>(initialPreview) }
-    var isLoading by remember(url) { mutableStateOf(true) }
-    var hasError by remember(url) { mutableStateOf(false) }
+    val sanitizedUrl = remember(url) { LinkMetadataParser.normalizeUrl(url) }
+    if (sanitizedUrl == null) return
+
+    val resolvedUseCase = rememberLinkMetadataUseCase(useCase)
     val uriHandler = LocalUriHandler.current
 
-    LaunchedEffect(url, initialPreview) {
-        // Skip fetch if metadata is already present in initialPreview
-        if (initialPreview != null && (!initialPreview.title.isNullOrBlank() || !initialPreview.description.isNullOrBlank())) {
-            linkPreview = initialPreview
+    val usableInitialPreview = remember(initialPreview) {
+        initialPreview?.takeIf { LinkMetadataParser.hasRenderableMetadata(it) }
+    }
+    val fallbackPreview = remember(sanitizedUrl) {
+        LinkPreview(url = sanitizedUrl, domain = LinkMetadataParser.domainOf(sanitizedUrl))
+    }
+
+    var preview by remember(sanitizedUrl) { mutableStateOf(usableInitialPreview ?: fallbackPreview) }
+    var isLoading by remember(sanitizedUrl) { mutableStateOf(usableInitialPreview == null) }
+
+    LaunchedEffect(sanitizedUrl, usableInitialPreview) {
+        if (usableInitialPreview != null) {
+            preview = usableInitialPreview
             isLoading = false
             return@LaunchedEffect
         }
-
-        isLoading = true
-        hasError = false
-        try {
-            val preview = withContext(Dispatchers.IO) {
-                useCase(url)
-            }
-            if (preview != null && (preview.title != null || preview.description != null)) {
-                linkPreview = preview
-            } else {
-                hasError = true
-            }
-        } catch (e: Exception) {
-            hasError = true
-        } finally {
+        if (resolvedUseCase == null) {
+            preview = fallbackPreview
             isLoading = false
+            return@LaunchedEffect
         }
+        isLoading = true
+        val fetched = try {
+            withContext(Dispatchers.IO) { resolvedUseCase(sanitizedUrl) }
+        } catch (t: Throwable) {
+            Napier.e("Failed to resolve link preview for " + sanitizedUrl, t)
+            null
+        }
+        preview = fetched ?: fallbackPreview
+        isLoading = false
     }
 
     if (isLoading) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(Sizes.Height100)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(Sizes.IconLarge))
-        }
-    } else if (linkPreview != null) {
-        val preview = linkPreview ?: return
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
-            ),
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable {
-                    try {
-                        uriHandler.openUri(url)
-                    } catch (e: Exception) {
-                        Napier.e("Failed to open URI: $url", e)
-                    }
+        LinkPreviewSkeleton(modifier = modifier)
+        return
+    }
+
+    val current = preview ?: fallbackPreview
+    val displayUrl = current.url.ifBlank { sanitizedUrl }
+    val host = LinkMetadataParser.domainOf(displayUrl) ?: sanitizedUrl
+    val siteLabel = current.siteName?.takeIf { it.isNotBlank() } ?: host
+    val hasMetadata = LinkMetadataParser.hasRenderableMetadata(current)
+
+    Card(
+        shape = RoundedCornerShape(Sizes.CornerLarge),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable {
+                try {
+                    uriHandler.openUri(displayUrl)
+                } catch (t: Throwable) {
+                    Napier.e("Failed to open URI: " + displayUrl, t)
                 }
-        ) {
-            Box {
-                Column {
-                    if (!preview.imageUrl.isNullOrBlank()) {
-                        AsyncImage(
-                            model = preview.imageUrl,
-                            contentDescription = "Link Preview Image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(Sizes.HeightCard)
+            }
+    ) {
+        Box {
+            Column {
+                if (hasMetadata && !current.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = current.imageUrl,
+                        contentDescription = current.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(PREVIEW_IMAGE_ASPECT_RATIO)
+                    )
+                }
+                Column(modifier = Modifier.padding(Spacing.space12)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LinkPreviewFavicon(faviconUrl = LinkMetadataParser.faviconUrl(displayUrl))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
+                        Text(
+                            text = siteLabel,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                    Column(modifier = Modifier.padding(Spacing.space12)) {
-                        if (!preview.domain.isNullOrBlank()) {
-                            Text(
-                                text = preview.domain ?: "",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.outline,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(Spacing.space4))
-                        }
-                        if (!preview.title.isNullOrBlank()) {
-                            Text(
-                                text = preview.title ?: "",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        if (!preview.description.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(Spacing.space4))
-                            Text(
-                                text = preview.description ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                    if (!current.title.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(Spacing.space4))
+                        Text(
+                            text = current.title.orEmpty(),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
-                }
-
-                if (onRemove != null) {
-                    IconButton(
-                        onClick = onRemove,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(Spacing.space4)
-                            .size(Sizes.IconLarge)
-                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f), shape = RoundedCornerShape(Sizes.CornerDefault))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Remove Link Preview",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(Sizes.IconSemiMedium)
+                    if (!current.description.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(Spacing.space4))
+                        Text(
+                            text = current.description.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
+
+            if (onRemove != null) {
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(Spacing.space4)
+                        .size(Sizes.IconLarge)
+                        .background(
+                            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(Sizes.CornerDefault)
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Remove Link Preview",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(Sizes.IconSemiMedium)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Favicon of the target site with a neutral globe behind it, so an unavailable icon still reads. */
+@Composable
+private fun LinkPreviewFavicon(faviconUrl: String?) {
+    Box(
+        modifier = Modifier
+            .size(Sizes.IconSemiMedium)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Language,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(Sizes.IconExtraSmall)
+        )
+        if (!faviconUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = faviconUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+            )
+        }
+    }
+}
+
+/**
+ * Compact shimmering placeholder. It reads unmistakably as a loading state and keeps the feed
+ * layout stable, unlike a fixed height empty container.
+ */
+@Composable
+private fun LinkPreviewSkeleton(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Sizes.CornerLarge))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f))
+            .padding(Spacing.space12),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ShimmerBox(
+            modifier = Modifier.size(Sizes.IconLarge),
+            shape = RoundedCornerShape(Sizes.CornerSmall)
+        )
+        Spacer(modifier = Modifier.width(Spacing.space12))
+        Column(modifier = Modifier.weight(1f)) {
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .height(Sizes.ShimmerLineHeight)
+            )
+            Spacer(modifier = Modifier.height(Spacing.space8))
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(Sizes.ShimmerLineHeight)
+            )
         }
     }
 }
