@@ -249,6 +249,9 @@ dependencies {
     implementation 'io.coil-kt.coil3:coil-video:3.6.3'
     implementation 'io.coil-kt.coil3:coil-network-okhttp:3.6.3'
     implementation 'io.coil-kt.coil3:coil:3.6.3'
+    // Liquid glass for the floating chat header: each of its three surfaces samples and refracts
+    // the conversation behind it (see feature/inbox/inbox/components/ChatTopAppBar.kt).
+    implementation 'io.github.kyant0:backdrop:2.0.1'
 
     // Accompanist for system UI controller
     implementation 'com.google.accompanist:accompanist-systemuicontroller:0.36.0'

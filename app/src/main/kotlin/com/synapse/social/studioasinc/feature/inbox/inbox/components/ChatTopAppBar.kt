@@ -2,8 +2,14 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import android.content.ClipData
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
@@ -22,6 +28,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -32,6 +39,13 @@ import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarque
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.DpOffset
+import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.highlight.HighlightStyle
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -66,6 +80,10 @@ fun ChatTopAppBar(
     // Shared-element modifier for the pill's picture, applied by the screen so the avatar can
     // travel into Contact Info instead of being re-created there.
     avatarModifier: Modifier = Modifier,
+    // The conversation captured behind the header, which each floating surface samples so it
+    // refracts the wallpaper and the messages moving underneath it. Null keeps the fallback
+    // translucent surfaces.
+    backdrop: Backdrop? = null,
     onClearSelection: () -> Unit,
     onDeleteSelectedMessages: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -179,6 +197,7 @@ fun ChatTopAppBar(
         }
 
         ChatFloatingTopBar(
+            backdrop = backdrop,
             title = titleText,
             status = statusText,
             statusColor = statusColor,
@@ -240,11 +259,36 @@ private val FloatingHeaderAvatarSize = FloatingHeaderHeight - Spacing.space4
 val ChatFloatingHeaderHeight = FloatingHeaderHeight + Spacing.space4 * 2
 
 /**
- * Restrained translucency for the floating surfaces: the active theme's surface-container role at a
- * high alpha, so the wallpaper reads through faintly without a costly, noisy blur.
+ * Fallback translucency for the floating surfaces on hardware that cannot render the glass: the
+ * active theme's surface-container role at a high alpha, so the wallpaper still reads through
+ * faintly without a blur or a refraction the device cannot draw.
  */
 private const val FloatingHeaderSurfaceAlpha = 0.92f
 private const val FloatingHeaderBorderAlpha = 0.45f
+
+/**
+ * Liquid glass parameters for the three floating surfaces. The tint is what keeps the title, the
+ * status line and the icons readable; the blur, the refraction and the specular edge are what make
+ * the same surface read as glass rather than as a translucent panel. The blur stays deliberately
+ * low - a heavy frosted blur is the look this is not.
+ */
+private const val GlassTintAlphaLight = 0.45f
+private const val GlassTintAlphaDark = 0.5f
+private val GlassBlurRadius = 3.dp
+private val GlassHighlightWidth = 0.5.dp
+private val GlassHighlightBlur = 0.75.dp
+private const val GlassHighlightAlphaLight = 0.9f
+private const val GlassHighlightAlphaDark = 0.5f
+
+/**
+ * Refraction of a 48dp capsule: the height stays inside its 24dp corner radius and the amount
+ * inside its short side, which is the range the refraction shader is defined over.
+ */
+private val GlassLensHeight = 12.dp
+private val GlassLensAmount = 24.dp
+
+/** How far a surface shrinks while it is held, without moving the glass it samples. */
+private const val GlassPressScale = 0.96f
 
 /**
  * Telegram-style floating chat header: three independent surfaces drawn over the conversation
@@ -252,6 +296,7 @@ private const val FloatingHeaderBorderAlpha = 0.45f
  */
 @Composable
 private fun ChatFloatingTopBar(
+    backdrop: Backdrop?,
     title: String,
     status: String,
     statusColor: Color,
@@ -294,10 +339,11 @@ private fun ChatFloatingTopBar(
             .padding(horizontal = Spacing.space4, vertical = Spacing.space4),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FloatingBackButton(onNavigateBack = onNavigateBack)
+        FloatingBackButton(backdrop = backdrop, onNavigateBack = onNavigateBack)
         Spacer(modifier = Modifier.width(Spacing.space4))
         FloatingTitlePill(
             modifier = Modifier.weight(1f),
+            backdrop = backdrop,
             title = title,
             status = status,
             statusColor = statusColor,
@@ -312,6 +358,7 @@ private fun ChatFloatingTopBar(
         )
         Spacer(modifier = Modifier.width(Spacing.space4))
         FloatingActionsPill(
+            backdrop = backdrop,
             isGroupChat = isGroupChat,
             onViewContact = onViewContact,
             showCallActions = showCallActions,
@@ -338,38 +385,116 @@ private fun ChatFloatingTopBar(
 }
 
 /**
- * The single glass/tonal treatment behind every floating surface, so the three pieces of the header
- * cannot drift apart in colour, elevation or border.
+ * The single glass treatment behind every floating surface, so the three pieces of the header cannot
+ * drift apart in tint, refraction or edge.
+ *
+ * [backdrop] is the conversation the screen captured behind the header - the wallpaper, the messages
+ * and the top scrim - and each surface samples it through its own shape, so the glass follows
+ * whatever scrolls underneath it. A null backdrop (the screen passes null below the RenderEffect API
+ * level rather than paying for a layer nothing can draw) keeps the plain translucent panel this
+ * header used before, so older hardware loses nothing.
  */
 @Composable
 private fun FloatingHeaderSurface(
     modifier: Modifier = Modifier,
     shape: Shape,
+    backdrop: Backdrop?,
+    interactionSource: MutableInteractionSource,
     content: @Composable () -> Unit
 ) {
-    Surface(
-        modifier = modifier,
-        shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = FloatingHeaderSurfaceAlpha),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = Sizes.ElevationLow,
-        shadowElevation = Sizes.ElevationLow,
-        border = BorderStroke(
-            width = Sizes.BorderHairline,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = FloatingHeaderBorderAlpha)
-        ),
-        content = content
-    )
+    val glassTint = MaterialTheme.colorScheme.surfaceContainerHigh
+    if (backdrop == null) {
+        Surface(
+            modifier = modifier,
+            shape = shape,
+            color = glassTint.copy(alpha = FloatingHeaderSurfaceAlpha),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = Sizes.ElevationLow,
+            shadowElevation = Sizes.ElevationLow,
+            border = BorderStroke(
+                width = Sizes.BorderHairline,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = FloatingHeaderBorderAlpha)
+            ),
+            content = content
+        )
+    } else {
+        // A light surface-container role means the light scheme. That scheme leans bright with a
+        // strong sheen; the dark scheme leans deep, which is what keeps white icons readable, with a
+        // restrained one.
+        val isLightGlass = glassTint.luminance() > 0.5f
+        val held by interactionSource.collectIsPressedAsState()
+        val pressProgress by animateFloatAsState(
+            targetValue = if (held) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            ),
+            label = "floatingHeaderPress"
+        )
+        Box(
+            modifier = modifier.drawBackdrop(
+                backdrop = backdrop,
+                shape = { shape },
+                effects = {
+                    // The order the library prescribes: colour filter, then blur, then lens.
+                    vibrancy()
+                    blur(GlassBlurRadius.toPx())
+                    // Refraction is what separates this from frosted glass. lens() is a no-op below
+                    // Android 13, where the reflection shaders do not exist.
+                    lens(
+                        refractionHeight = GlassLensHeight.toPx(),
+                        refractionAmount = GlassLensAmount.toPx(),
+                        depthEffect = true,
+                        chromaticAberration = true
+                    )
+                },
+                // White is the colour of the specular edge itself, not a themed role; only its
+                // strength follows the scheme.
+                highlight = {
+                    Highlight(
+                        width = GlassHighlightWidth,
+                        blurRadius = GlassHighlightBlur,
+                        alpha = if (isLightGlass) GlassHighlightAlphaLight else GlassHighlightAlphaDark,
+                        style = HighlightStyle.Default(color = Color.White.copy(alpha = 0.5f))
+                    )
+                },
+                // The press scale lives here rather than in a graphicsLayer above this modifier:
+                // the node draws the backdrop through the inverse of this transform, so the surface
+                // can shrink under a finger while the glass it samples stays exactly where it was.
+                layerBlock = {
+                    val scale = 1f - (1f - GlassPressScale) * pressProgress
+                    scaleX = scale
+                    scaleY = scale
+                },
+                onDrawSurface = {
+                    drawRect(
+                        glassTint.copy(
+                            alpha = if (isLightGlass) GlassTintAlphaLight else GlassTintAlphaDark
+                        )
+                    )
+                }
+            )
+        ) {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                content()
+            }
+        }
+    }
 }
 
 @Composable
-private fun FloatingBackButton(onNavigateBack: () -> Unit) {
+private fun FloatingBackButton(backdrop: Backdrop?, onNavigateBack: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
     FloatingHeaderSurface(
         modifier = Modifier.size(FloatingHeaderHeight),
-        shape = CircleShape
+        shape = CircleShape,
+        backdrop = backdrop,
+        interactionSource = interactionSource
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            IconButton(onClick = onNavigateBack) {
+            // The button reports into the surface's own source, so holding it shrinks the glass
+            // disc together with the icon.
+            IconButton(onClick = onNavigateBack, interactionSource = interactionSource) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.cd_back)
@@ -382,6 +507,7 @@ private fun FloatingBackButton(onNavigateBack: () -> Unit) {
 @Composable
 private fun FloatingTitlePill(
     modifier: Modifier,
+    backdrop: Backdrop?,
     title: String,
     status: String,
     statusColor: Color,
@@ -394,14 +520,24 @@ private fun FloatingTitlePill(
     onClickLabel: String,
     onViewContact: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     FloatingHeaderSurface(
         modifier = modifier.height(FloatingHeaderHeight),
-        shape = RoundedCornerShape(percent = 50)
+        shape = RoundedCornerShape(percent = 50),
+        backdrop = backdrop,
+        interactionSource = interactionSource
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable(onClickLabel = onClickLabel, onClick = onViewContact)
+                // One source for the whole pill: the tap that opens Contact Info and the pill's own
+                // press feedback come from the same gesture instead of two competing ones.
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = LocalIndication.current,
+                    onClickLabel = onClickLabel,
+                    onClick = onViewContact
+                )
                 // Horizontal only: the avatar already carries its own inset inside the pill, so
                 // a vertical padding here would only shrink it.
                 .padding(horizontal = Spacing.space4),
@@ -452,6 +588,7 @@ private fun FloatingTitlePill(
 
 @Composable
 private fun FloatingActionsPill(
+    backdrop: Backdrop?,
     isGroupChat: Boolean,
     onViewContact: () -> Unit,
     showCallActions: Boolean,
@@ -474,9 +611,12 @@ private fun FloatingActionsPill(
     onAddToChatFolder: () -> Unit,
     onDeleteChat: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     FloatingHeaderSurface(
         modifier = Modifier.height(FloatingHeaderHeight),
-        shape = RoundedCornerShape(percent = 50)
+        shape = RoundedCornerShape(percent = 50),
+        backdrop = backdrop,
+        interactionSource = interactionSource
     ) {
         Row(
             // Wrap content: a fillMaxSize row inside a surface that only fixes its height claims
@@ -488,7 +628,9 @@ private fun FloatingActionsPill(
             // Video calling lives in the overflow menu so the pill keeps the reference's two-icon
             // geometry (call + more options).
             if (showCallActions) {
-                IconButton(onClick = onStartVoiceCall) {
+                // Both buttons report into the pill's own source, so pressing either of them
+                // moves the whole surface the way the back button does.
+                IconButton(onClick = onStartVoiceCall, interactionSource = interactionSource) {
                     Icon(
                         Icons.Default.Call,
                         contentDescription = stringResource(R.string.chat_action_voice_call)
@@ -498,6 +640,7 @@ private fun FloatingActionsPill(
             // The overflow menu anchors to this, and this button is flush with the pill's trailing
             // edge, so the menu lines up with the right edge of the pill.
             ChatOverflowMenu(
+                interactionSource = interactionSource,
                 isGroupChat = isGroupChat,
                 canBlock = canBlock,
                 isMuted = isMuted,
@@ -580,6 +723,9 @@ fun ChatSearchTopAppBar(
 
 @Composable
 private fun ChatOverflowMenu(
+    // The pill hands its own source down, so pressing the three-dot button reads as the pill's own
+    // feedback rather than as a separate control lighting up.
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     isGroupChat: Boolean,
     canBlock: Boolean,
     isMuted: Boolean = false,
@@ -609,7 +755,7 @@ private fun ChatOverflowMenu(
     }
 
     Box {
-        IconButton(onClick = { expanded = true }) {
+        IconButton(onClick = { expanded = true }, interactionSource = interactionSource) {
             Icon(
                 Icons.Default.MoreVert,
                 contentDescription = stringResource(R.string.chat_action_more_options)
