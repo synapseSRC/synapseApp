@@ -7,11 +7,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.fillMaxSize
@@ -372,10 +374,18 @@ fun NavGraphBuilder.inboxGraph(
     }
     composable<AppDestination.Chat>(
         deepLinks = listOf(navDeepLink<AppDestination.Chat>(basePath = "synapse://chat")),
-        // The picture carries the movement into Contact Info, so the conversation itself only steps
-        // back with a short fade rather than a hard cut - and returns the same way.
-        exitTransition = { fadeOut(animationSpec = tween(durationMillis = 200)) },
-        popEnterTransition = { fadeIn(animationSpec = tween(durationMillis = 220)) }
+        // The picture does the travelling into Contact Info, so the conversation itself only steps
+        // back with a fade - and comes back the same way, settling instead of snapping.
+        exitTransition = {
+            fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)) +
+                scaleIn(
+                    initialScale = 0.98f,
+                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                )
+        }
     ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.Chat>()
                 ChatScreen(
@@ -467,20 +477,32 @@ fun NavGraphBuilder.inboxGraph(
                 )
             }
     composable<AppDestination.ChatInfo>(
-        // The picture is the movement between the two screens, so the screen itself only lifts in and
-        // out with a short cross-fade; nothing here competes with the shared element.
+        // The picture is the transition; the screen around it fades in and settles a few pixels
+        // upward, so the profile information lands in place instead of appearing. Every duration
+        // sits in the same short range on the same curve, so the two screens read as one movement.
         enterTransition = {
-            fadeIn(animationSpec = tween(durationMillis = 220)) +
-                scaleIn(initialScale = 0.96f, animationSpec = tween(durationMillis = 260))
+            fadeIn(animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)) +
+                slideInVertically(
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                    initialOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() }
+                )
         },
-        exitTransition = { fadeOut(animationSpec = tween(durationMillis = 180)) },
+        exitTransition = {
+            fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))
+        },
         popEnterTransition = {
-            fadeIn(animationSpec = tween(durationMillis = 200)) +
-                scaleIn(initialScale = 1.02f, animationSpec = tween(durationMillis = 220))
+            fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
+                slideInVertically(
+                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                    initialOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() }
+                )
         },
         popExitTransition = {
-            fadeOut(animationSpec = tween(durationMillis = 200)) +
-                scaleOut(targetScale = 0.96f, animationSpec = tween(durationMillis = 220))
+            fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
+                slideOutVertically(
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                    targetOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() }
+                )
         }
     ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.ChatInfo>()
