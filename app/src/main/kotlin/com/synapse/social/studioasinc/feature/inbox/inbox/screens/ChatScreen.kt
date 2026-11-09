@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -91,6 +90,10 @@ import kotlinx.coroutines.withContext
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showChatFolderSheet by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
@@ -189,7 +192,6 @@ val currentUserId = currentUserIdState ?: ""
     val listState = rememberSaveable(chatId, saver = LazyListState.Saver) {
         LazyListState(0, 0)
     }
-    val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var composerHeightPx by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -277,6 +279,20 @@ val currentUserId = currentUserIdState ?: ""
         composerHeight + Spacing.space12
     } else {
         Sizes.Height100
+    }
+
+    // Scroll padding, not reserved layout: the floating header paints over the timeline, so the
+    // oldest content has to be able to scroll clear of it.
+    val floatingHeaderHeight = Sizes.ButtonHeightM3Medium + Spacing.space16
+    val messageListTopPadding = floatingHeaderHeight +
+        with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+
+    val viewEarliestMessage: () -> Unit = {
+        coroutineScope.launch {
+            if (hasMoreMessages) viewModel.loadMoreMessages()
+            val lastIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+            listState.animateScrollToItem(lastIndex)
+        }
     }
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
@@ -448,77 +464,11 @@ val currentUserId = currentUserIdState ?: ""
                     onQueryChange = { searchQuery = it },
                     onCloseSearch = closeMessageSearch
                 )
-            } else {
-                val disappearingMode by viewModel.disappearingMode.collectAsState()
-                val isMuted by viewModel.isMuted.collectAsState()
-                val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
-                ChatTopAppBar(
-                    selectedMessageIds = selectedMessageIds,
-                    messages = messages,
-                    participantId = participantId,
-                    participantProfile = participantProfile,
-                    initialParticipantName = initialParticipantName,
-                    initialParticipantAvatar = initialParticipantAvatar,
-                    typingStatus = typingStatus,
-                    isParticipantActive = isParticipantActive,
-                    chatId = chatId,
-                    disappearingMode = disappearingMode,
-                    isGroupChat = isGroupChat,
-                    groupTitle = groupTitle,
-                    groupAvatarUrl = groupAvatarUrl,
-                    groupMemberCount = groupMemberNames.size,
-                    isMuted = isMuted,
-                    isMuteUpdating = isMuteUpdating,
-                    onClearSelection = viewModel::clearSelection,
-                    onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
-                    onNavigateBack = onNavigateBack,
-                    onSummarizeChat = viewModel::summarizeChat,
-                    onNavigateToGroupInfo = onNavigateToGroupInfo,
-                    onNavigateToChatInfo = onNavigateToChatInfo,
-                    onOpenDisappearingMessages = { showDisappearingModeDialog = true },
-                    onStartVoiceCall = { launchCall(false) },
-                    onStartVideoCall = { launchCall(true) },
-                    showCallActions = participantId != null && !isGroupChat,
-                    onSearchInChat = {
-                        searchJumpMessageId = null
-                        isSearchActive = true
-                    },
-                    onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
-                    onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
-                    onOpenChatTheme = { onNavigateToChatSettings(chatId) },
-                    onReportChat = { showReportDialog = true },
-                    onBlockChat = {
-                        if (participantId != null) showBlockDialog = true
-                    },
-                    onClearChat = { showClearChatDialog = true },
-                    onExportChat = {
-                        viewModel.exportChat(
-                            onSuccess = { formattedText ->
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, formattedText)
-                                    putExtra(Intent.EXTRA_SUBJECT, chatDisplayName.orEmpty())
-                                }
-                                context.startActivity(
-                                    Intent.createChooser(
-                                        shareIntent,
-                                        context.getString(R.string.chat_menu_export_chat)
-                                    )
-                                )
-                            },
-                            onError = {
-                                Toast.makeText(
-                                    context,
-                                    R.string.chat_info_error_export_chat,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
-                    },
-                    scrollBehavior = topAppBarScrollBehavior
-                )
             }
-        }
+        },
+        // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
+        // of a Scaffold top bar that would reserve layout space above the timeline.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -567,11 +517,11 @@ val currentUserId = currentUserIdState ?: ""
                     ChatMessageList(
                         chatId = chatId,
                         modifier = Modifier
-                            .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f }
-                            .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+                            .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
                         chatItems = chatItems,
                         messages = messages,
                         bottomContentPadding = messageListBottomPadding,
+                        topContentPadding = messageListTopPadding,
                         currentUserId = currentUserId,
                         selectedMessageIds = selectedMessageIds,
                         chatFontScale = chatFontScale,
@@ -633,6 +583,87 @@ typingStatus = typingStatus,
                             onSummarizeMessage = viewModel::summarizeMessage
                         )
                     }
+                }
+            }
+
+            // The conversation keeps rendering behind this overlay: three floating surfaces, no
+            // reserved layout space, so the wallpaper and the messages scroll underneath them.
+            if (!isSearchActive) {
+                val disappearingMode by viewModel.disappearingMode.collectAsState()
+                val isMuted by viewModel.isMuted.collectAsState()
+                val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                ) {
+                    ChatTopAppBar(
+                        selectedMessageIds = selectedMessageIds,
+                        messages = messages,
+                        participantId = participantId,
+                        participantProfile = participantProfile,
+                        initialParticipantName = initialParticipantName,
+                        initialParticipantAvatar = initialParticipantAvatar,
+                        typingStatus = typingStatus,
+                        isParticipantActive = isParticipantActive,
+                        chatId = chatId,
+                        disappearingMode = disappearingMode,
+                        isGroupChat = isGroupChat,
+                        groupTitle = groupTitle,
+                        groupAvatarUrl = groupAvatarUrl,
+                        groupMemberCount = groupMemberNames.size,
+                        isMuted = isMuted,
+                        isMuteUpdating = isMuteUpdating,
+                        onClearSelection = viewModel::clearSelection,
+                        onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
+                        onNavigateBack = onNavigateBack,
+                        onSummarizeChat = viewModel::summarizeChat,
+                        onNavigateToGroupInfo = onNavigateToGroupInfo,
+                        onNavigateToChatInfo = onNavigateToChatInfo,
+                        onOpenDisappearingMessages = { showDisappearingModeDialog = true },
+                        onStartVoiceCall = { launchCall(false) },
+                        onStartVideoCall = { launchCall(true) },
+                        showCallActions = participantId != null && !isGroupChat,
+                        onSearchInChat = {
+                            searchJumpMessageId = null
+                            isSearchActive = true
+                        },
+                        onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
+                        onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
+                        onOpenChatTheme = { onNavigateToChatSettings(chatId) },
+                        onReportChat = { showReportDialog = true },
+                        onBlockChat = {
+                            if (participantId != null) showBlockDialog = true
+                        },
+                        onClearChat = { showClearChatDialog = true },
+                        onExportChat = {
+                            viewModel.exportChat(
+                                onSuccess = { formattedText ->
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, formattedText)
+                                        putExtra(Intent.EXTRA_SUBJECT, chatDisplayName.orEmpty())
+                                    }
+                                    context.startActivity(
+                                        Intent.createChooser(
+                                            shareIntent,
+                                            context.getString(R.string.chat_menu_export_chat)
+                                        )
+                                    )
+                                },
+                                onError = {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_info_error_export_chat,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        },
+                        onViewEarliestMessage = viewEarliestMessage,
+                        onAddToChatFolder = { showChatFolderSheet = true },
+                        onDeleteChat = { showDeleteChatDialog = true }
+                    )
                 }
             }
 
@@ -887,6 +918,93 @@ typingStatus = typingStatus,
                 },
                 dismissButton = {
                     TextButton(onClick = { showClearChatDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+        val chatFolders by viewModel.chatFolders.collectAsState()
+
+        if (showChatFolderSheet) {
+            val currentChatId = resolvedChatId ?: chatId
+            ChatFolderSelectionBottomSheet(
+                folders = chatFolders,
+                currentFolderId = chatFolders.firstOrNull { currentChatId in it.includedChatIds }?.id,
+                onFolderSelected = { folder ->
+                    showChatFolderSheet = false
+                    viewModel.assignCurrentChatToFolder(folder.id)
+                },
+                onCreateNewFolder = {
+                    showChatFolderSheet = false
+                    showCreateFolderDialog = true
+                },
+                onDismiss = { showChatFolderSheet = false }
+            )
+        }
+
+        if (showCreateFolderDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showCreateFolderDialog = false
+                    newFolderName = ""
+                },
+                title = { Text(stringResource(R.string.inbox_folder_create)) },
+                text = {
+                    OutlinedTextField(
+                        value = newFolderName,
+                        onValueChange = { newFolderName = it },
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.inbox_folder_name)) }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        enabled = newFolderName.isNotBlank(),
+                        onClick = {
+                            viewModel.createFolderAndAssignCurrentChat(newFolderName)
+                            showCreateFolderDialog = false
+                            newFolderName = ""
+                        }
+                    ) { Text(stringResource(R.string.inbox_folder_save)) }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showCreateFolderDialog = false
+                            newFolderName = ""
+                        }
+                    ) { Text(stringResource(R.string.action_cancel)) }
+                }
+            )
+        }
+
+        // Deleting a conversation is destructive and irreversible, so it is confirmed first.
+        if (showDeleteChatDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteChatDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_delete_chat)) },
+                text = { Text(stringResource(R.string.chat_menu_delete_chat_confirm)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteChatDialog = false
+                            viewModel.deleteCurrentChat { result ->
+                                Toast.makeText(
+                                    context,
+                                    if (result.isSuccess) {
+                                        R.string.chat_menu_delete_chat_success
+                                    } else {
+                                        R.string.chat_menu_delete_chat_error
+                                    },
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                if (result.isSuccess) onNavigateBack()
+                            }
+                        }
+                    ) { Text(stringResource(R.string.action_ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteChatDialog = false }) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
