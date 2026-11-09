@@ -287,12 +287,19 @@ val currentUserId = currentUserIdState ?: ""
     val messageListTopPadding = floatingHeaderHeight +
         with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
+    // "View earliest message" lands on the earliest message that is loaded. The older page has to
+    // arrive first - scrolling right away would only reach the end of the list as it stood before
+    // the fetch - so the jump waits until no page request is in flight.
+    var pendingEarliestJump by rememberSaveable(chatId) { mutableStateOf(false) }
     val viewEarliestMessage: () -> Unit = {
-        coroutineScope.launch {
-            if (hasMoreMessages) viewModel.loadMoreMessages()
-            val lastIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
-            listState.animateScrollToItem(lastIndex)
-        }
+        pendingEarliestJump = true
+        if (hasMoreMessages) viewModel.loadMoreMessages()
+    }
+    LaunchedEffect(pendingEarliestJump, messages.size, isLoadingMore) {
+        if (!pendingEarliestJump || isLoadingMore) return@LaunchedEffect
+        val earliestIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+        listState.animateScrollToItem(earliestIndex)
+        pendingEarliestJump = false
     }
 
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
