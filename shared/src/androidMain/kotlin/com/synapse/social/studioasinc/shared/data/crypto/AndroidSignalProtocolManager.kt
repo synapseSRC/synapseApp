@@ -203,4 +203,34 @@ class AndroidSignalProtocolManager(context: Context) : SignalProtocolManager {
     override suspend fun hasIdentity(): Boolean {
         return store.hasIdentity()
     }
+    // ─── Identity verification (safety numbers) ──────────────────────────────
+
+    override fun verifiedSafetyNumber(peerId: String): String? = store.verifiedSafetyNumber(peerId)
+
+    override fun setVerifiedSafetyNumber(peerId: String, safetyNumber: String) =
+        store.setVerifiedSafetyNumber(peerId, safetyNumber)
+
+    override fun clearVerifiedSafetyNumber(peerId: String) =
+        store.clearVerifiedSafetyNumber(peerId)
+
+    override fun pendingIdentityChange(peerId: String): PendingIdentityChange? =
+        store.pendingIdentityChange(peerId)
+
+    override fun acceptIdentityChange(peerId: String): Boolean {
+        val change = store.pendingIdentityChange(peerId)
+            ?: return false
+        val identityKey = try {
+            IdentityKey(Base64.decode(change.currentIdentityKey, Base64.NO_WRAP))
+        } catch (e: Exception) {
+            Logger.e("E2EE_TRUST: Stored identity key for $peerId is not decodable", tag = "E2EE", throwable = e)
+            return false
+        }
+        store.acceptIdentityChange(peerId, DEVICE_ID, identityKey)
+        // The session that exists was built against the previous identity key and can never be
+        // authenticated again, so drop it and let the next message re-run X3DH.
+        store.deleteSession(SignalProtocolAddress(peerId, DEVICE_ID))
+        Logger.d("E2EE_TRUST: Accepted a new identity key for $peerId", tag = "E2EE")
+        return true
+    }
+
 }

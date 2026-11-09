@@ -124,10 +124,17 @@ class EditProfileRepositoryImpl @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
+    private val PROFILE_UPDATE_ALLOWLIST = setOf(
+        "avatar", "profile_cover_image", "username", "display_name", "nickname",
+        "bio", "location", "website", "gender", "pronouns", "birthday",
+        "relationship_status", "current_city", "hometown", "occupation", "workplace"
+    )
+
     suspend fun updateProfile(userId: String, updateData: Map<String, Any?>): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                client.from("users").update(updateData.toJsonObject()) {
+                val allowedUpdates = updateData.filterKeys { PROFILE_UPDATE_ALLOWLIST.contains(it) }
+                client.from("users").update(allowedUpdates.toJsonObject()) {
                     filter { eq("uid", userId) }
                 }
                 val persisted = client.from("users")

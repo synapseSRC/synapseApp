@@ -266,15 +266,19 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
      * Monitors for any new messages across the entire 'messages' table to update the user's inbox.
      * Note: Server-side RLS (Row Level Security) ensures the user only receives messages they are authorized to see.
      */
-    fun subscribeToInboxUpdates(chatIds: List<String>): Flow<MessageDto> = callbackFlow {
+    fun subscribeToInboxUpdates(chatIds: List<String>, onConnected: suspend () -> Unit = {}): Flow<MessageDto> = callbackFlow {
         // Chat ids are not part of the topic: Supabase rejects topics over 100 bytes.
         // Row visibility is enforced by RLS, not the topic.
         val channelId = uniqueTopic("inbox_flow")
         Napier.d("Creating realtime channel for inbox: $channelId", tag = "Realtime")
 
         try {
-            client.realtime.connect()
-        } catch (e: Exception) {}
+            kotlinx.coroutines.withTimeout(10_000L) { client.realtime.connect() }
+        } catch (e: Exception) {
+            if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
+            close(IllegalStateException("Inbox connection failed", e))
+            return@callbackFlow
+        }
 
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
@@ -292,12 +296,12 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                                 is PostgresAction.Insert -> {
                                     val message = action.decodeRecord<MessageDto>()
                                     Napier.d("Realtime inbox INSERT received: ${message.id}", tag = "Realtime")
-                                    trySend(message)
+                                    send(message)
                                 }
                                 is PostgresAction.Update -> {
                                     val message = action.decodeRecord<MessageDto>()
                                     Napier.d("Realtime inbox UPDATE received: ${message.id}", tag = "Realtime")
-                                    trySend(message)
+                                    send(message)
                                 }
                                 else -> {}
                             }
@@ -314,42 +318,37 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
             }
         }
 
-        launch(AppDispatchers.IO) {
+        val subscription = launch(AppDispatchers.IO) {
             try {
                 subscriptionReady.await()
                 yield()
-                var subscribed = false
-                var attempts = 0
-                while (!subscribed && attempts < 3 && isActive) {
-                    try {
-                        channel.subscribe(blockUntilSubscribed = true)
-                        subscribed = true
-                    } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        attempts++
-                        if (attempts < 3) delay(1000L * attempts)
-                    }
+                kotlinx.coroutines.withTimeout(10_000L) {
+                    channel.subscribe(blockUntilSubscribed = true)
                 }
-                if (!subscribed && isActive) {
-                    try {
-                        channel.subscribe(blockUntilSubscribed = false)
-                    } catch (e: Exception) {
-                        if (e !is CancellationException) {
-                            Napier.e("Failed to subscribe to inbox channel after retries", e, tag = "Realtime")
-                            close(e)
+                launch {
+                    channel.status.collect { status ->
+                        if (status != RealtimeChannel.Status.SUBSCRIBED) {
+                            close(IllegalStateException("Inbox channel lost subscription"))
                         }
                     }
                 }
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    Napier.e("Failed to subscribe to inbox channel", e, tag = "Realtime")
-                    close(e)
+                launch {
+                    client.realtime.status.collect { status ->
+                        if (status != Realtime.Status.CONNECTED) {
+                            close(IllegalStateException("Inbox socket disconnected"))
+                        }
+                    }
                 }
+                onConnected()
+            } catch (e: Exception) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
+                close(IllegalStateException("Inbox subscription failed", e))
             }
         }
 
         awaitClose {
             collector.cancel()
+            subscription.cancel()
             CoroutineScope(AppDispatchers.IO).launch {
                 try {
                     channel.unsubscribe()

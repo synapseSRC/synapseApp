@@ -72,16 +72,13 @@ class ProfileRepositoryImpl(
         internal const val KEY_PUBLIC_EMAIL = "public_email"
     }
 
-    internal fun resolveUserId(userId: String): String? {
+    internal suspend fun resolveUserId(userId: String): String? {
         return if (userId == "me") {
             val authId = client.auth.currentUserOrNull()?.id ?: return null
-            // Resolve auth id to the public users.uid used by posts.author_uid
-            runBlocking {
-                client.from("users").select(columns = Columns.list("uid")) {
-                    filter { eq("id", authId) }
-                }.decodeSingleOrNull<JsonObject>()
-                    ?.get("uid")?.let { if (it is JsonPrimitive) it.contentOrNull else null }
-            } ?: authId
+            client.from("users").select(columns = Columns.list("uid")) {
+                filter { eq("id", authId) }
+            }.decodeSingleOrNull<JsonObject>()
+                ?.get("uid")?.let { if (it is JsonPrimitive) it.contentOrNull else null }
         } else {
             userId
         }
@@ -285,7 +282,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("request_follow", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingleOrNull<String>()
+        }).decodeAs<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -296,7 +293,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         client.postgrest.rpc("unfollow_user", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingleOrNull<String>()
+        }).decodeAs<String>()
         Result.success(Unit)
     } catch (e: Exception) {
         Result.failure(e)
@@ -356,7 +353,7 @@ class ProfileRepositoryImpl(
         val actualTargetUserId = resolveUserId(targetUserId) ?: return Result.failure(Exception("Target user not found"))
         val status = client.postgrest.rpc("get_follow_status", buildJsonObject {
             put("p_target_uid", actualTargetUserId)
-        }).decodeSingle<String>()
+        }).decodeAs<String>()
         Result.success(status == "following")
     } catch (e: Exception) {
         Result.failure(e)

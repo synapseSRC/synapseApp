@@ -8,7 +8,12 @@ data class ChatVerificationInfo(
     val safetyNumber: String,
     val localQrPayload: String,
     val secureSessionActive: Boolean,
-    val isVerified: Boolean
+    val isVerified: Boolean,
+    /**
+     * True when this peer presented a different identity key than the one stored on this device and
+     * the user has not accepted the new key yet. Sending to the peer is refused until then.
+     */
+    val identityChanged: Boolean = false
 )
 
 enum class ChatVerificationFailureReason {
