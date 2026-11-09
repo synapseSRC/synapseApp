@@ -80,9 +80,11 @@ fun ChatTopAppBar(
     groupMemberCount: Int = 0,
     isMuted: Boolean = false,
     isMuteUpdating: Boolean = false,
-    // Shared-element modifier for the pill's picture, applied by the screen so the avatar can
-    // travel into Contact Info instead of being re-created there.
+    // Shared-element modifiers for the pill's picture, name and status line, applied by the screen
+    // so each of them travels into Contact Info instead of being re-created there.
     avatarModifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
+    statusModifier: Modifier = Modifier,
     // The conversation captured behind the header, which each floating surface samples so it
     // refracts the wallpaper and the messages moving underneath it. Null keeps the fallback
     // translucent surfaces.
@@ -176,23 +178,13 @@ fun ChatTopAppBar(
                 ?: participantId ?: "Chat"
         }
         // A group header reports its roster; a DM reports what the other side is doing right now.
-        val statusText = if (isGroupChat) {
-            if (groupMemberCount > 0) {
-                pluralStringResource(R.plurals.group_chat_member_count, groupMemberCount, groupMemberCount)
-            } else {
-                stringResource(R.string.group_chat_fallback_title)
-            }
-        } else {
-            val formattedLastSeen = participantProfile?.lastSeen
-                ?.let { formatChatTimestamp(it) }
-                ?.takeIf { it.isNotBlank() }
-            when {
-                typingStatus?.isTyping == true -> "Typing..."
-                isParticipantActive -> "Online"
-                formattedLastSeen != null -> "Last seen $formattedLastSeen"
-                else -> "Offline"
-            }
-        }
+        val statusText = chatHeaderStatusText(
+            isGroupChat = isGroupChat,
+            groupMemberCount = groupMemberCount,
+            isTyping = typingStatus?.isTyping == true,
+            isParticipantActive = isParticipantActive,
+            lastSeen = participantProfile?.lastSeen
+        )
         val statusColor = when {
             !isGroupChat && typingStatus?.isTyping == true -> MaterialTheme.colorScheme.primary
             !isGroupChat && isParticipantActive -> StatusOnline
@@ -211,6 +203,8 @@ fun ChatTopAppBar(
             },
             avatarUserId = if (isGroupChat) "" else participantId ?: "",
             avatarModifier = avatarModifier,
+            titleModifier = titleModifier,
+            statusModifier = statusModifier,
             avatarDisplayName = if (isGroupChat) {
                 null // Group avatar comes from the first-letters API, not UI rendering.
             } else {
@@ -294,6 +288,39 @@ private val GlassLensAmount = 24.dp
 private const val GlassPressScale = 0.96f
 
 /**
+ * The one line under the name in the header: a group's roster, or what the other side is doing right
+ * now.
+ *
+ * It lives outside [ChatTopAppBar] because the conversation derives the same line itself when it
+ * hands the status to Contact Info, so the two screens say the same words about the same person
+ * rather than each composing their own.
+ */
+@Composable
+internal fun chatHeaderStatusText(
+    isGroupChat: Boolean,
+    groupMemberCount: Int,
+    isTyping: Boolean,
+    isParticipantActive: Boolean,
+    lastSeen: String?
+): String = if (isGroupChat) {
+    if (groupMemberCount > 0) {
+        pluralStringResource(R.plurals.group_chat_member_count, groupMemberCount, groupMemberCount)
+    } else {
+        stringResource(R.string.group_chat_fallback_title)
+    }
+} else {
+    val formattedLastSeen = lastSeen
+        ?.let { formatChatTimestamp(it) }
+        ?.takeIf { it.isNotBlank() }
+    when {
+        isTyping -> "Typing..."
+        isParticipantActive -> "Online"
+        formattedLastSeen != null -> "Last seen $formattedLastSeen"
+        else -> "Offline"
+    }
+}
+
+/**
  * Telegram-style floating chat header: three independent surfaces drawn over the conversation
  * instead of a full-width bar, so the wallpaper and the messages stay visible behind them.
  */
@@ -307,6 +334,8 @@ private fun ChatFloatingTopBar(
     avatarUserId: String,
     avatarDisplayName: String?,
     avatarModifier: Modifier,
+    titleModifier: Modifier,
+    statusModifier: Modifier,
     showAvatarActiveStatus: Boolean,
     isGroupChat: Boolean,
     disappearingEnabled: Boolean,
@@ -354,6 +383,8 @@ private fun ChatFloatingTopBar(
             avatarUserId = avatarUserId,
             avatarDisplayName = avatarDisplayName,
             avatarModifier = avatarModifier,
+            titleModifier = titleModifier,
+            statusModifier = statusModifier,
             showAvatarActiveStatus = showAvatarActiveStatus,
             disappearingEnabled = disappearingEnabled,
             onClickLabel = contactInfoLabel,
@@ -522,6 +553,8 @@ private fun FloatingTitlePill(
     avatarUserId: String,
     avatarDisplayName: String?,
     avatarModifier: Modifier,
+    titleModifier: Modifier,
+    statusModifier: Modifier,
     showAvatarActiveStatus: Boolean,
     disappearingEnabled: Boolean,
     onClickLabel: String,
@@ -560,12 +593,21 @@ private fun FloatingTitlePill(
             )
             Spacer(modifier = Modifier.width(Spacing.space8))
             Column(modifier = Modifier.weight(1f)) {
-                SingleLineMarqueeText(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // The name and the status below it are values Contact Info shows as well, so each
+                // one sits in a host that keeps the marquee's width while the shared element itself
+                // measures to the words: the travelling element is then a line of type in both
+                // screens rather than a full-width slot, which is what lets it move between them
+                // without the glyphs being stretched on the way over. basicMarquee measures its
+                // content unbounded and only clamps the width it reports, so the marquee still
+                // scrolls a name that is too long for the pill.
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    SingleLineMarqueeText(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = titleModifier
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -580,13 +622,16 @@ private fun FloatingTitlePill(
                         Spacer(modifier = Modifier.width(Spacing.space4))
                     }
                     // Wrap content height: a ColumnScope weight would mean a *vertical* fill and
-                    // let the status line grow the pill instead of just scrolling.
-                    SingleLineMarqueeText(
-                        text = status,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = statusColor
-                    )
+                    // let the status line grow the pill instead of just scrolling. The host carries
+                    // the weight so the shared element can stay the width of the words themselves.
+                    Box(modifier = Modifier.weight(1f)) {
+                        SingleLineMarqueeText(
+                            text = status,
+                            modifier = statusModifier,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = statusColor
+                        )
+                    }
                 }
             }
         }
