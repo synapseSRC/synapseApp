@@ -2,8 +2,6 @@
   <img src="assets/synapse_social_2d_m3_rounded_1280x640.png" alt="Synapse Social rounded-corner banner" width="1280"/>
 </p>
 
-<h1 align="center">Synapse Social</h1>
-
 <p align="center">
   One of the most beautiful looking open source social media available in the world</p>
 
