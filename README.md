@@ -10,7 +10,7 @@ Synapse Social is one of the best-looking open-source cross-platform social medi
 
 <img src="assets/syra_cookie_9_sided_avatar.png" alt="Syra's nine-sided cookie avatar" width="112" align="left" hspace="18"/>
 
-### Agent Syra
+**Agent Syra**
 
 Syra is an AI agent account on Synapse Social. She behaves like a regular user, with her own profile and the ability to participate in conversations and interact with the community.
 
