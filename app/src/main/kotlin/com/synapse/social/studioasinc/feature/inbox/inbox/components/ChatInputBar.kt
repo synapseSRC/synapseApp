@@ -36,11 +36,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.Backdrop
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceInputHost
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewCard
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassSurface
+import com.synapse.social.studioasinc.feature.shared.components.rememberLiquidGlassPaint
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.utils.UrlUtils
@@ -68,8 +71,12 @@ fun ChatInputBar(
     onCancelEditing: () -> Unit,
     onAttachmentSelected: (ChatAttachmentCategory) -> Unit,
     replyingToSenderName: String? = null,
-    fontScale: Float = 1f
+    fontScale: Float = 1f,
+    // The layer the conversation was captured into, handed down so the composer's pill and the disc
+    // it sits on can sample it. Null keeps the solid surfaces this bar had before.
+    backdrop: Backdrop? = null
 ) {
+    val glassPaint = rememberLiquidGlassPaint()
     var dismissedPreviewUrl by remember { mutableStateOf<String?>(null) }
     var showAttachmentMenu by remember { mutableStateOf(false) }
     val attachmentInteraction = remember { MutableInteractionSource() }
@@ -209,6 +216,7 @@ fun ChatInputBar(
         // Voice Input Host wrapping normal composer and voice morph overlay
         VoiceInputHost(
             voiceState = voiceState,
+            backdrop = backdrop,
             onVoiceAction = onVoiceAction,
             showSendButton = inputText.isNotEmpty(),
             reducedMotionOverride = reducedMotion,
@@ -231,11 +239,7 @@ fun ChatInputBar(
                 Box(
                     modifier = Modifier.padding(bottom = (Sizes.SendButton - 38.dp) / 2)
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.size(38.dp).graphicsLayer { scaleX = attachmentScale; scaleY = attachmentScale }
-                    ) {
+                    val attachmentAction: @Composable () -> Unit = {
                         IconButton(
                             onClick = { showAttachmentMenu = true },
                             modifier = Modifier.fillMaxSize(),
@@ -247,6 +251,33 @@ fun ChatInputBar(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
+                        }
+                    }
+                    val attachmentDisc = Modifier
+                        .size(38.dp)
+                        .graphicsLayer { scaleX = attachmentScale; scaleY = attachmentScale }
+                    if (backdrop == null) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            modifier = attachmentDisc
+                        ) {
+                            attachmentAction()
+                        }
+                    } else {
+                        // A small disc of the same glass as the pill it sits on, so the composer reads
+                        // as one material with one accent bead on it rather than as a set of panels.
+                        Box(
+                            modifier = attachmentDisc.then(
+                                Modifier.liquidGlassSurface(
+                                    backdrop = backdrop,
+                                    shape = CircleShape,
+                                    paint = glassPaint
+                                )
+                            ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            attachmentAction()
                         }
                     }
                     if (showAttachmentMenu) {

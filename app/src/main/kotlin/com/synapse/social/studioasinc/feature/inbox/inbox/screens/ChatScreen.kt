@@ -477,22 +477,24 @@ val currentUserId = currentUserIdState ?: ""
         }
     }
 
-    // One capture for the entire header. The conversation - wallpaper, messages and the top scrim -
-    // is recorded into a single layer here, and each of the three floating surfaces samples that one
-    // layer through its own shape. The layer is only attached when the device can actually draw a
-    // RenderEffect: below Android 12 the screen keeps the plain translucent surfaces and skips the
-    // extra render pass altogether.
+    // One capture for every floating surface. The conversation - wallpaper, messages and the top
+    // scrim - is recorded into a single layer here, and each surface samples that one layer through
+    // its own shape: the header's three at the top, the composer's pill and its attachment disc at
+    // the bottom. One layer means one capture per frame and no pipeline per surface, and no surface
+    // ever samples a layer that contains it, because every one of them sits outside this box. The
+    // layer is only attached when the device can actually draw a RenderEffect: below Android 12 the
+    // screen keeps the plain translucent surfaces and skips the extra render pass altogether.
     val glassSurfaceSupported = remember { isRenderEffectSupported() }
     val backdropBaseColor = MaterialTheme.colorScheme.background
-    val headerBackdrop = rememberLayerBackdrop {
+    val contentBackdrop = rememberLayerBackdrop {
         // The base colour is painted first because the wallpaper itself can be translucent, and the
         // glass must never sample transparent pixels.
         drawRect(backdropBaseColor)
         drawContent()
     }
     // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
-    // in that layer, so the header is told not to sample one.
-    val headerGlassBackdrop = if (glassSurfaceSupported) headerBackdrop else null
+    // in that layer, so every glass surface is told not to sample one.
+    val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
 
     Scaffold(
         topBar = {
@@ -520,15 +522,15 @@ val currentUserId = currentUserIdState ?: ""
                     })
                 }
         ) {
-            // Everything the floating header floats over is captured here, as one layer: the
-            // wallpaper, the messages, and the scrim at the end. The header overlay below stays
-            // outside the layer on purpose - a glass surface must never sample a layer that
-            // contains it.
+            // Everything the floating surfaces float over is captured here, as one layer: the
+            // wallpaper, the messages, and the scrim at the end. The header and composer overlays
+            // below stay outside the layer on purpose - a glass surface must never sample a layer
+            // that contains it.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        if (glassSurfaceSupported) Modifier.layerBackdrop(headerBackdrop) else Modifier
+                        if (glassSurfaceSupported) Modifier.layerBackdrop(contentBackdrop) else Modifier
                     )
             ) {
                 ChatBackground(
@@ -718,7 +720,7 @@ val currentUserId = currentUserIdState ?: ""
                         avatarModifier = avatarHeroModifier,
                         titleModifier = titleHeroModifier,
                         statusModifier = statusHeroModifier,
-                        backdrop = headerGlassBackdrop,
+                        backdrop = glassBackdrop,
                         disappearingMode = disappearingMode,
                         isGroupChat = isGroupChat,
                         groupTitle = groupTitle,
@@ -844,6 +846,9 @@ val currentUserId = currentUserIdState ?: ""
                         .onSizeChanged { composerHeightPx = it.height }
                 ) {
                     ChatInputBar(
+                        // The same layer the header samples, so the composer's glass refracts the
+                        // wallpaper and the messages scrolling behind it.
+                        backdrop = glassBackdrop,
                         replyingToMessage = replyingToMessage,
                         editingMessage = editingMessage,
                         smartReplies = smartReplies,
