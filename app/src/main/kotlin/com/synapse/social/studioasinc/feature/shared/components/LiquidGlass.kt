@@ -37,6 +37,15 @@ import com.kyant.backdrop.highlight.HighlightStyle
  */
 internal const val GlassTintAlphaLight = 0.45f
 internal const val GlassTintAlphaDark = 0.5f
+
+/**
+ * The accent glass - the composer's mic and send button - is tinted harder than the neutral one.
+ * Its icon is drawn in `onPrimary`, so the tint has to hold that contrast over whatever wallpaper
+ * is behind the conversation; the blur, the refraction and the specular edge are still what make
+ * the surface read as glass rather than as a coloured chip.
+ */
+internal const val GlassAccentTintAlphaLight = 0.70f
+internal const val GlassAccentTintAlphaDark = 0.76f
 internal val GlassBlurRadius = 3.dp
 internal val GlassHighlightWidth = 0.5.dp
 internal val GlassHighlightBlur = 0.75.dp
@@ -55,16 +64,47 @@ internal val GlassLensAmount = 24.dp
 internal const val GlassPressScale = 0.96f
 
 /**
- * The two theme decisions every glass surface makes the same way: the colour it is tinted with, and
- * whether that colour means the light scheme. A light surface-container role means the light scheme,
- * which leans bright with a strong sheen; the dark scheme leans deep with a restrained one.
+ * The three theme decisions every glass surface makes the same way: the colour it is tinted with,
+ * how far that colour is laid over the sampled backdrop, and whether the scheme is the light one. A
+ * light surface-container role means the light scheme, which leans bright with a strong sheen; the
+ * dark scheme leans deep with a restrained one.
  */
-internal data class LiquidGlassPaint(val tint: Color, val isLight: Boolean)
+internal data class LiquidGlassPaint(
+    val tint: Color,
+    val tintAlpha: Float,
+    val isLight: Boolean
+)
 
 @Composable
 internal fun rememberLiquidGlassPaint(): LiquidGlassPaint {
     val tint = MaterialTheme.colorScheme.surfaceContainerHigh
-    return LiquidGlassPaint(tint = tint, isLight = tint.luminance() > 0.5f)
+    val isLight = tint.luminance() > 0.5f
+    return LiquidGlassPaint(
+        tint = tint,
+        tintAlpha = if (isLight) GlassTintAlphaLight else GlassTintAlphaDark,
+        isLight = isLight
+    )
+}
+
+/**
+ * The same glass, tinted with the scheme's accent instead of the neutral container.
+ *
+ * The composer's mic and its send button are one button in two states, so they are one material in
+ * both of them: coloured glass, which the wallpaper and the messages still show through, rather
+ * than a solid chip that only becomes glass once the user starts typing. The tint is a parameter
+ * because the mic's own colour travels - it turns red while a recording is dragged towards cancel -
+ * and the glass follows it.
+ */
+@Composable
+internal fun liquidGlassAccentPaint(
+    tint: Color = MaterialTheme.colorScheme.primary
+): LiquidGlassPaint {
+    val isLight = MaterialTheme.colorScheme.surfaceContainerHigh.luminance() > 0.5f
+    return LiquidGlassPaint(
+        tint = tint,
+        tintAlpha = if (isLight) GlassAccentTintAlphaLight else GlassAccentTintAlphaDark,
+        isLight = isLight
+    )
 }
 
 /**
@@ -133,19 +173,18 @@ internal fun Modifier.liquidGlassSurface(
         scaleY = scale
     },
     onDrawSurface = {
-        drawRect(
-            paint.tint.copy(alpha = if (paint.isLight) GlassTintAlphaLight else GlassTintAlphaDark)
-        )
+        drawRect(paint.tint.copy(alpha = paint.tintAlpha))
     }
 )
 
 /**
  * The specular sheen of a filled, circular action button.
  *
- * The composer's mic and send buttons keep Synapse's accent fill - they are the one place in this
- * conversation that is not glass - but they gain the same kind of edge the glass surfaces have, so
- * they read as raised beads of the same material family instead of flat colour chips sitting on top
- * of it. Drawn over the fill and behind the icon.
+ * The composer's mic and send buttons are accent glass, not the neutral container, so the bead is
+ * what tells the eye they are raised: the same kind of edge the other surfaces wear, drawn over the
+ * tint and behind the icon, so they read as beads of one material family rather than as flat colour
+ * chips sitting on top of it. On the fallback path, where there is no backdrop to tint, the same
+ * bead sits on the solid accent fill.
  */
 internal fun Modifier.accentBead(): Modifier = drawBehind {
     drawCircle(

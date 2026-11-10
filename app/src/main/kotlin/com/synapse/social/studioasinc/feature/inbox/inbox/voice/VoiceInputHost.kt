@@ -116,6 +116,16 @@ fun VoiceInputHost(
 ) {
     val reducedMotion = reducedMotionOverride
     val glassPaint = rememberLiquidGlassPaint()
+    // The accent button's glass: the same sampling, blur and refraction, tinted with the scheme's
+    // accent, so the mic and the send button are coloured glass rather than solid chips.
+    val accentPaint = liquidGlassAccentPaint()
+    // The pill is opaque while the energy field is on screen, so the accent button hands its glass
+    // back for those states - over a solid container it would read as a hole to the wallpaper.
+    val accentBackdrop = if (
+        voiceState is VoiceState.Recording ||
+        voiceState is VoiceState.Locked ||
+        voiceState is VoiceState.VoiceDraft
+    ) null else backdrop
     val pillShape = remember { RoundedCornerShape(Sizes.CornerMassive) }
     val density = LocalDensity.current
     var hostBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
@@ -227,17 +237,13 @@ fun VoiceInputHost(
                         modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE),
                         contentAlignment = Alignment.Center
                     ) {
-                        Surface(
-                            modifier = Modifier.size(Sizes.SendButton),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ) {
+                        // The send button is the mic's other state, so it wears the same accent glass
+                        // and the same bead; only the icon and the action change.
+                        val sendFace: @Composable () -> Unit = {
                             Box(
                                 contentAlignment = Alignment.Center,
-                                // The accent fill keeps Synapse's colour; the bead gives it the same
-                                // specular edge the glass surfaces wear, over the fill and behind
-                                // the icon.
+                                // The bead keeps the edge the accent surface wears - the same one the
+                                // other surfaces have - over the tint and behind the icon.
                                 modifier = Modifier.fillMaxSize().accentBead()
                             ) {
                                 IconButton(onClick = onSendMessage) {
@@ -250,6 +256,38 @@ fun VoiceInputHost(
                                 }
                             }
                         }
+                        if (backdrop == null) {
+                            Surface(
+                                modifier = Modifier.size(Sizes.SendButton),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                sendFace()
+                            }
+                        } else {
+                            // A transparent Surface rather than a plain Box: it draws nothing, and it
+                            // keeps the content colour the icon and the ripple had on the fallback.
+                            Surface(
+                                modifier = Modifier.size(Sizes.SendButton),
+                                shape = CircleShape,
+                                color = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .liquidGlassSurface(
+                                            backdrop = backdrop,
+                                            shape = CircleShape,
+                                            paint = accentPaint
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    sendFace()
+                                }
+                            }
+                        }
                     }
                 } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
                 } else {
@@ -257,6 +295,7 @@ fun VoiceInputHost(
                         voiceState = voiceState,
                         onVoiceAction = onVoiceAction,
                         reducedMotionOverride = reducedMotion,
+                        backdrop = accentBackdrop,
                         onMicBoundsChanged = { micBoundsInRoot = it },
                         onGestureOffsetChanged = { lastLockGestureOffsetYPx = it }
                     )
@@ -780,6 +819,7 @@ fun CanonicalMicButton(
     onVoiceAction: (VoiceAction) -> Unit,
     reducedMotionOverride: Boolean,
     modifier: Modifier = Modifier,
+    backdrop: Backdrop? = null,
     onMicBoundsChanged: (Rect) -> Unit = {},
     onGestureOffsetChanged: (Float) -> Unit = {}
 ) {
@@ -844,6 +884,10 @@ fun CanonicalMicButton(
         animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 520f),
         label = "voiceCancelDragTint"
     )
+
+    // The mic's glass is built from the colour above, so the cancel tint travels through it.
+    val micGlassBackdrop = backdrop
+    val micGlassPaint = liquidGlassAccentPaint(micTint)
 
     val targetGlowAlpha = if (isActive) ACTIVE_MIC_GLOW_ALPHA else 0f
     val glowAlpha = animateFloatForMotion(
@@ -938,8 +982,21 @@ fun CanonicalMicButton(
                     ambientColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha),
                     spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha * 0.8f)
                 )
-                .background(micTint, CircleShape)
-                // Same bead as the send button: the mic keeps its accent colour and gains the edge.
+                // The mic is the send button's other state: the same accent glass, so the button
+                // never changes material when the composer switches between them. The paint is built
+                // from the current colour, so the glass turns red with the cancel tint.
+                .then(
+                    if (micGlassBackdrop != null) {
+                        Modifier.liquidGlassSurface(
+                            backdrop = micGlassBackdrop,
+                            shape = CircleShape,
+                            paint = micGlassPaint
+                        )
+                    } else {
+                        Modifier.background(micTint, CircleShape)
+                    }
+                )
+                // Same bead as the send button: the accent surface keeps its edge either way.
                 .accentBead()
                 .testTag("voice-recording-mic-visual"),
             contentAlignment = Alignment.Center
