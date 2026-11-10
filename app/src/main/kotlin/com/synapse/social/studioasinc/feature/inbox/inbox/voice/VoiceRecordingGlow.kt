@@ -652,7 +652,12 @@ private fun rememberVoiceEnergyField(
 fun VoiceRecordingGlowSurface(
     voiceState: VoiceState,
     reducedMotionOverride: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Set by the composer when liquid glass draws the pill behind this surface: the glass is the
+    // container then, and this canvas only paints the energy field and its rim on top of it. A
+    // recording still hands the background back to the energy surface, which needs an opaque
+    // container to stay readable.
+    glassActive: Boolean = false
 ) {
     val active = voiceState.isGlowActive()
     // A recorded draft keeps the energy surface - the same spectrum, held at a calmer intensity -
@@ -710,9 +715,13 @@ fun VoiceRecordingGlowSurface(
             val maxCornerPx = with(density) { Sizes.CornerMassive.toPx() }
             val corner = CornerRadius(minOf(maxCornerPx, height / 2f))
 
-            drawRoundRect(color = surfaceColor, cornerRadius = corner)
-
             val presence = presenceState.value
+            // The glass is the container while the composer is at rest. The fill only comes back
+            // while the energy field is on screen, on the same fade that brings the field in, so
+            // the composer never jumps between two backgrounds.
+            if (!glassActive || presence > 0.001f) {
+                drawRoundRect(color = surfaceColor, cornerRadius = corner)
+            }
             if (presence <= 0.001f) return@Canvas
 
             if (shader != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
