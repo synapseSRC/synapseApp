@@ -64,6 +64,7 @@ import com.synapse.social.studioasinc.ui.settings.NavigationPlacement
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.shared.reels.components.UploadProgressOverlay
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** How long a buffered notification tap waits for this screen's navigation graph before falling back. */
@@ -140,7 +141,7 @@ fun HomeScreen(
     val isFeedScreen = currentDestination?.hasRoute<HomeDestinations.Feed>() == true
 
     val navigationPlacement by viewModel.navigationPlacement.collectAsStateWithLifecycle()
-    val unreadNotificationCount by notificationsViewModel.uiState.collectAsStateWithLifecycle { it.unreadCount }
+    val unreadNotificationCount by notificationsViewModel.uiState.map { it.unreadCount }.collectAsStateWithLifecycle(initialValue = 0)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val isBottomMode = navigationPlacement == NavigationPlacement.BOTTOM
