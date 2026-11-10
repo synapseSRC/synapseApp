@@ -135,6 +135,13 @@ fun BlockedContactsScreen(
     val unblockSuccessMessage = stringResource(R.string.unblock_success)
     LaunchedEffect(uiState) {
         when (val state = uiState) {
+            is BlockingUiState.BlockSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = stringResource(R.string.block_success),
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.resetState()
+            }
             is BlockingUiState.UnblockSuccess -> {
                 snackbarHostState.showSnackbar(
                     message = unblockSuccessMessage,
