@@ -39,6 +39,11 @@
 # ── Release minification guards ───────────────────────────────────────────────
 # Gson rebuilds generic types (List<PendingAction>) from erased signatures, so they must survive.
 -keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
+# Sentry receives these events from release builds, but without the source attributes every stack is
+# an anonymous a/b/c chain, and no CI step uploads mapping.txt. Keeping line numbers makes
+# production crashes readable on its own; the filename stays a constant placeholder.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
 # Chat background names are read off the field names of R$raw reflectively.
 -keep class **.R$raw { *; }
@@ -53,3 +58,7 @@
 
 # The Gemini SDK maps JSON onto AutoValue models through Gson reflection.
 -keep class com.google.genai.** { *; }
+
+# OneSignal discovers the notification service extension by fully-qualified class name from manifest
+# meta-data, so R8 must not rename or remove it.
+-keep class com.synapse.social.studioasinc.core.NotificationExtensionService { *; }

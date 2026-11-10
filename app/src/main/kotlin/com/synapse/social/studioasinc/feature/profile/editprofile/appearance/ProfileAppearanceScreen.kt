@@ -73,6 +73,7 @@ import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.components.SectionHeader
 import com.synapse.social.studioasinc.ui.settings.SettingsItemPosition
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,6 +140,7 @@ fun ProfileAppearanceScreen(
     SynapseTheme {
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = AppColors.screenBackground,
             topBar = {
                 MediumTopAppBar(
                     title = {
@@ -170,7 +172,8 @@ fun ProfileAppearanceScreen(
                     },
                     scrollBehavior = scrollBehavior,
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
                     )
                 )
             },

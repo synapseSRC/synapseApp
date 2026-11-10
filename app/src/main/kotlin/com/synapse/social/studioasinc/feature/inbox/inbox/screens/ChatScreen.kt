@@ -1,4 +1,7 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox.screens
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.isRenderEffectSupported
 import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import androidx.compose.ui.platform.LocalUriHandler
@@ -27,6 +30,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -55,6 +59,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceGestureConfig
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
+import com.synapse.social.studioasinc.feature.shared.components.LocalGlassBackdrop
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -75,20 +80,36 @@ import kotlinx.coroutines.withContext
         initialParticipantName: String? = null,
         initialParticipantAvatar: String? = null,
         initialMessageId: String? = null,
+        // Supplied by the navigation graph so the pill's picture and the Contact Info header can be
+        // one shared element. Null keeps the screen usable without a shared-transition host.
+        sharedTransitionScope: SharedTransitionScope? = null,
+        animatedVisibilityScope: AnimatedVisibilityScope? = null,
         onNavigateBack: () -> Unit,
         onNavigateToGroupInfo: (String, String) -> Unit = { _, _ -> },
-        onNavigateToChatInfo: (String, String) -> Unit = { _, _ -> },
+        // The conversation adds what its header is saying about this person, so Contact Info opens
+        // on the same words and the same colour instead of composing them again.
+        onNavigateToChatInfo: (
+            chatId: String,
+            userId: String,
+            status: String?,
+            statusIsActive: Boolean
+        ) -> Unit = { _, _, _, _ -> },
         onNavigateToProfile: (String) -> Unit = {},
         onNavigateToEvent: (String) -> Unit = {},
         onNavigateToProduct: (String) -> Unit = {},
         onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
         onNavigateToChatSettings: (String) -> Unit = {},
+        onNavigateToCreatePoll: (String) -> Unit = {},
         onStartCall: (CallLaunchRequest) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showChatFolderSheet by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
@@ -276,6 +297,26 @@ val currentUserId = currentUserIdState ?: ""
         Sizes.Height100
     }
 
+    // Scroll padding, not reserved layout: the floating header paints over the timeline, so the
+    // oldest content has to be able to scroll clear of it.
+    val messageListTopPadding = ChatFloatingHeaderHeight +
+        with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+
+    // "View earliest message" lands on the earliest message that is loaded. The older page has to
+    // arrive first - scrolling right away would only reach the end of the list as it stood before
+    // the fetch - so the jump waits until no page request is in flight.
+    var pendingEarliestJump by rememberSaveable(chatId) { mutableStateOf(false) }
+    val viewEarliestMessage: () -> Unit = {
+        pendingEarliestJump = true
+        if (hasMoreMessages) viewModel.loadMoreMessages()
+    }
+    LaunchedEffect(pendingEarliestJump, messages.size, isLoadingMore) {
+        if (!pendingEarliestJump || isLoadingMore) return@LaunchedEffect
+        val earliestIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+        listState.animateScrollToItem(earliestIndex)
+        pendingEarliestJump = false
+    }
+
     var selectedMediaFiles by remember { mutableStateOf<List<PickedFile>?>(null) }
     fun acceptSelectedUris(uris: List<Uri>) {
         if (uris.isNotEmpty()) {
@@ -437,6 +478,35 @@ val currentUserId = currentUserIdState ?: ""
         }
     }
 
+    // One capture for every floating surface. The conversation - wallpaper, messages and the top
+    // scrim - is recorded into a single layer here, and each surface samples that one layer through
+    // its own shape: the header's three at the top, the composer's pill and its attachment disc at
+    // the bottom. One layer means one capture per frame and no pipeline per surface, and no surface
+    // ever samples a layer that contains it, because every one of them sits outside this box. The
+    // layer is only attached when the device can actually draw a RenderEffect: below Android 12 the
+    // screen keeps the plain translucent surfaces and skips the extra render pass altogether.
+    val glassSurfaceSupported = remember { isRenderEffectSupported() }
+    val backdropBaseColor = MaterialTheme.colorScheme.background
+    val contentBackdrop = rememberLayerBackdrop {
+        // The base colour is painted first because the wallpaper itself can be translucent, and the
+        // glass must never sample transparent pixels.
+        drawRect(backdropBaseColor)
+        drawContent()
+    }
+    // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
+    // in that layer, so every glass surface is told not to sample one.
+    // A second, much smaller layer: the wallpaper on its own. The surfaces that live *inside* the
+    // content layer sample this one - they cannot sample the layer that contains them, see
+    // LocalGlassBackdrop - and it holds nothing else, so it can never contain them.
+    val backgroundBackdrop = rememberLayerBackdrop {
+        drawRect(backdropBaseColor)
+        drawContent()
+    }
+    // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
+    // in that layer, so every glass surface is told not to sample one.
+    val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
+    val inListBackdrop = if (glassSurfaceSupported) backgroundBackdrop else null
+
     Scaffold(
         topBar = {
             if (isSearchActive) {
@@ -445,76 +515,11 @@ val currentUserId = currentUserIdState ?: ""
                     onQueryChange = { searchQuery = it },
                     onCloseSearch = closeMessageSearch
                 )
-            } else {
-                val disappearingMode by viewModel.disappearingMode.collectAsState()
-                val isMuted by viewModel.isMuted.collectAsState()
-                val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
-                ChatTopAppBar(
-                    selectedMessageIds = selectedMessageIds,
-                    messages = messages,
-                    participantId = participantId,
-                    participantProfile = participantProfile,
-                    initialParticipantName = initialParticipantName,
-                    initialParticipantAvatar = initialParticipantAvatar,
-                    typingStatus = typingStatus,
-                    isParticipantActive = isParticipantActive,
-                    chatId = chatId,
-                    disappearingMode = disappearingMode,
-                    isGroupChat = isGroupChat,
-                    groupTitle = groupTitle,
-                    groupAvatarUrl = groupAvatarUrl,
-                    groupMemberCount = groupMemberNames.size,
-                    isMuted = isMuted,
-                    isMuteUpdating = isMuteUpdating,
-                    onClearSelection = viewModel::clearSelection,
-                    onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
-                    onNavigateBack = onNavigateBack,
-                    onSummarizeChat = viewModel::summarizeChat,
-                    onNavigateToGroupInfo = onNavigateToGroupInfo,
-                    onNavigateToChatInfo = onNavigateToChatInfo,
-                    onOpenDisappearingMessages = { showDisappearingModeDialog = true },
-                    onStartVoiceCall = { launchCall(false) },
-                    onStartVideoCall = { launchCall(true) },
-                    showCallActions = participantId != null && !isGroupChat,
-                    onSearchInChat = {
-                        searchJumpMessageId = null
-                        isSearchActive = true
-                    },
-                    onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
-                    onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
-                    onOpenChatTheme = { onNavigateToChatSettings(chatId) },
-                    onReportChat = { showReportDialog = true },
-                    onBlockChat = {
-                        if (participantId != null) showBlockDialog = true
-                    },
-                    onClearChat = { showClearChatDialog = true },
-                    onExportChat = {
-                        viewModel.exportChat(
-                            onSuccess = { formattedText ->
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, formattedText)
-                                    putExtra(Intent.EXTRA_SUBJECT, chatDisplayName.orEmpty())
-                                }
-                                context.startActivity(
-                                    Intent.createChooser(
-                                        shareIntent,
-                                        context.getString(R.string.chat_menu_export_chat)
-                                    )
-                                )
-                            },
-                            onError = {
-                                Toast.makeText(
-                                    context,
-                                    R.string.chat_info_error_export_chat,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
-                    }
-                )
             }
-        }
+        },
+        // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
+        // of a Scaffold top bar that would reserve layout space above the timeline.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -528,105 +533,282 @@ val currentUserId = currentUserIdState ?: ""
                     })
                 }
         ) {
-            ChatBackground(
-                chatWallpaperType = chatWallpaperType,
-                chatWallpaperValue = chatWallpaperValue,
-                chatWallpaperBlur = chatWallpaperBlur
-            )
-
-            when {
-                isLoading && messages.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.BottomCenter
-                    ) {
-                        ChatShimmer(modifier = Modifier.fillMaxWidth())
-                    }
-                }
-                error != null && messages.isEmpty() -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = error ?: "Something went wrong",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
+            // Everything the floating surfaces float over is captured here, as one layer: the
+            // wallpaper, the messages, and the scrim at the end. The header and composer overlays
+            // below stay outside the layer on purpose - a glass surface must never sample a layer
+            // that contains it.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (glassSurfaceSupported) Modifier.layerBackdrop(contentBackdrop) else Modifier
+                    )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .then(
+                            if (glassSurfaceSupported) Modifier.layerBackdrop(backgroundBackdrop) else Modifier
                         )
-                        Spacer(modifier = Modifier.height(Spacing.space8))
-                        TextButton(onClick = { viewModel.initialize(chatId, participantId) }) {
-                            Text(stringResource(R.string.action_retry))
+                ) {
+                    ChatBackground(
+                        chatWallpaperType = chatWallpaperType,
+                        chatWallpaperValue = chatWallpaperValue,
+                        chatWallpaperBlur = chatWallpaperBlur
+                    )
+                }
+
+                when {
+                    isLoading && messages.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            ChatShimmer(modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                    error != null && messages.isEmpty() -> {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = error ?: "Something went wrong",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.space8))
+                            TextButton(onClick = { viewModel.initialize(chatId, participantId) }) {
+                                Text(stringResource(R.string.action_retry))
+                            }
+                        }
+                    }
+                    else -> {
+                        // The list's own surfaces - the day chips, the intro header's button - sample
+                        // the wallpaper-only layer, provided here so they never see the layer that
+                        // contains them.
+                        CompositionLocalProvider(LocalGlassBackdrop provides inListBackdrop) {
+                            ChatMessageList(
+                                chatId = chatId,
+                                modifier = Modifier
+                                    .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
+                                chatItems = chatItems,
+                                messages = messages,
+                                bottomContentPadding = messageListBottomPadding,
+                                topContentPadding = messageListTopPadding,
+                                currentUserId = currentUserId,
+                                selectedMessageIds = selectedMessageIds,
+                                chatFontScale = chatFontScale,
+                                chatMessageCornerRadius = chatMessageCornerRadius,
+                                chatThemePreset = chatThemePreset,
+                                chatAvatarDisabled = chatAvatarDisabled,
+                                participantProfile = participantProfile,
+                                initialParticipantName = initialParticipantName,
+                                participantAvatarUrl = participantAvatarUrl,
+                                participantId = participantId,
+                                isGroupChat = isGroupChat,
+                                groupMemberNames = groupMemberNames,
+                                groupMemberAvatars = groupMemberAvatars,
+                                listState = listState,
+                                initialMessageId = searchJumpMessageId ?: initialMessageId,
+                                isListVisible = initialScrollCompleted || messages.isEmpty(),
+                                isScreenVisible = isScreenVisible,
+                                isLoadingMore = isLoadingMore,
+        typingStatus = typingStatus,
+                                typingStatusDisplayName = if (isGroupChat) {
+                                    typingStatus?.userId?.let { groupMemberNames[it] }
+                                } else null,
+                                onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
+                                onSingleTap = { selectedMessageForMenu = it },
+                                onToggleSelection = { viewModel.toggleMessageSelection(it) },
+                                onSwipeToReply = { viewModel.setReplyingToMessage(it) },
+                                onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
+                                onNavigateToProfile = onNavigateToProfile,
+                                onOpenEncryption = { showEncryptionSheet = true },
+                                onLocateMessage = viewModel::loadQuotedMessage,
+                                onOpenBatchGallery = { batchGalleryMessage = it },
+                                onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
+                                onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
+                                onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
+                                onOpenEphemeralMedia = { mediaUrl -> 
+                                try { 
+                                    uriHandler.openUri(mediaUrl)
+                                    messages.find { it.mediaUrl == mediaUrl && it.metadataContainer?.viewOnce?.isConsumed != true }?.id?.let { viewModel.markViewOnceConsumed(it) }
+                                } catch (_: Exception) {} 
+                            },
+                                onOpenEvent = { eventId -> try { uriHandler.openUri("synapse://event/$eventId") } catch (_: Exception) {} },
+                                onOpenProduct = { productId -> try { uriHandler.openUri("synapse://product/$productId") } catch (_: Exception) {} },
+                                onOpenMap = { lat, lon -> try { uriHandler.openUri("https://maps.google.com/?q=$lat,$lon") } catch (_: Exception) {} },
+                                onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} },
+                                onRetryClick = viewModel::retrySendMessage
+                            )
+                        }
+
+                        if (selectedMessageForMenu != null) {
+                            MessageContextMenu(
+                                selectedMessage = selectedMessageForMenu,
+                                currentUserId = currentUserId,
+                                onDismissRequest = { selectedMessageForMenu = null },
+                                onReactionSelected = viewModel::toggleMessageReaction,
+                                onStartEditing = viewModel::startEditing,
+                                onDeleteMessage = { message ->
+                                    selectedMessageForMenu = null
+                                    showDeleteMessageDialog = message
+                                },
+                                onSummarizeMessage = viewModel::summarizeMessage
+                            )
                         }
                     }
                 }
-                else -> {
-                    ChatMessageList(
-                        chatId = chatId,
-                        modifier = Modifier.graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
-                        chatItems = chatItems,
-                        messages = messages,
-                        bottomContentPadding = messageListBottomPadding,
-                        currentUserId = currentUserId,
+
+                // Inside the layer rather than above it, so the glass samples exactly what the eye
+                // sees around it. Softer than it was when it had to carry the pills on its own: the
+                // blur and the tint in each surface now do that, and what is left here is the wash
+                // that keeps the system icons legible over the wallpaper behind the transparent
+                // status bar.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(messageListTopPadding + Spacing.space24)
+                        .background(
+                            Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
+                                    0.3f to MaterialTheme.colorScheme.surface.copy(alpha = 0.30f),
+                                    1f to Color.Transparent
+                                )
+                            )
+                        )
+                )
+            }
+
+            // The conversation keeps rendering behind this overlay: three floating surfaces, no
+            // reserved layout space, so the wallpaper and the messages scroll underneath them.
+            if (!isSearchActive) {
+                val disappearingMode by viewModel.disappearingMode.collectAsState()
+                val isMuted by viewModel.isMuted.collectAsState()
+                val isMuteUpdating by viewModel.isMuteUpdating.collectAsState()
+                // The picture is the element that carries this person into Contact Info, so both
+                // screens declare the same shared element under the same user-based key. A group
+                // avatar is not that element, so a group hands over no user id.
+                val avatarHeroModifier = rememberChatAvatarHero(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    userId = if (isGroupChat) null else participantId,
+                    chatId = chatId
+                )
+                // The name and the status line are the other two values both screens show, so they
+                // travel on the same terms as the picture: same ids, same spring, one movement.
+                val titleHeroModifier = rememberChatHeaderTextHero(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    hero = ChatHeaderTextHero.Name,
+                    userId = if (isGroupChat) null else participantId,
+                    chatId = chatId
+                )
+                val statusHeroModifier = rememberChatHeaderTextHero(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    hero = ChatHeaderTextHero.Status,
+                    userId = if (isGroupChat) null else participantId,
+                    chatId = chatId
+                )
+                // Derived here as well as in the header itself, because the tap that opens Contact
+                // Info hands the line over: the other screen opens on exactly what the pill was
+                // showing, so the status can travel with the name and the picture.
+                val headerStatusText = chatHeaderStatusText(
+                    isGroupChat = isGroupChat,
+                    groupMemberCount = groupMemberNames.size,
+                    isTyping = typingStatus?.isTyping == true,
+                    isParticipantActive = isParticipantActive,
+                    lastSeen = participantProfile?.lastSeen
+                )
+                val headerStatusActive =
+                    !isGroupChat && (typingStatus?.isTyping == true || isParticipantActive)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                ) {
+                    ChatTopAppBar(
                         selectedMessageIds = selectedMessageIds,
-                        chatFontScale = chatFontScale,
-                        chatMessageCornerRadius = chatMessageCornerRadius,
-                        chatThemePreset = chatThemePreset,
-                        chatAvatarDisabled = chatAvatarDisabled,
+                        messages = messages,
+                        participantId = participantId,
                         participantProfile = participantProfile,
                         initialParticipantName = initialParticipantName,
-                        participantAvatarUrl = participantAvatarUrl,
-                        participantId = participantId,
+                        initialParticipantAvatar = initialParticipantAvatar,
+                        typingStatus = typingStatus,
+                        isParticipantActive = isParticipantActive,
+                        chatId = chatId,
+                        avatarModifier = avatarHeroModifier,
+                        titleModifier = titleHeroModifier,
+                        statusModifier = statusHeroModifier,
+                        backdrop = glassBackdrop,
+                        disappearingMode = disappearingMode,
                         isGroupChat = isGroupChat,
-                        groupMemberNames = groupMemberNames,
-                        groupMemberAvatars = groupMemberAvatars,
-                        listState = listState,
-                        initialMessageId = searchJumpMessageId ?: initialMessageId,
-                        isListVisible = initialScrollCompleted || messages.isEmpty(),
-                        isScreenVisible = isScreenVisible,
-                        isLoadingMore = isLoadingMore,
-typingStatus = typingStatus,
-                        typingStatusDisplayName = if (isGroupChat) {
-                            typingStatus?.userId?.let { groupMemberNames[it] }
-                        } else null,
-                        onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
-                        onSingleTap = { selectedMessageForMenu = it },
-                        onToggleSelection = { viewModel.toggleMessageSelection(it) },
-                        onSwipeToReply = { viewModel.setReplyingToMessage(it) },
-                        onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
-                        onNavigateToProfile = onNavigateToProfile,
-                        onOpenEncryption = { showEncryptionSheet = true },
-                        onLocateMessage = viewModel::loadQuotedMessage,
-                        onOpenBatchGallery = { batchGalleryMessage = it },
-                        onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
-                        onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
-                        onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
-                        onOpenEphemeralMedia = { mediaUrl -> 
-                        try { 
-                            uriHandler.openUri(mediaUrl)
-                            messages.find { it.mediaUrl == mediaUrl && it.metadataContainer?.viewOnce?.isConsumed != true }?.id?.let { viewModel.markViewOnceConsumed(it) }
-                        } catch (_: Exception) {} 
-                    },
-                        onOpenEvent = { eventId -> try { uriHandler.openUri("synapse://event/$eventId") } catch (_: Exception) {} },
-                        onOpenProduct = { productId -> try { uriHandler.openUri("synapse://product/$productId") } catch (_: Exception) {} },
-                        onOpenMap = { lat, lon -> try { uriHandler.openUri("https://maps.google.com/?q=$lat,$lon") } catch (_: Exception) {} },
-                        onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} },
-                        onRetryClick = viewModel::retrySendMessage
+                        groupTitle = groupTitle,
+                        groupAvatarUrl = groupAvatarUrl,
+                        groupMemberCount = groupMemberNames.size,
+                        isMuted = isMuted,
+                        isMuteUpdating = isMuteUpdating,
+                        onClearSelection = viewModel::clearSelection,
+                        onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
+                        onNavigateBack = onNavigateBack,
+                        onSummarizeChat = viewModel::summarizeChat,
+                        onNavigateToGroupInfo = onNavigateToGroupInfo,
+                        onNavigateToChatInfo = { targetChatId, targetUserId ->
+                            onNavigateToChatInfo(
+                                targetChatId,
+                                targetUserId,
+                                headerStatusText,
+                                headerStatusActive
+                            )
+                        },
+                        onOpenDisappearingMessages = { showDisappearingModeDialog = true },
+                        onStartVoiceCall = { launchCall(false) },
+                        onStartVideoCall = { launchCall(true) },
+                        showCallActions = participantId != null && !isGroupChat,
+                        onSearchInChat = {
+                            searchJumpMessageId = null
+                            isSearchActive = true
+                        },
+                        onOpenMediaLinksAndDocs = { onNavigateToSharedContent(chatId, 0) },
+                        onToggleMuteNotifications = { viewModel.toggleMuteNotifications() },
+                        onOpenChatTheme = { onNavigateToChatSettings(chatId) },
+                        onReportChat = { showReportDialog = true },
+                        onBlockChat = {
+                            if (participantId != null) showBlockDialog = true
+                        },
+                        onClearChat = { showClearChatDialog = true },
+                        onExportChat = {
+                            viewModel.exportChat(
+                                onSuccess = { formattedText ->
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, formattedText)
+                                        putExtra(Intent.EXTRA_SUBJECT, chatDisplayName.orEmpty())
+                                    }
+                                    context.startActivity(
+                                        Intent.createChooser(
+                                            shareIntent,
+                                            context.getString(R.string.chat_menu_export_chat)
+                                        )
+                                    )
+                                },
+                                onError = {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_info_error_export_chat,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        },
+                        onViewEarliestMessage = viewEarliestMessage,
+                        onAddToChatFolder = { showChatFolderSheet = true },
+                        onDeleteChat = { showDeleteChatDialog = true }
                     )
-
-                    if (selectedMessageForMenu != null) {
-                        MessageContextMenu(
-                            selectedMessage = selectedMessageForMenu,
-                            currentUserId = currentUserId,
-                            onDismissRequest = { selectedMessageForMenu = null },
-                            onReactionSelected = viewModel::toggleMessageReaction,
-                            onStartEditing = viewModel::startEditing,
-                            onDeleteMessage = { message ->
-                                selectedMessageForMenu = null
-                                showDeleteMessageDialog = message
-                            },
-                            onSummarizeMessage = viewModel::summarizeMessage
-                        )
-                    }
                 }
             }
 
@@ -688,6 +870,9 @@ typingStatus = typingStatus,
                         .onSizeChanged { composerHeightPx = it.height }
                 ) {
                     ChatInputBar(
+                        // The same layer the header samples, so the composer's glass refracts the
+                        // wallpaper and the messages scrolling behind it.
+                        backdrop = glassBackdrop,
                         replyingToMessage = replyingToMessage,
                         editingMessage = editingMessage,
                         smartReplies = smartReplies,
@@ -736,6 +921,7 @@ typingStatus = typingStatus,
                                 ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
                                 ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
                                 ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                                ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
                             }
                         }
                     )
@@ -880,6 +1066,93 @@ typingStatus = typingStatus,
                 },
                 dismissButton = {
                     TextButton(onClick = { showClearChatDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+        val chatFolders by viewModel.chatFolders.collectAsState()
+
+        if (showChatFolderSheet) {
+            val currentChatId = resolvedChatId ?: chatId
+            ChatFolderSelectionBottomSheet(
+                folders = chatFolders,
+                currentFolderId = chatFolders.firstOrNull { currentChatId in it.includedChatIds }?.id,
+                onFolderSelected = { folder ->
+                    showChatFolderSheet = false
+                    viewModel.assignCurrentChatToFolder(folder.id)
+                },
+                onCreateNewFolder = {
+                    showChatFolderSheet = false
+                    showCreateFolderDialog = true
+                },
+                onDismiss = { showChatFolderSheet = false }
+            )
+        }
+
+        if (showCreateFolderDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showCreateFolderDialog = false
+                    newFolderName = ""
+                },
+                title = { Text(stringResource(R.string.inbox_folder_create)) },
+                text = {
+                    OutlinedTextField(
+                        value = newFolderName,
+                        onValueChange = { newFolderName = it },
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.inbox_folder_name)) }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        enabled = newFolderName.isNotBlank(),
+                        onClick = {
+                            viewModel.createFolderAndAssignCurrentChat(newFolderName)
+                            showCreateFolderDialog = false
+                            newFolderName = ""
+                        }
+                    ) { Text(stringResource(R.string.inbox_folder_save)) }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showCreateFolderDialog = false
+                            newFolderName = ""
+                        }
+                    ) { Text(stringResource(R.string.action_cancel)) }
+                }
+            )
+        }
+
+        // Deleting a conversation is destructive and irreversible, so it is confirmed first.
+        if (showDeleteChatDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteChatDialog = false },
+                title = { Text(stringResource(R.string.chat_menu_delete_chat)) },
+                text = { Text(stringResource(R.string.chat_menu_delete_chat_confirm)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteChatDialog = false
+                            viewModel.deleteCurrentChat { result ->
+                                Toast.makeText(
+                                    context,
+                                    if (result.isSuccess) {
+                                        R.string.chat_menu_delete_chat_success
+                                    } else {
+                                        R.string.chat_menu_delete_chat_error
+                                    },
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                if (result.isSuccess) onNavigateBack()
+                            }
+                        }
+                    ) { Text(stringResource(R.string.action_ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteChatDialog = false }) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }

@@ -21,6 +21,11 @@ on:
       - 'gradle.properties'
       - 'local.properties'
       - '.github/workflows/build.yml'
+      # The AI build-repair pipeline is part of this job, so a change to it must build.
+      - '.github/workflows/ai_build_repair.sh'
+      - '.github/workflows/ai_commit_repairs.sh'
+      - '.github/workflows/ai_repair_guard.sh'
+      - '.github/workflows/kilo_repair_config.jsonc'
   workflow_dispatch:
 
 # Concurrency folds overlapping runs on the same branch (rapid pushes) into one, so the newest
@@ -30,12 +35,29 @@ concurrency:
   group: build-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
+# Least privilege. The workflow itself only needs to read the repository and its own run's
+# artifacts. The build job widens this to contents:write because an in-job repair must be
+# published from the same runner and workspace (the design deliberately has no second job),
+# but the token is never handed to the build/repair step: the checkout runs with
+# persist-credentials: false, so no credential is written into .git/config or the workspace,
+# and the job's token is materialised only in the "Commit AI repairs" step's own environment
+# and passed to git as a one-shot header for the push.
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   build:
     name: 🔨 Build APKs
     runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'blacksmith-4vcpu-ubuntu-2404' }}
+    # contents:write is used at most once per run, by "Commit AI repairs", and only after the
+    # release build and the release verification both passed. Nothing else needs write access,
+    # and no other step receives a token that could use it.
+    permissions:
+      contents: write
     outputs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
+      ai_repairs: ${{ steps.build_loop.outputs.ai_repairs }}
     steps:
       - name: 🛎️ Checkout
         uses: actions/checkout@v6
@@ -43,6 +65,10 @@ jobs:
           # versionCode is `git rev-list --count HEAD`; a shallow clone would make it 1
           # for every build, so each new APK would install as a downgrade.
           fetch-depth: 0
+          # No credential is persisted into .git/config, so the build step - the one that runs
+          # AI-generated code on a build failure - has no usable write credential at all. The
+          # commit step gets its own token below.
+          persist-credentials: false
 
       - name: ☕ Set up JDK 17
         uses: actions/setup-java@v5
@@ -80,7 +106,14 @@ jobs:
         with:
           cache-disabled: true
 
-      - name: 🏗️ Build Release APK
+      # Runs the release build. If the first attempt fails with a real code error, the same job,
+      # runner and workspace run a bounded diagnose -> repair -> rebuild loop with the Kilo Code
+      # CLI before giving up. Gradle caches and the working tree are reused between attempts.
+      # See .github/workflows/AI_SELF_HEALING.md.
+      - name: 🏗️ Build Release APK (AI self-healing)
+        id: build_loop
+        timeout-minutes: 240
+        shell: bash
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_SYNAPSE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SYNAPSE_ANON_KEY }}
@@ -92,27 +125,22 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          GOOGLE_WEB_CLIENT_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
           GRADLE_OPTS: "-Xmx6g -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=1g'"
-        run: |
-          set +e
-          ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee "$RUNNER_TEMP/assembleRelease.log"
-          gradle_status=${PIPESTATUS[0]}
-          set -e
-          if [ "$gradle_status" -ne 0 ]; then
-          diagnostics=$(grep -E '(^e: |^FAILURE:|^\* What went wrong:|^Execution failed for task|^Task .*not found|UnknownTaskException|^> Task .* FAILED|^.* FAILED$|^.*AssertionError:|^.*error:|^.*AAPT2|^.*failed linking references)' "$RUNNER_TEMP/assembleRelease.log" | tail -n 25 || true)
-          if [ -z "$diagnostics" ]; then
-            diagnostics=$(awk 'BEGIN { remaining = 0 } /^\* What went wrong:/ { remaining = 12 } remaining > 0 { print; remaining-- }' "$RUNNER_TEMP/assembleRelease.log")
-          fi
-          if [ -z "$diagnostics" ]; then
-            diagnostics=$(tail -n 12 "$RUNNER_TEMP/assembleRelease.log")
-          fi
-          while IFS= read -r line; do
-            [ -n "$line" ] && echo "::error title=Android release-build diagnostics::${line}"
-          done <<< "$diagnostics"
-          fi
-          exit "$gradle_status"
+          # Repair agent credentials. Never echoed; removed from the Gradle environment and from
+          # the agent's own environment (the loop runs it under `env -i`).
+          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
+          # Optional overrides; leave the repository variables unset to use the documented free
+          # default (kilo/kilo-auto/free) with automatic fallback.
+          AI_REPAIR_MODEL: ${{ vars.KILO_REPAIR_MODEL }}
+          AI_REPAIR_FALLBACK_MODELS: ${{ vars.KILO_REPAIR_FALLBACK_MODELS }}
+          AI_REPAIR_MAX_BUILD_ATTEMPTS: '5'
+          AI_REPAIR_MAX_INFRA_RETRIES: '2'
+          # The agent CLI is installed from the npm registry (integrity-verified package).
+          # The vendor's remote shell installer is only used when this is explicitly set to
+          # 'true'; it downloads a script and runs it on a runner that holds build secrets.
+          AI_REPAIR_ALLOW_CURL_INSTALL: ${{ vars.KILO_REPAIR_ALLOW_CURL_INSTALL }}
+        run: bash ./.github/workflows/ai_build_repair.sh
 
       - name: 🔎 Verify shipped auth and push config
         run: |
@@ -136,6 +164,34 @@ jobs:
           expect GOOGLE_WEB_CLIENT_ID "999615440042-9s9he8resh1k2i6st0dnmg1fiogv0vm6.apps.googleusercontent.com"
           expect ONESIGNAL_APP_ID "e6b42d8e-8039-4042-9d49-f96a7b675ad3"
           exit "$fail"
+
+      # One commit for every successful repair, and only ever after the build and the
+      # verification step above both passed. Skipped entirely when no repair was needed.
+      - name: 🧾 Commit AI repairs
+        if: steps.build_loop.outputs.repairs_applied == 'true'
+        shell: bash
+        env:
+          # The only step that receives the job's write token, and only for its push.
+          GITHUB_TOKEN: ${{ github.token }}
+          AI_REPAIR_APPLIED: ${{ steps.build_loop.outputs.repairs_applied }}
+          AI_REPAIR_ATTEMPTS: ${{ steps.build_loop.outputs.build_attempts }}
+          AI_REPAIR_MODEL: ${{ steps.build_loop.outputs.kilo_model }}
+          AI_REPAIR_REF_TYPE: ${{ github.ref_type }}
+          AI_REPAIR_HEAD_REF: ${{ github.head_ref }}
+          AI_REPAIR_BRANCH: ${{ github.head_ref || github.ref_name }}
+          AI_REPAIR_ACTOR: ${{ github.actor }}
+        run: bash ./.github/workflows/ai_commit_repairs.sh
+
+      # Evidence for every attempt: Gradle logs, the exact prompt handed to the agent, and the
+      # agent's output, all filtered through the redaction pass in the loop.
+      - name: 📤 Upload AI repair diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-repair-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/kilo-repair/**
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: 🔖 Set short SHA
         id: set_sha

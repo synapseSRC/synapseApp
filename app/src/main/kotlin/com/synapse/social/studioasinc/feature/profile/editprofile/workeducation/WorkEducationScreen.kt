@@ -51,6 +51,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
 import com.synapse.social.studioasinc.ui.settings.SettingsSection
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
@@ -82,6 +83,7 @@ fun WorkEducationScreen(
     SynapseTheme {
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = AppColors.screenBackground,
             topBar = {
                 MediumTopAppBar(
                     title = { Text(text = stringResource(R.string.nav_work_education)) },
@@ -112,7 +114,11 @@ fun WorkEducationScreen(
                             }
                         }
                     },
-                    scrollBehavior = scrollBehavior
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
+                    )
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }

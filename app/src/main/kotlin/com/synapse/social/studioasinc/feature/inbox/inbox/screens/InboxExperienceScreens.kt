@@ -6,6 +6,8 @@ import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -99,9 +101,31 @@ fun InboxConversationRow(
     onLongClick: () -> Unit = {},
     trailingContent: (@Composable () -> Unit)? = null,
     position: GroupedItemPosition = GroupedItemPosition.Single,
+    // The scopes the inbox is navigated with. With them, the row's picture and name carry the same
+    // shared-element identity the conversation's floating pill declares, so tapping a row hands them
+    // over instead of the screen cutting from a list row to a header. Without them - previews, tests,
+    // a screen with no transition - the row lays out and behaves exactly as it did.
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    // The group case has no single participant to point at, so both sides fall back to the chat id -
+    // the same fallback the conversation already uses for its pill.
+    val participantId = conversation.participantId.takeIf { !conversation.isGroup }
+    val avatarHero = rememberChatAvatarHero(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        chatId = conversation.chatId,
+        userId = participantId
+    )
+    val nameHero = rememberChatHeaderTextHero(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
+        chatId = conversation.chatId,
+        hero = ChatHeaderTextHero.Name,
+        userId = participantId
+    )
     val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.985f else 1f,
@@ -144,7 +168,9 @@ fun InboxConversationRow(
                 UserAvatar(
                     avatarUrl = conversation.participantAvatar,
                     displayName = if (conversation.isGroup) null else conversation.participantName,
-                    size = InboxExpressiveDimens.ConversationAvatarSize
+                    size = InboxExpressiveDimens.ConversationAvatarSize,
+                    // The picture the pill will be showing a moment later is this very element.
+                    modifier = avatarHero
                 )
             }
             Spacer(Modifier.width(Spacing.space12))
@@ -160,7 +186,9 @@ fun InboxConversationRow(
                         fontWeight = if (conversation.unreadCount > 0) FontWeight.SemiBold else FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        // Weight first, so the name still fills the row; the hero rides inside it,
+                        // which is what lets the words themselves grow into the pill's title.
+                        modifier = Modifier.weight(1f).then(nameHero)
                     )
                     val timestamp = conversation.lastMessageTime?.let { TimestampFormatter.formatRelative(it) }.orEmpty()
                     if (timestamp.isNotBlank()) {

@@ -1,4 +1,4 @@
-﻿package com.synapse.social.studioasinc.core.di
+package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -92,6 +92,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.MarkMessagesAsR
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ResetE2EUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SearchMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SendMessageUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.CreatePollUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SharePostToChatUseCase
@@ -225,6 +226,10 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideSharePostToChatUseCase(sendMessageUseCase: SendMessageUseCase): SharePostToChatUseCase = SharePostToChatUseCase(sendMessageUseCase)
+
+    @Provides
+    @Singleton
+    fun provideCreatePollUseCase(sendMessageUseCase: SendMessageUseCase): CreatePollUseCase = CreatePollUseCase(sendMessageUseCase)
 
     @Provides
     @Singleton
@@ -460,7 +465,8 @@ object ChatModule {
         getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
         setConversationMuteStatusUseCase: SetConversationMuteStatusUseCase,
         chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
-        deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase
+        deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase,
+        settingsRepository: SettingsRepository
     ): ChatSettingsDependencies = ChatSettingsDependencies(
         setDisappearingModeUseCase = setDisappearingModeUseCase,
         getDisappearingModeUseCase = getDisappearingModeUseCase,
@@ -468,6 +474,7 @@ object ChatModule {
         getConversationMuteStatusUseCase = getConversationMuteStatusUseCase,
         setConversationMuteStatusUseCase = setConversationMuteStatusUseCase,
         chatLockManager = chatLockManager,
-        deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase
+        deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase,
+        settingsRepository = settingsRepository
     )
 }

@@ -34,6 +34,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +69,7 @@ fun PersonalInformationScreen(
     SynapseTheme {
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = AppColors.screenBackground,
             topBar = {
                 MediumTopAppBar(
                     title = { Text(text = stringResource(R.string.nav_personal_info)) },
@@ -96,8 +98,8 @@ fun PersonalInformationScreen(
                     },
                     scrollBehavior = scrollBehavior,
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
                     )
                 )
             },

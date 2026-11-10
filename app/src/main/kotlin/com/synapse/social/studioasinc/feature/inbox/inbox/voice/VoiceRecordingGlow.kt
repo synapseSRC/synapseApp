@@ -7,7 +7,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,187 +17,580 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.cardSurfaceColor
+import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 
-private object GlowColors {
-    val Cyan = Color(0xFF00F2FE)
-    val ElectricBlue = Color(0xFF2979FF)
-    val Magenta = Color(0xFFFF2A85)
-    val SunsetGold = Color(0xFFFFB300)
-    val Violet = Color(0xFF7C4DFF)
-    val DeepIndigo = Color(0xFF3D5AFE)
-    val SpecularRim = Color(0x80FFFFFF)
-}
+/**
+ * Spring-coupled 1D fluid surface that carries live microphone energy, and the single source of
+ * animation truth for the voice recording glow.
+ *
+ * The node heights are no longer dead code: every frame the surface is reduced to three low-order
+ * harmonics which are published as Compose state and consumed by BOTH rendering paths, so the AGSL
+ * shader (API 33+) and the Compose Canvas fallback (API 26..32) trace the same silhouette.
+ *
+ * Published values are Compose state on purpose: the renderers read them inside the draw phase, so
+ * the field drives one invalidation per frame without ever recomposing the composer.
+ */
+internal class VoiceEnergyField(private val nodeCount: Int = VoiceEnergyDesign.FLUID_NODES) {
 
-private object GlowDesign {
-    const val MIN_AMPLITUDE = 0.08f
-    const val MAX_AMPLITUDE = 1.0f
-    const val TAU = 6.2831855f
-    const val FLUID_NODES = 28
-}
+    private val nodeHeights = FloatArray(nodeCount)
+    private val nodeVelocities = FloatArray(nodeCount)
+    private val cosineBasis = Array(VoiceEnergyDesign.HARMONICS) { FloatArray(nodeCount) }
+    private val sineBasis = Array(VoiceEnergyDesign.HARMONICS) { FloatArray(nodeCount) }
 
-/** 1D spring-coupled fluid surface simulation with organic multi-center wave motion */
-internal class FluidSurfaceSimulation(private val nodeCount: Int = GlowDesign.FLUID_NODES) {
-    val heights = FloatArray(nodeCount) { 0f }
-    private val velocities = FloatArray(nodeCount) { 0f }
+    /** Smoothed, normalised audio energy (attack is fast, release is calm). */
+    var energy by mutableFloatStateOf(VoiceEnergyDesign.MIN_AMPLITUDE)
+        private set
 
-    fun update(dt: Float, audioEnergy: Float, phase: Float) {
-        val springK = 7f
-        val coupling = 16f
-        val damping = 0.93f
+    /** Decaying kinetic impulse of the most recent loudness rise. */
+    var ripple by mutableFloatStateOf(0f)
+        private set
 
-        // Audio energy introduces energetic wave impulses across fluid surface
-        if (audioEnergy > 0.08f) {
-            val impulse = audioEnergy * 4.5f
-            val primaryNode = ((nodeCount - 1) * (0.5f + 0.38f * sin(phase * 4.2f))).toInt().coerceIn(2, nodeCount - 3)
-            velocities[primaryNode] += impulse
-            velocities[primaryNode - 1] += impulse * 0.75f
-            velocities[primaryNode + 1] += impulse * 0.75f
-            velocities[primaryNode - 2] += impulse * 0.40f
-            velocities[primaryNode + 2] += impulse * 0.40f
+    /** Accumulated animation seconds; frozen while recording is paused. */
+    var elapsed by mutableFloatStateOf(0f)
+        private set
+
+    /** Slow travel phase used for colour movement and ribbon drift. */
+    var drift by mutableFloatStateOf(0f)
+        private set
+
+    /** Harmonic displacement amplitudes of the simulated surface. */
+    val harmonicAmplitude = mutableStateListOf(0f, 0f, 0f)
+
+    /** Harmonic phases of the simulated surface. */
+    val harmonicPhase = mutableStateListOf(0f, 0f, 0f)
+
+    private var envelope = 0.1f
+    private var oscillator = 0f
+
+    init {
+        for (harmonic in 0 until VoiceEnergyDesign.HARMONICS) {
+            val order = (harmonic + 1).toFloat()
+            for (i in 0 until nodeCount) {
+                val x = i.toFloat() / (nodeCount - 1).toFloat()
+                cosineBasis[harmonic][i] = cos(VoiceEnergyDesign.TAU * order * x)
+                sineBasis[harmonic][i] = sin(VoiceEnergyDesign.TAU * order * x)
+            }
+        }
+        clearNodes()
+    }
+
+    /**
+     * Static but attractive composition for reduced motion. No animation loop is started, so the
+     * energy surface stays a fixed, legible gradient composition instead of a moving field.
+     */
+    fun snapshot(amplitude: Float) {
+        clearNodes()
+        elapsed = 0f
+        drift = 0f
+        ripple = 0f
+        oscillator = 0f
+        val target = amplitude.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+        energy = target
+        envelope = target
+        harmonicAmplitude[0] = target * 0.42f
+        harmonicAmplitude[1] = target * 0.24f
+        harmonicAmplitude[2] = target * 0.14f
+        harmonicPhase[0] = 0.6f
+        harmonicPhase[1] = 2.4f
+        harmonicPhase[2] = 4.1f
+    }
+
+    fun update(dtSeconds: Float, amplitude: Float, paused: Boolean) {
+        val dt = dtSeconds.coerceIn(0f, VoiceEnergyDesign.MAX_FRAME_DELTA_SECONDS)
+
+        // A paused recording stops receiving audio: the clock freezes and the field settles.
+        if (!paused) {
+            elapsed = wrap(elapsed + dt)
+            drift = wrap(drift + dt * (0.12f + 0.55f * energy))
         }
 
-        // Connected fluid boundary physics step
+        val target = if (paused) {
+            VoiceEnergyDesign.PAUSED_ENERGY
+        } else {
+            amplitude.coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+        }
+
+        // Fast attack so speech reads immediately, slow release so the surface decays gracefully.
+        energy = if (target > energy) energy * 0.30f + target * 0.70f
+        else energy * 0.90f + target * 0.10f
+
+        val rise = target - envelope
+        envelope = envelope * 0.86f + target * 0.14f
+        if (!paused && rise > 0.02f) {
+            val impulse = (rise * VoiceEnergyDesign.IMPULSE_GAIN).coerceAtMost(1f)
+            ripple = (ripple + impulse).coerceAtMost(1f)
+            injectImpulse(impulse)
+        }
+        // While paused the impulse field decays faster so no high-energy deformation lingers.
+        ripple *= if (paused) 0.80f else 0.93f
+
+        oscillator = wrap(oscillator + dt * (0.30f + 1.05f * energy))
+
+        stepFluid(dt, paused)
+        extractHarmonics()
+    }
+
+    private fun clearNodes() {
         for (i in 0 until nodeCount) {
-            val left = if (i > 0) heights[i - 1] else heights[i]
-            val right = if (i < nodeCount - 1) heights[i + 1] else heights[i]
+            nodeHeights[i] = 0f
+            nodeVelocities[i] = 0f
+        }
+    }
 
-            val springForce = -springK * heights[i]
-            val couplingForce = coupling * (left + right - 2f * heights[i])
-            val accel = springForce + couplingForce
+    private fun wrap(value: Float): Float = if (value >= 1000f) value - 1000f else value
 
-            velocities[i] = (velocities[i] + accel * dt) * damping
-            heights[i] = (heights[i] + velocities[i] * dt).coerceIn(-0.65f, 0.65f)
+    /** Audio impulses enter the surface where the oscillator is currently most active. */
+    private fun injectImpulse(strength: Float) {
+        val centre = ((nodeCount - 1) * (0.5f + 0.38f * sin(oscillator * 4.2f)))
+            .toInt()
+            .coerceIn(2, nodeCount - 3)
+        val kick = strength * 5.0f
+        nodeVelocities[centre] += kick
+        nodeVelocities[centre - 1] += kick * 0.75f
+        nodeVelocities[centre + 1] += kick * 0.75f
+        nodeVelocities[centre - 2] += kick * 0.40f
+        nodeVelocities[centre + 2] += kick * 0.40f
+    }
+
+    private fun stepFluid(dt: Float, paused: Boolean) {
+        val springK = 9f
+        val coupling = 15f
+        val damping = 0.96f
+
+        // A gentle seam of motion keeps the surface breathing while the voice is calm.
+        if (!paused) {
+            val drive = (0.10f + 0.55f * energy) * dt * 1.4f
+            for (i in 0 until nodeCount) {
+                val x = i.toFloat() / (nodeCount - 1).toFloat()
+                nodeVelocities[i] += drive * sin(VoiceEnergyDesign.TAU * 1.5f * x + oscillator * 0.9f)
+            }
+        }
+
+        for (i in 0 until nodeCount) {
+            val left = if (i > 0) nodeHeights[i - 1] else nodeHeights[i]
+            val right = if (i < nodeCount - 1) nodeHeights[i + 1] else nodeHeights[i]
+            val springForce = -springK * nodeHeights[i]
+            val couplingForce = coupling * (left + right - 2f * nodeHeights[i])
+            nodeVelocities[i] = (nodeVelocities[i] + (springForce + couplingForce) * dt) * damping
+            nodeHeights[i] = (nodeHeights[i] + nodeVelocities[i] * dt).coerceIn(-0.9f, 0.9f)
+        }
+    }
+
+    /**
+     * Projects the simulated node heights onto the three lowest harmonics so the shader and the
+     * Canvas fallback can rebuild the same silhouette from a handful of scalars.
+     */
+    private fun extractHarmonics() {
+        val normalisation = 2f / nodeCount
+        for (harmonic in 0 until VoiceEnergyDesign.HARMONICS) {
+            val cosines = cosineBasis[harmonic]
+            val sines = sineBasis[harmonic]
+            var a = 0f
+            var b = 0f
+            for (i in 0 until nodeCount) {
+                val height = nodeHeights[i]
+                a += height * cosines[i]
+                b += height * sines[i]
+            }
+            a *= normalisation
+            b *= normalisation
+            harmonicAmplitude[harmonic] = sqrt(a * a + b * b).coerceAtMost(VoiceEnergyDesign.MAX_HARMONIC)
+            harmonicPhase[harmonic] = atan2(a, b)
         }
     }
 }
 
-private const val SOFT_VOLUMETRIC_AGSL_SHADER = """
+/**
+ * Layer 1 + 2 + 3 of the energy field, rendered by the Android runtime shader on API 33+.
+ *
+ * Uniforms are set on a single cached shader instance - no shader object is created per frame.
+ */
+private const val VOICE_ENERGY_AGSL_SHADER = """
 uniform float2 iResolution;
 uniform float iTime;
 uniform float iAmplitude;
-uniform float4 colorCyan;
-uniform float4 colorBlue;
-uniform float4 colorMagenta;
-uniform float4 colorGold;
-uniform float4 colorViolet;
+uniform float iRipple;
+uniform float iDrift;
+uniform float iHarmonic1;
+uniform float iHarmonic2;
+uniform float iHarmonic3;
+uniform float iPhase1;
+uniform float iPhase2;
+uniform float iPhase3;
+uniform float4 cBlue;
+uniform float4 cViolet;
+uniform float4 cCyan;
+uniform float4 cCoral;
+uniform float4 cAmber;
+uniform float4 cGreen;
+uniform float4 cPink;
+
+// Soft Gaussian weight. Every colour pool uses it so hues travel through one another instead of
+// forming rigid stripes.
+float pool(float value, float centre, float width) {
+    float d = (value - centre) / width;
+    return exp(-d * d);
+}
+
+// Organic silhouette. The harmonics are the live output of the fluid simulation; the two slow
+// irrational drift terms keep the surface breathing while the voice is calm.
+float surfaceProfile(float x, float t, float amp) {
+    const float TAU = 6.2831853;
+    float d = iHarmonic1 * sin(TAU * x + iPhase1);
+    d += iHarmonic2 * 0.55 * sin(TAU * 2.0 * x + iPhase2);
+    d += iHarmonic3 * 0.32 * sin(TAU * 3.0 * x + iPhase3);
+    d += 0.055 * amp * sin(TAU * 1.7 * x - t * 0.55);
+    d += 0.030 * amp * sin(TAU * 2.9 * x + t * 0.83);
+    return d;
+}
+
+// Layer 3 - multicolour energy flow. Blue and violet hold the foundation, cyan runs through it,
+// and the warm roles only enter as the normalised amplitude (warmth) rises.
+float3 energyColor(float x, float warmth, float travel) {
+    const float TAU = 6.2831853;
+    // Roughly 1.5 hue cycles travel across the surface instead of a single slow sweep, so several
+    // related hues are on screen at once and hand over to each other through the Gaussian pools.
+    float coolMix = 0.5 + 0.5 * sin(TAU * x * 1.45 - travel * 0.95);
+    float3 cool = mix(cBlue.rgb, cViolet.rgb, coolMix);
+    float coolCyan = pool(x, 0.30 + 0.16 * sin(travel * 0.70), 0.26);
+    cool = mix(cool, cCyan.rgb, clamp(coolCyan * 0.62, 0.0, 0.80));
+
+    float warmMix = 0.5 + 0.5 * sin(TAU * x * 1.70 + travel * 1.15);
+    float3 warm = mix(cCoral.rgb, cAmber.rgb, warmMix);
+    float warmGreen = pool(x, 0.74 - 0.14 * cos(travel * 0.80), 0.22);
+    warm = mix(warm, cGreen.rgb, clamp(warmGreen * 0.70, 0.0, 0.86));
+    float warmPink = pool(x, 0.10 + 0.12 * cos(travel * 0.55), 0.18);
+    warm = mix(warm, cPink.rgb, clamp(warmPink * 0.55, 0.0, 0.68));
+
+    return mix(cool, warm, warmth);
+}
 
 half4 main(in float2 fragCoord) {
     float2 uv = fragCoord / iResolution;
+    float x = clamp(uv.x, 0.0, 1.0);
+    float y = uv.y;
+    float amp = clamp(iAmplitude, 0.0, 1.0);
+    // The warm roles used to sit behind a very high energy gate, so a conversational voice rendered
+    // as one flat blue/violet mass. The gate now opens at speaking level and saturates below peak, so
+    // the whole spectrum stays on screen and keeps re-mixing while someone talks.
+    float warmth = smoothstep(0.12, 0.60, amp);
+    float travel = iTime * 0.055 + iDrift * 0.02;
 
-    // Organic multi-frequency wave boundary
-    float w1 = sin(uv.x * 6.0 + iTime * 2.8) * 0.16 * iAmplitude;
-    float w2 = cos(uv.x * 11.0 - iTime * 2.2) * 0.12 * iAmplitude;
-    float w3 = sin(uv.x * 3.5 + iTime * 1.2) * 0.06;
+    // ---- Layer 1: primary energy surface ------------------------------------------------
+    float bodyLine = 0.90 - 0.05 * amp;
+    float profileScale = 0.10 + 0.13 * amp + 0.05 * iRipple;
+    float edge = bodyLine - surfaceProfile(x, iTime, amp) * profileScale;
 
-    float waveSurface = 0.70 - (w1 + w2 + w3 + iAmplitude * 0.15);
+    // Concentrated leading edge with a softly diffused tail upward (Gemini directional gradient).
+    float leading = pool(y, edge + 0.012, 0.030 + 0.018 * amp);
+    float innerHalo = pool(y, edge + 0.075, 0.150);
+    float depthFade = exp(-max(y - edge, 0.0) / 0.55);
+    float inside = smoothstep(edge - 0.02, edge + 0.05, y);
+    float tail = (y < edge) ? exp(-(edge - y) / (0.16 + 0.10 * amp)) : 0.0;
+    float volume = clamp(
+        leading + tail * 0.85 + inside * (0.30 + 0.45 * depthFade) + innerHalo * 0.30,
+        0.0, 1.0);
 
-    // Ultra-soft volumetric transition along liquid edge (no hard sharp boundary)
-    float liquidVolume = smoothstep(waveSurface - 0.28, waveSurface + 0.18, uv.y);
+    // ---- Layer 2: translucent energy ribbons at independent speeds and phases ------------
+    float r1 = 0.86 - surfaceProfile(x * 0.92, iTime * 0.78 + 1.7, amp) * (0.075 + 0.105 * amp) - 0.10;
+    float r2 = 0.80 - surfaceProfile(x * 1.11, iTime * 0.61 + 4.3, amp) * (0.065 + 0.095 * amp) - 0.22;
+    float r3 = 0.92 - surfaceProfile(x * 0.75, iTime * 0.93 + 7.9, amp) * (0.055 + 0.085 * amp) - 0.04;
+    float ribbon = pool(y, r1, 0.085) * 0.55 + pool(y, r2, 0.120) * 0.40 + pool(y, r3, 0.070) * 0.50;
+    ribbon *= (0.35 + 0.65 * amp) * (inside * 0.90 + tail * 0.35);
 
-    if (liquidVolume <= 0.001) {
+    // ---- Composite ----------------------------------------------------------------------
+    float3 col = energyColor(x, warmth, travel);
+    float3 ribbonTint = energyColor(fract(x + 0.22), warmth, travel + 1.35);
+    col += ribbonTint * ribbon * 0.60;
+    col *= 0.52 + 0.48 * amp;
+
+    float alpha = clamp(volume * (0.55 + 0.40 * amp), 0.0, 0.94) + ribbon * 0.16;
+    alpha = clamp(alpha, 0.0, 0.96);
+    if (alpha <= 0.002) {
         return half4(0.0, 0.0, 0.0, 0.0);
     }
 
-    // Multi-center dynamic volumetric color pooling (Cyan, Blue, Magenta, Sunset Gold, Violet)
-    float c1X = 0.20 + 0.18 * sin(iTime * 1.1 + uv.y * 2.0);
-    float c2X = 0.50 + 0.18 * cos(iTime * 0.9 + uv.y * 1.5);
-    float c3X = 0.80 + 0.18 * sin(iTime * 1.3 - uv.y * 2.5);
+    col += col * leading * (0.35 + 0.45 * amp);              // controlled bloom on the leading edge
+    col += col * innerHalo * 0.22;                            // volumetric inner illumination
+    col += float3(1.0) * leading * (0.10 + 0.22 * amp);       // specular highlight
+    col = clamp(col, 0.0, 1.0);
 
-    float d1 = length(float2(uv.x - c1X, uv.y - 0.85));
-    float d2 = length(float2(uv.x - c2X, uv.y - 0.80));
-    float d3 = length(float2(uv.x - c3X, uv.y - 0.85));
-
-    float3 col = colorCyan.rgb * smoothstep(0.72, 0.0, d1);
-    col += colorMagenta.rgb * smoothstep(0.65, 0.0, d2);
-    col += colorGold.rgb * smoothstep(0.55, 0.0, d2) * 0.65;
-    col += colorViolet.rgb * smoothstep(0.72, 0.0, d3);
-    col += colorBlue.rgb * (1.0 - smoothstep(0.0, 0.85, d2));
-
-    float alpha = liquidVolume * (0.68 + 0.32 * iAmplitude);
     return half4(col, alpha);
 }
 """
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-private class LiquidShaderHolder {
-    val runtimeShader = RuntimeShader(SOFT_VOLUMETRIC_AGSL_SHADER)
+private class VoiceEnergyShader {
+    val runtimeShader = RuntimeShader(VOICE_ENERGY_AGSL_SHADER)
     val shaderBrush = ShaderBrush(runtimeShader)
 
     init {
-        runtimeShader.setFloatUniform("colorCyan", GlowColors.Cyan.red, GlowColors.Cyan.green, GlowColors.Cyan.blue, GlowColors.Cyan.alpha)
-        runtimeShader.setFloatUniform("colorBlue", GlowColors.ElectricBlue.red, GlowColors.ElectricBlue.green, GlowColors.ElectricBlue.blue, GlowColors.ElectricBlue.alpha)
-        runtimeShader.setFloatUniform("colorMagenta", GlowColors.Magenta.red, GlowColors.Magenta.green, GlowColors.Magenta.blue, GlowColors.Magenta.alpha)
-        runtimeShader.setFloatUniform("colorGold", GlowColors.SunsetGold.red, GlowColors.SunsetGold.green, GlowColors.SunsetGold.blue, GlowColors.SunsetGold.alpha)
-        runtimeShader.setFloatUniform("colorViolet", GlowColors.Violet.red, GlowColors.Violet.green, GlowColors.Violet.blue, GlowColors.Violet.alpha)
+        setColor("cBlue", VoiceEnergyColors.Blue)
+        setColor("cViolet", VoiceEnergyColors.Violet)
+        setColor("cCyan", VoiceEnergyColors.Cyan)
+        setColor("cCoral", VoiceEnergyColors.Coral)
+        setColor("cAmber", VoiceEnergyColors.Amber)
+        setColor("cGreen", VoiceEnergyColors.Green)
+        setColor("cPink", VoiceEnergyColors.Pink)
     }
 
-    fun updateUniforms(width: Float, height: Float, timeSeconds: Float, amplitude: Float) {
-        runtimeShader.setFloatUniform("iResolution", width, height)
-        runtimeShader.setFloatUniform("iTime", timeSeconds)
-        runtimeShader.setFloatUniform("iAmplitude", amplitude)
+    private fun setColor(name: String, color: Color) {
+        runtimeShader.setFloatUniform(name, color.red, color.green, color.blue, color.alpha)
     }
+
+    fun updateUniforms(width: Float, height: Float, field: VoiceEnergyField, presence: Float) {
+        val amplitude = field.energy * presence
+        runtimeShader.setFloatUniform("iResolution", width, height)
+        runtimeShader.setFloatUniform("iTime", field.elapsed)
+        runtimeShader.setFloatUniform("iAmplitude", amplitude)
+        runtimeShader.setFloatUniform("iRipple", field.ripple)
+        runtimeShader.setFloatUniform("iDrift", field.drift)
+        runtimeShader.setFloatUniform("iHarmonic1", field.harmonicAmplitude[0])
+        runtimeShader.setFloatUniform("iHarmonic2", field.harmonicAmplitude[1])
+        runtimeShader.setFloatUniform("iHarmonic3", field.harmonicAmplitude[2])
+        runtimeShader.setFloatUniform("iPhase1", field.harmonicPhase[0])
+        runtimeShader.setFloatUniform("iPhase2", field.harmonicPhase[1])
+        runtimeShader.setFloatUniform("iPhase3", field.harmonicPhase[2])
+    }
+}
+
+/**
+ * Preallocated drawing resources for the Canvas fallback. Everything that would otherwise be
+ * recreated every frame (paths, strokes, gradients) is built once per density.
+ */
+private class VoiceEnergyFallbackArt(density: Density) {
+    val primaryPath = Path()
+    val ribbonPaths: List<Path> = List(2) { Path() }
+    val ribbonStrokes: List<Stroke> = listOf(11.dp, 6.dp).map { widthDp ->
+        Stroke(width = with(density) { widthDp.toPx() })
+    }
+    val edgeStrokes: List<Stroke> = listOf(18.dp, 10.dp, 4.dp).map { widthDp ->
+        Stroke(width = with(density) { widthDp.toPx() })
+    }
+    val specularStroke: Stroke = Stroke(width = with(density) { 1.dp.toPx() })
+    val edgeAlphas: List<Float> = listOf(0.05f, 0.09f, 0.18f)
+    val calmBrush: Brush = Brush.horizontalGradient(colorStops = calmEnergyStops())
+    val expressiveBrush: Brush = Brush.horizontalGradient(colorStops = expressiveEnergyStops())
+}
+
+/** Radial halo gradients for the ambient glow, built once. */
+private class VoiceAmbientArt {
+    val calmBrush: Brush = Brush.radialGradient(
+        colorStops = arrayOf(
+            0.00f to VoiceEnergyColors.Blue.copy(alpha = 0.85f),
+            0.34f to VoiceEnergyColors.Violet.copy(alpha = 0.45f),
+            0.68f to VoiceEnergyColors.DeepIndigo.copy(alpha = 0.16f),
+            1.00f to Color.Transparent
+        )
+    )
+    val expressiveBrush: Brush = Brush.radialGradient(
+        colorStops = arrayOf(
+            0.00f to VoiceEnergyColors.Coral.copy(alpha = 0.80f),
+            0.35f to VoiceEnergyColors.Amber.copy(alpha = 0.45f),
+            0.72f to VoiceEnergyColors.Green.copy(alpha = 0.18f),
+            1.00f to Color.Transparent
+        )
+    )
+}
+
+private fun calmEnergyStops(): Array<Pair<Float, Color>> = arrayOf(
+    0.00f to VoiceEnergyColors.DeepIndigo,
+    0.22f to VoiceEnergyColors.Blue,
+    0.44f to VoiceEnergyColors.Violet,
+    0.66f to VoiceEnergyColors.Cyan,
+    0.86f to VoiceEnergyColors.Blue,
+    1.00f to VoiceEnergyColors.Violet
+)
+
+private fun expressiveEnergyStops(): Array<Pair<Float, Color>> = arrayOf(
+    0.00f to VoiceEnergyColors.Blue,
+    0.18f to VoiceEnergyColors.Violet,
+    0.38f to VoiceEnergyColors.Cyan,
+    0.55f to VoiceEnergyColors.Coral,
+    0.72f to VoiceEnergyColors.Amber,
+    0.88f to VoiceEnergyColors.Green,
+    1.00f to VoiceEnergyColors.Pink
+)
+
+/**
+ * Shared silhouette maths. The Canvas fallback reproduces the shader profile exactly, so old
+ * devices see the same organic geometry and the same audio reactivity as new ones.
+ */
+private fun energySurfaceY(
+    x: Float,
+    field: VoiceEnergyField,
+    baseLine: Float,
+    scale: Float,
+    timeShift: Float
+): Float {
+    val amplitudes = field.harmonicAmplitude
+    val phases = field.harmonicPhase
+    val time = field.elapsed + timeShift
+    var profile = amplitudes[0] * sin(VoiceEnergyDesign.TAU * x + phases[0])
+    profile += amplitudes[1] * 0.55f * sin(VoiceEnergyDesign.TAU * 2f * x + phases[1])
+    profile += amplitudes[2] * 0.32f * sin(VoiceEnergyDesign.TAU * 3f * x + phases[2])
+    profile += 0.055f * field.energy * sin(VoiceEnergyDesign.TAU * 1.7f * x - time * 0.55f)
+    profile += 0.030f * field.energy * sin(VoiceEnergyDesign.TAU * 2.9f * x + time * 0.83f)
+    return baseLine - profile * scale
+}
+
+private fun buildEnergyPath(
+    path: Path,
+    field: VoiceEnergyField,
+    width: Float,
+    height: Float,
+    baseLine: Float,
+    scale: Float,
+    timeShift: Float,
+    closeToBottom: Boolean
+) {
+    val samples = VoiceEnergyDesign.FALLBACK_SAMPLES
+    path.reset()
+    path.moveTo(0f, energySurfaceY(0f, field, baseLine, scale, timeShift))
+    for (i in 1..samples) {
+        val step = i.toFloat() / samples.toFloat()
+        path.lineTo(width * step, energySurfaceY(step, field, baseLine, scale, timeShift))
+    }
+    if (closeToBottom) {
+        path.lineTo(width, height)
+        path.lineTo(0f, height)
+        path.close()
+    }
+}
+
+private fun DrawScope.drawVoiceEnergyFallback(
+    field: VoiceEnergyField,
+    art: VoiceEnergyFallbackArt,
+    presence: Float
+) {
+    val width = size.width
+    val height = size.height
+    if (width <= 0f || height <= 0f) return
+
+    val energy = field.energy
+    val warmth = ((energy - 0.12f) / 0.48f).coerceIn(0f, 1f)
+    val rippleBoost = 0.75f + 0.35f * field.ripple
+    val baseLine = height * (0.90f - 0.05f * energy)
+    val scale = height * (0.10f + 0.13f * energy + 0.05f * field.ripple)
+
+    // Layer 2 - secondary ribbons: open organic contours drawn as wide translucent arcs.
+    for (index in art.ribbonPaths.indices) {
+        val path = art.ribbonPaths[index]
+        val ribbonTimeShift = if (index == 0) VoiceEnergyDesign.RIBBON_TIME_SHIFT_1
+        else VoiceEnergyDesign.RIBBON_TIME_SHIFT_2
+        buildEnergyPath(
+            path = path,
+            field = field,
+            width = width,
+            height = height,
+            baseLine = baseLine - height * (0.10f + 0.09f * index),
+            scale = scale * (0.85f - 0.15f * index),
+            timeShift = ribbonTimeShift,
+            closeToBottom = false
+        )
+        val ribbonAlpha = presence * (0.15f - 0.05f * index) * (0.45f + 0.55f * energy)
+        if (ribbonAlpha <= 0.002f) continue
+        drawPath(path, brush = art.calmBrush, alpha = ribbonAlpha, style = art.ribbonStrokes[index])
+        drawPath(path, brush = art.expressiveBrush, alpha = ribbonAlpha * warmth, style = art.ribbonStrokes[index])
+    }
+
+    // Layer 1 - primary energy surface.
+    buildEnergyPath(
+        path = art.primaryPath,
+        field = field,
+        width = width,
+        height = height,
+        baseLine = baseLine,
+        scale = scale,
+        timeShift = 0f,
+        closeToBottom = true
+    )
+
+    val fillAlpha = presence * (0.34f + 0.42f * energy)
+    clipPath(art.primaryPath) {
+        drawRect(brush = art.calmBrush, alpha = fillAlpha)
+        drawRect(brush = art.expressiveBrush, alpha = fillAlpha * warmth)
+    }
+
+    // Illuminated boundary, diffused tail and bloom - wide, faint strokes instead of a blur pass.
+    art.edgeStrokes.forEachIndexed { index, stroke ->
+        val edgeAlpha = presence * art.edgeAlphas[index] * rippleBoost * (0.55f + 0.55f * energy)
+        if (edgeAlpha <= 0.002f) return@forEachIndexed
+        drawPath(art.primaryPath, brush = art.calmBrush, alpha = edgeAlpha, style = stroke)
+        drawPath(art.primaryPath, brush = art.expressiveBrush, alpha = edgeAlpha * warmth, style = stroke)
+    }
+
+    // Specular highlight riding the leading edge.
+    drawPath(
+        path = art.primaryPath,
+        brush = SolidColor(VoiceEnergyColors.Specular),
+        alpha = presence * (0.08f + 0.20f * energy),
+        style = art.specularStroke
+    )
+}
+
+private fun DrawScope.drawVoiceAmbientHalos(field: VoiceEnergyField, art: VoiceAmbientArt) {
+    val width = size.width
+    val height = size.height
+    if (width <= 0f || height <= 0f) return
+
+    val energy = field.energy
+    val warmth = ((energy - 0.12f) / 0.48f).coerceIn(0f, 1f)
+    val drift = field.drift
+    val radius = maxOf(width * 0.62f, height * 0.95f) * (0.92f + 0.16f * energy)
+    val coreAlpha = 0.10f + 0.22f * energy
+
+    // Three travelling pools keep the illumination local around the composer and let the colour
+    // follow the same cool -> warm transition as the primary surface.
+    val left = Offset(width * (0.24f + 0.07f * sin(drift * 0.90f)), height * 0.86f)
+    val middle = Offset(width * (0.50f + 0.07f * cos(drift * 0.80f)), height * 0.90f)
+    val right = Offset(width * (0.76f - 0.07f * sin(drift * 1.05f)), height * 0.86f)
+
+    drawCircle(brush = art.calmBrush, center = left, radius = radius, alpha = coreAlpha * 0.55f)
+    drawCircle(brush = art.expressiveBrush, center = left, radius = radius, alpha = coreAlpha * 0.55f * warmth)
+    drawCircle(brush = art.calmBrush, center = middle, radius = radius, alpha = coreAlpha * 0.50f)
+    drawCircle(brush = art.expressiveBrush, center = middle, radius = radius, alpha = coreAlpha * 0.50f * warmth)
+    drawCircle(brush = art.calmBrush, center = right, radius = radius, alpha = coreAlpha * 0.55f)
+    drawCircle(brush = art.expressiveBrush, center = right, radius = radius, alpha = coreAlpha * 0.55f * warmth)
 }
 
 private fun VoiceState.isGlowActive(): Boolean = this is VoiceState.Recording || this is VoiceState.Locked
 
 internal fun VoiceState.glowAmplitude(): Float = when (this) {
-    is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
-        .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
-    is VoiceState.Locked -> if (isPaused) GlowDesign.MIN_AMPLITUDE else
-        (amplitudeHistory.lastOrNull() ?: GlowDesign.MIN_AMPLITUDE)
-            .coerceIn(GlowDesign.MIN_AMPLITUDE, GlowDesign.MAX_AMPLITUDE)
+    is VoiceState.Recording -> (amplitudeHistory.lastOrNull() ?: VoiceEnergyDesign.MIN_AMPLITUDE)
+        .coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+    is VoiceState.Locked -> if (isPaused) VoiceEnergyDesign.MIN_AMPLITUDE else
+        (amplitudeHistory.lastOrNull() ?: VoiceEnergyDesign.MIN_AMPLITUDE)
+            .coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
+    is VoiceState.VoiceDraft -> draftGlowAmplitude()
     else -> 0f
 }
 
-@Composable
-internal fun rememberVoiceGlowPhase(
-    amplitude: Float,
-    active: Boolean,
-    isPaused: Boolean = false,
-    reducedMotion: Boolean,
-    label: String
-): Float {
-    var phase by remember(label) { mutableFloatStateOf(0f) }
-    val latestAmplitude by rememberUpdatedState(amplitude)
-    val latestPaused by rememberUpdatedState(isPaused)
-    LaunchedEffect(active, reducedMotion) {
-        if (!active || reducedMotion) {
-            if (reducedMotion) phase = 0f
-            return@LaunchedEffect
-        }
-        var previousFrameNanos = 0L
-        while (active && !reducedMotion) {
-            val frameNanos = withFrameNanos { it }
-            if (previousFrameNanos != 0L) {
-                val elapsedSeconds = ((frameNanos - previousFrameNanos) / 1_000_000_000f).coerceIn(0f, 0.05f)
-                if (!latestPaused) {
-                    val speed = 0.35f + 1.15f * latestAmplitude
-                    phase += elapsedSeconds * speed
-                    if (phase >= 1000f) phase -= 1000f
-                }
-            }
-            previousFrameNanos = frameNanos
-        }
-    }
-    return phase
-}
-
-@Composable
-internal fun rememberVoiceGlowIntensity(target: Float, reducedMotion: Boolean, label: String): Float {
-    if (reducedMotion) return target
-    val intensity by animateFloatAsState(
-        targetValue = target,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 450f),
-        label = label
-    )
-    return intensity
+/**
+ * Amplitude source for a recorded draft: the envelope is sampled at the current playback
+ * position, so replaying or scrubbing the draft lifts the surface exactly where the original
+ * audio did. An idle draft reports the silence floor and settles through the paused path.
+ */
+private fun VoiceState.VoiceDraft.draftGlowAmplitude(): Float {
+    if (!isPlaying || durationMs <= 0L || amplitudeHistory.isEmpty()) return VoiceEnergyDesign.MIN_AMPLITUDE
+    val fraction = (playbackPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+    val index = (fraction * (amplitudeHistory.size - 1).toFloat()).roundToInt()
+        .coerceIn(0, amplitudeHistory.size - 1)
+    return amplitudeHistory[index]
+        .coerceIn(VoiceEnergyDesign.MIN_AMPLITUDE, VoiceEnergyDesign.MAX_AMPLITUDE)
 }
 
 @Composable
@@ -217,44 +609,118 @@ internal fun rememberVoiceShimmerPhase(reducedMotion: Boolean, label: String): F
     return phase
 }
 
+/**
+ * Single frame-driven animation loop for the energy field. The loop is keyed on the voice stage
+ * and the reduced-motion flag only, so it is never restarted for a changing amplitude value, and
+ * it is cancelled when the component is inactive or disposed.
+ */
+@Composable
+private fun rememberVoiceEnergyField(
+    active: Boolean,
+    paused: Boolean,
+    amplitude: Float,
+    reducedMotion: Boolean
+): VoiceEnergyField {
+    val field = remember { VoiceEnergyField() }
+    val latestAmplitude by rememberUpdatedState(amplitude)
+    val latestPaused by rememberUpdatedState(paused)
+
+    if (reducedMotion) {
+        SideEffect { field.snapshot(latestAmplitude) }
+        return field
+    }
+
+    LaunchedEffect(active) {
+        if (!active) return@LaunchedEffect
+        var previousFrameNanos = 0L
+        while (true) {
+            val frameNanos = withFrameNanos { it }
+            if (previousFrameNanos != 0L) {
+                field.update(
+                    dtSeconds = (frameNanos - previousFrameNanos) / 1_000_000_000f,
+                    amplitude = latestAmplitude,
+                    paused = latestPaused
+                )
+            }
+            previousFrameNanos = frameNanos
+        }
+    }
+    return field
+}
+
+/**
+ * How much of the container the energy field draws over the glass. Chosen so the field has something
+ * to read against - the nested translucent ribbons and the specular rim need a body under them -
+ * while the glass underneath stays visibly glass.
+ */
+private const val GLASS_CONTAINER_FILL_MAX = 0.5f
+
 @Composable
 fun VoiceRecordingGlowSurface(
     voiceState: VoiceState,
     reducedMotionOverride: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Set by the composer when liquid glass draws the pill behind this surface: the glass is the
+    // container then, and this canvas only paints the energy field and its rim on top of it. A
+    // recording still hands the background back to the energy surface, which needs an opaque
+    // container to stay readable.
+    glassActive: Boolean = false
 ) {
     val active = voiceState.isGlowActive()
+    // A recorded draft keeps the energy surface - the same spectrum, held at a calmer intensity -
+    // so the voice bar stays part of one visual language after the finger lifts instead of
+    // collapsing into a flat card. The large ambient halos stay recording-only.
+    val isDraft = voiceState is VoiceState.VoiceDraft
+    val showField = active || isDraft
     val reducedMotion = reducedMotionOverride
     val surfaceColor = cardSurfaceColor()
     val shape = RoundedCornerShape(Sizes.CornerMassive)
-    val targetAmplitude = if (active) voiceState.glowAmplitude() else 0f
-    val intensity = rememberVoiceGlowIntensity(targetAmplitude, reducedMotion, "voiceGlowIntensity")
-    val isPaused = (voiceState as? VoiceState.Locked)?.isPaused == true
-    val phase = rememberVoiceGlowPhase(intensity, active, isPaused, reducedMotion, "voiceRecordingInterior")
+    val isPaused = when (voiceState) {
+        is VoiceState.Locked -> voiceState.isPaused
+        is VoiceState.VoiceDraft -> !voiceState.isPlaying
+        else -> false
+    }
+    val amplitude = if (showField) voiceState.glowAmplitude() else VoiceEnergyDesign.MIN_AMPLITUDE
+    val field = rememberVoiceEnergyField(showField, isPaused, amplitude, reducedMotion)
 
-    val activeAlpha by animateFloatAsState(
-        targetValue = if (active) 1f else 0f,
-        animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
+    // Read inside the draw phase so the settle fade never recomposes the composer.
+    val presenceState = animateFloatAsState(
+        targetValue = when {
+            active -> 1f
+            isDraft -> VoiceEnergyDesign.DRAFT_PRESENCE
+            else -> 0f
+        },
+        animationSpec = if (reducedMotion) snap() else
+            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "voiceLiquidSettle"
     )
 
-    val fluidSim = remember { FluidSurfaceSimulation() }
-
-    // AGSL Shader instance cached for API 33+
-    val shaderHolder = remember {
+    val density = LocalDensity.current
+    // RuntimeShader compiles AGSL on the device. A driver that rejects the program throws
+    // IllegalArgumentException out of the shader compiler at launch (SYNAPSE-9); that must not take
+    // the composer down with it. Fall back to the Canvas renderer, which draws the same silhouette.
+    val shader = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            LiquidShaderHolder()
-        } else null
-    }
-
-    LaunchedEffect(phase, intensity, active, isPaused) {
-        if (active && !isPaused) {
-            fluidSim.update(0.04f, intensity, phase)
+            runCatching { VoiceEnergyShader() }.getOrNull()
+        } else {
+            null
         }
     }
+    val fallbackArt = remember(density, shader) {
+        if (shader == null) VoiceEnergyFallbackArt(density) else null
+    }
+    val rimBrush = remember {
+        Brush.verticalGradient(
+            colors = listOf(
+                VoiceEnergyColors.Specular.copy(alpha = 1f),
+                VoiceEnergyColors.Cyan.copy(alpha = 0.70f),
+                VoiceEnergyColors.Violet.copy(alpha = 0.62f)
+            )
+        )
+    }
+    val rimStroke = remember(density) { Stroke(width = with(density) { 1.8.dp.toPx() }) }
 
     Box(modifier = modifier.clip(shape)) {
-        val density = LocalDensity.current
         Canvas(Modifier.matchParentSize()) {
             val width = size.width
             val height = size.height
@@ -263,72 +729,42 @@ fun VoiceRecordingGlowSurface(
             val maxCornerPx = with(density) { Sizes.CornerMassive.toPx() }
             val corner = CornerRadius(minOf(maxCornerPx, height / 2f))
 
-            drawRoundRect(
-                color = surfaceColor,
-                cornerRadius = corner
-            )
-
-            if (activeAlpha <= 0.001f) return@Canvas
-
-            val supportsAgsl = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shaderHolder != null
-
-            if (supportsAgsl) {
-                shaderHolder.updateUniforms(width, height, phase, intensity * activeAlpha)
-                drawRoundRect(
-                    brush = shaderHolder.shaderBrush,
-                    cornerRadius = corner,
-                    alpha = activeAlpha
-                )
+            val presence = presenceState.value
+            // The glass is the container in every state, voice mode included: a recording, or a draft
+            // the user has stopped on, needs a surface for the energy field to read against, but it
+            // never becomes an opaque one - the fill rises with the field, settles at
+            // GLASS_CONTAINER_FILL_MAX at most, and thins out on the same spring that takes the field
+            // away. The blur, the refraction and the wallpaper behind the bar still show through, and
+            // the composer still never jumps between two backgrounds when a recording ends.
+            val fillAlpha = if (!glassActive) {
+                1f
             } else {
-                // Soft Volumetric Canvas Fallback (API 26..32) with multi-color radial gradient pooling
-                val angle = phase * GlowDesign.TAU
-                val alpha = activeAlpha * (0.65f + 0.35f * intensity)
+                (presence / VoiceEnergyDesign.DRAFT_PRESENCE).coerceIn(0f, 1f) * GLASS_CONTAINER_FILL_MAX
+            }
+            if (fillAlpha > 0.001f) {
+                drawRoundRect(color = surfaceColor.copy(alpha = fillAlpha), cornerRadius = corner)
+            }
+            if (presence <= 0.001f) return@Canvas
 
-                val leftCenter = Offset(width * (0.22f + 0.10f * sin(angle)), height * 0.85f)
-                val midCenter = Offset(width * (0.50f + 0.10f * cos(angle * 0.9f)), height * 0.80f)
-                val rightCenter = Offset(width * (0.78f - 0.10f * sin(angle * 1.2f)), height * 0.85f)
-                val radius = width * 0.55f
-
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(GlowColors.Cyan.copy(alpha = alpha * 0.85f), GlowColors.ElectricBlue.copy(alpha = alpha * 0.40f), Color.Transparent),
-                        center = leftCenter, radius = radius
-                    ),
-                    center = leftCenter, radius = radius
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(GlowColors.Magenta.copy(alpha = alpha * 0.80f), GlowColors.SunsetGold.copy(alpha = alpha * 0.45f), Color.Transparent),
-                        center = midCenter, radius = radius * 0.90f
-                    ),
-                    center = midCenter, radius = radius * 0.90f
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(GlowColors.Violet.copy(alpha = alpha * 0.85f), GlowColors.DeepIndigo.copy(alpha = alpha * 0.45f), Color.Transparent),
-                        center = rightCenter, radius = radius
-                    ),
-                    center = rightCenter, radius = radius
-                )
+            if (shader != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                shader.updateUniforms(width, height, field, presence)
+                drawRoundRect(brush = shader.shaderBrush, cornerRadius = corner, alpha = presence)
+            } else if (fallbackArt != null) {
+                drawVoiceEnergyFallback(field, fallbackArt, presence)
             }
 
-            // Glass Specular Rim Border & Refraction Highlight
-            val borderAlpha = activeAlpha * (0.35f + intensity * 0.25f)
-            val strokePx = 1.8.dp.toPx()
+            // Outer specular rim keeps the energy field inside the composer's rounded container.
+            val borderAlpha = presence * (0.32f + 0.28f * field.energy)
+            val strokePx = with(density) { 1.8.dp.toPx() }
             val strokeCornerRadiusPx = with(density) { (Sizes.CornerMassive - (strokePx / 2f).toDp()).toPx() }
             val strokeCorner = CornerRadius(minOf(strokeCornerRadiusPx, (height - strokePx) / 2f).coerceAtLeast(0f))
             drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        GlowColors.SpecularRim.copy(alpha = borderAlpha * 1.5f),
-                        GlowColors.Cyan.copy(alpha = borderAlpha),
-                        GlowColors.Violet.copy(alpha = borderAlpha * 0.9f)
-                    )
-                ),
+                brush = rimBrush,
                 topLeft = Offset(strokePx / 2f, strokePx / 2f),
                 size = Size((width - strokePx).coerceAtLeast(0f), (height - strokePx).coerceAtLeast(0f)),
                 cornerRadius = strokeCorner,
-                style = Stroke(width = strokePx)
+                alpha = borderAlpha,
+                style = rimStroke
             )
         }
     }
@@ -342,44 +778,17 @@ fun VoiceRecordingAmbientGlow(
 ) {
     if (!voiceState.isGlowActive()) return
     val reducedMotion = reducedMotionOverride
-    val amplitude = voiceState.glowAmplitude()
     val isPaused = (voiceState as? VoiceState.Locked)?.isPaused == true
-    val phase = rememberVoiceGlowPhase(amplitude, true, isPaused, reducedMotion, "voiceRecordingAmbient")
-    val intensity = rememberVoiceGlowIntensity(amplitude, reducedMotion, "voiceAmbientIntensity")
+    val field = rememberVoiceEnergyField(
+        active = true,
+        paused = isPaused,
+        amplitude = voiceState.glowAmplitude(),
+        reducedMotion = reducedMotion
+    )
+    val haloArt = remember { VoiceAmbientArt() }
 
     Canvas(modifier) {
-        val width = size.width
-        val height = size.height
-        if (width <= 0f || height <= 0f) return@Canvas
-
-        val angle = phase * GlowDesign.TAU
-        val radius = maxOf(width * 0.70f, height * 1.05f)
-        val alpha = 0.15f + 0.25f * amplitude.coerceIn(0f, 1f)
-
-        val leftCenter = Offset(width * (0.25f + 0.08f * sin(angle)), height * 0.82f)
-        val midCenter = Offset(width * (0.50f + 0.08f * cos(angle * 0.9f)), height * 0.85f)
-        val rightCenter = Offset(width * (0.75f - 0.08f * cos(angle * 0.8f)), height * 0.82f)
-
-        drawCircle(
-            brush = Brush.radialGradient(
-                listOf(GlowColors.Cyan.copy(alpha = alpha), GlowColors.ElectricBlue.copy(alpha = alpha * 0.5f), Color.Transparent),
-                center = leftCenter, radius = radius
-            ),
-            center = leftCenter, radius = radius
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                listOf(GlowColors.Magenta.copy(alpha = alpha * 0.75f), GlowColors.SunsetGold.copy(alpha = alpha * 0.35f), Color.Transparent),
-                center = midCenter, radius = radius * 0.85f
-            ),
-            center = midCenter, radius = radius * 0.85f
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                listOf(GlowColors.Violet.copy(alpha = alpha * 0.85f), GlowColors.DeepIndigo.copy(alpha = alpha * 0.40f), Color.Transparent),
-                center = rightCenter, radius = radius
-            ),
-            center = rightCenter, radius = radius
-        )
+        drawVoiceAmbientHalos(field, haloArt)
     }
 }
+

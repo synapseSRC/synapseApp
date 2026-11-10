@@ -65,6 +65,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.ui.settings.SettingsCard
 import com.synapse.social.studioasinc.ui.components.SectionHeader
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -102,6 +103,7 @@ fun InterestsSkillsScreen(
     SynapseTheme {
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = AppColors.screenBackground,
             topBar = {
                 MediumTopAppBar(
                     title = { Text(text = stringResource(R.string.interests_skills_title)) },
@@ -132,7 +134,11 @@ fun InterestsSkillsScreen(
                             }
                         }
                     },
-                    scrollBehavior = scrollBehavior
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = AppColors.screenBackground,
+                        scrolledContainerColor = AppColors.cardBackground
+                    )
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }

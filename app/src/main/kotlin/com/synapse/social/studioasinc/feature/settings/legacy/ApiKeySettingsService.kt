@@ -5,8 +5,6 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.auth
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,8 +36,7 @@ data class ProviderSettings(
 
 @Singleton
 class ApiKeySettingsService @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val supabaseClient: SupabaseClient
+    @ApplicationContext private val context: Context
 ) {
     private val settingsDataStore by lazy { SettingsDataStore.getInstance(context) }
     // androidx.security:security-crypto is deprecated upstream with no in-library successor. These

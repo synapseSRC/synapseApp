@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Labels of the two links inside welcome_terms_notice. -->
+<resources>
+    <string name="welcome_link_terms">সেবার শর্তাবলী</string>
+    <string name="welcome_link_privacy">গোপনীয়তা নীতি</string>
+</resources>

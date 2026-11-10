@@ -51,6 +51,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.business.AccountType
 import com.synapse.social.studioasinc.ui.settings.SettingsNavigationItem
 import com.synapse.social.studioasinc.ui.settings.SettingsSection
+import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,6 +74,7 @@ fun ProfessionalProfileScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = AppColors.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = { Text(text = stringResource(R.string.professional_profile_title)) },
@@ -86,8 +88,8 @@ fun ProfessionalProfileScreen(
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = AppColors.screenBackground,
+                    scrolledContainerColor = AppColors.cardBackground
                 )
             )
         },

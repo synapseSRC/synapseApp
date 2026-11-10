@@ -77,6 +77,8 @@ data class ChatSettingsDependencies(
     val setConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.SetConversationMuteStatusUseCase,
     val chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
     val deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase,
+    /** Chat folders live in user settings; the header assigns the open chat to one of them. */
+    val settingsRepository: com.synapse.social.studioasinc.data.repository.SettingsRepository,
 )
 
 /**

@@ -1,5 +1,8 @@
 package com.synapse.social.studioasinc.feature.shared.theme
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.background
@@ -10,15 +13,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 
 val LightColorScheme = lightColorScheme(
     primary = LightPrimary,
@@ -125,12 +131,16 @@ fun SynapseTheme(
         baseScheme
     }
 
-    CompositionLocalProvider(LocalUiAtmosphere provides atmosphereState) {
+    CompositionLocalProvider(
+        LocalUiAtmosphere provides atmosphereState,
+        LocalSynapseBrandPalette provides if (darkTheme) SynapseDarkBrandPalette else SynapseLightBrandPalette
+    ) {
         MaterialExpressiveTheme(
             colorScheme = finalColorScheme,
             motionScheme = MotionScheme.expressive(),
             typography = SynapseTypography,
         ) {
+            SyncSystemBarAppearance(darkTheme)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -142,6 +152,32 @@ fun SynapseTheme(
     }
 }
 
+
+/**
+ * The status bar stays transparent so the wallpaper reaches behind it, which means the icon tint
+ * cannot be left to the system theme: it has to follow the theme the app is actually rendering.
+ */
+@Composable
+private fun SyncSystemBarAppearance(darkTheme: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    val activity = view.context.findActivity() ?: return
+    SideEffect {
+        WindowCompat.getInsetsController(activity.window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
+}
+
+private fun Context.findActivity(): Activity? {
+    var context: Context? = this
+    while (context != null) {
+        if (context is Activity) return context
+        context = (context as? ContextWrapper)?.baseContext
+    }
+    return null
+}
 
 @Composable
 private fun rememberSystemHighContrastTextEnabled(): Boolean {

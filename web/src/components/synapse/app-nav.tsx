@@ -33,9 +33,15 @@ const SignOutButton = ({ className }: { className?: string }) => {
 
     const handleSignOut = async () => {
         setPending(true);
-        await getSupabaseBrowserClient().auth.signOut();
-        router.replace("/");
-        router.refresh();
+        try {
+            await getSupabaseBrowserClient().auth.signOut();
+            router.replace("/");
+            router.refresh();
+        } finally {
+            // signOut rejects on a network failure; without this the button stays disabled and
+            // spinning, leaving no way to sign out until the page is reloaded.
+            setPending(false);
+        }
     };
 
     return (

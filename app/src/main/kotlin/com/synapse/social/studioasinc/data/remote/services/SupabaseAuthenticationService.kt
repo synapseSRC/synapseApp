@@ -195,8 +195,7 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                 if (userId != null) {
                     try {
                         OneSignal.login(userId)
-                        debugLog("✅ OneSignal login successful with user ID: $userId")
-                        android.util.Log.d("OneSignal", "✅ Logged in with user: $userId")
+                        debugLog("✅ OneSignal login successful")
                         
                         // Sync subscription ID if available
                         val subId = OneSignal.User.pushSubscription.id
@@ -213,12 +212,10 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                             }
                         }
                     } catch (e: Exception) {
-                        debugLog("❌ OneSignal login failed: ${e.message}")
-                        android.util.Log.e("OneSignal", "❌ Login failed", e)
+                        debugLog("❌ OneSignal login failed")
                     }
                 } else {
                     debugLog("❌ Cannot login to OneSignal: userId is null")
-                    android.util.Log.e("OneSignal", "❌ Cannot login: userId is null")
                 }
 
                 val supabaseUser = createdUser ?: client.auth.currentUserOrNull()
@@ -282,8 +279,7 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
 
                     try {
                         OneSignal.login(user.id)
-                        debugLog("✅ OneSignal login successful with user ID: ${user.id}")
-                        android.util.Log.d("OneSignal", "✅ Logged in with user: ${user.id}")
+                        debugLog("✅ OneSignal login successful")
                         
                         // Sync subscription ID if available
                         val subId = OneSignal.User.pushSubscription.id
@@ -300,8 +296,7 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                             }
                         }
                     } catch (e: Exception) {
-                        debugLog("❌ OneSignal login failed: ${e.message}")
-                        android.util.Log.e("OneSignal", "❌ Login failed", e)
+                        debugLog("❌ OneSignal login failed")
                     }
 
                     val emailVerified = supabaseUser.emailConfirmedAt != null || authConfig.shouldBypassEmailVerification()
@@ -420,7 +415,7 @@ class SupabaseAuthenticationService : com.synapse.social.studioasinc.data.remote
                     val user = client.auth.currentUserOrNull()
                     if (user != null && user.email == email) {
                         val verified = user.emailConfirmedAt != null
-                        debugLog("Email verification status for $email: $verified")
+                        debugLog("Email verification status: $verified")
                         verified
                     } else {
                         debugLog("No current user or email mismatch for verification check")

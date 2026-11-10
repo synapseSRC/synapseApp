@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Welcome screen: labels and destinations of the two links in welcome_terms_notice.
+     Kept out of strings.xml so that file never has to be rewritten in full. -->
+<resources>
+    <string name="welcome_link_terms">Terms of Service</string>
+    <string name="welcome_link_privacy">Privacy Policy</string>
+    <string name="welcome_terms_url" translatable="false">https://synapsesocial.vercel.app/terms</string>
+    <string name="welcome_privacy_url" translatable="false">https://synapsesocial.vercel.app/privacy</string>
+</resources>

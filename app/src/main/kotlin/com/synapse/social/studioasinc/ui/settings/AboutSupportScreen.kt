@@ -64,6 +64,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.core.config.SynapseConfig
 import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import kotlinx.coroutines.launch
 
@@ -160,7 +161,7 @@ fun AboutSupportScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(
-                            onClick = { IntentUtils.openUrl(context, AboutSupportViewModel.APP_WEBSITE_URL) },
+                            onClick = { IntentUtils.openUrl(context, SynapseConfig.APP_WEBSITE_URL) },
                             modifier = Modifier.height(dimensionResource(R.dimen.about_connected_button_height)),
                             shape = RoundedCornerShape(
                                 topStart = 50.dp,
