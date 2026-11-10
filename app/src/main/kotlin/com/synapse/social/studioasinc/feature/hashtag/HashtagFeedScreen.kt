@@ -42,6 +42,7 @@ fun HashtagFeedScreen(
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     val context = LocalContext.current
+    val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
     LaunchedEffect(tag) {
         viewModel.init(tag)
@@ -123,7 +124,7 @@ fun HashtagFeedScreen(
                 },
                 onCopyLink = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText(stringResource(R.string.clip_label_post_link), DeepLink.post(post.id))
+                    val clip = ClipData.newPlainText(postLinkLabel, DeepLink.post(post.id))
                     clipboard.setPrimaryClip(clip)
                     Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
                     selectedPost = null
