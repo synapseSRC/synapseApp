@@ -98,6 +98,7 @@ fun PostCard(
     onOptionsClick: () -> Unit,
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,
+    onUsernameSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
@@ -221,7 +222,8 @@ fun PostCard(
                     feeling = state.post.metadata?.feeling,
                     locationName = state.post.locationName,
                     taggedPeople = state.post.metadata?.taggedPeople ?: emptyList(),
-                    replyToUsernames = state.replyToUsernames
+                    replyToUsernames = state.replyToUsernames,
+                    onUsernameSelected = onUsernameSelected
                 )
 
                 PostContent(

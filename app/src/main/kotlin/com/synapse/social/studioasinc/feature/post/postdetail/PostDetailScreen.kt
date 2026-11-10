@@ -209,6 +209,13 @@ fun PostDetailScreen(
     if (showReplyingToSheet && uiState.replyToParticipants.isNotEmpty()) {
         ReplyingToBottomSheet(
             usernames = uiState.replyToParticipants.map { it.username },
+            onUsernameSelected = { username ->
+                uiState.replyToParticipants
+                    .firstOrNull { it.username == username }
+                    ?.uid
+                    ?.let { onNavigateToProfile(it) }
+                showReplyingToSheet = false
+            },
             onDismiss = { showReplyingToSheet = false }
         )
     }
