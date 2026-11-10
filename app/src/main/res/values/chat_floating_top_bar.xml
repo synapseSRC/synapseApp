@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings for the floating (Telegram-style) chat header and its overflow menu. -->
+<resources>
+    <string name="chat_menu_set_wallpaper">Set wallpaper</string>
+    <string name="chat_menu_view_earliest_message">View earliest message</string>
+    <string name="chat_menu_add_to_folder">Add to chat folder</string>
+    <string name="chat_menu_delete_chat">Delete chat</string>
+    <string name="chat_menu_delete_chat_confirm">This chat and all of its messages will be removed from your inbox. This cannot be undone.</string>
+    <string name="chat_menu_delete_chat_success">Chat deleted</string>
+    <string name="chat_menu_delete_chat_error">Could not delete this chat. Please try again.</string>
+    <string name="chat_menu_mute_state_muted">Muted</string>
+    <string name="chat_menu_mute_state_unmuted">Notifications on</string>
+</resources>

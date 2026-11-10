@@ -7,9 +7,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import com.synapse.social.studioasinc.R
 import androidx.compose.foundation.layout.fillMaxSize
@@ -336,6 +340,11 @@ fun NavGraphBuilder.inboxGraph(
                     onOpenEchoRoom = { roomId, speakOnEntry ->
                         navController.navigate(AppDestination.EchoRoom(roomId, speakOnEntry))
                     },
+                    // The inbox takes the same scopes the conversation does: with them, the picture
+                    // and the name in a row are the very elements the floating pill declares, so
+                    // opening a chat hands them over instead of cutting to a new header.
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@composable,
                     debugToolsEnabled = BuildConfig.DEBUG
                 )
             }
@@ -369,7 +378,19 @@ fun NavGraphBuilder.inboxGraph(
         )
     }
     composable<AppDestination.Chat>(
-        deepLinks = listOf(navDeepLink<AppDestination.Chat>(basePath = "synapse://chat"))
+        deepLinks = listOf(navDeepLink<AppDestination.Chat>(basePath = "synapse://chat")),
+        // The picture does the travelling into Contact Info, so the conversation itself only steps
+        // back with a fade - and comes back the same way, settling instead of snapping.
+        exitTransition = {
+            fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)) +
+                scaleIn(
+                    initialScale = 0.98f,
+                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                )
+        }
     ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.Chat>()
                 ChatScreen(
@@ -378,12 +399,36 @@ fun NavGraphBuilder.inboxGraph(
                     initialParticipantName = args.participantName,
                     initialParticipantAvatar = args.participantAvatar,
                     initialMessageId = args.messageId,
+                    // The conversation and Contact Info take the same transition scopes, which is what
+                    // makes the pill's picture one shared element across the navigation.
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@composable,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToGroupInfo = { chatId, groupName ->
                         navController.navigate(AppDestination.GroupInfo(chatId, groupName))
                     },
-                    onNavigateToChatInfo = { chatId, userId ->
-                        navController.navigate(AppDestination.ChatInfo(chatId, userId))
+                    onNavigateToChatInfo = { chatId, userId, status, statusIsActive ->
+                        // The whole pill is clickable and the transition takes a moment, so a second
+                        // tap can land before Contact Info has finished opening. launchSingleTop is
+                        // the guard for exactly that case: once Contact Info is the current
+                        // destination the tap does nothing, no second destination and no second
+                        // animation. It deliberately is *not* a scan of the whole back stack - a
+                        // Contact Info deeper in the stack (a chat opened again on top of it) must
+                        // never stop the pill from opening it for this conversation.
+                        navController.navigate(
+                            AppDestination.ChatInfo(
+                                chatId = chatId,
+                                userId = userId,
+                                participantName = args.participantName,
+                                participantAvatar = args.participantAvatar,
+                                // Contact Info opens on the same words and colour the pill was
+                                // showing, so the status travels with the name and the picture.
+                                participantStatus = status,
+                                participantStatusActive = statusIsActive
+                            )
+                        ) {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
@@ -440,11 +485,45 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToProfile = { userId -> navController.navigate(AppDestination.Profile(userId)) }
                 )
             }
-    composable<AppDestination.ChatInfo> { backStackEntry ->
+    composable<AppDestination.ChatInfo>(
+        // The picture is the transition; the screen around it fades in and settles a few pixels
+        // upward, so the profile information lands in place instead of appearing. Every duration
+        // sits in the same short range on the same curve, so the two screens read as one movement.
+        enterTransition = {
+            fadeIn(animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)) +
+                slideInVertically(
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                    initialOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() }
+                )
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
+                slideInVertically(
+                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                    initialOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() }
+                )
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
+                slideOutVertically(
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                    targetOffsetY = { fullHeight -> (fullHeight * 0.035f).toInt() }
+                )
+        }
+    ) { backStackEntry ->
                 val args = backStackEntry.toRoute<AppDestination.ChatInfo>()
                 com.synapse.social.studioasinc.feature.inbox.inbox.screens.ChatInfoScreen(
                     chatId = args.chatId,
                     userId = args.userId,
+                    initialDisplayName = args.participantName,
+                    initialAvatarUrl = args.participantAvatar,
+                    initialStatusText = args.participantStatus,
+                    initialStatusActive = args.participantStatusActive,
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@composable,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))

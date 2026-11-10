@@ -43,6 +43,12 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.kyant.backdrop.Backdrop
+import com.synapse.social.studioasinc.feature.shared.components.LiquidGlassPaint
+import com.synapse.social.studioasinc.feature.shared.components.accentBead
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassAccentPaint
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassSurface
+import com.synapse.social.studioasinc.feature.shared.components.rememberLiquidGlassPaint
 
 internal fun voiceCancelTint(normal: Color, cancel: Color, progress: Float): Color =
     lerp(normal, cancel, progress.coerceIn(0f, 1f))
@@ -104,10 +110,18 @@ fun VoiceInputHost(
     showSendButton: Boolean,
     onSendMessage: () -> Unit,
     reducedMotionOverride: Boolean,
+    // The layer the whole conversation was captured into, so the pill can sample the wallpaper and
+    // the messages moving behind it. Null keeps the solid container this bar had before.
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier,
     normalContent: @Composable () -> Unit
 ) {
     val reducedMotion = reducedMotionOverride
+    val glassPaint = rememberLiquidGlassPaint()
+    // The accent button's glass: the same sampling, blur and refraction, tinted with the scheme's
+    // accent, so the mic and the send button are coloured glass rather than solid chips.
+    val accentPaint = liquidGlassAccentPaint()
+    val pillShape = remember { RoundedCornerShape(Sizes.CornerMassive) }
     val density = LocalDensity.current
     var hostBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
     var micBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
@@ -142,14 +156,29 @@ fun VoiceInputHost(
                 .testTag("voice-recording-bar")
                 .shadow(
                     elevation = Sizes.ElevationMedium,
-                    shape = RoundedCornerShape(Sizes.CornerMassive),
+                    shape = pillShape,
                     clip = false
+                )
+                .then(
+                    // The composer is the same material as the chat header: it samples the one layer
+                    // the conversation was captured into, through its own pill shape, and puts
+                    // nothing of its own on top of it.
+                    if (backdrop != null) {
+                        Modifier.liquidGlassSurface(
+                            backdrop = backdrop,
+                            shape = pillShape,
+                            paint = glassPaint
+                        )
+                    } else {
+                        Modifier
+                    }
                 )
         ) {
             VoiceRecordingGlowSurface(
                 voiceState = voiceState,
                 reducedMotionOverride = reducedMotion,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier.matchParentSize(),
+                glassActive = backdrop != null
             )
 
             Row(
@@ -188,6 +217,8 @@ fun VoiceInputHost(
                                 VoiceInputBarContent(
                                     voiceState = animatedState,
                                     onVoiceAction = onVoiceAction,
+                                    backdrop = backdrop,
+                                    accentPaint = accentPaint,
                                     onSendBoundsChanged = { micBoundsInRoot = it }
                                 )
                             }
@@ -203,15 +234,14 @@ fun VoiceInputHost(
                         modifier = Modifier.size(MIC_TOUCH_TARGET_SIZE),
                         contentAlignment = Alignment.Center
                     ) {
-                        Surface(
-                            modifier = Modifier.size(Sizes.SendButton),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ) {
+                        // The send button is the mic's other state, so it wears the same accent glass
+                        // and the same bead; only the icon and the action change.
+                        val sendFace: @Composable () -> Unit = {
                             Box(
                                 contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
+                                // The bead keeps the edge the accent surface wears - the same one the
+                                // other surfaces have - over the tint and behind the icon.
+                                modifier = Modifier.fillMaxSize().accentBead()
                             ) {
                                 IconButton(onClick = onSendMessage) {
                                     Icon(
@@ -223,6 +253,38 @@ fun VoiceInputHost(
                                 }
                             }
                         }
+                        if (backdrop == null) {
+                            Surface(
+                                modifier = Modifier.size(Sizes.SendButton),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                sendFace()
+                            }
+                        } else {
+                            // A transparent Surface rather than a plain Box: it draws nothing, and it
+                            // keeps the content colour the icon and the ripple had on the fallback.
+                            Surface(
+                                modifier = Modifier.size(Sizes.SendButton),
+                                shape = CircleShape,
+                                color = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .liquidGlassSurface(
+                                            backdrop = backdrop,
+                                            shape = CircleShape,
+                                            paint = accentPaint
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    sendFace()
+                                }
+                            }
+                        }
                     }
                 } else if (voiceState is VoiceState.Locked || voiceState is VoiceState.VoiceDraft || voiceState is VoiceState.Sending || voiceState is VoiceState.Failed) {
                 } else {
@@ -230,6 +292,9 @@ fun VoiceInputHost(
                         voiceState = voiceState,
                         onVoiceAction = onVoiceAction,
                         reducedMotionOverride = reducedMotion,
+                        // The mic keeps its glass while the energy field is on screen too: the field's
+                        // container is glass now, so the button is the same material in every state.
+                        backdrop = backdrop,
                         onMicBoundsChanged = { micBoundsInRoot = it },
                         onGestureOffsetChanged = { lastLockGestureOffsetYPx = it }
                     )
@@ -249,10 +314,82 @@ fun VoiceInputHost(
     }
 }
 
+/**
+ * The send circle of a voice state - the locked recording's and the draft's - wearing the same accent
+ * glass the composer's own send button wears, so the button is one material in every state of the bar
+ * rather than glass while typing and a flat chip while recording. Where there is no backdrop to
+ * sample it is the solid accent circle it always was, with the shadow it always had.
+ */
+@Composable
+private fun VoiceSendCircle(
+    onClick: () -> Unit,
+    backdrop: Backdrop?,
+    accentPaint: LiquidGlassPaint,
+    modifier: Modifier = Modifier,
+    testTag: String? = null,
+    fallbackShadowElevation: androidx.compose.ui.unit.Dp = 0.dp
+) {
+    val face: @Composable () -> Unit = {
+        Box(
+            modifier = Modifier.fillMaxSize().accentBead(),
+            contentAlignment = Alignment.Center
+        ) {
+            IconButton(
+                onClick = onClick,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowUpward,
+                    contentDescription = stringResource(R.string.chat_action_send),
+                    modifier = Modifier.size(Sizes.IconLarge),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
+    }
+    if (backdrop == null) {
+        Surface(
+            modifier = modifier,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            shadowElevation = fallbackShadowElevation
+        ) {
+            face()
+        }
+    } else {
+        // A transparent Surface rather than a plain Box: it draws nothing, and it keeps the content
+        // colour the icon and the ripple had on the fallback.
+        Surface(
+            modifier = modifier,
+            shape = CircleShape,
+            color = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .liquidGlassSurface(
+                        backdrop = backdrop,
+                        shape = CircleShape,
+                        paint = accentPaint
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                face()
+            }
+        }
+    }
+}
+
 @Composable
 private fun VoiceInputBarContent(
     voiceState: VoiceState,
     onVoiceAction: (VoiceAction) -> Unit,
+    backdrop: Backdrop?,
+    accentPaint: LiquidGlassPaint,
     onSendBoundsChanged: (Rect) -> Unit = {}
 ) {
     // One shared spectrum sweep for the draft player, built once for the whole bar.
@@ -303,19 +440,16 @@ private fun VoiceInputBarContent(
                         )
                     }
                     Spacer(Modifier.width(Spacing.space8))
-                    Surface(
+                    VoiceSendCircle(
+                        onClick = { onVoiceAction(VoiceAction.FinishRecording) },
+                        backdrop = backdrop,
+                        accentPaint = accentPaint,
+                        testTag = "voice-locked-finish",
+                        fallbackShadowElevation = 2.dp,
                         modifier = Modifier
                             .size(Sizes.SendButton)
-                            .onGloballyPositioned { onSendBoundsChanged(it.boundsInRoot()) },
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shadowElevation = 2.dp
-                    ) {
-                        IconButton(onClick = { onVoiceAction(VoiceAction.FinishRecording) }, modifier = Modifier.fillMaxSize().testTag("voice-locked-finish")) {
-                            Icon(Icons.Default.ArrowUpward, stringResource(R.string.chat_action_send), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(Sizes.IconLarge))
-                        }
-                    }
+                            .onGloballyPositioned { onSendBoundsChanged(it.boundsInRoot()) }
+                    )
                 }
             }
             is VoiceState.VoiceDraft -> {
@@ -355,18 +489,14 @@ private fun VoiceInputBarContent(
                         onSeek = { onVoiceAction(VoiceAction.SeekDraft((it * voiceState.durationMs).toLong())) }, modifier = Modifier.weight(1f).height(32.dp),
                         activeColor = MaterialTheme.colorScheme.primary, activeSpectrum = waveformSpectrum)
                     OdometerTimerText(voiceState.durationMs, color = MaterialTheme.colorScheme.onSurface)
-                    Surface(
-                        // Same circle size as the locked row's send so the gap to the trailing edge is
-                        // identical in both voice states.
-                        modifier = Modifier.size(Sizes.SendButton),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        IconButton(onClick = { onVoiceAction(VoiceAction.SendDraft) }, modifier = Modifier.fillMaxSize()) {
-                            Icon(Icons.Default.ArrowUpward, stringResource(R.string.chat_action_send), modifier = Modifier.size(Sizes.IconLarge))
-                        }
-                    }
+                    // Same circle size as the locked row's send so the gap to the trailing edge is
+                    // identical in both voice states; and the same material in both of them too.
+                    VoiceSendCircle(
+                        onClick = { onVoiceAction(VoiceAction.SendDraft) },
+                        backdrop = backdrop,
+                        accentPaint = accentPaint,
+                        modifier = Modifier.size(Sizes.SendButton)
+                    )
                 }
             }
             is VoiceState.Sending -> {
@@ -753,6 +883,7 @@ fun CanonicalMicButton(
     onVoiceAction: (VoiceAction) -> Unit,
     reducedMotionOverride: Boolean,
     modifier: Modifier = Modifier,
+    backdrop: Backdrop? = null,
     onMicBoundsChanged: (Rect) -> Unit = {},
     onGestureOffsetChanged: (Float) -> Unit = {}
 ) {
@@ -817,6 +948,10 @@ fun CanonicalMicButton(
         animationSpec = if (reducedMotion) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 520f),
         label = "voiceCancelDragTint"
     )
+
+    // The mic's glass is built from the colour above, so the cancel tint travels through it.
+    val micGlassBackdrop = backdrop
+    val micGlassPaint = liquidGlassAccentPaint(micTint)
 
     val targetGlowAlpha = if (isActive) ACTIVE_MIC_GLOW_ALPHA else 0f
     val glowAlpha = animateFloatForMotion(
@@ -911,7 +1046,22 @@ fun CanonicalMicButton(
                     ambientColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha),
                     spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha * 0.8f)
                 )
-                .background(micTint, CircleShape)
+                // The mic is the send button's other state: the same accent glass, so the button
+                // never changes material when the composer switches between them. The paint is built
+                // from the current colour, so the glass turns red with the cancel tint.
+                .then(
+                    if (micGlassBackdrop != null) {
+                        Modifier.liquidGlassSurface(
+                            backdrop = micGlassBackdrop,
+                            shape = CircleShape,
+                            paint = micGlassPaint
+                        )
+                    } else {
+                        Modifier.background(micTint, CircleShape)
+                    }
+                )
+                // Same bead as the send button: the accent surface keeps its edge either way.
+                .accentBead()
                 .testTag("voice-recording-mic-visual"),
             contentAlignment = Alignment.Center
         ) {

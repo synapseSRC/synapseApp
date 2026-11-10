@@ -648,11 +648,23 @@ private fun rememberVoiceEnergyField(
     return field
 }
 
+/**
+ * How much of the container the energy field draws over the glass. Chosen so the field has something
+ * to read against - the nested translucent ribbons and the specular rim need a body under them -
+ * while the glass underneath stays visibly glass.
+ */
+private const val GLASS_CONTAINER_FILL_MAX = 0.5f
+
 @Composable
 fun VoiceRecordingGlowSurface(
     voiceState: VoiceState,
     reducedMotionOverride: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Set by the composer when liquid glass draws the pill behind this surface: the glass is the
+    // container then, and this canvas only paints the energy field and its rim on top of it. A
+    // recording still hands the background back to the energy surface, which needs an opaque
+    // container to stay readable.
+    glassActive: Boolean = false
 ) {
     val active = voiceState.isGlowActive()
     // A recorded draft keeps the energy surface - the same spectrum, held at a calmer intensity -
@@ -717,9 +729,21 @@ fun VoiceRecordingGlowSurface(
             val maxCornerPx = with(density) { Sizes.CornerMassive.toPx() }
             val corner = CornerRadius(minOf(maxCornerPx, height / 2f))
 
-            drawRoundRect(color = surfaceColor, cornerRadius = corner)
-
             val presence = presenceState.value
+            // The glass is the container in every state, voice mode included: a recording, or a draft
+            // the user has stopped on, needs a surface for the energy field to read against, but it
+            // never becomes an opaque one - the fill rises with the field, settles at
+            // GLASS_CONTAINER_FILL_MAX at most, and thins out on the same spring that takes the field
+            // away. The blur, the refraction and the wallpaper behind the bar still show through, and
+            // the composer still never jumps between two backgrounds when a recording ends.
+            val fillAlpha = if (!glassActive) {
+                1f
+            } else {
+                (presence / VoiceEnergyDesign.DRAFT_PRESENCE).coerceIn(0f, 1f) * GLASS_CONTAINER_FILL_MAX
+            }
+            if (fillAlpha > 0.001f) {
+                drawRoundRect(color = surfaceColor.copy(alpha = fillAlpha), cornerRadius = corner)
+            }
             if (presence <= 0.001f) return@Canvas
 
             if (shader != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

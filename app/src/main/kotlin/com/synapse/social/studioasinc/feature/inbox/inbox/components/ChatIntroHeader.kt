@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,6 +18,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.components.LocalGlassBackdrop
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassSurface
+import com.synapse.social.studioasinc.feature.shared.components.rememberLiquidGlassPaint
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.User
 
@@ -76,8 +80,30 @@ fun ChatIntroHeader(
 
         Spacer(modifier = Modifier.height(Spacing.space20))
 
-        OutlinedButton(onClick = onViewProfile) {
-            Text(text = stringResource(id = R.string.view_profile))
+        // The same material as the rest of the conversation. The button keeps its size, its padding,
+        // its label and its action; the outline it used to draw is replaced by the glass itself. It
+        // samples the wallpaper-only layer, like the day chips, because it is drawn inside the
+        // conversation's captured content too. With no backdrop the button is exactly what it was.
+        val viewProfileBackdrop = LocalGlassBackdrop.current
+        val viewProfilePaint = rememberLiquidGlassPaint()
+        val viewProfileShape = remember { RoundedCornerShape(Sizes.CornerFull) }
+        if (viewProfileBackdrop == null) {
+            OutlinedButton(onClick = onViewProfile) {
+                Text(text = stringResource(id = R.string.view_profile))
+            }
+        } else {
+            OutlinedButton(
+                onClick = onViewProfile,
+                shape = viewProfileShape,
+                border = null,
+                modifier = Modifier.liquidGlassSurface(
+                    backdrop = viewProfileBackdrop,
+                    shape = viewProfileShape,
+                    paint = viewProfilePaint
+                )
+            ) {
+                Text(text = stringResource(id = R.string.view_profile))
+            }
         }
 
         Spacer(modifier = Modifier.height(Spacing.space24))

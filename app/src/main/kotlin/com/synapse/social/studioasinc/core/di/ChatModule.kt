@@ -1,4 +1,4 @@
-﻿package com.synapse.social.studioasinc.core.di
+package com.synapse.social.studioasinc.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -465,7 +465,8 @@ object ChatModule {
         getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
         setConversationMuteStatusUseCase: SetConversationMuteStatusUseCase,
         chatLockManager: com.synapse.social.studioasinc.core.util.ChatLockManager,
-        deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase
+        deleteExpiredMessagesUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteExpiredMessagesUseCase,
+        settingsRepository: SettingsRepository
     ): ChatSettingsDependencies = ChatSettingsDependencies(
         setDisappearingModeUseCase = setDisappearingModeUseCase,
         getDisappearingModeUseCase = getDisappearingModeUseCase,
@@ -473,6 +474,7 @@ object ChatModule {
         getConversationMuteStatusUseCase = getConversationMuteStatusUseCase,
         setConversationMuteStatusUseCase = setConversationMuteStatusUseCase,
         chatLockManager = chatLockManager,
-        deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase
+        deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase,
+        settingsRepository = settingsRepository
     )
 }

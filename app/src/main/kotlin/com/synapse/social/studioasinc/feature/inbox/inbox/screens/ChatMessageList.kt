@@ -91,6 +91,9 @@ internal fun ChatMessageList(
     onOpenMap: (Double, Double) -> Unit = { _, _ -> },
     onContactAction: (String) -> Unit = {},
     bottomContentPadding: Dp = Sizes.WidthLarge,
+    // Scroll padding, not layout space: the floating header paints over the timeline, so the
+    // oldest content needs to be able to scroll clear of it.
+    topContentPadding: Dp = Spacing.space16,
     modifier: Modifier = Modifier,
     onLocateMessage: (String) -> Unit = {},
     groupMemberNames: Map<String, String> = emptyMap(),
@@ -202,7 +205,7 @@ internal fun ChatMessageList(
         contentPadding = PaddingValues(
             start = Spacing.space8,
             end = Spacing.space8,
-            top = Spacing.space16,
+            top = topContentPadding,
             bottom = bottomContentPadding
         ),
         reverseLayout = true
