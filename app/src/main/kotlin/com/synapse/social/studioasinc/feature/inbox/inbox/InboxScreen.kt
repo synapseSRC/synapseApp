@@ -2,6 +2,8 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.spring
@@ -150,6 +152,10 @@ fun InboxScreen(
     onOpenEchoRooms: () -> Unit = {},
     onOpenEchoRoom: (String, Boolean) -> Unit = { _, _ -> },
     debugToolsEnabled: Boolean = false,
+    // Handed straight through to the conversation rows: the picture and the name in a row are the
+    // same shared elements the chat's floating pill declares.
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
     InboxScreenContent(
@@ -161,6 +167,8 @@ fun InboxScreen(
         onOpenEchoRooms = onOpenEchoRooms,
         onOpenEchoRoom = onOpenEchoRoom,
         debugToolsEnabled = debugToolsEnabled,
+        sharedTransitionScope = sharedTransitionScope,
+        animatedVisibilityScope = animatedVisibilityScope,
         viewModel = viewModel
     )
 }
@@ -176,6 +184,8 @@ private fun InboxScreenContent(
     onOpenEchoRooms: () -> Unit,
     onOpenEchoRoom: (String, Boolean) -> Unit,
     debugToolsEnabled: Boolean,
+    sharedTransitionScope: SharedTransitionScope?,
+    animatedVisibilityScope: AnimatedVisibilityScope?,
     viewModel: InboxViewModel
 ) {
     var destination by rememberSaveable { mutableStateOf(InboxDestination.INBOX) }
@@ -500,6 +510,8 @@ private fun InboxScreenContent(
                 ) { tab ->
                     when (tab) {
                         InboxTab.MESSAGES -> HomeMessages(
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                             conversations = filteredConversations,
                             isLoading = isLoading,
                             isRefreshing = isRefreshing,
@@ -646,6 +658,8 @@ private fun InboxScreenContent(
 
 @Composable
 private fun HomeMessages(
+    sharedTransitionScope: SharedTransitionScope?,
+    animatedVisibilityScope: AnimatedVisibilityScope?,
     conversations: List<Conversation>,
     isLoading: Boolean,
     isRefreshing: Boolean,
@@ -734,6 +748,8 @@ private fun HomeMessages(
                     itemsIndexed(sectionConversations, key = { _, conversation -> conversation.chatId }) { index, conversation ->
                         InboxConversationRow(
                             conversation = conversation,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                             position = GroupedItemPosition.at(index, sectionConversations.size),
                             onClick = { onOpenConversation(conversation) },
                             onLongClick = { onLongPressConversation(conversation.chatId) },

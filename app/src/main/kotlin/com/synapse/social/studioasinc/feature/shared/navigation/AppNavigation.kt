@@ -340,6 +340,11 @@ fun NavGraphBuilder.inboxGraph(
                     onOpenEchoRoom = { roomId, speakOnEntry ->
                         navController.navigate(AppDestination.EchoRoom(roomId, speakOnEntry))
                     },
+                    // The inbox takes the same scopes the conversation does: with them, the picture
+                    // and the name in a row are the very elements the floating pill declares, so
+                    // opening a chat hands them over instead of cutting to a new header.
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@composable,
                     debugToolsEnabled = BuildConfig.DEBUG
                 )
             }
