@@ -1,6 +1,8 @@
 package com.synapse.social.studioasinc.ui.search
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
 import com.synapse.social.studioasinc.feature.shared.viewmodel.BaseViewModel
+import android.app.Application
+import com.synapse.social.studioasinc.R
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
@@ -17,7 +19,11 @@ import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchNewsUse
 import com.synapse.social.studioasinc.shared.domain.usecase.search.SearchPostsUseCase
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import com.synapse.social.studioasinc.domain.model.ProfileFollowStatus
+import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.synapse.social.studioasinc.feature.shared.components.post.PostEvent
+import com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -79,7 +85,10 @@ class SearchViewModel @Inject constructor(
     private val reportPostUseCase: com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase,
     private val populatePostPollsUseCase: com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase,
     private val populatePostReactionsUseCase: com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase,
-    private val summarizePostUseCase: SummarizePostUseCase
+    private val summarizePostUseCase: SummarizePostUseCase,
+    private val application: Application,
+    private val repostPostUseCase: RepostPostUseCase,
+    private val unrepostPostUseCase: UnrepostPostUseCase
 ) : BaseViewModel<SearchUiState>(SearchUiState()) {
     private var searchJob: Job? = null
     init {
@@ -455,6 +464,38 @@ class SearchViewModel @Inject constructor(
                         state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
                     }
                 }.onFailure { err -> updateState { it.copy(error = err.message) } }
+            }
+        }
+    }
+
+    fun resharePost(post: com.synapse.social.studioasinc.domain.model.Post) {
+        viewModelScope.launch {
+            val isCurrentlyReshared = post.isReshared
+            val optimisticPost = post.copy(
+                isReshared = !isCurrentlyReshared,
+                resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+            )
+            updateState { state ->
+                state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
+            }
+            PostEventBus.emit(PostEvent.Updated(optimisticPost))
+
+            val result = if (isCurrentlyReshared) {
+                unrepostPostUseCase(post.id)
+            } else {
+                repostPostUseCase(post.id)
+            }
+
+            result.onSuccess {
+                performSearch(currentState.query)
+            }.onFailure {
+                updateState { state ->
+                    state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
+                }
+                PostEventBus.emit(PostEvent.Updated(post))
+                updateState {
+                    it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+                }
             }
         }
     }

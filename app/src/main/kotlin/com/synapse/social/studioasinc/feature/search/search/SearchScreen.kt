@@ -74,6 +74,7 @@ fun SearchScreen(
     viewModel: SearchViewModel,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToPost: (String) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -345,8 +346,8 @@ fun SearchScreen(
                                                         onLike = viewModel::likePost,
                                                         onComment = { p -> onNavigateToPost(p.id) },
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                        onRepost = { },
-                                                        onQuote = { },
+                                                        onRepost = viewModel::resharePost,
+                                                        onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                         onBookmark = viewModel::bookmarkPost,
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
@@ -463,8 +464,8 @@ fun SearchScreen(
                                                                 onLike = viewModel::likePost,
                                                                 onComment = { p -> onNavigateToPost(p.id) },
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                                onRepost = { },
-                                                                onQuote = { },
+                                                                onRepost = viewModel::resharePost,
+                                                                onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                                 onBookmark = viewModel::bookmarkPost,
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
