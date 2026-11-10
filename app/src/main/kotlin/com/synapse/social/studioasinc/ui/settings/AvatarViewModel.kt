@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
 import javax.inject.Inject
 
 @HiltViewModel
@@ -71,15 +70,24 @@ class AvatarViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isUploading = true, error = null, successMessage = null)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val userId = editProfileRepository.getCurrentUserId() ?: return@withContext
-                val tempFile = copyUriToTempFile(uri, "avatar_") ?: run {
+                val userId = editProfileRepository.getCurrentUserId() ?: run {
+                    _uiState.value = _uiState.value.copy(isUploading = false)
+                    return@withContext
+                }
+                val inputStream = context.contentResolver.openInputStream(uri) ?: run {
                     _uiState.value = _uiState.value.copy(
                         isUploading = false,
                         error = "Could not read the selected image."
                     )
                     return@withContext
                 }
+                val tempFile = File.createTempFile("avatar_", ".tmp", context.cacheDir)
                 try {
+                    inputStream.use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
                     val uploadResult = editProfileRepository.uploadAvatar(userId, tempFile.absolutePath)
                     uploadResult.fold(
                         onSuccess = { mediaReference ->
@@ -121,7 +129,10 @@ class AvatarViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isUploading = true, error = null, successMessage = null)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val userId = editProfileRepository.getCurrentUserId() ?: return@withContext
+                val userId = editProfileRepository.getCurrentUserId() ?: run {
+                    _uiState.value = _uiState.value.copy(isUploading = false)
+                    return@withContext
+                }
                 val tempFile = saveBitmapToTempFile(bitmap, "avatar_") ?: run {
                     _uiState.value = _uiState.value.copy(
                         isUploading = false,
@@ -164,20 +175,6 @@ class AvatarViewModel @Inject constructor(
                     tempFile.delete()
                 }
             }
-        }
-    }
-
-    private fun copyUriToTempFile(uri: Uri, prefix: String): File? {
-        return try {
-            val tempFile = File.createTempFile(prefix, ".tmp", context.cacheDir)
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                tempFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-            tempFile
-        } catch (e: Exception) {
-            null
         }
     }
 
