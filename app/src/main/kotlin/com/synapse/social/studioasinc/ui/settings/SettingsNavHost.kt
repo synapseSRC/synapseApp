@@ -34,6 +34,8 @@ import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
+import com.synapse.social.studioasinc.ui.settings.TwoStepVerificationScreen
+import com.synapse.social.studioasinc.ui.settings.TwoStepVerificationViewModel
 
 @Composable
 fun SettingsNavHost(
@@ -108,6 +110,9 @@ fun SettingsNavHost(
                 },
                 onNavigateToPasskeys = {
                     navController.navigate(SettingsDestination.ROUTE_PASSKEYS)
+                },
+                onNavigateToTwoStepVerification = {
+                    navController.navigate(SettingsDestination.ROUTE_TWO_STEP_VERIFICATION)
                 }
             )
         }
@@ -115,6 +120,16 @@ fun SettingsNavHost(
         composable(route = SettingsDestination.ROUTE_PASSKEYS) {
             val viewModel: PasskeysViewModel = hiltViewModel()
             PasskeysScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_TWO_STEP_VERIFICATION) {
+            val viewModel: TwoStepVerificationViewModel = viewModel()
+            TwoStepVerificationScreen(
                 viewModel = viewModel,
                 onBackClick = {
                     navController.popBackStack()
