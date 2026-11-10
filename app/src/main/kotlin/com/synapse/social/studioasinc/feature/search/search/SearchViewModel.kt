@@ -58,6 +58,10 @@ data class SearchUiState(
     val cachedData: Map<SearchTab, Any> = emptyMap(),
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
+    val isReportDialogShowing: Boolean = false,
+    val reportDialogPost: com.synapse.social.studioasinc.domain.model.Post? = null,
+    val reportSuccess: Boolean = false,
+    val reportError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null
@@ -435,6 +439,40 @@ class SearchViewModel @Inject constructor(
     }
 
     fun reportPost(post: com.synapse.social.studioasinc.domain.model.Post) {
+        updateState { it.copy(isReportDialogShowing = true, reportDialogPost = post) }
+    }
+
+    fun submitReport(reason: String) {
+        val post = currentState.reportDialogPost ?: return
+        viewModelScope.launch {
+            reportPostUseCase(post.id, reason, null).collect { result ->
+                result.onSuccess {
+                    updateState {
+                        it.copy(
+                            isReportDialogShowing = false,
+                            reportDialogPost = null,
+                            reportSuccess = true
+                        )
+                    }
+                }.onFailure { err ->
+                    updateState {
+                        it.copy(
+                            isReportDialogShowing = false,
+                            reportDialogPost = null,
+                            reportError = err.message ?: "Failed to report post"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun dismissReportDialog() {
+        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null) }
+    }
+
+    fun clearReportStatus() {
+        updateState { it.copy(reportSuccess = false, reportError = null) }
     }
 
     fun blockUser(userId: String) {
