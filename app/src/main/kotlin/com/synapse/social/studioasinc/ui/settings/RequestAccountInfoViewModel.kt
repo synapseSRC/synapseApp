@@ -122,14 +122,14 @@ class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun downloadReport() {
-        if (_uiState.value.status !is RequestStatus.Ready) {
-            _uiState.value = _uiState.value.copy(
-                error = application.getString(R.string.download_report_not_ready)
-            )
-            return
-        }
-
         viewModelScope.launch {
+            if (_uiState.value.status !is RequestStatus.Ready) {
+                _uiState.value = _uiState.value.copy(
+                    error = application.getString(R.string.download_report_not_ready)
+                )
+                return@launch
+            }
+
             _uiState.value = _uiState.value.copy(isDownloading = true)
 
             try {
