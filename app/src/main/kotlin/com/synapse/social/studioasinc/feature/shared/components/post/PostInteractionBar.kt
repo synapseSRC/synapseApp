@@ -250,7 +250,7 @@ fun PostInteractionBar(
                 if (isLoading) {
                     androidx.compose.material3.CircularProgressIndicator(
                         modifier = Modifier.size(Sizes.IconSmall),
-                        strokeWidth = 2f
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Icon(
