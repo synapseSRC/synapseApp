@@ -145,8 +145,6 @@ fun SettingsNavHost(
                 onNavigateToBlockedUsers = {
                     navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS)
                 },
-                onNavigateToMutedUsers = {
-                },
                 onNavigateToActiveSessions = {
                 },
                 onNavigateToLastSeen = {

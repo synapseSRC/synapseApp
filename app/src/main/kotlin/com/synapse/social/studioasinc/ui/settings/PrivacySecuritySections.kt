@@ -148,7 +148,6 @@ internal fun SecuritySection(
 @Composable
 internal fun ContactsSection(
     onNavigateToBlockedUsers: () -> Unit,
-    onNavigateToMutedUsers: () -> Unit,
     isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.privacy_section_blocking)) {
@@ -164,8 +163,8 @@ internal fun ContactsSection(
             title = stringResource(R.string.privacy_muted_users),
             subtitle = stringResource(R.string.privacy_muted_users_subtitle),
             imageVector = Icons.Filled.Notifications,
-            onClick = onNavigateToMutedUsers,
-            enabled = !isLoading,
+            onClick = null,
+            enabled = false,
             position = SettingsItemPosition.Bottom
         )
     }
