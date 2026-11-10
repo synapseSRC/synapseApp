@@ -92,14 +92,14 @@ fun TwoStepVerificationScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SettingsIconBadge(imageVector = Icons.Filled.Security)
-                    Spacer(modifier = androidx.compose.foundation.layout.Modifier.width(AppSpacing.iconTextSpacing))
+                    Spacer(modifier = Modifier.width(AppSpacing.iconTextSpacing))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.settings_two_step_verification_title),
                             style = AppTypography.itemTitle,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Spacer(modifier = androidx.compose.foundation.layout.Modifier.height(Spacing.space4))
+                        Spacer(modifier = Modifier.height(Spacing.space4))
                         Text(
                             text = stringResource(R.string.settings_two_step_verification_subtitle),
                             style = AppTypography.itemSubtitle,
