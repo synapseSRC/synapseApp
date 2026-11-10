@@ -113,6 +113,18 @@ class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(a
         }
     }
 
+    fun downloadReport() {
+        viewModelScope.launch {
+            // Simulate retrieving the generated report from the server.
+            delay(800)
+
+            _uiState.value = _uiState.value.copy(
+                status = RequestStatus.Idle,
+                error = "Report downloaded to Downloads"
+            )
+        }
+    }
+
 
 
     fun clearError() {

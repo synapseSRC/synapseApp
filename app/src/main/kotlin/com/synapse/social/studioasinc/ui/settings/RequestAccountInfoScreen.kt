@@ -189,7 +189,7 @@ fun RequestAccountInfoScreen(
 
             AnimatedVisibility(visible = uiState.status is RequestStatus.Ready) {
                 OutlinedButton(
-                    onClick = { },
+                    onClick = { viewModel.downloadReport() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Sizes.HeightDefault),
