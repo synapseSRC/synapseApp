@@ -45,6 +45,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.kyant.backdrop.Backdrop
 import com.synapse.social.studioasinc.feature.shared.components.accentBead
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassAccentPaint
 import com.synapse.social.studioasinc.feature.shared.components.liquidGlassSurface
 import com.synapse.social.studioasinc.feature.shared.components.rememberLiquidGlassPaint
 
@@ -119,13 +120,6 @@ fun VoiceInputHost(
     // The accent button's glass: the same sampling, blur and refraction, tinted with the scheme's
     // accent, so the mic and the send button are coloured glass rather than solid chips.
     val accentPaint = liquidGlassAccentPaint()
-    // The pill is opaque while the energy field is on screen, so the accent button hands its glass
-    // back for those states - over a solid container it would read as a hole to the wallpaper.
-    val accentBackdrop = if (
-        voiceState is VoiceState.Recording ||
-        voiceState is VoiceState.Locked ||
-        voiceState is VoiceState.VoiceDraft
-    ) null else backdrop
     val pillShape = remember { RoundedCornerShape(Sizes.CornerMassive) }
     val density = LocalDensity.current
     var hostBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
@@ -295,7 +289,9 @@ fun VoiceInputHost(
                         voiceState = voiceState,
                         onVoiceAction = onVoiceAction,
                         reducedMotionOverride = reducedMotion,
-                        backdrop = accentBackdrop,
+                        // The mic keeps its glass while the energy field is on screen too: the field's
+                        // container is glass now, so the button is the same material in every state.
+                        backdrop = backdrop,
                         onMicBoundsChanged = { micBoundsInRoot = it },
                         onGestureOffsetChanged = { lastLockGestureOffsetYPx = it }
                     )
