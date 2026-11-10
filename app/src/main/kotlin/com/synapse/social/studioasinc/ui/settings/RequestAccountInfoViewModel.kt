@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.ui.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,7 +126,7 @@ class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(a
         viewModelScope.launch {
             if (_uiState.value.status !is RequestStatus.Ready) {
                 _uiState.value = _uiState.value.copy(
-                    error = application.getString(R.string.download_report_not_ready)
+                    error = getApplication<Application>().getString(R.string.download_report_not_ready)
                 )
                 return@launch
             }
@@ -137,12 +138,12 @@ class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(a
 
                 _uiState.value = _uiState.value.copy(
                     isDownloading = false,
-                    downloadSuccess = application.getString(R.string.download_report_success)
+                    downloadSuccess = getApplication<Application>().getString(R.string.download_report_success)
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isDownloading = false,
-                    error = application.getString(R.string.download_report_failed)
+                    error = getApplication<Application>().getString(R.string.download_report_failed)
                 )
             }
         }

@@ -207,7 +207,6 @@ fun RequestAccountInfoScreen(
                         CircularProgressIndicator(
                             modifier = Modifier.size(Sizes.IconLarge),
                             color = MaterialTheme.colorScheme.primary,
-                            contentDescription = stringResource(R.string.action_downloading_report),
                             strokeWidth = Sizes.BorderDefault
                         )
                         Spacer(Modifier.width(AppSpacing.sectionSpacing))
