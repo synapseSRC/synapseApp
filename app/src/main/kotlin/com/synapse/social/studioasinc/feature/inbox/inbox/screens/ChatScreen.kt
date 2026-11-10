@@ -59,6 +59,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceState
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceGestureConfig
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadService
 import com.synapse.social.studioasinc.feature.shared.components.LinkPreviewViewModel
+import com.synapse.social.studioasinc.feature.shared.components.LocalGlassBackdrop
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -494,7 +495,17 @@ val currentUserId = currentUserIdState ?: ""
     }
     // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
     // in that layer, so every glass surface is told not to sample one.
+    // A second, much smaller layer: the wallpaper on its own. The surfaces that live *inside* the
+    // content layer sample this one - they cannot sample the layer that contains them, see
+    // LocalGlassBackdrop - and it holds nothing else, so it can never contain them.
+    val backgroundBackdrop = rememberLayerBackdrop {
+        drawRect(backdropBaseColor)
+        drawContent()
+    }
+    // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
+    // in that layer, so every glass surface is told not to sample one.
     val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
+    val inListBackdrop = if (glassSurfaceSupported) backgroundBackdrop else null
 
     Scaffold(
         topBar = {
@@ -533,11 +544,19 @@ val currentUserId = currentUserIdState ?: ""
                         if (glassSurfaceSupported) Modifier.layerBackdrop(contentBackdrop) else Modifier
                     )
             ) {
-                ChatBackground(
-                    chatWallpaperType = chatWallpaperType,
-                    chatWallpaperValue = chatWallpaperValue,
-                    chatWallpaperBlur = chatWallpaperBlur
-                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .then(
+                            if (glassSurfaceSupported) Modifier.layerBackdrop(backgroundBackdrop) else Modifier
+                        )
+                ) {
+                    ChatBackground(
+                        chatWallpaperType = chatWallpaperType,
+                        chatWallpaperValue = chatWallpaperValue,
+                        chatWallpaperBlur = chatWallpaperBlur
+                    )
+                }
 
                 when {
                     isLoading && messages.isEmpty() -> {
@@ -565,60 +584,65 @@ val currentUserId = currentUserIdState ?: ""
                         }
                     }
                     else -> {
-                        ChatMessageList(
-                            chatId = chatId,
-                            modifier = Modifier
-                                .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
-                            chatItems = chatItems,
-                            messages = messages,
-                            bottomContentPadding = messageListBottomPadding,
-                            topContentPadding = messageListTopPadding,
-                            currentUserId = currentUserId,
-                            selectedMessageIds = selectedMessageIds,
-                            chatFontScale = chatFontScale,
-                            chatMessageCornerRadius = chatMessageCornerRadius,
-                            chatThemePreset = chatThemePreset,
-                            chatAvatarDisabled = chatAvatarDisabled,
-                            participantProfile = participantProfile,
-                            initialParticipantName = initialParticipantName,
-                            participantAvatarUrl = participantAvatarUrl,
-                            participantId = participantId,
-                            isGroupChat = isGroupChat,
-                            groupMemberNames = groupMemberNames,
-                            groupMemberAvatars = groupMemberAvatars,
-                            listState = listState,
-                            initialMessageId = searchJumpMessageId ?: initialMessageId,
-                            isListVisible = initialScrollCompleted || messages.isEmpty(),
-                            isScreenVisible = isScreenVisible,
-                            isLoadingMore = isLoadingMore,
-    typingStatus = typingStatus,
-                            typingStatusDisplayName = if (isGroupChat) {
-                                typingStatus?.userId?.let { groupMemberNames[it] }
-                            } else null,
-                            onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
-                            onSingleTap = { selectedMessageForMenu = it },
-                            onToggleSelection = { viewModel.toggleMessageSelection(it) },
-                            onSwipeToReply = { viewModel.setReplyingToMessage(it) },
-                            onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
-                            onNavigateToProfile = onNavigateToProfile,
-                            onOpenEncryption = { showEncryptionSheet = true },
-                            onLocateMessage = viewModel::loadQuotedMessage,
-                            onOpenBatchGallery = { batchGalleryMessage = it },
-                            onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
-                            onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
-                            onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
-                            onOpenEphemeralMedia = { mediaUrl -> 
-                            try { 
-                                uriHandler.openUri(mediaUrl)
-                                messages.find { it.mediaUrl == mediaUrl && it.metadataContainer?.viewOnce?.isConsumed != true }?.id?.let { viewModel.markViewOnceConsumed(it) }
-                            } catch (_: Exception) {} 
-                        },
-                            onOpenEvent = { eventId -> try { uriHandler.openUri("synapse://event/$eventId") } catch (_: Exception) {} },
-                            onOpenProduct = { productId -> try { uriHandler.openUri("synapse://product/$productId") } catch (_: Exception) {} },
-                            onOpenMap = { lat, lon -> try { uriHandler.openUri("https://maps.google.com/?q=$lat,$lon") } catch (_: Exception) {} },
-                            onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} },
-                            onRetryClick = viewModel::retrySendMessage
-                        )
+                        // The list's own surfaces - the day chips, the intro header's button - sample
+                        // the wallpaper-only layer, provided here so they never see the layer that
+                        // contains them.
+                        CompositionLocalProvider(LocalGlassBackdrop provides inListBackdrop) {
+                            ChatMessageList(
+                                chatId = chatId,
+                                modifier = Modifier
+                                    .graphicsLayer { alpha = if (initialScrollCompleted || messages.isEmpty()) 1f else 0f },
+                                chatItems = chatItems,
+                                messages = messages,
+                                bottomContentPadding = messageListBottomPadding,
+                                topContentPadding = messageListTopPadding,
+                                currentUserId = currentUserId,
+                                selectedMessageIds = selectedMessageIds,
+                                chatFontScale = chatFontScale,
+                                chatMessageCornerRadius = chatMessageCornerRadius,
+                                chatThemePreset = chatThemePreset,
+                                chatAvatarDisabled = chatAvatarDisabled,
+                                participantProfile = participantProfile,
+                                initialParticipantName = initialParticipantName,
+                                participantAvatarUrl = participantAvatarUrl,
+                                participantId = participantId,
+                                isGroupChat = isGroupChat,
+                                groupMemberNames = groupMemberNames,
+                                groupMemberAvatars = groupMemberAvatars,
+                                listState = listState,
+                                initialMessageId = searchJumpMessageId ?: initialMessageId,
+                                isListVisible = initialScrollCompleted || messages.isEmpty(),
+                                isScreenVisible = isScreenVisible,
+                                isLoadingMore = isLoadingMore,
+        typingStatus = typingStatus,
+                                typingStatusDisplayName = if (isGroupChat) {
+                                    typingStatus?.userId?.let { groupMemberNames[it] }
+                                } else null,
+                                onLoadMore = { if (hasMoreMessages) viewModel.loadMoreMessages() },
+                                onSingleTap = { selectedMessageForMenu = it },
+                                onToggleSelection = { viewModel.toggleMessageSelection(it) },
+                                onSwipeToReply = { viewModel.setReplyingToMessage(it) },
+                                onReactionSelected = { id, reaction -> viewModel.toggleMessageReaction(id, reaction) },
+                                onNavigateToProfile = onNavigateToProfile,
+                                onOpenEncryption = { showEncryptionSheet = true },
+                                onLocateMessage = viewModel::loadQuotedMessage,
+                                onOpenBatchGallery = { batchGalleryMessage = it },
+                                onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
+                                onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
+                                onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
+                                onOpenEphemeralMedia = { mediaUrl -> 
+                                try { 
+                                    uriHandler.openUri(mediaUrl)
+                                    messages.find { it.mediaUrl == mediaUrl && it.metadataContainer?.viewOnce?.isConsumed != true }?.id?.let { viewModel.markViewOnceConsumed(it) }
+                                } catch (_: Exception) {} 
+                            },
+                                onOpenEvent = { eventId -> try { uriHandler.openUri("synapse://event/$eventId") } catch (_: Exception) {} },
+                                onOpenProduct = { productId -> try { uriHandler.openUri("synapse://product/$productId") } catch (_: Exception) {} },
+                                onOpenMap = { lat, lon -> try { uriHandler.openUri("https://maps.google.com/?q=$lat,$lon") } catch (_: Exception) {} },
+                                onContactAction = { phone -> try { uriHandler.openUri("tel:$phone") } catch (_: Exception) {} },
+                                onRetryClick = viewModel::retrySendMessage
+                            )
+                        }
 
                         if (selectedMessageForMenu != null) {
                             MessageContextMenu(

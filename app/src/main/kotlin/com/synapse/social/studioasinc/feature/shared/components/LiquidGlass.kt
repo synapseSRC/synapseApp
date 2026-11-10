@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -62,6 +63,24 @@ internal val GlassLensAmount = 24.dp
 
 /** How far a surface shrinks while it is held, without moving the glass it samples. */
 internal const val GlassPressScale = 0.96f
+
+/**
+ * The backdrop the conversation's in-list surfaces sample, provided once by the screen that owns the
+ * content layer.
+ *
+ * It is a local rather than a parameter because the surfaces that need it sit at very different
+ * depths - the header and the composer, but also the day chips down inside the message list and the
+ * intro header's button - and threading one value through every composable on the way down would put
+ * it in the signature of all of them. A screen that provides nothing leaves those surfaces exactly
+ * as they were.
+ *
+ * It is deliberately *not* the same layer the floating header and composer sample: those sit outside
+ * the recorded content, so they can sample everything behind them, messages included. A chip is
+ * inside that content, and the library records a layer after drawing it, so sampling it from inside
+ * would feed the chip's own previous frame back into itself. In-list surfaces get the wallpaper-only
+ * layer instead, which is what is actually behind them.
+ */
+internal val LocalGlassBackdrop = compositionLocalOf<Backdrop?> { null }
 
 /**
  * The three theme decisions every glass surface makes the same way: the colour it is tinted with,
