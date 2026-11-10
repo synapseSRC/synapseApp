@@ -144,15 +144,6 @@ fun PostDetailScreen(
         }
     }
 
-    // Surface comment-like errors as a snackbar (post-load errors, where post == null, are rendered
-    // inline in PostDetailContent instead).
-    LaunchedEffect(uiState.error, uiState.post) {
-        if (uiState.error != null && uiState.post != null) {
-            snackbarHostState.showSnackbar(message = uiState.error ?: context.getString(R.string.error_unknown))
-            viewModel.clearError()
-        }
-    }
-
     if (showMediaViewer && uiState.post != null) {
         val mediaUrls = uiState.post?.post?.mediaItems?.map { it.url }
             ?: listOfNotNull(uiState.post?.post?.postImage)
@@ -252,6 +243,15 @@ fun PostDetailScreen(
             usernames = uiState.replyToParticipants.map { it.username },
             onDismiss = { showReplyingToSheet = false }
         )
+    }
+
+    // Surface comment-like errors as a snackbar (post-load errors, where post == null, are rendered
+    // inline in PostDetailContent instead).
+    LaunchedEffect(uiState.error, uiState.post) {
+        if (uiState.error != null && uiState.post != null) {
+            snackbarHostState.showSnackbar(message = uiState.error ?: context.getString(R.string.error_unknown))
+            viewModel.clearError()
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
