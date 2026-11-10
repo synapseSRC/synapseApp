@@ -30,8 +30,10 @@ struct PrivacySettingsView: View {
             }
 
             Section(header: Text("Blocked Users")) {
-                NavigationLink("Manage Blocked Users", destination: BlockedUsersView())
-                    .accessibilityLabel("Manage Blocked Users List Button")
+                NavigationLink(destination: BlockedUsersView()) {
+                    Text("Manage Blocked Users")
+                }
+                .accessibilityLabel("Manage Blocked Users List Button")
             }
         }
         .navigationTitle("Privacy & Security")
