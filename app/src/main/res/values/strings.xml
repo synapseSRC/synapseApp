@@ -1887,6 +1887,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="settings_passkeys_subtitle">Manage your passkeys</string>
     <string name="settings_two_step_verification_title">Two-Step Verification</string>
     <string name="settings_two_step_verification_subtitle">Add extra security to your account</string>
+    <string name="action_setup_two_factor">Set Up</string>
+    <string name="action_enabled">Enabled</string>
+    <string name="settings_two_factor_enabled_status">Two-step verification is enabled.</string>
+    <string name="settings_two_factor_setup_description">Set up two-step verification to add an extra layer of security to your account.</string>
     <string name="settings_account_information_section">Account Information</string>
     <string name="settings_email_address_title">Email Address</string>
     <string name="settings_email_address_subtitle">Update your email address</string>
