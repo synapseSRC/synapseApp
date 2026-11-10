@@ -43,6 +43,10 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.LiveW
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.components.OdometerTimerText
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.kyant.backdrop.Backdrop
+import com.synapse.social.studioasinc.feature.shared.components.accentBead
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassSurface
+import com.synapse.social.studioasinc.feature.shared.components.rememberLiquidGlassPaint
 
 internal fun voiceCancelTint(normal: Color, cancel: Color, progress: Float): Color =
     lerp(normal, cancel, progress.coerceIn(0f, 1f))
@@ -104,10 +108,15 @@ fun VoiceInputHost(
     showSendButton: Boolean,
     onSendMessage: () -> Unit,
     reducedMotionOverride: Boolean,
+    // The layer the whole conversation was captured into, so the pill can sample the wallpaper and
+    // the messages moving behind it. Null keeps the solid container this bar had before.
+    backdrop: Backdrop? = null,
     modifier: Modifier = Modifier,
     normalContent: @Composable () -> Unit
 ) {
     val reducedMotion = reducedMotionOverride
+    val glassPaint = rememberLiquidGlassPaint()
+    val pillShape = remember { RoundedCornerShape(Sizes.CornerMassive) }
     val density = LocalDensity.current
     var hostBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
     var micBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
@@ -142,14 +151,29 @@ fun VoiceInputHost(
                 .testTag("voice-recording-bar")
                 .shadow(
                     elevation = Sizes.ElevationMedium,
-                    shape = RoundedCornerShape(Sizes.CornerMassive),
+                    shape = pillShape,
                     clip = false
+                )
+                .then(
+                    // The composer is the same material as the chat header: it samples the one layer
+                    // the conversation was captured into, through its own pill shape, and puts
+                    // nothing of its own on top of it.
+                    if (backdrop != null) {
+                        Modifier.liquidGlassSurface(
+                            backdrop = backdrop,
+                            shape = pillShape,
+                            paint = glassPaint
+                        )
+                    } else {
+                        Modifier
+                    }
                 )
         ) {
             VoiceRecordingGlowSurface(
                 voiceState = voiceState,
                 reducedMotionOverride = reducedMotion,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier.matchParentSize(),
+                glassActive = backdrop != null
             )
 
             Row(
@@ -211,7 +235,10 @@ fun VoiceInputHost(
                         ) {
                             Box(
                                 contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
+                                // The accent fill keeps Synapse's colour; the bead gives it the same
+                                // specular edge the glass surfaces wear, over the fill and behind
+                                // the icon.
+                                modifier = Modifier.fillMaxSize().accentBead()
                             ) {
                                 IconButton(onClick = onSendMessage) {
                                     Icon(
@@ -912,6 +939,8 @@ fun CanonicalMicButton(
                     spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = glowAlpha * 0.8f)
                 )
                 .background(micTint, CircleShape)
+                // Same bead as the send button: the mic keeps its accent colour and gains the edge.
+                .accentBead()
                 .testTag("voice-recording-mic-visual"),
             contentAlignment = Alignment.Center
         ) {
