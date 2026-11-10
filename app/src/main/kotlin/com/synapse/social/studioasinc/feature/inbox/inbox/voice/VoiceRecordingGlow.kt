@@ -716,11 +716,19 @@ fun VoiceRecordingGlowSurface(
             val corner = CornerRadius(minOf(maxCornerPx, height / 2f))
 
             val presence = presenceState.value
-            // The glass is the container while the composer is at rest. The fill only comes back
-            // while the energy field is on screen, on the same fade that brings the field in, so
-            // the composer never jumps between two backgrounds.
-            if (!glassActive || presence > 0.001f) {
-                drawRoundRect(color = surfaceColor, cornerRadius = corner)
+            // The glass is the container while the composer is at rest. A recording, or a draft the
+            // user has stopped on, still needs an opaque surface for the energy field to read
+            // against, so the fill is drawn at full strength for as long as the field holds its own
+            // strength - DRAFT_PRESENCE is that strength, which is what the ratio normalises - and it
+            // thins out on the same spring that takes the field away. That is what keeps the composer
+            // from jumping between two backgrounds when a recording ends.
+            val fillAlpha = if (!glassActive) {
+                1f
+            } else {
+                (presence / VoiceEnergyDesign.DRAFT_PRESENCE).coerceIn(0f, 1f)
+            }
+            if (fillAlpha > 0.001f) {
+                drawRoundRect(color = surfaceColor.copy(alpha = fillAlpha), cornerRadius = corner)
             }
             if (presence <= 0.001f) return@Canvas
 
