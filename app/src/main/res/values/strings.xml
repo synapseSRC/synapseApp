@@ -1686,6 +1686,10 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="action_processing_request">Processing Request…</string>
     <string name="action_request_reports">Request Selected Reports</string>
     <string name="action_download_report">Download Ready Report</string>
+    <string name="action_downloading_report">Downloading Report…</string>
+    <string name="download_report_success">Report downloaded successfully.</string>
+    <string name="download_report_not_ready">Report is not ready for download.</string>
+    <string name="download_report_failed">Failed to download report. Please try again.</string>
     <!-- Scheduled Posts -->
     <string name="schedule">Schedule</string>
     <string name="title_schedule_post">Schedule Post</string>

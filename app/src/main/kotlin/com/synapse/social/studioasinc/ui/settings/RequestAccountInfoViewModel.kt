@@ -29,7 +29,9 @@ data class RequestAccountInfoUiState(
     val isChannelActivitySelected: Boolean = false,
     val isAutoReportEnabled: Boolean = false,
     val status: RequestStatus = RequestStatus.Idle,
-    val error: String? = null
+    val error: String? = null,
+    val isDownloading: Boolean = false,
+    val downloadSuccess: String? = null
 )
 
 
@@ -117,5 +119,36 @@ class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(a
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun downloadReport() {
+        if (_uiState.value.status !is RequestStatus.Ready) {
+            _uiState.value = _uiState.value.copy(
+                error = application.getString(R.string.download_report_not_ready)
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDownloading = true)
+
+            try {
+                delay(2000)
+
+                _uiState.value = _uiState.value.copy(
+                    isDownloading = false,
+                    downloadSuccess = application.getString(R.string.download_report_success)
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isDownloading = false,
+                    error = application.getString(R.string.download_report_failed)
+                )
+            }
+        }
+    }
+
+    fun clearDownloadSuccess() {
+        _uiState.value = _uiState.value.copy(downloadSuccess = null)
     }
 }

@@ -83,6 +83,13 @@ fun RequestAccountInfoScreen(
         }
     }
 
+    LaunchedEffect(uiState.downloadSuccess) {
+        uiState.downloadSuccess?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearDownloadSuccess()
+        }
+    }
+
     Scaffold(
         containerColor = AppColors.screenBackground,
         topBar = {
@@ -189,15 +196,26 @@ fun RequestAccountInfoScreen(
 
             AnimatedVisibility(visible = uiState.status is RequestStatus.Ready) {
                 OutlinedButton(
-                    onClick = { },
+                    onClick = { viewModel.downloadReport() },
+                    enabled = uiState.status is RequestStatus.Ready && !uiState.isDownloading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Sizes.HeightDefault),
                     shape = AppShapes.inputShape
                 ) {
-                    Icon(Icons.Default.FileDownload, contentDescription = null)
-                    Spacer(modifier = Modifier.width(Spacing.space8))
-                    Text(stringResource(R.string.action_download_report))
+                    if (uiState.isDownloading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(Sizes.IconLarge),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = Sizes.BorderDefault
+                        )
+                        Spacer(Modifier.width(AppSpacing.sectionSpacing))
+                        Text(stringResource(R.string.action_downloading_report))
+                    } else {
+                        Icon(Icons.Default.FileDownload, contentDescription = null)
+                        Spacer(modifier = Modifier.width(Spacing.space8))
+                        Text(stringResource(R.string.action_download_report))
+                    }
                 }
             }
 
