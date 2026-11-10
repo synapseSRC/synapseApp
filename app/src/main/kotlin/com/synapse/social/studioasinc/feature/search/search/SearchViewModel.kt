@@ -53,7 +53,7 @@ data class SearchUiState(
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
     val isReportDialogShowing: Boolean = false,
-    val reportDialogPost: Post? = null,
+    val reportDialogPost: com.synapse.social.studioasinc.domain.model.Post? = null,
     val reportSuccess: Boolean = false,
     val reportError: String? = null,
     val isSummarizing: Boolean = false,
