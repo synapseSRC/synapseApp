@@ -322,10 +322,13 @@ class PostDetailViewModel @Inject constructor(
     fun votePoll(optionIndex: Int) {
         val postId = currentPostId ?: return
         viewModelScope.launch {
+            _uiState.update { it.copy(voteError = null, lastVoteOptionIndex = optionIndex) }
             pollRepository.submitVote(postId, optionIndex).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                     _uiState.update { it.copy(post = updatedPost) }
-                 }
+                    _uiState.update { it.copy(post = updatedPost, voteError = null, lastVoteOptionIndex = null) }
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(voteError = e.message ?: "Failed to vote") }
             }
         }
     }
@@ -333,12 +336,29 @@ class PostDetailViewModel @Inject constructor(
     fun revokeVote() {
         val postId = currentPostId ?: return
         viewModelScope.launch {
+            _uiState.update { it.copy(revokeError = null) }
             pollRepository.revokeVote(postId).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                     _uiState.update { it.copy(post = updatedPost) }
-                 }
+                    _uiState.update { it.copy(post = updatedPost, revokeError = null, lastVoteOptionIndex = null) }
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(revokeError = e.message ?: "Failed to revoke vote") }
             }
         }
+    }
+
+    fun retryVote() {
+        val postId = currentPostId ?: return
+        val optionIndex = _uiState.value.lastVoteOptionIndex ?: return
+        votePoll(optionIndex)
+    }
+
+    fun clearVoteError() {
+        _uiState.update { it.copy(voteError = null) }
+    }
+
+    fun clearRevokeError() {
+        _uiState.update { it.copy(revokeError = null) }
     }
 
     fun toggleBookmark() {
