@@ -33,8 +33,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp as lerpDp
 import kotlinx.coroutines.coroutineScope
@@ -329,7 +327,7 @@ private fun VoiceSendCircle(
     accentPaint: LiquidGlassPaint,
     modifier: Modifier = Modifier,
     testTag: String? = null,
-    fallbackShadowElevation: Dp = 0.dp
+    fallbackShadowElevation: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     val face: @Composable () -> Unit = {
         Box(
