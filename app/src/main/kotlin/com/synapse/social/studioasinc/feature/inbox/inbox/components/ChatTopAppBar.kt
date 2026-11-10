@@ -2,14 +2,10 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.components
 
 import android.content.ClipData
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
@@ -28,7 +24,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -38,17 +33,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import com.synapse.social.studioasinc.feature.shared.components.SingleLineMarqueeText
+import com.synapse.social.studioasinc.feature.shared.components.liquidGlassSurface
+import com.synapse.social.studioasinc.feature.shared.components.rememberGlassPressProgress
+import com.synapse.social.studioasinc.feature.shared.components.rememberLiquidGlassPaint
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.DpOffset
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.effects.blur
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.effects.vibrancy
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.highlight.HighlightStyle
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatarWithStatus
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -263,29 +255,9 @@ val ChatFloatingHeaderHeight = FloatingHeaderHeight + Spacing.space4 * 2
 private const val FloatingHeaderSurfaceAlpha = 0.92f
 private const val FloatingHeaderBorderAlpha = 0.45f
 
-/**
- * Liquid glass parameters for the three floating surfaces. The tint is what keeps the title, the
- * status line and the icons readable; the blur, the refraction and the specular edge are what make
- * the same surface read as glass rather than as a translucent panel. The blur stays deliberately
- * low - a heavy frosted blur is the look this is not.
- */
-private const val GlassTintAlphaLight = 0.45f
-private const val GlassTintAlphaDark = 0.5f
-private val GlassBlurRadius = 3.dp
-private val GlassHighlightWidth = 0.5.dp
-private val GlassHighlightBlur = 0.75.dp
-private const val GlassHighlightAlphaLight = 0.9f
-private const val GlassHighlightAlphaDark = 0.5f
-
-/**
- * Refraction of a 48dp capsule: the height stays inside its 24dp corner radius and the amount
- * inside its short side, which is the range the refraction shader is defined over.
- */
-private val GlassLensHeight = 12.dp
-private val GlassLensAmount = 24.dp
-
-/** How far a surface shrinks while it is held, without moving the glass it samples. */
-private const val GlassPressScale = 0.96f
+// The glass itself - its parameters, the theme decisions and the modifier that draws it - lives in
+// feature/shared/components/LiquidGlass.kt, because the header and the chat composer are one
+// material and should always be read from one place.
 
 /**
  * The one line under the name in the header: a group's roster, or what the other side is doing right
@@ -436,12 +408,12 @@ private fun FloatingHeaderSurface(
     interactionSource: MutableInteractionSource,
     content: @Composable () -> Unit
 ) {
-    val glassTint = MaterialTheme.colorScheme.surfaceContainerHigh
+    val paint = rememberLiquidGlassPaint()
     if (backdrop == null) {
         Surface(
             modifier = modifier,
             shape = shape,
-            color = glassTint.copy(alpha = FloatingHeaderSurfaceAlpha),
+            color = paint.tint.copy(alpha = FloatingHeaderSurfaceAlpha),
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = Sizes.ElevationLow,
             shadowElevation = Sizes.ElevationLow,
@@ -452,65 +424,20 @@ private fun FloatingHeaderSurface(
             content = content
         )
     } else {
-        // A light surface-container role means the light scheme. That scheme leans bright with a
-        // strong sheen; the dark scheme leans deep, which is what keeps white icons readable, with a
-        // restrained one.
-        val isLightGlass = glassTint.luminance() > 0.5f
-        val held by interactionSource.collectIsPressedAsState()
-        val pressProgress by animateFloatAsState(
-            targetValue = if (held) 1f else 0f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            ),
-            label = "floatingHeaderPress"
-        )
+        // Held buttons shrink the glass disc they sit on; the surface reports through the same
+        // interaction source either way.
+        val pressProgress = rememberGlassPressProgress(interactionSource)
         Box(
-            modifier = modifier.drawBackdrop(
-                backdrop = backdrop,
-                shape = { shape },
-                effects = {
-                    // The order the library prescribes: colour filter, then blur, then lens.
-                    vibrancy()
-                    blur(GlassBlurRadius.toPx())
-                    // Refraction is what separates this from frosted glass. lens() is a no-op below
-                    // Android 13, where the reflection shaders do not exist.
-                    lens(
-                        refractionHeight = GlassLensHeight.toPx(),
-                        refractionAmount = GlassLensAmount.toPx(),
-                        depthEffect = true,
-                        chromaticAberration = true
-                    )
-                },
-                // White is the colour of the specular edge itself, not a themed role; only its
-                // strength follows the scheme.
-                highlight = {
-                    Highlight(
-                        width = GlassHighlightWidth,
-                        blurRadius = GlassHighlightBlur,
-                        alpha = if (isLightGlass) GlassHighlightAlphaLight else GlassHighlightAlphaDark,
-                        style = HighlightStyle.Default(color = Color.White.copy(alpha = 0.5f))
-                    )
-                },
-                // The press scale lives here rather than in a graphicsLayer above this modifier:
-                // the node draws the backdrop through the inverse of this transform, so the surface
-                // can shrink under a finger while the glass it samples stays exactly where it was.
-                layerBlock = {
-                    val scale = 1f - (1f - GlassPressScale) * pressProgress
-                    scaleX = scale
-                    scaleY = scale
-                },
-                onDrawSurface = {
-                    drawRect(
-                        glassTint.copy(
-                            alpha = if (isLightGlass) GlassTintAlphaLight else GlassTintAlphaDark
-                        )
-                    )
-                }
-            )
-            // Parity with the M3 Surface this Box replaces: the surface stays one traversal group
-            // for accessibility, and the minimum constraints still reach its content.
-            .semantics { isTraversalGroup = true },
+            modifier = modifier
+                .liquidGlassSurface(
+                    backdrop = backdrop,
+                    shape = shape,
+                    paint = paint,
+                    pressProgress = pressProgress
+                )
+                // Parity with the M3 Surface this Box replaces: the surface stays one traversal group
+                // for accessibility, and the minimum constraints still reach its content.
+                .semantics { isTraversalGroup = true },
             propagateMinConstraints = true
         ) {
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
