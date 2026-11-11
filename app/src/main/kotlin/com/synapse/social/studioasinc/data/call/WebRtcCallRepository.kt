@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -270,14 +271,22 @@ class WebRtcCallRepository @Inject constructor(
      *
      * The router is the authority: an icon showing Bluetooth while audio is on the earpiece is a lie
      * the user can only discover by holding the phone to their ear.
+     *
+     * The switch itself is deliberately made outside [mutex]. That lock is held across work that can
+     * take seconds — an offer waits out ICE gathering before it is published, a reconnect mints fresh
+     * TURN credentials before it restarts, a ring deadline re-reads the backend row — so a tap that
+     * arrived during any of it waited for the whole operation to finish before the device moved at all.
+     * Moving the output needs no call state, and this method publishes nothing either: [followAudioRoute]
+     * is the single publisher of the call's route, so the screen can only ever show a route the device
+     * reported rather than the one this request hoped for. The answer here is only what the caller asked
+     * for — whether the request could be honoured.
      */
-    override suspend fun setAudioRoute(callId: String, route: CallAudioRoute): Result<Unit> =
-        withLiveCall(callId) { call ->
-            val settled = audioRouter.select(route)
-            reduce(call) { it.copy(audioRoute = settled) }
-            if (settled == route) Result.success(Unit)
-            else Result.failure(IllegalStateException("Audio route '$route' is not available; using '$settled'"))
-        }
+    override suspend fun setAudioRoute(callId: String, route: CallAudioRoute): Result<Unit> {
+        if (liveOrNull(callId) == null) return Result.failure(IllegalStateException("No active call"))
+        val settled = audioRouter.select(route)
+        return if (settled == route) Result.success(Unit)
+        else Result.failure(IllegalStateException("Audio route '$route' is not available; using '$settled'"))
+    }
 
     override suspend fun setLocalVideoEnabled(callId: String, enabled: Boolean): Result<Unit> =
         withLiveCall(callId) { call ->
@@ -287,6 +296,11 @@ class WebRtcCallRepository @Inject constructor(
             // Switching the preview back on can mean starting capture again: turning video off
             // releases the camera to the system, so there may be no track left to enable.
             if (enabled && !call.captureRunning) {
+                // Turning the camera back on is a fresh claim on the lens: the grant that opened the call
+                // may have been revoked since. Checked before capture starts, so no hardware is touched
+                // without a grant, and the refusal is the same one `accept` and a media upgrade produce.
+                val plan = permissions.planFor(CallMediaType.VIDEO)
+                if (!plan.isReady) return@withLiveCall Result.failure(permissionFailure(plan))
                 val started = startCaptureLocked(call)
                 if (started.isFailure) return@withLiveCall started
             }
@@ -345,6 +359,10 @@ class WebRtcCallRepository @Inject constructor(
         // Call audio mode begins here, not when the row was created: a ringing screen is still an app
         // playing its own ringtone, and MODE_IN_COMMUNICATION would move that audio to the earpiece.
         audioRouter.start(video = call.mediaType == CallMediaType.VIDEO)
+        // Subscribed after the router has taken the output, so the first frame this call's screen
+        // receives for the route is the device the call actually begins on, not a default and not the
+        // placeholder the dialling screen was drawn with.
+        call.scope.launch { followAudioRoute(call) }
         val opened = call.engine.open(
             EngineConfig(
                 callId = call.id,
@@ -459,6 +477,28 @@ class WebRtcCallRepository @Inject constructor(
                 if (wasEnded) teardownLocked(call, "ended by the backend")
             }
         }
+    }
+
+    /**
+     * Follows the router's own reading of the route, not the tap that asked for it.
+     *
+     * [CallAudioRouter.activeRoute] is the only signal that says what the device actually did: the route
+     * this call started on, the device the framework settles on a moment after the switch is requested,
+     * and every change the platform makes on its own — a headset pulled out mid-call, an SCO link that
+     * comes up late. Republishing it is what keeps the speaker icon on the live route. Before this, the
+     * screen only ever had the read-back taken inside [setAudioRoute], so a move the platform completed
+     * afterwards left the icon showing the previous output until some unrelated device event happened to
+     * overwrite it — and the next tap, derived from that stale icon, asked again for a route the device
+     * was already on.
+     *
+     * Read without [mutex], like the candidate outbox: this is hardware state, and queueing it behind an
+     * in-flight negotiation would delay the very readout it exists to correct. The subscription ends
+     * with the call rather than merely skipping frames, so a closed call has no publisher left.
+     */
+    private suspend fun followAudioRoute(call: LiveCall) {
+        audioRouter.activeRoute
+            .takeWhile { !call.closed }
+            .collect { route -> reduce(call) { it.copy(audioRoute = route) } }
     }
 
     /**
@@ -611,6 +651,11 @@ class WebRtcCallRepository @Inject constructor(
             // half of the call is still real, so the call is not ended over a lost lens.
             call.captureRunning = false
             reduce(call) { it.copy(isLocalVideoEnabled = false, errorKind = kind) }
+            // The capturer and the track have to go together. Leaving the track behind would make the
+            // engine read the next camera-on as "already running" and report success over a lens that
+            // never reopened — a black self-view no control can explain.
+            runCatching { call.engine.stopVideo() }
+                .onFailure { Napier.w("Video could not be released after a camera error: ${it.message}") }
             return
         }
         reduce(call) { it.copy(errorKind = kind) }
