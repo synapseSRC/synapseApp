@@ -245,6 +245,15 @@ fun PostDetailScreen(
         )
     }
 
+    // Surface comment-like errors as a snackbar (post-load errors, where post == null, are rendered
+    // inline in PostDetailContent instead).
+    LaunchedEffect(uiState.error, uiState.post) {
+        if (uiState.error != null && uiState.post != null) {
+            snackbarHostState.showSnackbar(message = uiState.error ?: context.getString(R.string.error_unknown))
+            viewModel.clearError()
+        }
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
