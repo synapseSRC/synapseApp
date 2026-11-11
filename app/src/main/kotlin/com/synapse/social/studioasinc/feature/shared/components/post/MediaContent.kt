@@ -116,7 +116,7 @@ fun MediaContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onMediaClick(safePost!!, page) }
+                        .clickable { safePost?.let { opened -> onMediaClick(opened, page) } }
                         .padding(vertical = Spacing.space8)
                 ) {
                     AsyncImage(
@@ -172,7 +172,9 @@ fun PostMediaGrid(
 ) {
     val count = mediaUrls.size
     val spacing = Sizes.BorderDefault
-    val safePost = post!!
+    // A grid item is a media tap, not a post navigation, so an absent post must degrade to
+    // "no action" instead of composing a force unwrap that crashes the whole feed.
+    val safePost = post
 
     Column(
         modifier = modifier
@@ -183,39 +185,39 @@ fun PostMediaGrid(
         when (count) {
             2 -> {
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid2)) {
-                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 0) })
+                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 0) } })
                     Spacer(modifier = Modifier.width(spacing))
-                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 1) })
+                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 1) } })
                 }
             }
             3 -> {
-                MediaGridItem(url = mediaUrls[0], modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid3Top), onClick = { onMediaClick(safePost, 0) })
+                MediaGridItem(url = mediaUrls[0], modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridMedium, max = Sizes.HeightMediaGrid3Top), onClick = { safePost?.let { onMediaClick(it, 0) } })
                 Spacer(modifier = Modifier.height(spacing))
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridMedium)) {
-                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 1) })
+                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 1) } })
                     Spacer(modifier = Modifier.width(spacing))
-                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 2) })
+                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 2) } })
                 }
             }
             else -> {
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridLarge)) {
-                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 0) })
+                    MediaGridItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 0) } })
                     Spacer(modifier = Modifier.width(spacing))
-                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 1) })
+                    MediaGridItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 1) } })
                 }
                 Spacer(modifier = Modifier.height(spacing))
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.HeightMediaGridSmall, max = Sizes.HeightMediaGridLarge)) {
-                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { onMediaClick(safePost, 2) })
+                    MediaGridItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 2) } })
                     Spacer(modifier = Modifier.width(spacing))
 
                     Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                        MediaGridItem(url = mediaUrls[3], modifier = Modifier.fillMaxSize(), onClick = { onMediaClick(safePost, 3) })
+                        MediaGridItem(url = mediaUrls[3], modifier = Modifier.fillMaxSize(), onClick = { safePost?.let { onMediaClick(it, 3) } })
                         if (count > 4) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
-                                    .clickable { onMediaClick(safePost, 3) },
+                                    .clickable { safePost?.let { onMediaClick(it, 3) } },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(

@@ -23,6 +23,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 @Composable
 fun ReplyingToBottomSheet(
     usernames: List<String>,
+    onUsernameSelected: (String) -> Unit = {},
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -48,9 +49,9 @@ fun ReplyingToBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                 verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
-                usernames.forEach { username ->
-                    AssistChip(
-                        onClick = { },
+                    usernames.forEach { username ->
+                        AssistChip(
+                            onClick = { onUsernameSelected(username) },
                         label = {
                             Text(
                                 text = stringResource(R.string.common_at_username, username),

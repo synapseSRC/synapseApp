@@ -30,6 +30,7 @@ import com.synapse.social.studioasinc.feature.auth.ui.components.AuthTextField
 import com.synapse.social.studioasinc.feature.auth.ui.components.PasswordStrengthIndicator
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthUiState
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthField
+import com.synapse.social.studioasinc.shared.domain.model.PasswordStrength
 
 @Composable
 fun ResetPasswordScreen(
@@ -71,7 +72,7 @@ fun ResetPasswordScreen(
                 onValueChange = onPasswordChanged,
                 label = stringResource(R.string.change_password_new),
                 error = state.validationErrors[AuthField.PASSWORD],
-                isValid = false,
+                isValid = state.password.isNotEmpty() && state.passwordStrength != PasswordStrength.Weak,
                 isPassword = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
