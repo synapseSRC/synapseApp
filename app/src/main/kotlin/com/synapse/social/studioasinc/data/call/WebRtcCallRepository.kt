@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -275,15 +276,14 @@ class WebRtcCallRepository @Inject constructor(
      * take seconds — an offer waits out ICE gathering before it is published, a reconnect mints fresh
      * TURN credentials before it restarts, a ring deadline re-reads the backend row — so a tap that
      * arrived during any of it waited for the whole operation to finish before the device moved at all.
-     * Moving the output needs no call state; only reporting the answer does, and [followAudioRoute]
-     * keeps that report coming from the device rather than from this one request.
+     * Moving the output needs no call state, and this method publishes nothing either: [followAudioRoute]
+     * is the single publisher of the call's route, so the screen can only ever show a route the device
+     * reported rather than the one this request hoped for. The answer here is only what the caller asked
+     * for — whether the request could be honoured.
      */
     override suspend fun setAudioRoute(callId: String, route: CallAudioRoute): Result<Unit> {
         if (liveOrNull(callId) == null) return Result.failure(IllegalStateException("No active call"))
         val settled = audioRouter.select(route)
-        val call = liveOrNull(callId)
-            ?: return Result.failure(IllegalStateException("No active call"))
-        reduce(call) { it.copy(audioRoute = settled) }
         return if (settled == route) Result.success(Unit)
         else Result.failure(IllegalStateException("Audio route '$route' is not available; using '$settled'"))
     }
@@ -492,13 +492,13 @@ class WebRtcCallRepository @Inject constructor(
      * was already on.
      *
      * Read without [mutex], like the candidate outbox: this is hardware state, and queueing it behind an
-     * in-flight negotiation would delay the very readout it exists to correct.
+     * in-flight negotiation would delay the very readout it exists to correct. The subscription ends
+     * with the call rather than merely skipping frames, so a closed call has no publisher left.
      */
     private suspend fun followAudioRoute(call: LiveCall) {
-        audioRouter.activeRoute.collect { route ->
-            if (call.closed) return@collect
-            reduce(call) { it.copy(audioRoute = route) }
-        }
+        audioRouter.activeRoute
+            .takeWhile { !call.closed }
+            .collect { route -> reduce(call) { it.copy(audioRoute = route) } }
     }
 
     /**
