@@ -40,7 +40,8 @@ class BlockingViewModel @Inject constructor(
     /**
      * Blocks a user by their ID.
      * Updates UI state to Loading, then to BlockSuccess or Error based on result.
-     * 
+     * On success, refreshes the blocked users list inline to avoid a state-race
+     * with loadBlockedUsers() (which resets state to Loading unconditionally).
      * @param userId The ID of the user to block
      */
     fun blockUser(userId: String) {

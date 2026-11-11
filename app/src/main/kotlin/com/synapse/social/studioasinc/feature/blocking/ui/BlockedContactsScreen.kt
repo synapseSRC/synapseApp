@@ -20,7 +20,7 @@ import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
 
 /**
  * Screen displaying list of blocked users.
- * 
+ * Follows Material3 Theme guidelines with no hardcoded values.
  * Follows Material Theme guidelines with no hardcoded values.
  * Uses Scaffold with TopAppBar, LazyColumn for blocked users list,
  * loading indicator, empty state, and unblock confirmation dialog.
