@@ -106,11 +106,11 @@ fun HomeNavGraph(
                          is com.synapse.social.studioasinc.shared.domain.model.NotificationTarget.Profile -> {
                              onNavigateToProfile(target.userId)
                          }
-                         is com.synapse.social.studioasinc.shared.domain.model.NotificationTarget.Unknown -> {
-                             notification.targetId?.takeIf { it.isNotBlank() }?.let { id ->
-                                 navController.navigate(HomeDestinations.PostDetail(postId = id))
-                             }
-                         }
+                          is com.synapse.social.studioasinc.shared.domain.model.NotificationTarget.Unknown -> {
+                              // Unknown targets cannot be reliably interpreted as post IDs,
+                              // profiles, or comments. Do not navigate — sending the user to an
+                              // arbitrary PostDetail would open the wrong screen or fail.
+                          }
                      }
                  },
                  onUserClick = { userId -> onNavigateToProfile(userId) },
