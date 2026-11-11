@@ -103,8 +103,8 @@ fun BlockedContactsScreen(
                     ) {
                         itemsIndexed(
                             items = blockedUsers,
-                            key = { index, it -> "${it.id}_${index}" }
-                        ) { index, blockedUser ->
+                            key = { _, blockedUser -> blockedUser.id }
+                        ) { _, blockedUser ->
                             BlockedUserItem(
                                 blockedUser = blockedUser,
                                 onUnblockClick = {
