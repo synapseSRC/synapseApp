@@ -47,7 +47,7 @@ class AndroidCallAudioRouter @Inject constructor(
     @Volatile private var inCall = false
 
     /** API 31+ only: the framework's own word on the device the call is being carried on. */
-    private var communicationWatcher: AudioManager.OnCommunicationDeviceChangedListener? = null
+    @Volatile private var communicationWatcher: AudioManager.OnCommunicationDeviceChangedListener? = null
 
     private var focusRequest: AudioFocusRequest? = null
 
