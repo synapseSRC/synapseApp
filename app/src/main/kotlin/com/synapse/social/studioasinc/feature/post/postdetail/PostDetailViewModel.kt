@@ -286,6 +286,7 @@ class PostDetailViewModel @Inject constructor(
         isSubmittingComment = true
         viewModelScope.launch {
             try {
+                _uiState.update { it.copy(error = null, commentError = null) }
                 var mediaUrl: String? = null
                 if (mediaUri != null) {
                     val mediaItem = MediaItem(id = java.util.UUID.randomUUID().toString(), url = mediaUri.toString(), type = MediaType.IMAGE)
@@ -297,14 +298,14 @@ class PostDetailViewModel @Inject constructor(
                     refreshComments()
                     invalidateComments()
                     setReplyTo(null)
-
                 }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "Failed to add comment") }
+                    _uiState.update { it.copy(commentError = e.message ?: "Failed to add comment") }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message ?: "Failed to upload media") }
+                _uiState.update { it.copy(commentError = e.message ?: "Failed to upload media") }
             } finally {
                 isSubmittingComment = false
+                _uiState.update { it.copy(commentSubmitted = true) }
             }
         }
     }
@@ -365,11 +366,21 @@ class PostDetailViewModel @Inject constructor(
     fun editComment(commentId: String, content: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading + commentId) }
-            commentRepository.updateComment(commentId, content).onSuccess {
-                invalidateComments()
-                setEditingComment(null)
-            }.also {
-                _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading - commentId) }
+            _uiState.update { it.copy(commentError = null) }
+            try {
+                commentRepository.updateComment(commentId, content).onSuccess {
+                    invalidateComments()
+                    setEditingComment(null)
+                }.onFailure { e ->
+                    _uiState.update { it.copy(commentError = e.message ?: "Failed to edit comment") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(commentError = e.message ?: "Failed to edit comment") }
+            } finally {
+                _uiState.update { it.copy(
+                    commentActionsLoading = it.commentActionsLoading - commentId,
+                    commentSubmitted = true
+                ) }
             }
         }
     }
@@ -570,6 +581,10 @@ class PostDetailViewModel @Inject constructor(
 
     fun clearPostSummary() {
         _uiState.update { it.copy(postSummary = null, summaryError = null) }
+    }
+
+    fun clearCommentSubmission() {
+        _uiState.update { it.copy(commentSubmitted = false, commentError = null) }
     }
 
     fun clearError() {
