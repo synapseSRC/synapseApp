@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Share to Chat: the labeled destination and the review/confirm step shown before a post is sent. -->
+    <string name="share_to_chat_action">Share to Chat</string>
+    <string name="share_to_chat_confirm_title">Send this post to %1$s?</string>
+    <string name="share_to_chat_confirm_message">%1$s will get a preview of this post in your conversation.</string>
+    <string name="share_to_chat_confirm_send">Send</string>
+    <string name="share_to_chat_confirm_back">Choose another chat</string>
+    <string name="share_to_chat_preview_label">Post preview</string>
+</resources>
