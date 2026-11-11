@@ -116,8 +116,20 @@ internal class ProfilePostsRepositoryImpl(
             }.map { it.withSignedStorageMediaUrls() }
         } else emptyList()
 
-        // Merge own posts + reshares, sorted by reshare/post time descending
-        val merged = (ownPosts + resharedPosts).sortedByDescending { it.timestamp }
+        // Merge own posts + reshares, sorted by reshare/post time descending.
+        //
+        // The two queries are independent joins over `posts`, so a post the user authored *and*
+        // reshared comes back from both and carries the same post id twice. The profile grid keys
+        // its rows by that id, and a duplicated key is an immediate IllegalArgumentException
+        // ("Key ... was already used") plus a post rendered twice.
+        //
+        // Deduplicate by post id with the reshare entry first: that is the copy carrying the
+        // reshare badge (`isReshared` / `resharedByUsername`) and the reshare-time timestamp this
+        // list sorts by, so a self-reshare still surfaces once, at reshare time, on the single row
+        // the user's own post already occupies.
+        val merged = (resharedPosts + ownPosts)
+            .distinctBy { it.id }
+            .sortedByDescending { it.timestamp }
 
         val enrichedPosts = populatePostReactions(merged)
         val fullyEnrichedPosts = populatePostPolls(enrichedPosts)
