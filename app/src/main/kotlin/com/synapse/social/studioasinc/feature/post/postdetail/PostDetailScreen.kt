@@ -195,7 +195,7 @@ fun PostDetailScreen(
                 onNavigateBack()
             },
             onShare = { PostShareUtils.sharePost(context, postId) },
-            onCopyLink = { viewModel.copyLink(postId, context) },
+            onCopyLink = { PostShareUtils.copyPostLink(context, postId) },
             onBookmark = { viewModel.toggleBookmark() },
             onToggleComments = { viewModel.toggleComments() },
             onReport = { showReportDialog = true },
