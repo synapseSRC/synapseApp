@@ -19,10 +19,10 @@ import javax.inject.Inject
 @HiltViewModel
 class PrivacySecurityViewModel @Inject constructor(
     @ApplicationContext private val context: Context
-) : AndroidViewModel(context.application) {
+) : AndroidViewModel(context.applicationContext as Application) {
     private val biometricChecker: BiometricChecker = BiometricCheckerImpl()
 
-    private val settingsRepository = SettingsRepositoryImpl.getInstance(context.application)
+    private val settingsRepository = SettingsRepositoryImpl.getInstance(context.applicationContext as Application)
 
     private val _privacySettings = MutableStateFlow(PrivacySettings())
     val privacySettings: StateFlow<PrivacySettings> = _privacySettings.asStateFlow()

@@ -22,10 +22,10 @@ import java.util.Locale
 @HiltViewModel
 class LanguageRegionViewModel @Inject constructor(
     @ApplicationContext private val context: Context
-) : AndroidViewModel(context.application) {
+) : AndroidViewModel(context.applicationContext as Application) {
 
     private val settingsRepository: SettingsRepository =
-        SettingsRepositoryImpl.getInstance(context.application)
+        SettingsRepositoryImpl.getInstance(context.applicationContext as Application)
 
 
 

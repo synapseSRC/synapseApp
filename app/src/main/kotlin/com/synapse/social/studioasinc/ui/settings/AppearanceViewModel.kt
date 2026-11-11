@@ -17,8 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AppearanceViewModel @Inject constructor(
     @ApplicationContext private val context: Context
-) : AndroidViewModel(context.application) {
-    private val settingsRepository = SettingsRepositoryImpl.getInstance(context.application)
+) : AndroidViewModel(context.applicationContext as Application) {
+    private val settingsRepository = SettingsRepositoryImpl.getInstance(context.applicationContext as Application)
 
     private val _appearanceSettings = MutableStateFlow(AppearanceSettings())
     val appearanceSettings: StateFlow<AppearanceSettings> = _appearanceSettings.asStateFlow()
