@@ -271,7 +271,7 @@ class EditProfileRepositoryImpl @Inject constructor(
 
             val items = result.mapNotNull {
                 parseProfileHistoryItem(it)
-            }
+            }.map { it.withDisplayUrl(SupabaseClient.BUCKET_USER_AVATARS) }
 
             emit(Result.success(items))
         } catch (e: Exception) {
@@ -290,13 +290,25 @@ class EditProfileRepositoryImpl @Inject constructor(
 
             val items = result.mapNotNull {
                 parseCoverHistoryItem(it)
-            }
+            }.map { it.withDisplayUrl(SupabaseClient.BUCKET_USER_COVERS) }
 
             emit(Result.success(items))
         } catch (e: Exception) {
             emit(SupabaseErrorHandler.toResult(e, "EditProfileRepository", "Failed to get cover history: $userId"))
         }
     }.flowOn(Dispatchers.IO)
+
+    /**
+     * Attaches the URL the history grid renders.
+     *
+     * Rows keep whatever reference was stored: the public avatars bucket yields an https object URL
+     * the grid can already open, while the private covers bucket yields a `private-media://` link no
+     * image loader understands. Signing it here is what makes saved covers show up in the history
+     * screen, and [HistoryItem.imageUrl] is left as stored so that picking an entry still writes back
+     * the reference the profile tables expect.
+     */
+    private suspend fun HistoryItem.withDisplayUrl(bucket: String): HistoryItem =
+        copy(displayUrl = resolveProfileMediaUrl(imageUrl, bucket) ?: imageUrl)
 
     suspend fun deleteProfileHistoryItem(id: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
