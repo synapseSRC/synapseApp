@@ -26,13 +26,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
-import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
 
 @Composable
@@ -223,7 +222,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             AppLockScreen(
                 viewModel = viewModel,
-                onNavigateBack = {
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
                     navController.popBackStack()
                 }
             )
@@ -236,7 +235,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_last_seen_title),
                 subtitle = stringResource(R.string.settings_last_seen_subtitle),
@@ -258,7 +257,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val options = GroupPrivacy.values().map { groupPrivacy ->
                 PrivacyOptionItem(
                     title = groupPrivacy.displayName(),
@@ -369,7 +368,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_profile_photo_title),
                 subtitle = stringResource(R.string.settings_profile_photo_subtitle),
@@ -391,7 +390,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_about_privacy_title),
                 subtitle = stringResource(R.string.settings_about_subtitle),
@@ -413,7 +412,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_status_title),
                 subtitle = stringResource(R.string.settings_status_subtitle),
@@ -445,7 +444,7 @@ fun SettingsNavHost(
 
         composable(route = SettingsDestination.ROUTE_FONT) {
             val viewModel: FontViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
-            FontScreen(
+            val viewModel: FontViewModel = hiltViewModel()
                 viewModel = viewModel,
                 onNavigateBack = {
                     navController.popBackStack()

@@ -45,6 +45,8 @@ class PrivacySecurityViewModel @Inject constructor(
                 settingsRepository.privacySettings.collect { settings ->
                     _privacySettings.value = settings
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 android.util.Log.e("PrivacySecurityViewModel", "Failed to load privacy settings", e)
                 _error.value = "Failed to load privacy settings"
