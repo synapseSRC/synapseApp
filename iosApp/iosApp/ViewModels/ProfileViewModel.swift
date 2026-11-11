@@ -30,10 +30,6 @@ class ProfileViewModel: ObservableObject {
         }
     }
 
-    func loadProfile() async {
-        await loadProfile(userId: nil)
-    }
-
     func updateProfile(displayName: String, bio: String) async {
         let uid = currentUid
         guard !uid.isEmpty else {
