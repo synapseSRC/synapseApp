@@ -51,10 +51,6 @@ class BlockingViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.value = BlockingUiState.BlockSuccess
                     // Refresh the list after a successful block so the newly blocked user
-                    // appears in the blocked contacts list without requiring navigation away
-                    // and back. Mirrors the unblock flow, which already reloads on success.
-                    loadBlockedUsers()
-                }
                 .onFailure { error ->
                     _uiState.value = BlockingUiState.Error(
                         message = error.message ?: "Failed to block user"
