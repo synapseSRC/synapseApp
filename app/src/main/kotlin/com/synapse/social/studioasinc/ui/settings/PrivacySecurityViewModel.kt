@@ -5,6 +5,7 @@ import androidx.biometric.BiometricManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
+import com.synapse.social.studioasinc.data.local.database.settings.SettingsConstants
 import com.synapse.social.studioasinc.core.util.BiometricChecker
 import com.synapse.social.studioasinc.core.util.BiometricCheckerImpl
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,9 @@ class PrivacySecurityViewModel(
 
     private val _privacySettings = MutableStateFlow(PrivacySettings())
     val privacySettings: StateFlow<PrivacySettings> = _privacySettings.asStateFlow()
+
+    private val _disappearingMessagesTimer = MutableStateFlow(SettingsConstants.DEFAULT_DISAPPEARING_MESSAGES_TIMER)
+    val disappearingMessagesTimer: StateFlow<String> = _disappearingMessagesTimer.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -45,6 +49,15 @@ class PrivacySecurityViewModel(
             } catch (e: Exception) {
                 android.util.Log.e("PrivacySecurityViewModel", "Failed to load privacy settings", e)
                 _error.value = "Failed to load privacy settings"
+            }
+        }
+        viewModelScope.launch {
+            try {
+                settingsRepository.disappearingMessagesTimer.collect { timer ->
+                    _disappearingMessagesTimer.value = timer
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PrivacySecurityViewModel", "Failed to load disappearing messages timer", e)
             }
         }
     }
@@ -199,6 +212,22 @@ class PrivacySecurityViewModel(
             } catch (e: Exception) {
                 android.util.Log.e("PrivacySecurityViewModel", "Failed to toggle 2FA", e)
                 _error.value = "Failed to update two-factor authentication"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun setDisappearingMessagesTimer(timer: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                settingsRepository.setDisappearingMessagesTimer(timer)
+                android.util.Log.d("PrivacySecurityViewModel", "Disappearing messages timer set to: $timer")
+            } catch (e: Exception) {
+                android.util.Log.e("PrivacySecurityViewModel", "Failed to set disappearing messages timer", e)
+                _error.value = "Failed to update disappearing messages timer"
             } finally {
                 _isLoading.value = false
             }
