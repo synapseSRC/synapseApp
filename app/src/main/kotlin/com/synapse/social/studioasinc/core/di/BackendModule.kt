@@ -1,4 +1,4 @@
-﻿package com.synapse.social.studioasinc.core.di
+package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.data.repository.*
 import com.synapse.social.studioasinc.data.source.CommentLocalDataSource
@@ -66,6 +66,10 @@ object BackendModule {
             secureStorage = secureStorage
         )
     }
+
+    @Provides
+    @Singleton
+    fun provideChatEffectsRepository(): ChatEffectsRepository = SupabaseChatEffectsRepository()
 
     @Provides
     @Singleton

@@ -48,6 +48,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadServi
 import com.synapse.social.studioasinc.shared.domain.repository.AppRepository
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.BusinessRepository
+import com.synapse.social.studioasinc.shared.domain.repository.ChatEffectsRepository
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
@@ -83,6 +84,11 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCommonGroups
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.CreateWordEffectUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.DeleteWordEffectUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.GetWordEffectsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.ResolveMessageEffectsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.UpdateWordEffectUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase
@@ -170,6 +176,26 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideGetDisappearingModeUseCase(chatRepository: ChatRepository): GetDisappearingModeUseCase = GetDisappearingModeUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetWordEffectsUseCase(repository: ChatEffectsRepository): GetWordEffectsUseCase = GetWordEffectsUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideCreateWordEffectUseCase(repository: ChatEffectsRepository): CreateWordEffectUseCase = CreateWordEffectUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideUpdateWordEffectUseCase(repository: ChatEffectsRepository): UpdateWordEffectUseCase = UpdateWordEffectUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideDeleteWordEffectUseCase(repository: ChatEffectsRepository): DeleteWordEffectUseCase = DeleteWordEffectUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideResolveMessageEffectsUseCase(): ResolveMessageEffectsUseCase = ResolveMessageEffectsUseCase()
 
     @Provides
     @Singleton

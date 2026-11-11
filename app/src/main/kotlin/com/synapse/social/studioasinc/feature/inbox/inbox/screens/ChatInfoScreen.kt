@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Fingerprint
@@ -123,6 +124,7 @@ fun ChatInfoScreen(
     onNavigateToDisappearingMessages: (String) -> Unit = {},
     onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
     onNavigateToChatPrivacy: (String) -> Unit = {},
+    onNavigateToWordEffects: (String) -> Unit = {},
     viewModel: ChatInfoViewModel = hiltViewModel()
 ) {
     // Inherit the activity SynapseTheme so appearance settings and dynamic colors apply.
@@ -327,6 +329,20 @@ fun ChatInfoScreen(
                         }
                     } else null,
                     onClick = { onNavigateToSharedContent(chatId, 0) }
+                )
+            }
+            // Its own section rather than a line inside privacy: an effect is about what a
+            // message looks like, not about who can see it.
+            item(key = "effects-heading") {
+                SectionHeading(stringResource(R.string.word_effects_section_title))
+            }
+            item(key = "effects-settings") {
+                SettingsItem(
+                    icon = Icons.Rounded.AutoAwesome,
+                    title = stringResource(R.string.word_effects_title),
+                    supportingText = stringResource(R.string.word_effects_summary),
+                    trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    onClick = { onNavigateToWordEffects(chatId) }
                 )
             }
             item(key = "privacy-heading") {
@@ -635,340 +651,3 @@ private fun ContactHeader(
             text = displayName,
             // The same element the pill's title declared: the name lands here instead of being
             // written again, and the two screens fade one into the other while the bounds move.
-            modifier = nameModifier,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            // One line, so a longer name arriving from the server replaces text instead of moving
-            // the rest of the screen.
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        if (!username.isNullOrBlank() && username != displayName) {
-            Text(
-                text = "@$username",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        // While nothing about this person has arrived yet, the line the pill was showing is still
-        // the truth - it came from the conversation itself - so the status element keeps its words
-        // and travels into place instead of dissolving into a placeholder.
-        val seededStatus = initialStatusText?.takeIf { it.isNotBlank() }
-        val status = when {
-            isStatusPending -> seededStatus
-            isOnline -> stringResource(R.string.chat_info_user_online)
-            lastSeen != null -> stringResource(
-                R.string.chat_info_user_last_seen,
-                TimestampFormatter.formatRelative(lastSeen)
-            )
-            else -> stringResource(R.string.chat_info_user_offline)
-        }
-        if (status == null) {
-            SkeletonLine(
-                width = 104.dp,
-                label = stringResource(R.string.loading_profile),
-                height = 12.dp
-            )
-        } else {
-            val isActive = if (isStatusPending) initialStatusActive else isOnline
-            Text(
-                text = status,
-                // The same element the pill's status line declared.
-                modifier = statusModifier,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickActions(
-    isMuted: Boolean,
-    isMuteUpdating: Boolean,
-    onMessage: () -> Unit,
-    onProfile: () -> Unit,
-    onMute: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ChatInfoMetrics.connectedActionGap),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        QuickActionButton(
-            label = stringResource(R.string.chat_info_action_message),
-            icon = Icons.AutoMirrored.Rounded.Chat,
-            position = ItemPosition.FIRST,
-            onClick = onMessage,
-            modifier = Modifier.weight(1f)
-        )
-        QuickActionButton(
-            label = stringResource(R.string.chat_info_action_profile),
-            icon = Icons.Rounded.Person,
-            position = ItemPosition.MIDDLE,
-            onClick = onProfile,
-            modifier = Modifier.weight(1f)
-        )
-        QuickActionButton(
-            label = stringResource(if (isMuted) R.string.chat_info_action_muted else R.string.chat_info_action_mute),
-            icon = if (isMuted) Icons.Rounded.NotificationsActive else Icons.Rounded.NotificationsOff,
-            position = ItemPosition.LAST,
-            checked = isMuted,
-            enabled = !isMuteUpdating,
-            onClick = onMute,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun QuickActionButton(
-    label: String,
-    icon: ImageVector,
-    position: ItemPosition,
-    modifier: Modifier = Modifier,
-    checked: Boolean = false,
-    enabled: Boolean = true,
-    onClick: () -> Unit
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val buttonModifier = modifier.height(ChatInfoMetrics.actionHeight).pressScale(interaction)
-    val content: @Composable RowScope.() -> Unit = {
-        Icon(icon, contentDescription = label, modifier = Modifier.size(ChatInfoMetrics.actionIconSize))
-    }
-    if (checked) {
-        Button(
-            onClick = onClick,
-            modifier = buttonModifier,
-            enabled = enabled,
-            shape = connectedButtonShape(position),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            contentPadding = PaddingValues(horizontal = Spacing.space8),
-            interactionSource = interaction,
-            content = content
-        )
-    } else {
-        FilledTonalButton(
-            onClick = onClick,
-            modifier = buttonModifier,
-            enabled = enabled,
-            shape = connectedButtonShape(position),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            contentPadding = PaddingValues(horizontal = Spacing.space8),
-            interactionSource = interaction,
-            content = content
-        )
-    }
-}
-
-/**
- * A quiet placeholder for a value that has not arrived yet.
- *
- * It is the height of the line it stands in for, and its shimmer only redraws (the alpha is read
- * inside [graphicsLayer]), so a loading section costs no recomposition per frame. The label keeps
- * it honest to a screen reader instead of being decoration.
- */
-@Composable
-private fun SkeletonLine(
-    width: Dp,
-    label: String? = null,
-    height: Dp = 14.dp,
-    modifier: Modifier = Modifier
-) {
-    val transition = rememberInfiniteTransition(label = "skeleton")
-    val shimmer by transition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "skeletonAlpha"
-    )
-    Box(
-        modifier = modifier
-            .size(width = width, height = height)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .semantics { if (label != null) contentDescription = label }
-            .graphicsLayer { alpha = shimmer }
-    )
-}
-
-@Composable
-private fun SettingsItem(
-    icon: ImageVector,
-    title: String,
-    supportingText: String,
-    // A placeholder for a value that has not arrived yet, drawn in the shape of the line it will
-    // become so that filling it in cannot move the row.
-    supporting: (@Composable () -> Unit)? = null,
-    position: ItemPosition = ItemPosition.SINGLE,
-    shape: Shape = settingsItemShape(position),
-    iconContainerColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    iconTint: Color = MaterialTheme.colorScheme.onPrimaryContainer,
-    textColor: Color = MaterialTheme.colorScheme.onSurface,
-    trailingIcon: ImageVector? = null,
-    trailingContent: (@Composable () -> Unit)? = null,
-    onClick: (() -> Unit)? = null
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val rowModifier = Modifier
-        .fillMaxWidth()
-        .clip(shape)
-        .then(
-            if (onClick != null) {
-                Modifier.clickable(interactionSource = interaction, onClick = onClick)
-            } else {
-                Modifier
-            }
-        )
-        .pressScale(interaction)
-        .heightIn(min = ChatInfoMetrics.listItemMinHeight)
-
-    ListItem(
-        modifier = rowModifier,
-        content = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = textColor
-            )
-        },
-        supportingContent = {
-            if (supporting != null) {
-                supporting()
-            } else {
-                Text(
-                    text = supportingText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        leadingContent = {
-            Box(
-                modifier = Modifier.size(ChatInfoMetrics.iconContainerSize),
-                contentAlignment = Alignment.Center
-            ) {
-                androidx.compose.material3.Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = CircleShape,
-                    color = iconContainerColor
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = iconTint,
-                            modifier = Modifier.size(ChatInfoMetrics.listIconSize)
-                        )
-                    }
-                }
-            }
-        },
-        trailingContent = {
-            if (trailingContent != null) {
-                trailingContent()
-            } else if (trailingIcon != null) {
-                Icon(
-                    imageVector = trailingIcon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-    )
-}
-
-@Composable
-private fun PressScaleTextButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable RowScope.() -> Unit
-) {
-    val interaction = remember { MutableInteractionSource() }
-    TextButton(
-        onClick = onClick,
-        modifier = modifier.pressScale(interaction),
-        interactionSource = interaction,
-        content = content
-    )
-}
-
-@Composable
-private fun SectionHeading(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(horizontal = Spacing.space4, vertical = Spacing.space4)
-    )
-}
-
-@Composable
-private fun CommonGroupList(groups: List<Conversation>) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space4)) {
-        groups.forEach { group ->
-            ListItem(
-                content = { Text(group.participantName) },
-                leadingContent = { Icon(Icons.Rounded.Group, contentDescription = null) },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorBanner(message: String, canRetry: Boolean, onRetry: () -> Unit) {
-    androidx.compose.material3.Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(ChatInfoMetrics.cardCorner),
-        color = MaterialTheme.colorScheme.errorContainer
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(Spacing.space8),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
-        ) {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f)
-            )
-            if (canRetry) {
-                PressScaleTextButton(onClick = onRetry) {
-                    Text(stringResource(R.string.chat_info_retry))
-                }
-            }
-        }
-    }
-}
-
-private enum class ItemPosition { SINGLE, FIRST, MIDDLE, LAST }
-
-private fun connectedButtonShape(position: ItemPosition): Shape = when (position) {
-    ItemPosition.FIRST -> RoundedCornerShape(topStart = ChatInfoMetrics.listOuterCorner, bottomStart = ChatInfoMetrics.listOuterCorner, topEnd = ChatInfoMetrics.listInnerCorner, bottomEnd = ChatInfoMetrics.listInnerCorner)
-    ItemPosition.MIDDLE -> RoundedCornerShape(ChatInfoMetrics.listInnerCorner)
-    ItemPosition.LAST -> RoundedCornerShape(topStart = ChatInfoMetrics.listInnerCorner, bottomStart = ChatInfoMetrics.listInnerCorner, topEnd = ChatInfoMetrics.listOuterCorner, bottomEnd = ChatInfoMetrics.listOuterCorner)
-    ItemPosition.SINGLE -> RoundedCornerShape(ChatInfoMetrics.listOuterCorner)
-}
-
-private fun settingsItemShape(position: ItemPosition): Shape = when (position) {
-    ItemPosition.FIRST -> RoundedCornerShape(topStart = ChatInfoMetrics.listOuterCorner, topEnd = ChatInfoMetrics.listOuterCorner, bottomStart = ChatInfoMetrics.listInnerCorner, bottomEnd = ChatInfoMetrics.listInnerCorner)
-    ItemPosition.MIDDLE -> RoundedCornerShape(ChatInfoMetrics.listInnerCorner)
-    ItemPosition.LAST -> RoundedCornerShape(topStart = ChatInfoMetrics.listInnerCorner, topEnd = ChatInfoMetrics.listInnerCorner, bottomStart = ChatInfoMetrics.listOuterCorner, bottomEnd = ChatInfoMetrics.listOuterCorner)
-    ItemPosition.SINGLE -> RoundedCornerShape(ChatInfoMetrics.listOuterCorner)
-}
