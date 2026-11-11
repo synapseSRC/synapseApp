@@ -1,4 +1,4 @@
-package com.synapse.social.studioasinc.core.di
+﻿package com.synapse.social.studioasinc.core.di
 
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseBlockDataSource
 import com.synapse.social.studioasinc.shared.data.repository.BlockRepositoryImpl
