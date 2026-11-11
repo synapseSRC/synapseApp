@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.isRenderEffectSupported
-import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import androidx.compose.ui.platform.LocalUriHandler
 import android.widget.Toast
@@ -101,6 +100,7 @@ import kotlinx.coroutines.withContext
         onNavigateToChatSettings: (String) -> Unit = {},
         onNavigateToCreatePoll: (String) -> Unit = {},
         onStartCall: (CallLaunchRequest) -> Unit = {},
+        onOpenPost: (String) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
@@ -628,7 +628,7 @@ val currentUserId = currentUserIdState ?: ""
                                 onLocateMessage = viewModel::loadQuotedMessage,
                                 onOpenBatchGallery = { batchGalleryMessage = it },
                                 onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
-                                onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
+                                onOpenPost = onOpenPost,
                                 onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
                                 onOpenEphemeralMedia = { mediaUrl -> 
                                 try { 
