@@ -321,21 +321,7 @@ class PrivacySecurityViewModel @Inject constructor(
         }
     }
 
-    fun setDisappearingMessagesTimer(timer: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            try {
-                settingsRepository.setDisappearingMessagesTimer(timer)
-                android.util.Log.d("PrivacySecurityViewModel", "Disappearing messages timer set to: $timer")
-            } catch (e: Exception) {
-                android.util.Log.e("PrivacySecurityViewModel", "Failed to set disappearing messages timer", e)
-                _error.value = "Failed to update disappearing messages timer"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
+
 
     private fun canAuthenticateBiometrics(): Boolean {
         val canAuthenticate = biometricChecker.canAuthenticate(getApplication())
