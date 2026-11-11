@@ -362,7 +362,7 @@ fun FeedScreen(
                 sharePostViewModel.start(post)
                 selectedPost = null
             },
-            onCopyLink = { viewModel.copyPostLink(post) },
+            onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = { viewModel.toggleComments(post) },
             onReport = { postToReport = post; showReportDialog = true },

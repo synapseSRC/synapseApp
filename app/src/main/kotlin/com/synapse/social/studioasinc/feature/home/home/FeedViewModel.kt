@@ -283,10 +283,6 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun copyPostLink(post: Post) {
-        // UI action
-    }
-
     fun toggleComments(post: Post) {
         viewModelScope.launch {
             togglePostCommentsUseCase(post.id).collect { result ->
