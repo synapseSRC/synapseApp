@@ -50,10 +50,15 @@ class BlockingViewModel @Inject constructor(
             blockUserUseCase(userId)
                 .onSuccess {
                     _uiState.value = BlockingUiState.BlockSuccess
-                    // Refresh the list after a successful block so the newly blocked user
-                    // appears in the blocked contacts list without requiring navigation away
-                    // and back. Mirrors the unblock flow, which already reloads on success.
-                    loadBlockedUsers()
+                    // Refresh the blocked users list directly without going through
+                    // loadBlockedUsers(), which would overwrite BlockSuccess with Loading
+                    // before the UI LaunchedEffect can observe it (state-race fix).
+                    getBlockedUsersUseCase()
+                        .onSuccess { users ->
+                            _blockedUsers.value = users
+                        }
+                    // Transition to Idle; any list-load failure is non-fatal here.
+                    _uiState.value = BlockingUiState.Idle
                 }
                 .onFailure { error ->
                     _uiState.value = BlockingUiState.Error(

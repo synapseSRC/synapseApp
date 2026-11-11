@@ -17,7 +17,6 @@ import com.synapse.social.studioasinc.feature.blocking.BlockingUiState
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
-import kotlin.time.Clock
 
 /**
  * Screen displaying list of blocked users.
