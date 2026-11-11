@@ -327,7 +327,14 @@ fun NavGraphBuilder.inboxGraph(
     sharedTransitionScope: SharedTransitionScope
 ) {
     composable<AppDestination.Inbox> {
+                // The conversation list is pushed by Home, and while it is on screen it is a
+                // destination like any other: its leading control returns to the screen that opened
+                // it, which is what the system back gesture already does. Only a list with nothing
+                // below it in the back stack leads with the account instead.
+                val canNavigateBack = navController.previousBackStackEntry != null
+                val navigateBack: () -> Unit = { navController.popBackStack() }
                 InboxScreen(
+                    onNavigateBack = if (canNavigateBack) navigateBack else null,
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
                     },

@@ -173,6 +173,15 @@ fun InboxScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
+    /**
+     * Pops this screen when another destination pushed it; null when the conversation list is the
+     * root of the back stack and there is nothing behind it to return to.
+     *
+     * Home pushes the list, so the leading control has to be the same back arrow every other pushed
+     * screen shows: the system back gesture already returns to Home from here, and a header whose
+     * only leading control opens the account gives the user no visible way to follow it.
+     */
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToCreateGroup: () -> Unit = {},
     /**
      * Opens group creation with these people already members.
@@ -196,6 +205,7 @@ fun InboxScreen(
         onNavigateToProfile = onNavigateToProfile,
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
+        onNavigateBack = onNavigateBack,
         onNavigateToCreateGroup = onNavigateToCreateGroup,
         onNavigateToCreateGroupWithMembers = onNavigateToCreateGroupWithMembers,
         onStartCall = onStartCall,
@@ -208,12 +218,38 @@ fun InboxScreen(
     )
 }
 
+/**
+ * The account entry: the current user's picture, opening their own profile.
+ *
+ * It leads the header while the conversation list stands in for a root destination, and it is kept as
+ * an action while the back arrow leads, so the header changes hands without the entry going missing.
+ */
+@Composable
+private fun InboxAccountButton(
+    avatarUrl: String?,
+    displayName: String?,
+    onClick: () -> Unit
+) {
+    val accountLabel = stringResource(R.string.inbox_account)
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = accountLabel }
+    ) {
+        UserAvatar(
+            avatarUrl = avatarUrl,
+            displayName = displayName,
+            size = Sizes.AvatarSmall
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun InboxScreenContent(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
+    onNavigateBack: (() -> Unit)?,
     onNavigateToCreateGroup: () -> Unit,
     onNavigateToCreateGroupWithMembers: (List<String>) -> Unit,
     onStartCall: (CallLaunchRequest) -> Unit,
@@ -356,6 +392,17 @@ private fun InboxScreenContent(
         }
     }
 
+    // Handed to the account entry wherever the header keeps it: leading on a list that is the root
+    // of the back stack, and an action while the back arrow leads, so the entry is never lost.
+    val openOwnProfile: () -> Unit = {
+        val profileId = currentUserProfile?.uid
+        if (profileId != null) {
+            onNavigateToProfile(profileId)
+        } else {
+            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_profile_unavailable)) }
+        }
+    }
+
     BackHandler(enabled = destination != InboxDestination.INBOX) {
         if (destination == InboxDestination.ARCHIVED && selectedArchivedIds.isNotEmpty()) selectedArchivedIds = emptySet()
         else returnToInbox()
@@ -367,24 +414,36 @@ private fun InboxScreenContent(
             when (destination) {
                 InboxDestination.INBOX -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_brand)) },
+                    // The leading slot is the navigation slot: while another screen sits below this
+                    // one in the back stack it carries the same back arrow the list's own sub-screens
+                    // use, and it leaves for that screen exactly as the system back gesture does. A
+                    // list that is the root of the back stack leads with the account instead, because
+                    // that is when the account is the way out of the list.
                     navigationIcon = {
-                        val accountLabel = stringResource(R.string.inbox_account)
-                        IconButton(
-                            onClick = {
-                                val profileId = currentUserProfile?.uid
-                                if (profileId != null) onNavigateToProfile(profileId)
-                                else scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_profile_unavailable)) }
-                            },
-                            modifier = Modifier.semantics { contentDescription = accountLabel }
-                        ) {
-                            UserAvatar(
+                        val back = onNavigateBack
+                        if (back != null) {
+                            IconButton(onClick = back) {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = stringResource(R.string.inbox_back)
+                                )
+                            }
+                        } else {
+                            InboxAccountButton(
                                 avatarUrl = currentUserProfile?.avatar,
                                 displayName = currentUserProfile?.displayName ?: currentUserProfile?.username,
-                                size = Sizes.AvatarSmall
+                                onClick = openOwnProfile
                             )
                         }
                     },
                     actions = {
+                        if (onNavigateBack != null) {
+                            InboxAccountButton(
+                                avatarUrl = currentUserProfile?.avatar,
+                                displayName = currentUserProfile?.displayName ?: currentUserProfile?.username,
+                                onClick = openOwnProfile
+                            )
+                        }
                         IconButton(onClick = { destination = InboxDestination.SEARCH }) {
                             Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.inbox_search_action), tint = MaterialTheme.colorScheme.onSurface)
                         }
