@@ -69,6 +69,16 @@ data class ChatMediaDependencies(
 )
 
 /**
+ * Composer draft storage. Drafts are local, per-conversation text rather than conversation data,
+ * so they never travel through the chat repository.
+ */
+data class ChatDraftDependencies(
+    val getChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.GetChatDraftUseCase,
+    val saveChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.SaveChatDraftUseCase,
+    val clearChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.ClearChatDraftUseCase,
+)
+
+/**
  * Grouped dependencies for settings concerns.
  */
 data class ChatSettingsDependencies(
@@ -93,6 +103,7 @@ data class ChatDependencies(
     val ai: ChatAiDependencies,
     val media: ChatMediaDependencies,
     val settings: ChatSettingsDependencies,
+    val draft: ChatDraftDependencies,
     val initializeE2EUseCase: InitializeE2EUseCase,
     val getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase,
     val getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase,

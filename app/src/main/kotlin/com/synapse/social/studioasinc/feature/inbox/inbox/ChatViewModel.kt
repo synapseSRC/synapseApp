@@ -488,6 +488,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         broadcastTypingStatusUseCase = broadcastTypingStatusUseCase,
         viewModelScope = viewModelScope,
         messagingDelegate = messagingDelegate,
+        getChatDraftUseCase = dependencies.draft.getChatDraftUseCase,
+        saveChatDraftUseCase = dependencies.draft.saveChatDraftUseCase,
+        clearChatDraftUseCase = dependencies.draft.clearChatDraftUseCase,
         _inputText = _inputText,
         _editingMessage = _editingMessage,
         _error = _error,
@@ -609,12 +612,18 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             // Re-check the block on every return to the chat: it may have been created or removed
             // from Contact info, the settings list, or another device while this screen was away.
             initializationDelegate.refreshBlockStatus()
+            // An empty composer is filled from the draft stored for this chat; text already in it
+            // is newer than storage and is left untouched.
+            inputDelegate.restoreDraft(chatId)
             updateUiState()
             return
         }
 
         cleanup()
         initializationDelegate.initialize(chatId, participantId)
+        // A chat that does not exist yet has no stored draft; every real conversation reopens with
+        // its own, which is what keeps two chats from sharing one composer.
+        if (chatId != "new") inputDelegate.restoreDraft(chatId)
         updateUiState()
     }
 
