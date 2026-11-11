@@ -64,9 +64,7 @@ import com.synapse.social.studioasinc.feature.shared.components.LocalGlassBackdr
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.shared.domain.model.chat.AttachmentType
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
-import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -489,28 +487,31 @@ val currentUserId = currentUserIdState ?: ""
     // the bottom. One layer means one capture per frame and no pipeline per surface, and no surface
     // ever samples a layer that contains it, because every one of them sits outside this box. The
     // layer is only attached when the device can actually draw a RenderEffect: below Android 12 the
-    // screen keeps the plain translucent surfaces and skips the extra render pass altogether.
+    // screen keeps the plain translucent surfaces and skips the extra render pass altogether. The
+    // two recorded layers are only built on the devices that can draw glass as well: where the
+    // surfaces fall back, nothing samples them, so building them would hold two full-window
+    // recording layers against this composition for a screen that never reads them back.
     val glassSurfaceSupported = remember { isRenderEffectSupported() }
     val backdropBaseColor = MaterialTheme.colorScheme.background
-    val contentBackdrop = rememberLayerBackdrop {
+    val contentBackdrop = if (glassSurfaceSupported) rememberLayerBackdrop {
         // The base colour is painted first because the wallpaper itself can be translucent, and the
         // glass must never sample transparent pixels.
         drawRect(backdropBaseColor)
         drawContent()
-    }
+    } else null
     // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
     // in that layer, so every glass surface is told not to sample one.
     // A second, much smaller layer: the wallpaper on its own. The surfaces that live *inside* the
     // content layer sample this one - they cannot sample the layer that contains them, see
     // LocalGlassBackdrop - and it holds nothing else, so it can never contain them.
-    val backgroundBackdrop = rememberLayerBackdrop {
+    val backgroundBackdrop = if (glassSurfaceSupported) rememberLayerBackdrop {
         drawRect(backdropBaseColor)
         drawContent()
-    }
+    } else null
     // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
     // in that layer, so every glass surface is told not to sample one.
-    val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
-    val inListBackdrop = if (glassSurfaceSupported) backgroundBackdrop else null
+    val glassBackdrop = contentBackdrop
+    val inListBackdrop = backgroundBackdrop
 
     Scaffold(
         topBar = {
@@ -546,14 +547,14 @@ val currentUserId = currentUserIdState ?: ""
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        if (glassSurfaceSupported) Modifier.layerBackdrop(contentBackdrop) else Modifier
+                        contentBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier
                     )
             ) {
                 Box(
                     modifier = Modifier
                         .matchParentSize()
                         .then(
-                            if (glassSurfaceSupported) Modifier.layerBackdrop(backgroundBackdrop) else Modifier
+                            backgroundBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier
                         )
                 ) {
                     ChatBackground(
@@ -632,12 +633,6 @@ val currentUserId = currentUserIdState ?: ""
                                 onOpenEncryption = { showEncryptionSheet = true },
                                 onLocateMessage = viewModel::loadQuotedMessage,
                                 onOpenBatchGallery = { batchGalleryMessage = it },
-                                onOpenPhotoViewer = { message ->
-                                    // A single photo has no grid to return to: the viewer is the
-                                    // only overlay, so closing it lands back in the conversation.
-                                    batchViewerInitialIndex = 0
-                                    batchViewerMessage = message
-                                },
                                 onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
                                 onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
                                 onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
@@ -976,14 +971,12 @@ val currentUserId = currentUserIdState ?: ""
 
             batchGalleryMessage?.let { msg ->
                 BatchMediaGalleryDialog(
-                    attachments = msg.viewerMedia(),
+                    attachments = msg.attachments,
                     caption = msg.content.takeIf { it.isNotBlank() },
                     onDismiss = { batchGalleryMessage = null },
                     onMediaItemClick = { clickedIndex ->
-                        // The grid stays composed underneath the viewer, so closing the viewer
-                        // hands the grid back with its own scroll position instead of dropping
-                        // the reader into the conversation.
                         batchViewerInitialIndex = clickedIndex
+                        batchGalleryMessage = null
                         batchViewerMessage = msg
                     }
                 )
@@ -991,7 +984,7 @@ val currentUserId = currentUserIdState ?: ""
 
             batchViewerMessage?.let { msg ->
                 BatchMediaViewerDialog(
-                    attachments = msg.viewerMedia(),
+                    attachments = msg.attachments,
                     initialIndex = batchViewerInitialIndex,
                     caption = msg.content.takeIf { it.isNotBlank() },
                     onDismiss = { batchViewerMessage = null }
@@ -1273,18 +1266,6 @@ private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(
     "text/csv",
     "text/plain"
 )
-
-/**
- * The photos and videos this message can be viewed in: its own attachments, or — for a message
- * stored before attachments were kept per item — the single media URL it carries. An empty list
- * means the message holds nothing to open in the viewer.
- */
-private fun Message.viewerMedia(): List<MessageAttachment> =
-    attachments.ifEmpty {
-        mediaUrl?.takeIf { it.isNotBlank() }
-            ?.let { listOf(MessageAttachment(url = it, type = AttachmentType.IMAGE)) }
-            .orEmpty()
-    }
 
 private fun Context.toPickedFile(uri: Uri): PickedFile {
     val projection = arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)

@@ -211,6 +211,25 @@ jobs:
           name: apk-release-${{ steps.set_sha.outputs.short_sha }}
           path: app/build/outputs/apk/release/app-*-release-${{ steps.set_sha.outputs.short_sha }}.apk
 
+      # R8 replaces the source file name with the constant "SourceFile" and renumbers the line table
+      # (-renamesourcefileattribute in app/proguard-rules.pro), so the class and file frames of a
+      # release stack trace only map back to real sources through the mapping file R8 wrote for that
+      # exact APK. Nothing kept it, which is why the Compose drawing crash in #249 could not be
+      # symbolicated at all. Publish it next to the APK it belongs to, including on a failed build,
+      # where a partial mapping still identifies the classes it got to.
+      - name: 📤 Upload R8 mapping
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: r8-mapping-${{ steps.set_sha.outputs.short_sha }}
+          path: |
+            app/build/outputs/mapping/release/mapping.txt
+            app/build/outputs/mapping/release/configuration.txt
+            app/build/outputs/mapping/release/seeds.txt
+            app/build/outputs/mapping/release/usage.txt
+          if-no-files-found: warn
+          retention-days: 90
+
   aggregateAndSend:
     name: 📣 Send APKs to Telegram
     runs-on: ${{ vars.IS_USING_HOSTED_RUNNERS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
