@@ -1302,6 +1302,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="unblock">Unblock</string>
     <string name="block_user">Block User</string>
     <string name="block_success">User blocked successfully</string>
+    <string name="error_refresh_blocked_users">Could not refresh the blocked users list.</string>
     <string name="unblock_success">User unblocked successfully</string>
     <string name="error_block_failed">Failed to block user. Please try again.</string>
     <string name="error_unblock_failed">Failed to unblock user. Please try again.</string>
