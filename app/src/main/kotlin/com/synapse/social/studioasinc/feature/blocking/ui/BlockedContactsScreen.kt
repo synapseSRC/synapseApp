@@ -134,6 +134,7 @@ fun BlockedContactsScreen(
     // Handle UI state changes for success and error messages
     val unblockSuccessMessage = stringResource(R.string.unblock_success)
     val blockSuccessMessage = stringResource(R.string.block_success)
+<<<<<<< HEAD
     val refreshFailedMessage = stringResource(R.string.error_refresh_blocked_users)
     LaunchedEffect(uiState) {
         when (val state = uiState) {
