@@ -442,6 +442,9 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToCreatePoll = { chatId ->
                         navController.navigate(AppDestination.CreatePoll(chatId))
                     },
+                    onOpenPost = { postId ->
+                        navController.navigate(AppDestination.PostDetail(postId))
+                    },
                     onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
             }
