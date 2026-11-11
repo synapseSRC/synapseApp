@@ -288,7 +288,8 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_PRIVACY_DISAPPEARING_MESSAGES) {
-            var selectedTimer by remember { mutableStateOf("Off") }
+            val viewModel: PrivacySecurityViewModel = viewModel()
+            val selectedTimer by viewModel.disappearingMessagesTimer.collectAsState()
 
             val timerOptions = listOf(
                 PrivacyOptionItem(
@@ -318,7 +319,7 @@ fun SettingsNavHost(
                 subtitle = stringResource(R.string.settings_disappearing_messages_subtitle),
                 options = timerOptions,
                 selectedOption = selectedTimer,
-                onOptionSelected = { selectedTimer = it },
+                onOptionSelected = { viewModel.setDisappearingMessagesTimer(it) },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
