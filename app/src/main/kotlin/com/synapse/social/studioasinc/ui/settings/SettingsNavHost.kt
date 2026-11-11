@@ -123,7 +123,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_REQUEST_ACCOUNT_INFO) {
-            val viewModel: RequestAccountInfoViewModel = viewModel()
+            val viewModel: RequestAccountInfoViewModel = hiltViewModel()
             RequestAccountInfoScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -133,7 +133,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_PRIVACY) {
-            val viewModel: PrivacySecurityViewModel = viewModel()
+            val viewModel: PrivacySecurityViewModel = hiltViewModel()
             PrivacySecurityScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -429,7 +429,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_APPEARANCE) {
-            val viewModel: AppearanceViewModel = viewModel()
+            val viewModel: AppearanceViewModel = hiltViewModel()
             AppearanceScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -553,7 +553,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_LANGUAGE) {
-            val viewModel: LanguageRegionViewModel = viewModel()
+            val viewModel: LanguageRegionViewModel = hiltViewModel()
             LanguageRegionScreen(
                 viewModel = viewModel,
                 onBackClick = {

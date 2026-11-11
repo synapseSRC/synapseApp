@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +36,8 @@ data class RequestAccountInfoUiState(
 
 
 
-class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class RequestAccountInfoViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
     private val settingsDataStore = SettingsDataStore.getInstance(application)
 

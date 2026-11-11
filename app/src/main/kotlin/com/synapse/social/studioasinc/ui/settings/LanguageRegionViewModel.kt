@@ -12,10 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 
 
-class LanguageRegionViewModel(
+@HiltViewModel
+class LanguageRegionViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 

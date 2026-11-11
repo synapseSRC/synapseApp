@@ -11,8 +11,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class PrivacySecurityViewModel(
+@HiltViewModel
+class PrivacySecurityViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
     private val biometricChecker: BiometricChecker = BiometricCheckerImpl()
