@@ -96,8 +96,11 @@ interface SettingsRepository {
     val biometricLockEnabled: Flow<Boolean>
 
 
-
     val twoFactorEnabled: Flow<Boolean>
+
+
+
+    val disappearingMessagesTimer: Flow<String>
 
 
 
@@ -141,8 +144,7 @@ interface SettingsRepository {
 
     suspend fun setTwoFactorEnabled(enabled: Boolean)
 
-
-
+    suspend fun setDisappearingMessagesTimer(timer: String)
 
 
 
