@@ -27,6 +27,6 @@ data class PostDetailUiState(
     val isSummarizing: Boolean = false,
     val summaryError: String? = null,
     val voteError: String? = null,
-    val revokeError: String? = null,
-    val lastVoteOptionIndex: Int? = null
+    val lastVoteOptionIndex: Int? = null,
+    val revokeError: String? = null
 )
