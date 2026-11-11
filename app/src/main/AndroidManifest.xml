@@ -51,6 +51,13 @@
 		</intent>
 	</queries>
 
+	<!-- Back navigation is deliberately legacy here: Synapse does not want Android's predictive
+	     back "Back Preview" system animation (back-to-home, cross-task, cross-activity) on any
+	     device. enableOnBackInvokedCallback=false switches that system animation off. It is spelled
+	     out rather than omitted because API 36+ turns predictive back on by default for apps that
+	     target it, so an omitted flag would silently re-enable Back Preview on future devices.
+	     Back handling itself is unchanged: MainActivity's OnBackPressedCallback and the Compose
+	     BackHandler callbacks are still delivered, and standard back navigation still runs. -->
 	<application
 		android:allowBackup="false"
 		android:icon="@mipmap/ic_launcher"
@@ -61,7 +68,7 @@
 		android:roundIcon="@mipmap/ic_launcher_round"
 		android:supportsRtl="true"
 		android:localeConfig="@xml/locale_config"
-		android:enableOnBackInvokedCallback="true">
+		android:enableOnBackInvokedCallback="false">
 
 		<!-- Sentry is initialized manually only when SENTRY_DSN is configured. -->
 		<meta-data
