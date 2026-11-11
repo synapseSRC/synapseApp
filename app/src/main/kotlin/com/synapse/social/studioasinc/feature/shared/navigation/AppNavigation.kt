@@ -709,7 +709,15 @@ fun NavGraphBuilder.profileGraph(
                     },
                     onNavigateToBrandPartnerships = {
                         android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onNavigateToPayoutSettings = {
+                        navController.navigate(AppDestination.PayoutSettings)
                     }
+                )
+            }
+            composable<AppDestination.PayoutSettings> {
+                com.synapse.social.studioasinc.ui.settings.PayoutSettingsScreen(
+                    onBackClick = { navController.popBackStack() }
                 )
             }
             composable<AppDestination.ScheduledPosts> {

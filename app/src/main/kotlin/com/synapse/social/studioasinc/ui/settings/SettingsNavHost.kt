@@ -526,6 +526,17 @@ fun SettingsNavHost(
                 },
                 onNavigateToBrandPartnerships = {
                     android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                onNavigateToPayoutSettings = {
+                    navController.navigate(SettingsDestination.ROUTE_PAYOUT_SETTINGS)
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_PAYOUT_SETTINGS) {
+            PayoutSettingsScreen(
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }

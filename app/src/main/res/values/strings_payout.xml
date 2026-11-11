@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="payout_settings_title">Payout settings</string>
+    <string name="payout_settings_back">Back</string>
+    <string name="payout_settings_config_section">Payout configuration</string>
+    <string name="payout_settings_method_title">Payout method</string>
+    <string name="payout_settings_method_subtitle">How you receive your earnings.</string>
+    <string name="payout_method_bank_transfer">Bank transfer</string>
+    <string name="payout_method_paypal">PayPal</string>
+    <string name="payout_method_payoneer">Payoneer</string>
+    <string name="payout_settings_schedule_section">Payout schedule</string>
+    <string name="payout_settings_schedule_title">Payout schedule</string>
+    <string name="payout_settings_schedule_subtitle">How often your earnings are paid out.</string>
+    <string name="payout_schedule_weekly">Weekly</string>
+    <string name="payout_schedule_monthly">Monthly</string>
+    <string name="payout_schedule_manual">On request</string>
+    <string name="payout_settings_notifications_section">Notifications</string>
+    <string name="payout_settings_notifications_title">Payout notifications</string>
+    <string name="payout_settings_notifications_subtitle">Get notified when a payout is sent.</string>
+    <string name="payout_settings_storage_note">Payout details are saved on this device. Server-side payout processing is not enabled yet, so no earnings are transferred.</string>
+</resources>

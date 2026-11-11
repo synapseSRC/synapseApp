@@ -55,6 +55,8 @@ sealed class SettingsDestination(val route: String) {
 
     object BrandPartnerships : SettingsDestination(ROUTE_BRAND_PARTNERSHIPS)
 
+    object PayoutSettings : SettingsDestination(ROUTE_PAYOUT_SETTINGS)
+
     object BlockedContacts : SettingsDestination(ROUTE_BLOCKED_CONTACTS)
 
     object ChatSettings : SettingsDestination(ROUTE_CHAT_SETTINGS)
@@ -115,6 +117,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_BUSINESS_PLATFORM = "settings_business_platform"
         const val ROUTE_CHANGE_NUMBER = "settings_change_number"
         const val ROUTE_BRAND_PARTNERSHIPS = "settings_brand_partnerships"
+        const val ROUTE_PAYOUT_SETTINGS = "settings_business_payout"
         const val ROUTE_BLOCKED_CONTACTS = "settings_blocked_contacts"
         const val ROUTE_CHAT_SETTINGS = "settings_chat_settings"
         const val ROUTE_CHAT_FOLDERS = "settings_chat_folders"
@@ -167,6 +170,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_BUSINESS_PLATFORM -> BusinessPlatform
             ROUTE_CHANGE_NUMBER -> ChangeNumber
             ROUTE_BRAND_PARTNERSHIPS -> BrandPartnerships
+            ROUTE_PAYOUT_SETTINGS -> PayoutSettings
             ROUTE_BLOCKED_CONTACTS -> BlockedContacts
             ROUTE_CHAT_SETTINGS -> ChatSettings
             ROUTE_CHAT_FOLDERS -> ChatFolders

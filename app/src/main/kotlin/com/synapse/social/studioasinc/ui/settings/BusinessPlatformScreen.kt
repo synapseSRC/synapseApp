@@ -30,7 +30,8 @@ fun BusinessPlatformScreen(
     onNavigateToBrandPartnerships: () -> Unit = {},
     onNavigateToScheduledPosts: () -> Unit = {},
     onNavigateToContentCalendar: () -> Unit = {},
-    onNavigateToAnalytics: () -> Unit = {}
+    onNavigateToAnalytics: () -> Unit = {},
+    onNavigateToPayoutSettings: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -89,7 +90,8 @@ fun BusinessPlatformScreen(
                     item {
                         MonetizationSection(
                             state = state,
-                            onToggleMonetization = { viewModel.toggleMonetization(it) }
+                            onToggleMonetization = { viewModel.toggleMonetization(it) },
+                            onNavigateToPayoutSettings = onNavigateToPayoutSettings
                         )
                     }
                     item {
@@ -274,7 +276,8 @@ private fun AnalyticsCard(
 @Composable
 private fun MonetizationSection(
     state: BusinessPlatformState,
-    onToggleMonetization: (Boolean) -> Unit
+    onToggleMonetization: (Boolean) -> Unit,
+    onNavigateToPayoutSettings: () -> Unit
 ) {
     SettingsSection(title = stringResource(R.string.business_section_monetization)) {
         Column {
@@ -321,7 +324,7 @@ private fun MonetizationSection(
                     title = stringResource(R.string.business_payout_settings),
                     subtitle = stringResource(R.string.business_payout_subtitle),
                     imageVector = Icons.Filled.Security,
-                    onClick = {},
+                    onClick = onNavigateToPayoutSettings,
                     position = SettingsItemPosition.Bottom
                 )
             }
