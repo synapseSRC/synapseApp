@@ -8,7 +8,10 @@ class SettingsViewModel: ObservableObject {
     private let preferencesRepo = IOSDependencies.shared.getUserPreferencesRepository()
     private let crashReporter: CrashReportingService
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.synapse.social", category: "SettingsViewModel")
-    private let currentUid = "dummy-uid"
+    
+    private var currentUid: String {
+        return IOSDependencies.shared.getAuthRepository().getCurrentUserId() ?? ""
+    }
 
     init(crashReporter: CrashReportingService = DependencyContainer.shared.crashReportingService) {
         self.crashReporter = crashReporter
