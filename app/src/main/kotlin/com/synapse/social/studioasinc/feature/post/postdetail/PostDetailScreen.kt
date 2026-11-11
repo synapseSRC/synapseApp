@@ -133,8 +133,9 @@ fun PostDetailScreen(
 
     // Sync comment text with editing comment state
     LaunchedEffect(uiState.editingComment) {
-        if (uiState.editingComment != null) {
-            commentText = uiState.editingComment.content ?: ""
+        val editing = uiState.editingComment
+        if (editing != null) {
+            commentText = editing.content ?: ""
             commentIsSending = false
         }
     }
@@ -166,8 +167,6 @@ fun PostDetailScreen(
                 viewModel.revokeVote()
             }
             viewModel.clearRevokeError()
-        }
-    }
         }
     }
 
