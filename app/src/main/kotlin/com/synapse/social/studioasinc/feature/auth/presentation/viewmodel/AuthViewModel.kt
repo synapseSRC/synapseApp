@@ -244,7 +244,10 @@ class AuthViewModel @Inject constructor(
                      _uiState.value = state.copy(isLoading = false, isEmailSent = true)
                  },
                  onFailure = { error ->
-                     _uiState.value = state.copy(isLoading = false)
+                     _uiState.value = state.copy(
+                         isLoading = false,
+                         generalError = error.message ?: "Failed to send reset email"
+                     )
                  }
              )
          }
