@@ -64,7 +64,6 @@ class BlockingViewModel @Inject constructor(
                 refreshBlockedUsers()
             }
         }
-        }
     }
     
     /**
