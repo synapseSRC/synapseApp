@@ -51,8 +51,8 @@ class BlockingViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.value = BlockingUiState.BlockSuccess
                     // Refresh the list after a successful block so the newly blocked user
+                }
                 .onFailure { error ->
-                    _uiState.value = BlockingUiState.Error(
                         message = error.message ?: "Failed to block user"
                     )
                 }
