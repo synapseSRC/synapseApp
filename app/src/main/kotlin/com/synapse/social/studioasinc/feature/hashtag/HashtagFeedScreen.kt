@@ -1,5 +1,9 @@
 package com.synapse.social.studioasinc.feature.hashtag
 
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,13 +13,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.components.post.PostActions
+import com.synapse.social.studioasinc.feature.shared.components.post.PostOptionsBottomSheet
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
 import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
+import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +40,9 @@ fun HashtagFeedScreen(
     var showMediaViewer by remember { mutableStateOf(false) }
     var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
+    var selectedPost by remember { mutableStateOf<Post?>(null) }
+    val context = LocalContext.current
+    val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
     LaunchedEffect(tag) {
         viewModel.init(tag)
@@ -68,7 +80,7 @@ fun HashtagFeedScreen(
                                 onRepost = { },
                                 onQuote = { },
                                 onBookmark = viewModel::bookmarkPost,
-                                onOptionClick = { },
+                                onOptionClick = { post -> selectedPost = post },
                                 onPollVote = viewModel::votePoll,
                                 onUserClick = { userId -> onNavigateToProfile(userId) },
                                 onMediaClick = { post, index ->
@@ -92,6 +104,47 @@ fun HashtagFeedScreen(
                 mediaUrls = selectedMediaUrls,
                 initialPage = selectedMediaIndex,
                 onDismiss = { showMediaViewer = false }
+            )
+        }
+
+        selectedPost?.let { post ->
+            PostOptionsBottomSheet(
+                post = post,
+                isOwner = viewModel.isPostOwner(post),
+                commentsDisabled = post.postDisableReplies == "true",
+                onDismiss = { selectedPost = null },
+                onEdit = { },
+                onDelete = {
+                    viewModel.deletePost(post)
+                    selectedPost = null
+                },
+                onShare = {
+                    PostShareUtils.sharePost(context, post.id)
+                    selectedPost = null
+                },
+                onCopyLink = {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText(postLinkLabel, DeepLink.post(post.id))
+                    clipboard.setPrimaryClip(clip)
+                    Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
+                    selectedPost = null
+                },
+                onBookmark = {
+                    viewModel.bookmarkPost(post)
+                    selectedPost = null
+                },
+                onToggleComments = {
+                    selectedPost = null
+                },
+                onReport = {
+                    selectedPost = null
+                },
+                onBlock = {
+                    selectedPost = null
+                },
+                onRevokeVote = {
+                    selectedPost = null
+                }
             )
         }
     }

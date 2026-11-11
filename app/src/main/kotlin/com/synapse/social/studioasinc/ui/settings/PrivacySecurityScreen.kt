@@ -24,7 +24,6 @@ fun PrivacySecurityScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAppLock: () -> Unit,
     onNavigateToBlockedUsers: () -> Unit,
-    onNavigateToMutedUsers: () -> Unit,
     onNavigateToActiveSessions: () -> Unit,
     onNavigateToLastSeen: () -> Unit,
     onNavigateToProfilePhoto: () -> Unit,
@@ -45,7 +44,6 @@ fun PrivacySecurityScreen(
         onNavigateBack = onNavigateBack,
         onNavigateToAppLock = onNavigateToAppLock,
         onNavigateToBlockedUsers = onNavigateToBlockedUsers,
-        onNavigateToMutedUsers = onNavigateToMutedUsers,
         onNavigateToActiveSessions = onNavigateToActiveSessions,
         onNavigateToLastSeen = onNavigateToLastSeen,
         onNavigateToProfilePhoto = onNavigateToProfilePhoto,
@@ -69,7 +67,6 @@ fun PrivacySecurityContent(
     onNavigateBack: () -> Unit,
     onNavigateToAppLock: () -> Unit,
     onNavigateToBlockedUsers: () -> Unit,
-    onNavigateToMutedUsers: () -> Unit,
     onNavigateToActiveSessions: () -> Unit,
     onNavigateToLastSeen: () -> Unit,
     onNavigateToProfilePhoto: () -> Unit,
@@ -181,7 +178,6 @@ fun PrivacySecurityContent(
             item {
                 ContactsSection(
                     onNavigateToBlockedUsers = onNavigateToBlockedUsers,
-                    onNavigateToMutedUsers = onNavigateToMutedUsers,
                     isLoading = isLoading
                 )
             }

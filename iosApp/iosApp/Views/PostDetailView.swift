@@ -3,8 +3,8 @@ import SwiftUI
 struct PostDetailView: View {
     @StateObject private var viewModel: PostDetailViewModel
 
-    init(post: Post) {
-        _viewModel = StateObject(wrappedValue: PostDetailViewModel(post: post))
+    init(postId: String) {
+        _viewModel = StateObject(wrappedValue: PostDetailViewModel(postId: postId))
     }
 
     var body: some View {

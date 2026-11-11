@@ -25,5 +25,8 @@ data class PostDetailUiState(
     val ancestorComments: List<CommentWithUser> = emptyList(),
     val postSummary: String? = null,
     val isSummarizing: Boolean = false,
-    val summaryError: String? = null
+    val summaryError: String? = null,
+    val voteError: String? = null,
+    val lastVoteOptionIndex: Int? = null,
+    val revokeError: String? = null
 )

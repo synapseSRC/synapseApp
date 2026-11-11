@@ -12,9 +12,25 @@ class SettingsViewModel: ObservableObject {
     private var currentUid: String {
         return IOSDependencies.shared.getAuthRepository().getCurrentUserId() ?? ""
     }
+    }
 
     init(crashReporter: CrashReportingService = DependencyContainer.shared.crashReportingService) {
         self.crashReporter = crashReporter
+        Task { await loadPreferences() }
+    }
+
+    func loadPreferences() async {
+        guard let userId = currentUid, !userId.isEmpty else {
+            logger.warning("Cannot load preferences: no authenticated user ID")
+            return
+        }
+        do {
+            let enabled = try await preferencesRepo.getSecurityNotificationsEnabled(userId: userId)
+            self.securityNotificationsEnabled = enabled
+        } catch {
+            logger.error("Error loading preferences: \(error)")
+            crashReporter.recordError(error)
+        }
     }
 
     func savePreferences() async {
