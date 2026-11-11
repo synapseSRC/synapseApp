@@ -611,3 +611,356 @@ fun NavGraphBuilder.profileGraph(
                 val args = backStackEntry.toRoute<AppDestination.Profile>()
                 val userId = args.userId
                 val currentUserId = AuthHelper.getCurrentUserId() ?: return@composable
+                val targetUserId = if (userId == "me") currentUserId else userId
+                val viewModel: ProfileViewModel = hiltViewModel()
+                ProfileScreen(
+                    userId = targetUserId,
+                    currentUserId = currentUserId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEditProfile = {
+                        navController.navigate(AppDestination.EditProfile)
+                    },
+                    onNavigateToEditPost = { postId ->
+                        navController.navigate(AppDestination.CreatePost(postId = postId))
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(AppDestination.Settings)
+                    },
+                    onNavigateToChat = { targetUserId, userName, avatar ->
+                        navController.navigate(AppDestination.Chat(chatId = "new", userId = targetUserId, participantName = userName, participantAvatar = avatar))
+                    },
+                    onNavigateToFollowers = {
+                        navController.navigate(AppDestination.FollowList(userId, 0))
+                    },
+                    onNavigateToFollowing = {
+                        navController.navigate(AppDestination.FollowList(userId, 1))
+                    },
+                    onNavigateToQuotePost = { postId ->
+                        navController.navigate(AppDestination.QuotePost(postId))
+                    },
+                    onNavigateToUserProfile = { targetUid ->
+                        navController.navigate(AppDestination.Profile(targetUid))
+                    },
+                    onNavigateToStoryCreator = {
+                        context.startActivity(Intent(context, StoryCreatorActivity::class.java))
+                    },
+                    onNavigateToLockProfile = {
+                        navController.navigate(AppDestination.LockProfile)
+                    },
+                    viewModel = viewModel
+                )
+            }
+            composable<AppDestination.LockProfile> {
+                val viewModel: LockProfileViewModel = hiltViewModel()
+                LockProfileScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.EditProfile> {
+                val viewModel: EditProfileViewModel = hiltViewModel()
+
+                EditProfileScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToRegionSelection = { _ ->
+                        navController.navigate(AppDestination.Location)
+                    },
+                    onNavigateToProfileMedia = {
+                        navController.navigate(AppDestination.ProfileMedia)
+                    },
+                    onNavigateToPersonalInfo = {
+                        navController.navigate(AppDestination.PersonalInformation)
+                    },
+                    onNavigateToPhotoHistory = { type ->
+                        navController.navigate(AppDestination.PhotoHistory(type))
+                    },
+                    onNavigateToInterestsSkills = {
+                        navController.navigate(AppDestination.InterestsSkills)
+                    },
+                    onNavigateToWorkEducation = {
+                        navController.navigate(AppDestination.WorkEducation)
+                    },
+                    onNavigateToSocialLinks = {
+                        navController.navigate(AppDestination.SocialLinks)
+                    },
+                    onNavigateToProfileAppearance = {
+                        navController.navigate(AppDestination.ProfileAppearance)
+                    },
+                    onNavigateToFeaturedContent = {
+                        navController.navigate(AppDestination.FeaturedContent)
+                    },
+                    onNavigateToProfessionalProfile = {
+                        navController.navigate(AppDestination.ProfessionalProfile)
+                    }
+                )
+            }
+            composable<AppDestination.ProfessionalProfile> {
+                com.synapse.social.studioasinc.feature.profile.editprofile.professional.ProfessionalProfileScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToBusinessPlatform = {
+                        navController.navigate(AppDestination.BusinessPlatform)
+                    }
+                )
+            }
+            composable<AppDestination.BusinessPlatform> {
+                val viewModel: com.synapse.social.studioasinc.ui.settings.BusinessPlatformViewModel = hiltViewModel()
+                val currentContext = androidx.compose.ui.platform.LocalContext.current
+                com.synapse.social.studioasinc.ui.settings.BusinessPlatformScreen(
+                    viewModel = viewModel,
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToScheduledPosts = {
+                        navController.navigate(AppDestination.ScheduledPosts)
+                    },
+                    onNavigateToContentCalendar = {
+                        android.widget.Toast.makeText(currentContext, "Content Calendar coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onNavigateToBrandPartnerships = {
+                        android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onNavigateToPayoutSettings = {
+                        navController.navigate(AppDestination.PayoutSettings)
+                    }
+                )
+            }
+            composable<AppDestination.PayoutSettings> {
+                com.synapse.social.studioasinc.ui.settings.PayoutSettingsScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.ScheduledPosts> {
+                val viewModel: com.synapse.social.studioasinc.ui.settings.ScheduledPostsViewModel = hiltViewModel()
+                com.synapse.social.studioasinc.ui.settings.ScheduledPostsScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.ProfileMedia> {
+                ProfileMediaScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPhotoHistory = { type ->
+                        navController.navigate(AppDestination.PhotoHistory(type))
+                    }
+                )
+            }
+            composable<AppDestination.PersonalInformation> {
+                PersonalInformationScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.Location> {
+                val viewModel: com.synapse.social.studioasinc.feature.profile.editprofile.location.LocationViewModel = hiltViewModel()
+
+                val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+                val selectedRegion = savedStateHandle?.get<String>("selected_region")
+
+                LaunchedEffect(selectedRegion) {
+                    selectedRegion?.let { region ->
+                        viewModel.onEvent(com.synapse.social.studioasinc.feature.profile.editprofile.location.LocationEvent.RegionSelected(region))
+                        savedStateHandle.remove<String>("selected_region")
+                    }
+                }
+
+                com.synapse.social.studioasinc.feature.profile.editprofile.location.LocationScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToRegionSelection = {
+                        navController.navigate(AppDestination.RegionSelection)
+                    }
+                )
+            }
+            composable<AppDestination.RegionSelection> {
+                RegionSelectionScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onRegionSelected = { region ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set("selected_region", region)
+                        navController.popBackStack()
+                    }
+                )
+            }
+    composable<AppDestination.PhotoHistory> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.PhotoHistory>()
+                val typeStr = args.type
+                val photoType = try {
+                    PhotoType.valueOf(typeStr)
+                } catch (e: IllegalArgumentException) {
+                    return@composable
+                }
+
+                 PhotoHistoryScreen(
+                    type = photoType,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.InterestsSkills> {
+                InterestsSkillsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.SocialLinks> {
+                SocialLinksScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.ProfileAppearance> {
+                ProfileAppearanceScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.FeaturedContent> {
+                FeaturedContentScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable<AppDestination.WorkEducation> {
+                WorkEducationScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+     composable<AppDestination.FollowList> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.FollowList>()
+                val userId = args.userId
+                val currentUserId = AuthHelper.getCurrentUserId() ?: return@composable
+                val targetUserId = if (userId == "me") currentUserId else userId
+                val initialTab = args.initialTab
+                FollowListScreen(
+                    userId = targetUserId,
+                    initialTab = initialTab,
+                    onNavigateBack = { navController.popBackStack() },
+                    onUserClick = { profileUserId ->
+                        navController.navigate(AppDestination.Profile(profileUserId))
+                    },
+                    onMessageClick = { userId, userName, avatar ->
+                        navController.navigate(AppDestination.Chat(chatId = "new", userId = userId, participantName = userName, participantAvatar = avatar))
+                    }
+                )
+            }
+    composable<AppDestination.Settings> {
+                val signOutViewModel: com.synapse.social.studioasinc.ui.settings.SignOutViewModel = hiltViewModel()
+                SettingsNavHost(
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToProfileEdit = {
+                        navController.navigate(AppDestination.EditProfile)
+                    },
+                    onNavigateToChatPrivacy = {
+                        // navController.navigate(AppDestination.ChatPrivacy)
+                    },
+                    onLogout = {
+                        signOutViewModel.signOut {
+                            navController.navigate(AppDestination.Auth) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+fun NavGraphBuilder.postGraph(
+    navController: NavHostController,
+    sharedTransitionScope: SharedTransitionScope
+) {
+    composable<AppDestination.CreatePost> { backStackEntry ->
+        val viewModel: CreatePostViewModel = hiltViewModel()
+        val args = backStackEntry.toRoute<AppDestination.CreatePost>()
+        val postId = args.postId
+        val type = args.type
+        val replyToPostId = args.replyToPostId
+
+        LaunchedEffect(postId, replyToPostId, type) {
+            viewModel.setCompositionType(type)
+            if (postId != null) {
+                viewModel.loadPostForEdit(postId)
+            }
+            if (replyToPostId != null) {
+                viewModel.setReplyToPostId(replyToPostId)
+            }
+        }
+
+        CreatePostScreen(
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = this@composable,
+            viewModel = viewModel,
+            onNavigateUp = { navController.popBackStack() }
+        )
+    }
+    composable<AppDestination.PostDetail>(
+        deepLinks = listOf(navDeepLink<AppDestination.PostDetail>(basePath = "synapse://post"))
+    ) { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.PostDetail>()
+                PostDetailScreen(
+                    postId = args.postId,
+                    rootCommentId = args.commentId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToProfile = { userId ->
+                        navController.navigate(AppDestination.Profile(userId))
+                    },
+                    onNavigateToEditPost = { pid ->
+                        navController.navigate(AppDestination.CreatePost(pid))
+                },
+                onNavigateToQuotePost = { pid ->
+                        navController.navigate(AppDestination.QuotePost(pid))
+                },
+                onNavigateToReplyToPost = { pid ->
+                    navController.navigate(AppDestination.CreatePost(replyToPostId = pid))
+                },
+                onNavigateToCommentDetail = { postId, commentId ->
+                    navController.navigate(AppDestination.PostDetail(postId, commentId))
+                    }
+                )
+            }
+    composable<AppDestination.QuotePost> {
+                val viewModel: com.synapse.social.studioasinc.feature.createpost.quote.QuotePostViewModel = hiltViewModel()
+                com.synapse.social.studioasinc.feature.createpost.quote.QuotePostScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+fun NavGraphBuilder.hashtagGraph(
+    navController: NavHostController,
+    sharedTransitionScope: SharedTransitionScope
+) {
+    composable<AppDestination.HashtagFeed>(
+        deepLinks = listOf(navDeepLink<AppDestination.HashtagFeed>(basePath = "synapse://hashtag"))
+    ) { backStackEntry ->
+        val args = backStackEntry.toRoute<AppDestination.HashtagFeed>()
+        val viewModel: com.synapse.social.studioasinc.feature.hashtag.HashtagFeedViewModel = hiltViewModel()
+        com.synapse.social.studioasinc.feature.hashtag.HashtagFeedScreen(
+            tag = args.tag,
+            viewModel = viewModel,
+            onBack = { navController.popBackStack() },
+            onNavigateToPost = { postId, commentId ->
+                navController.navigate(AppDestination.PostDetail(postId, commentId))
+            },
+            onNavigateToProfile = { userId ->
+                navController.navigate(AppDestination.Profile(userId))
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+fun NavGraphBuilder.storyGraph(
+    navController: NavHostController,
+    sharedTransitionScope: SharedTransitionScope
+) {
+    composable<AppDestination.StoryViewer> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.StoryViewer>()
+                val userId = args.userId
+                val userIds = args.userIds.ifEmpty { listOf(userId) }
+
+                StoryPagerScreen(
+                    userIds = userIds,
+                    initialIndex = userIds.indexOf(userId).coerceAtLeast(0),
+                    onClose = { navController.popBackStack() }
+                )
+            }
+}
+
+private const val CALL_TRANSITION_MILLIS = 200
