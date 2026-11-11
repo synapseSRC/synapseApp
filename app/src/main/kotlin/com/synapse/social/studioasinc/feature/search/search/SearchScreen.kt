@@ -74,6 +74,7 @@ fun SearchScreen(
     viewModel: SearchViewModel,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToPost: (String) -> Unit,
+    onNavigateToEditPost: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -506,7 +507,7 @@ onMediaClick = { post, index ->
             isOwner = viewModel.isPostOwner(post),
             commentsDisabled = viewModel.areCommentsDisabled(post),
             onDismiss = { selectedPost = null },
-            onEdit = {  },
+            onEdit = { onNavigateToEditPost(post.id) },
             onDelete = {
                 viewModel.deletePost(post)
                 selectedPost = null

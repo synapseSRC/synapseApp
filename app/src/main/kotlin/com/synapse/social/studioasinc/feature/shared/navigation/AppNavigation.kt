@@ -313,6 +313,9 @@ fun NavGraphBuilder.homeGraph(
                     onNavigateToPost = { postId ->
                         navController.navigate(AppDestination.PostDetail(postId))
                     },
+                    onNavigateToEditPost = { postId ->
+                        navController.navigate(AppDestination.CreatePost(postId = postId))
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }

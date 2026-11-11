@@ -43,11 +43,18 @@ class SearchActivity : BaseComposeActivity() {
                         intent.putExtra("post_id", postId)
                         startActivity(intent)
                     },
+                    onNavigateToEditPost = { postId -> navigateToEditPost(postId) },
                     onBack = {
                         finish()
                     }
                 )
             }
         }
+    }
+
+    private fun navigateToEditPost(postId: String) {
+        startActivity(Intent(this, CreatePostActivity::class.java).apply {
+            putExtra("edit_post_id", postId)
+        })
     }
 }
