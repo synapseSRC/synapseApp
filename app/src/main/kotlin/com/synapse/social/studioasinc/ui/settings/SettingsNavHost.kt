@@ -24,17 +24,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.composable
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 
-@Composable
 fun SettingsNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -219,12 +218,10 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             AppLockScreen(
                 viewModel = viewModel,
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -232,10 +229,9 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_last_seen_title),
                 subtitle = stringResource(R.string.settings_last_seen_subtitle),
@@ -254,10 +250,9 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val options = GroupPrivacy.values().map { groupPrivacy ->
                 PrivacyOptionItem(
                     title = groupPrivacy.displayName(),
@@ -365,10 +360,9 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_profile_photo_title),
                 subtitle = stringResource(R.string.settings_profile_photo_subtitle),
@@ -387,10 +381,9 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_about_privacy_title),
                 subtitle = stringResource(R.string.settings_about_subtitle),
@@ -409,10 +402,9 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_status_title),
                 subtitle = stringResource(R.string.settings_status_subtitle),
@@ -443,12 +435,10 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_FONT) {
-            val viewModel: FontViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
             val viewModel: FontViewModel = hiltViewModel()
+            FontScreen(
                 viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
