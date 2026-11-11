@@ -15,7 +15,9 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,17 +33,18 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun CommentInput(
+    text: String,
+    onTextChange: (String) -> Unit,
+    isSending: Boolean,
+    onSendingChange: (Boolean) -> Unit,
     onSend: (String, Uri?) -> Unit,
     modifier: Modifier = Modifier,
-    initialValue: String = "",
     userAvatarUrl: String? = null,
     userDisplayName: String? = null,
     replyToParticipants: List<String> = emptyList(),
     onReplyingToClick: (() -> Unit)? = null,
     focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
-    var text by remember(initialValue) { mutableStateOf(initialValue) }
-    var isSending by remember { mutableStateOf(false) }
     var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
@@ -164,13 +167,13 @@ fun CommentInput(
 
                             TextField(
                                 value = text,
-                                onValueChange = { text = it },
+                                onValueChange = onTextChange,
                                 modifier = Modifier
                                     .weight(1f)
                                     .focusRequester(focusRequester),
                                 placeholder = {
                                     Text(
-                                        "Post your reply",
+                                        text = "Post your reply",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -191,11 +194,8 @@ fun CommentInput(
                             IconButton(
                                 onClick = {
                                     if (canSend) {
-                                        isSending = true
+                                        onSendingChange(true)
                                         onSend(text, selectedMediaUri)
-                                        text = ""
-                                        selectedMediaUri = null
-                                        isSending = false
                                     }
                                 },
                                 enabled = canSend

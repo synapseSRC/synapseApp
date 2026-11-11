@@ -74,6 +74,9 @@ fun PostDetailScreen(
     var showPostOptions by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
 
+    var commentText by remember { mutableStateOf("") }
+    var commentIsSending by remember { mutableStateOf(false) }
+
     var showCommentOptions by remember { mutableStateOf<CommentWithUser?>(null) }
     var showReactionPickerForComment by remember { mutableStateOf<CommentWithUser?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
@@ -110,6 +113,24 @@ fun PostDetailScreen(
                 viewModel.clearBlockStatus()
             }
         }
+    }
+
+    // Handle comment submission completion: clear input, show errors, reset sending state
+    LaunchedEffect(uiState.commentSubmitted) {
+        if (uiState.commentSubmitted) {
+            uiState.error?.let { error ->
+                snackbarHostState.showSnackbar(message = error)
+            }
+            commentText = ""
+            commentIsSending = false
+            viewModel.clearCommentSubmission()
+        }
+    }
+
+    // Sync comment text with editing comment state
+    LaunchedEffect(uiState.editingComment) {
+        commentText = uiState.editingComment?.content ?: ""
+        commentIsSending = false
     }
 
     if (showMediaViewer && uiState.post != null) {
@@ -225,6 +246,10 @@ fun PostDetailScreen(
                 onCancelReply = { viewModel.setReplyTo(null) },
                 onCancelEdit = { viewModel.setEditingComment(null) },
                 onReplyingToClick = { showReplyingToSheet = true },
+                commentText = commentText,
+                onCommentTextChange = { commentText = it },
+                commentIsSending = commentIsSending,
+                onCommentSendingChange = { commentIsSending = it },
                 onSendComment = { content, mediaUri ->
                     if (uiState.editingComment != null) {
                         uiState.editingComment?.id?.let { viewModel.editComment(it, content) }
@@ -457,6 +482,10 @@ private fun PostDetailBottomBar(
     onCancelReply: () -> Unit,
     onCancelEdit: () -> Unit,
     onReplyingToClick: () -> Unit,
+    commentText: String,
+    onCommentTextChange: (String) -> Unit,
+    commentIsSending: Boolean,
+    onCommentSendingChange: (Boolean) -> Unit,
     onSendComment: (String, android.net.Uri?) -> Unit
 ) {
     Column(
@@ -479,8 +508,11 @@ private fun PostDetailBottomBar(
             )
         }
         CommentInput(
+            text = commentText,
+            onTextChange = onCommentTextChange,
+            isSending = commentIsSending,
+            onSendingChange = onCommentSendingChange,
             onSend = onSendComment,
-            initialValue = uiState.editingComment?.content ?: "",
             userAvatarUrl = uiState.currentUserAvatarUrl,
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },

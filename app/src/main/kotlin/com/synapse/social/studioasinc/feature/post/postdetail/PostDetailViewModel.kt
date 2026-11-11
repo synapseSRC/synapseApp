@@ -250,6 +250,7 @@ class PostDetailViewModel @Inject constructor(
                 _uiState.update { it.copy(error = e.message ?: "Failed to upload media") }
             } finally {
                 isSubmittingComment = false
+                _uiState.update { it.copy(commentSubmitted = true) }
             }
         }
     }
@@ -477,5 +478,9 @@ class PostDetailViewModel @Inject constructor(
 
     fun clearPostSummary() {
         _uiState.update { it.copy(postSummary = null, summaryError = null) }
+    }
+
+    fun clearCommentSubmission() {
+        _uiState.update { it.copy(commentSubmitted = false) }
     }
 }
