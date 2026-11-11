@@ -141,6 +141,7 @@ import kotlinx.serialization.json.Json
 
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatAiDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatDraftDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatMediaDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatMessagingDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatSettingsDependencies
@@ -333,6 +334,7 @@ object ChatModule {
         ai: ChatAiDependencies,
         media: ChatMediaDependencies,
         settings: ChatSettingsDependencies,
+        draft: ChatDraftDependencies,
         initializeE2EUseCase: InitializeE2EUseCase,
         getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase,
         getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase,
@@ -358,6 +360,7 @@ object ChatModule {
         ai = ai,
         media = media,
         settings = settings,
+        draft = draft,
         initializeE2EUseCase = initializeE2EUseCase,
         getOrCreateChatUseCase = getOrCreateChatUseCase,
         getChatInfoUseCase = getChatInfoUseCase,
@@ -482,5 +485,18 @@ object ChatModule {
         chatLockManager = chatLockManager,
         deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase,
         settingsRepository = settingsRepository
+    )
+
+    // Composer draft dependencies group
+    @Provides
+    @Singleton
+    fun provideChatDraftDependencies(
+        getChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.GetChatDraftUseCase,
+        saveChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.SaveChatDraftUseCase,
+        clearChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.ClearChatDraftUseCase
+    ): ChatDraftDependencies = ChatDraftDependencies(
+        getChatDraftUseCase = getChatDraftUseCase,
+        saveChatDraftUseCase = saveChatDraftUseCase,
+        clearChatDraftUseCase = clearChatDraftUseCase
     )
 }
