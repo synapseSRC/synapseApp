@@ -33,7 +33,8 @@ fun AccountSettingsScreen(
     onNavigateToRequestAccountInfo: () -> Unit = {},
     onNavigateToBusinessPlatform: () -> Unit = {},
     onNavigateToChangeNumber: () -> Unit = {},
-    onNavigateToPasskeys: () -> Unit = {}
+    onNavigateToPasskeys: () -> Unit = {},
+    onNavigateToTwoStepVerification: () -> Unit = {}
 ) {
     val linkedAccounts by viewModel.linkedAccounts.collectAsState()
     val securityNotificationsEnabled by viewModel.securityNotificationsEnabled.collectAsState()
@@ -109,7 +110,7 @@ fun AccountSettingsScreen(
                         title = stringResource(R.string.settings_two_step_verification_title),
                         subtitle = stringResource(R.string.settings_two_step_verification_subtitle),
                         imageVector = Icons.Filled.Security,
-                        onClick = { },
+                        onClick = onNavigateToTwoStepVerification,
                         position = SettingsItemPosition.Bottom
                     )
                 }

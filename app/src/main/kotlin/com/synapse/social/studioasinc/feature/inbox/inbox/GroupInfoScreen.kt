@@ -231,7 +231,7 @@ fun GroupInfoScreen(
 
     val description = groupInfo?.description
     val showDescription = !description.isNullOrBlank() || canEditGroupInfo
-    val inviteLink = inviteCode?.let { INVITE_BASE_URL + it }
+    val inviteLink = inviteCode?.let { GroupInviteLinks.httpsLink(it) }
     val showInvite = inviteLink != null && (isAdmin || allowMemberInvites)
     val pendingCount = uiState.pendingRequests.size
     val showPending = isAdmin && requireJoinApproval
@@ -1379,7 +1379,6 @@ private fun createQrBitmap(value: String, foreground: Int, background: Int): Bit
 
 // endregion
 
-private const val INVITE_BASE_URL = "https://synapse.chat/g/"
 private const val GROUP_REPORT_REASON = "user_report"
 private const val GROUP_NAME_MAX_LENGTH = 60
 private const val GROUP_DESCRIPTION_MAX_LENGTH = 240

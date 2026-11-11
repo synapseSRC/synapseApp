@@ -47,6 +47,7 @@ fun PostHeader(
     feeling: FeelingActivity? = null,
     locationName: String? = null,
     replyToUsernames: List<String> = emptyList(),
+    onUsernameSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showReplyingToSheet by remember { mutableStateOf(false) }
@@ -224,6 +225,7 @@ fun PostHeader(
         if (showReplyingToSheet) {
             ReplyingToBottomSheet(
                 usernames = replyToUsernames,
+                onUsernameSelected = onUsernameSelected,
                 onDismiss = { showReplyingToSheet = false }
             )
         }

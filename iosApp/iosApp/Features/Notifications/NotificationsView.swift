@@ -116,6 +116,16 @@ struct NotificationsView: View {
                     }
                 }
             }
+            .navigationDestination(for: AppRoute.self) { route in
+                switch route {
+                case .postDetail(let postId):
+                    PostDetailView(postId: postId)
+                case .profile:
+                    ProfileView()
+                default:
+                    EmptyView()
+                }
+            }
         }
     }
 
@@ -134,9 +144,9 @@ struct NotificationsView: View {
 
     private func handleTargetNavigation(notification: NotificationItem) {
         if let targetPost = notification.target as? shared.NotificationTargetPost {
-            navigator.navigate(to: .home)
+            navigator.navigate(to: .postDetail(targetPost.postId))
         } else if let targetComment = notification.target as? shared.NotificationTargetComment {
-            navigator.navigate(to: .home)
+            navigator.navigate(to: .postDetail(targetComment.postId))
         } else if let targetProfile = notification.target as? shared.NotificationTargetProfile {
             navigator.navigate(to: .profile)
         } else if let targetId = notification.targetId, !targetId.isEmpty {

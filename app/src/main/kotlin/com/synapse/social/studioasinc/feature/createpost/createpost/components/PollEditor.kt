@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -29,6 +30,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +77,11 @@ fun PollCreationSheet(
                 onValueChange = { question = it },
                 label = { Text(stringResource(R.string.poll_question_hint)) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(Sizes.CornerDefault)
+                shape = RoundedCornerShape(Sizes.CornerDefault),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text
+                )
             )
 
             options.forEachIndexed { index, option ->
@@ -84,6 +91,10 @@ fun PollCreationSheet(
                     label = { Text(stringResource(R.string.poll_option_label, index + 1)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(Sizes.CornerDefault),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text
+                    ),
                     trailingIcon = if (options.size > 2) {
                         {
                             IconButton(onClick = { options.removeAt(index) }) {

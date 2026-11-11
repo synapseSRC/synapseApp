@@ -25,7 +25,7 @@ struct HomeFeedView: View {
                     ScrollView {
                         LazyVStack(spacing: AppTheme.Spacing.space0) {
                             ForEach(viewModel.posts) { post in
-                                NavigationLink(destination: PostDetailView(post: post)) {
+                                NavigationLink(destination: PostDetailView(postId: post.id)) {
                                     PostCardView(
                                         post: post,
                                         onLike: { viewModel.toggleLike(for: post) },

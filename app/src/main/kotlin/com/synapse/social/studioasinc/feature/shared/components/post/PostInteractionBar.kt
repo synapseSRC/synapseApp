@@ -72,7 +72,8 @@ fun PostInteractionBar(
     onQuoteClick: () -> Unit = {},
     onBookmarkClick: () -> Unit,
     onReactionLongPress: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
     val haptic = LocalHapticFeedback.current
     var showRepostMenu by remember { mutableStateOf(false) }
@@ -234,40 +235,50 @@ fun PostInteractionBar(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .combinedClickable(
-                        onClick = onLikeClick,
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onReactionLongPress?.invoke()
-                        }
-                    )
                     .padding(vertical = Spacing.space4)
+                    .then(
+                        if (isLoading) Modifier else Modifier
+                            .combinedClickable(
+                                onClick = onLikeClick,
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onReactionLongPress?.invoke()
+                                }
+                            )
+                    )
             ) {
-                Icon(
-                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = stringResource(
-                        if (isLiked) R.string.like_post_liked else R.string.like_post_with_count,
-                        likeCount
-                    ),
-                    tint = if (isLiked) likeActiveColor else iconColor,
-                    modifier = Modifier
-                        .size(Sizes.IconMedium)
-                        .graphicsLayer {
-                            scaleX = scale.value
-                            scaleY = scale.value
-                            rotationY = rotY.value
-                            rotationX = rotX.value
+                if (isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(Sizes.IconSmall),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = stringResource(
+                            if (isLiked) R.string.like_post_liked else R.string.like_post_with_count,
+                            likeCount
+                        ),
+                        tint = if (isLiked) likeActiveColor else iconColor,
+                        modifier = Modifier
+                            .size(Sizes.IconMedium)
+                            .graphicsLayer {
+                                scaleX = scale.value
+                                scaleY = scale.value
+                                rotationY = rotY.value
+                                rotationX = rotX.value
+                            }
+                    )
+                    if (likeCount > 0 && !hideLikeCount) {
+                        Spacer(modifier = Modifier.width(Spacing.space4))
+                        AnimatedCounter(count = likeCount) { targetCount ->
+                            Text(
+                                text = formatCount(targetCount),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isLiked) likeActiveColor else iconColor,
+                                fontWeight = if (isLiked) FontWeight.Bold else FontWeight.Normal
+                            )
                         }
-                )
-                if (likeCount > 0 && !hideLikeCount) {
-                    Spacer(modifier = Modifier.width(Spacing.space4))
-                    AnimatedCounter(count = likeCount) { targetCount ->
-                        Text(
-                            text = formatCount(targetCount),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isLiked) likeActiveColor else iconColor,
-                            fontWeight = if (isLiked) FontWeight.Bold else FontWeight.Normal
-                        )
                     }
                 }
             }

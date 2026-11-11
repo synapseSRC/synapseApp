@@ -49,10 +49,20 @@ fun PhotoHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = uiState.error
 
 
     LaunchedEffect(type) {
         viewModel.onEvent(PhotoHistoryEvent.LoadHistory(type))
+    }
+
+    // A failure that leaves photos on screen (picking or deleting an entry) is reported over the
+    // grid instead of replacing what the user is looking at.
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null && uiState.items.isNotEmpty()) {
+            snackbarHostState.showSnackbar(errorMessage)
+        }
     }
 
 
@@ -84,6 +94,7 @@ fun PhotoHistoryScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -118,6 +129,11 @@ fun PhotoHistoryScreen(
                 ) {
                     ExpressiveLoadingIndicator()
                 }
+            } else if (errorMessage != null && uiState.items.isEmpty()) {
+                PhotoHistoryErrorState(
+                    message = errorMessage,
+                    onRetry = { viewModel.onEvent(PhotoHistoryEvent.LoadHistory(type)) }
+                )
             } else if (uiState.items.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -183,7 +199,7 @@ fun PhotoHistoryScreen(
                         items = uiState.items,
                         key = { index, item -> "${item.id}_${index}" }
                     ) { index, item ->
-                        val isSelected = item.imageUrl == uiState.currentPhotoUrl
+                        val isSelected = storageObjectKey(item.imageUrl) == storageObjectKey(uiState.currentPhotoUrl)
 
                         PhotoHistoryItem(
                             modifier = Modifier.animateItem(),
@@ -222,7 +238,7 @@ fun PhotoHistoryItem(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
-                model = item.imageUrl,
+                model = item.displayUrl,
                 contentDescription = stringResource(R.string.history_photo),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -252,6 +268,42 @@ fun PhotoHistoryItem(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PhotoHistoryErrorState(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(AppSpacing.screenPadding),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.photo_history_error_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.space8))
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(Sizes.HeightSmall))
+
+        Button(onClick = onRetry) {
+            Text(text = stringResource(R.string.photo_history_retry))
         }
     }
 }

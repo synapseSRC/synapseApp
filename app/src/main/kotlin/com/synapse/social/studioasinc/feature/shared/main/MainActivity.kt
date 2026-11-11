@@ -24,6 +24,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -169,6 +170,9 @@ class MainActivity : AppCompatActivity() {
                 val showProfilePicSuggestion by viewModel.showProfilePicSuggestion.collectAsState()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
+                // The launch intent is acted on at most once per activity instance; saved so the
+                // re-composition a configuration change causes cannot act on it a second time.
+                var launchIntentHandled by rememberSaveable { mutableStateOf(false) }
 
                 if (!isCheckingAuth) {
                     AppNavigation(
@@ -191,14 +195,23 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
 
-                    LaunchedEffect(Unit) {
-                        // Only an app that already belongs in Home may honour the inbox shortcut;
-                        // onboarding must not be skipped by a launch intent.
-                        if (startDestination == AppDestination.Home) {
-                            val destination = this@MainActivity.intent.getStringExtra("destination")
-                            if (destination == "inbox") {
-                                navController.navigate(AppDestination.Inbox)
-                            }
+                    LaunchedEffect(navController, startDestination) {
+                        // This activity's launch intent was read before the navigation graph existed,
+                        // so whatever it asks for is applied here: a synapse:// link is handed to the
+                        // NavController exactly as onNewIntent does for a link that arrives while the
+                        // app is already running, and the inbox shortcut (HomeActivity clears back to
+                        // this activity carrying it) opens the inbox. Only an app that already belongs
+                        // in Home may act on either - auth or onboarding must not be skipped by a
+                        // launch intent.
+                        if (launchIntentHandled || startDestination != AppDestination.Home) {
+                            return@LaunchedEffect
+                        }
+                        launchIntentHandled = true
+                        val launchIntent = this@MainActivity.intent
+                        if (launchIntent.data != null) {
+                            navController.handleDeepLink(launchIntent)
+                        } else if (launchIntent.getStringExtra("destination") == "inbox") {
+                            navController.navigate(AppDestination.Inbox)
                         }
                     }
                 }
@@ -206,6 +219,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * A link that arrives while this instance is already running reuses the activity (the echo
+     * notification and the share shortcuts set FLAG_ACTIVITY_SINGLE_TOP), so the graph exists and
+     * the intent can be handed over directly. A link that starts the app from a closed state
+     * arrives in [onCreate] instead, where the graph does not exist yet - that intent is replayed
+     * from the Compose content once the graph is composed.
+     */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (::navController.isInitialized) {

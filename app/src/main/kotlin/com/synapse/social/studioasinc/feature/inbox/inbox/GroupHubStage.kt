@@ -145,7 +145,7 @@ internal fun GroupHubStage(
     var showRevokeDialog by remember { mutableStateOf(false) }
     var showRequestsDialog by remember { mutableStateOf(false) }
     var memberToRemove by remember { mutableStateOf<User?>(null) }
-    val inviteLink = inviteCode?.let { INVITE_BASE_URL + it }
+    val inviteLink = inviteCode?.let { GroupInviteLinks.httpsLink(it) }
 
     if (showRevokeDialog) {
         AlertDialog(
@@ -361,8 +361,6 @@ private fun createQrBitmap(value: String, foreground: Int, background: Int): Bit
     null
 }
 
-
-private const val INVITE_BASE_URL = "https://synapse.chat/g/"
 
 /** Invite QR rendered inside the hub card; the shared [Sizes.QRCodeSize] token is dialog-sized. */
 private val GroupQrCodeSize = 160.dp

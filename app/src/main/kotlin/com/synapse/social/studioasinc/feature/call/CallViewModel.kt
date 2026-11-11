@@ -174,7 +174,16 @@ class CallViewModel @Inject constructor(
 
     fun toggleCamera() {
         val session = currentSession() ?: return
-        runControl { toggleLocalVideo(session) }
+        // Turning the camera on claims the lens, which the user may never have granted — or may have
+        // revoked since the call started. Turning it off asks for nothing, so it is never gated. The
+        // repository checks again behind this: the gate exists to make the dialog reachable.
+        if (session.isLocalVideoEnabled) {
+            runControl { toggleLocalVideo(session) }
+        } else {
+            gateOnPermissions(CallMediaType.VIDEO, PendingCallOp.CameraToggle) {
+                runControl { toggleLocalVideo(session) }
+            }
+        }
     }
 
     fun flipCamera() {
@@ -215,6 +224,10 @@ class CallViewModel @Inject constructor(
                 PendingCallOp.Accept -> currentSession()?.let { runControl { acceptCall(it) } }
                 is PendingCallOp.Upgrade ->
                     currentSession()?.let { runControl { applyMediaChange(it, op.mediaType) } }
+
+                // The grant that stood in the way of a camera-on: the same control runs now.
+                PendingCallOp.CameraToggle ->
+                    currentSession()?.let { runControl { toggleLocalVideo(it) } }
 
                 // Nothing was parked behind the question — the user granted a permission the screen had
                 // put up on its own, so the call is free to be dialled again.
@@ -437,6 +450,9 @@ class CallViewModel @Inject constructor(
         data class Dial(val request: CallRequest) : PendingCallOp
         data object Accept : PendingCallOp
         data class Upgrade(val mediaType: CallMediaType) : PendingCallOp
+
+        /** A camera-on waiting on the camera permission. */
+        data object CameraToggle : PendingCallOp
     }
 
     private companion object {

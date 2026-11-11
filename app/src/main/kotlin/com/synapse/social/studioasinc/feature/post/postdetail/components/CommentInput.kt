@@ -10,12 +10,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +27,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
@@ -31,28 +36,29 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun CommentInput(
+    text: String,
+    onTextChange: (String) -> Unit,
+    isSending: Boolean,
+    onSendingChange: (Boolean) -> Unit,
     onSend: (String, Uri?) -> Unit,
     modifier: Modifier = Modifier,
-    initialValue: String = "",
     userAvatarUrl: String? = null,
     userDisplayName: String? = null,
     replyToParticipants: List<String> = emptyList(),
     onReplyingToClick: (() -> Unit)? = null,
     focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
-    var text by remember(initialValue) { mutableStateOf(initialValue) }
-    var isSending by remember { mutableStateOf(false) }
-    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
+    val selectedMediaUri = remember { mutableStateOf<Uri?>(null) }
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            selectedMediaUri = uri
+            selectedMediaUri.value = uri
         }
     }
 
-    val canSend = (text.isNotBlank() || selectedMediaUri != null) && !isSending
+    val canSend = (text.isNotBlank() || selectedMediaUri.value != null) && !isSending
 
     Column(
         modifier = modifier
@@ -112,7 +118,7 @@ fun CommentInput(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        if (selectedMediaUri != null) {
+                        if (selectedMediaUri.value != null) {
                             Box(
                                 modifier = Modifier
                                     .padding(start = Spacing.space16, end = Spacing.space16, top = Spacing.space12)
@@ -121,7 +127,7 @@ fun CommentInput(
                                     .border(Sizes.BorderThin, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Sizes.CornerDefault))
                             ) {
                                 AsyncImage(
-                                    model = selectedMediaUri,
+                                    model = selectedMediaUri.value,
                                     contentDescription = "Selected media",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
@@ -133,7 +139,7 @@ fun CommentInput(
                                         .align(Alignment.TopEnd)
                                         .padding(Spacing.space8)
                                         .size(Sizes.IconLarge)
-                                        .clickable { selectedMediaUri = null }
+                                        .clickable { selectedMediaUri.value = null }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
@@ -164,18 +170,22 @@ fun CommentInput(
 
                             TextField(
                                 value = text,
-                                onValueChange = { text = it },
+                                onValueChange = onTextChange,
                                 modifier = Modifier
                                     .weight(1f)
                                     .focusRequester(focusRequester),
                                 placeholder = {
                                     Text(
-                                        "Post your reply",
+                                        text = "Post your reply",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 },
                                 maxLines = 6,
+                                keyboardOptions = KeyboardOptions(
+                                    capitalization = KeyboardCapitalization.Sentences,
+                                    keyboardType = KeyboardType.Text
+                                ),
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
@@ -191,11 +201,9 @@ fun CommentInput(
                             IconButton(
                                 onClick = {
                                     if (canSend) {
-                                        isSending = true
-                                        onSend(text, selectedMediaUri)
-                                        text = ""
-                                        selectedMediaUri = null
-                                        isSending = false
+                                        onSendingChange(true)
+                                        onSend(text, selectedMediaUri.value)
+                                        selectedMediaUri.value = null
                                     }
                                 },
                                 enabled = canSend

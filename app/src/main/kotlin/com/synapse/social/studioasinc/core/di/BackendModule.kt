@@ -69,6 +69,10 @@ object BackendModule {
 
     @Provides
     @Singleton
+    fun provideChatEffectsRepository(): ChatEffectsRepository = SupabaseChatEffectsRepository()
+
+    @Provides
+    @Singleton
     fun provideSharedAuthRepository(
         client: SupabaseClientType,
         cachedMessageDao: CachedMessageDao,
@@ -163,7 +167,9 @@ object BackendModule {
 
     @Provides
     @Singleton
-    fun provideProfileActionRepository(): ProfileActionRepositoryImpl = ProfileActionRepositoryImpl()
+    fun provideProfileActionRepository(
+        blockRepository: BlockRepository
+    ): ProfileActionRepositoryImpl = ProfileActionRepositoryImpl(blockRepository)
 
     @Provides
     @Singleton

@@ -4,6 +4,7 @@ import shared
 @main
 struct iOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("appTheme") private var appTheme: String = "system"
     private let crashReporter: CrashReportingService
     private let analyticsService: AnalyticsService
 
@@ -19,6 +20,7 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             SplashView()
+                .environment(\.colorScheme, colorSchemeForTheme(appTheme))
         }
         .onChange(of: scenePhase) { phase in
             switch phase {
@@ -33,6 +35,15 @@ struct iOSApp: App {
             @unknown default:
                 break
             }
+        }
+    }
+
+    /// Maps the stored theme preference to a SwiftUI color scheme. `nil` follows the system.
+    private func colorSchemeForTheme(_ theme: String) -> ColorScheme? {
+        switch theme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
         }
     }
 }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Copy Link action: shown when the post permalink could not reach the clipboard. -->
+    <string name="link_copy_failed">Could not copy link</string>
+</resources>
