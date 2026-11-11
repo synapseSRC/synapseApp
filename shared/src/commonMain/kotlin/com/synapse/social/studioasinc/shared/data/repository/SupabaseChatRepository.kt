@@ -6,6 +6,7 @@ import com.synapse.social.studioasinc.shared.data.crypto.SignalProtocolManager
 import com.synapse.social.studioasinc.shared.data.crypto.models.EncryptedMessage
 import com.synapse.social.studioasinc.shared.data.datasource.ChatReactionDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.NotAuthenticatedException
+import com.synapse.social.studioasinc.shared.data.datasource.SupabaseBlockDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseChatDataSource
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseUserDataSource
 import com.synapse.social.studioasinc.shared.data.dto.chat.MessageDto
@@ -19,6 +20,8 @@ import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.mergeMonoton
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDomain
 import com.synapse.social.studioasinc.shared.data.mapper.ChatMapper.toDto
 import com.synapse.social.studioasinc.shared.data.util.initialsAvatarUrl
+import com.synapse.social.studioasinc.shared.domain.model.BlockStatus
+import com.synapse.social.studioasinc.shared.domain.model.BlockedConversationException
 import com.synapse.social.studioasinc.shared.domain.model.PendingAction
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.model.StorageConfig
@@ -47,6 +50,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -57,6 +61,9 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+
+/** How long the cached set of blocked account ids is trusted before it is re-read. */
+private const val BLOCK_RULES_TTL_MS = 30_000L
 
 /**
  * Repository implementation for managing chat data using Supabase as the remote backend.
@@ -80,6 +87,62 @@ class SupabaseChatRepository(
     private val groupRepository = ChatGroupRepository(dataSource, groupMetadataCipher)
     private val reactionDataSource = ChatReactionDataSource(client)
     private val conversationMutex = Mutex()
+
+    // Block enforcement for the messaging path. The data source is created here, inside the
+    // data layer, the same way the chat data source above is: the repository is the layer that
+    // owns the messaging rules, so a UI-only guard cannot be bypassed by another entry point.
+    private val blockDataSource = SupabaseBlockDataSource(client)
+    private val blockRulesMutex = Mutex()
+    private var blockedSenderIds: Set<String> = emptySet()
+    private var blockRulesLoadedAt: Long = 0L
+
+    /** Thrown when a block forbids the authenticated account from sending into this chat. */
+    private suspend fun requireMessagingAllowed(chatId: String, currentUserId: String) {
+        val otherParticipantId = dataSource.getOtherParticipantId(chatId, currentUserId) ?: return
+        if (otherParticipantId.isBlank()) return
+
+        val blockStatus = blockDataSource.getBlockStatus(otherParticipantId)
+            .getOrElse { error ->
+                // A failed check must not silently open the conversation, but it also must not
+                // take messaging down for an unrelated network error: log and let the send through
+                // so the authoritative server-side rule stays the decider.
+                Logger.w("Block status check failed for chat $chatId: ${error.message}")
+                BlockStatus.NONE
+            }
+
+        if (blockStatus.isBlocked) {
+            // Keep the realtime filter in step with a freshly created block.
+            ensureBlockRules(fresh = true)
+            throw BlockedConversationException(blockStatus)
+        }
+    }
+
+    /** Refreshes the cached set of blocked account ids when it is missing or stale. */
+    private suspend fun ensureBlockRules(fresh: Boolean) {
+        val now = TimeProvider.nowMillis()
+        blockRulesMutex.withLock {
+            if (!fresh && blockRulesLoadedAt > 0L && now - blockRulesLoadedAt < BLOCK_RULES_TTL_MS) return
+            blockDataSource.getBlockedUserIds()
+                .onSuccess { ids ->
+                    blockedSenderIds = ids
+                    blockRulesLoadedAt = TimeProvider.nowMillis()
+                }
+                .onFailure { error ->
+                    Logger.w("Could not refresh blocked account ids: ${error.message}")
+                }
+        }
+    }
+
+    /** True when [senderId] is an account the authenticated user blocked. */
+    private suspend fun isBlockedSender(senderId: String): Boolean {
+        if (senderId.isBlank()) return false
+        ensureBlockRules(fresh = false)
+        return senderId in blockedSenderIds
+    }
+
+    override suspend fun invalidateBlockRules() {
+        blockRulesMutex.withLock { blockRulesLoadedAt = 0L }
+    }
 
     // Per-chat mutexes — serializes concurrent cache writes for the same chat ID.
     // Prevents race conditions when real-time WebSocket delivery and inbox refresh
@@ -544,6 +607,11 @@ class SupabaseChatRepository(
     ): Result<Message> = withContext(AppDispatchers.IO) {
         try {
             val currentUserId = getCurrentUserId() ?: throw Exception("Not logged in")
+            // A block must stop the message before it leaves the device. System messages stay
+            // exempt: a block notice or disappearing-mode change is not user-authored content.
+            if (messageType != "system") {
+                requireMessagingAllowed(chatId, currentUserId)
+            }
             val dtoAttachments = attachments?.map { it.toDto() }
 
             val serializedMetadata = metadataContainer?.let {
@@ -925,7 +993,17 @@ class SupabaseChatRepository(
     }
 
     override fun subscribeToMessages(chatId: String, onConnected: suspend () -> Unit): Flow<Message> =
-        dataSource.subscribeToMessages(chatId, onConnected).map { dto ->
+        dataSource.subscribeToMessages(chatId, onConnected)
+            // Messages from an account the user blocked are dropped before they reach the timeline
+            // cache, so the blocker never receives them even if one is still in flight.
+            .transform { dto ->
+                if (isBlockedSender(dto.senderId)) {
+                    Logger.w("Dropped realtime message from blocked account ${dto.senderId}")
+                    return@transform
+                }
+                emit(dto)
+            }
+            .map { dto ->
             val userId = getCurrentUserId() ?: ""
             val decrypted = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
             val domainMessage = reconcileRealtimeMessage(chatId, decrypted)
@@ -950,7 +1028,13 @@ class SupabaseChatRepository(
         }
 
     override fun subscribeToInboxUpdates(chatIds: List<String>): Flow<Message> =
-        dataSource.subscribeToInboxUpdates(chatIds).map { dto ->
+        dataSource.subscribeToInboxUpdates(chatIds)
+            // The blocked account must not resurrect an inbox row or its badge either.
+            .transform { dto ->
+                if (isBlockedSender(dto.senderId)) return@transform
+                emit(dto)
+            }
+            .map { dto ->
             val userId = getCurrentUserId() ?: ""
             val domainMessage = if (userId.isNotBlank()) encryptionHelper.run { dto.decryptIfNecessary(userId).toDomain() } else dto.toDomain()
 
