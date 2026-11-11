@@ -62,6 +62,7 @@ fun ProfileIdentityPreview(
     onCoverClick: () -> Unit,
     onAvatarClick: () -> Unit,
     onRetryAvatarUpload: () -> Unit,
+    onClearPendingAvatar: () -> Unit,
     onRetryCoverUpload: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -282,6 +283,22 @@ fun ProfileIdentityPreview(
                                                 style = MaterialTheme.typography.labelSmall
                                             )
                                         }
+                                    }
+                                    Spacer(modifier = Modifier.height(Spacing.space4))
+                                    TextButton(
+                                        onClick = onClearPendingAvatar,
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        ),
+                                        contentPadding = PaddingValues(
+                                            horizontal = Spacing.space8,
+                                            vertical = Spacing.space4
+                                        )
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.action_clear_all),
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
                                     }
                                 }
                             }

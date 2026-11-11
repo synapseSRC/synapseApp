@@ -43,6 +43,13 @@ class SearchActivity : BaseComposeActivity() {
                         intent.putExtra("post_id", postId)
                         startActivity(intent)
                     },
+                    onNavigateToQuotePost = { postId ->
+                        val intent = Intent(this, com.synapse.social.studioasinc.feature.shared.main.MainActivity::class.java).apply {
+                            putExtra("destination", "quote")
+                            putExtra("post_id", postId)
+                        }
+                        startActivity(intent)
+                    },
                     onBack = {
                         finish()
                     }
