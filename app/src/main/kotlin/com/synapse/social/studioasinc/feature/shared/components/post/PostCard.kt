@@ -98,7 +98,9 @@ fun PostCard(
     onOptionsClick: () -> Unit,
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onUsernameSelected: (String) -> Unit = {},
+    modifier: Modifier = Modifier,
+    isLikeLoading: Boolean = false
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
 
@@ -221,7 +223,8 @@ fun PostCard(
                     feeling = state.post.metadata?.feeling,
                     locationName = state.post.locationName,
                     taggedPeople = state.post.metadata?.taggedPeople ?: emptyList(),
-                    replyToUsernames = state.replyToUsernames
+                    replyToUsernames = state.replyToUsernames,
+                    onUsernameSelected = onUsernameSelected
                 )
 
                 PostContent(
@@ -237,6 +240,10 @@ fun PostCard(
                     quotedPost = state.post.quotedPost,
                     linkPreviews = state.post.linkPreviews,
                     isExpanded = state.isExpanded,
+                    // The post travels with the media click: MediaContent hands it back through
+                    // onMediaClick so the viewer knows what was opened. Omitting it left the
+                    // callback without a post (no-op for one image, force-unwrap crash for many).
+                    post = state.post,
                     modifier = Modifier
                 )
 
@@ -251,6 +258,7 @@ fun PostCard(
                         isReshared = state.isReshared,
                         hideLikeCount = state.hideLikeCount,
                         hideViewsCount = state.hideViewsCount,
+                        isLoading = isLikeLoading,
                         onLikeClick = onLikeClick,
                         onCommentClick = onCommentClick,
                         onShareClick = onShareClick,
@@ -329,6 +337,7 @@ fun PostCard(
                     isReshared = state.isReshared,
                     hideLikeCount = true,
                     hideViewsCount = true,
+                    isLoading = isLikeLoading,
                     onLikeClick = onLikeClick,
                     onCommentClick = onCommentClick,
                     onShareClick = onShareClick,

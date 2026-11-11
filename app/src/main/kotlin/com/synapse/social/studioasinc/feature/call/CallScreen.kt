@@ -1,6 +1,8 @@
 package com.synapse.social.studioasinc.feature.call
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.view.accessibility.AccessibilityManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -111,7 +113,10 @@ fun CallScreenContent(
     // a launcher returns manifest names, and only the plan that asked can say which capability each one
     // was, and whether a "no" was the kind that Settings can undo.
     var askedPlan by remember { mutableStateOf<CallPermissionPlan?>(null) }
-    val activity = LocalContext.current as? Activity
+    // The composition's context is an Activity through at least one wrapper. Reading the wrong type
+    // would classify every denial as permanent and send the user to Settings for something a prompt
+    // could still settle.
+    val activity = remember(context) { context.findActivity() }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
@@ -301,3 +306,13 @@ private fun callSurfaceTransition(reducedMotion: Boolean): ContentTransform =
     }
 
 private const val SURFACE_FADE_MILLIS = 180
+
+/**
+ * Walks the wrapper chain to the Activity, the only context that can answer
+ * `shouldShowRequestPermissionRationale`.
+ */
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}

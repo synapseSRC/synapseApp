@@ -1,21 +1,25 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.app.Application
+import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import java.util.Locale
 
 
-
-class LanguageRegionViewModel(
+@HiltViewModel
+class LanguageRegionViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 

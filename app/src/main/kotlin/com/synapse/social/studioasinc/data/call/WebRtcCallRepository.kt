@@ -287,6 +287,11 @@ class WebRtcCallRepository @Inject constructor(
             // Switching the preview back on can mean starting capture again: turning video off
             // releases the camera to the system, so there may be no track left to enable.
             if (enabled && !call.captureRunning) {
+                // Turning the camera back on is a fresh claim on the lens: the grant that opened the call
+                // may have been revoked since. Checked before capture starts, so no hardware is touched
+                // without a grant, and the refusal is the same one `accept` and a media upgrade produce.
+                val plan = permissions.planFor(CallMediaType.VIDEO)
+                if (!plan.isReady) return@withLiveCall Result.failure(permissionFailure(plan))
                 val started = startCaptureLocked(call)
                 if (started.isFailure) return@withLiveCall started
             }
@@ -611,6 +616,11 @@ class WebRtcCallRepository @Inject constructor(
             // half of the call is still real, so the call is not ended over a lost lens.
             call.captureRunning = false
             reduce(call) { it.copy(isLocalVideoEnabled = false, errorKind = kind) }
+            // The capturer and the track have to go together. Leaving the track behind would make the
+            // engine read the next camera-on as "already running" and report success over a lens that
+            // never reopened — a black self-view no control can explain.
+            runCatching { call.engine.stopVideo() }
+                .onFailure { Napier.w("Video could not be released after a camera error: ${it.message}") }
             return
         }
         reduce(call) { it.copy(errorKind = kind) }

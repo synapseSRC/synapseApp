@@ -347,8 +347,14 @@ class StoryViewerViewModel @Inject constructor(
             val chatId = chatResult.getOrNull()
             if (chatId != null) {
                 val message = "[Story reply] ${currentStory.mediaUrl}\n$replyText"
-                chatRepository.sendMessage(chatId, message)
-                _uiState.update { it.copy(replyText = "", isReplying = false) }
+                chatRepository.sendMessage(chatId, message).fold(
+                    onSuccess = { _ ->
+                        _uiState.update { it.copy(replyText = "", isReplying = false) }
+                    },
+                    onFailure = { error ->
+                        _uiState.update { it.copy(error = "Failed to send reply: ${error.message ?: "unknown error"}") }
+                    }
+                )
             } else {
                 _uiState.update { it.copy(error = "Failed to send reply") }
             }

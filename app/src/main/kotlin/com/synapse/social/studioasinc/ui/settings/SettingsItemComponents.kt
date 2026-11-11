@@ -267,7 +267,7 @@ fun SettingsNavigationItem(
     title: String,
     subtitle: String? = null,
     imageVector: ImageVector? = null,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     position: SettingsItemPosition = SettingsItemPosition.Single,
     indicator: (@Composable () -> Unit)? = null
@@ -284,12 +284,16 @@ fun SettingsNavigationItem(
             }
         },
         trailingContent = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                indicator?.invoke()
-                SettingsNavigationChevron()
+            if (onClick != null || indicator != null) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    indicator?.invoke()
+                    if (onClick != null) {
+                        SettingsNavigationChevron()
+                    }
+                }
             }
         }
     )
@@ -466,9 +470,15 @@ fun SettingsSliderItem(
                 steps = steps,
                 trackRange = valueRange
             )
+            LaunchedEffect(value) {
+                sliderState.value = value
+            }
             Slider(
                 state = sliderState,
-                onValueChange = onValueChange,
+                onValueChange = { newValue ->
+                    sliderState.value = newValue
+                    onValueChange(newValue)
+                },
                 enabled = enabled,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,

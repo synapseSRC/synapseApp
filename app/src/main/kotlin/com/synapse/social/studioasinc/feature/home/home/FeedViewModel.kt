@@ -19,6 +19,7 @@ import com.synapse.social.studioasinc.domain.usecase.post.ReactToCommentUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.QuotePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.settings.GetAppearanceSettingsUseCase
@@ -53,7 +54,8 @@ data class FeedUiState(
     val blockError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
-    val summaryError: String? = null
+    val summaryError: String? = null,
+    val reportSubmitted: Boolean = false
 )
 
 @HiltViewModel
@@ -74,7 +76,8 @@ class FeedViewModel @Inject constructor(
     private val blockUserUseCase: BlockUserUseCase,
     private val repostPostUseCase: RepostPostUseCase,
     private val unrepostPostUseCase: UnrepostPostUseCase,
-    private val summarizePostUseCase: SummarizePostUseCase
+    private val summarizePostUseCase: SummarizePostUseCase,
+    private val reportPostUseCase: ReportPostUseCase
 ) : BaseViewModel<FeedUiState>(FeedUiState()) {
     private val _modifiedPosts = MutableStateFlow<Map<String, Post>>(emptyMap())
     private val MAX_MODIFIED_POSTS = 100
@@ -295,8 +298,21 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun reportPost(post: Post) {
-        // UI action
+    fun reportPost(postId: String, reason: String) {
+        viewModelScope.launch {
+            reportPostUseCase(postId, reason, null).collect { result ->
+                result.onSuccess {
+                    updateState { it.copy(error = null, reportSubmitted = true) }
+                }
+                result.onFailure { e ->
+                    updateState { it.copy(error = e.message ?: "Failed to report post") }
+                }
+            }
+        }
+    }
+
+    fun clearReportSubmitted() {
+        updateState { it.copy(reportSubmitted = false) }
     }
 
     fun blockUser(userId: String) {

@@ -648,9 +648,15 @@ internal fun BlurSlider(
             value = localBlur,
             trackRange = 0f..1.0f
         )
+        LaunchedEffect(localBlur) {
+            blurSliderState.value = localBlur
+        }
         Slider(
             state = blurSliderState,
-            onValueChange = { localBlur = it },
+            onValueChange = { newValue ->
+                blurSliderState.value = newValue
+                localBlur = newValue
+            },
             onValueChangeFinished = { onBlurIntensityChanged(blurSliderState.value) },
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,

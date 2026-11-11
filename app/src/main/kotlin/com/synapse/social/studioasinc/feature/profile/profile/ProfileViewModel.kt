@@ -445,27 +445,57 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun toggleSave(postId: String) {
-        val isSaved = postId in _state.value.savedPostIds
-        val currentUserId = _state.value.currentUserId
+    /**
+     * Saves or unsaves [post] from wherever the profile shows it (post row or options sheet).
+     *
+     * The bookmark lives on the post, because that is what the profile renders: the row is built
+     * from `state.posts`, and `savedPostIds` is not a source any of these composables read. The
+     * current state is therefore taken from `post.isBookmarked` and not from `savedPostIds`,
+     * which starts empty and would turn the first tap on an already-saved post into another save.
+     *
+     * The feed's own bookmark action works because it flips the post and announces it on
+     * [PostEventBus]; this does the same flip, in state and on the bus, so the row recomposes
+     * immediately and the change survives navigating away and back. A failure puts the original
+     * post back rather than leaving the UI lying about what the backend holds.
+     */
+    fun toggleSave(post: Post) {
+        val isSaved = post.isBookmarked
+        val currentUserId = _state.value.currentUserId.ifBlank { getCurrentUserIdUseCase().orEmpty() }
+        if (currentUserId.isBlank()) return
 
-        _state.update { state ->
-            val savedPostIds = state.savedPostIds.toMutableSet()
-            if (isSaved) savedPostIds.remove(postId) else savedPostIds.add(postId)
-            state.copy(savedPostIds = savedPostIds)
-        }
-
+        val optimisticPost = post.copy(isBookmarked = !isSaved)
         viewModelScope.launch {
-            bookmarkPostUseCase(postId, currentUserId, isSaved).collect { result ->
+            _state.update { state ->
+                state.copy(
+                    posts = state.posts.map { item ->
+                        if (item is Post && item.id == post.id) optimisticPost else item
+                    },
+                    savedPostIds = state.savedPostIds.withBookmark(post.id, saved = !isSaved)
+                )
+            }
+            PostEventBus.emit(PostEvent.Updated(optimisticPost))
+
+            bookmarkPostUseCase(post.id, currentUserId, isSaved).collect { result ->
                 result.onFailure {
                     _state.update { state ->
-                        val savedPostIds = state.savedPostIds.toMutableSet()
-                        if (isSaved) savedPostIds.add(postId) else savedPostIds.remove(postId)
-                        state.copy(savedPostIds = savedPostIds)
+                        state.copy(
+                            posts = state.posts.map { item ->
+                                if (item is Post && item.id == post.id) post else item
+                            },
+                            savedPostIds = state.savedPostIds.withBookmark(post.id, saved = isSaved)
+                        )
                     }
+                    // Put the original back for everyone else already showing this post too.
+                    PostEventBus.emit(PostEvent.Updated(post))
                 }
             }
         }
+    }
+
+    private fun Set<String>.withBookmark(postId: String, saved: Boolean): Set<String> {
+        val ids = toMutableSet()
+        if (saved) ids.add(postId) else ids.remove(postId)
+        return ids
     }
 
     fun votePoll(post: Post, optionIndex: Int) {

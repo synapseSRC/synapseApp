@@ -43,18 +43,18 @@ class SearchActivity : BaseComposeActivity() {
                         intent.putExtra("post_id", postId)
                         startActivity(intent)
                     },
-                    onNavigateToEditPost = { postId -> navigateToEditPost(postId) },
+                    onNavigateToQuotePost = { postId ->
+                        val intent = Intent(this, com.synapse.social.studioasinc.feature.shared.main.MainActivity::class.java).apply {
+                            putExtra("destination", "quote")
+                            putExtra("post_id", postId)
+                        }
+                        startActivity(intent)
+                    },
                     onBack = {
                         finish()
                     }
                 )
             }
         }
-    }
-
-    private fun navigateToEditPost(postId: String) {
-        startActivity(Intent(this, CreatePostActivity::class.java).apply {
-            putExtra("edit_post_id", postId)
-        })
     }
 }

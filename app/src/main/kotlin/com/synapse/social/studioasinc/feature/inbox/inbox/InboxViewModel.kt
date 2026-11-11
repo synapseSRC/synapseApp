@@ -348,6 +348,17 @@ class InboxViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Marks or unmarks one conversation as a favourite from its row in the Chatlist.
+     *
+     * A favourite is the participant's own pin flag: the backend stores no separate favourite
+     * column, and the Favorites filter, the row's badge and this action all read that one flag, so
+     * what the row saves is what the Chatlist shows after a reload. Persistence, the row update and
+     * the failure report are the ones [setConversationsPinned] already owns.
+     */
+    fun setConversationFavourite(chatId: String, isFavourite: Boolean) =
+        setConversationsPinned(setOf(chatId), isFavourite)
+
     fun setConversationsMuted(chatIds: Set<String>, isMuted: Boolean) {
         if (chatIds.isEmpty()) return
         viewModelScope.launch {
