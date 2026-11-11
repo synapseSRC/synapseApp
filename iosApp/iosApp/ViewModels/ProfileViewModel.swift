@@ -14,8 +14,8 @@ class ProfileViewModel: ObservableObject {
         return iosDependencies.getAuthRepository().getCurrentUserId() ?? ""
     }
 
-    func loadProfile() async {
-        let uid = currentUid
+    func loadProfile(userId: String? = nil) async {
+        let uid = userId ?? currentUid
         guard !uid.isEmpty else {
             self.generalError = "No authenticated user ID found"
             return
@@ -28,6 +28,10 @@ class ProfileViewModel: ObservableObject {
         } catch {
             self.generalError = "Failed to load profile: \(error.localizedDescription)"
         }
+    }
+
+    func loadProfile() async {
+        await loadProfile(userId: nil)
     }
 
     func updateProfile(displayName: String, bio: String) async {

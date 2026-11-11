@@ -65,7 +65,7 @@ struct NotificationsView: View {
                                                         position: pos,
                                                         onActorTap: {
                                                             if let actorId = notification.actorId {
-                                                                navigator.navigate(to: .profile)
+                                                                navigator.navigate(to: .profile(userId: actorId))
                                                             }
                                                         }
                                                     )
@@ -120,8 +120,8 @@ struct NotificationsView: View {
                 switch route {
                 case .postDetail(let postId):
                     PostDetailView(postId: postId)
-                case .profile:
-                    ProfileView()
+                case .profile(let userId):
+                    ProfileView(userId: userId)
                 default:
                     EmptyView()
                 }
@@ -148,7 +148,7 @@ struct NotificationsView: View {
         } else if let targetComment = notification.target as? shared.NotificationTargetComment {
             navigator.navigate(to: .postDetail(targetComment.postId))
         } else if let targetProfile = notification.target as? shared.NotificationTargetProfile {
-            navigator.navigate(to: .profile)
+            navigator.navigate(to: .profile(userId: targetProfile.userId))
         } else if let targetId = notification.targetId, !targetId.isEmpty {
             navigator.navigate(to: .home)
         }
