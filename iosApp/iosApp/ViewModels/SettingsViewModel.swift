@@ -9,8 +9,9 @@ class SettingsViewModel: ObservableObject {
     private let crashReporter: CrashReportingService
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.synapse.social", category: "SettingsViewModel")
 
-    private var currentUid: String? {
-        return DependencyContainer.shared.authRepository.getCurrentUserId()
+    private var currentUid: String {
+        return IOSDependencies.shared.getAuthRepository().getCurrentUserId() ?? ""
+    }
     }
 
     init(crashReporter: CrashReportingService = DependencyContainer.shared.crashReportingService) {
@@ -33,12 +34,10 @@ class SettingsViewModel: ObservableObject {
     }
 
     func savePreferences() async {
-        guard let userId = currentUid, !userId.isEmpty else {
-            logger.warning("Cannot save preferences: no authenticated user ID")
-            return
-        }
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
         do {
-            _ = try await preferencesRepo.setSecurityNotificationsEnabled(userId: userId, enabled: securityNotificationsEnabled)
+            _ = try await preferencesRepo.setSecurityNotificationsEnabled(userId: uid, enabled: securityNotificationsEnabled)
         } catch {
             logger.error("Error: \(error)")
             crashReporter.recordError(error)
