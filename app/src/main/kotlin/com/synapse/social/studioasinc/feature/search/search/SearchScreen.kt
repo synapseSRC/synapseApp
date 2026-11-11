@@ -53,6 +53,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostOptions
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
 import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
+import com.synapse.social.studioasinc.feature.shared.components.ReportPostDialog
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.core.ui.animation.SkeletonMorphedContent
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
@@ -74,6 +75,7 @@ fun SearchScreen(
     viewModel: SearchViewModel,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToPost: (String) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -121,6 +123,24 @@ fun SearchScreen(
                     message = uiState.blockError ?: context.getString(com.synapse.social.studioasinc.R.string.error_block_failed)
                 )
                 viewModel.clearBlockStatus()
+            }
+        }
+    }
+
+    // Handle report success/error messages
+    LaunchedEffect(uiState.reportSuccess, uiState.reportError) {
+        when {
+            uiState.reportSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(com.synapse.social.studioasinc.R.string.toast_report_submitted)
+                )
+                viewModel.clearReportStatus()
+            }
+            uiState.reportError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.reportError ?: context.getString(com.synapse.social.studioasinc.R.string.report_error)
+                )
+                viewModel.clearReportStatus()
             }
         }
     }
@@ -345,8 +365,8 @@ fun SearchScreen(
                                                         onLike = viewModel::likePost,
                                                         onComment = { p -> onNavigateToPost(p.id) },
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                        onRepost = { },
-                                                        onQuote = { },
+                                                        onRepost = viewModel::resharePost,
+                                                        onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                         onBookmark = viewModel::bookmarkPost,
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
@@ -463,8 +483,8 @@ fun SearchScreen(
                                                                 onLike = viewModel::likePost,
                                                                 onComment = { p -> onNavigateToPost(p.id) },
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                                onRepost = { },
-                                                                onQuote = { },
+                                                                onRepost = viewModel::resharePost,
+                                                                onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                                 onBookmark = viewModel::bookmarkPost,
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
@@ -545,6 +565,17 @@ onMediaClick = { post, index ->
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
+            }
+        )
+    }
+
+    if (uiState.isReportDialogShowing) {
+        ReportPostDialog(
+            onDismiss = {
+                viewModel.dismissReportDialog()
+            },
+            onConfirm = { reason ->
+                viewModel.submitReport(reason)
             }
         )
     }

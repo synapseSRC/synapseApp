@@ -9,6 +9,7 @@ enum AppRoute: Hashable {
     case settings
     case login
     case register
+    case postDetail(String postId)
 }
 
 enum AppTab: Int {

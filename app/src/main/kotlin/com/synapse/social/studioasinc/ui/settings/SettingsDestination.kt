@@ -85,6 +85,8 @@ sealed class SettingsDestination(val route: String) {
 
     object Passkeys : SettingsDestination(ROUTE_PASSKEYS)
 
+    object TwoStepVerification : SettingsDestination(ROUTE_TWO_STEP_VERIFICATION)
+
     companion object {
         const val ROUTE_HUB = "settings_hub"
         const val ROUTE_ACCOUNT = "settings_account"
@@ -130,6 +132,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_PRIVACY_EXCEPTION_SELECTOR = "settings_privacy_exception_selector/{settingKey}"
         const val ROUTE_APP_LOCK = "settings_app_lock"
         const val ROUTE_PASSKEYS = "settings_passkeys"
+        const val ROUTE_TWO_STEP_VERIFICATION = "settings_two_step_verification"
 
         fun createPrivacyCheckupCategoryRoute(categoryId: String): String =
             "settings_privacy_checkup_category/$categoryId"
@@ -179,6 +182,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_PRIVACY_CHECKUP -> PrivacyCheckup
             ROUTE_APP_LOCK -> AppLock
             ROUTE_PASSKEYS -> Passkeys
+            ROUTE_TWO_STEP_VERIFICATION -> TwoStepVerification
             else -> null
         }
     }

@@ -98,7 +98,8 @@ fun PostCard(
     onOptionsClick: () -> Unit,
     onPollVote: (String) -> Unit,
     onReactionSelected: ((ReactionType) -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLikeLoading: Boolean = false
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
 
@@ -251,6 +252,7 @@ fun PostCard(
                         isReshared = state.isReshared,
                         hideLikeCount = state.hideLikeCount,
                         hideViewsCount = state.hideViewsCount,
+                        isLoading = isLikeLoading,
                         onLikeClick = onLikeClick,
                         onCommentClick = onCommentClick,
                         onShareClick = onShareClick,
@@ -329,6 +331,7 @@ fun PostCard(
                     isReshared = state.isReshared,
                     hideLikeCount = true,
                     hideViewsCount = true,
+                    isLoading = isLikeLoading,
                     onLikeClick = onLikeClick,
                     onCommentClick = onCommentClick,
                     onShareClick = onShareClick,

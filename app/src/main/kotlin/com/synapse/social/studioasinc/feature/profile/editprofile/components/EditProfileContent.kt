@@ -55,6 +55,7 @@ fun EditProfileContent(
                 onCoverClick = onCoverClick,
                 onAvatarClick = onAvatarClick,
                 onRetryAvatarUpload = { onEvent(EditProfileEvent.RetryAvatarUpload) },
+                onClearPendingAvatar = { onEvent(EditProfileEvent.ClearPendingAvatar) },
                 onRetryCoverUpload = { onEvent(EditProfileEvent.RetryCoverUpload) }
             )
         }
