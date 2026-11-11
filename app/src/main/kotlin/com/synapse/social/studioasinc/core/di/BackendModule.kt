@@ -69,6 +69,10 @@ object BackendModule {
 
     @Provides
     @Singleton
+    fun provideChatEffectsRepository(): ChatEffectsRepository = SupabaseChatEffectsRepository()
+
+    @Provides
+    @Singleton
     fun provideSharedAuthRepository(
         client: SupabaseClientType,
         cachedMessageDao: CachedMessageDao,

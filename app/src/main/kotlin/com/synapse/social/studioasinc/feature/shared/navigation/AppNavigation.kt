@@ -556,7 +556,17 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToChatPrivacy = { chatId ->
                         navController.navigate(AppDestination.ChatPrivacy(chatId))
+                    },
+                    onNavigateToWordEffects = { chatId ->
+                        navController.navigate(AppDestination.WordEffects(chatId))
                     }
+                )
+            }
+    composable<AppDestination.WordEffects> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.WordEffects>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.screens.WordEffectsScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
     composable<AppDestination.DisappearingMessages> { backStackEntry ->

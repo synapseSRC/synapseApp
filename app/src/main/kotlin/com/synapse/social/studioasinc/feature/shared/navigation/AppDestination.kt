@@ -120,6 +120,9 @@ sealed interface AppDestination {
     ) : AppDestination
     @Serializable
     data class ChatSettings(val chatId: String) : AppDestination
+    /** Word effects for one conversation, reached from Chat info. */
+    @Serializable
+    data class WordEffects(val chatId: String) : AppDestination
     @Serializable
     data class HashtagFeed(val tag: String) : AppDestination
     @Serializable
