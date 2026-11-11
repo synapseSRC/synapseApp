@@ -93,8 +93,27 @@ class PostDetailRepositoryImpl @Inject constructor(
                 userPollVote = pollData.second
             }
 
+            // A poll's authoritative state is the post row plus the rows in "poll_votes", but every
+            // poll renderer derives the user's selection from `Post.userPollVote` (PostUiMapper ->
+            // PollContent) and the per-option counts from `Post.pollOptions`, and the post is what
+            // gets republished on PostEventBus. Keeping the freshly fetched vote only in the sibling
+            // PostDetail fields meant a poll loaded after the process was recreated - and a post
+            // rebroadcast after voting - rendered as if no vote had ever been submitted, so the user
+            // could believe a successfully persisted vote had been lost. Fold the fetched poll state
+            // back into the post so reloaded polls show the stored vote and current results.
+            val postWithPollState = if (resolvedPost.hasPoll == true) {
+                resolvedPost.copy(
+                    pollOptions = pollResults
+                        ?.map { PollOption(text = it.text, votes = it.voteCount) }
+                        ?: resolvedPost.pollOptions,
+                    userPollVote = userPollVote
+                )
+            } else {
+                resolvedPost
+            }
+
             val postDetail = PostDetail(
-                post = resolvedPost,
+                post = postWithPollState,
                 author = author,
                 reactionSummary = reactionSummary,
                 userReaction = userReaction,
