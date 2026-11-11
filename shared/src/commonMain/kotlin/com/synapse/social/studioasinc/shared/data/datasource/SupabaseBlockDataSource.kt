@@ -212,7 +212,7 @@ class SupabaseBlockDataSource(
     /** True when [blockerId] has a block row against [blockedId]. */
     private suspend fun blockExists(blockerId: String, blockedId: String): Boolean {
         val count = client.postgrest[tableName]
-            .select(columns = Columns.none()) {
+            .select {
                 filter {
                     eq("blocker_id", blockerId)
                     eq("blocked_id", blockedId)
