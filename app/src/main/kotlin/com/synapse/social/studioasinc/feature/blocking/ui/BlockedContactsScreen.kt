@@ -17,7 +17,6 @@ import com.synapse.social.studioasinc.feature.blocking.BlockingUiState
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
-import kotlin.time.Clock
 
 /**
  * Screen displaying list of blocked users.
@@ -39,6 +38,7 @@ fun BlockedContactsScreen(
 ) {
     val blockedUsers by viewModel.blockedUsers.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val refreshError by viewModel.refreshError.collectAsState()
     
     var userToUnblock by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -158,6 +158,16 @@ fun BlockedContactsScreen(
                 viewModel.resetState()
             }
             else -> {}
+        }
+    }
+
+    LaunchedEffect(refreshError) {
+        refreshError?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearRefreshError()
         }
     }
 }
