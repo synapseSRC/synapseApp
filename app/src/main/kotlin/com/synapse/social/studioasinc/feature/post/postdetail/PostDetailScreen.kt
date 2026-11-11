@@ -245,8 +245,10 @@ fun PostDetailScreen(
                 uiState.replyToParticipants
                     .firstOrNull { it.username == username }
                     ?.uid
-                    ?.let { onNavigateToProfile(it) }
-                showReplyingToSheet = false
+                    ?.let {
+                        onNavigateToProfile(it)
+                        showReplyingToSheet = false
+                    }
             },
             onDismiss = { showReplyingToSheet = false }
         )
