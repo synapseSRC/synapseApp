@@ -64,7 +64,9 @@ import com.synapse.social.studioasinc.feature.shared.components.LocalGlassBackdr
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.shared.domain.model.chat.AttachmentType
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
+import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -633,6 +635,12 @@ val currentUserId = currentUserIdState ?: ""
                                 onOpenEncryption = { showEncryptionSheet = true },
                                 onLocateMessage = viewModel::loadQuotedMessage,
                                 onOpenBatchGallery = { batchGalleryMessage = it },
+                                onOpenPhotoViewer = { message ->
+                                    // A single photo has no grid to return to: the viewer is the
+                                    // only overlay, so closing it lands back in the conversation.
+                                    batchViewerInitialIndex = 0
+                                    batchViewerMessage = message
+                                },
                                 onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
                                 onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
                                 onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
@@ -971,12 +979,14 @@ val currentUserId = currentUserIdState ?: ""
 
             batchGalleryMessage?.let { msg ->
                 BatchMediaGalleryDialog(
-                    attachments = msg.attachments,
+                    attachments = msg.viewerMedia(),
                     caption = msg.content.takeIf { it.isNotBlank() },
                     onDismiss = { batchGalleryMessage = null },
                     onMediaItemClick = { clickedIndex ->
+                        // The grid stays composed underneath the viewer, so closing the viewer
+                        // hands the grid back with its own scroll position instead of dropping
+                        // the reader into the conversation.
                         batchViewerInitialIndex = clickedIndex
-                        batchGalleryMessage = null
                         batchViewerMessage = msg
                     }
                 )
@@ -984,7 +994,7 @@ val currentUserId = currentUserIdState ?: ""
 
             batchViewerMessage?.let { msg ->
                 BatchMediaViewerDialog(
-                    attachments = msg.attachments,
+                    attachments = msg.viewerMedia(),
                     initialIndex = batchViewerInitialIndex,
                     caption = msg.content.takeIf { it.isNotBlank() },
                     onDismiss = { batchViewerMessage = null }
@@ -1266,6 +1276,18 @@ private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(
     "text/csv",
     "text/plain"
 )
+
+/**
+ * The photos and videos this message can be viewed in: its own attachments, or — for a message
+ * stored before attachments were kept per item — the single media URL it carries. An empty list
+ * means the message holds nothing to open in the viewer.
+ */
+private fun Message.viewerMedia(): List<MessageAttachment> =
+    attachments.ifEmpty {
+        mediaUrl?.takeIf { it.isNotBlank() }
+            ?.let { listOf(MessageAttachment(url = it, type = AttachmentType.IMAGE)) }
+            .orEmpty()
+    }
 
 private fun Context.toPickedFile(uri: Uri): PickedFile {
     val projection = arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
