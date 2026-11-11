@@ -25,6 +25,7 @@ data class PostDetailUiState(
     val commentSubmitted: Boolean = false,
     val ancestorComments: List<CommentWithUser> = emptyList(),
     val postSummary: String? = null,
+    val commentError: String? = null,
     val isSummarizing: Boolean = false,
     val summaryError: String? = null
 )

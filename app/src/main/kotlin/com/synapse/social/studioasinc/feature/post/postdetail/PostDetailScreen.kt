@@ -119,10 +119,12 @@ fun PostDetailScreen(
     LaunchedEffect(uiState.commentSubmitted) {
         if (uiState.commentSubmitted) {
             uiState.error?.let { error ->
-                snackbarHostState.showSnackbar(message = error)
+            uiState.commentError?.let { error ->
             }
             commentText = ""
-            commentIsSending = false
+            if (uiState.commentError == null) {
+                commentText = ""
+            }
             viewModel.clearCommentSubmission()
         }
     }
@@ -131,8 +133,10 @@ fun PostDetailScreen(
     LaunchedEffect(uiState.editingComment) {
         commentText = uiState.editingComment?.content ?: ""
         commentIsSending = false
-    }
-
+        if (uiState.editingComment != null) {
+            commentText = uiState.editingComment.content ?: ""
+            commentIsSending = false
+        }
     if (showMediaViewer && uiState.post != null) {
         val mediaUrls = uiState.post?.post?.mediaItems?.map { it.url }
             ?: listOfNotNull(uiState.post?.post?.postImage)
@@ -252,8 +256,10 @@ fun PostDetailScreen(
                 onCommentSendingChange = { commentIsSending = it },
                 onSendComment = { content, mediaUri ->
                     if (uiState.editingComment != null) {
+                        commentIsSending = true
                         uiState.editingComment?.id?.let { viewModel.editComment(it, content) }
                     } else {
+                        commentIsSending = true
                         viewModel.addComment(content, mediaUri)
                     }
                 }

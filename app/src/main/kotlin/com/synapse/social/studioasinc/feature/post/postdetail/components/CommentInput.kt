@@ -195,6 +195,7 @@ fun CommentInput(
 onClick = {
                                      if (canSend) {
                                          onSendingChange(true)
+                                        selectedMediaUri.value = null
                                          onSend(text, selectedMediaUri.value)
                                      }
                                  },
