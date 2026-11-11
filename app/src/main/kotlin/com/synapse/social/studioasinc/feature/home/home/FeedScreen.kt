@@ -371,6 +371,11 @@ fun FeedScreen(
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
+            },
+            onShareToChat = {
+                postToShare = post
+                sharePostViewModel.start(post)
+                selectedPost = null
             }
         )
     }

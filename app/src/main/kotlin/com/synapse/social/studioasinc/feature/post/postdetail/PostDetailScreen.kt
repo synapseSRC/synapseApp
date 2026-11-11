@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.synapse.social.studioasinc.domain.model.CommentAction
 import com.synapse.social.studioasinc.domain.model.CommentWithUser
+import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.ReactionType
 import com.synapse.social.studioasinc.feature.post.postdetail.components.*
 import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
@@ -39,6 +40,8 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMappe
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
+import com.synapse.social.studioasinc.feature.shared.sharepost.SharePostSheetViewModel
+import com.synapse.social.studioasinc.feature.shared.sharepost.ShareToChatSheet
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import kotlinx.coroutines.launch
@@ -57,7 +60,8 @@ fun PostDetailScreen(
     onNavigateToReplyToPost: (String) -> Unit,
     onNavigateToCommentDetail: (String, String) -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: PostDetailViewModel = hiltViewModel()
+    viewModel: PostDetailViewModel = hiltViewModel(),
+    sharePostViewModel: SharePostSheetViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val atmosphereState = LocalUiAtmosphere.current
@@ -75,6 +79,7 @@ fun PostDetailScreen(
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
     var showPostOptions by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
+    var postToShare by remember { mutableStateOf<Post?>(null) }
 
     var commentText by remember { mutableStateOf("") }
     var commentIsSending by remember { mutableStateOf(false) }
@@ -194,7 +199,14 @@ fun PostDetailScreen(
                 viewModel.deletePost(postId)
                 onNavigateBack()
             },
-            onShare = { PostShareUtils.sharePost(context, postId) },
+            onShare = {
+                postToShare = postDetail.post
+                sharePostViewModel.start(postDetail.post)
+            },
+            onShareToChat = {
+                postToShare = postDetail.post
+                sharePostViewModel.start(postDetail.post)
+            },
             onCopyLink = { PostShareUtils.copyPostLink(context, postId) },
             onBookmark = { viewModel.toggleBookmark() },
             onToggleComments = { viewModel.toggleComments() },
@@ -342,7 +354,10 @@ fun PostDetailScreen(
                     keyboardController?.show()
                 }
             },
-            onPostShare = { _ -> PostShareUtils.sharePost(context, postId) },
+            onPostShare = { post ->
+                postToShare = post
+                sharePostViewModel.start(post)
+            },
             onPostRepost = { _ -> viewModel.toggleReshare() },
             onPostBookmark = { _ -> viewModel.toggleBookmark() },
             onPostOptionClick = { _ -> showPostOptions = true },
@@ -352,6 +367,14 @@ fun PostDetailScreen(
                 showMediaViewer = true
             },
             onPostReactionSelected = { _, reaction -> viewModel.toggleReaction(reaction) }
+        )
+    }
+
+    postToShare?.let { post ->
+        ShareToChatSheet(
+            viewModel = sharePostViewModel,
+            onDismiss = { postToShare = null },
+            onShareExternal = { PostShareUtils.sharePost(context, post.id) }
         )
     }
 }
