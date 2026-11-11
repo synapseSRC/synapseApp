@@ -70,6 +70,8 @@
     <string name="inbox_back">Back</string>
     <string name="inbox_close_selection">Close selection</string>
     <string name="inbox_more_actions">More selection actions</string>
+    <string name="inbox_action_create_group">Create group from selection</string>
+    <string name="inbox_create_group_needs_two">Pick at least two people to create a group. Group conversations cannot be added as members.</string>
     <string name="inbox_action_pin">Pin</string>
     <string name="inbox_action_unpin">Unpin</string>
     <string name="inbox_action_mute">Mute</string>
