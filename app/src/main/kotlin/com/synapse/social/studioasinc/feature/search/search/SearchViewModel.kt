@@ -427,9 +427,6 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun copyPostLink(post: com.synapse.social.studioasinc.domain.model.Post) {
-    }
-
     fun toggleComments(post: com.synapse.social.studioasinc.domain.model.Post) {
         viewModelScope.launch {
             togglePostCommentsUseCase(post.id).collect { result ->

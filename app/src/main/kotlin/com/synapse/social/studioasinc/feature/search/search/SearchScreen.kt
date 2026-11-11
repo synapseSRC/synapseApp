@@ -1,9 +1,5 @@
 package com.synapse.social.studioasinc.ui.search
-import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -82,7 +78,6 @@ fun SearchScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val postLinkLabel = stringResource(R.string.clip_label_post_link)
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
     var showMediaViewer by remember { mutableStateOf(false) }
@@ -536,10 +531,7 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onCopyLink = {
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText(postLinkLabel, DeepLink.post(post.id))
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
+                PostShareUtils.copyPostLink(context, post.id)
                 selectedPost = null
             },
             onBookmark = {
