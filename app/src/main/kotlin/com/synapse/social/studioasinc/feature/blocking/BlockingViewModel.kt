@@ -36,6 +36,9 @@ class BlockingViewModel @Inject constructor(
     
     private val _blockedUsers = MutableStateFlow<List<BlockedUser>>(emptyList())
     val blockedUsers: StateFlow<List<BlockedUser>> = _blockedUsers.asStateFlow()
+
+    private val _refreshError = MutableStateFlow<String?>(null)
+    val refreshError: StateFlow<String?> = _refreshError.asStateFlow()
     
     /**
      * Blocks a user by their ID.
@@ -50,9 +53,8 @@ class BlockingViewModel @Inject constructor(
             blockUserUseCase(userId)
                 .onSuccess {
                     _uiState.value = BlockingUiState.BlockSuccess
-                    // Refresh the list after a successful block so the newly blocked user
-                    // appears in the on-screen list without requiring a screen re-entry.
-                    loadBlockedUsers()
+                    // Refresh the data without replacing BlockSuccess with Loading/Idle.
+                    refreshBlockedUsers()
                 }
                 .onFailure { error ->
                     _uiState.value = BlockingUiState.Error(
@@ -76,8 +78,8 @@ class BlockingViewModel @Inject constructor(
             unblockUserUseCase(userId)
                 .onSuccess {
                     _uiState.value = BlockingUiState.UnblockSuccess
-                    // Refresh the list after successful unblock
-                    loadBlockedUsers()
+                    // Refresh the data without replacing UnblockSuccess with Loading/Idle.
+                    refreshBlockedUsers()
                 }
                 .onFailure { error ->
                     _uiState.value = BlockingUiState.Error(
@@ -110,6 +112,25 @@ class BlockingViewModel @Inject constructor(
     }
     
     
+    /**
+     * Refreshes blocked-user data without touching the action UI state.
+     * This keeps success events observable while the network refresh is in flight.
+     */
+    private suspend fun refreshBlockedUsers() {
+        getBlockedUsersUseCase()
+            .onSuccess { users ->
+                _blockedUsers.value = users
+                _refreshError.value = null
+            }
+            .onFailure { error ->
+                _refreshError.value = error.message ?: "Failed to refresh blocked users"
+            }
+    }
+
+    fun clearRefreshError() {
+        _refreshError.value = null
+    }
+
     /**
      * Resets UI state to idle.
      * Useful for clearing success or error states after they've been handled.
