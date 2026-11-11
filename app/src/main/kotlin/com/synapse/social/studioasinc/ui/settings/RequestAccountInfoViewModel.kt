@@ -1,20 +1,23 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-
 
 
 sealed class RequestStatus {
@@ -37,9 +40,12 @@ data class RequestAccountInfoUiState(
 
 
 
-class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class RequestAccountInfoViewModel @Inject constructor(
+    @ApplicationContext private val context: Context
+) : AndroidViewModel(context.applicationContext as Application) {
 
-    private val settingsDataStore = SettingsDataStore.getInstance(application)
+    private val settingsDataStore = SettingsDataStore.getInstance(context.applicationContext as Application)
 
 
 
