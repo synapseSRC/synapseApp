@@ -14,6 +14,8 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Count
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 /**
@@ -184,9 +186,17 @@ class SupabaseBlockDataSource(
 
             // Each direction is read defensively: a row the reader is not allowed to see must
             // degrade to "no block" for that direction only, instead of failing the whole check and
-            // leaving the conversation without a usable block state.
-            val blockedByMe = runCatching { blockExists(currentUserId, otherUserId) }.getOrDefault(false)
-            val blockedMe = runCatching { blockExists(otherUserId, currentUserId) }.getOrDefault(false)
+            // leaving the conversation without a usable block state. The two direction checks are
+            // independent, so they run concurrently instead of two serial round-trips.
+            val (blockedByMe, blockedMe) = coroutineScope {
+                val blockedByMeDeferred = async {
+                    runCatching { blockExists(currentUserId, otherUserId) }.getOrDefault(false)
+                }
+                val blockedMeDeferred = async {
+                    runCatching { blockExists(otherUserId, currentUserId) }.getOrDefault(false)
+                }
+                blockedByMeDeferred.await() to blockedMeDeferred.await()
+            }
 
             when {
                 blockedByMe && blockedMe -> BlockStatus.BLOCKED_BOTH
@@ -202,7 +212,7 @@ class SupabaseBlockDataSource(
     /** True when [blockerId] has a block row against [blockedId]. */
     private suspend fun blockExists(blockerId: String, blockedId: String): Boolean {
         val count = client.postgrest[tableName]
-            .select(columns = Columns.list("id")) {
+            .select(columns = Columns.none()) {
                 filter {
                     eq("blocker_id", blockerId)
                     eq("blocked_id", blockedId)

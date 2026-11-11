@@ -116,7 +116,9 @@ class ChatInitializationDelegate(
         _error.value = null
 
         // Remembered so a resumed chat can re-check the block without reopening the screen.
-        if (participantId != null) participantUserId = participantId
+        // Always assign (including null) so switching to a chat without a participant does
+        // not leave refreshBlockStatus() querying a previous chat's user.
+        participantUserId = participantId
 
         activeJob = viewModelScope.launch {
             val actualChatId = if (chatId == "new" && participantId != null) {

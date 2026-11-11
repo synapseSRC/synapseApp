@@ -122,14 +122,18 @@ class SupabaseChatRepository(
         val now = TimeProvider.nowMillis()
         blockRulesMutex.withLock {
             if (!fresh && blockRulesLoadedAt > 0L && now - blockRulesLoadedAt < BLOCK_RULES_TTL_MS) return
-            blockDataSource.getBlockedUserIds()
-                .onSuccess { ids ->
-                    blockedSenderIds = ids
-                    blockRulesLoadedAt = TimeProvider.nowMillis()
-                }
-                .onFailure { error ->
-                    Logger.w("Could not refresh blocked account ids: ${error.message}")
-                }
+        }
+        // Network I/O must not run while holding blockRulesMutex: a concurrent
+        // invalidateBlockRules() or ensureBlockRules() would block until the in-flight
+        // network call returns, stalling the messaging path. Read staleness under the lock,
+        // fetch outside it, then write the result under the lock.
+        val ids = blockDataSource.getBlockedUserIds().getOrElse {
+            Logger.w("Could not refresh blocked account ids")
+            emptySet()
+        }
+        blockRulesMutex.withLock {
+            blockedSenderIds = ids
+            blockRulesLoadedAt = TimeProvider.nowMillis()
         }
     }
 
