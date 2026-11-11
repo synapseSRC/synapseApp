@@ -88,7 +88,15 @@ sealed interface AppDestination {
     @Serializable
     data object LockProfile : AppDestination
     @Serializable
-    data object CreateGroup : AppDestination
+    data class CreateGroup(
+        /**
+         * People the group is started with, when the flow is opened from a selection in the inbox.
+         *
+         * Empty for the inbox's own "Create group" entry point, which lets the user pick members
+         * from scratch.
+         */
+        val memberIds: List<String> = emptyList()
+    ) : AppDestination
     @Serializable
     data class CreatePoll(val chatId: String) : AppDestination
     @Serializable
