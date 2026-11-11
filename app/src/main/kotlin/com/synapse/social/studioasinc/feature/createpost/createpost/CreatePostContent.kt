@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
@@ -128,7 +130,11 @@ fun CreatePostContent(
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Start
                             ),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Sentences,
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Default
+                            ),
                             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                         )
                     }
@@ -218,7 +224,11 @@ fun CreatePostContent(
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Start
                                 ),
                                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
+                                keyboardOptions = KeyboardOptions(
+                                    capitalization = KeyboardCapitalization.Sentences,
+                                    keyboardType = KeyboardType.Text,
+                                    imeAction = ImeAction.Default
+                                ),
                                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                             )
                         }
