@@ -1160,7 +1160,11 @@ private class LiveCall(
     var mediaOpen: Boolean = false
     var markedActive: Boolean = false
     var reconnectAttempts: Int = 0
-    var closed: Boolean = false
+    /**
+     * Set once, with the repository's lock held, but also read without it by this call's own
+     * coroutines — the audio-route collector stops on it — so the flag carries its own barrier.
+     */
+    @Volatile var closed: Boolean = false
 
     /** The presence beat for this call; null until the call is connected. */
     var heartbeatJob: Job? = null
