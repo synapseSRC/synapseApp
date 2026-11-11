@@ -287,6 +287,9 @@ fun MessageBubble(
     replyCount: Int = 0,
     onQuoteClick: (messageId: String) -> Unit = {},
     onOpenBatchGallery: (Message) -> Unit = {},
+    // A photo-only message opens the dedicated viewer straight away; a multi-photo message opens
+    // the grid first, and the grid hands its selected item to this same viewer.
+    onOpenPhotoViewer: (Message) -> Unit = {},
     onVoteOption: (pollId: String, optionId: String) -> Unit = { _, _ -> },
     onOpenPost: (String) -> Unit = {},
     onOpenStory: (String) -> Unit = {},
@@ -805,16 +808,18 @@ fun MessageBubble(
                                         }
                                     } else {
                                         when {
-                                            isBatchMedia -> {
+                                            // A group that carries a single item is still one photo: opening
+                                            // a one-cell grid would add a step with nothing to choose between.
+                                            isBatchMedia && message.attachments.size > 1 -> {
                                                 StackedMediaCard(
                                                     attachments = message.attachments,
                                                     onClick = { onOpenBatchGallery(message) }
                                                 )
                                             }
-                                            message.messageType == MessageType.IMAGE -> {
+                                            isBatchMedia || message.messageType == MessageType.IMAGE -> {
                                                 AsyncImage(
                                                     model = coil3.request.ImageRequest.Builder(LocalContext.current)
-                                                        .data(message.mediaUrl)
+                                                        .data(message.mediaUrl ?: message.attachments.firstOrNull()?.url)
                                                         .crossfade(true)
                                                         .build(),
                                                     contentDescription = stringResource(R.string.cd_post_image),
@@ -823,9 +828,7 @@ fun MessageBubble(
                                                         .fillMaxWidth()
                                                         .heightIn(max = Sizes.HeightExtraLarge)
                                                         .clip(RoundedCornerShape(28.dp))
-                                                        .clickable {
-                                                            message.mediaUrl?.let { uriHandler.openUri(it) }
-                                                        }
+                                                        .clickable { onOpenPhotoViewer(message) }
                                                 )
                                             }
                                             message.messageType == MessageType.VIDEO -> {
