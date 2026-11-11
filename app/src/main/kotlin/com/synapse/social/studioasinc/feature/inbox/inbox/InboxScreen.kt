@@ -37,11 +37,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.Add
@@ -138,14 +136,16 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION }
+private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION, CONTACTS }
 
-/** Bottom bar positions. Echo took the slot Contacts used to hold; Contacts moved one place right. */
+/**
+ * Bottom bar positions. The bar carries Messages, Calls and Echo only: the Contacts tab was
+ * removed, and the contact picker is still reached from the New chat action as a full screen.
+ */
 private object InboxTab {
     const val MESSAGES = 0
     const val CALLS = 1
     const val ECHO = 2
-    const val CONTACTS = 3
 }
 
 /** A group needs the person creating it plus at least two people chosen from the chat list. */
@@ -462,6 +462,11 @@ private fun InboxScreenContent(
                     },
                     colors = barColors
                 )
+                InboxDestination.CONTACTS -> TopAppBar(
+                    title = { Text(stringResource(R.string.inbox_contacts_title)) },
+                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                    colors = barColors
+                )
             }
         },
         bottomBar = {
@@ -470,8 +475,7 @@ private fun InboxScreenContent(
                     val labels = listOf(
                         R.string.inbox_messages_tab,
                         R.string.inbox_calls_tab,
-                        R.string.inbox_echo_tab,
-                        R.string.inbox_contacts_tab
+                        R.string.inbox_echo_tab
                     )
                     labels.forEachIndexed { index, labelRes ->
                         val selected = selectedTab == index
@@ -483,8 +487,7 @@ private fun InboxScreenContent(
                                 val icon = when (index) {
                                     InboxTab.MESSAGES -> if (selected) Icons.Filled.Email else Icons.Outlined.Email
                                     InboxTab.CALLS -> if (selected) Icons.Filled.Call else Icons.Outlined.Call
-                                    InboxTab.ECHO -> if (selected) Icons.Filled.Mic else Icons.Outlined.Mic
-                                    else -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
+                                    else -> if (selected) Icons.Filled.Mic else Icons.Outlined.Mic
                                 }
                                 Icon(icon, contentDescription = null)
                             },
@@ -518,7 +521,7 @@ private fun InboxScreenContent(
                     }
                 ) {
                     FloatingActionButtonMenuItem(
-                        onClick = { showCreateMenu = false; selectedTab = InboxTab.CONTACTS },
+                        onClick = { showCreateMenu = false; destination = InboxDestination.CONTACTS },
                         icon = { Icon(Icons.AutoMirrored.Rounded.Chat, contentDescription = null) },
                         text = { Text(stringResource(R.string.inbox_fab_create_chat)) }
                     )
@@ -601,12 +604,7 @@ private fun InboxScreenContent(
                             onOpenRoom = onOpenEchoRoom,
                             contentPadding = PaddingValues()
                         )
-                        else -> ContactsTabScreen(
-                            onNavigateToChat = onNavigateToChat,
-                            onNavigateToSearch = onNavigateToSearch,
-                            onStartCall = onStartCall,
-                            contentPadding = PaddingValues()
-                        )
+                        else -> Unit
                     }
                 }
                 InboxDestination.SEARCH -> InboxSearchScreen(
@@ -644,6 +642,12 @@ private fun InboxScreenContent(
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
                     onDone = ::returnToInbox
+                )
+                InboxDestination.CONTACTS -> ContactsTabScreen(
+                    onNavigateToChat = onNavigateToChat,
+                    onNavigateToSearch = onNavigateToSearch,
+                    onStartCall = onStartCall,
+                    contentPadding = PaddingValues()
                 )
             }
         }
