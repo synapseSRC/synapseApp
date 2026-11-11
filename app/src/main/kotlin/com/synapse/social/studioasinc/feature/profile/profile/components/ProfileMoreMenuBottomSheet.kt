@@ -64,8 +64,11 @@ fun ProfileMoreMenuBottomSheet(
     onReportUser: () -> Unit,
     onMuteUser: () -> Unit
 ) {
+    // The sheet only enters composition when showMoreMenu is true (see ProfileDialogs.kt:24),
+    // so it should open expanded on first composition. Starting Hidden left the sheet
+    // composed but invisible, making the more-menu button appear to do nothing.
     val sheetState = rememberBottomSheetState(
-        initialValue = SheetValue.Hidden,
+        initialValue = SheetValue.Expanded,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     )
     val scope = rememberCoroutineScope()
