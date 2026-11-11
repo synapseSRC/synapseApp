@@ -106,7 +106,14 @@ internal fun ProfileContent(
             },
             onUserClick = { userId -> currentOnNavigateToUserProfile(userId) },
             onOptionClick = { post -> currentOnShowPostOptions(post) },
-            onMediaClick = { _, _ -> }
+            onMediaClick = { post, index ->
+                val mediaUrls = post.mediaItems?.map { it.url }?.takeIf { it.isNotEmpty() }
+                    ?: post.postImage?.let { listOf(it) }?.takeIf { it.isNotEmpty() }
+                    ?: emptyList()
+                if (mediaUrls.isNotEmpty() && index in mediaUrls.indices) {
+                    currentOnOpenMediaViewer(mediaUrls, index)
+                }
+            }
         )
     }
 
