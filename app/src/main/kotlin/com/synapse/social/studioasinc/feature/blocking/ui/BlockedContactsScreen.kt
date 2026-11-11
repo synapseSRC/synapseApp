@@ -38,6 +38,7 @@ fun BlockedContactsScreen(
 ) {
     val blockedUsers by viewModel.blockedUsers.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val refreshFailed by viewModel.refreshFailed.collectAsState()
     
     var userToUnblock by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -102,8 +103,8 @@ fun BlockedContactsScreen(
                     ) {
                         itemsIndexed(
                             items = blockedUsers,
-                            key = { index, it -> "${it.id}_${index}" }
-                        ) { index, blockedUser ->
+                            key = { _, blockedUser -> blockedUser.id }
+                        ) { _, blockedUser ->
                             BlockedUserItem(
                                 blockedUser = blockedUser,
                                 onUnblockClick = {
@@ -133,6 +134,7 @@ fun BlockedContactsScreen(
     // Handle UI state changes for success and error messages
     val unblockSuccessMessage = stringResource(R.string.unblock_success)
     val blockSuccessMessage = stringResource(R.string.block_success)
+    val refreshFailedMessage = stringResource(R.string.error_refresh_blocked_users)
     LaunchedEffect(uiState) {
         when (val state = uiState) {
             is BlockingUiState.BlockSuccess -> {
@@ -157,6 +159,16 @@ fun BlockedContactsScreen(
                 viewModel.resetState()
             }
             else -> {}
+        }
+    }
+
+    LaunchedEffect(refreshFailed) {
+        if (refreshFailed) {
+            snackbarHostState.showSnackbar(
+                message = refreshFailedMessage,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearRefreshError()
         }
     }
 }
