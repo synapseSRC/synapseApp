@@ -22,6 +22,10 @@ class DependencyContainer: ObservableObject {
     let removePasskeyUseCase: RemovePasskeyUseCase
     let signInWithPasskeyUseCase: SignInWithPasskeyUseCase
 
+    // Blocking Repos & Use Cases
+    let blockRepository: BlockRepository
+    let getBlockedUsersUseCase: GetBlockedUsersUseCase
+
     private init() {
         self.analyticsService = DefaultAnalyticsService()
         self.crashReportingService = DefaultCrashReportingService()
@@ -51,6 +55,10 @@ class DependencyContainer: ObservableObject {
             passkeyRepository: self.passkeyRepository,
             passkeyPlatformManager: self.passkeyPlatformManager
         )
+
+        // Initialize KMP Shared Blocking Dependencies
+        self.blockRepository = BlockRepositoryImpl(client: client)
+        self.getBlockedUsersUseCase = GetBlockedUsersUseCase(repository: self.blockRepository)
     }
 
     // ViewModels
@@ -81,5 +89,10 @@ class DependencyContainer: ObservableObject {
 
     func makeNotificationsViewModel() -> NotificationsViewModel {
         return NotificationsViewModel()
+    }
+
+    @MainActor
+    func makeBlockedUsersViewModel() -> BlockedUsersViewModel {
+        return BlockedUsersViewModel(getBlockedUsersUseCase: getBlockedUsersUseCase)
     }
 }

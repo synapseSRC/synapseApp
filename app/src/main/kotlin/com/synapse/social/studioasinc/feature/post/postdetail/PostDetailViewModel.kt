@@ -215,8 +215,63 @@ class PostDetailViewModel @Inject constructor(
 
     fun toggleCommentReaction(commentId: String, reactionType: ReactionType) {
         viewModelScope.launch {
-            reactionRepository.toggleReaction(commentId, "comment", reactionType).onSuccess {
-                 invalidateComments()
+            // Repeated-tap protection: ignore taps while an action for this comment is already in flight.
+            if (_uiState.value.commentActionsLoading.contains(commentId)) return@launch
+
+            val currentRootComment = _uiState.value.rootComment
+            val isRootComment = currentRootComment?.id == commentId
+            val wasLiked = currentRootComment?.userReaction == reactionType
+
+            // Optimistic update so the UI reflects the toggle immediately. This matters most for the
+            // root comment (notification entry path), which is rendered from uiState.rootComment and
+            // is not refreshed by the paging reload that invalidateComments() triggers.
+            var optimisticRootComment: CommentWithUser? = null
+            if (isRootComment && currentRootComment != null) {
+                val newReaction = if (wasLiked) null else reactionType
+                val countChange = if (wasLiked) -1 else 1
+                val updatedSummary = currentRootComment.reactionSummary.toMutableMap()
+                if (wasLiked) {
+                    updatedSummary[reactionType] = maxOf(0, updatedSummary[reactionType] ?: 1) - 1
+                } else {
+                    currentRootComment.userReaction?.let { oldType ->
+                        updatedSummary[oldType] = maxOf(0, updatedSummary[oldType] ?: 1) - 1
+                    }
+                    updatedSummary[reactionType] = (updatedSummary[reactionType] ?: 0) + 1
+                }
+                optimisticRootComment = currentRootComment.copy(
+                    likesCount = maxOf(0, currentRootComment.likesCount + countChange),
+                    userReaction = newReaction,
+                    reactionSummary = updatedSummary
+                )
+            }
+
+            _uiState.update { it.copy(
+                rootComment = if (isRootComment) optimisticRootComment else it.rootComment,
+                commentActionsLoading = it.commentActionsLoading + commentId
+            )}
+
+            reactionRepository.toggleReaction(commentId, "comment", reactionType).onSuccess { _ ->
+                invalidateComments()
+                // When the toggled comment is the root comment (notification entry path), reload it so
+                // uiState.rootComment reflects the authoritative server state instead of only the paging
+                // list that invalidateComments() refreshes.
+                if (isRootComment) {
+                    runCatching { commentRepository.getComment(commentId) }
+                        .getOrNull()
+                        ?.onSuccess { freshComment ->
+                            _uiState.update { it.copy(rootComment = freshComment) }
+                        }
+                }
+                _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading - commentId) }
+            }.onFailure { e ->
+                // Revert the optimistic root-comment update on failure so the UI does not show a lie.
+                if (isRootComment) {
+                    _uiState.update { it.copy(rootComment = currentRootComment) }
+                }
+                _uiState.update { it.copy(
+                    commentActionsLoading = it.commentActionsLoading - commentId,
+                    error = e.message ?: "Failed to update like"
+                )}
             }
         }
     }
@@ -333,10 +388,13 @@ class PostDetailViewModel @Inject constructor(
     fun votePoll(optionIndex: Int) {
         val postId = currentPostId ?: return
         viewModelScope.launch {
+            _uiState.update { it.copy(voteError = null, lastVoteOptionIndex = optionIndex) }
             pollRepository.submitVote(postId, optionIndex).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                     _uiState.update { it.copy(post = updatedPost) }
-                 }
+                    _uiState.update { it.copy(post = updatedPost, voteError = null, lastVoteOptionIndex = null) }
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(voteError = e.message ?: "Failed to vote") }
             }
         }
     }
@@ -344,12 +402,29 @@ class PostDetailViewModel @Inject constructor(
     fun revokeVote() {
         val postId = currentPostId ?: return
         viewModelScope.launch {
+            _uiState.update { it.copy(revokeError = null) }
             pollRepository.revokeVote(postId).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                     _uiState.update { it.copy(post = updatedPost) }
-                 }
+                    _uiState.update { it.copy(post = updatedPost, revokeError = null, lastVoteOptionIndex = null) }
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(revokeError = e.message ?: "Failed to revoke vote") }
             }
         }
+    }
+
+    fun retryVote() {
+        val postId = currentPostId ?: return
+        val optionIndex = _uiState.value.lastVoteOptionIndex ?: return
+        votePoll(optionIndex)
+    }
+
+    fun clearVoteError() {
+        _uiState.update { it.copy(voteError = null) }
+    }
+
+    fun clearRevokeError() {
+        _uiState.update { it.copy(revokeError = null) }
     }
 
     fun toggleBookmark() {
@@ -413,7 +488,25 @@ class PostDetailViewModel @Inject constructor(
     }
 
     fun toggleComments() {
+        val postId = currentPostId ?: return
+        val currentPost = _uiState.value.post ?: return
 
+        val isCurrentlyDisabled = currentPost.post.postDisableReplies == "true"
+        val newDisableValue = if (isCurrentlyDisabled) "false" else "true"
+
+        viewModelScope.launch {
+            val optimisticPost = currentPost.copy(
+                post = currentPost.post.copy(postDisableReplies = newDisableValue)
+            )
+
+            _uiState.update { it.copy(post = optimisticPost) }
+            PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
+
+            postActionsRepository.toggleComments(postId).onFailure { e ->
+                _uiState.update { it.copy(post = currentPost) }
+                PostEventBus.emit(PostEvent.Updated(currentPost.post))
+            }
+        }
     }
 
     fun blockUser(userId: String) {
@@ -492,5 +585,10 @@ class PostDetailViewModel @Inject constructor(
 
     fun clearCommentSubmission() {
         _uiState.update { it.copy(commentSubmitted = false, commentError = null) }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
     }
 }
