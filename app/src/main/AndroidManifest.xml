@@ -343,13 +343,25 @@
 			android:windowSoftInputMode="adjustResize"
 			android:exported="true">
 			<!-- Group invite links carry a bearer-equivalent code, so the filter must be
-			     domain-verified for the same reason as the auth callbacks above. -->
+			     domain-verified for the same reason as the auth callbacks above. The host is the
+			     project website the rest of the app already links to - the one host that serves an
+			     assetlinks.json naming this package, which is what makes Android hand the link to
+			     this activity instead of a browser. Keep it in step with SynapseConfig.APP_WEBSITE_URL. -->
 			<intent-filter android:autoVerify="true">
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />
-				<data android:scheme="https" android:host="synapse.chat" android:pathPrefix="/g/" />
+				<data android:scheme="https" android:host="synapsesocial.vercel.app" android:pathPrefix="/g/" />
 			</intent-filter>
-		</activity>
+			<!-- The same invitation in the app's own scheme. It needs no verification, so an
+			     invitation still opens the app on a build whose certificate is not registered in
+			     assetlinks.json, or on a device that could not verify the host. -->
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="synapse" android:host="invite" />
+			</intent-filter>
+			</activity>
 	</application>
 </manifest>
