@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -55,6 +56,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.ui.notifications.NotificationsViewModel
 import com.synapse.social.studioasinc.ui.navigation.HomeDestinations
 import com.synapse.social.studioasinc.core.navigation.NotificationNavigationCoordinator
 import com.synapse.social.studioasinc.ui.navigation.HomeNavGraph
@@ -62,6 +64,7 @@ import com.synapse.social.studioasinc.ui.settings.NavigationPlacement
 import com.synapse.social.studioasinc.feature.shared.reels.ReelUploadManager
 import com.synapse.social.studioasinc.feature.shared.reels.components.UploadProgressOverlay
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** How long a buffered notification tap waits for this screen's navigation graph before falling back. */
@@ -80,7 +83,8 @@ fun HomeScreen(
     onNavigateToQuotePost: (String) -> Unit,
     onNavigateToStoryViewer: (String, List<String>) -> Unit,
     onNavigateToCreateReel: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    notificationsViewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
     val pendingNotificationNavigation by NotificationNavigationCoordinator.pendingHomeNavigation.collectAsStateWithLifecycle()
@@ -137,6 +141,7 @@ fun HomeScreen(
     val isFeedScreen = currentDestination?.hasRoute<HomeDestinations.Feed>() == true
 
     val navigationPlacement by viewModel.navigationPlacement.collectAsStateWithLifecycle()
+    val unreadNotificationCount by notificationsViewModel.uiState.map { it.unreadCount }.collectAsStateWithLifecycle(initialValue = 0)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val isBottomMode = navigationPlacement == NavigationPlacement.BOTTOM
@@ -268,7 +273,18 @@ fun HomeScreen(
                                     text = { Text(stringResource(R.string.notifications)) },
                                     icon = {
                                         BadgedBox(
-                                            badge = { }
+                                            badge = {
+                                                if (unreadNotificationCount > 0) {
+                                                    Badge(
+                                                        content = {
+                                                            Text(
+                                                                text = if (unreadNotificationCount > 99) "99+" else unreadNotificationCount.toString(),
+                                                                modifier = Modifier.padding(horizontal = Spacing.space4)
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            }
                                         ) {
                                             Icon(
                                                 imageVector = if (isNotificationsSelected) Icons.Filled.Notifications else Icons.Outlined.Notifications,
@@ -404,7 +420,18 @@ fun HomeScreen(
                     },
                     icon = {
                         BadgedBox(
-                            badge = { }
+                            badge = {
+                                if (unreadNotificationCount > 0) {
+                                    Badge(
+                                        content = {
+                                            Text(
+                                                text = if (unreadNotificationCount > 99) "99+" else unreadNotificationCount.toString(),
+                                                modifier = Modifier.padding(horizontal = Spacing.space4)
+                                            )
+                                        }
+                                    )
+                                }
+                            }
                         ) {
                             Icon(
                                 imageVector = if (isNotificationsSelected) Icons.Filled.Notifications else Icons.Outlined.Notifications,
