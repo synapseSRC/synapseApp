@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.feature.inbox.inbox.screens
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.isRenderEffectSupported
-import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import androidx.compose.ui.platform.LocalUriHandler
 import android.widget.Toast
@@ -47,7 +46,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.media.VoicePlayerManager
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
-import com.synapse.social.studioasinc.feature.blocking.ui.UnblockConfirmationDialog
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
@@ -64,9 +62,7 @@ import com.synapse.social.studioasinc.feature.shared.components.LocalGlassBackdr
 import com.synapse.social.studioasinc.feature.shared.components.picker.PickedFile
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.shared.domain.model.chat.AttachmentType
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
-import com.synapse.social.studioasinc.shared.domain.model.chat.MessageAttachment
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -104,6 +100,7 @@ import kotlinx.coroutines.withContext
         onNavigateToChatSettings: (String) -> Unit = {},
         onNavigateToCreatePoll: (String) -> Unit = {},
         onStartCall: (CallLaunchRequest) -> Unit = {},
+        onOpenPost: (String) -> Unit = {},
         viewModel: ChatViewModel = hiltViewModel()
     ) {
     val reducedMotion = AnimationUtil.rememberReducedMotion()
@@ -114,7 +111,6 @@ import kotlinx.coroutines.withContext
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
-    var showUnblockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     // Initialize the ViewModel with the chat ID
@@ -143,7 +139,6 @@ import kotlinx.coroutines.withContext
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
     val isGroupChat by viewModel.isGroupChat.collectAsState()
-    val chatBlockStatus by viewModel.chatBlockStatus.collectAsState()
     val groupTitle by viewModel.groupTitle.collectAsState()
     val groupAvatarUrl by viewModel.groupAvatarUrl.collectAsState()
     val chatDisplayName = if (isGroupChat) {
@@ -489,31 +484,28 @@ val currentUserId = currentUserIdState ?: ""
     // the bottom. One layer means one capture per frame and no pipeline per surface, and no surface
     // ever samples a layer that contains it, because every one of them sits outside this box. The
     // layer is only attached when the device can actually draw a RenderEffect: below Android 12 the
-    // screen keeps the plain translucent surfaces and skips the extra render pass altogether. The
-    // two recorded layers are only built on the devices that can draw glass as well: where the
-    // surfaces fall back, nothing samples them, so building them would hold two full-window
-    // recording layers against this composition for a screen that never reads them back.
+    // screen keeps the plain translucent surfaces and skips the extra render pass altogether.
     val glassSurfaceSupported = remember { isRenderEffectSupported() }
     val backdropBaseColor = MaterialTheme.colorScheme.background
-    val contentBackdrop = if (glassSurfaceSupported) rememberLayerBackdrop {
+    val contentBackdrop = rememberLayerBackdrop {
         // The base colour is painted first because the wallpaper itself can be translucent, and the
         // glass must never sample transparent pixels.
         drawRect(backdropBaseColor)
         drawContent()
-    } else null
+    }
     // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
     // in that layer, so every glass surface is told not to sample one.
     // A second, much smaller layer: the wallpaper on its own. The surfaces that live *inside* the
     // content layer sample this one - they cannot sample the layer that contains them, see
     // LocalGlassBackdrop - and it holds nothing else, so it can never contain them.
-    val backgroundBackdrop = if (glassSurfaceSupported) rememberLayerBackdrop {
+    val backgroundBackdrop = rememberLayerBackdrop {
         drawRect(backdropBaseColor)
         drawContent()
-    } else null
+    }
     // Null means "use the fallback surface": a device below the RenderEffect API level has nothing
     // in that layer, so every glass surface is told not to sample one.
-    val glassBackdrop = contentBackdrop
-    val inListBackdrop = backgroundBackdrop
+    val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
+    val inListBackdrop = if (glassSurfaceSupported) backgroundBackdrop else null
 
     Scaffold(
         topBar = {
@@ -549,14 +541,14 @@ val currentUserId = currentUserIdState ?: ""
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        contentBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier
+                        if (glassSurfaceSupported) Modifier.layerBackdrop(contentBackdrop) else Modifier
                     )
             ) {
                 Box(
                     modifier = Modifier
                         .matchParentSize()
                         .then(
-                            backgroundBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier
+                            if (glassSurfaceSupported) Modifier.layerBackdrop(backgroundBackdrop) else Modifier
                         )
                 ) {
                     ChatBackground(
@@ -635,14 +627,8 @@ val currentUserId = currentUserIdState ?: ""
                                 onOpenEncryption = { showEncryptionSheet = true },
                                 onLocateMessage = viewModel::loadQuotedMessage,
                                 onOpenBatchGallery = { batchGalleryMessage = it },
-                                onOpenPhotoViewer = { message ->
-                                    // A single photo has no grid to return to: the viewer is the
-                                    // only overlay, so closing it lands back in the conversation.
-                                    batchViewerInitialIndex = 0
-                                    batchViewerMessage = message
-                                },
                                 onVoteOption = { messageId, optionId -> viewModel.voteInPoll(messageId, optionId) },
-                                onOpenPost = { postId -> try { uriHandler.openUri(DeepLink.post(postId)) } catch (_: Exception) {} },
+                                onOpenPost = onOpenPost,
                                 onOpenStory = { storyId -> try { uriHandler.openUri("synapse://story/$storyId") } catch (_: Exception) {} },
                                 onOpenEphemeralMedia = { mediaUrl -> 
                                 try { 
@@ -883,71 +869,62 @@ val currentUserId = currentUserIdState ?: ""
                         .align(Alignment.BottomCenter)
                         .onSizeChanged { composerHeightPx = it.height }
                 ) {
-                    if (chatBlockStatus.isBlocked) {
-                        // The composer is replaced, not just disabled: no entry point - typing,
-                        // attachments, voice or smart replies - survives a block.
-                        ChatBlockedNotice(
-                            blockedByMe = chatBlockStatus.blockedByMe,
-                            onUnblock = { showUnblockDialog = true }
-                        )
-                    } else {
-                        ChatInputBar(
-                            // The same layer the header samples, so the composer's glass refracts the
-                            // wallpaper and the messages scrolling behind it.
-                            backdrop = glassBackdrop,
-                            replyingToMessage = replyingToMessage,
-                            editingMessage = editingMessage,
-                            smartReplies = smartReplies,
-                            reducedMotion = reducedMotion,
-                            inputText = inputText,
-                            canSendMessage = canSendMessage,
+                    ChatInputBar(
+                        // The same layer the header samples, so the composer's glass refracts the
+                        // wallpaper and the messages scrolling behind it.
+                        backdrop = glassBackdrop,
+                        replyingToMessage = replyingToMessage,
+                        editingMessage = editingMessage,
+                        smartReplies = smartReplies,
+                        reducedMotion = reducedMotion,
+                        inputText = inputText,
+                        canSendMessage = canSendMessage,
+                        currentUserId = currentUserId,
+                        participantDisplayName = participantProfile?.displayName
+                            ?: participantProfile?.name
+                            ?: participantProfile?.username
+                            ?: initialParticipantName?.takeUnless { isGroupChat },
+                        replyingToSenderName = quotedSenderDisplayName(
+                            message = replyingToMessage,
                             currentUserId = currentUserId,
+                            isGroupChat = isGroupChat,
+                            groupMemberNames = groupMemberNames,
                             participantDisplayName = participantProfile?.displayName
                                 ?: participantProfile?.name
-                                ?: participantProfile?.username
-                                ?: initialParticipantName?.takeUnless { isGroupChat },
-                            replyingToSenderName = quotedSenderDisplayName(
-                                message = replyingToMessage,
-                                currentUserId = currentUserId,
-                                isGroupChat = isGroupChat,
-                                groupMemberNames = groupMemberNames,
-                                participantDisplayName = participantProfile?.displayName
-                                    ?: participantProfile?.name
-                                    ?: participantProfile?.username,
-                                initialParticipantName = initialParticipantName
-                            ),
-                            fontScale = chatFontScale,
-                            getLinkMetadataUseCase = linkPreviewViewModel.getLinkMetadataUseCase,
-                            context = context,
-                            voiceState = voiceState,
-                            onVoiceAction = { action ->
-                                val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                                if (action is VoiceAction.StartRecording && !hasPermission) {
-                                    voiceController.requestPermissionAndRecord()
-                                    recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                } else {
-                                    voiceController.handleAction(action)
-                                }
-                            },
-                            onInputTextChange = viewModel::onInputTextChange,
-                            onSendMessage = viewModel::sendMessage,
-                            onCancelReply = viewModel::cancelReply,
-                            onCancelEditing = viewModel::cancelEditing,
-                            onAttachmentSelected = { category ->
-                                focusManager.clearFocus()
-                                when (category) {
-                                    ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                                    )
-                                    ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
-                                    ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
-                                    ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
-                                    ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
-                                    ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
-                                }
+                                ?: participantProfile?.username,
+                            initialParticipantName = initialParticipantName
+                        ),
+                        fontScale = chatFontScale,
+                        getLinkMetadataUseCase = linkPreviewViewModel.getLinkMetadataUseCase,
+                        context = context,
+                        voiceState = voiceState,
+                        onVoiceAction = { action ->
+                            val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                            if (action is VoiceAction.StartRecording && !hasPermission) {
+                                voiceController.requestPermissionAndRecord()
+                                recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            } else {
+                                voiceController.handleAction(action)
                             }
-                        )
-                    }
+                        },
+                        onInputTextChange = viewModel::onInputTextChange,
+                        onSendMessage = viewModel::sendMessage,
+                        onCancelReply = viewModel::cancelReply,
+                        onCancelEditing = viewModel::cancelEditing,
+                        onAttachmentSelected = { category ->
+                            focusManager.clearFocus()
+                            when (category) {
+                                ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                                )
+                                ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
+                                ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
+                                ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
+                                ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                                ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
+                            }
+                        }
+                    )
                 }
             }
 
@@ -979,14 +956,12 @@ val currentUserId = currentUserIdState ?: ""
 
             batchGalleryMessage?.let { msg ->
                 BatchMediaGalleryDialog(
-                    attachments = msg.viewerMedia(),
+                    attachments = msg.attachments,
                     caption = msg.content.takeIf { it.isNotBlank() },
                     onDismiss = { batchGalleryMessage = null },
                     onMediaItemClick = { clickedIndex ->
-                        // The grid stays composed underneath the viewer, so closing the viewer
-                        // hands the grid back with its own scroll position instead of dropping
-                        // the reader into the conversation.
                         batchViewerInitialIndex = clickedIndex
+                        batchGalleryMessage = null
                         batchViewerMessage = msg
                     }
                 )
@@ -994,7 +969,7 @@ val currentUserId = currentUserIdState ?: ""
 
             batchViewerMessage?.let { msg ->
                 BatchMediaViewerDialog(
-                    attachments = msg.viewerMedia(),
+                    attachments = msg.attachments,
                     initialIndex = batchViewerInitialIndex,
                     caption = msg.content.takeIf { it.isNotBlank() },
                     onDismiss = { batchViewerMessage = null }
@@ -1065,28 +1040,6 @@ val currentUserId = currentUserIdState ?: ""
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
-            )
-        }
-
-        // A block is removed from the conversation itself for the side that created it: the notice
-        // replacing the composer offers Unblock, and the removal runs through the same confirmation
-        // as the blocked-contacts screen before the authoritative state is re-read.
-        if (showUnblockDialog) {
-            UnblockConfirmationDialog(
-                onConfirm = {
-                    showUnblockDialog = false
-                    val targetUserId = participantId
-                    if (!targetUserId.isNullOrBlank()) {
-                        viewModel.unblockCurrentChatParticipant(targetUserId) { result ->
-                            Toast.makeText(
-                                context,
-                                if (result.isSuccess) R.string.chat_info_msg_unblocked else R.string.chat_info_error_unblock,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                },
-                onDismiss = { showUnblockDialog = false }
             )
         }
 
@@ -1276,18 +1229,6 @@ private val DOCUMENT_ATTACHMENT_MIME_TYPES = arrayOf(
     "text/csv",
     "text/plain"
 )
-
-/**
- * The photos and videos this message can be viewed in: its own attachments, or — for a message
- * stored before attachments were kept per item — the single media URL it carries. An empty list
- * means the message holds nothing to open in the viewer.
- */
-private fun Message.viewerMedia(): List<MessageAttachment> =
-    attachments.ifEmpty {
-        mediaUrl?.takeIf { it.isNotBlank() }
-            ?.let { listOf(MessageAttachment(url = it, type = AttachmentType.IMAGE)) }
-            .orEmpty()
-    }
 
 private fun Context.toPickedFile(uri: Uri): PickedFile {
     val projection = arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
