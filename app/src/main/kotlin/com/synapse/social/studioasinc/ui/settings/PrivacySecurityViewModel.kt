@@ -321,6 +321,8 @@ class PrivacySecurityViewModel @Inject constructor(
         }
     }
 
+
+
     private fun canAuthenticateBiometrics(): Boolean {
         val canAuthenticate = biometricChecker.canAuthenticate(getApplication())
         when (canAuthenticate) {

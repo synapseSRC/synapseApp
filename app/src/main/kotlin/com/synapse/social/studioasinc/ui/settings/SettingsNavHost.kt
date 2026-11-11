@@ -304,7 +304,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
             val selectedTimer by viewModel.disappearingMessagesTimer.collectAsState()
 
             val timerOptions = listOf(
