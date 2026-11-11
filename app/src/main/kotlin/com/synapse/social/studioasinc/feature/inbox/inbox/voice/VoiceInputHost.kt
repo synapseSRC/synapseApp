@@ -16,13 +16,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.boundsInRoot
@@ -84,6 +90,21 @@ private val LOCK_PILL_TRACK_TRAVEL = 110.dp
 private val LOCK_PILL_HEIGHT_GROWTH = 0.12f
 // At the lock target the pill settles into a circle of this diameter.
 private val LOCK_PILL_LOCK_DIAMETER = 48.dp
+// Persistent lock target. The pill's motion alone only implies where the gesture ends, so the drag
+// also draws a rail along the pill's fixed track and a ring at the exact destination: the rail's
+// filled share and the ring's closing arc are the progress read-out, and both stay put for the whole
+// upward drag. The ring is deliberately wider than the locked pill so it remains a visible target
+// around the pill that settles inside it, and so the locked state reads as a filled halo.
+private val LOCK_TARGET_RING_DIAMETER = 56.dp
+private val LOCK_TARGET_RING_STROKE = 2.dp
+private val LOCK_TARGET_RAIL_WIDTH = 3.dp
+private const val LOCK_TARGET_RAIL_TRACK_ALPHA = 0.16f
+private const val LOCK_TARGET_RAIL_FILL_ALPHA = 0.55f
+private const val LOCK_TARGET_RING_TRACK_ALPHA = 0.30f
+private const val LOCK_TARGET_LOCKED_HALO_ALPHA = 0.22f
+// The mic keeps at least this share of its opacity while a lock drag is in progress, so the control
+// the user is holding never fades out before the lock target visibly takes over.
+private const val MIC_LOCK_DRAG_MIN_ALPHA = 0.45f
 
 private enum class VoiceVisualStage { Normal, VoiceReady, Pressing, Recording, Locked, VoiceDraft, Sending, Failed }
 
@@ -577,7 +598,11 @@ private fun VoiceRecordingContentOverlay(
                 // the capsule inflates mid-drag then deflates into a circle at lock.
                 val gapPx = with(density) { LOCK_PILL_TRACK_GAP.toPx() }
                 val travelPx = with(density) { LOCK_PILL_TRACK_TRAVEL.toPx() }
-                val pillCenterY = micCenterY - gapPx - travelPx * p
+                // The two anchors of the pill's fixed track, named so the persistent lock-target guide
+                // can be drawn on them: restCenterY where the drag starts, targetCenterY where it locks.
+                val restCenterY = micCenterY - gapPx
+                val targetCenterY = restCenterY - travelPx
+                val pillCenterY = restCenterY - travelPx * p
 
                 val baseHeightPx = with(density) { LOCK_PILL_BASE_HEIGHT.toPx() }
                 val lockDiameterPx = with(density) { LOCK_PILL_LOCK_DIAMETER.toPx() }
@@ -592,17 +617,106 @@ private fun VoiceRecordingContentOverlay(
                     .coerceIn(0f, (parentWidthPx - pillWidthPx).coerceAtLeast(0f))
                 val pillTopPx = pillCenterY - pillHeightPx / 2f
 
-                // Tooltip "Slide up to lock" bubble to the left of the pill (Image 4)
-                val tooltipVisible = !isLocked && p < 0.15f && cancelProgress == 0f
-                val tooltipAlpha = ((1f - p * 5f).coerceIn(0f, 1f) * (1f - cancelProgress * 3f).coerceIn(0f, 1f))
+                // The instructional cue no longer drops out after the first 15% of the drag: "keep
+                // holding and slide up" now stays for the whole upward gesture, and is only dropped for
+                // the lock itself, or when the same drag is released as a slide-to-cancel.
+                val cancelFade = (1f - cancelProgress * 2.5f).coerceIn(0f, 1f)
+                val tooltipVisible = !isLocked
+                val tooltipAlpha = cancelFade
                 val endPaddingPx = (parentWidthPx - pillLeftPx - pillWidthPx).coerceAtLeast(0f)
                 val endPaddingDp = with(density) { endPaddingPx.toDp() }
+
+                // Persistent lock target, drawn on the pill's own row so it shares its parent and its
+                // clipping behaviour: a rail along the fixed track with the travelled share filled, and
+                // a ring at the destination whose arc closes with lockProgress. Everything is resolved
+                // from the measured mic anchor, so it holds across screen sizes and densities, and it is
+                // a plain alpha-faded drawing (no motion) so it is identical under reduced motion.
+                val railWidthPx = with(density) { LOCK_TARGET_RAIL_WIDTH.toPx() }
+                val ringRadiusPx = with(density) { LOCK_TARGET_RING_DIAMETER.toPx() } / 2f
+                val ringStrokePx = with(density) { LOCK_TARGET_RING_STROKE.toPx() }
+                val railTrackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                    alpha = LOCK_TARGET_RAIL_TRACK_ALPHA * cancelFade
+                )
+                val railFillColor = MaterialTheme.colorScheme.primary.copy(
+                    alpha = LOCK_TARGET_RAIL_FILL_ALPHA * cancelFade
+                )
+                val ringTrackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                    alpha = LOCK_TARGET_RING_TRACK_ALPHA * cancelFade
+                )
+                val ringArcColor = MaterialTheme.colorScheme.primary.copy(
+                    alpha = (0.45f + 0.55f * p) * cancelFade
+                )
+                val ringHaloColor = MaterialTheme.colorScheme.primary.copy(
+                    alpha = LOCK_TARGET_LOCKED_HALO_ALPHA * cancelFade
+                )
 
                 Row(
                     modifier = Modifier
                         .absoluteOffset { IntOffset(pillLeftPx.roundToInt(), pillTopPx.roundToInt()) }
                         .fillMaxWidth()
-                        .padding(end = endPaddingDp),
+                        .padding(end = endPaddingDp)
+                        // Drawn in this row's own coordinates: the row's origin is the pill's top-left
+                        // (pillLeftPx, pillTopPx) in the overlay, so the guide's anchors are the overlay
+                        // anchors shifted by it. The rail goes behind the pill (it is the track the pill
+                        // rides); the destination ring goes on top of it, so the target can never hide
+                        // behind the pill - the affordance the user is aiming at stays visible for the
+                        // whole drag, including the moment the pill is at its largest.
+                        .drawWithContent {
+                            val railHalf = railWidthPx / 2f
+                            val railX = micCenterX - pillLeftPx
+                            val trackTop = targetCenterY - pillTopPx
+                            val trackBottom = restCenterY - pillTopPx
+                            val ringCenter = Offset(railX, trackTop)
+                            if (cancelFade > 0.01f) {
+                                val trackHeight = (trackBottom - trackTop).coerceAtLeast(0f)
+                                if (trackHeight > 0f) {
+                                    // The whole travel still ahead of the finger.
+                                    drawRoundRect(
+                                        color = railTrackColor,
+                                        topLeft = Offset(railX - railHalf, trackTop),
+                                        size = Size(railWidthPx, trackHeight),
+                                        cornerRadius = CornerRadius(railHalf, railHalf)
+                                    )
+                                    // The share already covered, growing from the mic toward the target.
+                                    val travelled = (trackBottom - (pillCenterY - pillTopPx))
+                                        .coerceIn(0f, trackHeight)
+                                    if (travelled > 0f) {
+                                        drawRoundRect(
+                                            color = railFillColor,
+                                            topLeft = Offset(railX - railHalf, pillCenterY - pillTopPx),
+                                            size = Size(railWidthPx, travelled),
+                                            cornerRadius = CornerRadius(railHalf, railHalf)
+                                        )
+                                    }
+                                }
+                                // Lock commit is unmistakable: the destination closes into a filled halo
+                                // around the pill that has just settled inside it.
+                                if (isLocked) {
+                                    drawCircle(
+                                        color = ringHaloColor,
+                                        radius = ringRadiusPx,
+                                        center = ringCenter
+                                    )
+                                }
+                            }
+                            drawContent()
+                            if (cancelFade <= 0.01f) return@drawWithContent
+                            drawCircle(
+                                color = ringTrackColor,
+                                radius = ringRadiusPx,
+                                center = ringCenter,
+                                style = Stroke(width = ringStrokePx)
+                            )
+                            drawArc(
+                                color = ringArcColor,
+                                startAngle = -90f,
+                                sweepAngle = 360f * p,
+                                useCenter = false,
+                                topLeft = Offset(railX - ringRadiusPx, trackTop - ringRadiusPx),
+                                size = Size(ringRadiusPx * 2f, ringRadiusPx * 2f),
+                                style = Stroke(width = ringStrokePx, cap = StrokeCap.Round)
+                            )
+                        },
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.Top
                 ) {
@@ -617,7 +731,7 @@ private fun VoiceRecordingContentOverlay(
                             tonalElevation = 2.dp
                         ) {
                             Text(
-                                text = stringResource(R.string.voice_recording_lock_hint),
+                                text = stringResource(R.string.voice_recording_lock_hold_hint),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.inverseOnSurface,
                                 modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4),
@@ -933,9 +1047,12 @@ fun CanonicalMicButton(
         animationSpec = spring(dampingRatio = MIC_SCALE_DAMPING_RATIO, stiffness = Spring.StiffnessMedium),
         label = "canonicalMicScale"
     )
-    // Mic fades out as the user drags up toward the lock target (WhatsApp behavior).
+    // Mic fades as the user drags up toward the lock target (WhatsApp behavior), but it is floored
+    // rather than faded to nothing: the control being held must stay visible so the gesture reads as
+    // a hand-off to the lock target instead of the mic disappearing before the user understands it.
     val lockProgress = recordingState?.lockProgress?.coerceIn(0f, 1f) ?: 0f
-    val targetMicAlpha = (1f - lockProgress).coerceIn(0f, 1f)
+    val targetMicAlpha = (1f - (1f - MIC_LOCK_DRAG_MIN_ALPHA) * lockProgress)
+        .coerceIn(MIC_LOCK_DRAG_MIN_ALPHA, 1f)
     val micAlpha = animateFloatForMotion(
         targetValue = targetMicAlpha,
         reducedMotion = reducedMotion,
