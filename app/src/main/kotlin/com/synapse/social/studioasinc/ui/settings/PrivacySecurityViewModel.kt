@@ -203,6 +203,23 @@ class PrivacySecurityViewModel @Inject constructor(
         }
     }
 
+    fun setDisappearingMessagesTimer(timer: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                _disappearingMessagesTimer.value = timer
+                settingsRepository.setDisappearingMessagesTimer(timer)
+                android.util.Log.d("PrivacySecurityViewModel", "Disappearing messages timer set to: $timer")
+            } catch (e: Exception) {
+                android.util.Log.e("PrivacySecurityViewModel", "Failed to set disappearing messages timer", e)
+                _error.value = "Failed to update disappearing messages timer"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun setTwoFactorEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -218,29 +235,6 @@ class PrivacySecurityViewModel @Inject constructor(
             } catch (e: Exception) {
                 android.util.Log.e("PrivacySecurityViewModel", "Failed to toggle 2FA", e)
                 _error.value = "Failed to update two-factor authentication"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun setDisappearingMessagesTimer(timer: String) {
-        val validTimers = setOf("Off", "24h", "7d", "90d")
-        if (timer !in validTimers) {
-            android.util.Log.e("PrivacySecurityViewModel", "Rejected invalid disappearing messages timer: $timer")
-            _error.value = "Invalid disappearing messages timer"
-            return
-        }
-
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            try {
-                settingsRepository.setDisappearingMessagesTimer(timer)
-                android.util.Log.d("PrivacySecurityViewModel", "Disappearing messages timer set to: $timer")
-            } catch (e: Exception) {
-                android.util.Log.e("PrivacySecurityViewModel", "Failed to set disappearing messages timer", e)
-                _error.value = "Failed to update disappearing messages timer"
             } finally {
                 _isLoading.value = false
             }
