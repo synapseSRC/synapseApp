@@ -231,7 +231,7 @@ class PostDetailViewModel @Inject constructor(
         isSubmittingComment = true
         viewModelScope.launch {
             try {
-        _uiState.update { it.copy(error = null, commentError = null) }
+                _uiState.update { it.copy(error = null, commentError = null) }
                 var mediaUrl: String? = null
                 if (mediaUri != null) {
                     val mediaItem = MediaItem(id = java.util.UUID.randomUUID().toString(), url = mediaUri.toString(), type = MediaType.IMAGE)
@@ -243,13 +243,12 @@ class PostDetailViewModel @Inject constructor(
                     refreshComments()
                     invalidateComments()
                     setReplyTo(null)
-
                 }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "Failed to add comment") }
                     _uiState.update { it.copy(commentError = e.message ?: "Failed to add comment") }
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message ?: "Failed to upload media") }
                 _uiState.update { it.copy(commentError = e.message ?: "Failed to upload media") }
+            } finally {
                 isSubmittingComment = false
                 _uiState.update { it.copy(commentSubmitted = true) }
             }

@@ -192,13 +192,13 @@ fun CommentInput(
                             )
 
                             IconButton(
-onClick = {
-                                     if (canSend) {
-                                         onSendingChange(true)
+                                onClick = {
+                                    if (canSend) {
+                                        onSendingChange(true)
+                                        onSend(text, selectedMediaUri.value)
                                         selectedMediaUri.value = null
-                                         onSend(text, selectedMediaUri.value)
-                                     }
-                                 },
+                                    }
+                                },
                                 enabled = canSend
                             ) {
                                 Icon(

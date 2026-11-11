@@ -96,7 +96,7 @@ fun PostDetailScreen(
             pagingItems.refresh()
         }
     }
-    
+
     // Handle block success/error messages
     LaunchedEffect(uiState.blockSuccess, uiState.blockError) {
         when {
@@ -118,25 +118,25 @@ fun PostDetailScreen(
     // Handle comment submission completion: clear input, show errors, reset sending state
     LaunchedEffect(uiState.commentSubmitted) {
         if (uiState.commentSubmitted) {
-            uiState.error?.let { error ->
             uiState.commentError?.let { error ->
+                snackbarHostState.showSnackbar(message = error)
             }
-            commentText = ""
             if (uiState.commentError == null) {
                 commentText = ""
             }
+            commentIsSending = false
             viewModel.clearCommentSubmission()
         }
     }
 
     // Sync comment text with editing comment state
     LaunchedEffect(uiState.editingComment) {
-        commentText = uiState.editingComment?.content ?: ""
-        commentIsSending = false
         if (uiState.editingComment != null) {
             commentText = uiState.editingComment.content ?: ""
             commentIsSending = false
         }
+    }
+
     if (showMediaViewer && uiState.post != null) {
         val mediaUrls = uiState.post?.post?.mediaItems?.map { it.url }
             ?: listOfNotNull(uiState.post?.post?.postImage)
@@ -364,7 +364,7 @@ private fun PostDetailContent(
                     headerContent = {
                         if (uiState.rootComment != null) {
                             val rootComment = uiState.rootComment
-                            
+
                             // Render ancestors
                             uiState.ancestorComments.forEach { ancestor ->
                                 val ancestorState = PostUiMapper.toPostCardState(
@@ -561,4 +561,3 @@ private fun handleCommentAction(
         is CommentAction.Pin -> viewModel.pinComment(action.commentId)
     }
 }
-
