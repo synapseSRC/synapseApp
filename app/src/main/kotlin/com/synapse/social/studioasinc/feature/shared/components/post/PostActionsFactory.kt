@@ -47,7 +47,7 @@ object PostActionsFactory {
             onShare = onShare,
             onRepost = { post -> viewModel.resharePost(post) },
             onQuote = onQuote,
-            onBookmark = { post -> viewModel.toggleSave(post.id) },
+            onBookmark = { post -> viewModel.toggleSave(post) },
             onOptionClick = onOptionClick,
             onPollVote = viewModel::votePoll,
             onUserClick = onUserClick,

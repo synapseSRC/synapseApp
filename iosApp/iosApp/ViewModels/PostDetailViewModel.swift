@@ -25,8 +25,34 @@ class PostDetailViewModel: ObservableObject {
         }
     }
 
-    init(post: Post) {
-        self.post = post
+    init(postId: String) {
+        self.post = Post(
+            id: postId,
+            authorUid: "",
+            postText: nil,
+            postImage: nil,
+            postType: nil,
+            likesCount: 0,
+            commentsCount: 0,
+            viewsCount: 0,
+            resharesCount: 0,
+            mediaItems: nil,
+            hasPoll: false,
+            pollQuestion: nil,
+            pollOptions: nil,
+            createdAt: nil,
+            updatedAt: nil,
+            username: nil,
+            displayName: nil,
+            avatarUrl: nil,
+            isVerified: false,
+            isBookmarked: false,
+            isReshared: false,
+            userReaction: nil,
+            reactions: nil,
+            inReplyToPostId: nil,
+            rootPostId: nil
+        )
         fetchComments()
     }
 
@@ -34,8 +60,8 @@ class PostDetailViewModel: ObservableObject {
         isLoading = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.comments = [
-                Post.mock(authorUid: "1", postText: "This is a great post!", username: "user1", displayName: "User One", createdAt: "1h ago", inReplyToPostId: self.post.id, rootPostId: self.post.id),
-                Post.mock(authorUid: "2", postText: "I completely agree with you.", username: "user2", displayName: "User Two", createdAt: "30m ago", inReplyToPostId: self.post.id, rootPostId: self.post.id)
+                Post.mock(authorUid: "1", postText: "This is a great post!", username: "user1", displayName: "User One", createdAt: "1h ago", inReplyToPostId: postId, rootPostId: postId),
+                Post.mock(authorUid: "2", postText: "I completely agree with you.", username: "user2", displayName: "User Two", createdAt: "30m ago", inReplyToPostId: postId, rootPostId: postId)
             ]
             self.isLoading = false
         }
@@ -46,7 +72,7 @@ class PostDetailViewModel: ObservableObject {
 
         isSubmittingComment = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let newComment = Post.mock(authorUid: "me", postText: self.commentText, username: "me_user", displayName: "Me", inReplyToPostId: self.post.id, rootPostId: self.post.id)
+            let newComment = Post.mock(authorUid: "me", postText: self.commentText, username: "me_user", displayName: "Me", inReplyToPostId: postId, rootPostId: postId)
 
             self.comments.insert(newComment, at: 0)
             self.commentText = ""
@@ -54,7 +80,7 @@ class PostDetailViewModel: ObservableObject {
 
             // Increment post comments count optimistically
             self.post = Post(
-                id: self.post.id,
+                id: postId,
                 authorUid: self.post.authorUid,
                 postText: self.post.postText,
                 postImage: self.post.postImage,

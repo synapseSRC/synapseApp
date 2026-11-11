@@ -88,21 +88,18 @@ interface SettingsRepository {
     val aboutExcludedUserIds: Flow<Set<String>>
 
     val statusExcludedUserIds: Flow<Set<String>>
-
     val groupExcludedUserIds: Flow<Set<String>>
-
 
 
     val biometricLockEnabled: Flow<Boolean>
 
 
-
     val twoFactorEnabled: Flow<Boolean>
 
+    val disappearingMessagesTimer: Flow<String>
 
 
     val privacySettings: Flow<PrivacySettings>
-
 
 
     suspend fun setProfileVisibility(visibility: ProfileVisibility)
@@ -134,15 +131,12 @@ interface SettingsRepository {
     suspend fun setGroupPrivacy(privacy: GroupPrivacy)
 
 
-
     suspend fun setBiometricLockEnabled(enabled: Boolean)
-
 
 
     suspend fun setTwoFactorEnabled(enabled: Boolean)
 
-
-
+    suspend fun setDisappearingMessagesTimer(timer: String)
 
 
 

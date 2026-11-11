@@ -93,6 +93,7 @@ object SettingsConstants {
 
     val KEY_APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
     val KEY_CHAT_LOCK_ENABLED = booleanPreferencesKey("chat_lock_enabled")
+    val KEY_DISAPPEARING_MESSAGES_TIMER = stringPreferencesKey("disappearing_messages_timer")
 
     val KEY_MEDIA_UPLOAD_QUALITY = stringPreferencesKey("media_upload_quality")
     val KEY_USE_LESS_DATA_CALLS = booleanPreferencesKey("use_less_data_calls")
@@ -146,6 +147,7 @@ object SettingsConstants {
     val DEFAULT_HIGH_PRIORITY_ENABLED = true
     val DEFAULT_APP_LOCK_ENABLED = false
     val DEFAULT_CHAT_LOCK_ENABLED = false
+    val DEFAULT_DISAPPEARING_MESSAGES_TIMER = "Off"
     val DEFAULT_ACCOUNT_REPORTS_AUTO_CREATE = false
     val DEFAULT_CHANNELS_REPORTS_AUTO_CREATE = false
 

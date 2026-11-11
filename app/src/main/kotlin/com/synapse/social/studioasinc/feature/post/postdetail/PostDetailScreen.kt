@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import androidx.compose.runtime.*
@@ -74,6 +76,9 @@ fun PostDetailScreen(
     var showPostOptions by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
 
+    var commentText by remember { mutableStateOf("") }
+    var commentIsSending by remember { mutableStateOf(false) }
+
     var showCommentOptions by remember { mutableStateOf<CommentWithUser?>(null) }
     var showReactionPickerForComment by remember { mutableStateOf<CommentWithUser?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
@@ -93,7 +98,7 @@ fun PostDetailScreen(
             pagingItems.refresh()
         }
     }
-    
+
     // Handle block success/error messages
     LaunchedEffect(uiState.blockSuccess, uiState.blockError) {
         when {
@@ -109,6 +114,59 @@ fun PostDetailScreen(
                 )
                 viewModel.clearBlockStatus()
             }
+        }
+    }
+
+    // Handle comment submission completion: clear input, show errors, reset sending state
+    LaunchedEffect(uiState.commentSubmitted) {
+        if (uiState.commentSubmitted) {
+            uiState.commentError?.let { error ->
+                snackbarHostState.showSnackbar(message = error)
+            }
+            if (uiState.commentError == null) {
+                commentText = ""
+            }
+            commentIsSending = false
+            viewModel.clearCommentSubmission()
+        }
+    }
+
+    // Sync comment text with editing comment state
+    LaunchedEffect(uiState.editingComment) {
+        val editing = uiState.editingComment
+        if (editing != null) {
+            commentText = editing.content ?: ""
+            commentIsSending = false
+        }
+    }
+
+    // Handle vote error with retry action
+    LaunchedEffect(uiState.voteError) {
+        if (uiState.voteError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = uiState.voteError!!,
+                actionLabel = context.getString(R.string.retry),
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.retryVote()
+            }
+            viewModel.clearVoteError()
+        }
+    }
+
+    // Handle revoke vote error with retry action
+    LaunchedEffect(uiState.revokeError) {
+        if (uiState.revokeError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = uiState.revokeError!!,
+                actionLabel = context.getString(R.string.retry),
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.revokeVote()
+            }
+            viewModel.clearRevokeError()
         }
     }
 
@@ -209,8 +267,26 @@ fun PostDetailScreen(
     if (showReplyingToSheet && uiState.replyToParticipants.isNotEmpty()) {
         ReplyingToBottomSheet(
             usernames = uiState.replyToParticipants.map { it.username },
+            onUsernameSelected = { username ->
+                uiState.replyToParticipants
+                    .firstOrNull { it.username == username }
+                    ?.uid
+                    ?.let {
+                        onNavigateToProfile(it)
+                        showReplyingToSheet = false
+                    }
+            },
             onDismiss = { showReplyingToSheet = false }
         )
+    }
+
+    // Surface comment-like errors as a snackbar (post-load errors, where post == null, are rendered
+    // inline in PostDetailContent instead).
+    LaunchedEffect(uiState.error, uiState.post) {
+        if (uiState.error != null && uiState.post != null) {
+            snackbarHostState.showSnackbar(message = uiState.error ?: context.getString(R.string.error_unknown))
+            viewModel.clearError()
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -225,10 +301,16 @@ fun PostDetailScreen(
                 onCancelReply = { viewModel.setReplyTo(null) },
                 onCancelEdit = { viewModel.setEditingComment(null) },
                 onReplyingToClick = { showReplyingToSheet = true },
+                commentText = commentText,
+                onCommentTextChange = { commentText = it },
+                commentIsSending = commentIsSending,
+                onCommentSendingChange = { commentIsSending = it },
                 onSendComment = { content, mediaUri ->
                     if (uiState.editingComment != null) {
+                        commentIsSending = true
                         uiState.editingComment?.id?.let { viewModel.editComment(it, content) }
                     } else {
+                        commentIsSending = true
                         viewModel.addComment(content, mediaUri)
                     }
                 }
@@ -333,7 +415,7 @@ private fun PostDetailContent(
                     headerContent = {
                         if (uiState.rootComment != null) {
                             val rootComment = uiState.rootComment
-                            
+
                             // Render ancestors
                             uiState.ancestorComments.forEach { ancestor ->
                                 val ancestorState = PostUiMapper.toPostCardState(
@@ -457,6 +539,10 @@ private fun PostDetailBottomBar(
     onCancelReply: () -> Unit,
     onCancelEdit: () -> Unit,
     onReplyingToClick: () -> Unit,
+    commentText: String,
+    onCommentTextChange: (String) -> Unit,
+    commentIsSending: Boolean,
+    onCommentSendingChange: (Boolean) -> Unit,
     onSendComment: (String, android.net.Uri?) -> Unit
 ) {
     Column(
@@ -479,8 +565,11 @@ private fun PostDetailBottomBar(
             )
         }
         CommentInput(
+            text = commentText,
+            onTextChange = onCommentTextChange,
+            isSending = commentIsSending,
+            onSendingChange = onCommentSendingChange,
             onSend = onSendComment,
-            initialValue = uiState.editingComment?.content ?: "",
             userAvatarUrl = uiState.currentUserAvatarUrl,
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },
@@ -523,4 +612,3 @@ private fun handleCommentAction(
         is CommentAction.Pin -> viewModel.pinComment(action.commentId)
     }
 }
-

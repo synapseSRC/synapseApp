@@ -133,6 +133,8 @@ class SettingsRepositoryImpl private constructor(
 
     override val twoFactorEnabled: Flow<Boolean> = settingsDataStore.twoFactorEnabled
 
+    override val disappearingMessagesTimer: Flow<String> = settingsDataStore.disappearingMessagesTimer
+
     override val privacySettings: Flow<PrivacySettings> = settingsDataStore.privacySettings
 
     override suspend fun setProfileVisibility(visibility: ProfileVisibility) {
@@ -190,6 +192,11 @@ class SettingsRepositoryImpl private constructor(
     override suspend fun setTwoFactorEnabled(enabled: Boolean) {
         settingsDataStore.setTwoFactorEnabled(enabled)
     }
+
+    override suspend fun setDisappearingMessagesTimer(timer: String) {
+        settingsDataStore.setDisappearingMessagesTimer(timer)
+    }
+
 
 
 
