@@ -101,6 +101,10 @@ interface SettingsRepository {
 
 
 
+    val disappearingMessagesTimer: Flow<String>
+
+
+
     val privacySettings: Flow<PrivacySettings>
 
 
@@ -140,6 +144,9 @@ interface SettingsRepository {
 
 
     suspend fun setTwoFactorEnabled(enabled: Boolean)
+
+
+    suspend fun setDisappearingMessagesTimer(timer: String)
 
 
 
