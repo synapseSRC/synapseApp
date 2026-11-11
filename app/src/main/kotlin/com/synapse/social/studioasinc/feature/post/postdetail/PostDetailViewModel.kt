@@ -402,7 +402,25 @@ class PostDetailViewModel @Inject constructor(
     }
 
     fun toggleComments() {
+        val postId = currentPostId ?: return
+        val currentPost = _uiState.value.post ?: return
 
+        val isCurrentlyDisabled = currentPost.post.postDisableReplies == "true"
+        val newDisableValue = if (isCurrentlyDisabled) "false" else "true"
+
+        viewModelScope.launch {
+            val optimisticPost = currentPost.copy(
+                post = currentPost.post.copy(postDisableReplies = newDisableValue)
+            )
+
+            _uiState.update { it.copy(post = optimisticPost) }
+            PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
+
+            postActionsRepository.toggleComments(postId).onFailure { e ->
+                _uiState.update { it.copy(post = currentPost) }
+                PostEventBus.emit(PostEvent.Updated(currentPost.post))
+            }
+        }
     }
 
     fun blockUser(userId: String) {
