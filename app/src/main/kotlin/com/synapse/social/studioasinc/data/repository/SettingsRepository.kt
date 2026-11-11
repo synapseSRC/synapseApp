@@ -102,10 +102,6 @@ interface SettingsRepository {
 
 
 
-    val disappearingMessagesTimer: Flow<String>
-
-
-
     val privacySettings: Flow<PrivacySettings>
 
 
