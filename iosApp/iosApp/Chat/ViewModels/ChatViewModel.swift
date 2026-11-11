@@ -36,7 +36,7 @@ class ChatViewModel: ObservableObject {
     private let typingSubject = PassthroughSubject<Bool, Never>()
     private var typingCancellable: AnyCancellable? = nil
      
-    private let currentUserId = "my_user_id" 
+    private let currentUserId = DependencyContainer.shared.authRepository.getCurrentUserId() ?? ""
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.synapse.social", category: "ChatViewModel")
 
     init(

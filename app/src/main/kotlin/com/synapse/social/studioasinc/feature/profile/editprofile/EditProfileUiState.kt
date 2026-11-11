@@ -92,6 +92,7 @@ sealed class EditProfileEvent {
     data class PublicEmailChanged(val email: String) : EditProfileEvent()
     object DismissShareToFeedDialog : EditProfileEvent()
     object NavigateToProfessionalProfile : EditProfileEvent()
+    object ClearPendingAvatar : EditProfileEvent()
 }
 
 sealed class EditProfileNavigation {

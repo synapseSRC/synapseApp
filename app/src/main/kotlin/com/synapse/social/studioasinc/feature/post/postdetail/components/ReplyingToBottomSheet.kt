@@ -49,9 +49,9 @@ fun ReplyingToBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
                 verticalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
-                usernames.forEach { username ->
-                    AssistChip(
-                        onClick = { onUsernameSelected(username) },
+                    usernames.forEach { username ->
+                        AssistChip(
+                            onClick = { onUsernameSelected(username); onDismiss() },
                         label = {
                             Text(
                                 text = stringResource(R.string.common_at_username, username),

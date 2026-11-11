@@ -23,10 +23,8 @@ struct PrivacySettingsView: View {
                 Toggle("Two-Factor Authentication (2FA)", isOn: $twoFactorEnabled)
                     .accessibilityLabel("Toggle Two-Factor Authentication")
 
-                Button("View Login Alerts") {
-                    print("Navigating to login alerts")
-                }
-                .accessibilityLabel("View Login Alerts Button")
+                NavigationLink("View Login Alerts", destination: LoginAlertsView())
+                    .accessibilityLabel("View Login Alerts Button")
             }
 
             Section(header: Text("Blocked Users")) {

@@ -7,7 +7,7 @@ struct ChatDetailView: View {
 
     @StateObject private var viewModel = ChatViewModel()
 
-    private let currentUserId = "my_user_id"
+    private let currentUserId = DependencyContainer.shared.authRepository.getCurrentUserId() ?? ""
     @State private var showingDisappearingModeSheet = false
 
     var body: some View {
