@@ -258,7 +258,7 @@ private fun UnifiedAuthForm(
         onValueChange = onPasswordChanged,
         label = stringResource(R.string.password),
         error = validationErrors[AuthField.PASSWORD],
-        isValid = false,
+        isValid = password.isNotEmpty(),
         isPassword = true,
         leadingIcon = { AuthFieldIcon(Icons.Filled.Lock) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
