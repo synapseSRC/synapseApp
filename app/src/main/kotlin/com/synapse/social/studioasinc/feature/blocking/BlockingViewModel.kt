@@ -43,26 +43,32 @@ class BlockingViewModel @Inject constructor(
     /**
      * Blocks a user by their ID.
      * Updates UI state to Loading, then to BlockSuccess or Error based on result.
-     * 
+     * On success, refreshes the blocked users list inline to avoid a state-race
+     * with loadBlockedUsers() (which resets state to Loading unconditionally).
      * @param userId The ID of the user to block
      */
     fun blockUser(userId: String) {
         viewModelScope.launch {
             _uiState.value = BlockingUiState.Loading
             
-            val result = blockUserUseCase(userId)
-            result.onSuccess {
-                _uiState.value = BlockingUiState.BlockSuccess
-            }.onFailure { error ->
-                _uiState.value = BlockingUiState.Error(
-                    message = error.message ?: "Failed to block user"
-                )
-            }
-
-            if (result.isSuccess) {
-                // Refresh the data without replacing BlockSuccess with Loading/Idle.
-                refreshBlockedUsers()
-            }
+            blockUserUseCase(userId)
+                .onSuccess {
+                    _uiState.value = BlockingUiState.BlockSuccess
+                    // Refresh the blocked users list directly without going through
+                    // loadBlockedUsers(), which would overwrite BlockSuccess with Loading
+                    // before the UI LaunchedEffect can observe it (state-race fix).
+                    getBlockedUsersUseCase()
+                        .onSuccess { users ->
+                            _blockedUsers.value = users
+                        }
+                    // Transition to Idle; any list-load failure is non-fatal here.
+                    _uiState.value = BlockingUiState.Idle
+                }
+                .onFailure { error ->
+                    _uiState.value = BlockingUiState.Error(
+                        message = error.message ?: "Failed to block user"
+                    )
+                }
         }
     }
     
