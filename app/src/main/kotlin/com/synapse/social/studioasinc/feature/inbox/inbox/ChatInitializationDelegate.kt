@@ -1,11 +1,13 @@
 package com.synapse.social.studioasinc.feature.inbox.inbox
 
+import com.synapse.social.studioasinc.shared.domain.model.BlockStatus
 import com.synapse.social.studioasinc.shared.domain.model.User
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetGroupMembersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.InitializeE2EUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
@@ -47,6 +49,8 @@ class ChatInitializationDelegate(
     private val getDisappearingModeUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase,
     private val _isMuted: MutableStateFlow<Boolean>,
     private val getConversationMuteStatusUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase,
+    private val getBlockStatusUseCase: GetBlockStatusUseCase,
+    private val _chatBlockStatus: MutableStateFlow<BlockStatus>,
     private val onChatIdResolved: (String) -> Unit,
     private val _groupMemberNames: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap()),
     private val _groupMemberAvatars: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
@@ -55,6 +59,9 @@ class ChatInitializationDelegate(
     private var activeJob: Job? = null
     private var initializationToken = 0L
     private var lastResolvedChatId: String? = null
+
+    /** Other participant of the open one-to-one chat, kept for block re-checks on resume. */
+    private var participantUserId: String? = null
 
     /** Cancels any in-flight initialization so stale results cannot land in the new chat. */
     fun cancelInitialization() {
@@ -66,6 +73,8 @@ class ChatInitializationDelegate(
     /** Full cleanup: cancel in-flight job and reset all state this delegate manages. */
     fun cleanup() {
         cancelInitialization()
+        participantUserId = null
+        _chatBlockStatus.value = BlockStatus.NONE
         _groupMemberNames.value = emptyMap()
         _groupMemberAvatars.value = emptyMap()
         _participantProfile.value = null
@@ -102,8 +111,12 @@ class ChatInitializationDelegate(
         _isCurrentUserAdmin.value = false
         _disappearingMode.value = com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode.OFF
         _isMuted.value = false
+        _chatBlockStatus.value = BlockStatus.NONE
         _isLoading.value = true
         _error.value = null
+
+        // Remembered so a resumed chat can re-check the block without reopening the screen.
+        if (participantId != null) participantUserId = participantId
 
         activeJob = viewModelScope.launch {
             val actualChatId = if (chatId == "new" && participantId != null) {
@@ -127,6 +140,10 @@ class ChatInitializationDelegate(
             // Start subscription immediately — do NOT wait for E2EE init, messages fetch,
             // or any other network call. Any delay here is a window where messages are lost.
             subscriptionDelegate.startSubscriptions(actualChatId)
+
+            if (participantId != null) {
+                launch { loadBlockStatus(actualChatId, participantId, token) }
+            }
 
             if (participantId != null) {
                 launch {
@@ -194,6 +211,8 @@ class ChatInitializationDelegate(
                     if (!isCurrent(token, actualChatId)) return@onSuccess
                     _isGroupChat.value = chatDto?.isGroup == true
                     if (chatDto?.isGroup == true) {
+                        // Blocks are a one-to-one concern; a group chat never hides the composer.
+                        _chatBlockStatus.value = BlockStatus.NONE
                         _groupTitle.value = chatDto.name
                         _groupAvatarUrl.value = chatDto.avatarUrl
                         _onlyAdminsCanMessage.value = chatDto.onlyAdminsCanMessage
@@ -252,6 +271,35 @@ class ChatInitializationDelegate(
             }
             _isCurrentUserAdmin.value = members.find { it.first.uid == currentUserIdProvider() }?.second == true
         }
+    }
+
+    /**
+     * Resolves the block relationship with the other participant of the open conversation.
+     *
+     * Both directions are read: the composer is hidden either way, but only the account that
+     * created the block is offered an unblock control.
+     */
+    private suspend fun loadBlockStatus(chatId: String, otherUserId: String, token: Long) {
+        if (otherUserId.isBlank()) return
+
+        getBlockStatusUseCase(otherUserId).onSuccess { status ->
+            if (!isCurrent(token, chatId)) return@onSuccess
+            _chatBlockStatus.value = status
+        }.onFailure { error ->
+            Napier.w("Block status could not be loaded for chat $chatId: ${error.message}", tag = "ChatInit")
+        }
+    }
+
+    /**
+     * Re-reads the block relationship for the open conversation. Called when the screen is resumed
+     * so a block created or removed elsewhere - another screen, another device - is reflected
+     * without reopening the chat.
+     */
+    fun refreshBlockStatus() {
+        val chatId = lastResolvedChatId ?: return
+        val otherUserId = participantUserId ?: return
+        if (_isGroupChat.value) return
+        viewModelScope.launch { loadBlockStatus(chatId, otherUserId, initializationToken) }
     }
 
     /**
