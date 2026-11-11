@@ -35,6 +35,27 @@ fun DisappearingMessagesScreen(
     val context = LocalContext.current
     var selectedMode by remember(uiState.disappearingMode) { mutableStateOf(uiState.disappearingMode) }
 
+    // Report the persisted outcome instead of assuming success: the mode is written asynchronously, so
+    // the screen only shows a success toast and navigates away once the repository confirms the write.
+    // On failure it stays on screen, keeps the user's selection, and shows a recoverable error.
+    LaunchedEffect(uiState.userMessageRes) {
+        uiState.userMessageRes?.let { messageRes ->
+            if (messageRes == R.string.toast_disappearing_mode_updated) {
+                Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
+                viewModel.clearUserMessage()
+                onNavigateBack()
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessageRes) {
+        uiState.errorMessageRes?.let { messageRes ->
+            if (messageRes == R.string.chat_info_error_update_disappearing_mode) {
+                Toast.makeText(context, messageRes, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -117,8 +138,6 @@ fun DisappearingMessagesScreen(
             Button(
                 onClick = {
                     viewModel.setDisappearingMode(chatId, selectedMode)
-                    Toast.makeText(context, R.string.toast_disappearing_mode_updated, Toast.LENGTH_SHORT).show()
-                    onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

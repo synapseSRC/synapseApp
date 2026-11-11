@@ -36,6 +36,9 @@ class BlockingViewModel @Inject constructor(
     
     private val _blockedUsers = MutableStateFlow<List<BlockedUser>>(emptyList())
     val blockedUsers: StateFlow<List<BlockedUser>> = _blockedUsers.asStateFlow()
+
+    private val _refreshFailed = MutableStateFlow(false)
+    val refreshFailed: StateFlow<Boolean> = _refreshFailed.asStateFlow()
     
     /**
      * Blocks a user by their ID.
@@ -47,18 +50,19 @@ class BlockingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = BlockingUiState.Loading
             
-            blockUserUseCase(userId)
-                .onSuccess {
-                    _uiState.value = BlockingUiState.BlockSuccess
-                    // Refresh the list after a successful block so the newly blocked user
-                    // appears in the on-screen list without requiring a screen re-entry.
-                    loadBlockedUsers()
-                }
-                .onFailure { error ->
-                    _uiState.value = BlockingUiState.Error(
-                        message = error.message ?: "Failed to block user"
-                    )
-                }
+            val result = blockUserUseCase(userId)
+            result.onSuccess {
+                _uiState.value = BlockingUiState.BlockSuccess
+            }.onFailure { error ->
+                _uiState.value = BlockingUiState.Error(
+                    message = error.message ?: "Failed to block user"
+                )
+            }
+
+            if (result.isSuccess) {
+                // Refresh the data without replacing BlockSuccess with Loading/Idle.
+                refreshBlockedUsers()
+            }
         }
     }
     
@@ -73,17 +77,19 @@ class BlockingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = BlockingUiState.Loading
             
-            unblockUserUseCase(userId)
-                .onSuccess {
-                    _uiState.value = BlockingUiState.UnblockSuccess
-                    // Refresh the list after successful unblock
-                    loadBlockedUsers()
-                }
-                .onFailure { error ->
-                    _uiState.value = BlockingUiState.Error(
-                        message = error.message ?: "Failed to unblock user"
-                    )
-                }
+            val result = unblockUserUseCase(userId)
+            result.onSuccess {
+                _uiState.value = BlockingUiState.UnblockSuccess
+            }.onFailure { error ->
+                _uiState.value = BlockingUiState.Error(
+                    message = error.message ?: "Failed to unblock user"
+                )
+            }
+
+            if (result.isSuccess) {
+                // Refresh the data without replacing UnblockSuccess with Loading/Idle.
+                refreshBlockedUsers()
+            }
         }
     }
     
@@ -110,6 +116,25 @@ class BlockingViewModel @Inject constructor(
     }
     
     
+    /**
+     * Refreshes blocked-user data without touching the action UI state.
+     * This keeps success events observable while the network refresh is in flight.
+     */
+    private suspend fun refreshBlockedUsers() {
+        _refreshFailed.value = false
+        getBlockedUsersUseCase()
+            .onSuccess { users ->
+                _blockedUsers.value = users
+            }
+            .onFailure {
+                _refreshFailed.value = true
+            }
+    }
+
+    fun clearRefreshError() {
+        _refreshFailed.value = false
+    }
+
     /**
      * Resets UI state to idle.
      * Useful for clearing success or error states after they've been handled.
