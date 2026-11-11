@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_blocked_notice_blocker">আপনি এই ব্যক্তিকে ব্লক করেছেন।</string>
+    <string name="chat_blocked_notice_other">এই মুহূর্তে মেসেজ পাঠানো সম্ভব নয়।</string>
+</resources>
