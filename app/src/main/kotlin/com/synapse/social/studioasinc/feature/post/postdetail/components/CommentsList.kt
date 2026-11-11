@@ -101,6 +101,7 @@ fun CommentsList(
                 
                 PostCard(
                     state = postCardState,
+                    isLikeLoading = commentActionsLoading.contains(comment.id),
                     onLikeClick = { onLikeClick(comment.id) },
                     onCommentClick = { onReplyClick(comment) },
                     onShareClick = { onShareClick?.invoke(comment.id) },

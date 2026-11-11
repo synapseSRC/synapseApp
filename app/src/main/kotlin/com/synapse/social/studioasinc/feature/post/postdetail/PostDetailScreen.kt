@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import androidx.compose.runtime.*
@@ -109,6 +111,36 @@ fun PostDetailScreen(
                 )
                 viewModel.clearBlockStatus()
             }
+        }
+    }
+
+    // Handle vote error with retry action
+    LaunchedEffect(uiState.voteError) {
+        if (uiState.voteError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = uiState.voteError!!,
+                actionLabel = context.getString(R.string.retry),
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.retryVote()
+            }
+            viewModel.clearVoteError()
+        }
+    }
+
+    // Handle revoke vote error with retry action
+    LaunchedEffect(uiState.revokeError) {
+        if (uiState.revokeError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = uiState.revokeError!!,
+                actionLabel = context.getString(R.string.retry),
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.revokeVote()
+            }
+            viewModel.clearRevokeError()
         }
     }
 
@@ -211,6 +243,15 @@ fun PostDetailScreen(
             usernames = uiState.replyToParticipants.map { it.username },
             onDismiss = { showReplyingToSheet = false }
         )
+    }
+
+    // Surface comment-like errors as a snackbar (post-load errors, where post == null, are rendered
+    // inline in PostDetailContent instead).
+    LaunchedEffect(uiState.error, uiState.post) {
+        if (uiState.error != null && uiState.post != null) {
+            snackbarHostState.showSnackbar(message = uiState.error ?: context.getString(R.string.error_unknown))
+            viewModel.clearError()
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)

@@ -28,6 +28,7 @@ interface PrivacyStore {
     val groupExcludedUserIds: Flow<Set<String>>
     val biometricLockEnabled: Flow<Boolean>
     val twoFactorEnabled: Flow<Boolean>
+    val disappearingMessagesTimer: Flow<String>
     val privacySettings: Flow<PrivacySettings>
 
     suspend fun setProfileVisibility(visibility: ProfileVisibility)
@@ -44,6 +45,7 @@ interface PrivacyStore {
     suspend fun setGroupPrivacy(privacy: GroupPrivacy)
     suspend fun setBiometricLockEnabled(enabled: Boolean)
     suspend fun setTwoFactorEnabled(enabled: Boolean)
+    suspend fun setDisappearingMessagesTimer(timer: String)
     suspend fun setReadReceiptsEnabled(enabled: Boolean)
     suspend fun setAppLockEnabled(enabled: Boolean)
     suspend fun setChatLockEnabled(enabled: Boolean)
@@ -68,6 +70,10 @@ class PrivacyStoreImpl(private val dataStore: DataStore<Preferences>) : PrivacyS
 
     override val twoFactorEnabled: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
         preferences[SettingsConstants.KEY_TWO_FACTOR_ENABLED] ?: SettingsConstants.DEFAULT_TWO_FACTOR_ENABLED
+    }
+
+    override val disappearingMessagesTimer: Flow<String> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_DISAPPEARING_MESSAGES_TIMER] ?: SettingsConstants.DEFAULT_DISAPPEARING_MESSAGES_TIMER
     }
 
     override val lastSeenVisibility: Flow<LastSeenVisibility> = dataStore.safePreferencesFlow().map { preferences ->
@@ -290,6 +296,12 @@ class PrivacyStoreImpl(private val dataStore: DataStore<Preferences>) : PrivacyS
     override suspend fun setTwoFactorEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_TWO_FACTOR_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun setDisappearingMessagesTimer(timer: String) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_DISAPPEARING_MESSAGES_TIMER] = timer
         }
     }
 

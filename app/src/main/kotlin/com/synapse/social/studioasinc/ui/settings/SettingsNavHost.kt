@@ -28,9 +28,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
+import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 
@@ -106,6 +106,9 @@ fun SettingsNavHost(
                 },
                 onNavigateToPasskeys = {
                     navController.navigate(SettingsDestination.ROUTE_PASSKEYS)
+                },
+                onNavigateToTwoStepVerification = {
+                    navController.navigate(SettingsDestination.ROUTE_TWO_STEP_VERIFICATION)
                 }
             )
         }
@@ -113,6 +116,16 @@ fun SettingsNavHost(
         composable(route = SettingsDestination.ROUTE_PASSKEYS) {
             val viewModel: PasskeysViewModel = hiltViewModel()
             PasskeysScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_TWO_STEP_VERIFICATION) {
+            val viewModel: TwoStepVerificationViewModel = viewModel()
+            TwoStepVerificationScreen(
                 viewModel = viewModel,
                 onBackClick = {
                     navController.popBackStack()
@@ -142,8 +155,6 @@ fun SettingsNavHost(
                 },
                 onNavigateToBlockedUsers = {
                     navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS)
-                },
-                onNavigateToMutedUsers = {
                 },
                 onNavigateToActiveSessions = {
                 },
@@ -282,7 +293,11 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_PRIVACY_DISAPPEARING_MESSAGES) {
-            var selectedTimer by remember { mutableStateOf("Off") }
+            val parentEntry = androidx.compose.runtime.remember(it) {
+                navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
+            }
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
+            val selectedTimer by viewModel.disappearingMessagesTimer.collectAsState()
 
             val timerOptions = listOf(
                 PrivacyOptionItem(
@@ -312,7 +327,7 @@ fun SettingsNavHost(
                 subtitle = stringResource(R.string.settings_disappearing_messages_subtitle),
                 options = timerOptions,
                 selectedOption = selectedTimer,
-                onOptionSelected = { selectedTimer = it },
+                onOptionSelected = { viewModel.setDisappearingMessagesTimer(it) },
                 onNavigateBack = { navController.popBackStack() }
             )
         }

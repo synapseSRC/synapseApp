@@ -22,7 +22,7 @@ struct HomeView: View {
 
                         LazyVStack(spacing: AppTheme.Spacing.space0) {
                             ForEach(viewModel.uiState.posts) { post in
-                                NavigationLink(value: post) {
+                                NavigationLink(value: AppRoute.postDetail(post.id)) {
                                     PostCardView(
                                         post: post,
                                         onLike: { viewModel.toggleLike(for: post) },
@@ -69,12 +69,11 @@ struct HomeView: View {
                     ProfileView()
                 case .create:
                     CreateView()
+                case .postDetail(let postId):
+                    PostDetailView(postId: postId)
                 case .home, .search, .notifications, .login, .register:
                     EmptyView()
                 }
-            }
-            .navigationDestination(for: Post.self) { post in
-                PostDetailView(post: post)
             }
             .onAppear {
                 viewModel.fetchHomeData()
