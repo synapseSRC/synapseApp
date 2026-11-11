@@ -290,11 +290,12 @@ class AndroidCallAudioRouter @Inject constructor(
                 .onFailure { Napier.w("Audio device monitoring unavailable: ${it.message}") }
         }
         // Plugging and unplugging are not the only way the route moves. On API 31+ the switch asked for
-        // through setCommunicationDevice() is completed by the framework a moment later, so the read-back
-        // taken inside apply() can still describe the device the call was on *before* the request.
-        // Listening for the framework's answer is what turns that late completion into a corrected
-        // readout: without it nothing re-reads the route, and the previous output stays on screen until
-        // an unrelated device event happens to overwrite it.
+        // through setCommunicationDevice() is applied by the framework after the call returns, so the
+        // read-back taken inside apply() can still describe the device the call was on *before* the
+        // request — and AudioDeviceCallback never fires for a communication-device change. This listener
+        // is the framework announcing one; its argument names the device that was *requested*, so the
+        // actual device is read back again here rather than taken from it. Without it nothing re-reads
+        // the route, and the previous output stays on screen until an unrelated device event overwrites it.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && communicationWatcher == null) {
             val listener = AudioManager.OnCommunicationDeviceChangedListener { refresh() }
             communicationWatcher = listener
@@ -324,9 +325,11 @@ class AndroidCallAudioRouter @Inject constructor(
      * system performs the switch itself, so this only keeps the readout honest; on older devices the
      * platform falls back the same way once the SCO/headset link drops.
      *
-     * The same read-back answers the framework's own communication-device announcement, which is how a
-     * switch the platform finished late stops being a stale icon and becomes the route that is really in
-     * use. Late is not a fault: SCO has to come up, and a wired link has to be re-established.
+     * The same read-back answers the framework's own communication-device announcement. The device a
+     * switch lands on is read from the platform here rather than taken from the listener's argument
+     * (which names the device that was *requested*), so a switch the platform finished late stops being a
+     * stale icon and becomes the route that is really in use. Late is not a fault: SCO has to come up,
+     * and a wired link has to be re-established.
      */
     private fun refresh() {
         val manager = audioManager ?: return
