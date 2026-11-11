@@ -9,6 +9,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.GroupCreationOpti
 import com.synapse.social.studioasinc.shared.domain.model.chat.GroupJoinRequest
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.follow.GetFollowingUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.user.GetUserProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.user.SearchUsersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -22,7 +23,7 @@ import javax.inject.Inject
 enum class GroupCreationError {
     AUTH_REQUIRED, LOAD_CONTACTS, SEARCH_FAILED, NAME_REQUIRED, MEMBER_REQUIRED,
     CREATE_FAILED, INVITE_UNAVAILABLE, LOAD_MEMBERS_FAILED,
-    LOAD_REQUESTS_FAILED, UPDATE_MEMBER_FAILED
+    LOAD_REQUESTS_FAILED, UPDATE_MEMBER_FAILED, PRESELECTED_MEMBERS_FAILED
 }
 
 @HiltViewModel
@@ -30,13 +31,21 @@ class CreateGroupViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val groupCreationRepository: GroupCreationRepository,
     private val searchUsersUseCase: SearchUsersUseCase,
-    private val getFollowingUseCase: GetFollowingUseCase
+    private val getFollowingUseCase: GetFollowingUseCase,
+    private val getUserProfileUseCase: GetUserProfileUseCase
 ) : ViewModel() {
     private val _users = MutableStateFlow<List<User>>(emptyList())
     val users: StateFlow<List<User>> = _users.asStateFlow()
 
-    private var initialUsers = emptyList<User>()
+    private var followingUsers = emptyList<User>()
+
+    // People handed over by the inbox selection. They are kept apart from the followed list so that
+    // a later contacts load cannot drop them out of the member list.
+    private var preselectedUsers = emptyList<User>()
     private var searchJob: Job? = null
+
+    /** Everyone who can be picked as a member: the selection's people first, then the followed ones. */
+    private val memberCandidates: List<User> get() = (preselectedUsers + followingUsers).distinctBy { it.uid }
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -87,8 +96,8 @@ class CreateGroupViewModel @Inject constructor(
                     return@launch
                 }
                 getFollowingUseCase(userId).onSuccess { result ->
-                    initialUsers = result.distinctBy { it.uid }.filterNot { it.uid == userId }
-                    if (_searchQuery.value.isBlank()) _users.value = initialUsers
+                    followingUsers = result.distinctBy { it.uid }.filterNot { it.uid == userId }
+                    if (_searchQuery.value.isBlank()) _users.value = memberCandidates
                 }.onFailure {
                     _error.value = GroupCreationError.LOAD_CONTACTS
                 }
@@ -100,11 +109,32 @@ class CreateGroupViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Seeds the member list with the people an inbox selection was turned into a group for.
+     *
+     * An id that no longer resolves to a profile is left out rather than sent to the backend as a
+     * participant, and the user is told the list is short of what was selected. Resolved people also
+     * join the candidate list, so they can be reviewed and dropped like anyone else before creating.
+     */
+    fun applyPreselectedMembers(memberIds: List<String>) {
+        if (memberIds.isEmpty()) return
+        viewModelScope.launch {
+            _error.value = null
+            val currentUserId = chatRepository.getCurrentUserId()
+            val ids = memberIds.filter { it.isNotBlank() && it != currentUserId }.distinct()
+            val resolved = ids.mapNotNull { uid -> getUserProfileUseCase(uid).getOrNull() }.distinctBy { it.uid }
+            preselectedUsers = (preselectedUsers + resolved).distinctBy { it.uid }
+            if (_searchQuery.value.isBlank()) _users.value = memberCandidates
+            _selectedUsers.value = (_selectedUsers.value + resolved).distinctBy { it.uid }
+            if (ids.size > resolved.size) _error.value = GroupCreationError.PRESELECTED_MEMBERS_FAILED
+        }
+    }
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
         searchJob?.cancel()
         if (query.isBlank()) {
-            _users.value = initialUsers
+            _users.value = memberCandidates
             _isLoadingUsers.value = false
             return
         }

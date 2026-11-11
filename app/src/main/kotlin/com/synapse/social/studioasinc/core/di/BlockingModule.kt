@@ -5,6 +5,7 @@ import com.synapse.social.studioasinc.shared.data.repository.BlockRepositoryImpl
 import com.synapse.social.studioasinc.shared.domain.repository.BlockRepository
 import com.synapse.social.studioasinc.shared.domain.usecase.auth.GetCurrentUserIdUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockedUsersUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.IsUserBlockedUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.UnblockUserUseCase
@@ -50,6 +51,12 @@ object BlockingModule {
     @Singleton
     fun provideIsUserBlockedUseCase(blockRepository: BlockRepository): IsUserBlockedUseCase {
         return IsUserBlockedUseCase(blockRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetBlockStatusUseCase(blockRepository: BlockRepository): GetBlockStatusUseCase {
+        return GetBlockStatusUseCase(blockRepository)
     }
 }
 

@@ -40,8 +40,11 @@
 # Gson rebuilds generic types (List<PendingAction>) from erased signatures, so they must survive.
 -keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
 # Sentry receives these events from release builds, but without the source attributes every stack is
-# an anonymous a/b/c chain, and no CI step uploads mapping.txt. Keeping line numbers makes
-# production crashes readable on its own; the filename stays a constant placeholder.
+# an anonymous a/b/c chain. Keeping line numbers makes production crashes readable on its own, but
+# the filename is replaced by the constant below and R8 renumbers the line table with it, so a frame
+# only maps back to real sources through the mapping file written for that exact APK - the build
+# workflow publishes it as the r8-mapping-<short-sha> artifact (.github/workflows/build.yml).
+# Without it a trace like #249 cannot be symbolicated at all.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 

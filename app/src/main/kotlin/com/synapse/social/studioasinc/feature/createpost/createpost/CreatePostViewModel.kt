@@ -335,24 +335,65 @@ class CreatePostViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Replaces the main post's media at [index] with the image the user just cropped.
+     *
+     * The cropper hands back a temporary URI, so it is resolved to a readable path before
+     * the item is stored; an unresolvable URI leaves the media untouched and reports it.
+     */
     fun updateMediaItem(index: Int, uri: Uri) {
-        val currentMedia = _uiState.value.mediaItems.toMutableList()
-        val context = getApplication<Application>()
+        val currentMedia = _uiState.value.mediaItems
+        if (index !in currentMedia.indices) return
 
-        if (index in currentMedia.indices) {
-            UriUtils.getPathFromUri(context, uri)?.let { path ->
-                val oldItem = currentMedia[index]
-                val newItem = oldItem.copy(
-                    url = path,
-                    mimeType = context.contentResolver.getType(uri)
-                )
-                currentMedia[index] = newItem
-                _uiState.update { it.copy(mediaItems = currentMedia) }
-            } ?: run {
-                android.util.Log.e("CreatePost", "Failed to convert edited URI to path: $uri")
-                viewModelScope.launch { UiEventManager.emit(UiEvent.Error("Failed to save edited image")) }
-            }
+        val resolved = resolveCroppedMedia(uri) ?: return
+        val updatedMedia = currentMedia.toMutableList()
+        updatedMedia[index] = updatedMedia[index].copy(
+            url = resolved.first,
+            mimeType = resolved.second
+        )
+        _uiState.update { it.copy(mediaItems = updatedMedia) }
+    }
+
+    /**
+     * Replaces the media at [mediaIndex] of the thread post at [postIndex] with the image
+     * the user just cropped, the same way [updateMediaItem] does for the main post.
+     *
+     * The thread post reference is re-read from state so an edit that arrives after the
+     * thread changed cannot write the image onto a different post.
+     */
+    fun updateThreadMediaItem(postIndex: Int, mediaIndex: Int, uri: Uri) {
+        val currentThreads = _uiState.value.threadPosts
+        if (postIndex !in currentThreads.indices) return
+
+        val currentMedia = currentThreads[postIndex].mediaItems
+        if (mediaIndex !in currentMedia.indices) return
+
+        val resolved = resolveCroppedMedia(uri) ?: return
+        val updatedMedia = currentMedia.toMutableList()
+        updatedMedia[mediaIndex] = updatedMedia[mediaIndex].copy(
+            url = resolved.first,
+            mimeType = resolved.second
+        )
+        val updatedThreads = currentThreads.toMutableList()
+        updatedThreads[postIndex] = updatedThreads[postIndex].copy(mediaItems = updatedMedia)
+        _uiState.update { it.copy(threadPosts = updatedThreads) }
+    }
+
+    /**
+     * Resolves a URI returned by the image cropper into a readable path and its MIME type.
+     *
+     * Returns null, after reporting a failure, when the URI cannot be resolved, so both
+     * media edit paths fail the same visible way instead of silently doing nothing.
+     */
+    private fun resolveCroppedMedia(uri: Uri): Pair<String, String?>? {
+        val context = getApplication<Application>()
+        val path = UriUtils.getPathFromUri(context, uri)
+        if (path == null) {
+            android.util.Log.e("CreatePost", "Failed to convert edited URI to path: $uri")
+            viewModelScope.launch { UiEventManager.emit(UiEvent.Error("Failed to save edited image")) }
+            return null
         }
+        return path to context.contentResolver.getType(uri)
     }
 
     fun setPoll(pollData: PollData?) {

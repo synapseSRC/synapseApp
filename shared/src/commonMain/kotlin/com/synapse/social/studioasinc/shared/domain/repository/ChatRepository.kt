@@ -121,6 +121,14 @@ interface ChatRepository {
      */
     suspend fun releaseTypingChannel(chatId: String)
 
+    /**
+     * Drops any cached block rules used by the realtime messaging path so the next delivered
+     * message is filtered with fresh rules. Called after a block or unblock is persisted.
+     *
+     * Default: no-op, for implementations that do not filter realtime messages.
+     */
+    suspend fun invalidateBlockRules() {}
+
     // Device synchronization methods
     fun setCurrentDeviceId(deviceId: String?)
     fun getCurrentDeviceId(): String?

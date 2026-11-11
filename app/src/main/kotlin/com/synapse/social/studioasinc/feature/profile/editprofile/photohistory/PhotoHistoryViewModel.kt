@@ -46,7 +46,7 @@ class PhotoHistoryViewModel @Inject constructor(
 
     private fun loadHistory(type: PhotoType) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, photoType = type) }
+            _uiState.update { it.copy(isLoading = true, error = null, photoType = type) }
             val userId = repository.getCurrentUserId()
             if (userId == null) {
                  _uiState.update { it.copy(isLoading = false, error = "User not logged in") }
@@ -66,7 +66,9 @@ class PhotoHistoryViewModel @Inject constructor(
                         fetchCurrentProfile(userId, type)
                     },
                     onFailure = { error ->
-                        _uiState.update { it.copy(isLoading = false, error = error.message) }
+                        _uiState.update {
+                            it.copy(isLoading = false, error = error.message ?: "Failed to load photo history")
+                        }
                     }
                 )
             }
@@ -95,7 +97,7 @@ class PhotoHistoryViewModel @Inject constructor(
             val userId = repository.getCurrentUserId() ?: return@launch
             val type = _uiState.value.photoType
 
-            val isCurrent = item.imageUrl == _uiState.value.currentPhotoUrl
+            val isCurrent = storageObjectKey(item.imageUrl) == storageObjectKey(_uiState.value.currentPhotoUrl)
             val newUrl = if (isCurrent) null else item.imageUrl
 
             val updateData = mutableMapOf<String, Any?>()
@@ -122,7 +124,7 @@ class PhotoHistoryViewModel @Inject constructor(
             val type = _uiState.value.photoType
             val userId = repository.getCurrentUserId() ?: return@launch
 
-            if (item.imageUrl == _uiState.value.currentPhotoUrl) {
+            if (storageObjectKey(item.imageUrl) == storageObjectKey(_uiState.value.currentPhotoUrl)) {
                  val updateData = mutableMapOf<String, Any?>()
                  when (type) {
                     PhotoType.PROFILE -> updateData["avatar"] = null

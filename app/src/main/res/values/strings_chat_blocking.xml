@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Conversation block state.
+
+      The two sides of a block deliberately do not read the same copy: only the account that
+      created the block is told that it did, and only that side is offered a way out. The other
+      participant is told nothing about who blocked whom.
+    -->
+    <string name="chat_blocked_notice_blocker">You blocked this person.</string>
+    <string name="chat_blocked_notice_other">Messaging is currently unavailable.</string>
+</resources>

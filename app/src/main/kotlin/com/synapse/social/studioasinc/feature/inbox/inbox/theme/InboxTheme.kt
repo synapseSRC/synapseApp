@@ -10,6 +10,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.synapse.social.studioasinc.feature.shared.theme.*
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 
 object InboxColors {
@@ -118,6 +119,17 @@ object InboxAnimations {
     val ItemEntranceSpec: AnimationSpec<Float> = tween(
         durationMillis = MediumDurationMs,
         easing = FastOutSlowInEasing
+    )
+
+    /**
+     * Placement spec for a list item that keeps its identity but changes slot - a conversation moving
+     * into the pinned section, or one dropping down because another was pinned above it. No bounce on
+     * medium-low stiffness is the same curve the chat message list already reorders with, so the inbox
+     * and the message list settle the same way instead of each inventing its own.
+     */
+    val ItemPlacementSpec: FiniteAnimationSpec<IntOffset> = spring(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessMediumLow
     )
 
     const val MessageEntranceDurationMs = 200

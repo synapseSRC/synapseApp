@@ -6,6 +6,8 @@ struct SettingsView: View {
     @State private var searchText = ""
     @State private var isAccountExpanded = false
     @State private var isPreferencesExpanded = false
+    @State private var navigateToAccount = false
+    @State private var navigateToStorage = false
 
     var body: some View {
         List {
@@ -19,7 +21,7 @@ struct SettingsView: View {
                             systemImage: "shield.checkered",
                             color: .purple
                         ) {
-                            // Action
+                            navigateToAccount = true
                         }
 
                         HeroCardView(
@@ -28,7 +30,7 @@ struct SettingsView: View {
                             systemImage: "externaldrive.fill",
                             color: .orange
                         ) {
-                            // Action
+                            navigateToStorage = true
                         }
                     }
                     .padding(.vertical, AppTheme.Spacing.space8)
@@ -86,5 +88,11 @@ struct SettingsView: View {
         .accessibilityLabel("Settings Menu")
         .animation(.default, value: isAccountExpanded)
         .animation(.default, value: isPreferencesExpanded)
+        .navigationDestination(isPresented: $navigateToAccount) {
+            AccountSettingsView()
+        }
+        .navigationDestination(isPresented: $navigateToStorage) {
+            DataStorageSettingsView()
+        }
     }
 }

@@ -71,7 +71,6 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-    val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
     val effectiveIsOwnProfile = state.isOwnProfile && state.viewAsMode == null
 
@@ -243,7 +242,6 @@ fun ProfileScreen(
             state = state,
             viewModel = viewModel,
             context = context,
-            postLinkLabel = postLinkLabel,
             onNavigateToEditPost = onNavigateToEditPost,
             onDismiss = {
                 showPostOptions = false

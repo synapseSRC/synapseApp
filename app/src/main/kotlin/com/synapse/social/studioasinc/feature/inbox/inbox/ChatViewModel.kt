@@ -23,6 +23,7 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
+import com.synapse.social.studioasinc.shared.domain.model.BlockStatus
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
@@ -116,6 +117,8 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val reportChatUseCase: ReportChatUseCase = dependencies.reportChatUseCase
     private val clearChatHistoryUseCase: ClearChatHistoryUseCase = dependencies.clearChatHistoryUseCase
     private val blockUserUseCase: BlockUserUseCase = dependencies.blockUserUseCase
+    private val getBlockStatusUseCase = dependencies.getBlockStatusUseCase
+    private val unblockUserUseCase = dependencies.unblockUserUseCase
     private val reportUserUseCase: ReportUserUseCase = dependencies.reportUserUseCase
 
     // Chat folders are a user setting rather than chat state, so they are read from the settings
@@ -152,6 +155,12 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
 
     private val _isParticipantActive = MutableStateFlow(false)
     val isParticipantActive: StateFlow<Boolean> = _isParticipantActive.asStateFlow()
+
+    // Directional block state of a one-to-one conversation. The composer is hidden whenever a
+    // block exists, and the copy differs per side, so this is published as the status itself
+    // rather than a single boolean.
+    private val _chatBlockStatus = MutableStateFlow(BlockStatus.NONE)
+    val chatBlockStatus: StateFlow<BlockStatus> = _chatBlockStatus.asStateFlow()
 
     private val _isGroupChat = MutableStateFlow(false)
     val isGroupChat: StateFlow<Boolean> = _isGroupChat.asStateFlow()
@@ -443,6 +452,8 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         getGroupMembersUseCase = getGroupMembersUseCase,
         observeUserActiveStatusUseCase = observeUserActiveStatusUseCase,
         observeUserPresenceDetailUseCase = observeUserPresenceDetailUseCase,
+        getBlockStatusUseCase = getBlockStatusUseCase,
+        _chatBlockStatus = _chatBlockStatus,
         viewModelScope = viewModelScope,
         currentUserIdProvider = { currentUserId.value },
         currentChatIdProvider = { currentChatId },
@@ -477,6 +488,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         broadcastTypingStatusUseCase = broadcastTypingStatusUseCase,
         viewModelScope = viewModelScope,
         messagingDelegate = messagingDelegate,
+        getChatDraftUseCase = dependencies.draft.getChatDraftUseCase,
+        saveChatDraftUseCase = dependencies.draft.saveChatDraftUseCase,
+        clearChatDraftUseCase = dependencies.draft.clearChatDraftUseCase,
         _inputText = _inputText,
         _editingMessage = _editingMessage,
         _error = _error,
@@ -595,12 +609,21 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             // Re-sync the roster so a member added/removed (e.g. from Group info) updates the header
             // member count and per-message sender attribution on return.
             initializationDelegate.refreshGroupRoster()
+            // Re-check the block on every return to the chat: it may have been created or removed
+            // from Contact info, the settings list, or another device while this screen was away.
+            initializationDelegate.refreshBlockStatus()
+            // An empty composer is filled from the draft stored for this chat; text already in it
+            // is newer than storage and is left untouched.
+            inputDelegate.restoreDraft(chatId)
             updateUiState()
             return
         }
 
         cleanup()
         initializationDelegate.initialize(chatId, participantId)
+        // A chat that does not exist yet has no stored draft; every real conversation reopens with
+        // its own, which is what keeps two chats from sharing one composer.
+        if (chatId != "new") inputDelegate.restoreDraft(chatId)
         updateUiState()
     }
 
@@ -1184,7 +1207,41 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         if (participantUserId.isBlank()) {
             return onResult(Result.failure(IllegalStateException("Contact is unavailable")))
         }
-        viewModelScope.launch { onResult(blockUserUseCase(participantUserId)) }
+        viewModelScope.launch {
+            val result = blockUserUseCase(participantUserId)
+            if (result.isSuccess) {
+                // The conversation must show the blocked state immediately, and the messaging layer
+                // must stop accepting messages from this account from this moment on.
+                _chatBlockStatus.value = BlockStatus.BLOCKED_BY_ME
+                chatRepository.invalidateBlockRules()
+            }
+            onResult(result)
+        }
+    }
+
+    /**
+     * Removes the block on the other participant of the open conversation.
+     *
+     * The authoritative status is re-read after a successful unblock so the composer only returns
+     * once the backend agrees the conversation may continue, and the messaging layer is told to
+     * drop its cached block rules.
+     */
+    fun unblockCurrentChatParticipant(participantUserId: String, onResult: (Result<Unit>) -> Unit) {
+        if (_isGroupChat.value) {
+            return onResult(Result.failure(IllegalStateException("Group chats cannot be unblocked")))
+        }
+        if (participantUserId.isBlank()) {
+            return onResult(Result.failure(IllegalStateException("Contact is unavailable")))
+        }
+        viewModelScope.launch {
+            val result = unblockUserUseCase(participantUserId)
+            if (result.isSuccess) {
+                val status = getBlockStatusUseCase(participantUserId).getOrDefault(BlockStatus.NONE)
+                _chatBlockStatus.value = status
+                chatRepository.invalidateBlockRules()
+            }
+            onResult(result)
+        }
     }
 
     /** Assigns the open chat to a chat folder, mirroring the inbox's folder assignment. */

@@ -3,6 +3,9 @@ package com.synapse.social.studioasinc.feature.inbox.inbox
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.BroadcastTypingStatusUseCase
+import com.synapse.social.studioasinc.domain.usecase.chat.ClearChatDraftUseCase
+import com.synapse.social.studioasinc.domain.usecase.chat.GetChatDraftUseCase
+import com.synapse.social.studioasinc.domain.usecase.chat.SaveChatDraftUseCase
 import android.os.SystemClock
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -23,6 +26,9 @@ class ChatInputDelegate(
     private val broadcastTypingStatusUseCase: BroadcastTypingStatusUseCase,
     private val viewModelScope: CoroutineScope,
     private val messagingDelegate: ChatMessagingDelegate,
+    private val getChatDraftUseCase: GetChatDraftUseCase,
+    private val saveChatDraftUseCase: SaveChatDraftUseCase,
+    private val clearChatDraftUseCase: ClearChatDraftUseCase,
     private val _inputText: MutableStateFlow<String>,
     private val _editingMessage: MutableStateFlow<Message?>,
     private val _error: MutableStateFlow<String?>,
@@ -137,10 +143,57 @@ class ChatInputDelegate(
         false
     }
 
+    // ===== Composer drafts =====
+    // A draft belongs to the conversation it was typed in: it is stored under that chat id, read
+    // back only when the same conversation is opened again, and dropped once its text has been sent
+    // or the user emptied the composer. The last stored value is kept here so restoring a draft or
+    // re-typing the same text does not write to storage twice.
+    private var storedDraft: Pair<String, String>? = null
+
+    /**
+     * Publishes the draft stored for [chatId] into the composer.
+     *
+     * Text the composer already holds is left alone: it is either newer than the stored draft or
+     * still the previous conversation's, and overwriting it would resurrect older text. Restoring
+     * writes the state flow directly, so a restored draft is not new typing activity.
+     */
+    fun restoreDraft(chatId: String) {
+        if (chatId.isBlank() || _editingMessage.value != null || _inputText.value.isNotEmpty()) return
+        val stored = getChatDraftUseCase(chatId).orEmpty()
+        if (stored.isNotEmpty()) _inputText.value = stored
+        storedDraft = chatId to stored
+    }
+
+    /** Stores the composer's text as [chatId]'s draft; an emptied composer clears that draft. */
+    private fun persistDraft(chatId: String?, text: String) {
+        // An edit owns the composer - its text is the message being edited, not a draft.
+        if (chatId.isNullOrBlank() || _editingMessage.value != null) return
+        val stored = storedDraft
+        if (stored != null && stored.first == chatId && stored.second == text) return
+        if (text.isBlank()) clearChatDraftUseCase(chatId) else saveChatDraftUseCase(chatId, text)
+        storedDraft = chatId to text
+    }
+
+    /** Drops [chatId]'s stored draft, for text the composer has handed over to a message. */
+    private fun clearDraft(chatId: String) {
+        clearChatDraftUseCase(chatId)
+        storedDraft = chatId to ""
+    }
+
+    /** Stores what the composer still holds before its conversation is left. */
+    private fun flushDraft() {
+        val text = _inputText.value
+        if (text.isBlank()) return
+        persistDraft(currentChatIdProvider(), text)
+    }
+
     fun onInputTextChange(newText: String) {
         val changed = _inputText.value != newText
         _inputText.value = newText
         val chatId = currentChatIdProvider()
+        // The composer is the only writer of a draft, so the same signal that drives the typing
+        // indicator is what stores the text under the chat it is being typed in.
+        if (changed) persistDraft(chatId, newText)
         if (newText.isBlank() || chatId.isNullOrBlank() || !canBroadcastTyping() || !viewModelScope.isActive) {
             stopTyping()
             return
@@ -209,9 +262,12 @@ class ChatInputDelegate(
         }
         val replyToId = _replyingToMessage.value?.id
 
-        // Consume this draft now so repeated taps cannot enqueue it twice.
+        // Consume this draft now so repeated taps cannot enqueue it twice. The text has left the
+        // composer for the outgoing message, which keeps its own retry affordance if it fails, so
+        // leaving it stored would only resurrect text the user already handed over.
         _replyingToMessage.value = null
         _inputText.value = ""
+        clearDraft(chatId)
 
         // Past every "nothing to send" check, so this says the composer really did hand a message over —
         // regardless of how many chunks it was split into.
@@ -316,6 +372,14 @@ class ChatInputDelegate(
 
     fun cleanup() {
         stopTyping()
+        // Whatever the composer still holds belongs to the conversation being left, so it is stored
+        // as that chat's draft before the composer is handed over empty. The next conversation then
+        // brings back its own text instead of inheriting this one's, and a reply or edit target
+        // cannot outlive the chat it was picked in.
+        flushDraft()
+        _inputText.value = ""
+        _editingMessage.value = null
+        _replyingToMessage.value = null
         // Keep the single scope-owned writer for the next chat; scope cancellation
         // performs the bounded final stop if this is the ViewModel's teardown.
     }

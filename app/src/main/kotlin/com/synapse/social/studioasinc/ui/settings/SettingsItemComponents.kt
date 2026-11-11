@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.ui.settings
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -267,7 +268,7 @@ fun SettingsNavigationItem(
     title: String,
     subtitle: String? = null,
     imageVector: ImageVector? = null,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     position: SettingsItemPosition = SettingsItemPosition.Single,
     indicator: (@Composable () -> Unit)? = null
@@ -284,12 +285,16 @@ fun SettingsNavigationItem(
             }
         },
         trailingContent = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                indicator?.invoke()
-                SettingsNavigationChevron()
+            if (onClick != null || indicator != null) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.space8),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    indicator?.invoke()
+                    if (onClick != null) {
+                        SettingsNavigationChevron()
+                    }
+                }
             }
         }
     )
@@ -466,10 +471,26 @@ fun SettingsSliderItem(
                 steps = steps,
                 trackRange = valueRange
             )
+            val sliderInteractionSource = remember { MutableInteractionSource() }
+            val isSliding by sliderInteractionSource.collectIsDraggedAsState()
+
+            // While the gesture is running the slider's own state is the source of truth.
+            // Re-applying the externally hoisted value here would fight the finger whenever the
+            // persisted setting trails the drag (Chat Settings persists on every frame), which is
+            // what made the thumb stall instead of following the drag. See issue #151.
+            LaunchedEffect(value) {
+                if (!isSliding && sliderState.value != value) {
+                    sliderState.value = value
+                }
+            }
             Slider(
                 state = sliderState,
-                onValueChange = onValueChange,
+                onValueChange = { newValue ->
+                    sliderState.value = newValue
+                    onValueChange(newValue)
+                },
                 enabled = enabled,
+                interactionSource = sliderInteractionSource,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,

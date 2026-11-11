@@ -1,10 +1,13 @@
 package com.synapse.social.studioasinc.data.call.webrtc
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.MediaRecorder
 import android.os.Handler
+import com.synapse.social.studioasinc.data.call.manifestName
 import com.synapse.social.studioasinc.shared.domain.model.call.CallMediaType
+import com.synapse.social.studioasinc.shared.domain.model.call.CallPermission
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aakira.napier.Napier
 import java.util.concurrent.CountDownLatch
@@ -395,7 +398,24 @@ class DefaultWebRtcCallEngine(
         if (currentConfig.mediaType != CallMediaType.VIDEO) {
             return fail("NOT_A_VIDEO_CALL", "Voice calls do not capture video")
         }
-        val alreadyRunning = runtime.onSignaling { videoTrack != null }
+        // A missing or revoked grant is a question for the user, not a camera failure: reporting it as
+        // one is what lets the call screen open the dialog instead of guessing at a dead lens.
+        if (!hasCameraPermission()) {
+            emit(
+                EngineEvent.MediaError(
+                    EngineTrackKind.VIDEO,
+                    EngineMediaIssue.CAMERA_PERMISSION,
+                    "The camera permission has not been granted"
+                )
+            )
+            return fail("CAMERA_PERMISSION_DENIED", "The camera permission has not been granted")
+        }
+        // Capture has to be alive, not merely represented by a track: after a camera error the track can
+        // outlive the capturer, and calling that "already running" would report success over a lens that
+        // is not open. `stopVideo` is the path that keeps the two honest.
+        val alreadyRunning = runtime.onSignaling {
+            videoTrack != null && capturer != null && surfaceTextureHelper != null
+        }
         if (alreadyRunning) return Result.success(Unit)
 
         // Camera enumeration and format selection talk to the camera service; keep it off the caller.
@@ -448,12 +468,23 @@ class DefaultWebRtcCallEngine(
             }
         }
         if (started == null || started.isFailure) {
-            val reason = started?.exceptionOrNull()?.message ?: "The camera did not respond"
+            val cause = started?.exceptionOrNull()
+            val reason = cause?.message ?: "The camera did not respond"
             Napier.e("Camera capture could not start: $reason")
-            emit(EngineEvent.MediaError(EngineTrackKind.VIDEO, EngineMediaIssue.CAMERA_ERROR, "Camera start failed"))
+            // A SecurityException is the platform refusing a grant, which is a permission answer rather
+            // than a broken camera; the two travel as different events so the UI can react to each.
+            val issue = if (cause is SecurityException || !hasCameraPermission()) {
+                EngineMediaIssue.CAMERA_PERMISSION
+            } else {
+                EngineMediaIssue.CAMERA_ERROR
+            }
+            emit(EngineEvent.MediaError(EngineTrackKind.VIDEO, issue, "Camera start failed"))
             runtime.onSignaling { releaseVideoObjects() }
             withContext(Dispatchers.IO) { stopCaptureAndRelease() }
-            return fail("CAMERA_START_FAILED", reason)
+            return fail(
+                if (issue == EngineMediaIssue.CAMERA_PERMISSION) "CAMERA_PERMISSION_DENIED" else "CAMERA_START_FAILED",
+                reason
+            )
         }
 
         val attached = runtime.onSignaling {
@@ -627,6 +658,13 @@ class DefaultWebRtcCallEngine(
         }
         surfaceTextureHelper = null
     }
+
+    /**
+     * The platform's current answer, never a cached one: a grant the user revoked has to stop capture
+     * here, and the constant behind the capability stays the single one in `CallPermissionNames`.
+     */
+    private fun hasCameraPermission(): Boolean =
+        context.checkSelfPermission(CallPermission.CAMERA.manifestName) == PackageManager.PERMISSION_GRANTED
 
     /** Must run on the signaling thread: unpublishes and disposes the local video objects. */
     private fun releaseVideoObjects() {

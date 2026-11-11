@@ -46,7 +46,8 @@ fun PostOptionsBottomSheet(
     onReport: () -> Unit,
     onBlock: () -> Unit,
     onRevokeVote: () -> Unit,
-    onSummarize: () -> Unit = {}
+    onSummarize: () -> Unit = {},
+    onShareToChat: (() -> Unit)? = null
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -114,7 +115,10 @@ fun PostOptionsBottomSheet(
                 onBlock = { onBlock(); onDismiss() },
                 onShare = { onShare(); onDismiss() },
                 onRevokeVote = { onRevokeVote(); onDismiss() },
-                onSummarize = { onSummarize(); onDismiss() }
+                onSummarize = { onSummarize(); onDismiss() },
+                onShareToChat = onShareToChat?.let { shareToChat ->
+                    { shareToChat(); onDismiss() }
+                }
             )
 
             LazyColumn {
@@ -218,7 +222,8 @@ private fun buildOptions(
     onBlock: () -> Unit,
     onShare: () -> Unit,
     onRevokeVote: () -> Unit,
-    onSummarize: () -> Unit
+    onSummarize: () -> Unit,
+    onShareToChat: (() -> Unit)?
 ): List<PostOption> {
     val options = mutableListOf<PostOption>()
 
@@ -241,6 +246,15 @@ private fun buildOptions(
 
     if ((post.postText?.length ?: 0) >= 120) {
         options.add(PostOption(stringResource(R.string.action_ai_summary), Icons.Filled.AutoAwesome, action = onSummarize))
+    }
+    onShareToChat?.let { shareToChat ->
+        options.add(
+            PostOption(
+                stringResource(R.string.share_to_chat_action),
+                Icons.AutoMirrored.Filled.Send,
+                action = shareToChat
+            )
+        )
     }
     options.add(PostOption(stringResource(R.string.share_via), Icons.AutoMirrored.Filled.Send, action = onShare))
 

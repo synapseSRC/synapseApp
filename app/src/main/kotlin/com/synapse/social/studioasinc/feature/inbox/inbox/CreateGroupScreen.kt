@@ -122,6 +122,8 @@ private const val FLOW_HUB = 3
 fun CreateGroupScreen(
     onNavigateBack: () -> Unit,
     onGroupCreated: (String) -> Unit,
+    /** People carried in from an inbox selection, already members when the flow opens. */
+    preselectedMemberIds: List<String> = emptyList(),
     viewModel: CreateGroupViewModel = hiltViewModel()
 ) {
     val users by viewModel.users.collectAsStateWithLifecycle()
@@ -136,6 +138,12 @@ fun CreateGroupScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     val createdChatId by viewModel.createdChatId.collectAsStateWithLifecycle()
     var stage by rememberSaveable { mutableStateOf(FLOW_MEMBERS) }
+
+    // Applied once for the selection this flow was opened with, so it cannot fight with the user's
+    // own changes to the member list afterwards.
+    LaunchedEffect(preselectedMemberIds) {
+        viewModel.applyPreselectedMembers(preselectedMemberIds)
+    }
 
     fun goBack() {
         if (stage == FLOW_MEMBERS) onNavigateBack()

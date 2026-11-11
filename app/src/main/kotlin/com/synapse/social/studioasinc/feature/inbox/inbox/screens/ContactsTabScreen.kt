@@ -63,6 +63,7 @@ fun ContactsTabScreen(
             if (contacts.isEmpty() && searchQuery.isBlank()) {
                 InboxEmptyState(
                     type = EmptyStateType.CONTACTS,
+                    onActionClick = onNavigateToSearch,
                     modifier = Modifier.fillMaxSize()
                 )
             } else if (contacts.isEmpty()) {

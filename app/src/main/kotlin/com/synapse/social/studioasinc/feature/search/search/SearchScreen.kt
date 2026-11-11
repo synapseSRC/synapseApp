@@ -1,9 +1,5 @@
 package com.synapse.social.studioasinc.ui.search
-import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -53,6 +49,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostOptions
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostItem
 import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
+import com.synapse.social.studioasinc.feature.shared.components.ReportPostDialog
 import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 import com.synapse.social.studioasinc.core.ui.animation.SkeletonMorphedContent
 import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
@@ -75,13 +72,13 @@ fun SearchScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToPost: (String) -> Unit,
     onNavigateToEditPost: (String) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val postLinkLabel = stringResource(R.string.clip_label_post_link)
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
     var showMediaViewer by remember { mutableStateOf(false) }
@@ -122,6 +119,24 @@ fun SearchScreen(
                     message = uiState.blockError ?: context.getString(com.synapse.social.studioasinc.R.string.error_block_failed)
                 )
                 viewModel.clearBlockStatus()
+            }
+        }
+    }
+
+    // Handle report success/error messages
+    LaunchedEffect(uiState.reportSuccess, uiState.reportError) {
+        when {
+            uiState.reportSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(com.synapse.social.studioasinc.R.string.toast_report_submitted)
+                )
+                viewModel.clearReportStatus()
+            }
+            uiState.reportError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.reportError ?: context.getString(com.synapse.social.studioasinc.R.string.report_error)
+                )
+                viewModel.clearReportStatus()
             }
         }
     }
@@ -346,8 +361,8 @@ fun SearchScreen(
                                                         onLike = viewModel::likePost,
                                                         onComment = { p -> onNavigateToPost(p.id) },
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                        onRepost = { },
-                                                        onQuote = { },
+                                                        onRepost = viewModel::resharePost,
+                                                        onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                         onBookmark = viewModel::bookmarkPost,
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
@@ -464,8 +479,8 @@ fun SearchScreen(
                                                                 onLike = viewModel::likePost,
                                                                 onComment = { p -> onNavigateToPost(p.id) },
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                                onRepost = { },
-                                                                onQuote = { },
+                                                                onRepost = viewModel::resharePost,
+                                                                onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                                 onBookmark = viewModel::bookmarkPost,
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
@@ -517,10 +532,7 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onCopyLink = {
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText(postLinkLabel, DeepLink.post(post.id))
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
+                PostShareUtils.copyPostLink(context, post.id)
                 selectedPost = null
             },
             onBookmark = {
@@ -546,6 +558,17 @@ onMediaClick = { post, index ->
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
+            }
+        )
+    }
+
+    if (uiState.isReportDialogShowing) {
+        ReportPostDialog(
+            onDismiss = {
+                viewModel.dismissReportDialog()
+            },
+            onConfirm = { reason ->
+                viewModel.submitReport(reason)
             }
         )
     }

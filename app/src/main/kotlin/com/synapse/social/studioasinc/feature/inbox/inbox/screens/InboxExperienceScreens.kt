@@ -49,6 +49,7 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -56,6 +57,8 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,7 +70,9 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -100,6 +105,11 @@ fun InboxConversationRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
     trailingContent: (@Composable () -> Unit)? = null,
+    // The row's in-context favourite action. The Boolean is the state the row moves to - the
+    // opposite of the one it is showing - so the caller owns the save and the row stays dumb. Null
+    // (selection mode, previews, the archive screen's own trailing action) leaves the trailing area
+    // exactly as it was.
+    onToggleFavourite: ((Boolean) -> Unit)? = null,
     position: GroupedItemPosition = GroupedItemPosition.Single,
     // The scopes the inbox is navigated with. With them, the row's picture and name carry the same
     // shared-element identity the conversation's floating pill declares, so tapping a row hands them
@@ -133,6 +143,7 @@ fun InboxConversationRow(
         label = "conversation-row-press"
     )
     val rowShape = position.shape
+    var showFavouriteMenu by remember { mutableStateOf(false) }
     Surface(
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else cardSurfaceColor(),
         contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
@@ -220,6 +231,30 @@ fun InboxConversationRow(
                                 text = if (conversation.unreadCount > 99) "99+" else conversation.unreadCount.toString(),
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.padding(horizontal = Spacing.space8, vertical = Spacing.space4)
+                            )
+                        }
+                    }
+                }
+                if (onToggleFavourite != null) {
+                    Box {
+                        IconButton(
+                            onClick = { showFavouriteMenu = true },
+                            modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)
+                        ) {
+                            Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.inbox_menu_more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        DropdownMenu(expanded = showFavouriteMenu, onDismissRequest = { showFavouriteMenu = false }) {
+                            // A favourite is the participant's own pin flag - the badge above and the
+                            // Favorites filter read the same state this item writes - and the label names
+                            // the state the row moves to, which is what makes the action reversible.
+                            val isFavourite = conversation.isPinned
+                            DropdownMenuItem(
+                                text = { Text(stringResource(if (isFavourite) R.string.remove_from_favourites else R.string.add_to_favourites)) },
+                                leadingIcon = { Icon(Icons.Rounded.PushPin, contentDescription = null) },
+                                onClick = {
+                                    showFavouriteMenu = false
+                                    onToggleFavourite(!isFavourite)
+                                }
                             )
                         }
                     }

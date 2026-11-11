@@ -48,6 +48,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceUploadServi
 import com.synapse.social.studioasinc.shared.domain.repository.AppRepository
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.BusinessRepository
+import com.synapse.social.studioasinc.shared.domain.repository.ChatEffectsRepository
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.repository.FollowRepository
@@ -72,6 +73,8 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessa
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistoryUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ReportChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.UnblockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
@@ -81,6 +84,11 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetCommonGroups
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationMuteStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetDisappearingModeUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.CreateWordEffectUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.DeleteWordEffectUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.GetWordEffectsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.ResolveMessageEffectsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.UpdateWordEffectUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessageByIdUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetMessagesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetSharedContentSummaryUseCase
@@ -139,6 +147,7 @@ import kotlinx.serialization.json.Json
 
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatAiDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatDependencies
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatDraftDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatMediaDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatMessagingDependencies
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatSettingsDependencies
@@ -167,6 +176,26 @@ object ChatModule {
     @Provides
     @Singleton
     fun provideGetDisappearingModeUseCase(chatRepository: ChatRepository): GetDisappearingModeUseCase = GetDisappearingModeUseCase(chatRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetWordEffectsUseCase(repository: ChatEffectsRepository): GetWordEffectsUseCase = GetWordEffectsUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideCreateWordEffectUseCase(repository: ChatEffectsRepository): CreateWordEffectUseCase = CreateWordEffectUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideUpdateWordEffectUseCase(repository: ChatEffectsRepository): UpdateWordEffectUseCase = UpdateWordEffectUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideDeleteWordEffectUseCase(repository: ChatEffectsRepository): DeleteWordEffectUseCase = DeleteWordEffectUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideResolveMessageEffectsUseCase(): ResolveMessageEffectsUseCase = ResolveMessageEffectsUseCase()
 
     @Provides
     @Singleton
@@ -331,6 +360,7 @@ object ChatModule {
         ai: ChatAiDependencies,
         media: ChatMediaDependencies,
         settings: ChatSettingsDependencies,
+        draft: ChatDraftDependencies,
         initializeE2EUseCase: InitializeE2EUseCase,
         getOrCreateChatUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase,
         getChatInfoUseCase: com.synapse.social.studioasinc.shared.domain.usecase.chat.GetChatInfoUseCase,
@@ -347,6 +377,8 @@ object ChatModule {
         reportChatUseCase: ReportChatUseCase,
         clearChatHistoryUseCase: ClearChatHistoryUseCase,
         blockUserUseCase: BlockUserUseCase,
+        getBlockStatusUseCase: GetBlockStatusUseCase,
+        unblockUserUseCase: UnblockUserUseCase,
         reportUserUseCase: ReportUserUseCase
     ): ChatDependencies = ChatDependencies(
         messaging = messaging,
@@ -354,6 +386,7 @@ object ChatModule {
         ai = ai,
         media = media,
         settings = settings,
+        draft = draft,
         initializeE2EUseCase = initializeE2EUseCase,
         getOrCreateChatUseCase = getOrCreateChatUseCase,
         getChatInfoUseCase = getChatInfoUseCase,
@@ -370,6 +403,8 @@ object ChatModule {
         reportChatUseCase = reportChatUseCase,
         clearChatHistoryUseCase = clearChatHistoryUseCase,
         blockUserUseCase = blockUserUseCase,
+        getBlockStatusUseCase = getBlockStatusUseCase,
+        unblockUserUseCase = unblockUserUseCase,
         reportUserUseCase = reportUserUseCase
     )
 
@@ -476,5 +511,18 @@ object ChatModule {
         chatLockManager = chatLockManager,
         deleteExpiredMessagesUseCase = deleteExpiredMessagesUseCase,
         settingsRepository = settingsRepository
+    )
+
+    // Composer draft dependencies group
+    @Provides
+    @Singleton
+    fun provideChatDraftDependencies(
+        getChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.GetChatDraftUseCase,
+        saveChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.SaveChatDraftUseCase,
+        clearChatDraftUseCase: com.synapse.social.studioasinc.domain.usecase.chat.ClearChatDraftUseCase
+    ): ChatDraftDependencies = ChatDraftDependencies(
+        getChatDraftUseCase = getChatDraftUseCase,
+        saveChatDraftUseCase = saveChatDraftUseCase,
+        clearChatDraftUseCase = clearChatDraftUseCase
     )
 }

@@ -316,6 +316,9 @@ fun NavGraphBuilder.homeGraph(
                     onNavigateToEditPost = { postId ->
                         navController.navigate(AppDestination.CreatePost(postId = postId))
                     },
+                    onNavigateToQuotePost = { postId ->
+                        navController.navigate(AppDestination.QuotePost(postId))
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -327,7 +330,14 @@ fun NavGraphBuilder.inboxGraph(
     sharedTransitionScope: SharedTransitionScope
 ) {
     composable<AppDestination.Inbox> {
+                // The conversation list is pushed by Home, and while it is on screen it is a
+                // destination like any other: its leading control returns to the screen that opened
+                // it, which is what the system back gesture already does. Only a list with nothing
+                // below it in the back stack leads with the account instead.
+                val canNavigateBack = navController.previousBackStackEntry != null
+                val navigateBack: () -> Unit = { navController.popBackStack() }
                 InboxScreen(
+                    onNavigateBack = if (canNavigateBack) navigateBack else null,
                     onNavigateToProfile = { userId ->
                         navController.navigate(AppDestination.Profile(userId))
                     },
@@ -337,7 +347,12 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToSearch = {
                         navController.navigate(AppDestination.Search)
                     },
-                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
+                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup()) },
+                    // The selection in the chat list already says who the group is for, so the group
+                    // flow opens with those people as members instead of asking for them again.
+                    onNavigateToCreateGroupWithMembers = { memberIds ->
+                        navController.navigate(AppDestination.CreateGroup(memberIds))
+                    },
                     onStartCall = { request -> navController.navigate(request.toDestination()) },
                     onOpenEchoRooms = { navController.navigate(AppDestination.EchoLobby) },
                     onOpenEchoRoom = { roomId, speakOnEntry ->
@@ -451,8 +466,10 @@ fun NavGraphBuilder.inboxGraph(
                     onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
             }
-    composable<AppDestination.CreateGroup> {
+    composable<AppDestination.CreateGroup> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.CreateGroup>()
                 com.synapse.social.studioasinc.feature.inbox.inbox.CreateGroupScreen(
+                    preselectedMemberIds = args.memberIds,
                     onNavigateBack = { navController.popBackStack() },
                     onGroupCreated = { chatId ->
                         navController.popBackStack()
@@ -535,7 +552,7 @@ fun NavGraphBuilder.inboxGraph(
                         navController.navigate(AppDestination.Profile(userId))
                     },
                     onNavigateToCreateGroup = {
-                        navController.navigate(AppDestination.CreateGroup)
+                        navController.navigate(AppDestination.CreateGroup())
                     },
                     onNavigateToDisappearingMessages = { chatId ->
                         navController.navigate(AppDestination.DisappearingMessages(chatId))
@@ -545,7 +562,17 @@ fun NavGraphBuilder.inboxGraph(
                     },
                     onNavigateToChatPrivacy = { chatId ->
                         navController.navigate(AppDestination.ChatPrivacy(chatId))
+                    },
+                    onNavigateToWordEffects = { chatId ->
+                        navController.navigate(AppDestination.WordEffects(chatId))
                     }
+                )
+            }
+    composable<AppDestination.WordEffects> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.WordEffects>()
+                com.synapse.social.studioasinc.feature.inbox.inbox.screens.WordEffectsScreen(
+                    chatId = args.chatId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
     composable<AppDestination.DisappearingMessages> { backStackEntry ->
@@ -698,7 +725,15 @@ fun NavGraphBuilder.profileGraph(
                     },
                     onNavigateToBrandPartnerships = {
                         android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onNavigateToPayoutSettings = {
+                        navController.navigate(AppDestination.PayoutSettings)
                     }
+                )
+            }
+            composable<AppDestination.PayoutSettings> {
+                com.synapse.social.studioasinc.ui.settings.PayoutSettingsScreen(
+                    onBackClick = { navController.popBackStack() }
                 )
             }
             composable<AppDestination.ScheduledPosts> {

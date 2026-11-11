@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Fingerprint
@@ -123,6 +124,7 @@ fun ChatInfoScreen(
     onNavigateToDisappearingMessages: (String) -> Unit = {},
     onNavigateToSharedContent: (String, Int) -> Unit = { _, _ -> },
     onNavigateToChatPrivacy: (String) -> Unit = {},
+    onNavigateToWordEffects: (String) -> Unit = {},
     viewModel: ChatInfoViewModel = hiltViewModel()
 ) {
     // Inherit the activity SynapseTheme so appearance settings and dynamic colors apply.
@@ -327,6 +329,20 @@ fun ChatInfoScreen(
                         }
                     } else null,
                     onClick = { onNavigateToSharedContent(chatId, 0) }
+                )
+            }
+            // Its own section rather than a line inside privacy: an effect is about what a
+            // message looks like, not about who can see it.
+            item(key = "effects-heading") {
+                SectionHeading(stringResource(R.string.word_effects_section_title))
+            }
+            item(key = "effects-settings") {
+                SettingsItem(
+                    icon = Icons.Rounded.AutoAwesome,
+                    title = stringResource(R.string.word_effects_title),
+                    supportingText = stringResource(R.string.word_effects_summary),
+                    trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    onClick = { onNavigateToWordEffects(chatId) }
                 )
             }
             item(key = "privacy-heading") {

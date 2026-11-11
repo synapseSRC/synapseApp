@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.shared.domain.model.chat.Conversation
+import com.synapse.social.studioasinc.shared.domain.model.chat.SharedPostMetadata
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetConversationsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SharePostToChatUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +21,8 @@ data class SharePostSheetUiState(
     val isLoading: Boolean = false,
     val conversations: List<Conversation> = emptyList(),
     val query: String = "",
+    val preview: SharedPostMetadata? = null,
+    val pendingConversation: Conversation? = null,
     val sendingChatId: String? = null,
     val confirmation: String? = null,
     val error: String? = null
@@ -40,6 +43,14 @@ class SharePostSheetViewModel @Inject constructor(
     fun start(post: Post) {
         if (post.id == this.post?.id) return
         this.post = post
+        _uiState.update {
+            it.copy(
+                preview = post.toSharedPostMetadata(),
+                pendingConversation = null,
+                confirmation = null,
+                error = null
+            )
+        }
         loadConversations()
     }
 
@@ -51,13 +62,34 @@ class SharePostSheetViewModel @Inject constructor(
         _uiState.update { it.copy(confirmation = null, error = null) }
     }
 
-    fun sendToChat(conversation: Conversation) {
-        val post = post ?: return
+    /** Called when the sheet is dismissed without sending, so the next open starts on the picker. */
+    fun onSheetDismissed() {
+        _uiState.update { it.copy(pendingConversation = null, confirmation = null, error = null) }
+    }
+
+    /**
+     * First half of the share: pick a conversation. Nothing is sent yet, the sheet moves to the
+     * review step so the user can confirm (or back out) before the post leaves the device.
+     */
+    fun selectConversation(conversation: Conversation) {
+        if (_uiState.value.sendingChatId != null) return
+        _uiState.update { it.copy(pendingConversation = conversation, confirmation = null, error = null) }
+    }
+
+    /** Returns from the review step to the conversation picker without sending anything. */
+    fun cancelSelection() {
+        _uiState.update { it.copy(pendingConversation = null, error = null) }
+    }
+
+    /** Second half of the share: send the reviewed post to the conversation the user confirmed. */
+    fun confirmSend() {
+        val conversation = _uiState.value.pendingConversation ?: return
+        val currentPost = post ?: return
         if (_uiState.value.sendingChatId != null) return
 
         _uiState.update { it.copy(sendingChatId = conversation.chatId) }
         viewModelScope.launch {
-            val sharedPost = post.toSharedPostMetadata()
+            val sharedPost = currentPost.toSharedPostMetadata()
             sharePostToChatUseCase(
                 chatId = conversation.chatId,
                 sharedPost = sharedPost,
@@ -66,6 +98,7 @@ class SharePostSheetViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         sendingChatId = null,
+                        pendingConversation = null,
                         confirmation = application.getString(R.string.shared_to_chat, conversation.participantName)
                     )
                 }

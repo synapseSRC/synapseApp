@@ -36,26 +36,37 @@ class BlockingViewModel @Inject constructor(
     
     private val _blockedUsers = MutableStateFlow<List<BlockedUser>>(emptyList())
     val blockedUsers: StateFlow<List<BlockedUser>> = _blockedUsers.asStateFlow()
+
+    private val _refreshFailed = MutableStateFlow(false)
+    val refreshFailed: StateFlow<Boolean> = _refreshFailed.asStateFlow()
     
     /**
      * Blocks a user by their ID.
      * Updates UI state to Loading, then to BlockSuccess or Error based on result.
-     * 
+     *
+     * Mirroring [unblockUser], the list is refreshed as part of the success path. The refresh runs
+     * through [refreshBlockedUsers] rather than [loadBlockedUsers] so that it never replaces the
+     * success state, and `BlockSuccess` is published last and left in place: the screen consumes it
+     * to show the confirmation snackbar and then calls [resetState]. Publishing `Idle` from here
+     * would race the collector and could swallow the confirmation entirely.
+     *
      * @param userId The ID of the user to block
      */
     fun blockUser(userId: String) {
         viewModelScope.launch {
             _uiState.value = BlockingUiState.Loading
-            
-            blockUserUseCase(userId)
-                .onSuccess {
-                    _uiState.value = BlockingUiState.BlockSuccess
-                }
-                .onFailure { error ->
-                    _uiState.value = BlockingUiState.Error(
-                        message = error.message ?: "Failed to block user"
-                    )
-                }
+
+            val result = blockUserUseCase(userId)
+            if (result.isSuccess) {
+                // Refresh first: the newly blocked account is already listed when the confirmation
+                // appears, and a list-load failure is surfaced through refreshFailed.
+                refreshBlockedUsers()
+                _uiState.value = BlockingUiState.BlockSuccess
+            } else {
+                _uiState.value = BlockingUiState.Error(
+                    message = result.exceptionOrNull()?.message ?: "Failed to block user"
+                )
+            }
         }
     }
     
@@ -70,17 +81,19 @@ class BlockingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = BlockingUiState.Loading
             
-            unblockUserUseCase(userId)
-                .onSuccess {
-                    _uiState.value = BlockingUiState.UnblockSuccess
-                    // Refresh the list after successful unblock
-                    loadBlockedUsers()
-                }
-                .onFailure { error ->
-                    _uiState.value = BlockingUiState.Error(
-                        message = error.message ?: "Failed to unblock user"
-                    )
-                }
+            val result = unblockUserUseCase(userId)
+            result.onSuccess {
+                _uiState.value = BlockingUiState.UnblockSuccess
+            }.onFailure { error ->
+                _uiState.value = BlockingUiState.Error(
+                    message = error.message ?: "Failed to unblock user"
+                )
+            }
+
+            if (result.isSuccess) {
+                // Refresh the data without replacing UnblockSuccess with Loading/Idle.
+                refreshBlockedUsers()
+            }
         }
     }
     
@@ -107,6 +120,25 @@ class BlockingViewModel @Inject constructor(
     }
     
     
+    /**
+     * Refreshes blocked-user data without touching the action UI state.
+     * This keeps success events observable while the network refresh is in flight.
+     */
+    private suspend fun refreshBlockedUsers() {
+        _refreshFailed.value = false
+        getBlockedUsersUseCase()
+            .onSuccess { users ->
+                _blockedUsers.value = users
+            }
+            .onFailure {
+                _refreshFailed.value = true
+            }
+    }
+
+    fun clearRefreshError() {
+        _refreshFailed.value = false
+    }
+
     /**
      * Resets UI state to idle.
      * Useful for clearing success or error states after they've been handled.

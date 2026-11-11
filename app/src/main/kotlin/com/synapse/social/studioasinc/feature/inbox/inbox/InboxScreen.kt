@@ -27,18 +27,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.Add
@@ -49,6 +50,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
@@ -109,6 +111,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.FolderTabRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxFilter
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCategory
+import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.CallsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ContactsTabScreen
@@ -117,6 +120,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxArchivedS
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxConversationRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSearchScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSelectionToolbar
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxAnimations
 import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxExpressiveDimens
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
@@ -132,22 +136,61 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION }
+private enum class InboxDestination { INBOX, SEARCH, ARCHIVED, SELECTION, CONTACTS }
 
-/** Bottom bar positions. Echo took the slot Contacts used to hold; Contacts moved one place right. */
+/**
+ * Bottom bar positions. The bar carries Messages, Calls and Echo only: the Contacts tab was
+ * removed, and the contact picker is still reached from the New chat action as a full screen.
+ */
 private object InboxTab {
     const val MESSAGES = 0
     const val CALLS = 1
     const val ECHO = 2
-    const val CONTACTS = 3
 }
+
+/** A group needs the person creating it plus at least two people chosen from the chat list. */
+private const val MIN_GROUP_MEMBERS = 2
+
+/**
+ * The people a new group can be started with, taken from the current selection.
+ *
+ * Only one-to-one conversations contribute a member: a group chat cannot join another group, and
+ * the current user is already part of the group being created. Duplicates collapse, because the
+ * same person can sit behind more than one selected conversation.
+ */
+private fun groupMemberCandidates(
+    conversations: List<Conversation>,
+    selectedChatIds: Set<String>,
+    currentUserId: String?
+): List<String> = conversations
+    .filter { it.chatId in selectedChatIds && !it.isGroup }
+    .map { it.participantId }
+    .filter { it.isNotBlank() && it != currentUserId }
+    .distinct()
 
 @Composable
 fun InboxScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
+    /**
+     * Pops this screen when another destination pushed it; null when the conversation list is the
+     * root of the back stack and there is nothing behind it to return to.
+     *
+     * Home pushes the list, so the leading control has to be the same back arrow every other pushed
+     * screen shows: the system back gesture already returns to Home from here, and a header whose
+     * only leading control opens the account gives the user no visible way to follow it.
+     */
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToCreateGroup: () -> Unit = {},
+    /**
+     * Opens group creation with these people already members.
+     *
+     * Used when the chat list selection is turned into a group: the people behind the selected
+     * conversations are handed over, and the group flow stays the one place that reviews the
+     * members, names the group and creates it.
+     */
+    onNavigateToCreateGroupWithMembers: (List<String>) -> Unit = {},
     onStartCall: (CallLaunchRequest) -> Unit = {},
     onOpenEchoRooms: () -> Unit = {},
     onOpenEchoRoom: (String, Boolean) -> Unit = { _, _ -> },
@@ -162,7 +205,9 @@ fun InboxScreen(
         onNavigateToProfile = onNavigateToProfile,
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
+        onNavigateBack = onNavigateBack,
         onNavigateToCreateGroup = onNavigateToCreateGroup,
+        onNavigateToCreateGroupWithMembers = onNavigateToCreateGroupWithMembers,
         onStartCall = onStartCall,
         onOpenEchoRooms = onOpenEchoRooms,
         onOpenEchoRoom = onOpenEchoRoom,
@@ -173,13 +218,40 @@ fun InboxScreen(
     )
 }
 
+/**
+ * The account entry: the current user's picture, opening their own profile.
+ *
+ * It leads the header while the conversation list stands in for a root destination, and it is kept as
+ * an action while the back arrow leads, so the header changes hands without the entry going missing.
+ */
+@Composable
+private fun InboxAccountButton(
+    avatarUrl: String?,
+    displayName: String?,
+    onClick: () -> Unit
+) {
+    val accountLabel = stringResource(R.string.inbox_account)
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = accountLabel }
+    ) {
+        UserAvatar(
+            avatarUrl = avatarUrl,
+            displayName = displayName,
+            size = Sizes.AvatarSmall
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun InboxScreenContent(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
+    onNavigateBack: (() -> Unit)?,
     onNavigateToCreateGroup: () -> Unit,
+    onNavigateToCreateGroupWithMembers: (List<String>) -> Unit,
     onStartCall: (CallLaunchRequest) -> Unit,
     onOpenEchoRooms: () -> Unit,
     onOpenEchoRoom: (String, Boolean) -> Unit,
@@ -204,6 +276,10 @@ private fun InboxScreenContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Owned by the screen rather than by HomeMessages: the messages list is composed and disposed as
+    // the destination animates in and out, and a state created with the list would come back at the
+    // top of the list - a jump of its own, on top of the reorder the list is meant to animate.
+    val conversationListState = rememberLazyListState()
     val currentUserProfile by viewModel.currentUserProfile.collectAsState()
     val conversations by viewModel.conversations.collectAsState()
     val filteredConversations by viewModel.filteredConversations.collectAsState()
@@ -223,6 +299,9 @@ private fun InboxScreenContent(
     val noFolderLabel = stringResource(R.string.inbox_no_folder)
     val assignedFolderNames = folders.filter { folder -> selectedChatIds.any { it in folder.includedChatIds } }.map { it.name }.distinct()
     val currentFolderLabel = assignedFolderNames.takeIf { it.isNotEmpty() }?.joinToString() ?: noFolderLabel
+    // The people the current selection could start a group with. This stays empty for a selection
+    // that is all group conversations, which is what the group action reports back to the user.
+    val groupMemberIds = groupMemberCandidates(conversations, selectedChatIds, currentUserProfile?.uid)
 
     LaunchedEffect(Unit) { viewModel.loadArchivedConversations() }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -283,6 +362,17 @@ private fun InboxScreenContent(
         returnToInbox()
     }
 
+    fun createGroupFromSelection() {
+        // The action is never disabled: an ineligible selection is answered with an explanation
+        // rather than a button that silently does nothing.
+        if (groupMemberIds.size < MIN_GROUP_MEMBERS) {
+            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_create_group_needs_two)) }
+            return
+        }
+        onNavigateToCreateGroupWithMembers(groupMemberIds)
+        returnToInbox()
+    }
+
     fun openConversation(conversation: Conversation) {
         val participantId = conversation.participantId.takeIf { !conversation.isGroup }
         val navigate = { onNavigateToChat(conversation.chatId, participantId, conversation.participantName, conversation.participantAvatar) }
@@ -302,6 +392,17 @@ private fun InboxScreenContent(
         }
     }
 
+    // Handed to the account entry wherever the header keeps it: leading on a list that is the root
+    // of the back stack, and an action while the back arrow leads, so the entry is never lost.
+    val openOwnProfile: () -> Unit = {
+        val profileId = currentUserProfile?.uid
+        if (profileId != null) {
+            onNavigateToProfile(profileId)
+        } else {
+            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_profile_unavailable)) }
+        }
+    }
+
     BackHandler(enabled = destination != InboxDestination.INBOX) {
         if (destination == InboxDestination.ARCHIVED && selectedArchivedIds.isNotEmpty()) selectedArchivedIds = emptySet()
         else returnToInbox()
@@ -313,24 +414,36 @@ private fun InboxScreenContent(
             when (destination) {
                 InboxDestination.INBOX -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_brand)) },
+                    // The leading slot is the navigation slot: while another screen sits below this
+                    // one in the back stack it carries the same back arrow the list's own sub-screens
+                    // use, and it leaves for that screen exactly as the system back gesture does. A
+                    // list that is the root of the back stack leads with the account instead, because
+                    // that is when the account is the way out of the list.
                     navigationIcon = {
-                        val accountLabel = stringResource(R.string.inbox_account)
-                        IconButton(
-                            onClick = {
-                                val profileId = currentUserProfile?.uid
-                                if (profileId != null) onNavigateToProfile(profileId)
-                                else scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_profile_unavailable)) }
-                            },
-                            modifier = Modifier.semantics { contentDescription = accountLabel }
-                        ) {
-                            UserAvatar(
+                        val back = onNavigateBack
+                        if (back != null) {
+                            IconButton(onClick = back) {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = stringResource(R.string.inbox_back)
+                                )
+                            }
+                        } else {
+                            InboxAccountButton(
                                 avatarUrl = currentUserProfile?.avatar,
                                 displayName = currentUserProfile?.displayName ?: currentUserProfile?.username,
-                                size = Sizes.AvatarSmall
+                                onClick = openOwnProfile
                             )
                         }
                     },
                     actions = {
+                        if (onNavigateBack != null) {
+                            InboxAccountButton(
+                                avatarUrl = currentUserProfile?.avatar,
+                                displayName = currentUserProfile?.displayName ?: currentUserProfile?.username,
+                                onClick = openOwnProfile
+                            )
+                        }
                         IconButton(onClick = { destination = InboxDestination.SEARCH }) {
                             Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.inbox_search_action), tint = MaterialTheme.colorScheme.onSurface)
                         }
@@ -385,6 +498,13 @@ private fun InboxScreenContent(
                     title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedChatIds.size, selectedChatIds.size)) },
                     navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
                     actions = {
+                        IconButton(onClick = ::createGroupFromSelection) {
+                            Icon(
+                                Icons.Rounded.GroupAdd,
+                                contentDescription = stringResource(R.string.inbox_action_create_group),
+                                tint = if (groupMemberIds.size >= MIN_GROUP_MEMBERS) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                         Box {
                             IconButton(onClick = { showSelectionMenu = true }) { Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.inbox_more_actions)) }
                             DropdownMenu(expanded = showSelectionMenu, onDismissRequest = { showSelectionMenu = false }) {
@@ -401,6 +521,11 @@ private fun InboxScreenContent(
                     },
                     colors = barColors
                 )
+                InboxDestination.CONTACTS -> TopAppBar(
+                    title = { Text(stringResource(R.string.inbox_contacts_title)) },
+                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                    colors = barColors
+                )
             }
         },
         bottomBar = {
@@ -409,8 +534,7 @@ private fun InboxScreenContent(
                     val labels = listOf(
                         R.string.inbox_messages_tab,
                         R.string.inbox_calls_tab,
-                        R.string.inbox_echo_tab,
-                        R.string.inbox_contacts_tab
+                        R.string.inbox_echo_tab
                     )
                     labels.forEachIndexed { index, labelRes ->
                         val selected = selectedTab == index
@@ -422,8 +546,7 @@ private fun InboxScreenContent(
                                 val icon = when (index) {
                                     InboxTab.MESSAGES -> if (selected) Icons.Filled.Email else Icons.Outlined.Email
                                     InboxTab.CALLS -> if (selected) Icons.Filled.Call else Icons.Outlined.Call
-                                    InboxTab.ECHO -> if (selected) Icons.Filled.Mic else Icons.Outlined.Mic
-                                    else -> if (selected) Icons.Filled.Person else Icons.Outlined.Person
+                                    else -> if (selected) Icons.Filled.Mic else Icons.Outlined.Mic
                                 }
                                 Icon(icon, contentDescription = null)
                             },
@@ -457,7 +580,7 @@ private fun InboxScreenContent(
                     }
                 ) {
                     FloatingActionButtonMenuItem(
-                        onClick = { showCreateMenu = false; selectedTab = InboxTab.CONTACTS },
+                        onClick = { showCreateMenu = false; destination = InboxDestination.CONTACTS },
                         icon = { Icon(Icons.AutoMirrored.Rounded.Chat, contentDescription = null) },
                         text = { Text(stringResource(R.string.inbox_fab_create_chat)) }
                     )
@@ -510,6 +633,7 @@ private fun InboxScreenContent(
                 ) { tab ->
                     when (tab) {
                         InboxTab.MESSAGES -> HomeMessages(
+                            listState = conversationListState,
                             sharedTransitionScope = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
                             conversations = filteredConversations,
@@ -526,7 +650,8 @@ private fun InboxScreenContent(
                             onOpenArchive = { destination = InboxDestination.ARCHIVED },
                             onRetry = viewModel::loadConversations,
                             onOpenConversation = ::openConversation,
-                            onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION }
+                            onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION },
+                            onToggleFavourite = viewModel::setConversationFavourite
                         )
                         InboxTab.CALLS -> CallsTabScreen(
                             contentPadding = PaddingValues(),
@@ -539,12 +664,7 @@ private fun InboxScreenContent(
                             onOpenRoom = onOpenEchoRoom,
                             contentPadding = PaddingValues()
                         )
-                        else -> ContactsTabScreen(
-                            onNavigateToChat = onNavigateToChat,
-                            onNavigateToSearch = onNavigateToSearch,
-                            onStartCall = onStartCall,
-                            contentPadding = PaddingValues()
-                        )
+                        else -> Unit
                     }
                 }
                 InboxDestination.SEARCH -> InboxSearchScreen(
@@ -582,6 +702,12 @@ private fun InboxScreenContent(
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
                     onDone = ::returnToInbox
+                )
+                InboxDestination.CONTACTS -> ContactsTabScreen(
+                    onNavigateToChat = onNavigateToChat,
+                    onNavigateToSearch = onNavigateToSearch,
+                    onStartCall = onStartCall,
+                    contentPadding = PaddingValues()
                 )
             }
         }
@@ -658,6 +784,7 @@ private fun InboxScreenContent(
 
 @Composable
 private fun HomeMessages(
+    listState: LazyListState,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
     conversations: List<Conversation>,
@@ -674,9 +801,12 @@ private fun HomeMessages(
     onOpenArchive: () -> Unit,
     onRetry: () -> Unit,
     onOpenConversation: (Conversation) -> Unit,
-    onLongPressConversation: (String) -> Unit
+    onLongPressConversation: (String) -> Unit,
+    // The row menu's favourite action. The Boolean is the state the row moves to.
+    onToggleFavourite: (chatId: String, isFavourite: Boolean) -> Unit
 ) {
     val sections = remember(conversations) { groupConversations(conversations) }
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
     Column(
         Modifier
             .fillMaxSize()
@@ -722,30 +852,35 @@ private fun HomeMessages(
                 }
             }
             else -> LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24)
             ) {
                 if (archivedCount > 0) {
-                    item(key = "archived-conversations") {
+                    item(key = "archived-conversations", contentType = "archived-conversations") {
                         ArchivedConversationsEntry(
                             count = archivedCount,
                             onClick = onOpenArchive,
-                            modifier = Modifier.padding(bottom = Spacing.space8)
+                            modifier = reorderPlacementModifier(reducedMotion).padding(bottom = Spacing.space8)
                         )
                     }
                 }
                 sections.forEach { (section, sectionConversations) ->
-                    item(key = "conversation-header-${section.name}") {
+                    item(key = "conversation-header-${section.name}", contentType = "conversation-header") {
                         Text(
                             text = stringResource(section.labelRes),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
+                            modifier = reorderPlacementModifier(reducedMotion)
                                 .padding(start = Spacing.space4, top = Spacing.space16, bottom = Spacing.space8)
                                 .semantics { heading() }
                         )
                     }
-                    itemsIndexed(sectionConversations, key = { _, conversation -> conversation.chatId }) { index, conversation ->
+                    itemsIndexed(
+                        items = sectionConversations,
+                        key = { _, conversation -> conversation.chatId },
+                        contentType = { _, _ -> "conversation-row" }
+                    ) { index, conversation ->
                         InboxConversationRow(
                             conversation = conversation,
                             sharedTransitionScope = sharedTransitionScope,
@@ -753,7 +888,13 @@ private fun HomeMessages(
                             position = GroupedItemPosition.at(index, sectionConversations.size),
                             onClick = { onOpenConversation(conversation) },
                             onLongClick = { onLongPressConversation(conversation.chatId) },
-                            modifier = if (index == 0) Modifier else Modifier.padding(top = GroupedListSpacing)
+                            onToggleFavourite = { isFavourite -> onToggleFavourite(conversation.chatId, isFavourite) },
+                            // The chat id is still the row's key after the pin flip, so the list knows this
+                            // is the same row changing slot rather than a row leaving and another arriving:
+                            // the placement modifier carries it up into PINNED and pushes the rows it passed
+                            // down, instead of every affected row appearing already at its new position.
+                            modifier = reorderPlacementModifier(reducedMotion)
+                                .then(if (index == 0) Modifier else Modifier.padding(top = GroupedListSpacing))
                         )
                     }
                 }
@@ -761,6 +902,26 @@ private fun HomeMessages(
         }
     }
 }
+
+/**
+ * Item placement for a list whose rows keep their identity but change slot - a conversation pinned
+ * into the section at the top, or one dropping down because a conversation above it was.
+ *
+ * The placement spec moves the row node itself, so nothing teleports and nothing is re-created. The
+ * fades are deliberately off: a row that only moves must never cross-fade with itself, which is what
+ * reads as the list flickering or the row appearing twice. Reduced motion turns the whole modifier
+ * into a no-op - the reorder still happens, it just lands in one frame, as the system settings ask.
+ */
+private fun LazyItemScope.reorderPlacementModifier(reducedMotion: Boolean): Modifier =
+    if (reducedMotion) {
+        Modifier
+    } else {
+        Modifier.animateItem(
+            fadeInSpec = null,
+            fadeOutSpec = null,
+            placementSpec = InboxAnimations.ItemPlacementSpec
+        )
+    }
 
 private enum class ConversationSection(@StringRes val labelRes: Int) {
     PINNED(R.string.inbox_section_pinned),

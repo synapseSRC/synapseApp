@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Strings for the Word effects screen and the Chat info entry that opens it.
+  Kept in their own file so the feature stays readable next to chat_info.xml.
+-->
+<resources>
+    <string name="word_effects_title">Word effects</string>
+    <string name="word_effects_section_title">Effects</string>
+    <string name="word_effects_summary">Animate a message when a word appears</string>
+
+    <string name="word_effects_intro_title">Bring words to life</string>
+    <string name="word_effects_intro_body">Choose a word and an emoji. When someone writes that word in this chat, the emoji plays an animation beside the message. Effects never change the message, never send it again, and are resolved from the same shared settings for everyone in the conversation.</string>
+
+    <string name="word_effects_preview_title">Preview</string>
+    <string name="word_effects_preview_label">Sample message</string>
+    <string name="word_effects_preview_empty">Type a sample message above to see the effect.</string>
+
+    <string name="word_effects_list_title">Your effects</string>
+    <string name="word_effects_empty">No word effects yet. Add one to get started.</string>
+    <string name="word_effects_add">Add effect</string>
+    <string name="word_effects_add_title">New effect</string>
+    <string name="word_effects_edit_title">Edit effect</string>
+    <string name="word_effects_edit">Edit effect</string>
+    <string name="word_effects_delete">Delete effect</string>
+    <string name="word_effects_trigger_label">Word or phrase</string>
+    <string name="word_effects_emoji_label">Emoji</string>
+    <string name="word_effects_animation_label">Animation</string>
+    <string name="word_effects_animation_glow">Glow</string>
+    <string name="word_effects_animation_confetti">Confetti</string>
+    <string name="word_effects_animation_sparkle">Sparkle</string>
+    <string name="word_effects_animation_pulse">Pulse</string>
+    <string name="word_effects_save">Save</string>
+    <string name="word_effects_cancel">Cancel</string>
+    <string name="word_effects_retry">Retry</string>
+
+    <string name="word_effects_delete_confirm_title">Delete this effect?</string>
+    <string name="word_effects_delete_confirm_body">The effect for %1$s stops playing on future messages. Messages that were already sent are unchanged.</string>
+    <string name="word_effects_delete_confirm">Delete</string>
+
+    <string name="word_effects_reduced_motion_notice">Animations are reduced because of your device settings. Effects still appear without motion.</string>
+
+    <string name="word_effects_error_load">Could not load word effects. Check your connection and try again.</string>
+    <string name="word_effects_error_save">Could not save the effect. Please try again.</string>
+    <string name="word_effects_error_delete">Could not delete the effect. Please try again.</string>
+    <string name="word_effects_error_trigger_blank">Enter a word or phrase.</string>
+    <string name="word_effects_error_trigger_too_long">Keep the word or phrase to 32 characters or fewer.</string>
+    <string name="word_effects_error_trigger_invalid">That word contains characters that cannot be used.</string>
+    <string name="word_effects_error_emoji_blank">Choose an emoji.</string>
+    <string name="word_effects_error_emoji_too_long">Use a single emoji.</string>
+    <string name="word_effects_error_trigger_duplicate">That word already has an effect in this chat.</string>
+</resources>

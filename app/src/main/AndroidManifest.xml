@@ -51,6 +51,13 @@
 		</intent>
 	</queries>
 
+	<!-- Back navigation is deliberately legacy here: Synapse does not want Android's predictive
+	     back "Back Preview" system animation (back-to-home, cross-task, cross-activity) on any
+	     device. enableOnBackInvokedCallback=false switches that system animation off. It is spelled
+	     out rather than omitted because API 36+ turns predictive back on by default for apps that
+	     target it, so an omitted flag would silently re-enable Back Preview on future devices.
+	     Back handling itself is unchanged: MainActivity's OnBackPressedCallback and the Compose
+	     BackHandler callbacks are still delivered, and standard back navigation still runs. -->
 	<application
 		android:allowBackup="false"
 		android:icon="@mipmap/ic_launcher"
@@ -61,7 +68,7 @@
 		android:roundIcon="@mipmap/ic_launcher_round"
 		android:supportsRtl="true"
 		android:localeConfig="@xml/locale_config"
-		android:enableOnBackInvokedCallback="true">
+		android:enableOnBackInvokedCallback="false">
 
 		<!-- Sentry is initialized manually only when SENTRY_DSN is configured. -->
 		<meta-data
@@ -336,13 +343,25 @@
 			android:windowSoftInputMode="adjustResize"
 			android:exported="true">
 			<!-- Group invite links carry a bearer-equivalent code, so the filter must be
-			     domain-verified for the same reason as the auth callbacks above. -->
+			     domain-verified for the same reason as the auth callbacks above. The host is the
+			     project website the rest of the app already links to - the one host that serves an
+			     assetlinks.json naming this package, which is what makes Android hand the link to
+			     this activity instead of a browser. Keep it in step with SynapseConfig.APP_WEBSITE_URL. -->
 			<intent-filter android:autoVerify="true">
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />
-				<data android:scheme="https" android:host="synapse.chat" android:pathPrefix="/g/" />
+				<data android:scheme="https" android:host="synapsesocial.vercel.app" android:pathPrefix="/g/" />
 			</intent-filter>
-		</activity>
+			<!-- The same invitation in the app's own scheme. It needs no verification, so an
+			     invitation still opens the app on a build whose certificate is not registered in
+			     assetlinks.json, or on a device that could not verify the host. -->
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="synapse" android:host="invite" />
+			</intent-filter>
+			</activity>
 	</application>
 </manifest>

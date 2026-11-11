@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.data.repository
 
 import com.synapse.social.studioasinc.shared.core.network.SupabaseClient
+import com.synapse.social.studioasinc.shared.domain.repository.BlockRepository
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -16,7 +17,9 @@ import com.synapse.social.studioasinc.domain.model.ProfileFollowStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ProfileActionRepositoryImpl @Inject constructor() : ProfilePrivacyRepository {
+class ProfileActionRepositoryImpl @Inject constructor(
+    private val blockRepository: BlockRepository
+) : ProfilePrivacyRepository {
     private val supabase = SupabaseClient.client
 
     @Suppress("UNUSED_PARAMETER")
@@ -104,18 +107,17 @@ class ProfileActionRepositoryImpl @Inject constructor() : ProfilePrivacyReposito
         }
     }
 
-    suspend fun blockUser(userId: String, blockedUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            supabase.from("blocked_users")
-                .insert(mapOf(
-                    "user_id" to userId,
-                    "blocked_user_id" to blockedUserId
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    /**
+     * Blocks [blockedUserId] through the shared, authoritative blocking layer.
+     *
+     * The block has to land in the blocks table: that is the single store that the
+     * blocked-contacts list, the directional block status and the messaging guard all read.
+     * A write aimed at any other table leaves the block unpersisted, so the account never
+     * appears in the blocked list and the messaging path never refuses its messages.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun blockUser(userId: String, blockedUserId: String): Result<Unit> =
+        blockRepository.blockUser(blockedUserId)
 
     suspend fun reportUser(userId: String, reportedUserId: String, reason: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
