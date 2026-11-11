@@ -1,7 +1,12 @@
 import SwiftUI
 
 struct ProfileView: View {
+    let userId: String?
     @StateObject private var viewModel = ProfileViewModel()
+
+    init(userId: String? = nil) {
+        self.userId = userId
+    }
 
     var body: some View {
         NavigationView {
@@ -105,7 +110,7 @@ struct ProfileView: View {
                 }
             }
             .task {
-                await viewModel.loadProfile()
+                await viewModel.loadProfile(userId: userId)
             }
         }
     }

@@ -5,7 +5,7 @@ enum AppRoute: Hashable {
     case search
     case create
     case notifications
-    case profile
+    case profile(userId: String?)
     case settings
     case login
     case register
