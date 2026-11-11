@@ -29,11 +29,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
+import com.synapse.social.studioasinc.ui.settings.TwoStepVerificationScreen
+import com.synapse.social.studioasinc.ui.settings.TwoStepVerificationViewModel
 
 @Composable
 fun SettingsNavHost(
@@ -108,6 +110,9 @@ fun SettingsNavHost(
                 },
                 onNavigateToPasskeys = {
                     navController.navigate(SettingsDestination.ROUTE_PASSKEYS)
+                },
+                onNavigateToTwoStepVerification = {
+                    navController.navigate(SettingsDestination.ROUTE_TWO_STEP_VERIFICATION)
                 }
             )
         }
@@ -122,8 +127,18 @@ fun SettingsNavHost(
             )
         }
 
+        composable(route = SettingsDestination.ROUTE_TWO_STEP_VERIFICATION) {
+            val viewModel: TwoStepVerificationViewModel = viewModel()
+            TwoStepVerificationScreen(
+                viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(route = SettingsDestination.ROUTE_REQUEST_ACCOUNT_INFO) {
-            val viewModel: RequestAccountInfoViewModel = viewModel()
+            val viewModel: RequestAccountInfoViewModel = hiltViewModel()
             RequestAccountInfoScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -133,7 +148,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_PRIVACY) {
-            val viewModel: PrivacySecurityViewModel = viewModel()
+            val viewModel: PrivacySecurityViewModel = hiltViewModel()
             PrivacySecurityScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -144,8 +159,6 @@ fun SettingsNavHost(
                 },
                 onNavigateToBlockedUsers = {
                     navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS)
-                },
-                onNavigateToMutedUsers = {
                 },
                 onNavigateToActiveSessions = {
                 },
@@ -220,7 +233,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             AppLockScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -233,7 +246,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
 
@@ -255,7 +268,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
 
@@ -370,7 +383,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
 
@@ -392,7 +405,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
 
@@ -414,7 +427,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
 
@@ -433,7 +446,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_APPEARANCE) {
-            val viewModel: AppearanceViewModel = viewModel()
+            val viewModel: AppearanceViewModel = hiltViewModel()
             AppearanceScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -448,7 +461,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_FONT) {
-            val viewModel: FontViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
+            val viewModel: FontViewModel = hiltViewModel()
             FontScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
@@ -557,7 +570,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_LANGUAGE) {
-            val viewModel: LanguageRegionViewModel = viewModel()
+            val viewModel: LanguageRegionViewModel = hiltViewModel()
             LanguageRegionScreen(
                 viewModel = viewModel,
                 onBackClick = {

@@ -130,6 +130,9 @@ class EditProfileViewModel @Inject constructor(
             EditProfileEvent.RetryAvatarUpload -> {
                 retryAvatarUpload()
             }
+            EditProfileEvent.ClearPendingAvatar -> {
+                clearPendingAvatar()
+            }
             EditProfileEvent.RetryCoverUpload -> {
                 retryCoverUpload()
             }
@@ -484,6 +487,10 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    private fun clearPendingAvatar() {
+        _uiState.update { it.copy(pendingAvatarUri = null, avatarUploadState = UploadState.Idle) }
+    }
+
     private fun retryCoverUpload() {
         lastCoverUri?.let { uri ->
             handleCoverCropped(uri)
@@ -533,10 +540,10 @@ class EditProfileViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     avatarUploadState = UploadState.Error("Avatar upload failed: ${error.message}"),
-                                    isSaving = false
+                                    pendingAvatarUri = null
                                 )
                             }
-                            return@launch
+                            finalState = _uiState.value
                         }
                     )
                 }
