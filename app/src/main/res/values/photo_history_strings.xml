@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Photo history (profile and cover) states shared by the history screen. -->
+<resources>
+    <string name="photo_history_error_title">Photos unavailable</string>
+    <string name="photo_history_retry">Try again</string>
+</resources>
