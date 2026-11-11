@@ -185,7 +185,7 @@ internal fun PostOptionsSection(
                 Toast.makeText(context, context.getString(R.string.toast_link_copied), Toast.LENGTH_SHORT).show()
             },
             onBookmark = {
-                viewModel.toggleSave(post.id)
+                viewModel.toggleSave(post)
             },
             onToggleComments = {
                 Toast.makeText(context, context.getString(R.string.toast_toggle_comments_impl), Toast.LENGTH_SHORT).show()
