@@ -108,6 +108,9 @@ fun SettingsNavHost(
                 },
                 onNavigateToPasskeys = {
                     navController.navigate(SettingsDestination.ROUTE_PASSKEYS)
+                },
+                onNavigateToTwoStepVerification = {
+                    navController.navigate(SettingsDestination.ROUTE_PRIVACY)
                 }
             )
         }
