@@ -689,3 +689,6 @@ class ProfileViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+}
