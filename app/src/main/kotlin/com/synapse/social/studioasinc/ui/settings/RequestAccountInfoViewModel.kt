@@ -41,11 +41,9 @@ data class RequestAccountInfoUiState(
 
 
 @HiltViewModel
-class RequestAccountInfoViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
-) : AndroidViewModel(context.applicationContext as Application) {
+class RequestAccountInfoViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
-    private val settingsDataStore = SettingsDataStore.getInstance(context.applicationContext as Application)
+    private val settingsDataStore = SettingsDataStore.getInstance(application)
 
 
 

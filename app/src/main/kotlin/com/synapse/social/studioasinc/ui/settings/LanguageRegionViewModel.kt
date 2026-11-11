@@ -18,14 +18,13 @@ import javax.inject.Inject
 import java.util.Locale
 
 
-
 @HiltViewModel
 class LanguageRegionViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
-) : AndroidViewModel(context.applicationContext as Application) {
+    application: Application
+) : AndroidViewModel(application) {
 
     private val settingsRepository: SettingsRepository =
-        SettingsRepositoryImpl.getInstance(context.applicationContext as Application)
+        SettingsRepositoryImpl.getInstance(application)
 
 
 

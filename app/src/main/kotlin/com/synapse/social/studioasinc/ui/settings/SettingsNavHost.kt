@@ -26,16 +26,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.composable
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
-import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
-import com.synapse.social.studioasinc.ui.settings.TwoStepVerificationScreen
-import com.synapse.social.studioasinc.ui.settings.TwoStepVerificationViewModel
+import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 
 @Composable
 fun SettingsNavHost(
@@ -236,9 +234,7 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             AppLockScreen(
                 viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -249,7 +245,6 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_last_seen_title),
                 subtitle = stringResource(R.string.settings_last_seen_subtitle),
@@ -271,7 +266,6 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
             val options = GroupPrivacy.values().map { groupPrivacy ->
                 PrivacyOptionItem(
                     title = groupPrivacy.displayName(),
@@ -386,7 +380,6 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_profile_photo_title),
                 subtitle = stringResource(R.string.settings_profile_photo_subtitle),
@@ -408,7 +401,6 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_about_privacy_title),
                 subtitle = stringResource(R.string.settings_about_subtitle),
@@ -430,7 +422,6 @@ fun SettingsNavHost(
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val privacySettings by viewModel.privacySettings.collectAsState()
             val isLoading by viewModel.isLoading.collectAsState()
-
             PrivacySelectionScreen(
                 title = stringResource(R.string.settings_status_title),
                 subtitle = stringResource(R.string.settings_status_subtitle),
@@ -464,9 +455,7 @@ fun SettingsNavHost(
             val viewModel: FontViewModel = hiltViewModel()
             FontScreen(
                 viewModel = viewModel,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
