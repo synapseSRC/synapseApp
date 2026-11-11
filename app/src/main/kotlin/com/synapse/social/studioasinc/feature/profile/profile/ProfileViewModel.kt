@@ -691,4 +691,22 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun summarizePost(post: Post) {
+        val content = post.postText.orEmpty().trim()
+        if (content.isBlank()) {
+            _state.update { it.copy(summaryError = "No text content to summarize.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSummarizing = true, postSummary = null, summaryError = null) }
+            summarizePostUseCase(content, emptyList())
+                .onSuccess { summary -> _state.update { it.copy(isSummarizing = false, postSummary = summary) } }
+                .onFailure { e -> _state.update { it.copy(isSummarizing = false, summaryError = e.message ?: "Failed to summarize post.") } }
+        }
+    }
+
+    fun clearPostSummary() {
+        _state.update { it.copy(postSummary = null, summaryError = null) }
+    }
 }
