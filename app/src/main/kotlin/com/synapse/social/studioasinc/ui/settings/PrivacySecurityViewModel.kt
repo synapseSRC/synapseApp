@@ -58,6 +58,7 @@ class PrivacySecurityViewModel(
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PrivacySecurityViewModel", "Failed to load disappearing messages timer", e)
+                _error.value = "Failed to load disappearing messages timer"
             }
         }
     }
@@ -239,6 +240,12 @@ class PrivacySecurityViewModel(
     }
 
     fun setDisappearingMessagesTimer(timer: String) {
+        val validTimers = setOf("Off", "24h", "7d", "90d")
+        if (timer !in validTimers) {
+            android.util.Log.e("PrivacySecurityViewModel", "Invalid disappearing messages timer value: $timer")
+            _error.value = "Invalid timer value"
+            return
+        }
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
