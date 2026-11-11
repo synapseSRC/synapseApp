@@ -126,7 +126,7 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_TWO_STEP_VERIFICATION) {
-            val viewModel: TwoStepVerificationViewModel = viewModel()
+            val viewModel: TwoStepVerificationViewModel = hiltViewModel()
             TwoStepVerificationScreen(
                 viewModel = viewModel,
                 onBackClick = {
@@ -298,7 +298,7 @@ fun SettingsNavHost(
             val parentEntry = androidx.compose.runtime.remember(it) {
                 navController.getBackStackEntry(SettingsDestination.ROUTE_PRIVACY)
             }
-            val viewModel: PrivacySecurityViewModel = viewModel(parentEntry)
+            val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val selectedTimer by viewModel.disappearingMessagesTimer.collectAsState()
 
             val timerOptions = listOf(
