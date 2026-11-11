@@ -197,10 +197,7 @@ class SettingsRepositoryImpl private constructor(
         settingsDataStore.setDisappearingMessagesTimer(timer)
     }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/fix/disappearing-messages-timer-persistence
 
 
 
