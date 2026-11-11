@@ -94,7 +94,10 @@ class ReelRepository {
                 "blocker_id" to currentUser.id,
                 "blocked_id" to creatorId
             )
-            client.from("user_blocks").insert(blockData)
+            // The blocks table is the single authoritative store: the blocked-contacts list,
+            // the directional block status and the messaging guard all read it. A write to
+            // any other table leaves the block unpersisted and ineffective.
+            client.from("blocks").insert(blockData)
             Result.success(Unit)
         } catch (e: Exception) {
             Napier.e("Failed to block creator $creatorId", e, tag = TAG)
