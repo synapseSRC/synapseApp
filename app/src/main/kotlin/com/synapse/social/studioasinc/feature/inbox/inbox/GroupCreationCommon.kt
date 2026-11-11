@@ -124,6 +124,7 @@ internal fun GroupErrorMessage(error: GroupCreationError, onDismiss: () -> Unit)
         GroupCreationError.LOAD_MEMBERS_FAILED -> stringResource(R.string.group_error_group_members)
         GroupCreationError.LOAD_REQUESTS_FAILED -> stringResource(R.string.group_error_requests)
         GroupCreationError.UPDATE_MEMBER_FAILED -> stringResource(R.string.group_error_member_update)
+        GroupCreationError.PRESELECTED_MEMBERS_FAILED -> stringResource(R.string.group_error_preselected_members)
     }
     TextButton(onClick = onDismiss) {
         Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)

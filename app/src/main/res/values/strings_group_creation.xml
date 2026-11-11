@@ -100,6 +100,7 @@
     <string name="group_error_group_members">The group was created, but participant details could not be loaded.</string>
     <string name="group_error_requests">Pending requests could not be loaded.</string>
     <string name="group_error_member_update">The member change could not be saved.</string>
+    <string name="group_error_preselected_members">Some of the selected people could not be loaded. Check the participant list before creating the group.</string>
     <string name="disappearing_mode_90_days">90 days</string>
     <string name="unknown_user_name">Unknown user</string>
     <string name="done">Done</string>
