@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +19,8 @@ import kotlinx.coroutines.launch
  * it to the UI. A real setup flow can be wired into [setupTwoFactor] once the underlying
  * two-factor setup implementation is available.
  */
-class TwoStepVerificationViewModel(
+@HiltViewModel
+class TwoStepVerificationViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
