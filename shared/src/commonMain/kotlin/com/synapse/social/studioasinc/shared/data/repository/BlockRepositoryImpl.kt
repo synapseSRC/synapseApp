@@ -3,6 +3,7 @@ import com.synapse.social.studioasinc.shared.core.util.AppDispatchers
 
 import com.synapse.social.studioasinc.shared.data.datasource.SupabaseBlockDataSource
 import com.synapse.social.studioasinc.shared.data.mapper.BlockMapper
+import com.synapse.social.studioasinc.shared.domain.model.BlockStatus
 import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
 import com.synapse.social.studioasinc.shared.domain.repository.BlockRepository
 import kotlinx.coroutines.Dispatchers
@@ -78,5 +79,19 @@ class BlockRepositoryImpl(
     override suspend fun isUserBlocked(targetUserId: String): Result<Boolean> = 
         withContext(AppDispatchers.IO) {
             dataSource.isUserBlocked(targetUserId)
+        }
+
+    /**
+     * Resolves the block relationship with [otherUserId] in both directions.
+     *
+     * Messaging and the conversation UI need more than "did I block them", so the data source is
+     * asked for the directional status instead of guessing from a single boolean.
+     *
+     * @param otherUserId The ID of the account to inspect
+     * @return Result containing the directional block status or an error if the check fails
+     */
+    override suspend fun getBlockStatus(otherUserId: String): Result<BlockStatus> =
+        withContext(AppDispatchers.IO) {
+            dataSource.getBlockStatus(otherUserId)
         }
 }

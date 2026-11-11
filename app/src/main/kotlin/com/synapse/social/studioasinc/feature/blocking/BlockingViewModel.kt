@@ -43,32 +43,30 @@ class BlockingViewModel @Inject constructor(
     /**
      * Blocks a user by their ID.
      * Updates UI state to Loading, then to BlockSuccess or Error based on result.
-     * On success, refreshes the blocked users list inline to avoid a state-race
-     * with loadBlockedUsers() (which resets state to Loading unconditionally).
+     *
+     * Mirroring [unblockUser], the list is refreshed as part of the success path. The refresh runs
+     * through [refreshBlockedUsers] rather than [loadBlockedUsers] so that it never replaces the
+     * success state, and `BlockSuccess` is published last and left in place: the screen consumes it
+     * to show the confirmation snackbar and then calls [resetState]. Publishing `Idle` from here
+     * would race the collector and could swallow the confirmation entirely.
+     *
      * @param userId The ID of the user to block
      */
     fun blockUser(userId: String) {
         viewModelScope.launch {
             _uiState.value = BlockingUiState.Loading
-            
-            blockUserUseCase(userId)
-                .onSuccess {
-                    _uiState.value = BlockingUiState.BlockSuccess
-                    // Refresh the blocked users list directly without going through
-                    // loadBlockedUsers(), which would overwrite BlockSuccess with Loading
-                    // before the UI LaunchedEffect can observe it (state-race fix).
-                    getBlockedUsersUseCase()
-                        .onSuccess { users ->
-                            _blockedUsers.value = users
-                        }
-                    // Transition to Idle; any list-load failure is non-fatal here.
-                    _uiState.value = BlockingUiState.Idle
-                }
-                .onFailure { error ->
-                    _uiState.value = BlockingUiState.Error(
-                        message = error.message ?: "Failed to block user"
-                    )
-                }
+
+            val result = blockUserUseCase(userId)
+            if (result.isSuccess) {
+                // Refresh first: the newly blocked account is already listed when the confirmation
+                // appears, and a list-load failure is surfaced through refreshFailed.
+                refreshBlockedUsers()
+                _uiState.value = BlockingUiState.BlockSuccess
+            } else {
+                _uiState.value = BlockingUiState.Error(
+                    message = result.exceptionOrNull()?.message ?: "Failed to block user"
+                )
+            }
         }
     }
     

@@ -11,5 +11,10 @@ data class BlockedUser(
     val blockedUserId: String,
     val blockedUsername: String?,
     val blockedUserAvatar: String?,
-    val blockedAt: Instant
+    val blockedAt: Instant,
+    /**
+     * Best available human-readable name for the blocked account, resolved from the profile when
+     * it can be loaded. Null only when the profile genuinely could not be retrieved.
+     */
+    val blockedDisplayName: String? = null
 )

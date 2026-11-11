@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.shared.domain.repository
 
+import com.synapse.social.studioasinc.shared.domain.model.BlockStatus
 import com.synapse.social.studioasinc.shared.domain.model.BlockedUser
 
 /**
@@ -39,4 +40,17 @@ interface BlockRepository {
      * @return Result containing boolean status (true if blocked) or an error on failure
      */
     suspend fun isUserBlocked(targetUserId: String): Result<Boolean>
+
+    /**
+     * Resolves the block relationship between the current user and [otherUserId] in both
+     * directions.
+     *
+     * `isUserBlocked` only answers "did I block them". Messaging needs the other direction too,
+     * because a message must not be delivered in either direction, and the conversation UI has to
+     * tell the two sides apart.
+     *
+     * @param otherUserId The ID of the account to inspect
+     * @return Result containing the directional [BlockStatus], or an error on failure
+     */
+    suspend fun getBlockStatus(otherUserId: String): Result<BlockStatus>
 }

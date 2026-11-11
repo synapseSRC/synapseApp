@@ -72,6 +72,8 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.BulkDeleteMessa
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ClearChatHistoryUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.ReportChatUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.UnblockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageForMeUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.DeleteMessageUseCase
@@ -347,6 +349,8 @@ object ChatModule {
         reportChatUseCase: ReportChatUseCase,
         clearChatHistoryUseCase: ClearChatHistoryUseCase,
         blockUserUseCase: BlockUserUseCase,
+        getBlockStatusUseCase: GetBlockStatusUseCase,
+        unblockUserUseCase: UnblockUserUseCase,
         reportUserUseCase: ReportUserUseCase
     ): ChatDependencies = ChatDependencies(
         messaging = messaging,
@@ -370,6 +374,8 @@ object ChatModule {
         reportChatUseCase = reportChatUseCase,
         clearChatHistoryUseCase = clearChatHistoryUseCase,
         blockUserUseCase = blockUserUseCase,
+        getBlockStatusUseCase = getBlockStatusUseCase,
+        unblockUserUseCase = unblockUserUseCase,
         reportUserUseCase = reportUserUseCase
     )
 

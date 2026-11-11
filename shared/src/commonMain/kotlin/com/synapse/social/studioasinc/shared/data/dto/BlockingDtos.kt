@@ -56,5 +56,22 @@ data class UserProfileDTO(
     val username: String?,
     
     @SerialName("avatar")
-    val avatar: String?
+    val avatar: String?,
+
+    /**
+     * Preferred name for the row. Optional so a profile selected without these columns still
+     * decodes; the mapper falls back to the username.
+     */
+    @SerialName("display_name")
+    val displayName: String? = null
+)
+
+/**
+ * Id-only projection of the blocks table.
+ * Used by the messaging path, which only needs the set of blocked account ids.
+ */
+@Serializable
+data class BlockedUserIdDTO(
+    @SerialName("blocked_id")
+    val blockedId: String
 )

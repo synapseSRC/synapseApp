@@ -7,6 +7,8 @@ import com.synapse.social.studioasinc.shared.domain.service.MediaCompressor
 import com.synapse.social.studioasinc.shared.domain.usecase.ai.GenerateSmartRepliesUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.GetBlockStatusUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.UnblockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserActiveStatusUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.presence.ObserveUserPresenceDetailUseCase
@@ -107,5 +109,8 @@ data class ChatDependencies(
     val reportChatUseCase: ReportChatUseCase,
     val clearChatHistoryUseCase: ClearChatHistoryUseCase,
     val blockUserUseCase: BlockUserUseCase,
+    /** Resolves the block relationship with the other participant, in both directions. */
+    val getBlockStatusUseCase: GetBlockStatusUseCase,
+    val unblockUserUseCase: UnblockUserUseCase,
     val reportUserUseCase: ReportUserUseCase,
 )
