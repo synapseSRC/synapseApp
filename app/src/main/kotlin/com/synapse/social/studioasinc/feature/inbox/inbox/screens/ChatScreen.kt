@@ -47,6 +47,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.core.media.VoicePlayerManager
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
+import com.synapse.social.studioasinc.feature.blocking.ui.UnblockConfirmationDialog
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
@@ -111,6 +112,7 @@ import kotlinx.coroutines.withContext
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var showUnblockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     // Initialize the ViewModel with the chat ID
@@ -139,6 +141,7 @@ import kotlinx.coroutines.withContext
     val replyingToMessage by viewModel.replyingToMessage.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
     val isGroupChat by viewModel.isGroupChat.collectAsState()
+    val chatBlockStatus by viewModel.chatBlockStatus.collectAsState()
     val groupTitle by viewModel.groupTitle.collectAsState()
     val groupAvatarUrl by viewModel.groupAvatarUrl.collectAsState()
     val chatDisplayName = if (isGroupChat) {
@@ -869,62 +872,71 @@ val currentUserId = currentUserIdState ?: ""
                         .align(Alignment.BottomCenter)
                         .onSizeChanged { composerHeightPx = it.height }
                 ) {
-                    ChatInputBar(
-                        // The same layer the header samples, so the composer's glass refracts the
-                        // wallpaper and the messages scrolling behind it.
-                        backdrop = glassBackdrop,
-                        replyingToMessage = replyingToMessage,
-                        editingMessage = editingMessage,
-                        smartReplies = smartReplies,
-                        reducedMotion = reducedMotion,
-                        inputText = inputText,
-                        canSendMessage = canSendMessage,
-                        currentUserId = currentUserId,
-                        participantDisplayName = participantProfile?.displayName
-                            ?: participantProfile?.name
-                            ?: participantProfile?.username
-                            ?: initialParticipantName?.takeUnless { isGroupChat },
-                        replyingToSenderName = quotedSenderDisplayName(
-                            message = replyingToMessage,
+                    if (chatBlockStatus.isBlocked) {
+                        // The composer is replaced, not just disabled: no entry point - typing,
+                        // attachments, voice or smart replies - survives a block.
+                        ChatBlockedNotice(
+                            blockedByMe = chatBlockStatus.blockedByMe,
+                            onUnblock = { showUnblockDialog = true }
+                        )
+                    } else {
+                        ChatInputBar(
+                            // The same layer the header samples, so the composer's glass refracts the
+                            // wallpaper and the messages scrolling behind it.
+                            backdrop = glassBackdrop,
+                            replyingToMessage = replyingToMessage,
+                            editingMessage = editingMessage,
+                            smartReplies = smartReplies,
+                            reducedMotion = reducedMotion,
+                            inputText = inputText,
+                            canSendMessage = canSendMessage,
                             currentUserId = currentUserId,
-                            isGroupChat = isGroupChat,
-                            groupMemberNames = groupMemberNames,
                             participantDisplayName = participantProfile?.displayName
                                 ?: participantProfile?.name
-                                ?: participantProfile?.username,
-                            initialParticipantName = initialParticipantName
-                        ),
-                        fontScale = chatFontScale,
-                        getLinkMetadataUseCase = linkPreviewViewModel.getLinkMetadataUseCase,
-                        context = context,
-                        voiceState = voiceState,
-                        onVoiceAction = { action ->
-                            val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                            if (action is VoiceAction.StartRecording && !hasPermission) {
-                                voiceController.requestPermissionAndRecord()
-                                recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            } else {
-                                voiceController.handleAction(action)
+                                ?: participantProfile?.username
+                                ?: initialParticipantName?.takeUnless { isGroupChat },
+                            replyingToSenderName = quotedSenderDisplayName(
+                                message = replyingToMessage,
+                                currentUserId = currentUserId,
+                                isGroupChat = isGroupChat,
+                                groupMemberNames = groupMemberNames,
+                                participantDisplayName = participantProfile?.displayName
+                                    ?: participantProfile?.name
+                                    ?: participantProfile?.username,
+                                initialParticipantName = initialParticipantName
+                            ),
+                            fontScale = chatFontScale,
+                            getLinkMetadataUseCase = linkPreviewViewModel.getLinkMetadataUseCase,
+                            context = context,
+                            voiceState = voiceState,
+                            onVoiceAction = { action ->
+                                val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                                if (action is VoiceAction.StartRecording && !hasPermission) {
+                                    voiceController.requestPermissionAndRecord()
+                                    recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                } else {
+                                    voiceController.handleAction(action)
+                                }
+                            },
+                            onInputTextChange = viewModel::onInputTextChange,
+                            onSendMessage = viewModel::sendMessage,
+                            onCancelReply = viewModel::cancelReply,
+                            onCancelEditing = viewModel::cancelEditing,
+                            onAttachmentSelected = { category ->
+                                focusManager.clearFocus()
+                                when (category) {
+                                    ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                                    )
+                                    ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
+                                    ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
+                                    ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
+                                    ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
+                                    ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
+                                }
                             }
-                        },
-                        onInputTextChange = viewModel::onInputTextChange,
-                        onSendMessage = viewModel::sendMessage,
-                        onCancelReply = viewModel::cancelReply,
-                        onCancelEditing = viewModel::cancelEditing,
-                        onAttachmentSelected = { category ->
-                            focusManager.clearFocus()
-                            when (category) {
-                                ChatAttachmentCategory.PHOTOS_AND_VIDEOS -> photoVideoPickerLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                                )
-                                ChatAttachmentCategory.DOCUMENTS -> documentPickerLauncher.launch(DOCUMENT_ATTACHMENT_MIME_TYPES)
-                                ChatAttachmentCategory.AUDIO -> documentPickerLauncher.launch(arrayOf("audio/*"))
-                                ChatAttachmentCategory.FILES -> documentPickerLauncher.launch(arrayOf("*/*"))
-                                ChatAttachmentCategory.CONTACTS -> contactPickerLauncher.launch(null)
-                                ChatAttachmentCategory.POLL -> onNavigateToCreatePoll(resolvedChatId ?: chatId)
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             }
 
@@ -1040,6 +1052,28 @@ val currentUserId = currentUserIdState ?: ""
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
+            )
+        }
+
+        // A block is removed from the conversation itself for the side that created it: the notice
+        // replacing the composer offers Unblock, and the removal runs through the same confirmation
+        // as the blocked-contacts screen before the authoritative state is re-read.
+        if (showUnblockDialog) {
+            UnblockConfirmationDialog(
+                onConfirm = {
+                    showUnblockDialog = false
+                    val targetUserId = participantId
+                    if (!targetUserId.isNullOrBlank()) {
+                        viewModel.unblockCurrentChatParticipant(targetUserId) { result ->
+                            Toast.makeText(
+                                context,
+                                if (result.isSuccess) R.string.chat_info_msg_unblocked else R.string.chat_info_error_unblock,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                },
+                onDismiss = { showUnblockDialog = false }
             )
         }
 
