@@ -156,7 +156,6 @@ internal fun PostOptionsSection(
     state: ProfileScreenState,
     viewModel: ProfileViewModel,
     context: Context,
-    postLinkLabel: String,
     onNavigateToEditPost: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -178,11 +177,7 @@ internal fun PostOptionsSection(
                 PostShareUtils.sharePost(context, post.id)
             },
             onCopyLink = {
-                val url = "${BuildConfig.APP_DOMAIN}/post/${post.id}"
-                val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-                val clip = android.content.ClipData.newPlainText(postLinkLabel, url)
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, context.getString(R.string.toast_link_copied), Toast.LENGTH_SHORT).show()
+                PostShareUtils.copyPostLink(context, post.id)
             },
             onBookmark = {
                 viewModel.toggleSave(post)
