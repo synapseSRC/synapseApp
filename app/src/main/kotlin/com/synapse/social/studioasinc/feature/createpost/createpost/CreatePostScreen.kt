@@ -47,22 +47,59 @@ fun CreatePostScreen(
 
 
     var editingMediaIndex by remember { mutableStateOf<Int?>(null) }
+    // The post/media pair that the pending crop belongs to when the user is editing
+    // an image attached to a thread post; null while the main post's media is edited.
+    var editingThreadMediaTarget by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var threadMediaPickerIndex by remember { mutableStateOf<Int?>(null) }
     // CropImageContract is deprecated upstream (com.canhub.cropper) with no drop-in replacement;
     // rolling a custom ActivityResultContract is a separate project, not a warning fix.
     @Suppress("DEPRECATION")
     val cropImage = rememberLauncherForActivityResult(contract = CropImageContract()) { result ->
+        // Read the pending target first and clear it before anything else, so the launcher
+        // can never hand a second result to media the user has already finished editing.
+        val mainMediaIndex = editingMediaIndex
+        val threadMediaTarget = editingThreadMediaTarget
+        editingMediaIndex = null
+        editingThreadMediaTarget = null
+
         if (result.isSuccessful) {
-             editingMediaIndex?.let { index ->
-                 result.uriContent?.let { uri ->
-                     viewModel.updateMediaItem(index, uri)
+             val editedUri = result.uriContent
+             if (editedUri != null) {
+                 if (threadMediaTarget != null) {
+                     viewModel.updateThreadMediaItem(threadMediaTarget.first, threadMediaTarget.second, editedUri)
+                 } else if (mainMediaIndex != null) {
+                     viewModel.updateMediaItem(mainMediaIndex, editedUri)
                  }
              }
         } else {
              val exception = result.error
              Toast.makeText(context, context.getString(R.string.error_crop_failed, exception?.message ?: ""), Toast.LENGTH_SHORT).show()
         }
-        editingMediaIndex = null
+    }
+
+    // Main post media and thread post media crop through the same launcher, so URI
+    // resolution and the crop options live here instead of being duplicated per call site.
+    fun mediaUriOf(url: String): Uri =
+        if (url.startsWith("content://") || url.startsWith("file://") || url.startsWith("http")) {
+            Uri.parse(url)
+        } else {
+            Uri.fromFile(java.io.File(url))
+        }
+
+    @Suppress("DEPRECATION")
+    fun launchImageCropper(uri: Uri) {
+        cropImage.launch(
+            CropImageContractOptions(
+                uri = uri,
+                cropImageOptions = CropImageOptions().apply {
+                    guidelines = CropImageView.Guidelines.ON
+                    activityTitle = context.getString(R.string.title_edit_image)
+                    cropMenuCropButtonTitle = context.getString(R.string.action_save)
+                    showCropOverlay = true
+                    showProgressBar = true
+                }
+            )
+        )
     }
 
 
@@ -212,26 +249,9 @@ fun CreatePostScreen(
                 onUpdateText = { viewModel.updateText(it) },
                 onRemoveMedia = { viewModel.removeMedia(it) },
                 onEditMedia = { index ->
-                    val item = uiState.mediaItems[index]
+                    editingThreadMediaTarget = null
                     editingMediaIndex = index
-                    val uri = if (item.url.startsWith("content://") || item.url.startsWith("file://") || item.url.startsWith("http")) {
-                        Uri.parse(item.url)
-                    } else {
-                        Uri.fromFile(java.io.File(item.url))
-                    }
-                    @Suppress("DEPRECATION")
-                    cropImage.launch(
-                        CropImageContractOptions(
-                            uri = uri,
-                            cropImageOptions = CropImageOptions().apply {
-                                guidelines = CropImageView.Guidelines.ON
-                                activityTitle = context.getString(R.string.title_edit_image)
-                                cropMenuCropButtonTitle = context.getString(R.string.action_save)
-                                showCropOverlay = true
-                                showProgressBar = true
-                            }
-                        )
-                    )
+                    launchImageCropper(mediaUriOf(uiState.mediaItems[index].url))
                 },
                 onRemovePoll = { viewModel.setPoll(null) },
                 onRemoveYoutube = { viewModel.setYoutubeUrl(null) },
@@ -240,11 +260,10 @@ fun CreatePostScreen(
                 onUpdateThreadText = { index, text -> viewModel.updateThreadPostText(index, text) },
                 onRemoveThreadMedia = { postIndex, mediaIndex -> viewModel.removeThreadMedia(postIndex, mediaIndex) },
                 onEditThreadMedia = { postIndex, mediaIndex ->
-                    // Editing thread media logic
                     val item = uiState.threadPosts[postIndex].mediaItems[mediaIndex]
-                    editingMediaIndex = null // Ideally track this properly, but editing thread media index needs extra state.
-                    // For now, keep it simple and skip editing thread media if too complex.
-                    // It's possible to just remove and re-add for thread media
+                    editingMediaIndex = null
+                    editingThreadMediaTarget = postIndex to mediaIndex
+                    launchImageCropper(mediaUriOf(item.url))
                 },
                 onAddThreadMedia = { postIndex ->
                     threadMediaPickerIndex = postIndex
