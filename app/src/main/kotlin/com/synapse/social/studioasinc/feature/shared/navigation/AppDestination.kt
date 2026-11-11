@@ -30,6 +30,8 @@ sealed interface AppDestination {
     @Serializable
     data object BusinessPlatform : AppDestination
     @Serializable
+    data object PayoutSettings : AppDestination
+    @Serializable
     data object ScheduledPosts : AppDestination
     @Serializable
     data object ProfileMedia : AppDestination
