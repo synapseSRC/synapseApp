@@ -46,6 +46,9 @@ class AndroidCallAudioRouter @Inject constructor(
     private var watcher: AudioDeviceCallback? = null
     @Volatile private var inCall = false
 
+    /** API 31+ only: the framework's own word on the device the call is being carried on. */
+    private var communicationWatcher: AudioManager.OnCommunicationDeviceChangedListener? = null
+
     private var focusRequest: AudioFocusRequest? = null
 
     /**
@@ -88,6 +91,9 @@ class AndroidCallAudioRouter @Inject constructor(
 
     override fun select(route: CallAudioRoute): CallAudioRoute {
         val manager = audioManager ?: return _activeRoute.value
+        // A switch that lands after stop() would move the output of an app that is no longer in a call.
+        // The repository asks for a route without holding its call lock now, so teardown can race this.
+        if (!inCall) return _activeRoute.value
         return apply(manager, route)
     }
 
@@ -273,18 +279,37 @@ class AndroidCallAudioRouter @Inject constructor(
     // ---- Device changes ----------------------------------------------------------
 
     private fun watchDevices(manager: AudioManager) {
-        if (watcher != null) return
-        val callback = object : AudioDeviceCallback() {
-            override fun onAudioDevicesAdded(addedDevices: Array<AudioDeviceInfo>) = refresh()
+        if (watcher == null) {
+            val callback = object : AudioDeviceCallback() {
+                override fun onAudioDevicesAdded(addedDevices: Array<AudioDeviceInfo>) = refresh()
 
-            override fun onAudioDevicesRemoved(removedDevices: Array<AudioDeviceInfo>) = refresh()
+                override fun onAudioDevicesRemoved(removedDevices: Array<AudioDeviceInfo>) = refresh()
+            }
+            watcher = callback
+            runCatching { manager.registerAudioDeviceCallback(callback, null) }
+                .onFailure { Napier.w("Audio device monitoring unavailable: ${it.message}") }
         }
-        watcher = callback
-        runCatching { manager.registerAudioDeviceCallback(callback, null) }
-            .onFailure { Napier.w("Audio device monitoring unavailable: ${it.message}") }
+        // Plugging and unplugging are not the only way the route moves. On API 31+ the switch asked for
+        // through setCommunicationDevice() is completed by the framework a moment later, so the read-back
+        // taken inside apply() can still describe the device the call was on *before* the request.
+        // Listening for the framework's answer is what turns that late completion into a corrected
+        // readout: without it nothing re-reads the route, and the previous output stays on screen until
+        // an unrelated device event happens to overwrite it.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && communicationWatcher == null) {
+            val listener = AudioManager.OnCommunicationDeviceChangedListener { refresh() }
+            communicationWatcher = listener
+            runCatching { manager.addOnCommunicationDeviceChangedListener(context.mainExecutor, listener) }
+                .onFailure { Napier.w("Communication device monitoring unavailable: ${it.message}") }
+        }
     }
 
     private fun releaseDeviceWatcher(manager: AudioManager) {
+        communicationWatcher?.let { current ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                runCatching { manager.removeOnCommunicationDeviceChangedListener(current) }
+            }
+            communicationWatcher = null
+        }
         watcher?.let { current ->
             runCatching { manager.unregisterAudioDeviceCallback(current) }
             watcher = null
@@ -298,6 +323,10 @@ class AndroidCallAudioRouter @Inject constructor(
      * has to follow: the user's last tap is stale the moment a device disappears. On API 31+ the
      * system performs the switch itself, so this only keeps the readout honest; on older devices the
      * platform falls back the same way once the SCO/headset link drops.
+     *
+     * The same read-back answers the framework's own communication-device announcement, which is how a
+     * switch the platform finished late stops being a stale icon and becomes the route that is really in
+     * use. Late is not a fault: SCO has to come up, and a wired link has to be re-established.
      */
     private fun refresh() {
         val manager = audioManager ?: return

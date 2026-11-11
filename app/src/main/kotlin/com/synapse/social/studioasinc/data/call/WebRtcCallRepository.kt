@@ -270,14 +270,23 @@ class WebRtcCallRepository @Inject constructor(
      *
      * The router is the authority: an icon showing Bluetooth while audio is on the earpiece is a lie
      * the user can only discover by holding the phone to their ear.
+     *
+     * The switch itself is deliberately made outside [mutex]. That lock is held across work that can
+     * take seconds — an offer waits out ICE gathering before it is published, a reconnect mints fresh
+     * TURN credentials before it restarts, a ring deadline re-reads the backend row — so a tap that
+     * arrived during any of it waited for the whole operation to finish before the device moved at all.
+     * Moving the output needs no call state; only reporting the answer does, and [followAudioRoute]
+     * keeps that report coming from the device rather than from this one request.
      */
-    override suspend fun setAudioRoute(callId: String, route: CallAudioRoute): Result<Unit> =
-        withLiveCall(callId) { call ->
-            val settled = audioRouter.select(route)
-            reduce(call) { it.copy(audioRoute = settled) }
-            if (settled == route) Result.success(Unit)
-            else Result.failure(IllegalStateException("Audio route '$route' is not available; using '$settled'"))
-        }
+    override suspend fun setAudioRoute(callId: String, route: CallAudioRoute): Result<Unit> {
+        if (liveOrNull(callId) == null) return Result.failure(IllegalStateException("No active call"))
+        val settled = audioRouter.select(route)
+        val call = liveOrNull(callId)
+            ?: return Result.failure(IllegalStateException("No active call"))
+        reduce(call) { it.copy(audioRoute = settled) }
+        return if (settled == route) Result.success(Unit)
+        else Result.failure(IllegalStateException("Audio route '$route' is not available; using '$settled'"))
+    }
 
     override suspend fun setLocalVideoEnabled(callId: String, enabled: Boolean): Result<Unit> =
         withLiveCall(callId) { call ->
@@ -350,6 +359,10 @@ class WebRtcCallRepository @Inject constructor(
         // Call audio mode begins here, not when the row was created: a ringing screen is still an app
         // playing its own ringtone, and MODE_IN_COMMUNICATION would move that audio to the earpiece.
         audioRouter.start(video = call.mediaType == CallMediaType.VIDEO)
+        // Subscribed after the router has taken the output, so the first frame this call's screen
+        // receives for the route is the device the call actually begins on, not a default and not the
+        // placeholder the dialling screen was drawn with.
+        call.scope.launch { followAudioRoute(call) }
         val opened = call.engine.open(
             EngineConfig(
                 callId = call.id,
@@ -463,6 +476,28 @@ class WebRtcCallRepository @Inject constructor(
                 applyRowLocked(call, row)
                 if (wasEnded) teardownLocked(call, "ended by the backend")
             }
+        }
+    }
+
+    /**
+     * Follows the router's own reading of the route, not the tap that asked for it.
+     *
+     * [CallAudioRouter.activeRoute] is the only signal that says what the device actually did: the route
+     * this call started on, the device the framework settles on a moment after the switch is requested,
+     * and every change the platform makes on its own — a headset pulled out mid-call, an SCO link that
+     * comes up late. Republishing it is what keeps the speaker icon on the live route. Before this, the
+     * screen only ever had the read-back taken inside [setAudioRoute], so a move the platform completed
+     * afterwards left the icon showing the previous output until some unrelated device event happened to
+     * overwrite it — and the next tap, derived from that stale icon, asked again for a route the device
+     * was already on.
+     *
+     * Read without [mutex], like the candidate outbox: this is hardware state, and queueing it behind an
+     * in-flight negotiation would delay the very readout it exists to correct.
+     */
+    private suspend fun followAudioRoute(call: LiveCall) {
+        audioRouter.activeRoute.collect { route ->
+            if (call.closed) return@collect
+            reduce(call) { it.copy(audioRoute = route) }
         }
     }
 
