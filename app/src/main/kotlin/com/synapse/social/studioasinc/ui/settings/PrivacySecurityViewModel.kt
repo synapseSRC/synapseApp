@@ -240,7 +240,7 @@ class PrivacySecurityViewModel(
     }
 
     fun setDisappearingMessagesTimer(timer: String) {
-        val validTimers = setOf("Off", "24h", "7d", "90d")
+        val validTimers = setOf("Off", "24h", "7d", "90d") // allowlist: matches PrivacySelectionScreen timerOptions
         if (timer !in validTimers) {
             android.util.Log.e("PrivacySecurityViewModel", "Invalid disappearing messages timer value: $timer")
             _error.value = "Invalid timer value"
