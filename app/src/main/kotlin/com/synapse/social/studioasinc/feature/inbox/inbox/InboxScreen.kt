@@ -27,8 +27,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
@@ -109,6 +112,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.FolderTabRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxFilter
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.InboxSearchCategory
+import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.CallsTabScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.ContactsTabScreen
@@ -117,6 +121,7 @@ import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxArchivedS
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxConversationRow
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSearchScreen
 import com.synapse.social.studioasinc.feature.inbox.inbox.screens.InboxSelectionToolbar
+import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxAnimations
 import com.synapse.social.studioasinc.feature.inbox.inbox.theme.InboxExpressiveDimens
 import com.synapse.social.studioasinc.feature.shared.components.UserAvatar
 import com.synapse.social.studioasinc.feature.shared.theme.GroupedItemPosition
@@ -204,6 +209,10 @@ private fun InboxScreenContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Owned by the screen rather than by HomeMessages: the messages list is composed and disposed as
+    // the destination animates in and out, and a state created with the list would come back at the
+    // top of the list - a jump of its own, on top of the reorder the list is meant to animate.
+    val conversationListState = rememberLazyListState()
     val currentUserProfile by viewModel.currentUserProfile.collectAsState()
     val conversations by viewModel.conversations.collectAsState()
     val filteredConversations by viewModel.filteredConversations.collectAsState()
@@ -510,6 +519,7 @@ private fun InboxScreenContent(
                 ) { tab ->
                     when (tab) {
                         InboxTab.MESSAGES -> HomeMessages(
+                            listState = conversationListState,
                             sharedTransitionScope = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
                             conversations = filteredConversations,
@@ -658,6 +668,7 @@ private fun InboxScreenContent(
 
 @Composable
 private fun HomeMessages(
+    listState: LazyListState,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?,
     conversations: List<Conversation>,
@@ -677,6 +688,7 @@ private fun HomeMessages(
     onLongPressConversation: (String) -> Unit
 ) {
     val sections = remember(conversations) { groupConversations(conversations) }
+    val reducedMotion = AnimationUtil.rememberReducedMotion()
     Column(
         Modifier
             .fillMaxSize()
@@ -722,30 +734,35 @@ private fun HomeMessages(
                 }
             }
             else -> LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Spacing.space16, end = Spacing.space16, top = Spacing.space8, bottom = Spacing.space24)
             ) {
                 if (archivedCount > 0) {
-                    item(key = "archived-conversations") {
+                    item(key = "archived-conversations", contentType = "archived-conversations") {
                         ArchivedConversationsEntry(
                             count = archivedCount,
                             onClick = onOpenArchive,
-                            modifier = Modifier.padding(bottom = Spacing.space8)
+                            modifier = reorderPlacementModifier(reducedMotion).padding(bottom = Spacing.space8)
                         )
                     }
                 }
                 sections.forEach { (section, sectionConversations) ->
-                    item(key = "conversation-header-${section.name}") {
+                    item(key = "conversation-header-${section.name}", contentType = "conversation-header") {
                         Text(
                             text = stringResource(section.labelRes),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
+                            modifier = reorderPlacementModifier(reducedMotion)
                                 .padding(start = Spacing.space4, top = Spacing.space16, bottom = Spacing.space8)
                                 .semantics { heading() }
                         )
                     }
-                    itemsIndexed(sectionConversations, key = { _, conversation -> conversation.chatId }) { index, conversation ->
+                    itemsIndexed(
+                        items = sectionConversations,
+                        key = { _, conversation -> conversation.chatId },
+                        contentType = { _, _ -> "conversation-row" }
+                    ) { index, conversation ->
                         InboxConversationRow(
                             conversation = conversation,
                             sharedTransitionScope = sharedTransitionScope,
@@ -753,7 +770,12 @@ private fun HomeMessages(
                             position = GroupedItemPosition.at(index, sectionConversations.size),
                             onClick = { onOpenConversation(conversation) },
                             onLongClick = { onLongPressConversation(conversation.chatId) },
-                            modifier = if (index == 0) Modifier else Modifier.padding(top = GroupedListSpacing)
+                            // The chat id is still the row's key after the pin flip, so the list knows this
+                            // is the same row changing slot rather than a row leaving and another arriving:
+                            // the placement modifier carries it up into PINNED and pushes the rows it passed
+                            // down, instead of every affected row appearing already at its new position.
+                            modifier = reorderPlacementModifier(reducedMotion)
+                                .then(if (index == 0) Modifier else Modifier.padding(top = GroupedListSpacing))
                         )
                     }
                 }
@@ -761,6 +783,26 @@ private fun HomeMessages(
         }
     }
 }
+
+/**
+ * Item placement for a list whose rows keep their identity but change slot - a conversation pinned
+ * into the section at the top, or one dropping down because a conversation above it was.
+ *
+ * The placement spec moves the row node itself, so nothing teleports and nothing is re-created. The
+ * fades are deliberately off: a row that only moves must never cross-fade with itself, which is what
+ * reads as the list flickering or the row appearing twice. Reduced motion turns the whole modifier
+ * into a no-op - the reorder still happens, it just lands in one frame, as the system settings ask.
+ */
+private fun LazyItemScope.reorderPlacementModifier(reducedMotion: Boolean): Modifier =
+    if (reducedMotion) {
+        Modifier
+    } else {
+        Modifier.animateItem(
+            fadeInSpec = null,
+            fadeOutSpec = null,
+            placementSpec = InboxAnimations.ItemPlacementSpec
+        )
+    }
 
 private enum class ConversationSection(@StringRes val labelRes: Int) {
     PINNED(R.string.inbox_section_pinned),
