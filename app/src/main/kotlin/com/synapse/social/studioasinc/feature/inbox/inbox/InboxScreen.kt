@@ -526,7 +526,8 @@ private fun InboxScreenContent(
                             onOpenArchive = { destination = InboxDestination.ARCHIVED },
                             onRetry = viewModel::loadConversations,
                             onOpenConversation = ::openConversation,
-                            onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION }
+                            onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION },
+                            onToggleFavourite = viewModel::setConversationFavourite
                         )
                         InboxTab.CALLS -> CallsTabScreen(
                             contentPadding = PaddingValues(),
@@ -674,7 +675,9 @@ private fun HomeMessages(
     onOpenArchive: () -> Unit,
     onRetry: () -> Unit,
     onOpenConversation: (Conversation) -> Unit,
-    onLongPressConversation: (String) -> Unit
+    onLongPressConversation: (String) -> Unit,
+    // The row menu's favourite action. The Boolean is the state the row moves to.
+    onToggleFavourite: (chatId: String, isFavourite: Boolean) -> Unit
 ) {
     val sections = remember(conversations) { groupConversations(conversations) }
     Column(
@@ -753,6 +756,7 @@ private fun HomeMessages(
                             position = GroupedItemPosition.at(index, sectionConversations.size),
                             onClick = { onOpenConversation(conversation) },
                             onLongClick = { onLongPressConversation(conversation.chatId) },
+                            onToggleFavourite = { isFavourite -> onToggleFavourite(conversation.chatId, isFavourite) },
                             modifier = if (index == 0) Modifier else Modifier.padding(top = GroupedListSpacing)
                         )
                     }
