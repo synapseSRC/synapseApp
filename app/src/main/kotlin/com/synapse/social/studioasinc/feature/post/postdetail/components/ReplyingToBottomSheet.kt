@@ -51,7 +51,7 @@ fun ReplyingToBottomSheet(
             ) {
                     usernames.forEach { username ->
                         AssistChip(
-                            onClick = { onUsernameSelected(username); onDismiss() },
+                            onClick = { onUsernameSelected(username) },
                         label = {
                             Text(
                                 text = stringResource(R.string.common_at_username, username),
