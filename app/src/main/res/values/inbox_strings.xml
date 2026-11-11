@@ -64,7 +64,7 @@
     <string name="inbox_messages_tab">Messages</string>
     <string name="inbox_calls_tab">Calls</string>
     <string name="inbox_echo_tab">Echo</string>
-    <string name="inbox_contacts_tab">Contacts</string>
+    <string name="inbox_contacts_title">Contacts</string>
     <string name="inbox_account">Open profile</string>
     <string name="inbox_search_action">Search inbox</string>
     <string name="inbox_back">Back</string>
