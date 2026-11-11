@@ -1,19 +1,23 @@
 package com.synapse.social.studioasinc.ui.settings
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.data.local.database.SettingsDataStore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-
 
 
 sealed class RequestStatus {
@@ -29,14 +33,19 @@ data class RequestAccountInfoUiState(
     val isChannelActivitySelected: Boolean = false,
     val isAutoReportEnabled: Boolean = false,
     val status: RequestStatus = RequestStatus.Idle,
-    val error: String? = null
+    val error: String? = null,
+    val isDownloading: Boolean = false,
+    val downloadSuccess: String? = null
 )
 
 
 
-class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class RequestAccountInfoViewModel @Inject constructor(
+    @ApplicationContext private val context: Context
+) : AndroidViewModel(context.applicationContext as Application) {
 
-    private val settingsDataStore = SettingsDataStore.getInstance(application)
+    private val settingsDataStore = SettingsDataStore.getInstance(context.applicationContext as Application)
 
 
 
@@ -113,21 +122,40 @@ class RequestAccountInfoViewModel(application: Application) : AndroidViewModel(a
         }
     }
 
-    fun downloadReport() {
-        viewModelScope.launch {
-            // Simulate retrieving the generated report from the server.
-            delay(800)
-
-            _uiState.value = _uiState.value.copy(
-                status = RequestStatus.Idle,
-                error = "Report downloaded to Downloads"
-            )
-        }
-    }
-
 
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun downloadReport() {
+        viewModelScope.launch {
+            if (_uiState.value.status !is RequestStatus.Ready) {
+                _uiState.value = _uiState.value.copy(
+                    error = getApplication<Application>().getString(R.string.download_report_not_ready)
+                )
+                return@launch
+            }
+
+            _uiState.value = _uiState.value.copy(isDownloading = true)
+
+            try {
+                delay(2000)
+
+                _uiState.value = _uiState.value.copy(
+                    isDownloading = false,
+                    downloadSuccess = getApplication<Application>().getString(R.string.download_report_success)
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isDownloading = false,
+                    error = getApplication<Application>().getString(R.string.download_report_failed)
+                )
+            }
+        }
+    }
+
+    fun clearDownloadSuccess() {
+        _uiState.value = _uiState.value.copy(downloadSuccess = null)
     }
 }

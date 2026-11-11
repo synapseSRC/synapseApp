@@ -50,6 +50,9 @@ class BlockingViewModel @Inject constructor(
             blockUserUseCase(userId)
                 .onSuccess {
                     _uiState.value = BlockingUiState.BlockSuccess
+                    // Refresh the list after a successful block so the newly blocked user
+                    // appears in the on-screen list without requiring a screen re-entry.
+                    loadBlockedUsers()
                 }
                 .onFailure { error ->
                     _uiState.value = BlockingUiState.Error(

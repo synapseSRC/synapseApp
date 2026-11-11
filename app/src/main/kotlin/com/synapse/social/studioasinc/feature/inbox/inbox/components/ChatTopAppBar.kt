@@ -6,6 +6,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
@@ -405,10 +409,16 @@ private fun FloatingHeaderSurface(
     modifier: Modifier = Modifier,
     shape: Shape,
     backdrop: Backdrop?,
-    interactionSource: MutableInteractionSource,
+    interactionSource: MutableInteractionSource? = null,
+    pressProgress: Float = 0f,
     content: @Composable () -> Unit
 ) {
     val paint = rememberLiquidGlassPaint()
+    val glassProgress = if (interactionSource != null) {
+        rememberGlassPressProgress(interactionSource)
+    } else {
+        pressProgress
+    }
     if (backdrop == null) {
         Surface(
             modifier = modifier,
@@ -426,14 +436,13 @@ private fun FloatingHeaderSurface(
     } else {
         // Held buttons shrink the glass disc they sit on; the surface reports through the same
         // interaction source either way.
-        val pressProgress = rememberGlassPressProgress(interactionSource)
         Box(
             modifier = modifier
                 .liquidGlassSurface(
                     backdrop = backdrop,
                     shape = shape,
                     paint = paint,
-                    pressProgress = pressProgress
+                    pressProgress = glassProgress
                 )
                 // Parity with the M3 Surface this Box replaces: the surface stays one traversal group
                 // for accessibility, and the minimum constraints still reach its content.
@@ -590,12 +599,30 @@ private fun FloatingActionsPill(
     onAddToChatFolder: () -> Unit,
     onDeleteChat: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val voiceCallInteractionSource = remember { MutableInteractionSource() }
+    val overflowInteractionSource = remember { MutableInteractionSource() }
+
+    // Each action keeps its own interaction source, so ripple stays isolated to the button the
+    // user actually taps: pressing the voice call button must not light up the overflow menu and
+    // vice versa. The combined pressed state still drives the pill's glass press scale.
+    val voiceCallPressed by voiceCallInteractionSource.collectIsPressedAsState()
+    val overflowPressed by overflowInteractionSource.collectIsPressedAsState()
+    val glassPressed = voiceCallPressed || overflowPressed
+    val pressProgress by animateFloatAsState(
+        targetValue = if (glassPressed) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "chatActionsGlassPress"
+    )
+
     FloatingHeaderSurface(
         modifier = Modifier.height(FloatingHeaderHeight),
         shape = RoundedCornerShape(percent = 50),
         backdrop = backdrop,
-        interactionSource = interactionSource
+        interactionSource = null,
+        pressProgress = pressProgress
     ) {
         Row(
             // Wrap content: a fillMaxSize row inside a surface that only fixes its height claims
@@ -607,9 +634,7 @@ private fun FloatingActionsPill(
             // Video calling lives in the overflow menu so the pill keeps the reference's two-icon
             // geometry (call + more options).
             if (showCallActions) {
-                // Both buttons report into the pill's own source, so pressing either of them
-                // moves the whole surface the way the back button does.
-                IconButton(onClick = onStartVoiceCall, interactionSource = interactionSource) {
+                IconButton(onClick = onStartVoiceCall, interactionSource = voiceCallInteractionSource) {
                     Icon(
                         Icons.Default.Call,
                         contentDescription = stringResource(R.string.chat_action_voice_call)
@@ -619,7 +644,7 @@ private fun FloatingActionsPill(
             // The overflow menu anchors to this, and this button is flush with the pill's trailing
             // edge, so the menu lines up with the right edge of the pill.
             ChatOverflowMenu(
-                interactionSource = interactionSource,
+                interactionSource = overflowInteractionSource,
                 isGroupChat = isGroupChat,
                 canBlock = canBlock,
                 isMuted = isMuted,
@@ -702,8 +727,8 @@ fun ChatSearchTopAppBar(
 
 @Composable
 private fun ChatOverflowMenu(
-    // The pill hands its own source down, so pressing the three-dot button reads as the pill's own
-    // feedback rather than as a separate control lighting up.
+    // The overflow button owns its own interaction source, so its ripple stays isolated to the
+    // three-dot button instead of lighting up the neighbouring voice-call action (or vice versa).
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     isGroupChat: Boolean,
     canBlock: Boolean,
