@@ -55,6 +55,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
 import com.synapse.social.studioasinc.feature.shared.components.MediaViewer
+import com.synapse.social.studioasinc.feature.shared.components.ReportPostDialog
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.sharepost.SharePostSheetViewModel
 import com.synapse.social.studioasinc.feature.shared.sharepost.ShareToChatSheet
@@ -84,6 +85,8 @@ fun FeedScreen(
     val posts = viewModel.posts.collectAsLazyPagingItems()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var postToShare by remember { mutableStateOf<Post?>(null) }
+    var postToReport by remember { mutableStateOf<Post?>(null) }
+    var showReportDialog by remember { mutableStateOf(false) }
     var showSummarySheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -121,6 +124,16 @@ fun FeedScreen(
                 )
                 viewModel.clearError()
             }
+        }
+    }
+
+    // Show a success snackbar only after the repository confirms the report was submitted.
+    LaunchedEffect(uiState.reportSubmitted) {
+        if (uiState.reportSubmitted) {
+            snackbarHostState.showSnackbar(
+                message = context.getString(R.string.report_submitted)
+            )
+            viewModel.clearReportSubmitted()
         }
     }
 
@@ -352,7 +365,7 @@ fun FeedScreen(
             onCopyLink = { viewModel.copyPostLink(post) },
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = { viewModel.toggleComments(post) },
-            onReport = { viewModel.reportPost(post) },
+            onReport = { postToReport = post; showReportDialog = true },
             onBlock = { viewModel.blockUser(post.authorUid) },
             onRevokeVote = { viewModel.revokeVote(post) },
             onSummarize = {
@@ -372,6 +385,22 @@ fun FeedScreen(
                 viewModel.clearPostSummary()
             }
         )
+    }
+
+    postToReport?.let { reportTarget ->
+        if (showReportDialog) {
+            ReportPostDialog(
+                onDismiss = {
+                    showReportDialog = false
+                    postToReport = null
+                },
+                onConfirm = { reason ->
+                    viewModel.reportPost(reportTarget.id, reason)
+                    showReportDialog = false
+                    postToReport = null
+                }
+            )
+        }
     }
 
     postToShare?.let { post ->
