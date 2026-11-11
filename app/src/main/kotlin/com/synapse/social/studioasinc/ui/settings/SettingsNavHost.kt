@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
@@ -34,6 +35,7 @@ import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerViewModel
 import com.synapse.social.studioasinc.feature.permission.PermissionManagerScreen
 
+@Composable
 fun SettingsNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
