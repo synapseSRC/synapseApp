@@ -52,6 +52,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
@@ -147,12 +148,40 @@ private object InboxTab {
     const val CONTACTS = 3
 }
 
+/** A group needs the person creating it plus at least two people chosen from the chat list. */
+private const val MIN_GROUP_MEMBERS = 2
+
+/**
+ * The people a new group can be started with, taken from the current selection.
+ *
+ * Only one-to-one conversations contribute a member: a group chat cannot join another group, and
+ * the current user is already part of the group being created. Duplicates collapse, because the
+ * same person can sit behind more than one selected conversation.
+ */
+private fun groupMemberCandidates(
+    conversations: List<Conversation>,
+    selectedChatIds: Set<String>,
+    currentUserId: String?
+): List<String> = conversations
+    .filter { it.chatId in selectedChatIds && !it.isGroup }
+    .map { it.participantId }
+    .filter { it.isNotBlank() && it != currentUserId }
+    .distinct()
+
 @Composable
 fun InboxScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit = {},
+    /**
+     * Opens group creation with these people already members.
+     *
+     * Used when the chat list selection is turned into a group: the people behind the selected
+     * conversations are handed over, and the group flow stays the one place that reviews the
+     * members, names the group and creates it.
+     */
+    onNavigateToCreateGroupWithMembers: (List<String>) -> Unit = {},
     onStartCall: (CallLaunchRequest) -> Unit = {},
     onOpenEchoRooms: () -> Unit = {},
     onOpenEchoRoom: (String, Boolean) -> Unit = { _, _ -> },
@@ -168,6 +197,7 @@ fun InboxScreen(
         onNavigateToChat = onNavigateToChat,
         onNavigateToSearch = onNavigateToSearch,
         onNavigateToCreateGroup = onNavigateToCreateGroup,
+        onNavigateToCreateGroupWithMembers = onNavigateToCreateGroupWithMembers,
         onStartCall = onStartCall,
         onOpenEchoRooms = onOpenEchoRooms,
         onOpenEchoRoom = onOpenEchoRoom,
@@ -185,6 +215,7 @@ private fun InboxScreenContent(
     onNavigateToChat: (String, String?, String?, String?) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToCreateGroup: () -> Unit,
+    onNavigateToCreateGroupWithMembers: (List<String>) -> Unit,
     onStartCall: (CallLaunchRequest) -> Unit,
     onOpenEchoRooms: () -> Unit,
     onOpenEchoRoom: (String, Boolean) -> Unit,
@@ -232,6 +263,9 @@ private fun InboxScreenContent(
     val noFolderLabel = stringResource(R.string.inbox_no_folder)
     val assignedFolderNames = folders.filter { folder -> selectedChatIds.any { it in folder.includedChatIds } }.map { it.name }.distinct()
     val currentFolderLabel = assignedFolderNames.takeIf { it.isNotEmpty() }?.joinToString() ?: noFolderLabel
+    // The people the current selection could start a group with. This stays empty for a selection
+    // that is all group conversations, which is what the group action reports back to the user.
+    val groupMemberIds = groupMemberCandidates(conversations, selectedChatIds, currentUserProfile?.uid)
 
     LaunchedEffect(Unit) { viewModel.loadArchivedConversations() }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -289,6 +323,17 @@ private fun InboxScreenContent(
                 if (result == SnackbarResult.ActionPerformed) viewModel.unarchiveConversations(archivedIds)
             }
         }
+        returnToInbox()
+    }
+
+    fun createGroupFromSelection() {
+        // The action is never disabled: an ineligible selection is answered with an explanation
+        // rather than a button that silently does nothing.
+        if (groupMemberIds.size < MIN_GROUP_MEMBERS) {
+            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_create_group_needs_two)) }
+            return
+        }
+        onNavigateToCreateGroupWithMembers(groupMemberIds)
         returnToInbox()
     }
 
@@ -394,6 +439,13 @@ private fun InboxScreenContent(
                     title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedChatIds.size, selectedChatIds.size)) },
                     navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
                     actions = {
+                        IconButton(onClick = ::createGroupFromSelection) {
+                            Icon(
+                                Icons.Rounded.GroupAdd,
+                                contentDescription = stringResource(R.string.inbox_action_create_group),
+                                tint = if (groupMemberIds.size >= MIN_GROUP_MEMBERS) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                         Box {
                             IconButton(onClick = { showSelectionMenu = true }) { Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.inbox_more_actions)) }
                             DropdownMenu(expanded = showSelectionMenu, onDismissRequest = { showSelectionMenu = false }) {

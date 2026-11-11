@@ -337,7 +337,12 @@ fun NavGraphBuilder.inboxGraph(
                     onNavigateToSearch = {
                         navController.navigate(AppDestination.Search)
                     },
-                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
+                    onNavigateToCreateGroup = { navController.navigate(AppDestination.CreateGroup()) },
+                    // The selection in the chat list already says who the group is for, so the group
+                    // flow opens with those people as members instead of asking for them again.
+                    onNavigateToCreateGroupWithMembers = { memberIds ->
+                        navController.navigate(AppDestination.CreateGroup(memberIds))
+                    },
                     onStartCall = { request -> navController.navigate(request.toDestination()) },
                     onOpenEchoRooms = { navController.navigate(AppDestination.EchoLobby) },
                     onOpenEchoRoom = { roomId, speakOnEntry ->
@@ -448,8 +453,10 @@ fun NavGraphBuilder.inboxGraph(
                     onStartCall = { request -> navController.navigate(request.toDestination()) }
                 )
             }
-    composable<AppDestination.CreateGroup> {
+    composable<AppDestination.CreateGroup> { backStackEntry ->
+                val args = backStackEntry.toRoute<AppDestination.CreateGroup>()
                 com.synapse.social.studioasinc.feature.inbox.inbox.CreateGroupScreen(
+                    preselectedMemberIds = args.memberIds,
                     onNavigateBack = { navController.popBackStack() },
                     onGroupCreated = { chatId ->
                         navController.popBackStack()
@@ -532,7 +539,7 @@ fun NavGraphBuilder.inboxGraph(
                         navController.navigate(AppDestination.Profile(userId))
                     },
                     onNavigateToCreateGroup = {
-                        navController.navigate(AppDestination.CreateGroup)
+                        navController.navigate(AppDestination.CreateGroup())
                     },
                     onNavigateToDisappearingMessages = { chatId ->
                         navController.navigate(AppDestination.DisappearingMessages(chatId))
