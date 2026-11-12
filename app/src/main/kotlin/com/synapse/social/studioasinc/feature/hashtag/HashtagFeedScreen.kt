@@ -34,7 +34,8 @@ fun HashtagFeedScreen(
     onBack: () -> Unit,
     onNavigateToPost: (postId: String, commentId: String?) -> Unit,
     onNavigateToProfile: (String) -> Unit,
-    onNavigateToEditPost: (String) -> Unit
+    onNavigateToEditPost: (String) -> Unit,
+    onNavigateToQuotePost: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -73,13 +74,13 @@ fun HashtagFeedScreen(
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(uiState.posts, key = { it.id }) { post ->
-                        val actions = remember(viewModel, onNavigateToPost, onNavigateToProfile) {
+                        val actions = remember(viewModel, onNavigateToPost, onNavigateToProfile, onNavigateToQuotePost) {
                             PostActions(
                                 onLike = { p -> viewModel.reactToPost(p, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
                                 onComment = { p -> onNavigateToPost(p.rootPostId ?: p.inReplyToPostId ?: p.id, if (p.rootPostId != null || p.inReplyToPostId != null) p.id else null) },
-                                onShare = { },
-                                onRepost = { },
-                                onQuote = { },
+                                onShare = { p -> PostShareUtils.sharePost(context, p.id) },
+                                onRepost = viewModel::resharePost,
+                                onQuote = { post -> onNavigateToQuotePost(post.id) },
                                 onBookmark = viewModel::bookmarkPost,
                                 onOptionClick = { post -> selectedPost = post },
                                 onPollVote = viewModel::votePoll,
