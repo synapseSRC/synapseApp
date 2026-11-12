@@ -127,6 +127,17 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
+    fun retryLoadPost() {
+        _uiState.update { it.copy(error = null) }
+        val postId = currentPostId
+        val root = rootCommentId
+        if (postId == null) return
+        // Invalidate the load guard so the same post is fetched again after a failure
+        currentPostId = null
+        rootCommentId = null
+        loadPost(postId, root)
+    }
+
     private val pendingViewedCommentIds = mutableSetOf<String>()
     private var flushViewsJob: kotlinx.coroutines.Job? = null
 
