@@ -379,10 +379,7 @@ class SupabaseAuthRepository(
     override suspend fun resetPassword(password: String, token: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
-                client.auth.verifyOtp {
-                    type = OtpType.Email.RECOVERY
-                    token = token
-                }
+                client.auth.verifyEmailOtp(OtpType.Email.RECOVERY, token)
                 client.auth.updateUser {
                     this.password = password
                 }
