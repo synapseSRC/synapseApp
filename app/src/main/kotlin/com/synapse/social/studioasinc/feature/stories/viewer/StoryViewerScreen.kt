@@ -35,9 +35,7 @@ import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.domain.model.Story
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
-import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.domain.model.User
-import com.synapse.social.studioasinc.ui.navigation.DeepLink
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
@@ -152,6 +150,7 @@ fun StoryReplyBar(
 fun StoryViewerScreen(
     onFinished: () -> Unit,
     onClose: () -> Unit,
+    onNavigateToProfile: (String) -> Unit = {},
     viewModel: StoryViewerViewModel,
     isActive: Boolean = true
 ) {
@@ -344,11 +343,7 @@ fun StoryViewerScreen(
                         viewers = uiState.viewers,
                         isLoading = uiState.isLoadingViewers,
                         onDismiss = { viewModel.hideViewersSheet() },
-                        onUserClick = { user ->
-                            user.id?.let { id ->
-                                IntentUtils.openUrl(context, DeepLink.profile(id))
-                            }
-                        }
+                        onUserClick = { user -> onNavigateToProfile(user.uid) }
                     )
                 }
 
