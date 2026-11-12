@@ -33,7 +33,8 @@ fun HashtagFeedScreen(
     viewModel: HashtagFeedViewModel,
     onBack: () -> Unit,
     onNavigateToPost: (postId: String, commentId: String?) -> Unit,
-    onNavigateToProfile: (String) -> Unit
+    onNavigateToProfile: (String) -> Unit,
+    onNavigateToEditPost: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -113,7 +114,7 @@ fun HashtagFeedScreen(
                 isOwner = viewModel.isPostOwner(post),
                 commentsDisabled = post.postDisableReplies == "true",
                 onDismiss = { selectedPost = null },
-                onEdit = { },
+                onEdit = { onNavigateToEditPost(post.id) },
                 onDelete = {
                     viewModel.deletePost(post)
                     selectedPost = null
