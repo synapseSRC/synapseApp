@@ -472,7 +472,7 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true)
-            resetPasswordUseCase(state.password).fold(
+            resetPasswordUseCase(state.password, "").fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
