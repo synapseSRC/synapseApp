@@ -415,7 +415,12 @@ private fun PostDetailContent(
             }
         } else if (uiState.error != null && uiState.post == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.error_prefix, uiState.error ?: ""))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(stringResource(R.string.error_prefix, uiState.error ?: ""))
+                    Button(onClick = { viewModel.retryLoadPost() }) {
+                        Text(stringResource(R.string.retry))
+                    }
+                }
             }
         } else {
             val postDetail = uiState.post
