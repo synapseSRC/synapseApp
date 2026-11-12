@@ -21,7 +21,8 @@ import kotlin.math.absoluteValue
 fun StoryPagerScreen(
     userIds: List<String>,
     initialIndex: Int,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onNavigateToProfile: (String) -> Unit = {}
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialIndex,
@@ -90,7 +91,8 @@ fun StoryPagerScreen(
                     },
                     onClose = onClose,
                     viewModel = viewModel,
-                    isActive = pagerState.currentPage == pageIndex && !pagerState.isScrollInProgress
+                    isActive = pagerState.currentPage == pageIndex && !pagerState.isScrollInProgress,
+                    onNavigateToProfile = onNavigateToProfile
                 )
 
                 // Shading overlay to emphasize edges
