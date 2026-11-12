@@ -952,6 +952,9 @@ fun NavGraphBuilder.hashtagGraph(
             },
             onNavigateToQuotePost = { postId ->
                 navController.navigate(AppDestination.QuotePost(postId))
+            },
+            onNavigateToEditPost = { postId ->
+                navController.navigate(AppDestination.CreatePost(postId = postId))
             }
         )
     }
