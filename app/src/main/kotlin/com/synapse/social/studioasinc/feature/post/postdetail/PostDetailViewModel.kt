@@ -128,7 +128,7 @@ class PostDetailViewModel @Inject constructor(
     }
 
     fun retryLoadPost() {
-        _error.value = null
+        _uiState.update { it.copy(error = null) }
         val postId = currentPostId
         val root = rootCommentId
         if (postId == null) return

@@ -330,6 +330,7 @@ fun PostDetailScreen(
         }
     ) { paddingValues ->
         PostDetailContent(
+            viewModel = viewModel,
             uiState = uiState,
             paddingValues = paddingValues,
             pagingItems = pagingItems,
@@ -401,7 +402,8 @@ private fun PostDetailContent(
     onPostOptionClick: (com.synapse.social.studioasinc.domain.model.Post) -> Unit,
     onPostPollVote: (com.synapse.social.studioasinc.domain.model.Post, Int) -> Unit,
     onPostMediaClick: (Int) -> Unit,
-    onPostReactionSelected: (com.synapse.social.studioasinc.domain.model.Post, ReactionType) -> Unit
+    onPostReactionSelected: (com.synapse.social.studioasinc.domain.model.Post, ReactionType) -> Unit,
+    viewModel: PostDetailViewModel
 ) {
     val context = LocalContext.current
     Box(
