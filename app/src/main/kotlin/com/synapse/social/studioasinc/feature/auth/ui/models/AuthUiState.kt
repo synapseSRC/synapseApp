@@ -56,6 +56,7 @@ sealed class AuthUiState {
     data class ResetPassword(
         val password: String = "",
         val confirmPassword: String = "",
+        val token: String = "",
         val validationErrors: Map<AuthField, String?> = emptyMap(),
         val generalError: String? = null,
         val passwordStrength: PasswordStrength = PasswordStrength.Weak,
