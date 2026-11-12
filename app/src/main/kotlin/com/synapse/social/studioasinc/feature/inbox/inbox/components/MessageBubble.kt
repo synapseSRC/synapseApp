@@ -75,6 +75,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.DeliveryStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
+import com.synapse.social.studioasinc.shared.domain.model.chat.effects.MessageEffect
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
@@ -299,7 +300,8 @@ fun MessageBubble(
     onOpenMap: (Double, Double) -> Unit = { _, _ -> },
     onContactAction: (String) -> Unit = {},
     modifier: Modifier = Modifier,
-    currentUserId: String = ""
+    currentUserId: String = "",
+    messageEffects: List<MessageEffect> = emptyList()
 ) {
     val configuration = LocalConfiguration.current
     val bubbleMaxWidth = (configuration.screenWidthDp.dp * 0.78f).coerceIn(Sizes.ChatMaxWidth, Sizes.BubbleMaxWidth)
@@ -856,6 +858,9 @@ if (message.content.isNotBlank()) {
                                                 ),
                                                 modifier = Modifier.padding(horizontal = Spacing.space16, vertical = Spacing.space8)
                                             )
+                                            if (messageEffects.isNotEmpty()) {
+                                                WordEffectOverlay(messageEffects)
+                                            }
                                         }
                                 }
                                 MessageMetadataRow(
