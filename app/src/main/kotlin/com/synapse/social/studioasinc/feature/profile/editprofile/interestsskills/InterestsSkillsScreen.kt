@@ -278,6 +278,7 @@ fun InterestsSkillsScreen(
                                                 }
                                             }
                                         }
+                                        }
 
                                         Spacer(modifier = Modifier.height(Spacing.space16))
 
