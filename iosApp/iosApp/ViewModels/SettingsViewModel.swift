@@ -12,7 +12,6 @@ class SettingsViewModel: ObservableObject {
     private var currentUid: String {
         return IOSDependencies.shared.getAuthRepository().getCurrentUserId() ?? ""
     }
-    }
 
     init(crashReporter: CrashReportingService = DependencyContainer.shared.crashReportingService) {
         self.crashReporter = crashReporter
