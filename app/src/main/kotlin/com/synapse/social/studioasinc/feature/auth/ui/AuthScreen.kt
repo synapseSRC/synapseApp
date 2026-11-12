@@ -52,7 +52,10 @@ fun AuthScreen(
                 navController.navigate("emailVerification/$encodedEmail")
             }
             is AuthNavigationEvent.NavigateToForgotPassword -> navController.navigate("forgotPassword")
-            is AuthNavigationEvent.NavigateToResetPassword -> navController.navigate("resetPassword")
+            is AuthNavigationEvent.NavigateToResetPassword -> {
+                val encodedToken = android.net.Uri.encode(event.token)
+                navController.navigate("resetPassword/$encodedToken")
+            }
             is AuthNavigationEvent.NavigateBack -> navController.popBackStack()
             is AuthNavigationEvent.OpenUrl -> IntentUtils.openUrl(context, event.url)
             is AuthNavigationEvent.InitiateGoogleSignIn -> {
@@ -149,16 +152,24 @@ fun AuthScreen(
                 )
             }
 
-            composable("resetPassword") {
+            composable(
+                route = "resetPassword/{token}",
+                arguments = listOf(androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType })
+            ) { backStackEntry ->
+                val token = backStackEntry.arguments?.getString("token") ?: ""
                 val viewModel = hiltViewModel<ResetPasswordViewModel>()
                 val state by viewModel.uiState.collectAsState()
+
+                LaunchedEffect(token) {
+                    viewModel.initToken(token)
+                }
 
                 LaunchedEffect(Unit) {
                     viewModel.navigationEvent.collect { handleNavigationEvent(it) }
                 }
 
                 ResetPasswordScreen(
-                    state = state as? AuthUiState.ResetPassword ?: AuthUiState.ResetPassword(),
+                    state = state as? AuthUiState.ResetPassword ?: AuthUiState.ResetPassword(token = token),
                     onPasswordChanged = viewModel::onPasswordChanged,
                     onConfirmPasswordChanged = viewModel::onConfirmPasswordChanged,
                     onResetPasswordClick = viewModel::onSubmitNewPassword,

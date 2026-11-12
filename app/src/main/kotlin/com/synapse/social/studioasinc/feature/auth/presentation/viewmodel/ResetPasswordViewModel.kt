@@ -43,6 +43,11 @@ class ResetPasswordViewModel @Inject constructor(
          )
     }
 
+    fun initToken(token: String) {
+        val state = _uiState.value as? AuthUiState.ResetPassword ?: return
+        _uiState.value = state.copy(token = token)
+    }
+
     fun onSubmitNewPassword() {
         val state = _uiState.value as? AuthUiState.ResetPassword ?: return
 
@@ -58,7 +63,7 @@ class ResetPasswordViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, generalError = null)
-            resetPasswordUseCase(state.password).fold(
+            resetPasswordUseCase(state.password, state.token).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
