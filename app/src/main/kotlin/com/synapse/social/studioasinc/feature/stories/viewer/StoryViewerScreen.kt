@@ -23,6 +23,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.synapse.social.studioasinc.R
@@ -540,6 +542,7 @@ fun StoryUserHeader(
             .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val viewProfileContentDescription = stringResource(R.string.view_profile)
 
         Box(
             modifier = Modifier
@@ -547,7 +550,7 @@ fun StoryUserHeader(
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { onUserClick() }
-                .semantics { contentDescription = stringResource(R.string.view_profile) },
+                .semantics { contentDescription = viewProfileContentDescription },
             contentAlignment = Alignment.Center
         ) {
             if (user?.avatar != null) {
