@@ -21,7 +21,8 @@ import kotlin.math.absoluteValue
 fun StoryPagerScreen(
     userIds: List<String>,
     initialIndex: Int,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onNavigateToProfile: (String) -> Unit = {}
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialIndex,
@@ -89,6 +90,7 @@ fun StoryPagerScreen(
                         }
                     },
                     onClose = onClose,
+                    onNavigateToProfile = onNavigateToProfile,
                     viewModel = viewModel,
                     isActive = pagerState.currentPage == pageIndex && !pagerState.isScrollInProgress
                 )
