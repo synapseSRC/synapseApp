@@ -515,6 +515,7 @@ private fun PostDetailContent(
                                     likesCount = postDetail.reactionSummary.values.sum(),
                                     replyCount = postDetail.post.replyCount,
                                     isReshared = postDetail.hasReshared,
+                                    isBookmarked = postDetail.isBookmarked,
                                     username = postDetail.author.username,
                                     avatarUrl = postDetail.author.avatar,
                                     isVerified = postDetail.author.verify
