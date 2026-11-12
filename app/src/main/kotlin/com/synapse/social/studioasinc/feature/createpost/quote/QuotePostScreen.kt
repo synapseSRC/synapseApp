@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
@@ -21,14 +22,17 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMappe
 
 import androidx.compose.ui.Alignment
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.feature.shared.utils.PostShareUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuotePostScreen(
     viewModel: QuotePostViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToPost: (postId: String, commentId: String?) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var quoteText by remember { mutableStateOf("") }
 
     LaunchedEffect(state.isSuccess) {
@@ -96,22 +100,24 @@ fun QuotePostScreen(
                     tonalElevation = 1.dp,
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    state.post?.let { PostUiMapper.toPostCardState(it) }?.let { PostCard(
- state = it,
-
-                        onLikeClick = {},
-                        onCommentClick = {},
-                        onShareClick = {},
-                        onRepostClick = {},
-                        onBookmarkClick = {},
-                        onUserClick = {},
-                        onPostClick = {},
-                        onMediaClick = { _, _ -> },
-                        onOptionsClick = {},
-                        onPollVote = {},
-                        onQuoteClick = {},
-                        modifier = Modifier.padding(Spacing.space8)
-                    ) }
+                    state.post?.let { post ->
+                        val postCardState = PostUiMapper.toPostCardState(post)
+                        PostCard(
+                            state = postCardState,
+                            onLikeClick = {},
+                            onCommentClick = {},
+                            onShareClick = { PostShareUtils.sharePost(context, post.id) },
+                            onRepostClick = {},
+                            onBookmarkClick = {},
+                            onUserClick = {},
+                            onPostClick = {},
+                            onMediaClick = { _, _ -> },
+                            onOptionsClick = {},
+                            onPollVote = {},
+                            onQuoteClick = {},
+                            modifier = Modifier.padding(Spacing.space8)
+                        )
+                    }
                 }
             }
 

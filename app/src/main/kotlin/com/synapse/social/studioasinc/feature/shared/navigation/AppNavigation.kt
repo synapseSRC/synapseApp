@@ -922,7 +922,10 @@ fun NavGraphBuilder.postGraph(
                 val viewModel: com.synapse.social.studioasinc.feature.createpost.quote.QuotePostViewModel = hiltViewModel()
                 com.synapse.social.studioasinc.feature.createpost.quote.QuotePostScreen(
                     viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPost = { postId, commentId ->
+                        navController.navigate(AppDestination.PostDetail(postId, commentId))
+                    }
                 )
             }
 }
