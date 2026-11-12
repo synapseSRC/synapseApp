@@ -114,7 +114,7 @@ fun HashtagFeedScreen(
                 isOwner = viewModel.isPostOwner(post),
                 commentsDisabled = post.postDisableReplies == "true",
                 onDismiss = { selectedPost = null },
-                onEdit = { onNavigateToEditPost(post.id) },
+                onEdit = { onNavigateToEditPost(post.id); selectedPost = null },
                 onDelete = {
                     viewModel.deletePost(post)
                     selectedPost = null
