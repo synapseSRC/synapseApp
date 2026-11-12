@@ -147,7 +147,11 @@ class HashtagFeedViewModel @Inject constructor(
         viewModelScope.launch {
             val result = repostPostUseCase(post.id)
             result.onSuccess {
-                // Repost succeeded
+                _uiState.update { state ->
+                    state.copy(posts = state.posts.map {
+                        if (it.id == post.id) it.copy(resharesCount = it.resharesCount + 1) else it
+                    })
+                }
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message ?: "Failed to repost") }
             }
