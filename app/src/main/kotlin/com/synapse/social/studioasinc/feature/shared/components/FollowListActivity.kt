@@ -12,6 +12,7 @@ import com.synapse.social.studioasinc.feature.shared.components.compose.FollowLi
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.GetOrCreateChatUseCase
 import kotlinx.coroutines.launch
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -20,6 +21,9 @@ import javax.inject.Inject
 class FollowListActivity : AppCompatActivity() {
     @Inject
     lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var getOrCreateChatUseCase: GetOrCreateChatUseCase
 
     companion object {
         const val EXTRA_USER_ID = "user_id"
@@ -67,8 +71,23 @@ class FollowListActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                Toast.makeText(this@FollowListActivity, "Chat feature not implemented", Toast.LENGTH_SHORT).show()
+                getOrCreateChatUseCase(targetUserId)
+                    .onSuccess { chatId ->
+                        IntentUtils.openUrl(this@FollowListActivity, DeepLink.chat(chatId))
+                    }
+                    .onFailure { error ->
+                        Toast.makeText(
+                            this@FollowListActivity,
+                            "Failed to start chat",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
             } catch (e: Exception) {
+                Toast.makeText(
+                    this@FollowListActivity,
+                    "Failed to start chat",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
