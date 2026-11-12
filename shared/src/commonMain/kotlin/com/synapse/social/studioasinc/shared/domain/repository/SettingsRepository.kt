@@ -63,6 +63,7 @@ interface SettingsRepository {
     suspend fun setTwoFactorEnabled(enabled: Boolean)
     val notificationPreferences: Flow<NotificationPreferences>
     suspend fun updateNotificationPreference(category: NotificationCategory, enabled: Boolean)
+    suspend fun setGlobalNotificationsEnabled(enabled: Boolean)
     suspend fun setInAppNotificationsEnabled(enabled: Boolean)
     suspend fun setReadReceiptsEnabled(enabled: Boolean)
     val chatFontScale: Flow<Float>

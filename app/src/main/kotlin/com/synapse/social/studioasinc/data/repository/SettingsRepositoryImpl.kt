@@ -208,6 +208,10 @@ class SettingsRepositoryImpl private constructor(
         settingsDataStore.updateNotificationPreference(category, enabled)
     }
 
+    override suspend fun setGlobalNotificationsEnabled(enabled: Boolean) {
+        settingsDataStore.setGlobalNotificationsEnabled(enabled)
+    }
+
     override suspend fun setInAppNotificationsEnabled(enabled: Boolean) {
         settingsDataStore.setInAppNotificationsEnabled(enabled)
     }
