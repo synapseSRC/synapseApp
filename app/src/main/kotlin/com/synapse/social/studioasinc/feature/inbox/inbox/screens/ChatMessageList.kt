@@ -50,8 +50,10 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
+import com.synapse.social.studioasinc.shared.domain.model.chat.effects.WordEffect
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType as SharedReactionType
+import com.synapse.social.studioasinc.shared.domain.util.ChatEffectResolver
 
 @Composable
 internal fun ChatMessageList(
@@ -101,7 +103,8 @@ internal fun ChatMessageList(
     groupMemberAvatars: Map<String, String> = emptyMap(),
     initialMessageId: String? = null,
     isListVisible: Boolean = true,
-    isScreenVisible: Boolean
+    isScreenVisible: Boolean,
+    chatWordEffects: List<WordEffect> = emptyList(),
 ) {
     val scope = rememberCoroutineScope()
     val messagesMap = remember(messages) {
@@ -292,6 +295,9 @@ internal fun ChatMessageList(
                     } else {
                         Modifier
                     }
+                    val messageEffects = remember(message, chatWordEffects) {
+                        ChatEffectResolver.resolve(message.content, chatWordEffects)
+                    }
                     MessageBubble(
                         modifier = Modifier
                             .then(itemPlacementModifier)
@@ -308,6 +314,7 @@ internal fun ChatMessageList(
                             )
                             .padding(bottom = bottomGap),
                         message = message,
+                        messageEffects = messageEffects,
                         isFromMe = message.isFromMe(currentUserId),
                         position = position,
                         isSelected = isSelected,
