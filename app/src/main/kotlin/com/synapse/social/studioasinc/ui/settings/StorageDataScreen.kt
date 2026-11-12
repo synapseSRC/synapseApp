@@ -41,7 +41,7 @@ fun StorageDataScreen(
         onBackClick = onBackClick,
         onNavigateToStorageManage = { navController?.navigate("settings_storage_manage") },
         onNavigateToNetworkUsage = { navController?.navigate("settings_network_usage") },
-        onNavigateToProxy = {  },
+        onNavigateToProxy = null,
         onUseLessDataCallsChanged = { viewModel.setUseLessDataCalls(it) },
         onOpenMobileDialog = { showMobileDialog = true },
         onOpenWifiDialog = { showWifiDialog = true },
@@ -74,7 +74,7 @@ private fun StorageDataContent(
     onBackClick: () -> Unit,
     onNavigateToStorageManage: () -> Unit,
     onNavigateToNetworkUsage: () -> Unit,
-    onNavigateToProxy: () -> Unit,
+    onNavigateToProxy: (() -> Unit)? = null,
     onUseLessDataCallsChanged: (Boolean) -> Unit,
     onOpenMobileDialog: () -> Unit,
     onOpenWifiDialog: () -> Unit,
@@ -272,7 +272,7 @@ private fun CallSettingsSection(
 }
 
 @Composable
-private fun NetworkSection(onNavigateToProxy: () -> Unit) {
+private fun NetworkSection(onNavigateToProxy: (() -> Unit)? = null) {
     SettingsSection(title = stringResource(R.string.settings_network_section)) {
         SettingsNavigationItem(
             title = stringResource(R.string.settings_proxy_title),
