@@ -145,14 +145,9 @@ interface SettingsRepository {
 
     suspend fun updateNotificationPreference(category: NotificationCategory, enabled: Boolean)
 
-
+    suspend fun setGlobalNotificationsEnabled(enabled: Boolean)
 
     suspend fun setInAppNotificationsEnabled(enabled: Boolean)
-
-
-
-
-
 
     suspend fun setReadReceiptsEnabled(enabled: Boolean)
 

@@ -52,6 +52,7 @@ object SettingsConstants {
     val KEY_NOTIFICATIONS_FOLLOWS = booleanPreferencesKey("notifications_follows")
     val KEY_NOTIFICATIONS_MESSAGES = booleanPreferencesKey("notifications_messages")
     val KEY_NOTIFICATIONS_MENTIONS = booleanPreferencesKey("notifications_mentions")
+    val KEY_NOTIFICATIONS_GLOBAL = booleanPreferencesKey("notifications_global")
     val KEY_IN_APP_NOTIFICATIONS = booleanPreferencesKey("in_app_notifications")
 
     val KEY_SOUND_EFFECTS_MASTER = booleanPreferencesKey("sound_effects_master")
@@ -126,6 +127,7 @@ object SettingsConstants {
     val DEFAULT_BIOMETRIC_LOCK_ENABLED = false
     val DEFAULT_TWO_FACTOR_ENABLED = false
     val DEFAULT_NOTIFICATIONS_ENABLED = true
+    val DEFAULT_NOTIFICATIONS_GLOBAL = true
     val DEFAULT_IN_APP_NOTIFICATIONS_ENABLED = true
     val DEFAULT_SOUND_TONES_ENABLED = true
     val DEFAULT_READ_RECEIPTS_ENABLED = true
