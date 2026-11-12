@@ -67,8 +67,8 @@ private fun EmptyFavouritesCard() {
 fun FavouritesScreen(
     onBackClick: () -> Unit
 ) {
-    val showFavouritesInChatList by remember { mutableStateOf(true) }
-    val showFavouriteBadge by remember { mutableStateOf(true) }
+    var showFavouritesInChatList by remember { mutableStateOf(true) }
+    var showFavouriteBadge by remember { mutableStateOf(true) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
