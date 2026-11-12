@@ -6,6 +6,8 @@ import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.domain.model.ReactionType
 import com.synapse.social.studioasinc.domain.usecase.post.BookmarkPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
@@ -34,6 +36,8 @@ class HashtagFeedViewModel @Inject constructor(
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val votePollUseCase: VotePollUseCase,
     private val deletePostUseCase: DeletePostUseCase,
+    private val repostPostUseCase: RepostPostUseCase,
+    private val unrepostPostUseCase: UnrepostPostUseCase,
     private val populatePostPollsUseCase: PopulatePostPollsUseCase,
     private val populatePostReactionsUseCase: PopulatePostReactionsUseCase,
     private val authRepository: AuthRepository
@@ -134,6 +138,36 @@ class HashtagFeedViewModel @Inject constructor(
                     _uiState.update { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
                 }.onFailure { e ->
                     _uiState.update { it.copy(error = e.message) }
+                }
+            }
+        }
+    }
+
+    fun resharePost(post: Post) {
+        val isCurrentlyReshared = post.isReshared
+        val optimisticPost = post.copy(
+            isReshared = !isCurrentlyReshared,
+            resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+        )
+        _uiState.update { state ->
+            state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
+        }
+
+        viewModelScope.launch {
+            val result = if (isCurrentlyReshared) {
+                unrepostPostUseCase(post.id)
+            } else {
+                repostPostUseCase(post.id)
+            }
+
+            result.onSuccess {
+                val currentTag = _uiState.value.tag
+                if (currentTag.isNotBlank()) {
+                    loadPosts(currentTag)
+                }
+            }.onFailure {
+                _uiState.update { state ->
+                    state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
                 }
             }
         }
